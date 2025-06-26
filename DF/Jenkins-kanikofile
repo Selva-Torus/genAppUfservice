@@ -1,0 +1,82 @@
+pipeline {
+  agent {
+    kubernetes {
+      yamlFile 'kaniko-builder.yaml'
+    }
+  }
+ 
+  environment {
+    DOCKER_REGISTRY = "192.168.2.164:5000"
+    APP_NAME = "kaniko-nest-mappdf"
+    IMAGE_NAME = "${DOCKER_REGISTRY}/${APP_NAME}"
+    IMAGE_TAG = "${BUILD_NUMBER}"
+    GITHUB_CREDENTIALS = "GIT_HUB_PAT"
+    KUBECONFIG = '/root/.kube/config'
+    MINIO_ALIAS = "minio"
+    MINIO_URL = "https://minioapi.gsstvl.com:9000/"
+    MINIO_ACCESS_KEY = "hTI7NRWHQgrr5Sr48EaR"
+    MINIO_SECRET_KEY = "A8Yx41Wszs4qmBLnlr2hKWSx9tXOymrL6foqPFC2"
+    MINIO_BUCKET = "claims7-df-k8s"
+  }
+ 
+  stages {
+    stage("Cleanup Workspace") {
+      steps {
+        cleanWs()
+      }
+    }
+ 
+    stage("Checkout from SCM") {
+      steps {
+        git branch: 'master', credentialsId: 'GIT_HUB_PAT', url: 'https://github.com/TorusDev2023/Claims7DF.git'
+      }
+    }
+    stage("Replace Kubernetes Folder From MinIO") {
+      steps {
+        container('kubectl') {
+          sh """
+	    echo "Removing old kubernetes folder"
+            rm -rf kubernetes
+ 
+            echo "Installing mc cli..."
+            wget https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/local/bin/mc
+            chmod +x /usr/local/bin/mc
+ 
+            echo "Setting up MinIO alias"
+            mc alias set ${MINIO_ALIAS} ${MINIO_URL} ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY}
+ 
+            echo "Downloading latest kubernetes folder from MinIO"
+            mc cp --recursive ${MINIO_ALIAS}/${MINIO_BUCKET}/kubernetes/ ./kubernetes/
+          """
+        }
+      }
+    }
+ 
+    stage("Build & Push with Kaniko") {
+      steps {
+        container(name: 'kaniko', shell: '/bin/sh') {
+          sh """
+            echo "Building Docker image with Kaniko..."
+            /kaniko/executor --dockerfile=./Dockerfile --context=. --destination=${IMAGE_NAME}:${IMAGE_TAG}
+          """
+        }
+      }
+    }
+ 
+    stage("Deploy to Kubernetes") {
+      steps {
+        container('kubectl') {
+          withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+            sh """
+              echo "Updating deployment YAML with the new image tag..."
+              sed -i 's/docker_tag/${IMAGE_TAG}/g' kubernetes/deploymentservice.yaml
+ 
+              echo "Applying Kubernetes manifest..."
+              kubectl apply -f kubernetes/deploymentservice.yaml -n claims7-df
+            """
+          }
+        }
+      }
+    }
+  }
+}

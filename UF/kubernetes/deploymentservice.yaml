@@ -1,0 +1,55 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: tob002-uf-generator
+  namespace: tob002-uf-v1
+  labels:
+    app: tob002-uf-generator
+spec:
+  replicas: 1
+  strategy:
+    canary:
+      steps:
+      - setWeight: 20  # 20% traffic to Canary
+      - pause: {duration: 30s}  # Wait 30 seconds
+      - setWeight: 50  # 50% traffic to Canary
+      - pause: {duration: 60s}  # Wait 60 seconds
+      - setWeight: 100  # 100% Canary (Stable)
+  selector:
+    matchLabels:
+      app: tob002-uf-generator
+  template:
+    metadata:
+      labels:
+        app: tob002-uf-generator
+    spec:
+      containers:
+      - name: tob002-uf-generator-frontend-container
+        image: 192.168.2.164:5000/tob002-uf-v1:docker_tag
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 3000
+        
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tob002-uf-generator
+  namespace: tob002-uf-v1
+  labels:
+    app: tob002-uf-generator
+spec:
+  selector:
+    app: tob002-uf-generator
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 3000
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 3000
+      #nodePort: 30001
+  type: ClusterIP

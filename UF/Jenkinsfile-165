@@ -1,0 +1,103 @@
+pipeline {
+    agent {
+        label 'slave-165'
+    }
+    tools {
+        jdk 'jdk17' 
+        nodejs 'Node20.0.0'
+    }
+    environment {
+        DOCKERHUB_USERNAME = "192.168.2.164:5000"
+        APP_NAME = "tob002-uf-v1"
+        IMAGE_NAME = "${DOCKERHUB_USERNAME}/${APP_NAME}"
+        BUILD_NUMBER = "${BUILD_NUMBER}"
+        GITHUB_CREDENTIALS = "GIT_HUB_PAT"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        SCANNER_HOME = tool 'sonar-scanner'
+    }
+
+    stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
+        stage('Code Checkout') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "${GITHUB_CREDENTIALS}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
+                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/TorusDev2023/Claims3UF.git'
+                }
+            }
+        }
+
+        stage('Detect Changes in CT242 App') {
+            steps {
+                script {
+                    def diff = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
+                    if (diff.split('\n').any { it.startsWith('apps/CT242/TOB001/TOB002/v1/Next-uf/') }) {
+                        env.NEXT_UF_CHANGED = "true"
+                        echo "Changes detected in apps/CT242/TOB001/TOB002/v1/Next-uf"
+                    } else {
+                        env.NEXT_UF_CHANGED = "false"
+                        echo "No changes in apps/CT242/TOB001/TOB002/v1/Next-uf. Skipping build and deployment stages."
+                    }
+                }
+            }
+        }
+
+        stage('Docker Build & Push') {
+            when {
+                expression { return env.NEXT_UF_CHANGED == "true" }
+            }
+            steps {
+                script {
+                    docker.withRegistry("http://${DOCKERHUB_USERNAME}", '') {
+                        sh """
+                        docker build -t ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG} -f apps/CT242/TOB001/TOB002/v1/Next-uf/Dockerfile apps/CT242/TOB001/TOB002/v1/Next-uf
+                        docker push ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Update Kubernetes Deployment File') {
+            when {
+                expression { return env.NEXT_UF_CHANGED == "true" }
+            }
+            steps {
+                script {
+                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CT242/TOB001/TOB002/v1/Next-uf/kubernetes/deploymentservice.yaml"
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            when {
+                expression { return env.NEXT_UF_CHANGED == "true" }
+            }
+            steps {
+                script {
+                    withKubeConfig(credentialsId: 'kubernetes-165', serverUrl: 'https://lb.kubesphere.local:6443') {
+                        sh "kubectl apply -f apps/CT242/TOB001/TOB002/v1/Next-uf/kubernetes/deploymentservice.yaml"
+                    }
+                }
+            }
+        }
+
+        stage('Remove Previous Build Image') {
+            when {
+                expression { return env.NEXT_UF_CHANGED == "true" }
+            }
+            steps {
+                script {
+                    def prevBuildNumber = env.BUILD_NUMBER.toInteger() - 1
+                    if (prevBuildNumber > 0) {
+                        sh "docker rmi -f ${IMAGE_NAME}:${prevBuildNumber} || true"
+                    }
+                }
+            }
+        }
+    }
+}

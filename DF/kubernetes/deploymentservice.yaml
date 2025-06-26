@@ -1,0 +1,60 @@
+
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: tob002-df-generator
+  namespace: tob002-df-v1
+  labels:
+    app: tob002-df-generator
+spec:
+  replicas: 1
+  strategy:
+    canary:
+      steps:
+      - setWeight: 20  # 20% traffic to Canary
+      - pause: {duration: 30s}  # Wait 30 seconds
+      - setWeight: 50  # 50% traffic to Canary
+      - pause: {duration: 60s}  # Wait 60 seconds
+      - setWeight: 100  # 100% Canary (Stable)
+  selector:
+    matchLabels:
+      app: tob002-df-generator
+  template:
+    metadata:
+      labels:
+        app: tob002-df-generator
+    spec:
+      containers:
+      - name: tob002-df-generator-backend-container
+        image: 192.168.2.164:5000/tob002-df-v1:docker_tag
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 3000    # Aligning with Service targetPort
+        env:
+        - name: redis_host
+          value: "192.168.2.180"
+        - name: redis_port
+          value: "32055"
+       
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tob002-df-generator
+  namespace: tob002-df-v1
+  labels:
+    app: tob002-df-generator
+spec:
+  selector:
+    app: tob002-df-generator
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 3000
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 3000
+  type: ClusterIP
