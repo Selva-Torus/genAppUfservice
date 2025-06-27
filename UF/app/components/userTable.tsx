@@ -129,7 +129,7 @@ const UserTable: React.FC<{
   const getAccessProfiles = async () => {
     try {
       const res = await AxiosService.get(
-        `${process.env.NEXT_PUBLIC_TORUS_API_URL}getAppAccessProfiles?tenant=${tenant}&ag=${ag}&app=${app}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/getAppAccessProfiles`,
         {
           headers: {
             Authorization: `Bearer ${getCookie('token')}`

@@ -52,7 +52,7 @@ import {
   logoutDto,
   uploadHandlerDto,
   myAccountForClientdto,
-  introspectDto
+  introspectDto,
 } from 'src/dto';
 import { diskStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -64,19 +64,23 @@ export class UfController {
   constructor(private readonly appService: UfService) {}
 
   @Post('screenRoute')
-  async screenRoute(@Body() keys: any,@Headers() header) {
+  async screenRoute(@Body() keys: any, @Headers() header) {
     const token: string = header.authorization.split(' ')[1];
-    const {dpdKey,method} = keys
-    let result :any = await this.appService.screenRoute(keys.keys,token,header)
-    if(dpdKey && method){
-      result["dpdKey"] = dpdKey
-      result["method"] = method
+    const { dpdKey, method } = keys;
+    let result: any = await this.appService.screenRoute(
+      keys.keys,
+      token,
+      header,
+    );
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
     }
     return result;
   }
 
   @Post('getAccessToken')
-   @ApiOkResponse({
+  @ApiOkResponse({
     description: 'Returns updated token with the orps structure',
     content: {
       'application/json': {
@@ -86,11 +90,11 @@ export class UfController {
       },
     },
   })
-    @ApiBadRequestResponse({ description: 'Invalid Credentials' })
+  @ApiBadRequestResponse({ description: 'Invalid Credentials' })
   async getAccessToken(@Body() body: any, @Req() req: any) {
     const token: string = req.headers.authorization?.split(' ')[1];
-    const { psCode , selectedAccessProfile , dap ,dpdKey,method } = body;
-    
+    const { psCode, selectedAccessProfile, dap, dpdKey, method } = body;
+
     if (!token) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
@@ -101,10 +105,15 @@ export class UfController {
       );
     }
     try {
-      let result : any = await this.appService.getAccessToken(token, psCode , selectedAccessProfile , dap);
-      if(dpdKey && method){
-        result["dpdKey"] = dpdKey
-        result["method"] = method
+      let result: any = await this.appService.getAccessToken(
+        token,
+        psCode,
+        selectedAccessProfile,
+        dap,
+      );
+      if (dpdKey && method) {
+        result['dpdKey'] = dpdKey;
+        result['method'] = method;
       }
       return result;
     } catch (err) {
@@ -113,7 +122,7 @@ export class UfController {
   }
 
   @Get('getAccessTemplates')
-   @ApiOkResponse({
+  @ApiOkResponse({
     description: 'Returns all possible access template of the loggedin user',
     content: {
       'application/json': {
@@ -123,20 +132,19 @@ export class UfController {
       },
     },
   })
-  
   @ApiBadRequestResponse({ description: 'Invalid Credentials' })
-  async getAccessTemplates(@Req() req: any, @Query() query ) {
-    const {dpdKey,method} = query;
+  async getAccessTemplates(@Req() req: any, @Query() query) {
+    const { dpdKey, method } = query;
     const token: string = req.headers.authorization?.split(' ')[1];
-    
+
     if (!token) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
     try {
-      let reuslt : any = await this.appService.getAccessTemplate(token);
-      if(dpdKey && method){
-        reuslt["dpdKey"] = dpdKey
-        reuslt["method"] = method
+      let reuslt: any = await this.appService.getAccessTemplate(token);
+      if (dpdKey && method) {
+        reuslt['dpdKey'] = dpdKey;
+        reuslt['method'] = method;
       }
       return reuslt;
     } catch (err) {
@@ -151,16 +159,16 @@ export class UfController {
     required: true,
   })
   @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(@UploadedFile() file: Express.Multer.File,@Body() body: any) {
-    let { context,dpdKey,method } = body
-    const result = await this.appService.uploadFile( 
-      file,
-      context
-    );
-    let finalresult : any= {file:result}
-    if(dpdKey && method){
-      finalresult["dpdKey"] = dpdKey;
-      finalresult["method"] = method
+  async uploadFile(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: any,
+  ) {
+    let { context, dpdKey, method } = body;
+    const result = await this.appService.uploadFile(file, context);
+    let finalresult: any = { file: result };
+    if (dpdKey && method) {
+      finalresult['dpdKey'] = dpdKey;
+      finalresult['method'] = method;
     }
     return finalresult;
   }
@@ -173,16 +181,17 @@ export class UfController {
   })
   @ApiOperation({
     summary: 'Download file from MongoDb GridFSBucket',
-    description: 'Download file from the stored MongoDb GridFSBucket on specified path',
+    description:
+      'Download file from the stored MongoDb GridFSBucket on specified path',
   })
-  async getFile(@Body() body: any,@Res() res: Response) {
-    let { context , id } = body
-    const file = await this.appService.getFile(id,context);
+  async getFile(@Body() body: any, @Res() res: Response) {
+    let { context, id } = body;
+    const file = await this.appService.getFile(id, context);
     if (!file) {
       throw new HttpException('File not found', HttpStatus.NOT_FOUND);
     }
     res.set({
-      'Content-Type':file.file?.contentType || 'application/octet-stream',
+      'Content-Type': file.file?.contentType || 'application/octet-stream',
       'Content-Disposition': `inline; filename="${file.file?.filename} "`,
     });
 
@@ -224,11 +233,11 @@ export class UfController {
   })
   async setUpKey(@Body() body: setUpKeyDto, @Req() req: any) {
     const token: string = req.headers.authorization.split(' ')[1];
-    const { key,dpdKey,method } = body;
-    let result : any = await this.appService.setUpKey(key,token);
-    if(dpdKey && method){
-      result["dpdKey"] = dpdKey
-      result["method"] = method
+    const { key, dpdKey, method } = body;
+    let result: any = await this.appService.setUpKey(key, token);
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
     }
     return result;
   }
@@ -267,7 +276,15 @@ export class UfController {
   })
   async Orchestration(@Body() body: OrchestrationDto, @Req() req: any) {
     const token: string = req.headers.authorization.split(' ')[1];
-    const { key, componentId, controlId, isTable, accessProfile,dpdKey,method } = body;
+    const {
+      key,
+      componentId,
+      controlId,
+      isTable,
+      accessProfile,
+      dpdKey,
+      method,
+    } = body;
     let result = await this.appService.Orchestration(
       key,
       componentId,
@@ -276,10 +293,10 @@ export class UfController {
       isTable,
       accessProfile,
     );
-      if (dpdKey && method) {
-        result['dpdKey'] = dpdKey;
-        result['method'] = method;
-      }
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
+    }
     return result;
   }
 
@@ -299,7 +316,6 @@ export class UfController {
     description: 'Bearer token for authentication',
     required: true,
   })
-  
   @ApiBody({ type: getMapperDetailsDto })
   @ApiOperation({
     summary: 'Retrive dropdown component values',
@@ -327,13 +343,30 @@ export class UfController {
       },
     },
   })
-  async getMapperDetails(@Body() body: getMapperDetailsDto,@Req() req: any) {
-    const token: string = req.headers.authorization.split(' ')[1];	
-    const { ufkey, componentId, controlId, category, bindtranValue, code ,dpdKey ,method } = body;
-    let result : any = await this.appService.getMapperDetails(ufkey,componentId,controlId,category,bindtranValue,code,token);
-    if(dpdKey && method){
-      result["dpdKey"] = dpdKey
-      result["method"] = method
+  async getMapperDetails(@Body() body: getMapperDetailsDto, @Req() req: any) {
+    const token: string = req.headers.authorization.split(' ')[1];
+    const {
+      ufkey,
+      componentId,
+      controlId,
+      category,
+      bindtranValue,
+      code,
+      dpdKey,
+      method,
+    } = body;
+    let result: any = await this.appService.getMapperDetails(
+      ufkey,
+      componentId,
+      controlId,
+      category,
+      bindtranValue,
+      code,
+      token,
+    );
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
     }
     return result;
   }
@@ -345,24 +378,29 @@ export class UfController {
   //   return await this.appService.codeExecution(stringCode, params);
   // }
 
-   @Post('code')
-   @ApiBody({ type: codefilterDto })
-   @ApiHeader({
+  @Post('code')
+  @ApiBody({ type: codefilterDto })
+  @ApiHeader({
     name: 'Authorization',
     description: 'Bearer token for authentication',
     required: true,
   })
-  
-   async codefilter(@Body() body: codefilterDto, @Req() req: any) {
-    const token: string = req.headers.authorization.split(' ')[1];	
-    const { key, groupId, controlId, event, dpdKey ,method } = body;
-    let result : any = await this.appService.codefilter(key, groupId, controlId, event, token);
-    if(dpdKey && method){
-      result["dpdKey"] = dpdKey
-      result["method"] = method
+  async codefilter(@Body() body: codefilterDto, @Req() req: any) {
+    const token: string = req.headers.authorization.split(' ')[1];
+    const { key, groupId, controlId, event, dpdKey, method } = body;
+    let result: any = await this.appService.codefilter(
+      key,
+      groupId,
+      controlId,
+      event,
+      token,
+    );
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
     }
     return result;
-   }
+  }
 
   @Get('dfKey')
   @ApiResponse({ status: 200, description: 'Get DFKey Completed' })
@@ -374,7 +412,6 @@ export class UfController {
     description: 'Bearer token for authentication',
     required: true,
   })
-  
   @ApiOperation({
     summary: 'Fetch the DFD key',
     description:
@@ -403,9 +440,9 @@ export class UfController {
   async getDfkey(
     @Query('ufKey') ufKey: string,
     @Query('groupId') groupId: string,
-    @Req() req: any
+    @Req() req: any,
   ) {
-    const token: string = req.headers.authorization.split(' ')[1];	
+    const token: string = req.headers.authorization.split(' ')[1];
     const ufkey: string = ufKey;
     const groupid: string = groupId;
     return await this.appService.getDfkey(ufkey, groupid, token);
@@ -451,13 +488,21 @@ export class UfController {
       },
     },
   })
-  async paginationDataFilter(@Body() body: paginationDataFilterDto,@Req() req: any) {
-    const token: string = req.headers.authorization.split(' ')[1];	
-    const { key, data,dfdType,dpdKey,method } = body;
-    let result : any = await this.appService.paginationDataFilter(key, data, token,dfdType);
-    if(dpdKey && method){
-      result["dpdKey"] = dpdKey
-      result["method"] = method
+  async paginationDataFilter(
+    @Body() body: paginationDataFilterDto,
+    @Req() req: any,
+  ) {
+    const token: string = req.headers.authorization.split(' ')[1];
+    const { key, data, dfdType, dpdKey, method } = body;
+    let result: any = await this.appService.paginationDataFilter(
+      key,
+      data,
+      token,
+      dfdType,
+    );
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
     }
     return result;
   }
@@ -549,10 +594,10 @@ export class UfController {
   async InitiatePF(@Body() body: InitiatePFDto, @Req() req): Promise<any> {
     const token: string = req.headers.authorization.split(' ')[1];
     const { key, sourceId, dpdKey, method } = body;
-    let result : any = await this.appService.InitiatePF(key, sourceId, token);
-    if(dpdKey && method){
-      result["dpdKey"] = dpdKey
-      result["method"] = method
+    let result: any = await this.appService.InitiatePF(key, sourceId, token);
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
     }
     return result;
   }
@@ -617,11 +662,17 @@ export class UfController {
   })
   async ifo(@Body() body: ifoDto, @Req() req: any): Promise<any> {
     const token: string = req.headers.authorization.split(' ')[1];
-    const { formData, key, controlId, isTable, dpdKey ,method } = body;
-    let result : any = await this.appService.ifo(formData, key, controlId, isTable, token);
-    if(dpdKey && method){
-      result["dpdKey"] = dpdKey
-      result["method"] = method
+    const { formData, key, controlId, isTable, dpdKey, method } = body;
+    let result: any = await this.appService.ifo(
+      formData,
+      key,
+      controlId,
+      isTable,
+      token,
+    );
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
     }
     return result;
   }
@@ -661,13 +712,18 @@ export class UfController {
   })
   async signinToTorus(
     @Body(new ValidationPipe({ transform: true })) body: signinToTorusDto,
-    @Req() req: any
+    @Req() req: any,
   ) {
     const { client, username, password, type, dpdKey, method } = body;
-    let result:any = await this.appService.signIntoTorus(client, username, password, type);
-    if(dpdKey && method){
-      result["dpdKey"] = dpdKey
-      result["method"] = method
+    let result: any = await this.appService.signIntoTorus(
+      client,
+      username,
+      password,
+      type,
+    );
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
     }
     return result;
   }
@@ -702,17 +758,25 @@ export class UfController {
       },
     },
   })
-  async MyAccountForClient(@Req() req: Request, @Body() body:myAccountForClientdto,@Query() query ) {
-    const {key} = body;
-    const {dpdKey,method} = query;
-    const { authorization }: any = req.headers;   
+  async MyAccountForClient(
+    @Req() req: Request,
+    @Body() body: myAccountForClientdto,
+    @Query() query,
+  ) {
+    const { key } = body;
+    const { dpdKey, method } = query;
+    const { authorization }: any = req.headers;
     const token = authorization.split(' ')[1];
-    let result : any = await this.appService.MyAccountForClient(token,key,authorization);
-    if(dpdKey && method){
-      result["dpdKey"] = dpdKey;
-      result["method"] = method;
+    let result: any = await this.appService.MyAccountForClient(
+      token,
+      key,
+      authorization,
+    );
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
     }
-    return result;  
+    return result;
   }
 
   @Get('logout')
@@ -745,14 +809,14 @@ export class UfController {
       },
     },
   })
-  async logout(@Headers() header,@Body() body:logoutDto, @Query() query ) {
-    const {key} = body;
-    const {dpdKey,method} = query;
-    const tokens: string = header.authorization.split(' ')[1];	
-    let result : any = await this.appService.logout(header,tokens,key);
-    if(dpdKey && method){
-      result["dpdKey"] = dpdKey
-      result["method"] = method
+  async logout(@Headers() header, @Body() body: logoutDto, @Query() query) {
+    const { key } = body;
+    const { dpdKey, method } = query;
+    const tokens: string = header.authorization.split(' ')[1];
+    let result: any = await this.appService.logout(header, tokens, key);
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
     }
     return result;
   }
@@ -787,14 +851,22 @@ export class UfController {
       },
     },
   })
-  async introspectToken(@Headers() header, @Body() body:introspectDto, @Query() query ) {
-    const {key} = body;
-    const {dpdKey,method} = query;
+  async introspectToken(
+    @Headers() header,
+    @Body() body: introspectDto,
+    @Query() query,
+  ) {
+    const { key } = body;
+    const { dpdKey, method } = query;
     const tokens: string = header.authorization.split(' ')[1];
-    let result : any = await this.appService.introspectToken(header,tokens,key);
-    if(dpdKey && method){
-      result["dpdKey"] = dpdKey
-      result["method"] = method
+    let result: any = await this.appService.introspectToken(
+      header,
+      tokens,
+      key,
+    );
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
     }
     return result;
   }
@@ -822,26 +894,26 @@ export class UfController {
       },
     },
   })
-  async getpagination(@Body() input: pageDto,@Req() req: any) {
+  async getpagination(@Body() input: pageDto, @Req() req: any) {
     const token: string = req?.headers?.authorization?.split(' ')[1];
-    if(!token) return 'Authorization token not found';
+    if (!token) return 'Authorization token not found';
     // const {keys} = input;
-    const{dpdKey,method} = input
-    if (input.key && input.count){
-      let result : any = await this.appService.getpagination(
+    const { dpdKey, method } = input;
+    if (input.key && input.count) {
+      let result: any = await this.appService.getpagination(
         input.key,
         input.page,
         input.count,
         input.filterDetails,
         input.searchFilter,
-        token
+        token,
       );
-      if(dpdKey && method){
-      result["dpdKey"] = dpdKey
-      result["method"] = method
-    }
-    return result;
-    }else{
+      if (dpdKey && method) {
+        result['dpdKey'] = dpdKey;
+        result['method'] = method;
+      }
+      return result;
+    } else {
       return 'MDKey/count shouldnot be empty';
     }
   }
@@ -871,18 +943,18 @@ export class UfController {
   })
   async dataGet(@Body() input: dataGet, @Req() req: any) {
     const token: string = req.headers.authorization.split(' ')[1];
-    const {dpdKey,method} = input
+    const { dpdKey, method } = input;
     if (input.key) {
       try {
-      let allDetails:any=  await this.appService.getpagination(
+        let allDetails: any = await this.appService.getpagination(
           input.key,
           1,
           10,
-          "",
-          "",
+          '',
+          '',
           token,
         );
-        let result : any = await this.appService.getpagination(
+        let result: any = await this.appService.getpagination(
           input.key,
           1,
           allDetails?.totalRecords,
@@ -890,11 +962,11 @@ export class UfController {
           input.searchFilter,
           token,
         );
-        if(dpdKey && method){
-          result["dpdKey"] = dpdKey
-          result["method"] = method
+        if (dpdKey && method) {
+          result['dpdKey'] = dpdKey;
+          result['method'] = method;
         }
-        return result;        
+        return result;
       } catch (err) {
         return err;
       }
@@ -907,17 +979,17 @@ export class UfController {
     const token: string = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED); 
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
 
-    const {email,dpdKey,method} = input;
-  
+    const { email, dpdKey, method } = input;
+
     if (email) {
       try {
-        let result : any = await this.appService.sendMailOTP(email);
-        if(dpdKey && method){
-          result["dpdKey"] = dpdKey
-          result["method"] = method
+        let result: any = await this.appService.sendMailOTP(email);
+        if (dpdKey && method) {
+          result['dpdKey'] = dpdKey;
+          result['method'] = method;
         }
         return result;
       } catch (err) {
@@ -926,5 +998,59 @@ export class UfController {
     } else {
       return 'Email is required';
     }
-  }  
+  }
+
+  // static screen's apis
+
+  @Get('getAppSecurityData')
+  async getAppSecurityData() {
+    return this.appService.getAppSecurityData();
+  }
+
+  @Get('getAPPSecurityTemplateData')
+  async getAPPSecurityTemplateData() {
+    return this.appService.getAPPSecurityTemplateData();
+  }
+
+  @Get('getAppAccessProfiles')
+  async getAppAccessProfiles() {
+    return this.appService.getAppAccessProfiles();
+  }
+
+  @Post('postAppUserList')
+  async postAppUserList(@Body() body) {
+    const { data } = body;
+    return this.appService.postAppUserList(data);
+  }
+
+  @Post('setJson')
+  async setJson(
+    @Query(new ValidationPipe({ transform: true })) query: any,
+    @Body(new ValidationPipe({ transform: true })) body: any,
+  ): Promise<any> {
+    const key = query.key;
+    const data = body.data;
+    return await this.appService.setJson(key, data);
+  }
+
+  @Post('appUserAddition')
+  async appUserAddition(@Body() body) {
+    const { data } = body;
+    return this.appService.appUserAddition(data);
+  }
+
+
+   @Post('uploadimg')
+  @UseInterceptors(FileInterceptor('file'))
+   async post_upload(@UploadedFile() file: Express.Multer.File, @Body() body) {
+     const { bucketFolderame, folderPath , filename ="" } = body;
+    const imageUrl = await this.appService.uploadImage(
+      file,
+      bucketFolderame,
+      folderPath,
+      filename
+    );
+    return { imageUrl };
+  }
+
 }

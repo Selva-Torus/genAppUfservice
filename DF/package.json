@@ -26,23 +26,26 @@
     "@nestjs/core": "^10.0.0",
     "@nestjs/jwt": "^10.2.0",
     "@nestjs/mapped-types": "*",
-    "@nestjs/microservices": "^10.4.15",    
+    "@nestjs/microservices": "^10.4.15",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^8.1.0",
     "@prisma/client": "^6.1.0",
     "@types/express-session": "^1.18.1",
     "axios": "^1.7.9",
-   "basic": "^2.0.3",
+    "basic": "^2.0.3",
     "basic-ftp": "^5.0.5",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "express-session": "^1.18.1",
+    "form-data": "^4.0.3",
     "ioredis": "^5.4.1",
+    "json-to-json-schema": "^0.0.4",
     "jsonata": "^2.0.6",
     "minio": "^8.0.2",
     "mongodb": "^6.13.0",
+    "node-vault": "^0.10.2",
     "nodemailer": "^6.10.0",
     "pg": "^8.13.1",
     "prisma": "^6.1.0",
@@ -51,9 +54,7 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "valibot": "^1.0.0-beta.9",
-    "xid-js": "^1.0.1",
-    "json-to-json-schema": "^0.0.4",
-    "node-vault": "^0.10.2"
+    "xid-js": "^1.0.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
@@ -95,7 +96,7 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
-    },
+  },
   "prisma": {
     "schema": "src/erd/prisma/schema.prisma"
   }

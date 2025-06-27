@@ -12,6 +12,8 @@ import {
   BadRequestException,
   NotAcceptableException,
   CustomException,
+  ForbiddenException,
+  ConflictException,
 } from 'src/customException';
 import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 import * as nodemailer from 'nodemailer';
@@ -22,6 +24,9 @@ import { MongoService } from 'src/mongoService';
 const jsonata = require('jsonata');
 import * as fs from 'fs';
 import { table } from 'console';
+import axios from 'axios';
+import { Readable } from 'stream';
+import * as FormData from 'form-data';
 
 // import { RuleService } from 'src/ruleService';
 
@@ -33,7 +38,9 @@ const transporter = nodemailer.createTransport({
     pass: 'Welcome@100',
   },
 });
-const auth_secret = 'HpZnm7V6YeshFDVbwACyOtx6oa6QSbraZoNyU9fwtGYUL1Rnc6PN5QUosu9BcqVBo5L6QeSs';
+const auth_secret =
+  'HpZnm7V6YeshFDVbwACyOtx6oa6QSbraZoNyU9fwtGYUL1Rnc6PN5QUosu9BcqVBo5L6QeSs';
+const tenant = process.env.TENANT;
 const ag = process.env.APPGROUPCODE;
 const app = process.env.APPCODE;
 
@@ -48,9 +55,9 @@ export class UfService {
     private readonly mongoService: MongoService,
   ) {}
 
-  async screenRoute(keys:any[],token:string,header:any){
-    for(let i=0; i < keys.length; i++){
-      const UO: any =  await this.commonService.readAPI(
+  async screenRoute(keys: any[], token: string, header: any) {
+    for (let i = 0; i < keys.length; i++) {
+      const UO: any = await this.commonService.readAPI(
         keys[i].ufKey + ':UO',
         'redis',
         'redis',
@@ -58,26 +65,44 @@ export class UfService {
       const securityData: any = UO.securityData;
       const screenName: string = keys[i].ufKey.split(':')[11];
       let templateArray: any[] = securityData.accessProfile;
-      const authorization = await this.introspectToken(header,keys[i].ufKey,token);
-      const accessProfile = await this.MyAccountForClient(token,keys[i].ufKey,authorization)
-      
+      const authorization = await this.introspectToken(
+        header,
+        keys[i].ufKey,
+        token,
+      );
+      const accessProfile = await this.MyAccountForClient(
+        token,
+        keys[i].ufKey,
+        authorization,
+      );
+
       if (keys[i].ufKey === securityData.afk) {
         for (let j = 0; j < templateArray.length; j++) {
           if (
-            accessProfile.accessProfile.includes(templateArray[j].accessProfile) &&
+            accessProfile.accessProfile.includes(
+              templateArray[j].accessProfile,
+            ) &&
             screenName === templateArray[j].security.artifact.resource &&
-            templateArray[j].security.artifact.SIFlag.selectedValue === "AA"
+            templateArray[j].security.artifact.SIFlag.selectedValue === 'AA'
           ) {
-            return keys[i].screensName
+            return keys[i].screensName;
           }
         }
       } else {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG085','security afk not found',keys[i].ufKey,token);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG085',
+          'security afk not found',
+          keys[i].ufKey,
+          token,
+        );
       }
     }
   }
 
-   async uploadFile(file: Express.Multer.File, context:string): Promise<any> {
+  async uploadFile(file: Express.Multer.File, context: string): Promise<any> {
     const res = await this.commonService.uploadFile(file, context);
     return res;
   }
@@ -85,15 +110,23 @@ export class UfService {
   async getFile(id: string, context: string) {
     const file = await this.commonService.findFileById(id);
     const res = await this.commonService.getFile(id, context);
-    return {res, file};
+    return { res, file };
   }
 
-  async setUpKey(key: string,token:string) {    
-    const sKey: any = await this.commonService.readAPI(key, 'redis', 'redis')
+  async setUpKey(key: string, token: string) {
+    const sKey: any = await this.commonService.readAPI(key, 'redis', 'redis');
     if (sKey) {
       return sKey;
     } else {
-      await this.commonService.errorLog('Technical','AK','Fatal','TG027','setupKey not found',key,token);
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG027',
+        'setupKey not found',
+        key,
+        token,
+      );
     }
   }
 
@@ -229,26 +262,41 @@ export class UfService {
     }
   }
 
-  async getpagination(key: any, page, count, filter?, searchObj?,token?:string) {
+  async getpagination(
+    key: any,
+    page,
+    count,
+    filter?,
+    searchObj?,
+    token?: string,
+  ) {
     try {
-       let tokenDecode = await this.jwtService.decodeToken(token)
-       console.log(tokenDecode);
-       if(!tokenDecode?.selectedAccessProfile) throw 'Selected Access Profile not found';
+      let tokenDecode = await this.jwtService.decodeToken(token);
+      console.log(tokenDecode);
+      if (!tokenDecode?.selectedAccessProfile)
+        throw 'Selected Access Profile not found';
 
       var dsObject = JSON.parse(
         await this.redisService.getJsonData(key + 'DS_Object'),
       );
       if (!dsObject) {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG033','DataSet does not exists',key,token);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG033',
+          'DataSet does not exists',
+          key,
+          token,
+        );
       }
-     
-      
+
       var data = dsObject?.data;
       if (data && tokenDecode) {
         if (!page) page = 1;
         let rule: any;
         let finalData = [];
-        var dataArr =[]
+        var dataArr = [];
         var searcharr = [];
         var start = (page - 1) * count;
         var end = start + count;
@@ -264,9 +312,17 @@ export class UfService {
               '.mappedData.artifact.node',
             ),
           );
-       
+
           if (!json) {
-            await this.commonService.errorLog('Technical','AK','Fatal','TG034','node is empty',key,token);
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG034',
+              'node is empty',
+              key,
+              token,
+            );
           }
           for (var s = 0; s < json.length; s++) {
             if (json[s].nodeId == filter.nodeId) {
@@ -280,30 +336,47 @@ export class UfService {
               if (result?.error) {
                 break;
               } else if (result?.result?.output === true) {
-                if(tokenDecode?.dap == 'f'){
-                   finalData.push(data[j]);
+                if (tokenDecode?.dap == 'f') {
+                  finalData.push(data[j]);
+                } else if (
+                  tokenDecode.orgGrpCode == data[j]['trs_org_grp_code'] &&
+                  tokenDecode.orgCode == data[j]['trs_org_code'] &&
+                  tokenDecode.roleGrpCode == data[j]['trs_role_grp_code'] &&
+                  tokenDecode.roleCode == data[j]['trs_role_code'] &&
+                  tokenDecode.psGrpCode == data[j]['trs_ps_grp_code'] &&
+                  tokenDecode.psCode == data[j]['trs_ps_code'] &&
+                  tokenDecode.selectedAccessProfile ==
+                    data[j]['trs_access_profile'] &&
+                  tokenDecode.loginId == data[j]['trs_created_by']
+                ) {
+                  finalData.push(data[j]);
                 }
-                else if(tokenDecode.orgGrpCode == data[j]['trs_org_grp_code'] && tokenDecode.orgCode == data[j]['trs_org_code'] && tokenDecode.roleGrpCode == data[j]['trs_role_grp_code'] && tokenDecode.roleCode == data[j]['trs_role_code'] && tokenDecode.psGrpCode == data[j]['trs_ps_grp_code'] && tokenDecode.psCode == data[j]['trs_ps_code'] && tokenDecode.selectedAccessProfile == data[j]['trs_access_profile'] && tokenDecode.loginId == data[j]['trs_created_by']){
-                    finalData.push(data[j]);
-                }
-                
-               
-              
               }
             }
-            
+
             if (searchObj && Object.keys(searchObj).length > 0) {
               for (var x = 0; x < finalData.length; x++) {
                 var s = 0;
                 for (var q = 0; q < searchkey.length; q++) {
                   if (finalData[x][searchkey[q]] == searchval[q]) {
-                    if(tokenDecode?.dap == 'f'){
-                       s++;
-                      }
-                     else if(tokenDecode.orgGrpCode ==finalData[x]['trs_org_grp_code'] && tokenDecode.orgCode == finalData[x]['trs_org_code'] && tokenDecode.roleGrpCode == finalData[x]['trs_role_grp_code'] && tokenDecode.roleCode == finalData[x]['trs_role_code'] && tokenDecode.psGrpCode == finalData[x]['trs_ps_grp_code'] && tokenDecode.psCode == finalData[x]['trs_ps_code'] && tokenDecode.selectedAccessProfile == finalData[x]['trs_access_profile'] && tokenDecode.loginId == finalData[x]['trs_created_by']){
-                          s++;
-                     }
-                    
+                    if (tokenDecode?.dap == 'f') {
+                      s++;
+                    } else if (
+                      tokenDecode.orgGrpCode ==
+                        finalData[x]['trs_org_grp_code'] &&
+                      tokenDecode.orgCode == finalData[x]['trs_org_code'] &&
+                      tokenDecode.roleGrpCode ==
+                        finalData[x]['trs_role_grp_code'] &&
+                      tokenDecode.roleCode == finalData[x]['trs_role_code'] &&
+                      tokenDecode.psGrpCode ==
+                        finalData[x]['trs_ps_grp_code'] &&
+                      tokenDecode.psCode == finalData[x]['trs_ps_code'] &&
+                      tokenDecode.selectedAccessProfile ==
+                        finalData[x]['trs_access_profile'] &&
+                      tokenDecode.loginId == finalData[x]['trs_created_by']
+                    ) {
+                      s++;
+                    }
                   }
                 }
                 // if(searchset.includes(searchkey.toLowerCase())){
@@ -314,7 +387,15 @@ export class UfService {
             }
             return await this.filterpagination(start, end, finalData);
           } else {
-            await this.commonService.errorLog('Technical','AK','Fatal','TG035','Invalid rule',key,token);
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG035',
+              'Invalid rule',
+              key,
+              token,
+            );
           }
         }
 
@@ -323,12 +404,21 @@ export class UfService {
             var s = 0;
             for (var q = 0; q < searchkey.length; q++) {
               if (data[x][searchkey[q]] == searchval[q]) {
-                if(tokenDecode?.dap == 'f'){
+                if (tokenDecode?.dap == 'f') {
+                  s++;
+                } else if (
+                  tokenDecode.orgGrpCode == data[x]['trs_org_grp_code'] &&
+                  tokenDecode.orgCode == data[x]['trs_org_code'] &&
+                  tokenDecode.roleGrpCode == data[x]['trs_role_grp_code'] &&
+                  tokenDecode.roleCode == data[x]['trs_role_code'] &&
+                  tokenDecode.psGrpCode == data[x]['trs_ps_grp_code'] &&
+                  tokenDecode.psCode == data[x]['trs_ps_code'] &&
+                  tokenDecode.selectedAccessProfile ==
+                    data[x]['trs_access_profile'] &&
+                  tokenDecode.loginId == data[x]['trs_created_by']
+                ) {
                   s++;
                 }
-               else if(tokenDecode.orgGrpCode ==data[x]['trs_org_grp_code'] && tokenDecode.orgCode == data[x]['trs_org_code'] && tokenDecode.roleGrpCode == data[x]['trs_role_grp_code'] && tokenDecode.roleCode == data[x]['trs_role_code'] && tokenDecode.psGrpCode == data[x]['trs_ps_grp_code'] && tokenDecode.psCode == data[x]['trs_ps_code'] && tokenDecode.selectedAccessProfile == data[x]['trs_access_profile'] && tokenDecode.loginId == data[x]['trs_created_by']){
-                   s++;
-                 }
               }
             }
             // if(searchset.includes(searchkey.toLowerCase())){ searchkey
@@ -336,21 +426,38 @@ export class UfService {
           }
           return await this.filterpagination(start, end, searcharr);
         }
-       
-        if(data?.length>0){
-          for(let i=0;i< data.length;i++){
-           if(tokenDecode?.dap == 'f'){
-                   dataArr.push(data[i])
-                }
-             else if(tokenDecode.orgGrpCode ==data[i]['trs_org_grp_code'] && tokenDecode.orgCode == data[i]['trs_org_code'] && tokenDecode.roleGrpCode == data[i]['trs_role_grp_code'] && tokenDecode.roleCode == data[i]['trs_role_code'] && tokenDecode.psGrpCode == data[i]['trs_ps_grp_code'] && tokenDecode.psCode == data[i]['trs_ps_code'] && tokenDecode.selectedAccessProfile == data[i]['trs_access_profile'] && tokenDecode.loginId == data[i]['trs_created_by']){
-                dataArr.push(data[i])
-             }
+
+        if (data?.length > 0) {
+          for (let i = 0; i < data.length; i++) {
+            if (tokenDecode?.dap == 'f') {
+              dataArr.push(data[i]);
+            } else if (
+              tokenDecode.orgGrpCode == data[i]['trs_org_grp_code'] &&
+              tokenDecode.orgCode == data[i]['trs_org_code'] &&
+              tokenDecode.roleGrpCode == data[i]['trs_role_grp_code'] &&
+              tokenDecode.roleCode == data[i]['trs_role_code'] &&
+              tokenDecode.psGrpCode == data[i]['trs_ps_grp_code'] &&
+              tokenDecode.psCode == data[i]['trs_ps_code'] &&
+              tokenDecode.selectedAccessProfile ==
+                data[i]['trs_access_profile'] &&
+              tokenDecode.loginId == data[i]['trs_created_by']
+            ) {
+              dataArr.push(data[i]);
+            }
           }
         }
         return await this.filterpagination(start, end, dataArr);
       }
     } catch (err) {
-      await this.commonService.errorLog('Technical','AK','Fatal','TG036',`Error in pagination:${err.message}`,key,token);
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG036',
+        `Error in pagination:${err.message}`,
+        key,
+        token,
+      );
     }
   }
 
@@ -371,8 +478,7 @@ export class UfService {
     accessProfile?: any[],
   ) {
     try {
-      
-      const UO: any =  await this.commonService.readAPI(
+      const UO: any = await this.commonService.readAPI(
         key + ':UO',
         'redis',
         'redis',
@@ -384,14 +490,14 @@ export class UfService {
       const decodedToken: any = await this.jwtService.decodeToken(token);
       let object = {};
       let security: any;
-      let allowedGroup:any=[]
+      let allowedGroup: any = [];
       let componentNameArray: string[] = [];
       let controlNames: any = [];
       let DFkeys: string[] = [];
       let dfKey: string;
       let sourceData: any[];
       let dfData: any;
-      let DS_Object:any=[]
+      let DS_Object: any = [];
       if (UO) {
         if (key && !componentId && !controlId) {
           /*---------security start-------------*/
@@ -401,17 +507,26 @@ export class UfService {
                 accessProfile.includes(templateArray[i].accessProfile) &&
                 screenName === templateArray[i].security.artifact.resource
               ) {
-                security = templateArray[i].security.artifact.SIFlag.selectedValue;
-                templateArray[i].security.artifact?.node?.map((nodes:any)=>{
+                security =
+                  templateArray[i].security.artifact.SIFlag.selectedValue;
+                templateArray[i].security.artifact?.node?.map((nodes: any) => {
                   allowedGroup.push({
-                    groupName:nodes?.resource,
-                    security:nodes?.SIFlag.selectedValue
-                  })
-                })
+                    groupName: nodes?.resource,
+                    security: nodes?.SIFlag.selectedValue,
+                  });
+                });
               }
             }
           } else {
-            await this.commonService.errorLog('Technical','AK','Fatal','TG085','security afk not found',key,token);
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG085',
+              'security afk not found',
+              key,
+              token,
+            );
           }
           /*---------security end-------------*/
           /*---------get dfKey start-------------*/
@@ -423,7 +538,15 @@ export class UfService {
               DFkeys.push(dfKey);
             }
           } else {
-            await this.commonService.errorLog('Technical','AK','Fatal','TG086','sourceData not found',key,token);
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG086',
+              'sourceData not found',
+              key,
+              token,
+            );
           }
           /*---------get dfKey end-------------*/
           object = {
@@ -433,7 +556,7 @@ export class UfService {
             events: UO.mappedData.artifact?.events,
             mapper: UO.mappedData.artifact?.mapper,
             security: security,
-            allowedGroup:allowedGroup,
+            allowedGroup: allowedGroup,
             DFkeys: DFkeys,
           };
           return object;
@@ -593,7 +716,15 @@ export class UfService {
               }
             }
           } else {
-            await this.commonService.errorLog('Technical','AK','Fatal','TG087','security afk not found',key,token);
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG087',
+              'security afk not found',
+              key,
+              token,
+            );
           }
           /*---------security end-------------*/
           for (let i = 0; i < mappedData.length; i++) {
@@ -627,7 +758,15 @@ export class UfService {
               }
             }
           } else {
-            await this.commonService.errorLog('Technical','AK','Fatal','TG088','mappedData not found',key,token);
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG088',
+              'mappedData not found',
+              key,
+              token,
+            );
           }
           /*---------get dfKey end-------------*/
           if (isTable) {
@@ -640,16 +779,19 @@ export class UfService {
             try {
               dfData = dfSchemaKey;
               let schemaData = dfData.filter((item: any) => {
-                if (item?.nodeType !== 'startnode' && item?.nodeType !== 'endnode') return item;
+                if (
+                  item?.nodeType !== 'startnode' &&
+                  item?.nodeType !== 'endnode'
+                )
+                  return item;
               });
 
-              let nodeType:string = 'apinode'
-              schemaData.map((nodes:any)=>{
-                if(nodes?.nodeType=='dbnode')
-                {
-                  nodeType='dbnode'
+              let nodeType: string = 'apinode';
+              schemaData.map((nodes: any) => {
+                if (nodes?.nodeType == 'dbnode') {
+                  nodeType = 'dbnode';
                 }
-              })
+              });
 
               // return schemaData
               object = {
@@ -657,7 +799,7 @@ export class UfService {
                 security: controlNames,
                 schemaData,
                 dfKey: dfKey,
-                dfdNodeType:nodeType
+                dfdNodeType: nodeType,
               };
             } catch (err) {
               object = {
@@ -696,30 +838,32 @@ export class UfService {
                     );
 
                     // return dfSchemaKey
-                      try {
-                        dfData = dfSchemaKey;
-                        schemaData = dfData.filter((item: any) => {
-                        if (item?.nodeType == 'apinode' || item?.nodeType == 'dbnode') return item;
-                        });
-                      } catch (err) {
-                        schemaData = [];
+                    try {
+                      dfData = dfSchemaKey;
+                      schemaData = dfData.filter((item: any) => {
+                        if (
+                          item?.nodeType == 'apinode' ||
+                          item?.nodeType == 'dbnode'
+                        )
+                          return item;
+                      });
+                    } catch (err) {
+                      schemaData = [];
                     }
 
                     let dstKey: string = dfdKey
                       .replace(':AFC:', ':AFCP:')
                       .replace(':AF:', ':AFP:')
                       .replace(':DF-DFD:', ':DF-DST:');
-                   DS_Object = await this.commonService.readAPI(
+                    DS_Object = await this.commonService.readAPI(
                       dstKey + ':DS_Object',
                       'redis',
                       'redis',
                     );
 
-                    if(DS_Object == null || DS_Object == undefined)
-                    {
-                      DS_Object['data']=[]
+                    if (DS_Object == null || DS_Object == undefined) {
+                      DS_Object['data'] = [];
                     }
-                    
                   }
                   object = {
                     action: mappedData[i].objElements[j]?.action,
@@ -737,10 +881,26 @@ export class UfService {
           }
         }
       } else {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG089','UO not found',key,token);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG089',
+          'UO not found',
+          key,
+          token,
+        );
       }
     } catch (error) {
-      await this.commonService.errorLog('Technical','AK','Fatal','TG090',`Error in Orchestration:${error.message}`,key,token);
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG090',
+        `Error in Orchestration:${error.message}`,
+        key,
+        token,
+      );
     }
   }
 
@@ -786,7 +946,7 @@ export class UfService {
     category: string,
     bindtranValue?: any,
     code?: any,
-    token?:string
+    token?: string,
   ) {
     try {
       let codName: any;
@@ -919,14 +1079,38 @@ export class UfService {
             }
           }
         } else {
-          await this.commonService.errorLog('Technical','AK','Fatal','TG030','mapper data not found',key,token);
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG030',
+            'mapper data not found',
+            key,
+            token,
+          );
         }
       } else {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG031','UO not found',key,token);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG031',
+          'UO not found',
+          key,
+          token,
+        );
       }
     } catch (error) {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG032',`UO api error:${error.message}`,key,token);
-      }
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG032',
+        `UO api error:${error.message}`,
+        key,
+        token,
+      );
+    }
   }
 
   async codeExecution(stringCode: string, params: any) {
@@ -999,7 +1183,7 @@ export class UfService {
     groupId?: any,
     controlId?: string,
     event?: any,
-    token?:string
+    token?: string,
   ) {
     try {
       let rule: string = '';
@@ -1057,7 +1241,16 @@ export class UfService {
                   for (let j = 0; j < group.objElements.length; j++) {
                     let control = group.objElements[j];
                     if (control.code != '') return control.code;
-                    else await this.commonService.errorLog('Technical','AK','Fatal','TG037','there is no rule in control level',key,token);                    
+                    else
+                      await this.commonService.errorLog(
+                        'Technical',
+                        'AK',
+                        'Fatal',
+                        'TG037',
+                        'there is no rule in control level',
+                        key,
+                        token,
+                      );
                   }
                 }
               }
@@ -1067,25 +1260,65 @@ export class UfService {
               let group = mappedData.artifact.node[i];
               if (group.nodeId == groupId) {
                 if (group.code != '') return group.code;
-                else await this.commonService.errorLog('Technical','AK','Fatal','TG038','there is no rule in group level',key,token);
+                else
+                  await this.commonService.errorLog(
+                    'Technical',
+                    'AK',
+                    'Fatal',
+                    'TG038',
+                    'there is no rule in group level',
+                    key,
+                    token,
+                  );
               }
             }
           }
         } else {
           if (mappedData.artifact.code != '') return mappedData.artifact.code;
-          else await this.commonService.errorLog('Technical','AK','Fatal','TG039','there is no rule in artifact level',key,token); 
+          else
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG039',
+              'there is no rule in artifact level',
+              key,
+              token,
+            );
         }
       }
-    } catch (error) {      
-        await this.commonService.errorLog('Technical','AK','Fatal','TG040',`Error in codefilter:${error.message}`,key,token);     
+    } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG040',
+        `Error in codefilter:${error.message}`,
+        key,
+        token,
+      );
     }
   }
 
-  async ifo(formData: any, key: string, controlId: string, isTable?: Boolean, token?:string) {
+  async ifo(
+    formData: any,
+    key: string,
+    controlId: string,
+    isTable?: Boolean,
+    token?: string,
+  ) {
     if (isTable == true) {
       try {
         if (formData == undefined || Object.keys(formData).length === 0)
-          await this.commonService.errorLog('Technical','AK','Fatal','TG041','post data is not a valid data',key,token);
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG041',
+            'post data is not a valid data',
+            key,
+            token,
+          );
         if (key !== '') {
           let spiltedkey: any[] = key.split('|');
           let findingkey: string = spiltedkey.pop();
@@ -1125,21 +1358,61 @@ export class UfService {
                   }
                 }
               }
-              await this.commonService.errorLog('Technical','AK','Fatal','TG042','ifo not found',key,token);
+              await this.commonService.errorLog(
+                'Technical',
+                'AK',
+                'Fatal',
+                'TG042',
+                'ifo not found',
+                key,
+                token,
+              );
             }
           } else {
-            await this.commonService.errorLog('Technical','AK','Fatal','TG043','key is not a valid key in POdata',key,token);
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG043',
+              'key is not a valid key in POdata',
+              key,
+              token,
+            );
           }
         } else {
-          await this.commonService.errorLog('Technical','AK','Fatal','TG044','key is not a valid key',key,token);
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG044',
+            'key is not a valid key',
+            key,
+            token,
+          );
         }
       } catch (error) {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG045',`Error in ifo:${error.message}`,key,token);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG045',
+          `Error in ifo:${error.message}`,
+          key,
+          token,
+        );
       }
     } else {
       try {
         if (formData == undefined || Object.keys(formData).length === 0)
-          await this.commonService.errorLog('Technical','AK','Fatal','TG046','post data is not a valid data',key,token);
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG046',
+            'post data is not a valid data',
+            key,
+            token,
+          );
         if (key !== '') {
           let spiltedkey: any[] = key.split('|');
           let findingkey: string = spiltedkey.pop();
@@ -1184,16 +1457,48 @@ export class UfService {
                   }
                 }
               }
-              await this.commonService.errorLog('Technical','AK','Fatal','TG047','ifo not found',key,token);
+              await this.commonService.errorLog(
+                'Technical',
+                'AK',
+                'Fatal',
+                'TG047',
+                'ifo not found',
+                key,
+                token,
+              );
             }
           } else {
-            await this.commonService.errorLog('Technical','AK','Fatal','TG048','key is not a valid key in POdata',key,token);
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG048',
+              'key is not a valid key in POdata',
+              key,
+              token,
+            );
           }
         } else {
-          await this.commonService.errorLog('Technical','AK','Fatal','TG049','key is not a valid key',key,token);
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG049',
+            'key is not a valid key',
+            key,
+            token,
+          );
         }
       } catch (error) {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG050',`Error in ifo:${error.message}`,key,token);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG050',
+          `Error in ifo:${error.message}`,
+          key,
+          token,
+        );
       }
     }
   }
@@ -1301,13 +1606,29 @@ export class UfService {
             }
           });
           if (Object.keys(nodeProperty).length === 0) {
-            await this.commonService.errorLog('Technical','AK','Fatal','TG051','node property not found',key,token);
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG051',
+              'node property not found',
+              key,
+              token,
+            );
           } else {
             delete nodeProperty.data;
             nodeProperty.key = nodeProperty.key + ':';
           }
         } else {
-          await this.commonService.errorLog('Technical','AK','Fatal','TG052','node property not found',key,token);
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG052',
+            'node property not found',
+            key,
+            token,
+          );
         }
         let eventProperty: any = {};
         if (POdata) {
@@ -1329,21 +1650,61 @@ export class UfService {
               }
             });
             if (Object.keys(eventProperty).length === 0) {
-              await this.commonService.errorLog('Technical','AK','Fatal','TG053','event property not found',key,token);
+              await this.commonService.errorLog(
+                'Technical',
+                'AK',
+                'Fatal',
+                'TG053',
+                'event property not found',
+                key,
+                token,
+              );
             }
           } else {
-            await this.commonService.errorLog('Technical','AK','Fatal','TG054','event property not found',key,token);
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG054',
+              'event property not found',
+              key,
+              token,
+            );
           }
         } else {
-          await this.commonService.errorLog('Technical','AK','Fatal','TG055','event property not found',key,token);
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG055',
+            'event property not found',
+            key,
+            token,
+          );
         }
 
         return { nodeProperty, eventProperty };
       } else {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG056','key not found',key,token);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG056',
+          'key not found',
+          key,
+          token,
+        );
       }
     } catch (error) {
-      await this.commonService.errorLog('Technical','AK','Fatal','TG057',`Error in InitiatePF:${error.message}`,key,token);
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG057',
+        `Error in InitiatePF:${error.message}`,
+        key,
+        token,
+      );
     }
   }
 
@@ -1505,7 +1866,7 @@ export class UfService {
     }
   }
 
-  async getDfkey(ufKey: any, groupid?: string, token?:string ) {
+  async getDfkey(ufKey: any, groupid?: string, token?: string) {
     try {
       let sourceData: any[];
       const source: string = 'redis';
@@ -1542,7 +1903,15 @@ export class UfService {
               }
             }
           } else {
-            await this.commonService.errorLog('Technical','AK','Fatal','TG058','sourceData not found',ufKey,token);
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG058',
+              'sourceData not found',
+              ufKey,
+              token,
+            );
           }
         } else {
           sourceData = mapperProperties.source;
@@ -1555,14 +1924,38 @@ export class UfService {
             }
             return DFkeys;
           } else {
-            await this.commonService.errorLog('Technical','AK','Fatal','TG059','sourceData not found',ufKey,token);
+            await this.commonService.errorLog(
+              'Technical',
+              'AK',
+              'Fatal',
+              'TG059',
+              'sourceData not found',
+              ufKey,
+              token,
+            );
           }
         }
       } else {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG060','mapperProperties not found',ufKey,token);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG060',
+          'mapperProperties not found',
+          ufKey,
+          token,
+        );
       }
     } catch (error: any) {
-      await this.commonService.errorLog('Technical','AK','Fatal','TG061',`Error in getDfkey:${error.message}`,ufKey,token);
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG061',
+        `Error in getDfkey:${error.message}`,
+        ufKey,
+        token,
+      );
     }
   }
   /* async zenrule(rule: any, data: any) {
@@ -1578,7 +1971,12 @@ export class UfService {
             }
           }*/
 
-  async paginationDataFilter(ufKey: any, data: any, token: string,dfdType:string) {
+  async paginationDataFilter(
+    ufKey: any,
+    data: any,
+    token: string,
+    dfdType: string,
+  ) {
     try {
       const source: string = 'redis';
       const target: string = 'redis';
@@ -1589,7 +1987,16 @@ export class UfService {
       );
       const mapperProperties: any = mapperPropertiesKey;
       if (mapperProperties) {
-        if (data == undefined || data.length == 0) await this.commonService.errorLog('Technical','AK','Fatal','TG062','Record not found',ufKey,token);
+        if (data == undefined || data.length == 0)
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG062',
+            'Record not found',
+            ufKey,
+            token,
+          );
         if (mapperProperties.mappedData) {
           let mapperSourceData: any = {};
           let mapperData: any = [];
@@ -1609,7 +2016,7 @@ export class UfService {
                 code: mapperProperties.mappedData.artifact.code,
               },
             ];
-            // return objectfn
+          // return objectfn
           if (
             Object.keys(mapperProperties.mappedData.artifact.rule).length > 0
           ) {
@@ -1663,27 +2070,57 @@ export class UfService {
                 mapperData[i].targetKey.split('|')[
                   mapperData[i].targetKey.split('|').length - 1
                 ],
-              columnKey:dfdType=='apinode'? mapperData[i].sourceKey[0].split('.').at(-1) : mapperData[i].sourceKey[0].split('|').at(-1),
+              columnKey:
+                dfdType == 'apinode'
+                  ? mapperData[i].sourceKey[0].split('.').at(-1)
+                  : mapperData[i].sourceKey[0].split('|').at(-1),
             });
             nodeName = mapperData[i].sourceKey[0].split('.').at(-1);
           }
 
-          targetKeys.push({targetKey: 'trs_next_status',columnKey: 'trs_next_status'});
+          targetKeys.push({
+            targetKey: 'trs_next_status',
+            columnKey: 'trs_next_status',
+          });
           targetKeys.push({ targetKey: 'trs_status', columnKey: 'trs_status' });
-          targetKeys.push({ targetKey: 'trs_process_id', columnKey: 'trs_process_id' });
-          targetKeys.push({ targetKey: 'trs_access_profile', columnKey: 'trs_access_profile' });
-          targetKeys.push({ targetKey: 'trs_org_grp_code', columnKey: 'trs_org_grp_code' });
-          targetKeys.push({ targetKey: 'trs_org_code', columnKey: 'trs_org_code' });
-          targetKeys.push({ targetKey: 'trs_role_grp_code', columnKey: 'trs_role_grp_code' });
-          targetKeys.push({ targetKey: 'trs_role_code', columnKey: 'trs_role_code' });
-          targetKeys.push({ targetKey: 'trs_ps_grp_code', columnKey: 'trs_ps_grp_code' });
-          targetKeys.push({ targetKey: 'trs_ps_code', columnKey: 'trs_ps_code' });
+          targetKeys.push({
+            targetKey: 'trs_process_id',
+            columnKey: 'trs_process_id',
+          });
+          targetKeys.push({
+            targetKey: 'trs_access_profile',
+            columnKey: 'trs_access_profile',
+          });
+          targetKeys.push({
+            targetKey: 'trs_org_grp_code',
+            columnKey: 'trs_org_grp_code',
+          });
+          targetKeys.push({
+            targetKey: 'trs_org_code',
+            columnKey: 'trs_org_code',
+          });
+          targetKeys.push({
+            targetKey: 'trs_role_grp_code',
+            columnKey: 'trs_role_grp_code',
+          });
+          targetKeys.push({
+            targetKey: 'trs_role_code',
+            columnKey: 'trs_role_code',
+          });
+          targetKeys.push({
+            targetKey: 'trs_ps_grp_code',
+            columnKey: 'trs_ps_grp_code',
+          });
+          targetKeys.push({
+            targetKey: 'trs_ps_code',
+            columnKey: 'trs_ps_code',
+          });
 
           //  value = await this.commonService.readAPI(
-            // redisKey + ':DS_Object',
-            //  source,
-            //   target,
-            //  );
+          // redisKey + ':DS_Object',
+          //  source,
+          //   target,
+          //  );
           // value = JSON.parse(await this.readKeys(value))
           let temp = {};
           for (let i = 0; i < targetKeys.length; i++) {
@@ -1710,7 +2147,7 @@ export class UfService {
                 }
               });
               newData.push(temp);
-              temp={}
+              temp = {};
             });
           }
           return newData;
@@ -1780,10 +2217,26 @@ export class UfService {
           //---------------------------------------go-rule end------------------------------------
         }
       } else {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG063','mapper data not found',ufKey,token);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG063',
+          'mapper data not found',
+          ufKey,
+          token,
+        );
       }
     } catch (error) {
-      await this.commonService.errorLog('Technical','AK','Fatal','TG064',`Error in paginationDataFilter:${error.message}`,ufKey,token);
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG064',
+        `Error in paginationDataFilter:${error.message}`,
+        ufKey,
+        token,
+      );
     }
   }
 
@@ -2272,20 +2725,44 @@ export class UfService {
     }
   }
 
-  async logout(headers: any,tokens: string, key: string) {
+  async logout(headers: any, tokens: string, key: string) {
     try {
       const { authorization } = headers;
       if (!authorization || typeof authorization !== 'string') {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG065','Token not found',key,tokens);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG065',
+          'Token not found',
+          key,
+          tokens,
+        );
       }
       const token = authorization.split(' ')[1];
       if (!token) {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG066','Token not found',key,tokens);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG066',
+          'Token not found',
+          key,
+          tokens,
+        );
       }
 
       const payload: any = await this.jwt.decode(token);
       if (!payload || !payload.client || !payload.type) {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG067','Invalid access token',key,tokens);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG067',
+          'Invalid access token',
+          key,
+          tokens,
+        );
       }
       const sessionListCacheKey =
         payload.type == 'c'
@@ -2299,7 +2776,15 @@ export class UfService {
         !Array.isArray(JSON.parse(sessionListCache)) ||
         !JSON.parse(sessionListCache).length
       ) {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG068','Invalid access token',key,tokens);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG068',
+          'Invalid access token',
+          key,
+          tokens,
+        );
       }
       const sessionList = JSON.parse(sessionListCache);
       const updatedSessionList = await this.checkSession(sessionList);
@@ -2316,11 +2801,24 @@ export class UfService {
       }
       return 'logout successfully';
     } catch (error) {
-      await this.commonService.errorLog('Technical','AK','Fatal','TG069',`Error in logout:${error.message}`,key,tokens);
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG069',
+        `Error in logout:${error.message}`,
+        key,
+        tokens,
+      );
     }
   }
 
-  async getAccessToken(token: string, ps: string , selectedAccessProfile:string , dap: string | undefined) {
+  async getAccessToken(
+    token: string,
+    ps: string,
+    selectedAccessProfile: string,
+    dap: string | undefined,
+  ) {
     try {
       const parts = ps.split('-');
 
@@ -2420,7 +2918,7 @@ export class UfService {
 
       return {
         accessProfile: profile.accessProfile,
-        dap : profile?.dap ? profile?.dap : undefined,
+        dap: profile?.dap ? profile?.dap : undefined,
         combinations,
       };
     });
@@ -2468,11 +2966,19 @@ export class UfService {
   }
 
   async MyAccountForClient(token: string, key: string, authorization: any) {
-    if(authorization){
+    if (authorization) {
       try {
         const payload: any = this.jwt.decode(token);
         if (!payload) {
-          await this.commonService.errorLog('Technical','AK','Fatal','TG070','Please provide valid token',key,token);
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG070',
+            'Please provide valid token',
+            key,
+            token,
+          );
         } else {
           let userCachekey;
           if (payload.type === 'c') {
@@ -2490,28 +2996,68 @@ export class UfService {
           return { ...reqiredUser, client: payload.client };
         }
       } catch (error) {
-      await this.commonService.errorLog('Technical','AK','Fatal','TG071',`Error in MyAccountForClient:${error.message}`,key,token);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG071',
+          `Error in MyAccountForClient:${error.message}`,
+          key,
+          token,
+        );
       }
-  }else{
-      await this.commonService.errorLog('Technical','AK','Fatal','TG072','Token not found',key,token);
+    } else {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG072',
+        'Token not found',
+        key,
+        token,
+      );
     }
   }
 
-  async introspectToken(headers: any, key: string, tokens: string ) {
+  async introspectToken(headers: any, key: string, tokens: string) {
     try {
       const auth_secret =
         'HpZnm7V6YeshFDVbwACyOtx6oa6QSbraZoNyU9fwtGYUL1Rnc6PN5QUosu9BcqVBo5L6QeSs';
       const { authorization } = headers;
       if (!authorization || typeof authorization !== 'string') {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG073','Token not found',key,tokens);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG073',
+          'Token not found',
+          key,
+          tokens,
+        );
       }
       const token = authorization.split(' ')[1];
       if (!token) {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG074','Token not found',key,tokens);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG074',
+          'Token not found',
+          key,
+          tokens,
+        );
       }
       const payload = await this.jwt.decode(token);
       if (!payload || !payload.client || !payload.type) {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG075','Invalid access token',key,tokens);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG075',
+          'Invalid access token',
+          key,
+          tokens,
+        );
       }
       const sessionListCacheKey =
         payload.type == 'c'
@@ -2525,7 +3071,15 @@ export class UfService {
         !Array.isArray(JSON.parse(sessionListCache)) ||
         !JSON.parse(sessionListCache).length
       ) {
-        await this.commonService.errorLog('Technical','AK','Fatal','TG076','Invalid access token',key,tokens);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG076',
+          'Invalid access token',
+          key,
+          tokens,
+        );
       }
       const sessionList = JSON.parse(sessionListCache);
       const updatedSessionList = await this.checkSession(sessionList);
@@ -2534,7 +3088,15 @@ export class UfService {
           sessionListCacheKey,
           JSON.stringify(updatedSessionList),
         );
-        await this.commonService.errorLog('Technical','AK','Fatal','TG077','Invalid access token',key,tokens);
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG077',
+          'Invalid access token',
+          key,
+          tokens,
+        );
       }
       const timeNow = Math.ceil(new Date().getTime() / 1000);
       const timegap = payload.exp - timeNow;
@@ -2545,7 +3107,7 @@ export class UfService {
             loginId: payload.loginId,
             type: payload.type,
             ag,
-            app
+            app,
           },
           {
             secret: auth_secret,
@@ -2565,7 +3127,15 @@ export class UfService {
         return { authenticated: true };
       }
     } catch (error) {
-      await this.commonService.errorLog('Technical','AK','Fatal','TG078',`Error in introspectToken:${error.message}`,key,tokens);
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG078',
+        `Error in introspectToken:${error.message}`,
+        key,
+        tokens,
+      );
     }
   }
 
@@ -2576,9 +3146,9 @@ export class UfService {
     type: 't' | 'c' = 't',
   ) {
     try {
-      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`
+      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
 
-      const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`
+      const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
 
       const userResponse = await this.redisService.getJsonData(userCachekey);
 
@@ -2591,7 +3161,7 @@ export class UfService {
         password,
         loggedInUser.password,
       );
-      
+
       if (!isPasswordMatch) {
         throw new UnauthorizedException('Invalid credentials');
       }
@@ -2671,7 +3241,7 @@ export class UfService {
         };
       }
 
-      const accessProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`
+      const accessProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`;
 
       const accessProfileCache = await this.redisService.getJsonData(
         accessProfileCacheKey,
@@ -2715,12 +3285,20 @@ export class UfService {
                 orpAccessObj[key] = combination[0][key];
                 orpAccessObj['selectedAccessProfile'] =
                   loggedInUser.accessProfile[0];
-                orpAccessObj["dap"] = filteredCombination[0]["dap"] || undefined;  
+                orpAccessObj['dap'] =
+                  filteredCombination[0]['dap'] || undefined;
                 redirectToORPSelector = false;
               }
             }
             token = await this.jwt.signAsync(
-              { loginId: loggedInUser.loginId, client, type, ag, app, ...orpAccessObj },
+              {
+                loginId: loggedInUser.loginId,
+                client,
+                type,
+                ag,
+                app,
+                ...orpAccessObj,
+              },
               {
                 secret: auth_secret,
                 expiresIn: '24h',
@@ -2761,7 +3339,7 @@ export class UfService {
         JSON.stringify([...Array.from(sessionList), token]),
       );
       return true;
-    } catch (error) {      
+    } catch (error) {
       return false;
     }
   }
@@ -2774,14 +3352,23 @@ export class UfService {
     return timingSafeEqual(hashBuffer, testHash);
   }
 
+  hashPassword(password: string): string {
+    const SALT_LENGTH = 16;
+    const KEY_LENGTH = 64;
+    const salt = randomBytes(SALT_LENGTH).toString('hex');
+    const hash = scryptSync(password, salt, KEY_LENGTH).toString('hex');
+    return `${salt}:${hash}`;
+  }
+
   async throwCustomException(error: any) {
     if (error instanceof CustomException) {
       throw error; // Re-throw the specific custom exception
     }
-    throw new CustomException(
-      'An unexpected error occurred',
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
+    throw error;
+    // throw new CustomException(
+    //   'An unexpected error occurred',
+    //   HttpStatus.INTERNAL_SERVER_ERROR,
+    // );
   }
 
   async sendMailOTP(email: string) {
@@ -2821,6 +3408,285 @@ export class UfService {
       return { otp: otp, message: `Email sent` };
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  // static screen's apis
+
+  async getAppSecurityData() {
+    try {
+      if (!tenant)
+        throw new BadRequestException(
+          'Either AppGroup or Application not available',
+        );
+      const appCachePrefix = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1`;
+      const cacheKeyArray = ['orgMatrix', 'users', 'appearance'];
+      const securityResponse = {};
+      for (let index = 0; index < cacheKeyArray.length; index++) {
+        const cacheKey = `${appCachePrefix}:${cacheKeyArray[index]}`;
+        const data = await this.redisService.getJsonData(cacheKey);
+        if (data) {
+          securityResponse[cacheKeyArray[index]] =
+            cacheKeyArray[index] == 'users'
+              ? JSON.parse(data).filter((user) => {
+                  delete user.password;
+                  return user;
+                })
+              : JSON.parse(data);
+        } else {
+          securityResponse[cacheKeyArray[index]] =
+            (data ?? cacheKeyArray[index] == 'appearance') ? {} : [];
+        }
+      }
+
+      return securityResponse;
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+
+  async getAPPSecurityTemplateData() {
+    try {
+      const responseFromRedis = await this.redisService.getJsonData(
+        `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`,
+      );
+      const userResponse = await this.redisService.getJsonData(
+        `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`,
+      );
+
+      let securityTemplateData = [];
+      if (responseFromRedis) {
+        securityTemplateData = JSON.parse(responseFromRedis);
+        securityTemplateData = securityTemplateData.map((data) => ({
+          ...data,
+          'no.ofusers': 0,
+        }));
+        if (userResponse) {
+          const userlist = JSON.parse(userResponse);
+          securityTemplateData = securityTemplateData.map((data) => {
+            var noOfUsers = 0;
+            userlist.forEach((user) => {
+              if (
+                user?.accessProfile &&
+                user.accessProfile.includes(data.accessProfile)
+              ) {
+                noOfUsers += 1;
+              }
+            });
+
+            return { ...data, 'no.ofusers': noOfUsers };
+          });
+        }
+      }
+      return securityTemplateData;
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+
+  async getAppAccessProfiles() {
+    try {
+      if (!tenant || !ag || !app) {
+        throw new BadRequestException(
+          'Either AppGroup or Application not available',
+        );
+      }
+      const responseFromRedis = await this.redisService.getJsonData(
+        `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`,
+      );
+      const accessProfileArray = [];
+      const accessProfileWithProductAndService = {};
+      if (responseFromRedis) {
+        const accessProfileData: any[] = JSON.parse(responseFromRedis);
+        accessProfileData.forEach((accessProfileObj) => {
+          var noOfProdService = 0;
+          accessProfileObj['products/Services'].forEach((productGrp: any) => {
+            noOfProdService += productGrp['ps'].length;
+          });
+          accessProfileWithProductAndService[accessProfileObj?.accessProfile] =
+            noOfProdService;
+          accessProfileArray.push(accessProfileObj?.accessProfile);
+        });
+      }
+      return accessProfileWithProductAndService;
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+
+  async postAppUserList(data: any[]) {
+    try {
+      if (!tenant || !data || !Array.isArray(data)) {
+        throw new BadRequestException('Invalid credentials');
+      }
+      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+
+      var userList = [];
+      const responseFromRedis =
+        await this.redisService.getJsonData(userCachekey);
+
+      if (responseFromRedis) {
+        const existingUserList: any[] = JSON.parse(responseFromRedis);
+        data.forEach((newUser) => {
+          if (newUser.password) {
+            userList.push({
+              ...newUser,
+              password: this.hashPassword(newUser.password),
+            });
+          } else {
+            const existingUserObj = existingUserList.find(
+              (existinguser) => existinguser.email == newUser.email,
+            );
+            userList.push({
+              ...existingUserObj,
+              ...newUser,
+              password: existingUserObj?.password,
+            });
+          }
+        });
+      } else {
+        userList = data.map((item) => ({
+          ...item,
+          password: this.hashPassword(item.password),
+        }));
+      }
+      return await this.redisService.setJsonData(
+        userCachekey,
+        JSON.stringify([...userList]),
+      );
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+
+  async setJson(key: string, data: any) {
+    try {
+      return await this.redisService.setJsonData(key, JSON.stringify(data));
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+
+  async appUserAddition(data: any) {
+    try {
+      if (!tenant || !ag || !app || !data) {
+        throw new BadRequestException('Invalid input parameters');
+      }
+      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+      const clientProfileResourceKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`;
+
+      const userResponse = await this.redisService.getJsonData(userCachekey);
+
+      const userList: any[] = userResponse ? JSON.parse(userResponse) : [];
+
+      const clientProfile = JSON.parse(
+        await this.redisService.getJsonData(clientProfileResourceKey),
+      );
+
+      const { email, firstName, lastName, password, loginId } = data;
+      const resForClientUserAddition = await this.redisService.getJsonData(
+        `CK:TRL:FNGK:AFR:FNK:TEMPLATE:CATK:Portal:AFGK:Email:AFK:clientUserAddition:AFVK:v1:AFI`,
+      );
+
+      const clientUserAddition = JSON.parse(resForClientUserAddition);
+
+      const updatedSubject = (clientUserAddition.subject as string).replaceAll(
+        '${clientProfile.clientName}',
+        `${clientProfile.Name}`,
+      );
+      const updateclientUserAdditionHtml = (clientUserAddition.html as string)
+        .replaceAll('${clientProfile.clientName}', `${clientProfile.Name}`)
+        .replace('${firstName}', `${firstName}`)
+        .replace('${lastName}', `${lastName}`)
+        .replace('${clientCode}', `${tenant}`)
+        .replace('${username}', `${loginId}`)
+        .replace('${password}', `${password}`);
+
+      const mailOptions = {
+        from: 'support@torus.tech',
+        to: email,
+        subject: updatedSubject,
+        // text: updateclientUserAddition,
+        html: updateclientUserAdditionHtml,
+      };
+
+      transporter.sendMail(mailOptions, async (error, info) => {
+        if (error) {
+          throw new ForbiddenException('There is an issue with sending otp');
+        } else {
+          console.log('Email sent: ' + info.response);
+          // return `Email sent`;
+        }
+      });
+
+      userList.push({
+        ...data,
+        password: this.hashPassword(data.password),
+        isRestricted: true,
+      });
+      await this.redisService.setJsonData(
+        userCachekey,
+        JSON.stringify(userList),
+      );
+      const newUserList = structuredClone(userList);
+
+      let result = [];
+
+      for (const user of newUserList) {
+        delete user.password;
+        result.push(user);
+      }
+
+      return result;
+    } catch (error) {
+      console.log(error, 'error');
+
+      await this.throwCustomException(error);
+    }
+  }
+
+  async uploadImage(
+    file: Express.Multer.File,
+    bucketFoldername?: string,
+    folderPath?: string,
+    filename?: string,
+  ): Promise<string> {
+    try {
+      const fileName = filename || file.originalname;
+      const bucket = bucketFoldername || ''; // e.g., 'torus'
+      const subFolder = folderPath || ''; // e.g., 'images'
+
+      const actualBuffer = Buffer.isBuffer(file.buffer)
+        ? file.buffer
+        : Buffer.from((file.buffer as any)?.data || []);
+
+      const form = new FormData();
+      form.append('file', Readable.from(actualBuffer), fileName);
+
+      const res = await axios.post(
+        `${process.env.FTP_OUTPUT_HOST}/buckets/${bucket}/${subFolder}/${fileName}`,
+        form,
+        {
+          headers: {
+            Accept: 'application/json',
+            ...form.getHeaders(),
+          },
+          auth: {
+            username: `${process.env.SEAWEED_USERNAME}`,
+            password: `${process.env.SEAWEED_PASSWORD}`,
+          },
+          validateStatus: (status) => status < 500,
+        },
+      );
+      if (res.status == 201) {
+        return `${process.env.SEAWEED_OUTPUT_HOST}/${bucket}/${subFolder}/${fileName}`;
+      } else {
+        throw new ConflictException(
+          res.data || 'Error Occured while uploading file',
+        );
+      }
+    } catch (error) {
+      await this.throwCustomException(error);
     }
   }
 }

@@ -143,7 +143,7 @@ const SetupScreen = ({
   const getOrgAndUserData = async () => {
     try {
       const response = await AxiosService.get(
-        `${process.env.NEXT_PUBLIC_TORUS_API_URL}getAppSecurityData?tenant=${tenant}&ag=${ag}&app=${app}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/getAppSecurityData`,
         {
           headers: {
             Authorization: `Bearer ${getCookie('token')}`
@@ -261,8 +261,10 @@ const SetupScreen = ({
     const key = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:orgMatrix`
     try {
       const res = await AxiosService.post(
-        `${process.env.NEXT_PUBLIC_TORUS_API_URL}setJson?key=${key}`,
-        orgGrpData,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/setJson?key=${key}`, 
+        {
+          data : orgGrpData
+        },
         {
           headers: {
             Authorization: `Bearer ${getCookie('token')}`
@@ -322,7 +324,7 @@ const SetupScreen = ({
   const getSecurityTemplate = async () => {
     try {
       const res = await AxiosService.get(
-        `${process.env.NEXT_PUBLIC_TORUS_API_URL}getAPPSecurityTemplateData?tenant=${tenant}&ag=${ag}&app=${app}`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/getAPPSecurityTemplateData`,
         {
           headers: {
             Authorization: `Bearer ${getCookie('token')}`
@@ -403,11 +405,8 @@ const SetupScreen = ({
   ) => {
     try {
       const res = await AxiosService.post(
-        `${process.env.NEXT_PUBLIC_TORUS_API_URL}postAppUserList`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/postAppUserList`,
         {
-          tenant,
-          ag,
-          app,
           data: data ? data : userProfileData
         },
         {
@@ -434,16 +433,16 @@ const SetupScreen = ({
   ) => {
     try {
       const res = await AxiosService.post(
-        `${process.env.NEXT_PUBLIC_TORUS_API_URL}postAppSecurityTemplateData`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/setJson`,
         {
-          tenant: tenant,
-          ag,
-          app,
           data: data ? data : securityData
         },
         {
           headers: {
             Authorization: `Bearer ${getCookie('token')}`
+          },
+          params : {
+            key : `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`
           }
         }
       )

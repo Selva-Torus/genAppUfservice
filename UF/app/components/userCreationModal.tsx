@@ -148,7 +148,7 @@ const UserCreationModal = ({
       )
 
       const res = await AxiosService.post(
-        `${process.env.NEXT_PUBLIC_TORUS_API_URL}upload`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/uploadimg`,
         data,
         {
           headers: {
@@ -208,11 +208,8 @@ const UserCreationModal = ({
           )
           setData([])
           const res = await AxiosService.post(
-            `${process.env.NEXT_PUBLIC_TORUS_API_URL}postAppUserList`,
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/postAppUserList`,
             {
-              tenant: tenant,
-              ag,
-              app,
               data: userResult
             },
             {
@@ -230,11 +227,8 @@ const UserCreationModal = ({
         }
 
         const userAdditionResponse = await AxiosService.post(
-          `${process.env.NEXT_PUBLIC_TORUS_API_URL}appUserAddition`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/appUserAddition`,
           {
-            tenant: tenant,
-            ag,
-            app,
             data: {
               ...user,
               email: `${newUser.email}${emailDomain}`,

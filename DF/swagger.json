@@ -893,6 +893,104 @@
         ]
       }
     },
+    "/UF/getAppSecurityData": {
+      "get": {
+        "operationId": "UfController_getAppSecurityData",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
+    "/UF/getAPPSecurityTemplateData": {
+      "get": {
+        "operationId": "UfController_getAPPSecurityTemplateData",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
+    "/UF/getAppAccessProfiles": {
+      "get": {
+        "operationId": "UfController_getAppAccessProfiles",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
+    "/UF/postAppUserList": {
+      "post": {
+        "operationId": "UfController_postAppUserList",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
+    "/UF/setJson": {
+      "post": {
+        "operationId": "UfController_setJson",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
+    "/UF/appUserAddition": {
+      "post": {
+        "operationId": "UfController_appUserAddition",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
+    "/UF/uploadimg": {
+      "post": {
+        "operationId": "UfController_post_upload",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
     "/te/eventEmitter": {
       "post": {
         "operationId": "TeController_pfEventEmitter",
