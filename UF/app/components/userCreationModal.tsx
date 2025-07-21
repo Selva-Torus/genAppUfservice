@@ -133,6 +133,13 @@ const UserCreationModal = ({
 
   const handleInputChange = (e: any) => {
     const { name, value } = e.target
+    if (name === 'accessProfile') {
+      var noOfProd = 0
+      value.forEach((item: any) => {
+        noOfProd += accessProfiles[item]
+      })
+      setNewUser((prev: any) => ({ ...prev, noOfProductsService: noOfProd }))
+    }
     setNewUser((prev: any) => ({ ...prev, [name]: value }))
   }
 
@@ -427,7 +434,9 @@ const UserCreationModal = ({
                         value={
                           readOnly && name == 'domain'
                             ? emailDomain
-                            : newUser[name]
+                            : readOnly && name == 'email'
+                              ? newUser.email.split('@')[0]
+                              : newUser[name]
                         }
                       />
                     )}
@@ -447,8 +456,8 @@ const UserCreationModal = ({
                         multiple
                       >
                         {accessProfiles &&
-                          accessProfiles.length > 0 &&
-                          accessProfiles.map((item: any) => {
+                          Object.keys(accessProfiles).length > 0 &&
+                          Object.keys(accessProfiles).map((item: any) => {
                             return (
                               <Select.Option key={item} value={item}>
                                 {item}

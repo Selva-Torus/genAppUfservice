@@ -395,7 +395,7 @@ const UserTable: React.FC<{
               setModalOpen={setEditUserModalOpen}
               newUser={userData}
               setNewUser={setUserData}
-              accessProfiles={Object.keys(accessProfiles)}
+              accessProfiles={accessProfiles}
               data={data}
               setData={setData}
               isEdit={true}
@@ -421,7 +421,7 @@ const UserTable: React.FC<{
             setModalOpen={setAddUserModalOpen}
             newUser={newUser}
             setNewUser={setNewUser}
-            accessProfiles={Object.keys(accessProfiles)}
+            accessProfiles={accessProfiles}
             data={data}
             setData={setData}
           />
