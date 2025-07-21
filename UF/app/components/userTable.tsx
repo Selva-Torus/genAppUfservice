@@ -4,7 +4,6 @@ import {
   Select,
   Table,
   Text,
-  User,
   withTableSelection
 } from '@gravity-ui/uikit'
 import { AxiosService } from '@/app/components/axiosService'
@@ -13,7 +12,6 @@ import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import { Modal } from '@gravity-ui/uikit'
 import UserCreationModal from './userCreationModal'
 import { EditIcon } from './svgApplication'
-import { template } from 'lodash'
 import { SetupScreenContext, SetupScreenContextType } from './setup'
 
 export interface UserData {
@@ -38,12 +36,9 @@ const UserTable: React.FC<{
   data: UserData[]
   setData: React.Dispatch<React.SetStateAction<UserData[]>>
 }> = ({ data, setData }) => {
-  const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
-  const ag = process.env.NEXT_PUBLIC_APPGROUPCODE
-  const app = process.env.NEXT_PUBLIC_APPCODE
   const [currentPage, setCurrentPage] = useState(1)
   const toast = useInfoMsg()
-  const [accessProfiles, setAccessProfiles] = useState([])
+  const [accessProfiles, setAccessProfiles] = useState<any>({})
   const [addUserModalOpen, setAddUserModalOpen] = useState(false)
   const [editUserModalOpen, setEditUserModalOpen] = useState(false)
   const [userData, setUserData] = useState({})
@@ -116,8 +111,12 @@ const UserTable: React.FC<{
   ) => {
     const updatedData = data.map(user => {
       if (user.email === item.email) {
-        if (key == "accessProfile"){
-          return { ...user, [key]: value , noOfProductsService : accessProfiles[value]  }
+        if (key == 'accessProfile') {
+          let noOfProductsService: any = 0
+          ;(value as string[]).forEach(selectedProfiles => {
+            noOfProductsService += accessProfiles[selectedProfiles]
+          })
+          return { ...user, [key]: value, noOfProductsService }
         }
         return { ...user, [key]: value }
       }
@@ -244,9 +243,44 @@ const UserTable: React.FC<{
       id: 'accessProfile',
       name: 'Access Profile',
       width: 150,
-      template: (item: any) => (
-        <>
+      template: (item: any) =>
+        item.accessProfile && item.accessProfile.length > 1 ? (
           <Select
+            renderControl={props => (
+              <div className='g-select-control g-select-control_size_m g-select-control_pin_round-round g-select-control_has-value'>
+                {React.createElement(
+                  'div',
+                  {
+                    className:
+                      'g-select-control__button g-select-control__button_size_m g-select-control__button_view_normal g-select-control__button_pin_round-round',
+                    ...props
+                  },
+                  'Multiple Templates'
+                )}
+                <svg
+                  xmlns='http://www.w3.org/2000/svg'
+                  width='16'
+                  height='16'
+                  className='g-icon g-select-control__chevron-icon'
+                  fill='currentColor'
+                  stroke='none'
+                  aria-hidden='true'
+                >
+                  <svg
+                    xmlns='http://www.w3.org/2000/svg'
+                    fill='none'
+                    viewBox='0 0 16 16'
+                  >
+                    <path
+                      fill='currentColor'
+                      fill-rule='evenodd'
+                      d='M2.97 5.47a.75.75 0 0 1 1.06 0L8 9.44l3.97-3.97a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 0 1 0-1.06'
+                      clip-rule='evenodd'
+                    ></path>
+                  </svg>
+                </svg>
+              </div>
+            )}
             value={item.accessProfile}
             onUpdate={data => handledatachange(item, 'accessProfile', data)}
             width={'max'}
@@ -264,8 +298,28 @@ const UserTable: React.FC<{
               </Select.Option>
             ))}
           </Select>
-        </>
-      )
+        ) : (
+          <>
+            <Select
+              value={item.accessProfile}
+              onUpdate={data => handledatachange(item, 'accessProfile', data)}
+              width={'max'}
+              placeholder='Select Access Profile'
+              multiple
+            >
+              {(accessProfiles &&
+              typeof accessProfiles === 'object' &&
+              !Array.isArray(accessProfiles)
+                ? Object.keys(accessProfiles)
+                : []
+              ).map((profile: string, index: number) => (
+                <Select.Option key={index} value={profile}>
+                  {profile}
+                </Select.Option>
+              ))}
+            </Select>
+          </>
+        )
     },
     {
       id: 'noOfProductsService',
