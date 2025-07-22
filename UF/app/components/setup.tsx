@@ -2,6 +2,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import {
   DeleteIcon,
+  GeneralSettingsIcon,
   Management,
   Multiply,
   Org,
@@ -16,7 +17,7 @@ import {
   handleDelete,
   handleDeleteGroupAndMembers
 } from '../components/utils'
-import { Button, Modal } from '@gravity-ui/uikit'
+import { Modal } from '@gravity-ui/uikit'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import { getCookie } from '@/app/components/cookieMgment'
 import { AxiosService } from '@/app/components/axiosService'
@@ -24,8 +25,9 @@ import { isLightColor } from '@/app/components/utils'
 import UserTable from './userTable'
 import AccessTemplateTable from './accessTemplateTable'
 import { TotalContext, TotalContextProps } from '@/app/globalContext'
+import GeneralSettings from './generalSettings'
 
-type SettingTabs = 'org' | 'st' | 'user'
+type SettingTabs = 'org' | 'st' | 'user' | 'general'
 
 export interface SetupScreenContextType {
   userProfileData: any
@@ -61,7 +63,7 @@ const SetupScreen = ({
 }: {
   tenantAccess: 'view' | 'edit' | null | undefined
 }) => {
-  const [selectedMenuItem, setSelectedMenuItem] = useState<SettingTabs>('org')
+  const [selectedMenuItem, setSelectedMenuItem] = useState<SettingTabs>('general')
   const [orgGrpData, setOrgGrpData] = useState<any>([])
   const [tenantProfileData, setTenantProfileData] = useState<
     Record<string, any>
@@ -193,6 +195,15 @@ const SetupScreen = ({
     {
       items: [
         {
+          name: 'General',
+          svg: (
+            <GeneralSettingsIcon
+              fill={`${selectedMenuItem === 'general' ? brandcolor : '#000000'}`}
+            />
+          ),
+          code: 'general'
+        },
+        {
           name: 'Organizational Matrix',
           svg: (
             <Org
@@ -261,9 +272,9 @@ const SetupScreen = ({
     const key = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:orgMatrix`
     try {
       const res = await AxiosService.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/setJson?key=${key}`, 
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/setJson?key=${key}`,
         {
-          data : orgGrpData
+          data: orgGrpData
         },
         {
           headers: {
@@ -441,8 +452,8 @@ const SetupScreen = ({
           headers: {
             Authorization: `Bearer ${getCookie('token')}`
           },
-          params : {
-            key : `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`
+          params: {
+            key: `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`
           }
         }
       )
@@ -481,7 +492,6 @@ const SetupScreen = ({
         break
       case 'st':
         handleAddNewTemplate()
-        // document.getElementById('st-creation-btn')?.click()
         break
       case 'user':
         document.getElementById('tanantUser-creation-btn')?.click()
@@ -551,42 +561,6 @@ const SetupScreen = ({
     setRefetch(prev => !prev)
   }
 
-  const handletitle = () => {
-    if (selectedMenuItem === 'st') {
-      return 'Delete accesstemplate'
-    } else if (selectedMenuItem === 'org') {
-      return 'Delete orgmatrix'
-    } else if (selectedMenuItem === 'user') {
-      return 'Delete user'
-    } else {
-      return ''
-    }
-  }
-
-  const handlemessage = () => {
-    if (selectedMenuItem === 'st') {
-      return 'Are you sure you want to delete this template?'
-    } else if (selectedMenuItem === 'org') {
-      return 'Are you sure you want to delete this org?'
-    } else if (selectedMenuItem === 'user') {
-      return 'Are you sure you want to delete this user?'
-    } else {
-      return 'Are you sure you want to delete this data?'
-    }
-  }
-
-  const handlestatus = () => {
-    if (selectedMenuItem === 'st') {
-      return 'Deleting the template will remove all associated'
-    } else if (selectedMenuItem === 'org') {
-      return 'Deleting the org will remove all associated'
-    } else if (selectedMenuItem === 'user') {
-      return 'Deleting the user will remove all associated'
-    } else {
-      return 'Data deleted successfully'
-    }
-  }
-
   useEffect(() => {
     getSecurityTemplate()
     getOrgAndUserData()
@@ -639,9 +613,10 @@ const SetupScreen = ({
                 <div
                   style={{
                     backgroundColor: '#F4F5FA',
-                    color: '#000000'
+                    color: '#000000',
+                    visibility : selectedMenuItem  == "general" ? "hidden" : "unset"
                   }}
-                  className='relative h-[4.2vh] w-[25.75vw] items-center rounded-md'
+                  className={'relative h-[4.2vh] w-[25.75vw] items-center rounded-md'}
                 >
                   <span className='absolute inset-y-0 left-0 flex h-[2.18vw] w-[2.18vw] p-[0.58vw] '>
                     <SearchIcon
@@ -666,7 +641,7 @@ const SetupScreen = ({
                   />
                 </div>
                 <div className='mb-[0.5vh] flex items-center gap-[0.75vw]'>
-                  {['st', 'user', 'org'].includes(selectedMenuItem) && (
+                  {['st', 'user', 'org' ].includes(selectedMenuItem) && (
                     <div className='mb-[0.5vh] flex items-center gap-[0.29vw]'>
                       <button
                         onClick={handlePlusButtonClick}
@@ -813,18 +788,20 @@ const SetupScreen = ({
                 className='relative flex h-full w-full overflow-hidden px-[1.20vw] py-[1.25vh]'
                 style={{ overflow: selectedMenuItem == 'org' ? 'auto' : '' }}
               >
-                {selectedMenuItem === 'user' && (
+                {selectedMenuItem == 'general' ? (
+                  <GeneralSettings />
+                ) : selectedMenuItem === 'user' ? (
                   <UserTable
                     data={userProfileData}
                     setData={setUserProfileData}
                   />
-                )}
-                {selectedMenuItem === 'org' && (
+                ) : selectedMenuItem === 'org' ? (
                   <div className='w-full'>
                     <OrgMatrix tenantAccess={tenantAccess} />
                   </div>
+                ) : (
+                  selectedMenuItem === 'st' && <AccessTemplateTable />
                 )}
-                {selectedMenuItem === 'st' && <AccessTemplateTable />}
               </div>
             </div>
           </div>

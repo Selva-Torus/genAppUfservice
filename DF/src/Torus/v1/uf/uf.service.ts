@@ -3689,4 +3689,22 @@ export class UfService {
       await this.throwCustomException(error);
     }
   }
+
+  async readAMDKey(key: string, token: string) {
+    const valueObj: any = await this.commonService.readAPI(key, 'redis', 'redis');
+    if (valueObj) {
+      return valueObj;
+    } else {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG027',
+        'setupKey not found',
+        key,
+        token,
+      );
+      throw new NotFoundException('data not found');
+    }
+  }
 }

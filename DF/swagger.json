@@ -991,6 +991,29 @@
         ]
       }
     },
+    "/UF/readAMDKey": {
+      "get": {
+        "operationId": "UfController_readAMDKey",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
     "/te/eventEmitter": {
       "post": {
         "operationId": "TeController_pfEventEmitter",

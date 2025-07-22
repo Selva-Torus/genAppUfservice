@@ -1053,4 +1053,10 @@ export class UfController {
     return { imageUrl };
   }
 
+  @Get('readAMDKey')
+  async readAMDKey(@Query('key') key: string, @Req() req: any) {
+    const token: string = req.headers.authorization?.split(' ')[1];
+    return this.appService.readAMDKey(key, token);
+  }
+
 }
