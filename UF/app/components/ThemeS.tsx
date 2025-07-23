@@ -16,17 +16,14 @@ import LogoutPage from './logout';
 import i18n from './i18n';
 import { TotalContext, TotalContextProps } from '../globalContext';
 const ThemeS = ({ children }: any) => {
-  const [selectedOption, setSelectedOption] = useState('light')
   
   //let selectedDirection:Direction = 'direction?.toLowerCase() '
 
-  const { property, setProperty } = useContext(TotalContext) as TotalContextProps;
+  const { property, setProperty , selectedTheme , setSelectedTheme } = useContext(TotalContext) as TotalContextProps;
 
   const selectedDirect = property?.direction?.toLowerCase() as Direction;
   const [loading,setLoading] = useState(true)
-  const handleAction = (theme: any) => {
-    setSelectedOption(theme)
-  }
+ 
 
   {/*  const handleAction1 = (direction: Direction) => {
     setSelectedDirect(direction)
@@ -45,7 +42,7 @@ const ThemeS = ({ children }: any) => {
   }
   const keyset:any=i18n.keyset("language")
   return (
-    <ThemeProvider theme={selectedOption} direction={selectedDirect}>
+    <ThemeProvider theme={selectedTheme} direction={selectedDirect}>
       <Container style={{padding:"0px"}}  >
         <Row space={0} className='rounded-lg '>
             {/*<Col>

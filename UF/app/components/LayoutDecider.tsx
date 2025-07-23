@@ -1,4 +1,3 @@
-
 'use client'
 import React, { useContext, useEffect, useMemo, useState } from 'react'
 import TopNav from './TopNav'
@@ -10,6 +9,7 @@ import { deleteAllCookies, getCookie } from './cookieMgment'
 import { useInfoMsg } from './infoMsgHandler'
 import { MenuItem } from '../interfaces/interfaces'
 import decodeToken from './decodeToken'
+import { useGravityThemeClass } from '../utils/useGravityUITheme'
 
 const LayoutDecider = ({
   mode = 'detached',
@@ -31,62 +31,70 @@ const LayoutDecider = ({
   const [fullView, setFullView] = useState(
     sidebarStyle == 'default' || sidebarStyle == 'condensed' ? true : false
   )
-  const { property, setProperty, userDetails , setUserDetails,encAppFalg , setEncAppFalg } = useContext(
-    TotalContext
-  ) as TotalContextProps
-  const encryptionFlagApp: boolean = true;
-  const encryptionDpd: string = "CK:CT242:FNGK:AF:FNK:CDF-DPD:CATK:TOB001:AFGK:TOB002:AFK:TOBDPD:AFVK:v1";
-  const encryptionMethod: string = "";
+  const {
+    property,
+    setProperty,
+    userDetails,
+    setUserDetails,
+    encAppFalg,
+    setEncAppFalg
+  } = useContext(TotalContext) as TotalContextProps
+  const encryptionFlagApp: boolean = true
+  const encryptionDpd: string =
+    'CK:CT242:FNGK:AF:FNK:CDF-DPD:CATK:TOB001:AFGK:TOB002:AFK:TOBDPD:AFVK:v1'
+  const encryptionMethod: string = ''
   const brandColor = property?.brandColor || '#1F2D3D'
   const hoverColor = property?.hoverColor || '#1F2D3D'
   const selectionColor = property?.selectionColor || '#1F2D3D'
   const sidebarColor = property?.menubarColor || '#1F2D3D'
   const topbarColor = property?.topbarColor || ''
-  const logo = ""
-  const appName = "TOBApp"
+  const logo = ''
+  const appName = 'TOBApp'
   const toast = useInfoMsg()
   const [loading, setLoading] = useState(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
   const navData: MenuItem[] = [
-  {
-    "menuGroup": "admin",
-    "menuGroupLabel": "Admin",
-    "screenDetails": [
-      {
-        "name": "logs",
-        "label": "Logs",
-        "key": "Logs Screen",
-        "static": true,
-        "icon": "https://minapi.gsstvl.com/torus/9.1/resources/icons/document-add-svgrepo-com.svg"
-      },
-      {
-        "name": "user",
-        "label": "User",
-        "key": "User Screen",
-        "static": true,
-        "icon": "https://minapi.gsstvl.com/torus/9.1/resources/icons/user-plus-svgrepo-com.svg"
-      }
-    ],
-    "items": [],
-    "icon": "https://minapi.gsstvl.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
-  },
-  {
-    "menuGroup": "tob_schema",
-    "menuGroupLabel": "TOB_Schema",
-    "screenDetails": [
-      {
-        "name": "tob_screen_1",
-        "label": "TOB_Screen_1",
-        "key": "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TOB001:AFGK:TOB002:AFK:TOB_Dashboard_Screen:AFVK:v1",
-        "static": false
-      }
-    ],
-    "items": []
-  }
-]
-  const token:string = getCookie('token'); 
+    {
+      menuGroup: 'admin',
+      menuGroupLabel: 'Admin',
+      screenDetails: [
+        {
+          name: 'logs',
+          label: 'Logs',
+          key: 'Logs Screen',
+          static: true,
+          icon: 'https://minapi.gsstvl.com/torus/9.1/resources/icons/document-add-svgrepo-com.svg'
+        },
+        {
+          name: 'user',
+          label: 'User',
+          key: 'User Screen',
+          static: true,
+          icon: 'https://minapi.gsstvl.com/torus/9.1/resources/icons/user-plus-svgrepo-com.svg'
+        }
+      ],
+      items: [],
+      icon: 'https://minapi.gsstvl.com/torus/9.1/resources/icons/admin-svgrepo-com.svg'
+    },
+    {
+      menuGroup: 'tob_schema',
+      menuGroupLabel: 'TOB_Schema',
+      screenDetails: [
+        {
+          name: 'tob_screen_1',
+          label: 'TOB_Screen_1',
+          key: 'CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TOB001:AFGK:TOB002:AFK:TOB_Dashboard_Screen:AFVK:v1',
+          static: false
+        }
+      ],
+      items: []
+    }
+  ]
+  const token: string = getCookie('token')
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.selectedAccessProfile
+  const themeClass = useGravityThemeClass()
+
   const getSideNavClassName = useMemo(() => {
     if (
       navigationStyles === 'horizontal' ||
@@ -165,20 +173,20 @@ const LayoutDecider = ({
   ): Promise<Boolean> => {
     if (!artifactKey) return false
     try {
-        setEncAppFalg({
-          "flag":encryptionFlagApp,
-          "dpd":encryptionDpd,
-          "method":encryptionMethod
-      });
-      let orchestrationBody:any ={
-          key: artifactKey,
-          accessProfile: accessProfile,
-          from: 'layoutDecider'
-        }
-        if (encryptionFlagApp) {          
-          orchestrationBody["dpdKey"] = encryptionDpd;
-          orchestrationBody["method"] = encryptionMethod;
-        }
+      setEncAppFalg({
+        flag: encryptionFlagApp,
+        dpd: encryptionDpd,
+        method: encryptionMethod
+      })
+      let orchestrationBody: any = {
+        key: artifactKey,
+        accessProfile: accessProfile,
+        from: 'layoutDecider'
+      }
+      if (encryptionFlagApp) {
+        orchestrationBody['dpdKey'] = encryptionDpd
+        orchestrationBody['method'] = encryptionMethod
+      }
       const orchestrationData = await AxiosService.post(
         '/UF/Orchestration',
         orchestrationBody,
@@ -249,9 +257,9 @@ const LayoutDecider = ({
 
   async function checkAccessProfile(token: string) {
     try {
-      let myAccount:any;
-      if (encryptionFlagApp) {  
-         myAccount = await AxiosService.get('/UF/myAccount-for-client', {
+      let myAccount: any
+      if (encryptionFlagApp) {
+        myAccount = await AxiosService.get('/UF/myAccount-for-client', {
           headers: {
             Authorization: `Bearer ${token}`
           },
@@ -260,7 +268,7 @@ const LayoutDecider = ({
             method: encryptionMethod
           }
         })
-      }else{
+      } else {
         myAccount = await AxiosService.get('/UF/myAccount-for-client', {
           headers: {
             Authorization: `Bearer ${token}`
@@ -268,9 +276,7 @@ const LayoutDecider = ({
         })
       }
       setUserDetails(myAccount?.data)
-      if (
-       user != "" && user != null
-      ) {
+      if (user != '' && user != null) {
         const processedMenuItems = await processMenuItems(
           navData,
           [user],
@@ -353,13 +359,8 @@ const LayoutDecider = ({
       </div>
     )
   return (
-    <div className='flex h-screen w-screen flex-col'>
-      <div
-        className='flex-shrink-0'
-        style={{
-          backgroundColor: `${topbarColor}`
-        }}
-      >
+    <div className={`flex h-screen w-screen flex-col`}>
+      <div className={`g-root flex-shrink-0 ${themeClass}`}>
         <TopNav
           navData={updatedNavData}
           listMenuItems={listMenuItems()}
@@ -370,14 +371,15 @@ const LayoutDecider = ({
           topbarColor={topbarColor}
           appName={appName}
           logo={logo}
+          userDetails={userDetails}
         />
       </div>
-      <div className='flex h-full flex-1'>
+      <div className='flex h-[95%] flex-1'>
         <div
           className={`cursor-pointer transition-all duration-700 ease-in-out ${getSideNavClassName}`}
           style={{
-            backgroundColor: `${sidebarColor}`,
-            borderColor: `${brandColor}70`
+            // backgroundColor: `${sidebarColor}`,
+            borderColor: 'var(--g-color-line-generic)'
           }}
         >
           <SideNav
@@ -392,7 +394,12 @@ const LayoutDecider = ({
             userDetails={userDetails}
           />
         </div>
-        <div className={`flex-1 overflow-auto ${childrenClassName} pageStyle` }>
+        <div
+          className={`flex-1 overflow-auto ${childrenClassName} pageStyle border`}
+          style={{
+            borderColor: 'var(--g-color-line-generic)'
+          }}
+        >
           {children}
         </div>
       </div>

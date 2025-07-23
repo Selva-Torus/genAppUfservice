@@ -6,6 +6,7 @@ import { AxiosService } from '@/app/components/axiosService'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import { getCookie } from '@/app/components/cookieMgment'
 import { TotalContext, TotalContextProps } from '@/app/globalContext'
+import { useGravityThemeClass } from '../utils/useGravityUITheme'
 
 const UserCreationModal = ({
   setModalOpen,
@@ -121,14 +122,17 @@ const UserCreationModal = ({
   const ag = process.env.NEXT_PUBLIC_APPGROUPCODE
   const app = process.env.NEXT_PUBLIC_APPCODE
   const toast = useInfoMsg()
-  const { property, setProperty , userDetails } = useContext(TotalContext) as TotalContextProps
+  const themeClass = useGravityThemeClass()
+  const { property, setProperty, userDetails } = useContext(
+    TotalContext
+  ) as TotalContextProps
   const emailDomain = useMemo(() => {
     let domain = '@gmail.com'
     if (userDetails?.email) {
-    domain = "@" + userDetails.email.split('@')[1]
+      domain = '@' + userDetails.email.split('@')[1]
     }
     return domain
-  } , [])
+  }, [])
   let brandcolor: string = property?.brandColor ?? '#0736c4'
 
   const handleInputChange = (e: any) => {
@@ -175,7 +179,8 @@ const UserCreationModal = ({
     if (
       newUser?.firstName === '' ||
       newUser?.lastName === '' ||
-      (newUser.firstName && newUser.lastName == '') || !newUser?.firstName ||
+      (newUser.firstName && newUser.lastName == '') ||
+      !newUser?.firstName ||
       !newUser?.lastName
     ) {
       toast('Please provide valid name', 'danger')
@@ -189,12 +194,12 @@ const UserCreationModal = ({
     ) {
       toast('userName already exists', 'danger')
       return
-    } else if (!isEdit && !newUser?.email ) {
+    } else if (!isEdit && !newUser?.email) {
       toast('Please provide valid email', 'danger')
       return
     } else if (
       !isEdit &&
-      (!newUser?.email || newUser?.email === '' || newUser.email.includes('@') )
+      (!newUser?.email || newUser?.email === '' || newUser.email.includes('@'))
     ) {
       toast('Please provide valid email in the selected domain', 'danger')
       return
@@ -203,9 +208,6 @@ const UserCreationModal = ({
       data.some((val: any) => val.email.split('@')[0] === newUser?.email)
     ) {
       toast('Email already exists', 'danger')
-      return
-    } else if ( !newUser?.accessExpires || newUser?.accessExpires === '') {
-      toast('Please provide valid validity period', 'danger')
       return
     } else {
       try {
@@ -328,11 +330,12 @@ const UserCreationModal = ({
   }
 
   return (
-    <div className='flex w-[44.73vw] flex-col items-center justify-center'>
-      <div className='items-center flex w-full justify-between px-[0.87vw] py-[1.87vh]'>
+    <div
+      className={`g-root flex w-[44.73vw] flex-col items-center justify-center ${themeClass}`}
+    >
+      <div className='flex w-full items-center justify-between px-[0.87vw] py-[1.87vh]'>
         <h1
           style={{
-            color: '#000000',
             fontSize: `1.04vw`
           }}
           className='font-medium leading-[2.22vh]'
@@ -343,20 +346,29 @@ const UserCreationModal = ({
           onClick={handleCloseModal}
           className='cursor-pointer outline-none'
         >
-          <Multiply width='0.83vw' height='0.83vw' fill={'#000000'} />
+          <Multiply
+            width='0.83vw'
+            height='0.83vw'
+            fill={themeClass.includes('dark') ? '#ffffff' : '#000000'}
+          />
         </button>
       </div>
 
-      <hr style={{ borderColor: '#00000026' }} className='w-full' />
+      <hr
+        style={{ borderColor: 'var(--g-color-line-generic)' }}
+        className='w-full'
+      />
 
       <div className='flex flex-col gap-[2.18vh] py-[1.87vh] pl-[1.46vw]'>
-        {userAdditionDetails && userAdditionDetails.toSpliced(6).map(({ heading, subHeading, formData }, index) => (
+        {userAdditionDetails &&
+          userAdditionDetails
+            .toSpliced(6)
+            .map(({ heading, subHeading, formData }, index) => (
               <div key={index} className='flex gap-[0.58vw]'>
                 <div className='flex w-[21vw] flex-col gap-[0.62vh]'>
                   <h1
                     style={{
-                      fontSize: `0.72vw`,
-                      color: '#000000'
+                      fontSize: `0.72vw`
                     }}
                     className='font-semibold leading-[1.85vh]'
                   >
@@ -365,7 +377,7 @@ const UserCreationModal = ({
                   <p
                     style={{
                       fontSize: `0.72vw`,
-                      color: '#00000080'
+                      opacity: '0.6'
                     }}
                     className='leading-[1.85vh]'
                   >
@@ -419,9 +431,9 @@ const UserCreationModal = ({
                         readOnly={readOnly}
                         name={name}
                         style={{
-                          backgroundColor: '#FFFFFF',
-                          color: '#000000',
-                          borderColor: '#00000026',
+                          backgroundColor: 'var(--g-color-base-background)',
+                          color: 'var(--g-color-text-primary)',
+                          borderColor: 'var(--g-color-line-generic)',
                           fontSize: `0.83vw`
                         }}
                         className={`border outline-none ${name == 'accessExpires' || name == 'loginId' ? 'w-[20.88vw]' : 'w-[10.18vw]'} rounded-lg px-[0.58vw] py-[1.24vh] leading-[2.22vh]`}
@@ -440,39 +452,107 @@ const UserCreationModal = ({
                         }
                       />
                     )}
-                    {type == 'dropdown' && (
-                      <Select
-                        value={newUser?.accessProfile || []}
-                        onUpdate={selectedKey => {
-                          handleInputChange({
-                            target: {
-                              name: 'accessProfile',
-                              value: selectedKey
-                            }
-                          })
-                        }}
-                        width={'max'}
-                        placeholder='Select Access Profile'
-                        multiple
-                      >
-                        {accessProfiles &&
-                          Object.keys(accessProfiles).length > 0 &&
-                          Object.keys(accessProfiles).map((item: any) => {
-                            return (
-                              <Select.Option key={item} value={item}>
-                                {item}
+                    {
+                      type == 'dropdown' && (
+                      newUser?.accessProfile &&
+                      newUser?.accessProfile.length > 1 ? (
+                        <Select
+                          renderControl={props => (
+                            <div className='g-select-control g-select-control_size_m g-select-control_pin_round-round g-select-control_has-value'>
+                              {React.createElement(
+                                'div',
+                                {
+                                  className:
+                                    'g-select-control__button g-select-control__button_size_m g-select-control__button_view_normal g-select-control__button_pin_round-round',
+                                  ...props
+                                },
+                                'Multiple Templates'
+                              )}
+                              <svg
+                                xmlns='http://www.w3.org/2000/svg'
+                                width='16'
+                                height='16'
+                                className='g-icon g-select-control__chevron-icon'
+                                fill='currentColor'
+                                stroke='none'
+                                aria-hidden='true'
+                              >
+                                <svg
+                                  xmlns='http://www.w3.org/2000/svg'
+                                  fill='none'
+                                  viewBox='0 0 16 16'
+                                >
+                                  <path
+                                    fill='currentColor'
+                                    fill-rule='evenodd'
+                                    d='M2.97 5.47a.75.75 0 0 1 1.06 0L8 9.44l3.97-3.97a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 0 1 0-1.06'
+                                    clip-rule='evenodd'
+                                  ></path>
+                                </svg>
+                              </svg>
+                            </div>
+                          )}
+                          value={newUser?.accessProfile}
+                          onUpdate={selectedKey => {
+                            handleInputChange({
+                              target: {
+                                name: 'accessProfile',
+                                value: selectedKey
+                              }
+                            })
+                          }}
+                          width={'max'}
+                          placeholder='Select Access Profile'
+                          multiple
+                        >
+                          {(accessProfiles &&
+                          typeof accessProfiles === 'object' &&
+                          !Array.isArray(accessProfiles)
+                            ? Object.keys(accessProfiles)
+                            : []
+                          ).map((profile: string, index: number) => (
+                            <Select.Option key={index} value={profile}>
+                              {profile}
+                            </Select.Option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <>
+                          <Select
+                            value={newUser?.accessProfile ?? []}
+                            onUpdate={selectedKey => {
+                              handleInputChange({
+                                target: {
+                                  name: 'accessProfile',
+                                  value: selectedKey
+                                }
+                              })
+                            }}
+                            width={'max'}
+                            placeholder='Select Access Profile'
+                            multiple
+                          >
+                            {(accessProfiles &&
+                            typeof accessProfiles === 'object' &&
+                            !Array.isArray(accessProfiles)
+                              ? Object.keys(accessProfiles)
+                              : []
+                            ).map((profile: string, index: number) => (
+                              <Select.Option key={index} value={profile}>
+                                {profile}
                               </Select.Option>
-                            )
-                          })}
-                      </Select>
-                    )}
+                            ))}
+                          </Select>
+                        </>
+                      ))
+                    }
                   </div>
                 ))}
               </div>
             ))}
       </div>
 
-      <hr style={{ borderColor: '#00000026' }} className='w-full' />
+      <hr style={{ borderColor: '#var(--g-color-line-generic)' }} className='w-full' />
 
       <div className='flex w-full justify-end gap-[0.58vw] px-[0.58vw] py-[1.24vh]'>
         <button

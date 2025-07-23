@@ -26,6 +26,7 @@ import UserTable from './userTable'
 import AccessTemplateTable from './accessTemplateTable'
 import { TotalContext, TotalContextProps } from '@/app/globalContext'
 import GeneralSettings from './generalSettings'
+import { useGravityThemeClass } from '../utils/useGravityUITheme'
 
 type SettingTabs = 'org' | 'st' | 'user' | 'general'
 
@@ -63,7 +64,8 @@ const SetupScreen = ({
 }: {
   tenantAccess: 'view' | 'edit' | null | undefined
 }) => {
-  const [selectedMenuItem, setSelectedMenuItem] = useState<SettingTabs>('general')
+  const [selectedMenuItem, setSelectedMenuItem] =
+    useState<SettingTabs>('general')
   const [orgGrpData, setOrgGrpData] = useState<any>([])
   const [tenantProfileData, setTenantProfileData] = useState<
     Record<string, any>
@@ -98,6 +100,8 @@ const SetupScreen = ({
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const ag = process.env.NEXT_PUBLIC_APPGROUPCODE
   const app = process.env.NEXT_PUBLIC_APPCODE
+  const themeClass = useGravityThemeClass()
+
   const onUpdateSecurityData = (updatedData: any[]) => {
     setSecurityData(updatedData)
   }
@@ -198,7 +202,7 @@ const SetupScreen = ({
           name: 'General',
           svg: (
             <GeneralSettingsIcon
-              fill={`${selectedMenuItem === 'general' ? brandcolor : '#000000'}`}
+              fill={`${selectedMenuItem === 'general' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
             />
           ),
           code: 'general'
@@ -207,7 +211,7 @@ const SetupScreen = ({
           name: 'Organizational Matrix',
           svg: (
             <Org
-              fill={`${selectedMenuItem === 'org' ? brandcolor : '#000000'}`}
+              fill={`${selectedMenuItem === 'org' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
             />
           ),
           code: 'org'
@@ -216,7 +220,7 @@ const SetupScreen = ({
           name: 'Access Template',
           svg: (
             <Security
-              fill={`${selectedMenuItem === 'st' ? brandcolor : '#000000'}`}
+              fill={`${selectedMenuItem === 'st' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
             />
           ),
           code: 'st'
@@ -225,7 +229,7 @@ const SetupScreen = ({
           name: 'User Management',
           svg: (
             <Management
-              fill={`${selectedMenuItem === 'user' ? brandcolor : '#000000'}`}
+              fill={`${selectedMenuItem === 'user' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
             />
           ),
           code: 'user'
@@ -596,13 +600,11 @@ const SetupScreen = ({
           }}
         >
           <div
-            style={{ backgroundColor: '#FFFFFF' }}
-            className='flex h-[93vh] w-full flex-col overflow-y-hidden'
+            className={`g-root flex h-[90vh] w-full flex-col overflow-y-hidden ${themeClass}`}
           >
             <div className='flex h-[6.66vh] w-[65%] items-center justify-between px-[0.58vw]'>
               <div
                 style={{
-                  color: '#000000',
                   fontSize: `0.93vw`
                 }}
                 className='flex items-center gap-[0.58vw] font-semibold leading-[2.22vh]'
@@ -612,15 +614,16 @@ const SetupScreen = ({
               <div className='flex gap-[0.35vw]'>
                 <div
                   style={{
-                    backgroundColor: '#F4F5FA',
-                    color: '#000000',
-                    visibility : selectedMenuItem  == "general" ? "hidden" : "unset"
+                    visibility:
+                      selectedMenuItem == 'general' ? 'hidden' : 'unset'
                   }}
-                  className={'relative h-[4.2vh] w-[25.75vw] items-center rounded-md'}
+                  className={
+                    'relative h-[4.2vh] w-[25.75vw] items-center rounded-md'
+                  }
                 >
                   <span className='absolute inset-y-0 left-0 flex h-[2.18vw] w-[2.18vw] p-[0.58vw] '>
                     <SearchIcon
-                      fill={'#000000'}
+                      fill={themeClass.includes('dark') ? '#ffffff' : '#000000'}
                       height='0.83vw'
                       width='0.83vw'
                     />
@@ -632,24 +635,23 @@ const SetupScreen = ({
                     onFocus={e => (e.target.style.borderColor = brandcolor)}
                     onBlur={e => (e.target.style.borderColor = '#00000026')}
                     style={{
-                      backgroundColor: '#F4F5FA',
-                      color: '#000000',
-                      borderColor: '#00000026',
+                      backgroundColor: 'var(--g-color-base-background)',
+                      color: 'var(--g-color-text-primary)',
+                      borderColor: 'var(--g-color-line-generic)',
                       fontSize: `0.72vw`
                     }}
                     className={`h-[4.2vh] w-full rounded-md border p-[0.29vw] pl-[1.76vw] font-medium focus:outline-none`}
                   />
                 </div>
                 <div className='mb-[0.5vh] flex items-center gap-[0.75vw]'>
-                  {['st', 'user', 'org' ].includes(selectedMenuItem) && (
+                  {['st', 'user', 'org'].includes(selectedMenuItem) && (
                     <div className='mb-[0.5vh] flex items-center gap-[0.29vw]'>
                       <button
                         onClick={handlePlusButtonClick}
                         style={{
-                          backgroundColor:
-                            selectedMenuItem === 'org' && !focusedPath
-                              ? '#dae1f6'
-                              : brandcolor
+                          backgroundColor: brandcolor,
+                          opacity:
+                            selectedMenuItem === 'org' && !focusedPath ? 0.5 : 1
                         }}
                         className={`rounded-md px-[0.5vw] py-[0.82vh] outline-none`}
                         disabled={
@@ -720,7 +722,7 @@ const SetupScreen = ({
                           <div className='flex w-full items-center justify-end gap-[0.5vw] pr-[1vw]'>
                             <button
                               onClick={() => setDeleteModalOpen(false)}
-                              className='flex items-center gap-[0.5vw] rounded-md bg-[#F4F5FA] px-[0.5vw] py-[0.82vh] outline-none'
+                              className='flex items-center gap-[0.5vw] rounded-md  px-[0.5vw] py-[0.82vh] outline-none'
                             >
                               <h1 className='text-[1vw] font-medium'>Cancel</h1>
                             </button>
@@ -747,13 +749,10 @@ const SetupScreen = ({
                 </div>
               </div>
             </div>
-            <hr style={{ borderColor: '#E5E9EB' }} className=' w-full'></hr>
-            <div
-              style={{ backgroundColor: '#FFFFFF' }}
-              className='flex h-[92.8vh]'
-            >
+            <hr style={{ borderColor: 'var(--g-color-line-generic)' }} className=' w-full'></hr>
+            <div className='flex h-[92.8vh]'>
               <div
-                style={{ borderRight: `1px solid ${'#E5E9EB'}` }}
+                style={{ borderRight: `1px solid var(--g-color-line-generic)` }}
                 className='flex h-[92.8vh] w-[10.57vw] flex-col gap-[3vh] p-[0.83vw]'
               >
                 {menuItems.map((section, index) => (
@@ -765,7 +764,9 @@ const SetupScreen = ({
                           color:
                             selectedMenuItem === item.code
                               ? brandcolor
-                              : '#000000'
+                              : themeClass.includes('dark')
+                                ? '#fff'
+                                : '#000'
                         }}
                         className={`cursor-pointer`}
                         onClick={() =>

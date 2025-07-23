@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useContext } from "react";
 import { DownArrow, SearchIcon } from "./svgApplication";
 import useClickOutside from "./useClickOutsideRef";
 import { TotalContext, TotalContextProps } from "@/app/globalContext";
+import { useGravityThemeClass } from "../utils/useGravityUITheme";
 
 const CustomGrpMemberDropdown = ({
     data,
@@ -24,6 +25,7 @@ const CustomGrpMemberDropdown = ({
     const [searchTerm, setSearchTerm] = useState("");
     const { property, setProperty } = useContext(TotalContext) as TotalContextProps
     let brandcolor: string = property?.brandColor ?? "#0736c4"
+    const themeClass = useGravityThemeClass();
 
     useClickOutside(customDropDownRef, () => setOpen(false));
 
@@ -159,12 +161,11 @@ const CustomGrpMemberDropdown = ({
     };
 
     return (
-        <div className="relative m-2" ref={customDropDownRef}>
+        <div className={`relative m-2 g-root ${themeClass}`} ref={customDropDownRef}>
             <button
                 ref={buttonRef}
                 style={{
-                    backgroundColor: "#F4F5FA",
-                    color: "#000000",
+                    borderColor : 'var(--g-color-line-generic)'
                 }}
                 className={`p-3 outline-none ${groupKey == "orgGrp"
                         ? "w-[13.33vw]"
@@ -173,22 +174,21 @@ const CustomGrpMemberDropdown = ({
                             : groupKey == "psGrp"
                                 ? "w-[12.18vw]"
                                 : "w-[40vw]"
-                    } flex justify-between items-center rounded disabled:bg-[${"#00000026"}]`}
+                    } flex justify-between items-center border rounded disabled:opacity-50 `}
                 onClick={() => setOpen(!isOpen)}
                 disabled={isDisabled}
             >
                 <span>Select {groupKey}</span>
                 <span>
-                    <DownArrow fill={"#000000"} />
+                    <DownArrow fill={themeClass.includes ('dark') ? "#ffffff" : "#000000"} />
                 </span>
             </button>
 
             {isOpen && (
                 <div
                     style={{
-                        backgroundColor: "#F4F5FA",
-                        color: "#000000",
-                        borderColor: "#00000026",
+                      borderColor : 'var(--g-color-line-generic)',
+                      backgroundColor: 'var(--g-color-base-background)',
                     }}
                     className={`flex flex-col gap-1 absolute z-20 ${dropUp ? "bottom-full mb-[0.5vw]" : "top-full mt-[0.5vw]"
                         } ${filteredData.length > 2 ? "h-[21.5vh] overflow-y-auto" : ""} ${groupKey == "orgGrp"

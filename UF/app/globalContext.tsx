@@ -1,7 +1,9 @@
 
 
 "use client"
+import { RealTheme } from '@gravity-ui/uikit'
 import React from 'react'
+import { getCookie } from './components/cookieMgment'
 
 export interface TotalContextProps {
     API_Report360bc: any 
@@ -71,7 +73,9 @@ export interface TotalContextProps {
     userDetails:any,
     setUserDetails:React.Dispatch<React.SetStateAction<any>>
     encAppFalg:any,
-    setEncAppFalg:React.Dispatch<React.SetStateAction<any>>
+    setEncAppFalg:React.Dispatch<React.SetStateAction<any>>,
+    selectedTheme: RealTheme,
+    setSelectedTheme: React.Dispatch<React.SetStateAction<RealTheme>>
 }
 
 export const TotalContext = React.createContext<TotalContextProps | {}>({})
@@ -355,9 +359,11 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     const [eventEmitterData,setEventEmitterData] = React.useState<any>([])
     const [userDetails , setUserDetails] = React.useState<any>({})
     const [encAppFalg , setEncAppFalg] = React.useState<any>({})
+    const theme = getCookie('cfg_theme')
+    const [selectedTheme , setSelectedTheme] = React.useState<RealTheme>(theme || "light")
     
   return (
-    <TotalContext.Provider value={{API_Report360bc, setAPI_Report360bc,isAPI_Report360bcContainValidataion,setAPI_Report360bcContainValidataion,API_Repo_Table8836e, setAPI_Repo_Table8836e,isAPI_Repo_Table8836eContainValidataion,setAPI_Repo_Table8836eContainValidataion,Connected_App_Tablecff73, setConnected_App_Tablecff73,isConnected_App_Tablecff73ContainValidataion,setConnected_App_Tablecff73ContainValidataion,Info_Groupaab7f, setInfo_Groupaab7f,isInfo_Groupaab7fContainValidataion,setInfo_Groupaab7fContainValidataion,Summary_Table98cb0, setSummary_Table98cb0,isSummary_Table98cb0ContainValidataion,setSummary_Table98cb0ContainValidataion,API_Process_Log_Table4f441, setAPI_Process_Log_Table4f441,isAPI_Process_Log_Table4f441ContainValidataion,setAPI_Process_Log_Table4f441ContainValidataion,API_Info80710, setAPI_Info80710,isAPI_Info80710ContainValidataion,setAPI_Info80710ContainValidataion,Consent_Logs_Table87d37, setConsent_Logs_Table87d37,isConsent_Logs_Table87d37ContainValidataion,setConsent_Logs_Table87d37ContainValidataion,refetch, setRefetch,searchParam , setSearchParam,disableParam , setDisableParam,globalState , setGlobalState,validate, setValidate,validateRefetch, setValidateRefetch,accessProfile,setAccessProfile,property, setProperty,disable, setDisable,hide, setHide, setRefresh, refresh,memoryVariables, setMemoryVariables,lockedData, setLockedData,eventEmitterData,setEventEmitterData, userDetails , setUserDetails,encAppFalg , setEncAppFalg}}>
+    <TotalContext.Provider value={{API_Report360bc, setAPI_Report360bc,isAPI_Report360bcContainValidataion,setAPI_Report360bcContainValidataion,API_Repo_Table8836e, setAPI_Repo_Table8836e,isAPI_Repo_Table8836eContainValidataion,setAPI_Repo_Table8836eContainValidataion,Connected_App_Tablecff73, setConnected_App_Tablecff73,isConnected_App_Tablecff73ContainValidataion,setConnected_App_Tablecff73ContainValidataion,Info_Groupaab7f, setInfo_Groupaab7f,isInfo_Groupaab7fContainValidataion,setInfo_Groupaab7fContainValidataion,Summary_Table98cb0, setSummary_Table98cb0,isSummary_Table98cb0ContainValidataion,setSummary_Table98cb0ContainValidataion,API_Process_Log_Table4f441, setAPI_Process_Log_Table4f441,isAPI_Process_Log_Table4f441ContainValidataion,setAPI_Process_Log_Table4f441ContainValidataion,API_Info80710, setAPI_Info80710,isAPI_Info80710ContainValidataion,setAPI_Info80710ContainValidataion,Consent_Logs_Table87d37, setConsent_Logs_Table87d37,isConsent_Logs_Table87d37ContainValidataion,setConsent_Logs_Table87d37ContainValidataion,refetch, setRefetch,searchParam , setSearchParam,disableParam , setDisableParam,globalState , setGlobalState,validate, setValidate,validateRefetch, setValidateRefetch,accessProfile,setAccessProfile,property, setProperty,disable, setDisable,hide, setHide, setRefresh, refresh,memoryVariables, setMemoryVariables,lockedData, setLockedData,eventEmitterData,setEventEmitterData, userDetails , setUserDetails,encAppFalg , setEncAppFalg , selectedTheme , setSelectedTheme}}>
       {children}
     </TotalContext.Provider>
   )

@@ -17,6 +17,7 @@ import { MenuItem, MenuStructure } from '../interfaces/interfaces'
 import Image from 'next/image'
 import { isLightColor } from './utils'
 import { FileGallery } from '../utils/svgApplications'
+import { useGravityThemeClass } from '../utils/useGravityUITheme'
 
 const SideNav =  ({
   navData,
@@ -50,6 +51,7 @@ const SideNav =  ({
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.loginId
   const pathname = usePathname()
+  const themeClass = useGravityThemeClass();
   
  // const getRandomIcon = () => {
  //   const allIcons = { ...FaIcons, ...MdIcons, ...AiIcons }
@@ -202,7 +204,7 @@ const SideNav =  ({
   }, [fullView])
   return (
     <div
-      className={`flex h-full flex-col items-center justify-between px-2 py-2`}
+      className={`flex h-full flex-col items-center justify-between px-2 py-2 g-root ${themeClass}`}
     >
       <div
         className='scrollbar-none flex max-h-[80vh] w-full flex-col gap-[0.25vh] overflow-x-hidden overflow-y-scroll pt-2 '
@@ -249,12 +251,12 @@ const SideNav =  ({
                                     alt='icon'
                                     src={menu.icon}
                                     style={{
-                                      filter : typeof getDropDownStyles(menu.menuGroup , true) == "boolean" ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)' : 'unset'
+                                      filter : typeof getDropDownStyles(menu.menuGroup , true) == "boolean" || themeClass.includes('dark') ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)' : 'unset'
                                     }}
                                   />
                                 ) : (
                                  // <RandomIcon size={16} />
-                                  <FileGallery height='20' width='20'/>
+                                  <FileGallery height='20' width='20' fill={themeClass.includes('dark') ? '#fff' : '#1C274C'}/>
                                 )}
                               </div>
                               <span
@@ -288,8 +290,7 @@ const SideNav =  ({
                                   src={menu.icon}
                                 />
                               ) : (
-                                //<RandomIcon size={16} />
-                                 <FileGallery height='20' width='20' fill={`${isLightColor(brandColor)}`} />
+                                 <FileGallery height='20' width='20' fill={themeClass.includes('dark') ? '#fff' : '#1C274C'} />
                               )}
                             </span>
                           )}

@@ -1,4 +1,5 @@
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
+"use client";
+import React, { use, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   DeleteIcon,
   DownArrow,
@@ -14,6 +15,7 @@ import { isLightColor } from '@/app/components/utils'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import { Pagination, Popup, TextInput } from '@gravity-ui/uikit'
 import { TotalContext, TotalContextProps } from '@/app/globalContext'
+import { useGravityThemeClass } from '../utils/useGravityUITheme';
 
 type ProductService = {
   psCode: string
@@ -146,6 +148,7 @@ const RenderMembers = ({
     psList,
     currentPage
   } = React.useContext(OrgMatrixContext) as OrgMatrixContextType
+  const themeClass = useGravityThemeClass();
 
   const updatedParentCode = parentCode ? `${parentCode}-` : ''
   const isFocused = focusedPath == `${path}.${chilldArrayKeyName}`
@@ -236,8 +239,6 @@ const RenderMembers = ({
       draggable={!isNonDeletable}
       className={`group relative mr-1 flex w-full flex-[0_0_18%] cursor-pointer items-center rounded border p-[0.58vw]`}
       style={{
-        backgroundColor: keyOfName == 'orgName' ? 'transparent' : '#F4F5FA',
-        color: '#000000',
         width: `${
           keyOfName === 'orgName'
             ? '12vw'
@@ -251,9 +252,9 @@ const RenderMembers = ({
         }`,
         borderColor: isFocused
           ? brandcolor
-          : keyOfName == 'orgName'
-            ? 'transparent'
-            : '#00000059',
+          // : keyOfName == 'orgName'
+          //   ? 'transparent'
+            : themeClass.includes("dark") ? "#ffffff59" : '#00000059',
         margin:
           expanded && keyOfName === 'orgName'
             ? '0.3vw 0.3vw 0.6vw'
@@ -276,7 +277,7 @@ const RenderMembers = ({
       }
     >
       <span>
-        <SixDotsSvg fill={'#000000'} />
+        <SixDotsSvg fill={themeClass.includes("dark") ? '#ffffff' : '#000000'} />
       </span>
       {
         <span
@@ -434,9 +435,9 @@ const RenderMembers = ({
           onClick={() => setExpanded(!expanded)}
         >
           {expanded ? (
-            <UpArrow fill={'#000000'} />
+            <UpArrow fill={themeClass.includes('dark') ? '#ffffff' : '#000000'} />
           ) : (
-            <DownArrow fill={'#000000'} />
+            <DownArrow fill={themeClass.includes('dark') ? '#ffffff' : '#000000'} />
           )}
         </div>
       )}
@@ -572,16 +573,17 @@ const RenderOrg = ({
   parentCode
 }: Organization & { path: string; parentCode: string }) => {
   const [expanded, setExpanded] = useState(false)
+  const themeClass = useGravityThemeClass();
+
   return (
     <div
       style={{
-        color: '#000000',
-        borderColor: '#00000026'
+        borderColor: themeClass.includes('dark') ? '#ffffff26' : '#00000026'
       }}
       className='flex justify-end'
     >
       <div
-        style={{ borderColor: '#00000059' }}
+        style={{ borderColor: themeClass.includes('dark') ? '#ffffff26' : '#00000026' }}
         className='cursor-pointer rounded border pb-2'
       >
         <RenderMembers
@@ -639,6 +641,8 @@ const OrgMatrix = ({
   const [isInput, setIsInput] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const toast = useInfoMsg()
+  const themeClass = useGravityThemeClass();
+
 
   const filteredData = Object.entries(data)
     .filter(([key, value]) => {
@@ -788,10 +792,9 @@ const OrgMatrix = ({
         currentPage
       }}
     >
-      <div className='flex w-full items-center justify-between'>
+      <div className={`flex w-full items-center justify-between g-root ${themeClass}`}>
         <h1
           style={{
-            color: '#000000',
             fontSize: `1.25vw`
           }}
           className=' font-semibold leading-[1.04vw]'
@@ -807,11 +810,9 @@ const OrgMatrix = ({
         </button>
       </div>
       <div
-        className='mt-[2vh] flex items-center justify-between rounded-xl px-3'
+        className='mt-[2vh] flex items-center justify-between rounded-xl px-3 border'
         style={{
-          backgroundColor: '#F4F5FA',
-          color: '#000000',
-          borderColor: '#00000026'
+          borderColor: themeClass.includes('dark') ? '#ffffff26' : '#00000026'
         }}
       >
         <div
@@ -834,7 +835,7 @@ const OrgMatrix = ({
           className='mr-[0.29vw] flex items-center rounded px-[0.58vw] py-[1vh] focus:outline-none'
           onClick={addTopLevelOrganization}
           style={{
-            borderColor: '#00000026',
+            borderColor: themeClass.includes('dark') ? '#ffffff26' : '#00000026',
             backgroundColor: brandcolor
           }}
           disabled={tenantAccess !== 'edit'}

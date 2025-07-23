@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { MenuItem, MenuStructure } from '../interfaces/interfaces'
 import { isLightColor } from './utils'
 import Image from 'next/image'
+import { useGravityThemeClass } from '../utils/useGravityUITheme'
 
 const TopNav = ({
   navData,
@@ -17,7 +18,8 @@ const TopNav = ({
   hoverColor = '#fff',
   topbarColor = '#fff',
   appName,
-  logo
+  logo,
+  userDetails
 }: {
   navData: MenuStructure
   listMenuItems?: boolean
@@ -28,6 +30,7 @@ const TopNav = ({
   topbarColor: string
   appName: string
   logo?: string
+  userDetails:any
 }) => {
   const router = useRouter()
   const token: string = getCookie('token')
@@ -38,6 +41,7 @@ const TopNav = ({
   const [visibleItems, setVisibleItems] = useState<MenuItem[]>(navData || [])
   const [hiddenItems, setHiddenItems] = useState<MenuItem[]>([])
   const tp_ps = getCookie('tp_ps')
+  const themeClass = useGravityThemeClass()
 
   useEffect(() => {
     const checkOverflow = () => {
@@ -153,8 +157,8 @@ const TopNav = ({
   return (
     <div
       suppressHydrationWarning
-      className={`flex items-center justify-between p-2 ${mode === 'detached' ? 'shadow-md' : ''} `}
-      style={{ backgroundColor: topbarColor }}
+      className={`flex items-center justify-between p-2 ${mode === 'detached' ? 'shadow-md' : ''} g-root ${themeClass} `}
+      // style={{ backgroundColor: topbarColor }}
     >
       <div className='flex items-center gap-1'>
         {logo ? (
@@ -170,9 +174,6 @@ const TopNav = ({
         )}
         <h3
           className='text-center text-[1.5vw] font-bold '
-          // style={{
-          //  color: brandColor
-          // }}
         >
           {appName}
         </h3>
@@ -291,7 +292,7 @@ const TopNav = ({
               renderSwitcher={(props: any) => (
                 <UserLabel
                   type='person'
-                  avatar='https://loremflickr.com/300/220/nature'
+                  avatar={userDetails?.profile}
                   {...props}
                 >
                   {' '}

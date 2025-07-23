@@ -1,14 +1,12 @@
-import { AxiosService } from '@/app/components/axiosService'
-import { getCookie } from '@/app/components/cookieMgment'
-import React, { useContext, useEffect, useMemo, useState } from 'react'
+import React, { useContext, useMemo, useState } from 'react'
 import { SetupScreenContext, SetupScreenContextType } from './setup'
 import CustomGrpMemberDropdown from './customGrpMemberDropdown'
 import { TotalContext, TotalContextProps } from '@/app/globalContext'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import { Pagination, Select } from '@gravity-ui/uikit'
+import { useGravityThemeClass } from '../utils/useGravityUITheme'
 
 const AccessTemplateTable = ({}) => {
-  const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const toast = useInfoMsg()
   const [editingCell, setEditingCell] = useState<string | null>(null)
   const {
@@ -28,9 +26,10 @@ const AccessTemplateTable = ({}) => {
   const { property, setProperty } = useContext(
     TotalContext
   ) as TotalContextProps
-  let brandcolor: string = property?.brandColor ?? "#0736c4"
+  let brandcolor: string = property?.brandColor ?? '#0736c4'
   const [currentPage, setCurrentPage] = useState(1)
   const accessTemplatePerPage = 10
+  const themeClass = useGravityThemeClass()
 
   const filteredData = Object.entries(securityData)
     .filter(([key, value]) => {
@@ -329,12 +328,17 @@ const AccessTemplateTable = ({}) => {
   const accessPrivilegeData = ['Full', 'Limited']
 
   return (
-    <div className='w-full h-full'>
+    <div className={`g-root h-full w-full ${themeClass}`}>
       <h2 className='mb-4 text-xl font-bold'>Access Template</h2>
       <div className='h-[72vh] w-full overflow-x-auto'>
         <table className='min-w-full rounded text-left'>
-          <thead style={{ background: "#F4F5FA" }}>
-            <tr>
+          <thead>
+            <tr
+              className='rounded border'
+              style={{
+                borderColor: 'var(--g-color-line-generic)'
+              }}
+            >
               <th className='px-1 py-4'>
                 <input
                   type='checkbox'
@@ -378,7 +382,7 @@ const AccessTemplateTable = ({}) => {
                     onDoubleClick={() =>
                       TemplateNotEditable(template, template.originalIndex)
                     }
-                    className={`ml-3 w-[12.29vw] bg-[#F4F5FA] p-3 ${template['no.ofusers'] == 0 ? 'cursor-pointer' : 'cursor-default'}`}
+                    className={`ml-3 w-[12.29vw]  p-3 ${template['no.ofusers'] == 0 ? 'cursor-pointer' : 'cursor-default'}`}
                   >
                     {template['no.ofusers'] == 0 &&
                     editingCell ===
@@ -408,7 +412,12 @@ const AccessTemplateTable = ({}) => {
                           )
                           handleEdit(null)
                         }}
-                        className={`bg-[#F4F5FA] outline-none`}
+                        className={`border outline-none rounded p-1`}
+                        style={{
+                          backgroundColor: 'var(--g-color-base-background)',
+                          color: 'var(--g-color-text-primary)',
+                          borderColor: 'var(--g-color-line-generic)'
+                        }}
                       />
                     ) : (
                       template.accessProfile
@@ -511,7 +520,9 @@ const AccessTemplateTable = ({}) => {
                 <td className='px-[0.29vw] py-[0.31vh] text-center'>
                   {template['no.ofusers']}
                 </td>
-                <td className='px-[0.29vw] py-[0.31vh]'>{template.createdOn}</td>
+                <td className='px-[0.29vw] py-[0.31vh]'>
+                  {template.createdOn}
+                </td>
               </tr>
             ))}
           </tbody>

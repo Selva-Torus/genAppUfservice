@@ -13,6 +13,7 @@ import { Modal } from '@gravity-ui/uikit'
 import UserCreationModal from './userCreationModal'
 import { EditIcon } from './svgApplication'
 import { SetupScreenContext, SetupScreenContextType } from './setup'
+import { useGravityThemeClass } from '../utils/useGravityUITheme'
 
 export interface UserData {
   users: string
@@ -45,6 +46,7 @@ const UserTable: React.FC<{
   const [newUser, setNewUser] = useState({})
   const { selectedRows, setSelectedRows, searchTerm } = React.useContext(SetupScreenContext) as SetupScreenContextType;
   const userDataPerPage = 11
+  const themeClass = useGravityThemeClass();
 
   const formatDate = (dateString: string | Date): string => {
     const date = new Date(dateString)
@@ -212,7 +214,7 @@ const UserTable: React.FC<{
               width: '40px',
               height: '40px',
               borderRadius: '50%',
-              backgroundColor: '#f0f1f2',
+              // backgroundColor: '#f0f1f2',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -336,7 +338,12 @@ const UserTable: React.FC<{
           <div className={`flex rounded-md text-[0.72vw] leading-[1.04vw]`}>
             <form onSubmit={e => e.preventDefault()}>
               <input
-                className='cursor-pointer px-[0.5vw] py-[0.5vh]'
+                className='cursor-pointer px-[0.5vw] py-[0.5vh] border rounded'
+                style={{
+                    backgroundColor: 'var(--g-color-base-background)',
+                      color: 'var(--g-color-text-primary)',
+                      borderColor: 'var(--g-color-line-generic)',
+                }}
                 type='date'
                 defaultValue={item.accessExpires}
                 min={new Date().toISOString().split('T')[0]}
@@ -407,7 +414,7 @@ const UserTable: React.FC<{
   ]
 
   return (
-    <div className='w-full h-[80vh]'>
+    <div className={`w-full h-[80vh] g-root ${themeClass}`}>
       <div>
         <button
           id='tanantUser-creation-btn'
@@ -429,7 +436,6 @@ const UserTable: React.FC<{
       </div>
       <h1
         style={{
-          color: "#000000",
           fontSize: `1.25vw`,
         }}
         className=" leading-[1.04vw] font-semibold"

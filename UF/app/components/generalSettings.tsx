@@ -10,18 +10,19 @@ import { getCookie, setCookie } from './cookieMgment'
 import { Select } from '@gravity-ui/uikit'
 import { getLanguagesJson } from '../utils/getLanguagesJson.api'
 import { TotalContext, TotalContextProps } from '../globalContext'
+import { useGravityThemeClass } from '../utils/useGravityUITheme'
 
 const GeneralSettings = () => {
   const [languageOptions, setLanguageOptions] = useState([])
   const [selectedLanguage, setSelectedLanguage] = useState([
     getCookie('cfg_lang')
   ])
-  const [selectedTheme, setSelectedTheme] = useState(getCookie('cfg_theme'))
   const token = getCookie('token')
-  const { property, setProperty } = useContext(
+  const { property, setProperty, selectedTheme, setSelectedTheme } = useContext(
     TotalContext
   ) as TotalContextProps
   let brandcolor: string = property?.brandColor ?? '#0736c4'
+  const themeClass = useGravityThemeClass();
 
   const themeOptions = [
     {
@@ -75,12 +76,11 @@ const GeneralSettings = () => {
   }
 
   return (
-    <div className='h-full w-full'>
+    <div className={`h-full w-full g-root ${themeClass}`}>
       <div className='flex w-full items-center justify-between'>
         <div className='flex flex-col gap-[1vh]'>
           <h1
             style={{
-              color: '#000000',
               fontSize: `1.25vw`
             }}
             className=' font-semibold leading-[1.04vw]'
@@ -89,7 +89,6 @@ const GeneralSettings = () => {
           </h1>
           <p
             style={{
-              color: '#000000',
               opacity: '0.5',
               fontSize: `0.83vw`
             }}
@@ -100,14 +99,13 @@ const GeneralSettings = () => {
         </div>
       </div>
       {/* Divider Line */}
-      <hr className='my-[1vh] w-full border-[#D8DBDF]' />
+      <hr className='my-[1vh] w-full border' style={{ borderColor : 'var(--g-color-line-generic)'}} />
       {/* Theme Selection */}
       <div className='flex flex-col gap-[2.49vh]'>
         <div className='flex flex-col gap-[0.62vh]'>
           <h1
             className='font-semibold leading-[1.85vh]'
             style={{
-              color: '#000000',
               fontSize: `0.72vw`
             }}
           >
@@ -116,7 +114,6 @@ const GeneralSettings = () => {
           <p
             className='leading-[1.85vh]'
             style={{
-              color: '#000000',
               fontSize: '0.72vw',
               opacity: '0.5'
             }}
@@ -128,12 +125,12 @@ const GeneralSettings = () => {
           {themeOptions.map(val => (
             <div
               key={val.label}
-              className='flex flex-col gap-[2.25vh] text-center cursor-pointer '
+              className='flex cursor-pointer flex-col gap-[2.25vh] text-center '
               onClick={() => handleThemeChange(val.code)}
             >
               <div
                 key={val.code}
-                className={`rounded-md rounded-tl-xl outline-none relative`}
+                className={`relative rounded-md rounded-tl-xl outline-none`}
                 style={{
                   border:
                     selectedTheme == val.code
@@ -142,27 +139,25 @@ const GeneralSettings = () => {
                 }}
               >
                 {val.icon}
-              <div className='absolute right-4 bottom-3'>
-                {selectedTheme === val.code && (
-                  <input
-                    type='checkbox'
-                    readOnly
-                    checked={true}
-                    className='transition-color fade-in h-[0.8vw] w-[0.8vw] cursor-pointer rounded-lg outline-none duration-700'
-                    style={{
-                      backgroundColor: `#000000`,
-                      color: `${brandcolor}`,
-                      borderColor: `${brandcolor}`,
-                      accentColor: `${brandcolor}`
-                    }}
-                  />
-                )}
-              </div>
+                <div className='absolute bottom-3 right-4'>
+                  {selectedTheme === val.code && (
+                    <input
+                      type='checkbox'
+                      readOnly
+                      checked={true}
+                      className='transition-color fade-in h-[0.8vw] w-[0.8vw] cursor-pointer rounded-lg outline-none duration-700'
+                      style={{
+                        color: `${brandcolor}`,
+                        borderColor: `${brandcolor}`,
+                        accentColor: `${brandcolor}`
+                      }}
+                    />
+                  )}
+                </div>
               </div>
               <span
                 className='flex items-center justify-center font-medium leading-[1.85vh]'
                 style={{
-                  color: '#000000',
                   fontSize: '0.72vw'
                 }}
               >
@@ -173,14 +168,13 @@ const GeneralSettings = () => {
         </div>
       </div>
       {/* Divider Line */}
-      <hr className='my-[1vh] w-full border-[#D8DBDF]' />
+      <hr className='my-[1vh] w-full border' style={{ borderColor : 'var(--g-color-line-generic)'}} />
       {/* Language Selection */}
       <div className='flex items-center'>
         <div className='flex w-[20vw] flex-col gap-[0.62vh]'>
           <h1
             className='font-semibold leading-[1.85vh] '
             style={{
-              color: '#000000',
               fontSize: '0.72vw'
             }}
           >
@@ -189,7 +183,6 @@ const GeneralSettings = () => {
           <p
             className='leading-[1.85vh]'
             style={{
-              color: '#000000',
               fontSize: `0.72vw`,
               opacity: '0.5'
             }}
@@ -208,7 +201,7 @@ const GeneralSettings = () => {
         </div>
       </div>
       {/* Divider Line */}
-      <hr className='my-[1vh] w-full border-[#D8DBDF]' />
+      <hr className='my-[1vh] w-full border' style={{ borderColor : 'var(--g-color-line-generic)'}} />
     </div>
   )
 }
