@@ -7,10 +7,7 @@ import {
   UserLabel
 } from '@gravity-ui/uikit'
 import { usePathname, useRouter } from 'next/navigation'
-import React, { useCallback, useMemo, useState } from 'react'
-//import * as FaIcons from 'react-icons/fa' // Font Awesome
-//import * as MdIcons from 'react-icons/md' // Material Design Icons
-//import * as AiIcons from 'react-icons/ai' // Ant Design Icons
+import React, { useCallback, useMemo } from 'react'
 import { deleteAllCookies, getCookie } from '@/app/components/cookieMgment'
 import decodeToken from '@/app/components/decodeToken'
 import { MenuItem, MenuStructure } from '../interfaces/interfaces'
@@ -19,7 +16,7 @@ import { isLightColor } from './utils'
 import { FileGallery } from '../utils/svgApplications'
 import { useGravityThemeClass } from '../utils/useGravityUITheme'
 
-const SideNav =  ({
+const SideNav = ({
   navData,
   mode = 'fluid',
   sidebarStyle = 'default',
@@ -44,33 +41,23 @@ const SideNav =  ({
   selectionColor: string
   brandColor: string
   hoverColor: string
-  userDetails:any
+  userDetails: any
 }) => {
   const router = useRouter()
   const token: string = getCookie('token')
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.loginId
   const pathname = usePathname()
-  const themeClass = useGravityThemeClass();
-  
- // const getRandomIcon = () => {
- //   const allIcons = { ...FaIcons, ...MdIcons, ...AiIcons }
- //   const iconsArray = Object.values(allIcons) // Convert to an array
- //   const randomIndex = Math.floor(Math.random() * iconsArray.length) // Get random index
- //   const RandomIcon = iconsArray[randomIndex] // Get the random icon
-//    return RandomIcon // Return the icon component
-//  }
+  const themeClass = useGravityThemeClass()
 
   const getNestedMenu = (menu: MenuItem): any => {
     const nestedMenu = []
     for (const screen of menu.screenDetails) {
-    //  const RandomIcon = getRandomIcon()
       nestedMenu.push({
         text: (
           <p
             className='m-0 p-0'
             style={{
-              color: `${isLightColor(brandColor)}`,
               transition: 'all 0.2s ease-in-out'
             }}
           >
@@ -96,11 +83,21 @@ const SideNav =  ({
             height={100}
             alt='icon'
             src={screen.icon}
+            style={{
+              filter:
+                typeof getDropDownStyles(menu.menuGroup, true) == 'boolean' ||
+                themeClass.includes('dark')
+                  ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
+                  : 'unset'
+            }}
           />
         ) : (
           <span>
-          {/* <RandomIcon size={16} color={`${isLightColor(brandColor)}`} /> */}
-            <FileGallery height='20' width='20' fill={`${isLightColor(brandColor)}`} />
+            <FileGallery
+              height='20'
+              width='20'
+              fill={themeClass.includes('dark') ? '#ffffff' : '#000000'}
+            />
           </span>
         )
       })
@@ -108,13 +105,11 @@ const SideNav =  ({
 
     if (menu.items) {
       for (const item of menu.items) {
-       // const RandomIcon = getRandomIcon()
         nestedMenu.push({
           text: (
             <p
               className='m-0 p-0'
               style={{
-                color: `${isLightColor(brandColor)}`,
                 transition: 'all 0.2s ease-in-out'
               }}
             >
@@ -132,9 +127,11 @@ const SideNav =  ({
               src={item.icon}
             />
           ) : (
-            //<RandomIcon size={16} color={`${isLightColor(brandColor)}`} />
-            <FileGallery height='20' width='20' fill={`${isLightColor(brandColor)}`} />
-
+            <FileGallery
+              height='20'
+              width='20'
+              fill={`${isLightColor(brandColor)}`}
+            />
           )
         })
       }
@@ -174,12 +171,15 @@ const SideNav =  ({
   }
 
   const getDropDownStyles = useCallback(
-    (menuGroup: any , imageUrl?:boolean) => {
+    (menuGroup: any, imageUrl?: boolean) => {
       const menuGrp = navData.find(item => item.menuGroup === menuGroup)
-      const currentScreen = pathname.split('/').pop()?.split('_')[0] || ''
+      const currentScreen = pathname.includes('_')
+        ? pathname.split('/').pop()?.split('_').slice(0, -1).join('_') || ''
+        : pathname.split('/').pop() || ''
+
       const selectedRoute = hasMatchingName(menuGrp, currentScreen)
       if (selectedRoute) {
-        if(imageUrl){
+        if (imageUrl) {
           return true
         }
         return {
@@ -192,7 +192,7 @@ const SideNav =  ({
       return {
         backgroundColor: 'transparent',
         height: '6vh',
-        color: "unset"
+        color: 'unset'
       }
     },
     [hoverColor, brandColor, sidebarStyle]
@@ -204,7 +204,7 @@ const SideNav =  ({
   }, [fullView])
   return (
     <div
-      className={`flex h-full flex-col items-center justify-between px-2 py-2 g-root ${themeClass}`}
+      className={`g-root flex h-full flex-col items-center justify-between px-2 py-2 ${themeClass}`}
     >
       <div
         className='scrollbar-none flex max-h-[80vh] w-full flex-col gap-[0.25vh] overflow-x-hidden overflow-y-scroll pt-2 '
@@ -214,7 +214,6 @@ const SideNav =  ({
       >
         {navData &&
           navData.map((menu, index): any => {
-            // const RandomIcon = getRandomIcon()
             if (menu.menuGroup) {
               return (
                 <Tooltip
@@ -232,7 +231,12 @@ const SideNav =  ({
                   <button
                     key={index}
                     className={` flex cursor-pointer items-center justify-center gap-2 px-1 py-1 transition delay-150 duration-300 ease-in-out ${sidebarStyle === 'compact' || sidebarStyle === 'hoverView' ? 'w-[80%]' : 'w-[98%]'} rounded-md `}
-                    style={getDropDownStyles(menu.menuGroup , false) as React.CSSProperties}
+                    style={
+                      getDropDownStyles(
+                        menu.menuGroup,
+                        false
+                      ) as React.CSSProperties
+                    }
                   >
                     <DropdownMenu
                       renderSwitcher={(props: any) => (
@@ -251,12 +255,26 @@ const SideNav =  ({
                                     alt='icon'
                                     src={menu.icon}
                                     style={{
-                                      filter : typeof getDropDownStyles(menu.menuGroup , true) == "boolean" || themeClass.includes('dark') ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)' : 'unset'
+                                      filter:
+                                        typeof getDropDownStyles(
+                                          menu.menuGroup,
+                                          true
+                                        ) == 'boolean' ||
+                                        themeClass.includes('dark')
+                                          ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
+                                          : 'unset'
                                     }}
                                   />
                                 ) : (
-                                 // <RandomIcon size={16} />
-                                  <FileGallery height='20' width='20' fill={themeClass.includes('dark') ? '#fff' : '#1C274C'}/>
+                                  <FileGallery
+                                    height='20'
+                                    width='20'
+                                    fill={
+                                      themeClass.includes('dark')
+                                        ? '#fff'
+                                        : '#1C274C'
+                                    }
+                                  />
                                 )}
                               </div>
                               <span
@@ -288,9 +306,27 @@ const SideNav =  ({
                                   height={100}
                                   alt='icon'
                                   src={menu.icon}
+                                  style={{
+                                    filter:
+                                      typeof getDropDownStyles(
+                                        menu.menuGroup,
+                                        true
+                                      ) == 'boolean' ||
+                                      themeClass.includes('dark')
+                                        ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
+                                        : 'unset'
+                                  }}
                                 />
                               ) : (
-                                 <FileGallery height='20' width='20' fill={themeClass.includes('dark') ? '#fff' : '#1C274C'} />
+                                <FileGallery
+                                  height='20'
+                                  width='20'
+                                  fill={
+                                    themeClass.includes('dark')
+                                      ? '#fff'
+                                      : '#1C274C'
+                                  }
+                                />
                               )}
                             </span>
                           )}
@@ -339,7 +375,10 @@ const SideNav =  ({
                           : 'transparent',
                       width: '100%',
                       justifyContent: fullView ? 'unset' : 'center',
-                      color : routingName == pathname ? `${isLightColor(brandColor)}` : 'unset'
+                      color:
+                        routingName == pathname
+                          ? `${isLightColor(brandColor)}`
+                          : 'unset'
                     }}
                   >
                     {menu.screenDetails[0].icon ? (
@@ -350,23 +389,22 @@ const SideNav =  ({
                         alt='icon'
                         src={menu.screenDetails[0].icon}
                         style={{
-                          filter : routingName == pathname ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)' : 'unset'
+                          filter:
+                            routingName == pathname || themeClass.includes('dark')
+                              ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
+                              : 'unset'
                         }}
                       />
                     ) : (
-                     // <RandomIcon
-                     //   size={16}
-                     //   color={
-                     //     routingName == pathname
-                     //       ? `${isLightColor(brandColor)}`
-                    //        : 'black'
-                    //    }
-                   //   />
-                    <FileGallery height='20' width='20' fill={
-                         routingName == pathname
-                          ? `${isLightColor(brandColor)}`
-                        : 'black'
-                       } />
+                      <FileGallery
+                        height='20'
+                        width='20'
+                        fill={
+                          routingName == pathname 
+                            ? `${isLightColor(brandColor)}`
+                            : themeClass.includes('dark') ? '#fff' : '#1C274C'
+                        }
+                      />
                     )}
                     {fullView && (
                       <button key={index}>{menu.menuGroupLabel}</button>
@@ -413,7 +451,7 @@ const FullViewAvatar = ({
   logout: () => void
   user: string
   brandColor: string
-  userDetails:any
+  userDetails: any
 }) => {
   const router = useRouter()
   const tp_ps = getCookie('tp_ps')
@@ -504,7 +542,7 @@ const PartialViewAvatar = ({
   logout: () => void
   user: string
   brandColor: string
-  userDetails:any
+  userDetails: any
 }) => {
   const router = useRouter()
   const tp_ps = getCookie('tp_ps')
