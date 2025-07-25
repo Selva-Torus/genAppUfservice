@@ -85,7 +85,6 @@ const SideNav = ({
             src={screen.icon}
             style={{
               filter:
-                typeof getDropDownStyles(menu.menuGroup, true) == 'boolean' ||
                 themeClass.includes('dark')
                   ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
                   : 'unset'
@@ -125,12 +124,17 @@ const SideNav = ({
               height={100}
               alt='icon'
               src={item.icon}
+              style={{
+                filter: themeClass.includes('dark')
+                  ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
+                  : 'unset'
+              }}
             />
           ) : (
             <FileGallery
               height='20'
               width='20'
-              fill={`${isLightColor(brandColor)}`}
+              fill={themeClass.includes('dark') ? '#ffffff' : '#000000'}
             />
           )
         })
@@ -185,7 +189,7 @@ const SideNav = ({
         return {
           backgroundColor: brandColor,
           height: '6vh',
-          color: `${isLightColor(brandColor)}`
+          color: themeClass.includes('dark') ? '#ffffff' : '#000000'
         }
       }
 

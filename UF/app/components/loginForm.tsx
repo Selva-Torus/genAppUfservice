@@ -1,4 +1,3 @@
-
 "use client"
 import React, { useMemo, useState } from 'react'
 import { Logo } from '../components/Logo'
@@ -11,7 +10,8 @@ import { useRouter } from 'next/navigation';
 import { Spin } from '@gravity-ui/uikit';
 import { DefaultLoginImage } from '../utils/svgApplications';
 import { BsEyeFill, BsEyeSlash } from 'react-icons/bs'
-
+import Link from 'next/link';
+ 
 interface LoginProps {
     logo?: string;
     appName?: string;
@@ -19,8 +19,8 @@ interface LoginProps {
     loginType?: "standard" | "rightFloat" | "tenanted";
     image?: string;
 }
-
-const Login = ({ logo, appName = "TOBApp", brandColor = "#fafafb", loginType = "standard", image }: LoginProps) => {
+ 
+const Login = ({ logo, appName = "TOBApp", brandColor = "#76C432", loginType = "standard", image }: LoginProps) => {
     const [formData, setFormData] = useState<Record<string, string>>({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false)
@@ -35,12 +35,12 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#fafafb", loginType = "
             return process.env.NEXT_PUBLIC_TENANT_CODE
         }
     }, [loginType, formData])
-
+ 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value }));
     }
-
+ 
     const handleFormSubmit = async () => {
         try {
             if (tenant && formData.email && formData.password) {
@@ -74,7 +74,7 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#fafafb", loginType = "
 ]
                     }
                 screenDetails = screenDetails.keys
-                let defaultScreen ='' 
+                let defaultScreen =''
                 if (onBoardingKey === 'User Screen') {
                     defaultScreen = 'user'
                 }
@@ -111,7 +111,7 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#fafafb", loginType = "
             }
         }
     }
-
+ 
     return (
         <div className='flex w-screen h-screen'>
             {loginType == "rightFloat" &&
@@ -119,7 +119,7 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#fafafb", loginType = "
                     {image ? image : <DefaultLoginImage />}
                 </div>
             }
-
+ 
             <div
                 style={{ background: `linear-gradient(to bottom, ${brandColor}, #ffffff)` }}
                 className={`flex flex-col ${loginType === "rightFloat" ? "w-1/2 h-full" : "w-full h-full"}`}>
@@ -148,11 +148,11 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#fafafb", loginType = "
                             Create an account or log in to explore about our app
                         </p>
                     </div>
-                    <div className={`flex flex-col gap-[2.24vh] bg-white w-[20.98vw] px-[0.83vw] ${loginType === "tenanted" ? "min-h-[48.68vh]" : "min-h-[38.68vh]"}  rounded-lg`}>
+                    <div className={`flex flex-col gap-[2.24vh] bg-white w-[20.98vw] px-[0.83vw] ${loginType === "tenanted" ? "min-h-[48.68vh]" : "min-h-[40.68vh]"}  rounded-lg`}>
                         <h1 className='font-bold text-[1.5vw] py-[2.24vh]'>
                             Login
                         </h1>
-
+ 
                         {loginType === "tenanted" && <label className='flex flex-col gap-[0.62vh] text-[0.83vw]'>
                             Tenant
                             <input
@@ -164,7 +164,7 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#fafafb", loginType = "
                             />
                         </label>
                         }
-
+ 
                         <label className='flex flex-col gap-[0.62vh] text-[0.83vw]'>
                             Email Address
                             <input
@@ -210,6 +210,9 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#fafafb", loginType = "
                             )}
                             </button>
                         </label>
+                        <Link href="/forgot-password" className='text-black/50'>
+                            Forgot Password
+                        </Link>
                         <button
                             onClick={handleFormSubmit}
                             style={{ background: brandColor, color: isLightColor(brandColor) }}
@@ -217,7 +220,7 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#fafafb", loginType = "
                         >
                             {loading ? <Spin size="s" /> : "Login"}
                         </button>
-
+ 
                         <div
                             className="flex justify-center text-[0.65vw]"
                         >
@@ -237,5 +240,5 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#fafafb", loginType = "
         </div>
     )
 }
-
+ 
 export default Login

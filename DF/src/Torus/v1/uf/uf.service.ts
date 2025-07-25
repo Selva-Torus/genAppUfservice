@@ -3371,46 +3371,6 @@ export class UfService {
     // );
   }
 
-  async sendMailOTP(email: string) {
-    try {
-      if (!email) {
-        throw new BadRequestException('Not enough data to continue');
-      }
-      const otp = Math.floor(100000 + Math.random() * 900000);
-      const responseFromRedis = await this.redisService.getJsonData(
-        'CK:TRL:FNGK:AFR:FNK:TEMPLATE:CATK:Portal:AFGK:Email:AFK:mailVerficationOtp:AFVK:v1:AFI',
-      );
-      const verificationTemplate = JSON.parse(responseFromRedis);
-      const updatedTemplate = (verificationTemplate.text as string)
-        .replace('${email}', email.split('@')[0])
-        .replace('${otp}', `${otp}`);
-      const fabricatedUserName = email.split('@')[0];
-      const mailOptions = {
-        from: 'support@torus.tech',
-        to: email,
-        subject: verificationTemplate.subject,
-        // text: updatedTemplate,
-        html: verificationTemplate.html
-          .replace(
-            '${email}',
-            fabricatedUserName.charAt(0).toUpperCase() +
-              fabricatedUserName.slice(1),
-          )
-          .replace('${otp}', `${otp}`),
-      };
-      transporter.sendMail(mailOptions, async (error, info) => {
-        if (error) {
-          console.log('Please check email is correct');
-        } else {
-          console.log('Email sent: ' + info.response);
-        }
-      });
-      return { otp: otp, message: `Email sent` };
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
   // static screen's apis
 
   async getAppSecurityData() {
@@ -3691,7 +3651,11 @@ export class UfService {
   }
 
   async readAMDKey(key: string, token: string) {
-    const valueObj: any = await this.commonService.readAPI(key, 'redis', 'redis');
+    const valueObj: any = await this.commonService.readAPI(
+      key,
+      'redis',
+      'redis',
+    );
     if (valueObj) {
       return valueObj;
     } else {
@@ -3707,4 +3671,105 @@ export class UfService {
       throw new NotFoundException('data not found');
     }
   }
+
+  async getResetPasswordOtp(email: string) {
+    try {
+      if (!email) throw new BadRequestException('email is required');
+      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+      const otpCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:otp`;
+      const userResponse = await this.redisService.getJsonData(userCachekey);
+      if (!userResponse) throw new NotFoundException('no data found');
+      const userList: any[] = userResponse ? JSON.parse(userResponse) : [];
+      const foundedUser = userList.find(
+        (user) => user.email.toLowerCase() === email.toLowerCase(),
+      );
+      if (!foundedUser) throw new NotFoundException('user not found');
+
+      const otpTemplateFromRedis = await this.redisService.getJsonData(
+        'CK:TRL:FNGK:AFR:FNK:TEMPLATE:CATK:Portal:AFGK:EMail:AFK:resetPasswordOtp:AFVK:v1:AFI',
+      );
+      const resetOtpTemplate = otpTemplateFromRedis
+        ? JSON.parse(otpTemplateFromRedis)
+        : {};
+
+      const capitalizeFirstLetter = (str: string) => {
+        if (!str) return str; // If the string is empty or null, return it as is.
+        return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+      };
+      const otp = Math.floor(100000 + Math.random() * 900000);
+      const otpJsonFromRedis = await this.redisService.getJsonData(otpCacheKey);
+      var otpJson = [];
+
+      if (otpJsonFromRedis) {
+        otpJson = JSON.parse(otpJsonFromRedis);
+        const existingIndex = otpJson.findIndex((ele) => ele.email == email);
+        if (existingIndex != -1) {
+          otpJson.splice(existingIndex, 1, { email, otp });
+        } else {
+          otpJson.push({ email, otp });
+        }
+      } else {
+        otpJson.push({ email, otp });
+      }
+      await this.redisService.setJsonData(otpCacheKey, JSON.stringify(otpJson));
+
+      const updatedTemplateHtml = (resetOtpTemplate.html as string)
+        .replace(
+          '${name}',
+          `${capitalizeFirstLetter(foundedUser.firstName ?? email)} ${capitalizeFirstLetter(foundedUser.lastName ?? '')}`,
+        )
+        .replace('${otp}', `${otp}`).replaceAll('Torus' , process.env.APPNAME);
+      const mailOptions = {
+        from: 'support@torus.tech',
+        to: email,
+        subject: resetOtpTemplate.subject,
+        html: updatedTemplateHtml,
+      };
+      transporter.sendMail(mailOptions, async (error, info) => {
+        if (error) {
+          throw new ForbiddenException('There is an issue with sending otp');
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
+      return "Email sent to the registered email address"
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+
+  async verifyOtp(email:string , otp:string){
+    try {
+      if(!email || !otp) throw new BadRequestException('email or otp is required');
+      const otpCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:otp`;
+      const otpJsonFromRedis = await this.redisService.getJsonData(otpCacheKey);
+      if(!otpJsonFromRedis) throw new NotFoundException('otp not found');
+      const otpJson = JSON.parse(otpJsonFromRedis);
+      const existingIndex = otpJson.findIndex((ele) => ele.email == email && ele.otp == otp);
+      if (existingIndex == -1) throw new NotFoundException('invalid otp');
+      otpJson.splice(existingIndex, 1);
+      await this.redisService.setJsonData(otpCacheKey, JSON.stringify(otpJson));
+      return true
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+
+  async resetPassword(email:string , password:string){
+    try {
+     if(!email || !password) throw new BadRequestException('Please provide valid email and password');
+     const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+     const userResponse = await this.redisService.getJsonData(userCachekey);
+     if(!userResponse) throw new NotFoundException('no data found');
+     const userList: any[] = JSON.parse(userResponse);
+     const foundedUser = userList.find((user) => user.email.toLowerCase() === email.toLowerCase());
+     if(!foundedUser) throw new NotFoundException('user not found');
+     foundedUser.password = this.hashPassword(password);
+     await this.redisService.setJsonData(userCachekey, JSON.stringify(userList));
+     return "Password updated successfully"
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+
 }

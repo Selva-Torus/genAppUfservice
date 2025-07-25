@@ -8,6 +8,7 @@ import { getCookie } from '@/app/components/cookieMgment'
 import decodeToken from '@/app/components/decodeToken'
 import Artifactdetails from './artifactdetails'
 import { TotalContext, TotalContextProps } from '../globalContext'
+import { dateTime } from '@gravity-ui/date-utils'
 
 const ParentComponent = () => {
   const [searchTerm, setSearchTerm] = useState('')
@@ -26,6 +27,7 @@ const ParentComponent = () => {
   const decodedTokenObj: any = decodeToken(token)
   const [user, setUser] = useState<string>(decodedTokenObj?.loginId)
   const { encAppFalg,setEncAppFalg}= useContext(TotalContext) as TotalContextProps
+  const [range , setRange ] = useState({start: dateTime().subtract({days: 4}), end: dateTime().subtract({days: 1})})
 
   const [jsonData, setJsonData] = useState({
     data: [],
@@ -42,13 +44,13 @@ const ParentComponent = () => {
       appgroup: appGroup,
       app: app,
       user: [user],
-      FromDate: '',
-      ToDate: '',
+      FromDate: range.start.format('DD/MM/YYYY'),
+      ToDate: range.end.format('DD/MM/YYYY'),
       page: jsonData.page,
       limit: jsonData.limit,
       searchParam: search
     }
-  }, [activeTab, jsonData, search])
+  }, [activeTab, jsonData, search , range])
 
   const fetchData = async (signal: AbortSignal) => {
     try {
@@ -188,7 +190,7 @@ const ParentComponent = () => {
     return () => {
       controller.abort()
     }
-  }, [jsonData.page, jsonData.limit, search, activeTab])
+  }, [jsonData.page, jsonData.limit, search, activeTab , range])
 
   const handlePageChange = (newPage: number, newPageSize: number) => {
     setJsonData(prev => ({
@@ -212,6 +214,8 @@ const ParentComponent = () => {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           setNodeData={setNodeData}
+          range={range}
+          setRange={setRange}
         />
       )}
     </>

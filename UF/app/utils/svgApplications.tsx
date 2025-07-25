@@ -1,10 +1,10 @@
 import React from 'react'
 
-export const TorusLogo = () => {
+export const TorusLogo = ({ width = '2.3vw', height = '2.6vh' }) => {
   return (
     <svg
-      width='2.3vw'
-      height='2.6vh'
+      width={width}
+      height={height}
       viewBox='0 0 46 29'
       fill='none'
       xmlns='http://www.w3.org/2000/svg'

@@ -879,20 +879,6 @@
         ]
       }
     },
-    "/UF/sendMailOTP": {
-      "post": {
-        "operationId": "UfController_sendMailOTP",
-        "parameters": [],
-        "responses": {
-          "400": {
-            "description": "Invalid Email"
-          }
-        },
-        "tags": [
-          "TG"
-        ]
-      }
-    },
     "/UF/getAppSecurityData": {
       "get": {
         "operationId": "UfController_getAppSecurityData",
@@ -1004,6 +990,48 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
+    "/UF/getResetPasswordOtp": {
+      "get": {
+        "operationId": "UfController_getResetPasswordOtp",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
+    "/UF/verifyOtp": {
+      "get": {
+        "operationId": "UfController_verifyOtp",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
+    "/UF/resetPassword": {
+      "patch": {
+        "operationId": "UfController_resetPassword",
+        "parameters": [],
         "responses": {
           "200": {
             "description": ""

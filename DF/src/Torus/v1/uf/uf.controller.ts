@@ -12,6 +12,7 @@ import {
   HttpException,
   HttpStatus,
   Headers,
+  Patch,
 } from '@nestjs/common';
 import { UfService } from './uf.service';
 import {
@@ -973,33 +974,6 @@ export class UfController {
     } else return 'MDKey/count shouldnot be empty';
   }
 
-  @Post('sendMailOTP')
-  @ApiBadRequestResponse({ description: 'Invalid Email' })
-  async sendMailOTP(@Body() input: any, @Req() req: any) {
-    const token: string = req.headers.authorization?.split(' ')[1];
-
-    if (!token) {
-      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
-    }
-
-    const { email, dpdKey, method } = input;
-
-    if (email) {
-      try {
-        let result: any = await this.appService.sendMailOTP(email);
-        if (dpdKey && method) {
-          result['dpdKey'] = dpdKey;
-          result['method'] = method;
-        }
-        return result;
-      } catch (err) {
-        return err;
-      }
-    } else {
-      return 'Email is required';
-    }
-  }
-
   // static screen's apis
 
   @Get('getAppSecurityData')
@@ -1057,6 +1031,24 @@ export class UfController {
   async readAMDKey(@Query('key') key: string, @Req() req: any) {
     const token: string = req.headers.authorization?.split(' ')[1];
     return this.appService.readAMDKey(key, token);
+  }
+
+  @Get('getResetPasswordOtp')
+  async getResetPasswordOtp(@Query() query: any) {
+    const { email }  = query;
+    return this.appService.getResetPasswordOtp(email);
+  }
+
+  @Get('verifyOtp')
+  async verifyOtp(@Query() query: any) {
+    const { email, otp } = query;
+    return this.appService.verifyOtp(email, otp);
+  }
+
+  @Patch('resetPassword')
+  async resetPassword(@Body() body: any) {
+    const { email, password } = body;
+    return this.appService.resetPassword(email, password);
   }
 
 }

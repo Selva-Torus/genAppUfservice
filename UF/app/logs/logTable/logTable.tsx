@@ -2,6 +2,7 @@
 import {
   Button,
   Pagination,
+  Popup,
   Table,
   TableProps,
   Tabs,
@@ -9,11 +10,14 @@ import {
   withTableSelection,
   withTableSorting
 } from '@gravity-ui/uikit'
-import React, { SetStateAction, useMemo, useState } from 'react'
+import React, { SetStateAction, useMemo, useRef, useState } from 'react'
 import JsonView from 'react18-json-view'
 import 'react18-json-view/src/style.css'
 import { Copy } from '@gravity-ui/icons'
 import { CopyCheck } from '@gravity-ui/icons'
+import { useGravityThemeClass } from '@/app/utils/useGravityUITheme'
+import { RangeCalendar } from '@gravity-ui/date-components'
+import { DateTime } from '@gravity-ui/date-utils'
 const fontSize = 1
 interface DataItem {
   _id: string
@@ -57,7 +61,15 @@ interface TableHeaderProps {
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>
   activeTab: string
   setActiveTab: React.Dispatch<SetStateAction<'process' | 'torus'>>
-  setNodeData: React.Dispatch<SetStateAction<any>>
+  setNodeData: React.Dispatch<SetStateAction<any>>,
+  range: {
+    start: DateTime;
+    end: DateTime;
+},
+  setRange : React.Dispatch<React.SetStateAction<{
+    start: DateTime;
+    end: DateTime;
+}>>
 }
 
 const MyTable = withTableSorting(
@@ -72,7 +84,9 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   setSearchTerm,
   activeTab,
   setActiveTab,
-  setNodeData
+  setNodeData,
+  range,
+  setRange
 }) => {
   const headerProcessRowsItem = [
     'artifactName',
@@ -93,9 +107,13 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   ]
   const [copied, setCopied] = useState<string | null>(null)
   const [selectionId, setSelectionId] = useState<selectionId | null>(null)
+  const themeClass = useGravityThemeClass();
   const handleUpdate = (newPage: number, newPageSize: number) => {
     onPageChange(newPage, newPageSize)
   }
+  const [open , setOpen ] = useState(false)
+  const buttonElement = useRef<HTMLButtonElement>(null)
+  
 
   const nodeFiner = (data: any) => {
     const returnedData = Object.values(data).flat()
@@ -215,7 +233,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 key={`${item}${indexOfTime}`}
                 className='font-medium leading-[1.34vh]'
                 style={{
-                  color: '#25272C',
+                  opacity: 0.7,
                   fontSize: `${fontSize * 0.72}vw`
                 }}
               >
@@ -274,7 +292,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         <div
           className='leading-[1.85vh]'
           style={{
-            color: '#25272C',
+            opacity: 0.4,
             fontSize: `${fontSize * 0.625}vw`
           }}
         >
@@ -373,12 +391,12 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     ),
     Version: (
       <>
-        <RowElementContainer color='black' alignment='start' item={item.AFVK} />
+        <RowElementContainer color={themeClass.includes("dark") ? "#fff" : "#000"} alignment='start' item={item.AFVK} />
       </>
     ),
     Fabric: (
       <>
-        <RowElementContainer color='black' alignment='start' item={item.FNK} />
+        <RowElementContainer color={themeClass.includes("dark") ? "#fff" : "#000"} alignment='start' item={item.FNK} />
       </>
     ),
     'Session Info':
@@ -392,12 +410,12 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 <RowElementContainer
                   item={i?.user}
                   alignment='start'
-                  color='black'
+                  color={themeClass.includes("dark") ? "#fff" : "#000"}
                 />
                 <RowElementContainer
                   item={i?.accessProfile}
                   alignment='start'
-                  color='#999999'
+                  color={themeClass.includes("dark") ? "#fff" : "#000"}
                 />
               </div>
             )
@@ -414,7 +432,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 <RowElementContainer
                   item={i}
                   alignment='start'
-                  color='#5b606c'
+                  color={themeClass.includes("dark") ? "#fff" : "#000"}
                 />
               </div>
             )
@@ -431,7 +449,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 <RowElementContainer
                   item={i}
                   alignment='start'
-                  color='#5b606c'
+                  color={themeClass.includes("dark") ? "#fff" : "#000"}
                 />
               </div>
             )
@@ -449,7 +467,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 <RowElementContainer
                   item={i}
                   alignment='start'
-                  color='#5b606c'
+                  color={themeClass.includes("dark") ? "#ffffff56" : "#0000005"}
                 />
               </div>
             )
@@ -523,7 +541,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   }
 
   return (
-    <div className='grid h-full grid-cols-12'>
+    <div className={`grid h-full grid-cols-12 g-root ${themeClass}`}>
       <div className='col-span-12'>
         <div
           className='flex flex-col rounded-md'
@@ -533,7 +551,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         >
           <div className='flex w-full items-center justify-between'>
             <div className=' ml-3.5 flex items-center justify-start gap-1.5 '>
-              <LogsHub fill='black' width='1.55vw' height='1.55vw' />
+              <LogsHub fill={themeClass.includes("dark") ? "#fff" : "#000"} width='1.55vw' height='1.55vw' />
               <HeaderElementContainer
                 header='Logs Hug'
                 rounded=''
@@ -545,8 +563,22 @@ const TableHeader: React.FC<TableHeaderProps> = ({
               placeholder='Search...'
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value.trim())}
-              className='w-[50%] rounded-md border border-gray-300 px-2 text-[0.82vw] shadow-md focus:border focus:border-blue-500 xl:py-1 2xl:py-2'
+              className='w-[50%] rounded-md border px-2 text-[0.82vw] shadow-md focus:border xl:py-1 2xl:py-2'
+              style={{
+                      backgroundColor: 'var(--g-color-base-background)',
+                      color: 'var(--g-color-text-primary)',
+                      borderColor: 'var(--g-color-line-generic)',
+                    }}
             />
+
+              <div>
+                <Button ref={buttonElement} onClick={() => setOpen(!open)}>DateRange : {range.start.format('DD/MM/YYYY')} - {range.end.format('DD/MM/YYYY')}</Button>
+                <Popup anchorRef={buttonElement} placement={'bottom-end'} open={open}>
+                <RangeCalendar value={range} onUpdate={(data: any) =>setRange(data)
+                } />
+                </Popup>
+              </div>
+
             {/* { PLS DON'T DELETE } */}
             <LogSwitcher activeTab={activeTab} setActiveTab={handleTabChange} />
           </div>
@@ -655,13 +687,13 @@ const HeaderElementContainer = ({
   return (
     <div
       className={`h-full w-full px-1 py-[0.75vw] text-center ${rounded ? rounded : 'rounded-none'} `}
-      style={{
-        backgroundColor: 'transparent'
-      }}
+      // style={{
+      //   backgroundColor: 'transparent'
+      // }}
     >
       <h3
         style={{
-          color: '#ffffff/80',
+          // color: '#ffffff/80',
           fontSize: '0.72vw',
           fontWeight: '400'
         }}
@@ -681,29 +713,30 @@ const ArtifactNameContainer = ({
   app: string
   appGroup: string
 }) => {
+  const themeClass = useGravityThemeClass();
   return (
     <div>
       <RowElementContainer
         item={artifactName}
-        color={'black'}
+        color={themeClass.includes('dark' ) ? 'white' : 'black'}
         alignment={'start'}
       />
       <div className='flex items-center justify-start gap-1'>
         <RowElementContainer
           item={app}
-          color={'#25272C'}
+          color={themeClass.includes('dark') ? '#ffffff59' : '#00000059'}
           alignment={'center'}
           size='0.62vw'
         />
         <RowElementContainer
           item={'>'}
-          color={'#25272C'}
+          color={themeClass.includes('dark') ? '#ffffff59' : '#00000059'}
           alignment={'center'}
           size='0.62vw'
         />
         <RowElementContainer
           item={appGroup}
-          color={'#25272C'}
+          color={themeClass.includes('dark') ? '#ffffff59' : '#00000059'}
           alignment={'center'}
           size='0.62vw'
         />
@@ -719,13 +752,14 @@ const LogSwitcher = ({
   activeTab: string
   setActiveTab: (item: string) => void
 }) => {
+  const themeClass = useGravityThemeClass();
   return (
     <Tabs className={' pr-[0.58vw]'} activeTab={activeTab}>
       <Tabs.Item
         id='process'
         title={
           <RowElementContainer
-            color='black'
+            color={themeClass.includes('dark') ? '#ffffff59' : '#00000059'}
             alignment='start'
             item={'Process Log'}
           />
@@ -738,7 +772,7 @@ const LogSwitcher = ({
         id='torus'
         title={
           <RowElementContainer
-            color='black'
+            color={themeClass.includes('dark') ? '#ffffff59' : '#00000059'}
             alignment='start'
             item={'System Log'}
           />
@@ -778,12 +812,12 @@ const JsonViewer = ({ tabdata }: any) => {
   return (
     <div
       className={`w-[100%] ${tabdata ? 'xl:h-[68vh] 2xl:h-[80vh]' : ' h-[20vh]'} mr-[0.87vw] mt-[0.58vw] items-center rounded-lg`}
-      style={{ backgroundColor: '#F7F8F8' }}
+      // style={{ backgroundColor: '#F7F8F8' }}
     >
       <p
         className='p-[0.87vw] text-left font-semibold leading-[2.22vh]'
         style={{
-          color: 'black',
+          opacity: 0.7,
           fontSize: `0.72vw`
         }}
       >
