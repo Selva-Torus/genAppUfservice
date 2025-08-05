@@ -16,11 +16,11 @@ interface LoginProps {
     logo?: string;
     appName?: string;
     brandColor?: string;
-    loginType?: "standard" | "rightFloat" | "tenanted";
+    loginType?: "standard" | "rightAligned" | "leftAligned";
     image?: string;
 }
  
-const Login = ({ logo, appName = "TOBApp", brandColor = "#76C432", loginType = "standard", image }: LoginProps) => {
+const Login = ({ logo, appName = "TOBApp", brandColor = "#76C432", loginType = "rightAligned", image }: LoginProps) => {
     const [formData, setFormData] = useState<Record<string, string>>({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false)
@@ -28,13 +28,7 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#76C432", loginType = "
     const toast = useInfoMsg()
     const router = useRouter()
     const onBoardingKey:string = "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TOB001:AFGK:TOB002:AFK:TOB_Dashboard_Screen:AFVK:v1"
-    const tenant = useMemo(() => {
-        if (loginType == "tenanted") {
-            return formData?.tenant ?? "";
-        } else {
-            return process.env.NEXT_PUBLIC_TENANT_CODE
-        }
-    }, [loginType, formData])
+    const tenant = process.env.NEXT_PUBLIC_TENANT_CODE;
  
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -113,16 +107,18 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#76C432", loginType = "
     }
  
     return (
-        <div className='flex w-screen h-screen'>
-            {loginType == "rightFloat" &&
+        <div className={'flex w-screen h-screen'} style={{
+            flexDirection : loginType == "leftAligned" ?  "row-reverse" : "row"
+        }}>
+            {loginType !== "standard" &&
                 <div className='flex flex-col w-1/2 h-full justify-center items-center'>
-                    {image ? image : <DefaultLoginImage />}
+                    {image ? <img className='h-full w-full' src={image} alt='login' /> : <DefaultLoginImage />}
                 </div>
             }
  
             <div
                 style={{ background: `linear-gradient(to bottom, ${brandColor}, #ffffff)` }}
-                className={`flex flex-col ${loginType === "rightFloat" ? "w-1/2 h-full" : "w-full h-full"}`}>
+                className={`flex flex-col ${loginType !== "standard" ? "w-1/2 h-full" : "w-full h-full"}`}>
                 <div className='flex flex-col gap-[5.24vh] h-[80vh] justify-center items-center'>
                     <div className='flex flex-col gap-[1.24vh] items-center'>
                         {logo ? (
@@ -148,22 +144,10 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#76C432", loginType = "
                             Create an account or log in to explore about our app
                         </p>
                     </div>
-                    <div className={`flex flex-col gap-[2.24vh] bg-white w-[20.98vw] px-[0.83vw] ${loginType === "tenanted" ? "min-h-[48.68vh]" : "min-h-[40.68vh]"}  rounded-lg`}>
+                    <div className={`flex flex-col gap-[2.24vh] bg-white w-[20.98vw] px-[0.83vw] min-h-[40.68vh] rounded-lg`}>
                         <h1 className='font-bold text-[1.5vw] py-[2.24vh]'>
                             Login
                         </h1>
- 
-                        {loginType === "tenanted" && <label className='flex flex-col gap-[0.62vh] text-[0.83vw]'>
-                            Tenant
-                            <input
-                                type="text"
-                                name="tenant"
-                                className='bg-[#F4F5FA] rounded-full py-[1.24vh] px-[0.83vw] outline-none'
-                                placeholder='Enter your tenant'
-                                onChange={handleInputChange}
-                            />
-                        </label>
-                        }
  
                         <label className='flex flex-col gap-[0.62vh] text-[0.83vw]'>
                             Email Address

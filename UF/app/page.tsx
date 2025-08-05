@@ -64,7 +64,7 @@ export default function HomePage() {
 
   return (
     <>
-      <LoginForm logo=""/>
+      <LoginForm logo="" image='https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/nodeicons/DF-DFD/ext-streamnode.svg' loginType='standard'/>
     </>
   )
 }
