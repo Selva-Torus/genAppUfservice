@@ -318,45 +318,7 @@ const LayoutDecider = ({
 
   if (loading == true)
     return (
-      <div className={`skeleton skeleton-loading h-full w-full`}>
-        <style jsx>{`
-          .skeleton {
-            background-color: #e0e0e0;
-            background-image: linear-gradient(
-              90deg,
-              #f0f0f0 25%,
-              #f7f7f7 50%,
-              #f0f0f0 75%
-            );
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            border-radius: 4px;
-          }
-
-          @keyframes loading {
-            0% {
-              background-position: 200% 0;
-            }
-            100% {
-              background-position: -200% 0;
-            }
-          }
-
-          .skeleton-text {
-            height: 20px;
-          }
-
-          .skeleton-image {
-            height: 150px;
-            border-radius: 8px;
-          }
-
-          .skeleton-card {
-            height: 200px;
-            border-radius: 8px;
-          }
-        `}</style>
-      </div>
+     <div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><img src="" alt="loadingImage" /></div>
     )
   return (
     <div className={`flex h-screen w-screen flex-col`}>

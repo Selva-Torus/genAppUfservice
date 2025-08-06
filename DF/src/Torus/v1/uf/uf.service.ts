@@ -3157,6 +3157,10 @@ export class UfService {
         (user: any) => user.loginId === username || user.email === username,
       );
 
+      if(!loggedInUser){
+        throw new UnauthorizedException('Invalid credentials');
+      }
+
       const isPasswordMatch = this.comparePasswords(
         password,
         loggedInUser.password,

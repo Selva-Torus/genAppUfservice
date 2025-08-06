@@ -1,37 +1,22 @@
 'use client'
 import {
   Button,
+  Modal,
   Pagination,
-  Popup,
   Table,
   TableProps,
   Tabs,
   withTableActions,
-  withTableSelection,
   withTableSorting
 } from '@gravity-ui/uikit'
 import React, { SetStateAction, useMemo, useRef, useState } from 'react'
 import JsonView from 'react18-json-view'
 import 'react18-json-view/src/style.css'
-import { Copy } from '@gravity-ui/icons'
-import { CopyCheck } from '@gravity-ui/icons'
 import { useGravityThemeClass } from '@/app/utils/useGravityUITheme'
-import { RangeCalendar } from '@gravity-ui/date-components'
 import { DateTime } from '@gravity-ui/date-utils'
+import { FilterIcon } from '@/app/components/svgApplication'
+import LogsFilterationModal from './LogsFilterationModal'
 const fontSize = 1
-interface DataItem {
-  _id: string
-  CK: string
-  FNGK: string
-  FNK: string
-  CATK: string
-  AFGK: string
-  AFK: string
-  AFVK: string
-  USER: string
-  DATE: string
-  AFSK?: { [key: string]: { processInfo: { status: string } }[] }
-}
 
 interface selectionId {
   id: string
@@ -70,6 +55,8 @@ interface TableHeaderProps {
     start: DateTime;
     end: DateTime;
 }>>
+fabrics: Array<string>;
+setFabrics: React.Dispatch<React.SetStateAction<Array<string>>>
 }
 
 const MyTable = withTableSorting(
@@ -86,7 +73,9 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   setActiveTab,
   setNodeData,
   range,
-  setRange
+  setRange,
+  fabrics,
+  setFabrics
 }) => {
   const headerProcessRowsItem = [
     'artifactName',
@@ -558,12 +547,13 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 background='transparent'
               />
             </div>
+            <div className='flex items-center justify-center w-[70%] gap-2'>
             <input
               type='text'
               placeholder='Search...'
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value.trim())}
-              className='w-[50%] rounded-md border px-2 text-[0.82vw] shadow-md focus:border xl:py-1 2xl:py-2'
+              className='w-[50%] rounded-md border px-2 text-[0.82vw] shadow-md focus:border xl:py-1 2xl:py-2 outline-none'
               style={{
                       backgroundColor: 'var(--g-color-base-background)',
                       color: 'var(--g-color-text-primary)',
@@ -572,11 +562,21 @@ const TableHeader: React.FC<TableHeaderProps> = ({
             />
 
               <div>
-                <Button ref={buttonElement} onClick={() => setOpen(!open)}>DateRange : {range.start.format('DD/MM/YYYY')} - {range.end.format('DD/MM/YYYY')}</Button>
-                <Popup anchorRef={buttonElement} placement={'bottom-end'} open={open}>
-                <RangeCalendar value={range} onUpdate={(data: any) =>setRange(data)
-                } />
-                </Popup>
+                <Button  ref={buttonElement} onClick={() => setOpen(!open)}>
+                  <span className='flex items-center gap-2'>
+                  Filter <FilterIcon fill='var(--g-color-text-primary)'/>
+                  </span>
+                </Button>
+                <Modal open={open}>
+                <LogsFilterationModal 
+                  setOpen={setOpen} 
+                  range={range} 
+                  setRange={setRange} 
+                  fabrics={fabrics} 
+                  setFabrics={setFabrics}
+                />
+              </Modal>
+              </div>
               </div>
 
             {/* { PLS DON'T DELETE } */}
@@ -857,7 +857,7 @@ const LogsHub = ({ width = '1.25vw', height = '1.25vw', fill = 'black' }) => {
         d='M7.971 1.88397C8.16743 2.10839 8.26672 2.40162 8.24703 2.69921C8.22734 2.9968 8.09029 3.27439 7.866 3.47097L5.8335 5.24997L7.866 7.02897C7.98145 7.12499 8.07651 7.24314 8.14558 7.37647C8.21464 7.50981 8.25632 7.65562 8.26815 7.80531C8.27998 7.955 8.26172 8.10555 8.21445 8.24807C8.16718 8.3906 8.09186 8.52222 7.99292 8.63517C7.89399 8.74813 7.77344 8.84014 7.63838 8.90577C7.50333 8.9714 7.3565 9.00934 7.20655 9.01733C7.05661 9.02533 6.90658 9.00323 6.76531 8.95233C6.62404 8.90143 6.49439 8.82276 6.384 8.72097L3.384 6.09597C3.26354 5.99038 3.16702 5.86029 3.10089 5.71439C3.03477 5.56849 3.00056 5.41016 3.00056 5.24997C3.00056 5.08979 3.03477 4.93145 3.10089 4.78555C3.16702 4.63965 3.26354 4.50956 3.384 4.40397L6.384 1.77897C6.60841 1.58254 6.90165 1.48326 7.19924 1.50294C7.49683 1.52263 7.77442 1.65968 7.971 1.88397ZM10.779 1.88397C10.5826 2.10839 10.4833 2.40162 10.503 2.69921C10.5227 2.9968 10.6597 3.27439 10.884 3.47097L12.9165 5.24997L10.884 7.02897C10.7685 7.12499 10.6735 7.24314 10.6044 7.37647C10.5354 7.50981 10.4937 7.65562 10.4819 7.80531C10.47 7.955 10.4883 8.10555 10.5355 8.24807C10.5828 8.3906 10.6581 8.52222 10.7571 8.63517C10.856 8.74813 10.9766 8.84014 11.1116 8.90577C11.2467 8.9714 11.3935 9.00934 11.5434 9.01733C11.6934 9.02533 11.8434 9.00323 11.9847 8.95233C12.126 8.90143 12.2556 8.82276 12.366 8.72097L15.366 6.09597C15.4865 5.99038 15.583 5.86029 15.6491 5.71439C15.7152 5.56849 15.7494 5.41016 15.7494 5.24997C15.7494 5.08979 15.7152 4.93145 15.6491 4.78555C15.583 4.63965 15.4865 4.50956 15.366 4.40397L12.366 1.77897C12.1416 1.58254 11.8484 1.48326 11.5508 1.50294C11.2532 1.52263 10.9756 1.65968 10.779 1.88397ZM4.125 11.25C3.82663 11.25 3.54048 11.3685 3.3295 11.5795C3.11853 11.7905 3 12.0766 3 12.375C3 12.6733 3.11853 12.9595 3.3295 13.1705C3.54048 13.3814 3.82663 13.5 4.125 13.5H19.875C20.1734 13.5 20.4595 13.3814 20.6705 13.1705C20.8815 12.9595 21 12.6733 21 12.375C21 12.0766 20.8815 11.7905 20.6705 11.5795C20.4595 11.3685 20.1734 11.25 19.875 11.25H4.125ZM3 16.875C3 16.5766 3.11853 16.2905 3.3295 16.0795C3.54048 15.8685 3.82663 15.75 4.125 15.75H19.875C20.1734 15.75 20.4595 15.8685 20.6705 16.0795C20.8815 16.2905 21 16.5766 21 16.875C21 17.1733 20.8815 17.4595 20.6705 17.6705C20.4595 17.8814 20.1734 18 19.875 18H4.125C3.82663 18 3.54048 17.8814 3.3295 17.6705C3.11853 17.4595 3 17.1733 3 16.875ZM4.125 20.25C3.82663 20.25 3.54048 20.3685 3.3295 20.5795C3.11853 20.7905 3 21.0766 3 21.375C3 21.6733 3.11853 21.9595 3.3295 22.1705C3.54048 22.3814 3.82663 22.5 4.125 22.5H13.875C14.1734 22.5 14.4595 22.3814 14.6705 22.1705C14.8815 21.9595 15 21.6733 15 21.375C15 21.0766 14.8815 20.7905 14.6705 20.5795C14.4595 20.3685 14.1734 20.25 13.875 20.25H4.125Z'
         fill={fill}
         stroke='white'
-        stroke-width='0.5'
+        strokeWidth='0.5'
       />
     </svg>
   )

@@ -27,7 +27,8 @@ const ParentComponent = () => {
   const decodedTokenObj: any = decodeToken(token)
   const [user, setUser] = useState<string>(decodedTokenObj?.loginId)
   const { encAppFalg,setEncAppFalg}= useContext(TotalContext) as TotalContextProps
-  const [range , setRange ] = useState({start: dateTime().subtract({days: 4}), end: dateTime().subtract({days: 1})})
+  const [range , setRange ] = useState({start: dateTime().subtract({days: 4}), end: dateTime()})
+  const [ fabrics , setFabrics ] = useState<Array<string>>([])
 
   const [jsonData, setJsonData] = useState({
     data: [],
@@ -37,20 +38,34 @@ const ParentComponent = () => {
     totalPages: 0
   })
   const search = useDeferredValue(searchTerm)
+
+  const suffixes: any = {
+  DF: ["DFD"],
+  UF: ["UFM", "UFW"],
+  PF: ["PFD"],
+  API: ["APID", "ERD"],
+  AIF: ["AIFD"],
+  CDF: ["DPD", "IFD"],
+};  
+
   let payload:any = useMemo(() => {
     return {
       tenant: 'CT242',
-      fabric: [],
+      fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
+            suffixes[prefix]
+              ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
+              : []
+          ) : [],
       appgroup: appGroup,
       app: app,
       user: [user],
-      FromDate: range.start.format('DD/MM/YYYY'),
-      ToDate: range.end.format('DD/MM/YYYY'),
+      FromDate: range.start.format('YYYY-MM-DD'),
+      ToDate: range.end.format('YYYY-MM-DD'),
       page: jsonData.page,
       limit: jsonData.limit,
       searchParam: search
     }
-  }, [activeTab, jsonData, search , range])
+  }, [activeTab, jsonData, search , range , fabrics])
 
   const fetchData = async (signal: AbortSignal) => {
     try {
@@ -216,6 +231,8 @@ const ParentComponent = () => {
           setNodeData={setNodeData}
           range={range}
           setRange={setRange}
+          fabrics={fabrics}
+          setFabrics={setFabrics}
         />
       )}
     </>
