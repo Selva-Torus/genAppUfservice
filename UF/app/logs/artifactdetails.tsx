@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
-
 import JsonView from 'react18-json-view'
-import { ArrowLeft } from '@gravity-ui/icons'
-// import { TabProvider, TabList, Tab, TabPanel } from '@gravity-ui/uikit'
+import { ArrowLeft, Copy, CopyCheckXmark, ChevronDown } from '@gravity-ui/icons'
 import 'react18-json-view/src/style.css'
 import { twMerge } from 'tailwind-merge'
+import { Button, Loader } from '@gravity-ui/uikit'
+import { AxiosService } from '../components/axiosService'
 
 const fontSize = 1
 interface Nodedataprops {
@@ -22,22 +22,157 @@ interface Nodedataprops {
   setNodeData: any
 }
 
-interface Nodeprops {
-  name: string
-  request: string
-  response: string
-  time: string[]
-  status: string
-  exception: string
-}
+const RenderNodesInfo = ({
+  nodes,
+  selectedNode,
+  handleNodeClick,
+  handleCopyToClipboard,
+  copied
+}: {
+  nodes: any[]
+  selectedNode: any
+  handleNodeClick: (node: any) => void
+  handleCopyToClipboard: (uid: string) => Promise<void>
+  copied: string | null
+}) => {
+  const [subFlowNodes, setSubFlowNodes] = useState<any[]>([])
+  const [isExpanded, setIsExpanded] = useState<string | null>(null)
+  const [isLoading, setLoading] = useState(false)
 
-type ItemType = {
-  id: string
-  name: string
+  const handleSubFlowNodes = async (node: any) => {
+    if (isExpanded === node.subFlowInfo?.subFlowUpId) {
+      setIsExpanded(null)
+      setSubFlowNodes([])
+      return
+    }
+    if (node.subFlowInfo) {
+      setLoading(true)
+      const { subFlowKey, subFlowUpId } = node.subFlowInfo
+      setIsExpanded(subFlowUpId)
+      const response = await AxiosService.post(
+        '/subFlowLog',
+        {
+          key: subFlowKey,
+          upId: subFlowUpId
+        }
+      )
+      if (response.status == 201 && Array.isArray(response.data)) {
+        setIsExpanded(subFlowUpId)
+        setSubFlowNodes(
+          response.data.map((item: any) => ({
+            name: item?.processInfo?.nodeName,
+            request: item?.processInfo?.request,
+            response: item?.processInfo?.response,
+            exception: item?.errorDetails,
+            status: item?.processInfo?.status,
+            time: item?.DateAndTime,
+            subFlowInfo: item?.processInfo?.subFlowInfo
+          }))
+        )
+      }
+    } else {
+      setSubFlowNodes([])
+      setIsExpanded(null)
+    }
+    setLoading(false)
+    handleNodeClick(node)
+  }
+
+  return (
+    <div className='scrollbar-hide flex  h-full flex-col overflow-auto py-1'>
+      {nodes.map((item: Record<string, any>, index: number) => (
+        <div key={index}>
+          <div
+            className={`mx-[0.2vw] flex cursor-pointer items-center justify-between rounded p-[0.87vw] transition-colors duration-300 ease-in-out`}
+            onClick={e => {
+              e.stopPropagation()
+              handleSubFlowNodes(item)
+            }}
+          >
+            <div className='flex flex-col items-start rounded-md'>
+              <span
+                style={{
+                  fontSize: `${fontSize * 0.72}vw`,
+                  color:
+                    JSON.stringify(selectedNode) === JSON.stringify(item) ? 'var(--brand-color)' : ''
+                }}
+                className='px-[0.58vw] py-[0.42vh] leading-[1.25vw]'
+              >
+                {item.name}
+              </span>
+              {item.subFlowInfo && (
+                <div
+                  className='flex w-fit items-center gap-1 rounded-full p-2 font-medium leading-[1.85vh]'
+                  style={{
+                    backgroundColor: 'var(--selection-color)',
+                    fontSize: `${fontSize * 0.625}vw`
+                  }}
+                >
+                  UID: {item?.subFlowInfo?.subFlowUpId}
+                  <Button
+                    view='flat'
+                    size='xs'
+                    className='border-none'
+                    onClick={e => {
+                      e.stopPropagation()
+                      handleCopyToClipboard(item?.subFlowInfo?.subFlowUpId)
+                    }}
+                  >
+                    {copied && copied === item?.subFlowInfo?.subFlowUpId ? (
+                      <CopyCheckXmark className='text-green-500' />
+                    ) : (
+                      <Copy />
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+            {item.subFlowInfo && (
+              <div
+                className={twMerge(
+                  'transform-gpu transition-transform duration-300 ease-in-out',
+                  isExpanded == item?.subFlowInfo?.subFlowUpId
+                    ? 'rotate-180'
+                    : 'rotate-0'
+                )}
+              >
+                <ChevronDown />
+              </div>
+            )}
+          </div>
+          <div>
+            {isExpanded &&
+            item?.subFlowInfo?.subFlowUpId &&
+            isExpanded == item?.subFlowInfo?.subFlowUpId &&
+            isLoading ? (
+              <Loader className='flex w-full justify-center' />
+            ) : (
+              isExpanded &&
+              item?.subFlowInfo?.subFlowUpId &&
+              isExpanded == item?.subFlowInfo?.subFlowUpId && (
+                <div
+                  className='border-b pl-[0.2vw]'
+                  style={{ borderColor: 'var(--g-color-line-generic)' }}
+                >
+                  <RenderNodesInfo
+                    nodes={subFlowNodes}
+                    selectedNode={selectedNode}
+                    handleNodeClick={handleNodeClick}
+                    handleCopyToClipboard={handleCopyToClipboard}
+                    copied={copied}
+                  />
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<string>('')
   const [selectedNode, setSelectedNode] = useState<any>(nodeData?.node?.[0])
   const { artifact, version, processId, status, time } = nodeData
@@ -72,11 +207,13 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
     }
   }
 
-  const handleCopyToClipboard = async () => {
+  const handleCopyToClipboard = async (uid: string) => {
     try {
-      await navigator.clipboard.writeText(processId)
- 
-
+      await navigator.clipboard.writeText(uid)
+      setCopied(uid)
+      setTimeout(() => {
+        setCopied(null)
+      }, 2000)
     } catch (err) {
       console.error('Failed to copy text: ', err)
     }
@@ -136,18 +273,29 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
         }}
         className='col-span-12 flex h-full w-full gap-5 overflow-hidden'
       >
-        <div className='flex h-full w-[15%] flex-col rounded-lg border'>
-          <div className='flex flex-col border-b'>
+        <div
+          className='flex h-full w-[20%] flex-col rounded-lg border'
+          style={{ borderColor: 'var(--g-color-line-generic)' }}
+        >
+          <div
+            className='flex flex-col border-b py-[1vh]'
+            style={{ borderColor: 'var(--g-color-line-generic)' }}
+          >
             <div
               onClick={() => setNodeData(null)}
-              className='flex justify-between p-[0.87vw]'
+              className='flex items-center justify-between px-[0.87vw] py-[1vh]'
             >
-              <ArrowLeft className='cursor-pointer' role='button' onClick={() => setNodeData(null)} />
+              <ArrowLeft
+                className='cursor-pointer'
+                role='button'
+                onClick={() => setNodeData(null)}
+              />
               <h1
                 style={{
                   fontSize: `${fontSize * 0.83}vw`
                 }}
-                className=' mx-[0.29vw] font-semibold leading-[1.25vw]'
+                className='mx-[0.29vw] w-[80%] truncate font-semibold leading-[1.25vw]'
+                title={artifact.toUpperCase()}
               >
                 {artifact.toUpperCase()}
               </h1>
@@ -161,38 +309,47 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                 {version}
               </p>
             </div>
-          </div>
-          <div className='scrollbar-hide flex  h-full flex-col overflow-auto py-1'>
-            {nodeData.node.map(
-              (item: Record<string, string>, index: number) => (
-                <div
-                  key={index}
-                  style={{
-                    backgroundColor:
-                      selectedNode?.name === item.name
-                        ? 'var(--selection-color)'
-                        : ''
+            {processId && (
+              <div
+                className='flex w-fit items-center self-center rounded-full p-[0.2vw] font-medium leading-[1.85vh]'
+                style={{
+                  backgroundColor: 'var(--selection-color)',
+                  fontSize: `${fontSize * 0.625}vw`
+                }}
+              >
+                UID: {processId}
+                <Button
+                  view='flat'
+                  size='xs'
+                  className='border-none'
+                  onClick={e => {
+                    e.stopPropagation()
+                    handleCopyToClipboard(processId)
                   }}
-                  // onMouseEnter={(e) => (e.target as HTMLDivElement).style.backgroundColor = torusTheme["bgCard"]}
-                  // onMouseLeave={(e) => (e.target as HTMLDivElement).style.backgroundColor = ""}
-                  className={`mx-[0.2vw] cursor-pointer rounded p-[0.87vw] transition-colors duration-300 ease-in-out`}
-                  onClick={() => handleNodeClick(item)}
                 >
-                  <div className='flex items-center rounded-md'>
-                    <span
-                      style={{ fontSize: `${fontSize * 0.72}vw` }}
-                      className='px-[0.58vw] py-[0.42vh] leading-[1.25vw]'
-                    >
-                      {item.name}
-                    </span>
-                  </div>
-                </div>
-              )
+                  {copied && copied === processId ? (
+                    <CopyCheckXmark className='text-green-500' />
+                  ) : (
+                    <Copy />
+                  )}
+                </Button>
+              </div>
             )}
           </div>
+          {/* seperate */}
+          <RenderNodesInfo
+            nodes={nodeData.node}
+            selectedNode={selectedNode}
+            handleNodeClick={handleNodeClick}
+            copied={copied}
+            handleCopyToClipboard={handleCopyToClipboard}
+          />
         </div>
 
-        <div className='flex h-full w-[85%] flex-col rounded-lg border'>
+        <div
+          className='flex h-full w-[80%] flex-col rounded-lg border'
+          style={{ borderColor: 'var(--g-color-line-generic)' }}
+        >
           <div className='flex h-full w-full rounded-lg'>
             <div className='flex h-full w-[70%] flex-col gap-[0.87vw] p-[0.58vw]'>
               <div
@@ -300,11 +457,17 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
               </div>
             </div>
 
-            <hr className='h-[95%] w-[0.5px] border self-center' />
+            <hr
+              className='h-[95%] w-[0.5px] self-center border'
+              style={{ borderColor: 'var(--g-color-line-generic)' }}
+            />
 
             <div className={`flex h-full w-[45%] p-[1.46vw] text-center`}>
               <div className='w-full'>
-                <div className='ml-[0.2vw] mt-[0.5vh] flex w-[98%] items-center gap-[0.58vw] rounded-md border'>
+                <div
+                  className='flex w-[98%] items-center gap-[0.58vw] rounded-md border'
+                  style={{ borderColor: 'var(--g-color-line-generic)' }}
+                >
                   <div
                     onClick={() => {
                       setActiveTab('request')

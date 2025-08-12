@@ -17,6 +17,7 @@ import { DateTime } from '@gravity-ui/date-utils'
 import { FilterIcon } from '@/app/components/svgApplication'
 import LogsFilterationModal from './LogsFilterationModal'
 const fontSize = 1
+import { CopyCheckXmark , Copy } from '@gravity-ui/icons';
 
 interface selectionId {
   id: string
@@ -57,6 +58,8 @@ interface TableHeaderProps {
 }>>
 fabrics: Array<string>;
 setFabrics: React.Dispatch<React.SetStateAction<Array<string>>>
+user: Array<string>;
+setUser: React.Dispatch<React.SetStateAction<Array<string>>>
 }
 
 const MyTable = withTableSorting(
@@ -75,10 +78,13 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   range,
   setRange,
   fabrics,
-  setFabrics
+  setFabrics,
+  user,
+  setUser
 }) => {
   const headerProcessRowsItem = [
     'artifactName',
+    'user',
     'version',
     'fabric',
     'status',
@@ -270,10 +276,9 @@ const TableHeader: React.FC<TableHeaderProps> = ({
       }
     }
     return (
-      <div className='flex w-[50%]  flex-col gap-[0.29vw]'>
+      <div className='flex w-[40%] flex-col gap-[0.29vw]' onClick={() => setNodeData(nodeData)}>
         <div
           className='font-bold leading-[1.85vh]'
-          onClick={() => setNodeData(nodeData)}
           style={{ fontSize: `${fontSize * 0.833}vw` }}
         >
           {artifact}
@@ -289,27 +294,29 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         </div>
         {processId && (
           <div
-            className='flex items-center gap-1 rounded-full  p-2 font-medium leading-[1.85vh]'
+            className='flex items-center gap-1 rounded-full p-2 font-medium leading-[1.85vh] w-fit'
             style={{
               backgroundColor: 'var(--selection-color)',
-              // borderColor: '#E0E3F2',
-              // color: '#25272C',
               fontSize: `${fontSize * 0.625}vw`
             }}
           >
             UID: {processId}
-            {/* <Button
+            <Button
               view='flat'
               size='xs'
-              className='flex items-center border-none hover:bg-transparent  active:bg-transparent'
-              onClick={() => handleCopyToClipboard(processId)}
+              className='border-none'
+              
+              onClick={(e) => {
+                e.stopPropagation()
+                handleCopyToClipboard(processId)
+              }}
             >
               {copied && copied === processId ? (
-                <CopyCheck className='text-green-500' />
+                <CopyCheckXmark className='text-green-500' />
               ) : (
                 <Copy />
               )}
-            </Button> */}
+            </Button>
           </div>
         )}
       </div>
@@ -327,6 +334,15 @@ const TableHeader: React.FC<TableHeaderProps> = ({
             style={{ fontSize: `${fontSize * 0.72}vw` }}
           >
             {item.version}
+          </div>
+        )
+      case 'user':
+        return (
+          <div
+            className='text-center font-medium leading-[1.34vh]'
+            style={{ fontSize: `${fontSize * 0.72}vw` }}
+          >
+            {item.user}
           </div>
         )
       case 'fabric':
@@ -542,9 +558,8 @@ const TableHeader: React.FC<TableHeaderProps> = ({
             <div className=' ml-3.5 flex items-center justify-start gap-1.5 '>
               <LogsHub fill={themeClass.includes("dark") ? "#fff" : "#000"} width='1.55vw' height='1.55vw' />
               <HeaderElementContainer
-                header='Logs Hug'
+                header='Logs Hub'
                 rounded=''
-                background='transparent'
               />
             </div>
             <div className='flex items-center justify-center w-[70%] gap-2'>
@@ -574,6 +589,8 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                   setRange={setRange} 
                   fabrics={fabrics} 
                   setFabrics={setFabrics}
+                  user={user}
+                  setUser={setUser}
                 />
               </Modal>
               </div>
@@ -598,8 +615,6 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                       ? []
                       : (processRow as any)
                 }
-                // selectedIds={[]}
-                // onSelectionChange={e => console.log(e)}
                 width='auto'
                 wordWrap={false}
                 edgePadding={true}
@@ -678,27 +693,21 @@ const RowElementContainer = ({
 const HeaderElementContainer = ({
   header,
   rounded,
-  background = '#E0E3F2'
 }: {
   header: string
   rounded: string
-  background?: string
 }) => {
   return (
     <div
       className={`h-full w-full px-1 py-[0.75vw] text-center ${rounded ? rounded : 'rounded-none'} `}
-      // style={{
-      //   backgroundColor: 'transparent'
-      // }}
     >
       <h3
         style={{
-          // color: '#ffffff/80',
           fontSize: '0.72vw',
           fontWeight: '400'
         }}
       >
-        {header}
+        {header.toLocaleUpperCase()}
       </h3>
     </div>
   )

@@ -1,16 +1,25 @@
-import { FilterIcon, Multiply } from '@/app/components/svgApplication'
+import {
+  FilterIcon,
+  Multiply,
+  SearchIcon
+} from '@/app/components/svgApplication'
 import { RangeCalendar } from '@gravity-ui/date-components'
 import { DateTime } from '@gravity-ui/date-utils'
-import { Button, Checkbox, Popup } from '@gravity-ui/uikit'
-import React, { useRef, useState } from 'react'
-import { Calendar } from '@gravity-ui/icons'
+import { Avatar, Button, Checkbox, Popup , Loader } from '@gravity-ui/uikit'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { Calendar , Person } from '@gravity-ui/icons'
+import { getCookie } from '@/app/components/cookieMgment'
+import { checkDataAccess } from '@/app/utils/checkDAP'
+import { AxiosService } from '@/app/components/axiosService'
 
 const LogsFilterationModal = ({
   range,
   setRange,
   setOpen,
   fabrics,
-  setFabrics
+  setFabrics,
+  user,
+  setUser
 }: {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
   range: {
@@ -25,10 +34,19 @@ const LogsFilterationModal = ({
   >
   fabrics: Array<string>
   setFabrics: React.Dispatch<React.SetStateAction<Array<string>>>
+  user: Array<string>
+  setUser: React.Dispatch<React.SetStateAction<Array<string>>>
 }) => {
   const [isDateRangeOpen, setDateRangeOpen] = useState(false)
   const [selectedDateRange, setSelectedDateRange] = useState(range)
   const [selectedKeys, setSelectedKeys] = useState<string[]>(fabrics)
+  const [selectedUsers, setSelectedUsers] = useState<string[]>(user)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [userList, setuserList] = useState<Array<any>>([])
+  const [loading, setLoading] = useState(false)
+  const token: string = getCookie('token')
+
+  const isAdminUser = useMemo(() => checkDataAccess(token), [token])
 
   const calendarTriggerRef = useRef<HTMLDivElement>(null)
 
@@ -44,8 +62,38 @@ const LogsFilterationModal = ({
   const handleUpdateFilterInputs = () => {
     setRange(selectedDateRange)
     setFabrics(selectedKeys)
+    setUser(selectedUsers)
     setOpen(false)
   }
+
+  const getOrgAndUserData = async () => {
+    setuserList([])
+    setLoading(true)
+    try {
+      if (!isAdminUser) return
+      const response = await AxiosService.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/getAppSecurityData`,
+        {
+          headers: {
+            Authorization: `Bearer ${getCookie('token')}`
+          }
+        }
+      )
+      if (response.status === 200) {
+        if (response.data.users && Array.isArray(response.data.users)) {
+          setuserList(response.data.users)
+          setLoading(false)
+        }
+      }
+    } catch (error) {
+      setLoading(false)
+      console.error(error)
+    }
+  }
+
+  useEffect(() => {
+    getOrgAndUserData()
+  }, [])
 
   return (
     <div className='h-fit w-[30vw]'>
@@ -133,10 +181,99 @@ const LogsFilterationModal = ({
           ))}
         </div>
       </div>
+      {/* if admin User  */}
+      {isAdminUser && (
+        <div className='flex flex-col gap-[1.24vh] px-[0.58vw] py-[1.24vh]'>
+          <h1 className='text-[0.72vw] font-medium leading-[2.22vh]'>USERS</h1>
+          {/* Search section */}
+          <div
+            className={
+              'flex w-full items-center gap-[0.5vw] rounded border px-[0.58vw]'
+            }
+            style={{
+              borderColor: 'var(--g-color-line-generic)'
+            }}
+          >
+            <span>
+              <SearchIcon
+                fill={'var(--g-color-text-primary)'}
+                height='0.83vw'
+                width='0.83vw'
+              />
+            </span>
+            <input
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              placeholder={'Search'}
+              style={{
+                backgroundColor: 'var(--g-color-base-background)',
+                color: 'var(--g-color-text-primary)',
+                fontSize: `0.72vw`
+              }}
+              className={`h-[4.2vh] w-full rounded-md border-none font-medium outline-none`}
+            />
+          </div>
+          {/* user list section */}
+          <div
+            className='scrollbar-none flex flex-col gap-[1vh] overflow-scroll'
+            style={{
+              height: userList.length > 3 ? '15vh' : 'auto'
+            }}
+          >
+            {loading ? (
+              <Loader className='flex w-full justify-center' />
+            ) : (
+              userList
+                .filter(u =>
+                  (u.loginId + u.firstName + u.lastName)
+                    .toLowerCase()
+                    .includes(searchTerm.toLowerCase())
+                )
+                .map((userObj: any) => (
+                  <Checkbox
+                    key={userObj?.loginId}
+                    content={
+                      <div key={userObj?.loginId} className='flex gap-[0.5vw]'>
+                        <Avatar
+                          imgUrl={userObj?.profile}
+                          size='m'
+                          className={`transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
+                          icon={Person}
+                        />
+                        <div className='flex flex-col gap-[0.5vh]'>
+                          <span>
+                            {userObj?.firstName + ' ' + userObj?.lastName}
+                          </span>
+                          <span>{userObj?.loginId}</span>
+                        </div>
+                      </div>
+                    }
+                    value={userObj?.loginId}
+                    className='flex items-center gap-[0.58vw] text-[0.72vw]'
+                    onChange={e =>
+                      setSelectedUsers(prev => {
+                        if (e.target.checked) {
+                          return [...prev, userObj?.loginId]
+                        } else {
+                          return prev.filter(id => id !== userObj?.loginId)
+                        }
+                      })
+                    }
+                    checked={selectedUsers.includes(userObj?.loginId)}
+                    style={{
+                      fontSize: '0.72vw'
+                    }}
+                  />
+                ))
+            )}
+          </div>
+        </div>
+      )}
       <hr
         style={{ borderColor: 'var(--g-color-line-generic)' }}
         className='w-full'
       />
+
       <div className='flex justify-end gap-[1vw] px-[0.58vw] py-[1.24vh]'>
         <Button view='raised' onClick={() => setOpen(false)}>
           Cancel

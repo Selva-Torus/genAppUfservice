@@ -25,7 +25,7 @@ const ParentComponent = () => {
   })
   const token: string = getCookie('token')
   const decodedTokenObj: any = decodeToken(token)
-  const [user, setUser] = useState<string>(decodedTokenObj?.loginId)
+  const [user, setUser] = useState<string[]>([decodedTokenObj?.loginId])
   const { encAppFalg,setEncAppFalg}= useContext(TotalContext) as TotalContextProps
   const [range , setRange ] = useState({start: dateTime().subtract({days: 4}), end: dateTime()})
   const [ fabrics , setFabrics ] = useState<Array<string>>([])
@@ -52,20 +52,20 @@ const ParentComponent = () => {
     return {
       tenant: 'CT242',
       fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
-            suffixes[prefix]
-              ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
-              : []
+              suffixes[prefix]
+                ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
+                : []
           ) : [],
       appgroup: appGroup,
       app: app,
-      user: [user],
+      user: user,
       FromDate: range.start.format('YYYY-MM-DD'),
       ToDate: range.end.format('YYYY-MM-DD'),
       page: jsonData.page,
       limit: jsonData.limit,
       searchParam: search
     }
-  }, [activeTab, jsonData, search , range , fabrics])
+  }, [activeTab, jsonData, search , range , fabrics , user])  
 
   const fetchData = async (signal: AbortSignal) => {
     try {
@@ -132,6 +132,7 @@ const ParentComponent = () => {
                   name: processInfo.nodeName,
                   request: processInfo.request,
                   response: processInfo.response,
+                  subFlowInfo : processInfo.subFlowInfo ? processInfo.subFlowInfo : undefined,
                   time: DateAndTime,
                   status: nodeStatus,
                   exception: errorDetails
@@ -152,6 +153,7 @@ const ParentComponent = () => {
               fabric,
               version: item['AFVK'],
               status: overallStatus,
+              user : item['USER'],
               node: nodeDetails.map((node: any) => node.nodeData),
               time: nodeDetails.map((node: any) => node.time),
               processId,
@@ -233,6 +235,8 @@ const ParentComponent = () => {
           setRange={setRange}
           fabrics={fabrics}
           setFabrics={setFabrics}
+          user={user}
+          setUser={setUser}
         />
       )}
     </>

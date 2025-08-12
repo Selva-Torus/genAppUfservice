@@ -443,7 +443,7 @@ const UserTable: React.FC<{
         {"User Management"}
       </h1>
       <CustomTable
-        className='h-[74vh] mt-[2vh]'
+        className='h-[73vh] mt-[2vh]'
         data={currentGroups}
         columns={columns as any}
         emptyMessage='No data available'

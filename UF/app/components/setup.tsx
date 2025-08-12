@@ -1,5 +1,5 @@
 'use client'
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useState } from 'react'
 import {
   DeleteIcon,
   GeneralSettingsIcon,
@@ -27,6 +27,7 @@ import AccessTemplateTable from './accessTemplateTable'
 import { TotalContext, TotalContextProps } from '@/app/globalContext'
 import GeneralSettings from './generalSettings'
 import { useGravityThemeClass } from '../utils/useGravityUITheme'
+import { checkDataAccess } from '../utils/checkDAP'
 
 type SettingTabs = 'org' | 'st' | 'user' | 'general'
 
@@ -101,6 +102,10 @@ const SetupScreen = ({
   const ag = process.env.NEXT_PUBLIC_APPGROUPCODE
   const app = process.env.NEXT_PUBLIC_APPCODE
   const themeClass = useGravityThemeClass()
+  const userManagementAccess = useMemo(
+    () => checkDataAccess(getCookie('token')),
+    []
+  )
 
   const onUpdateSecurityData = (updatedData: any[]) => {
     setSecurityData(updatedData)
@@ -148,6 +153,7 @@ const SetupScreen = ({
 
   const getOrgAndUserData = async () => {
     try {
+      if (!userManagementAccess) return
       const response = await AxiosService.get(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/getAppSecurityData`,
         {
@@ -195,48 +201,68 @@ const SetupScreen = ({
     }
   }
 
-  const menuItems = [
-    {
-      items: [
+  const menuItems = useMemo(() => {
+    if (userManagementAccess) {
+      return [
         {
-          name: 'General',
-          svg: (
-            <GeneralSettingsIcon
-              fill={`${selectedMenuItem === 'general' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
-            />
-          ),
-          code: 'general'
-        },
+          items: [
+            {
+              name: 'General',
+              svg: (
+                <GeneralSettingsIcon
+                  fill={`${selectedMenuItem === 'general' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
+                />
+              ),
+              code: 'general'
+            },
+            {
+              name: 'Organizational Matrix',
+              svg: (
+                <Org
+                  fill={`${selectedMenuItem === 'org' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
+                />
+              ),
+              code: 'org'
+            },
+            {
+              name: 'Access Template',
+              svg: (
+                <Security
+                  fill={`${selectedMenuItem === 'st' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
+                />
+              ),
+              code: 'st'
+            },
+            {
+              name: 'User Management',
+              svg: (
+                <Management
+                  fill={`${selectedMenuItem === 'user' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
+                />
+              ),
+              code: 'user'
+            }
+          ]
+        }
+      ]
+    } else {
+      return [
         {
-          name: 'Organizational Matrix',
-          svg: (
-            <Org
-              fill={`${selectedMenuItem === 'org' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
-            />
-          ),
-          code: 'org'
-        },
-        {
-          name: 'Access Template',
-          svg: (
-            <Security
-              fill={`${selectedMenuItem === 'st' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
-            />
-          ),
-          code: 'st'
-        },
-        {
-          name: 'User Management',
-          svg: (
-            <Management
-              fill={`${selectedMenuItem === 'user' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
-            />
-          ),
-          code: 'user'
+          items: [
+            {
+              name: 'General',
+              svg: (
+                <GeneralSettingsIcon
+                  fill={`${selectedMenuItem === 'general' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
+                />
+              ),
+              code: 'general'
+            }
+          ]
         }
       ]
     }
-  ]
+  }, [selectedMenuItem])
 
   const resetStates = (code: 'org' | 'st' | 'user' | string) => {
     switch (code) {
@@ -338,6 +364,7 @@ const SetupScreen = ({
 
   const getSecurityTemplate = async () => {
     try {
+      if (!userManagementAccess) return
       const res = await AxiosService.get(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/getAPPSecurityTemplateData`,
         {
@@ -644,112 +671,113 @@ const SetupScreen = ({
                   />
                 </div>
                 <div className='mb-[0.5vh] flex items-center gap-[0.75vw]'>
-                  {['st', 'user', 'org'].includes(selectedMenuItem) && (
-                    <div className='mb-[0.5vh] flex items-center gap-[0.29vw]'>
-                      <button
-                        onClick={handlePlusButtonClick}
-                        style={{
-                          backgroundColor: brandcolor,
-                          opacity:
-                            selectedMenuItem === 'org' && !focusedPath ? 0.5 : 1
-                        }}
-                        className={`rounded-md px-[0.5vw] py-[0.82vh] outline-none`}
-                        disabled={
-                          tenantAccess != 'edit' ||
-                          (selectedMenuItem === 'org' && !focusedPath)
-                        }
-                      >
-                        <PlusIcon fill={isLightColor(brandcolor)} />
-                      </button>
+                  <div
+                    className='mb-[0.5vh] flex items-center gap-[0.29vw]'
+                    style={{
+                      visibility:
+                        selectedMenuItem == 'general' ? 'hidden' : 'unset'
+                    }}
+                  >
+                    <button
+                      onClick={handlePlusButtonClick}
+                      style={{
+                        backgroundColor: brandcolor,
+                        opacity:
+                          selectedMenuItem === 'org' && !focusedPath ? 0.5 : 1
+                      }}
+                      className={`rounded-md px-[0.5vw] py-[0.82vh] outline-none`}
+                      disabled={
+                        tenantAccess != 'edit' ||
+                        (selectedMenuItem === 'org' && !focusedPath)
+                      }
+                    >
+                      <PlusIcon fill={isLightColor(brandcolor)} />
+                    </button>
 
-                      <button
-                        className={`${selectedMenuItem === 'org' ? 'hidden' : ''} outline-none ${((selectedMenuItem === 'st' || selectedMenuItem === 'user') && Array.from(selectedRows).filter(Boolean).length > 0) || (Object.keys(selectedItems).length > 0 && Object.values(selectedItems).includes(true)) ? 'bg-[#F14336]' : 'bg-[#F14336]/50'} rounded-md px-[0.5vw] py-[0.82vh]`}
-                        disabled={
-                          selectedMenuItem === 'st' ||
-                          selectedMenuItem === 'user'
-                            ? Array.from(selectedRows).filter(Boolean).length >
-                              0
-                              ? false
-                              : true
-                            : Object.keys(selectedItems).length > 0 &&
-                                Object.values(selectedItems).includes(true)
-                              ? tenantAccess != 'edit'
-                                ? true
-                                : false
-                              : true
-                        }
-                        onClick={() => setDeleteModalOpen(true)}
-                      >
-                        <DeleteIcon
-                          fill='white'
-                          height='1.25vw'
-                          width='1.25vw'
-                        />
-                      </button>
-                      <Modal open={deleteModalOpen} disableOutsideClick>
-                        <div className='flex w-[28vw] flex-col items-center gap-[1.5vh] py-[1.5vh]'>
-                          <div className='flex w-full items-center justify-between px-[1vw]'>
-                            <h1 className='flex items-center gap-[0.2vw] text-[1vw] font-semibold text-[#EB5757]'>
-                              <DeleteIcon
-                                fill='#EB5757'
-                                height='1.2vw'
-                                width='1.2vw'
-                              />
-                              {selectedMenuItem === 'st'
-                                ? 'Delete AccessTemplate'
-                                : selectedMenuItem === 'user' && 'Delete User'}
-                            </h1>
-                            <button onClick={() => setDeleteModalOpen(false)}>
-                              <Multiply />
-                            </button>
-                          </div>
-                          <hr className='w-full' />
-                          <div className='flex w-full flex-col gap-[1.5vh] px-[1vw]'>
-                            <h1 className='text-[1vw] font-medium'>
-                              {selectedMenuItem === 'st'
-                                ? 'Are you sure you want to delete this template?'
-                                : selectedMenuItem === 'user' &&
-                                  'Are you sure you want to delete this user?'}
-                            </h1>
-                            <p className='text-[0.83vw] font-medium text-black/35'>
-                              {selectedMenuItem === 'st'
-                                ? 'Deleting the template will remove all associated'
-                                : selectedMenuItem === 'user' &&
-                                  'Deleting the user will remove all associated'}
-                            </p>
-                          </div>
-                          <hr className='w-full' />
-                          <div className='flex w-full items-center justify-end gap-[0.5vw] pr-[1vw]'>
-                            <button
-                              onClick={() => setDeleteModalOpen(false)}
-                              className='flex items-center gap-[0.5vw] rounded-md  px-[0.5vw] py-[0.82vh] outline-none'
-                            >
-                              <h1 className='text-[1vw] font-medium'>Cancel</h1>
-                            </button>
-                            <button
-                              onClick={handleDeleteButtonClick}
-                              className='flex items-center gap-[0.5vw] rounded-md px-[0.5vw] py-[0.82vh] text-white outline-none'
-                              style={{ backgroundColor: '#EB5757' }}
-                            >
-                              <h1 className='text-[1vw] font-medium'>Delete</h1>
-                            </button>
-                          </div>
+                    <button
+                      className={`${selectedMenuItem === 'org' ? 'hidden' : ''} outline-none ${((selectedMenuItem === 'st' || selectedMenuItem === 'user') && Array.from(selectedRows).filter(Boolean).length > 0) || (Object.keys(selectedItems).length > 0 && Object.values(selectedItems).includes(true)) ? 'bg-[#F14336]' : 'bg-[#F14336]/50'} rounded-md px-[0.5vw] py-[0.82vh]`}
+                      disabled={
+                        selectedMenuItem === 'st' || selectedMenuItem === 'user'
+                          ? Array.from(selectedRows).filter(Boolean).length > 0
+                            ? false
+                            : true
+                          : Object.keys(selectedItems).length > 0 &&
+                              Object.values(selectedItems).includes(true)
+                            ? tenantAccess != 'edit'
+                              ? true
+                              : false
+                            : true
+                      }
+                      onClick={() => setDeleteModalOpen(true)}
+                    >
+                      <DeleteIcon fill='white' height='1.25vw' width='1.25vw' />
+                    </button>
+                    <Modal open={deleteModalOpen} disableOutsideClick>
+                      <div className='flex w-[28vw] flex-col items-center gap-[1.5vh] py-[1.5vh]'>
+                        <div className='flex w-full items-center justify-between px-[1vw]'>
+                          <h1 className='flex items-center gap-[0.2vw] text-[1vw] font-semibold text-[#EB5757]'>
+                            <DeleteIcon
+                              fill='#EB5757'
+                              height='1.2vw'
+                              width='1.2vw'
+                            />
+                            {selectedMenuItem === 'st'
+                              ? 'Delete AccessTemplate'
+                              : selectedMenuItem === 'user' && 'Delete User'}
+                          </h1>
+                          <button onClick={() => setDeleteModalOpen(false)}>
+                            <Multiply />
+                          </button>
                         </div>
-                      </Modal>
+                        <hr className='w-full' />
+                        <div className='flex w-full flex-col gap-[1.5vh] px-[1vw]'>
+                          <h1 className='text-[1vw] font-medium'>
+                            {selectedMenuItem === 'st'
+                              ? 'Are you sure you want to delete this template?'
+                              : selectedMenuItem === 'user' &&
+                                'Are you sure you want to delete this user?'}
+                          </h1>
+                          <p className='text-[0.83vw] font-medium text-black/35'>
+                            {selectedMenuItem === 'st'
+                              ? 'Deleting the template will remove all associated'
+                              : selectedMenuItem === 'user' &&
+                                'Deleting the user will remove all associated'}
+                          </p>
+                        </div>
+                        <hr className='w-full' />
+                        <div className='flex w-full items-center justify-end gap-[0.5vw] pr-[1vw]'>
+                          <button
+                            onClick={() => setDeleteModalOpen(false)}
+                            className='flex items-center gap-[0.5vw] rounded-md  px-[0.5vw] py-[0.82vh] outline-none'
+                          >
+                            <h1 className='text-[1vw] font-medium'>Cancel</h1>
+                          </button>
+                          <button
+                            onClick={handleDeleteButtonClick}
+                            className='flex items-center gap-[0.5vw] rounded-md px-[0.5vw] py-[0.82vh] text-white outline-none'
+                            style={{ backgroundColor: '#EB5757' }}
+                          >
+                            <h1 className='text-[1vw] font-medium'>Delete</h1>
+                          </button>
+                        </div>
+                      </div>
+                    </Modal>
 
-                      <button
-                        onClick={handleSaveButtonClick}
-                        className={`rounded-md bg-[#1C274C] px-[0.5vw] py-[0.82vh] outline-none`}
-                        disabled={tenantAccess != 'edit'}
-                      >
-                        <SaveIcon />
-                      </button>
-                    </div>
-                  )}
+                    <button
+                      onClick={handleSaveButtonClick}
+                      className={`rounded-md bg-[#1C274C] px-[0.5vw] py-[0.82vh] outline-none`}
+                      disabled={tenantAccess != 'edit'}
+                    >
+                      <SaveIcon />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
-            <hr style={{ borderColor: 'var(--g-color-line-generic)' }} className=' w-full'></hr>
+            <hr
+              style={{ borderColor: 'var(--g-color-line-generic)' }}
+              className=' w-full'
+            ></hr>
             <div className='flex h-[92.8vh]'>
               <div
                 style={{ borderRight: `1px solid var(--g-color-line-generic)` }}

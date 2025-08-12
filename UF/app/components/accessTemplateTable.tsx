@@ -330,7 +330,7 @@ const AccessTemplateTable = ({}) => {
   return (
     <div className={`g-root h-full w-full ${themeClass}`}>
       <h2 className='mb-4 text-xl font-bold'>Access Template</h2>
-      <div className='h-[72vh] w-full overflow-x-auto'>
+      <div className='h-[73vh] w-full overflow-x-auto'>
         <table className='min-w-full rounded text-left'>
           <thead>
             <tr
@@ -449,6 +449,7 @@ const AccessTemplateTable = ({}) => {
                       size='l'
                       placeholder='Select DAP'
                       className='w-full'
+                      disabled
                     >
                       {accessPrivilegeData.map((item, index) => (
                         <Select.Option key={index} value={item}>
