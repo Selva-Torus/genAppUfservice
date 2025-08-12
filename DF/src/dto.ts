@@ -108,7 +108,7 @@ export class readAPIDTO {
     isTable?:boolean
   }
 
-  export class PoEvent {
+ export class PoEvent {
     constructor(
       public key: string,
       public upId: string,
@@ -118,7 +118,10 @@ export class readAPIDTO {
       public nodeId: string,
       public nodeName: string,
       public nodeType: string,
-      public flag : string
+      public flag : string,
+      public page?:number,
+      public count?:number,
+      public filterData?:object
       ) {}
     }
 
@@ -137,6 +140,9 @@ export class readAPIDTO {
       refreshFlag : string
       dpdKey ?: string
       method?:string
+      page?:number
+      count?:number
+      filterData?:object
     }
   
     export class pageDto { 

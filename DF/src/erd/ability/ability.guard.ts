@@ -25,7 +25,7 @@ export class AbilitiesGuard implements CanActivate {
       [];
 
     const request: any = context.switchToHttp().getRequest();
-    const dfKey:string = 'CK:CT242:FNGK:AF:FNK:API-MSD:CATK:TOB001:AFGK:TOB002:AFK:TOB_LFI_Consents:AFVK:v1';
+    const dfKey:string = 'CK:CT003:FNGK:AF:FNK:API-ERD:CATK:CG:AFGK:TG2:AFK:tableCheck:AFVK:v1';
     const source: string = 'redis';
     const target: string = 'redis';
     const artifact : string = dfKey.split(':')[11];
@@ -33,7 +33,7 @@ export class AbilitiesGuard implements CanActivate {
     const decodedToken: any = this.jwtService.decodeToken(token);
     decodedToken.template = 'T1';
 
-    const DO: any = await this.TGCommonService.readAPI(dfKey + ':DO',source,target);
+    const DO: any = await this.TGCommonService.readAPI(dfKey + ':DO',process.env.clientCode,token);
     const securityData: any = DO.security;
     const templateArray: any[] = securityData.templates;
 

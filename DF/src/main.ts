@@ -5,9 +5,11 @@ import * as bodyParser from 'body-parser';
 import * as session from 'express-session';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as fs from 'fs';
+import { BigIntInterceptor } from './bigint.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.useGlobalInterceptors(new BigIntInterceptor());
   app.use(
     session({
       secret: 'Torus9x',
@@ -28,10 +30,10 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Nest API')
     .setDescription('The Nestjs API documentation')
-    .setVersion('0.1')
+    .setVersion('0.11')
     .addTag('ERD API')
     .addTag('Torus API')
-    .addServer('https://tgadev.gsstvl.com/ct242/tob001/tob002/v1/api-int','Production Server')
+    .addServer('http://192.168.2.57:3010','Production Server')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger.json', JSON.stringify(document, null, 2));

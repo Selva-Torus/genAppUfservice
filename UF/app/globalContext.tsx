@@ -1,347 +1,340 @@
 
 
+
 "use client"
 import { RealTheme } from '@gravity-ui/uikit'
 import React from 'react'
 import { getCookie } from './components/cookieMgment'
-
 export interface TotalContextProps {
-    API_Report360bc: any 
-    setAPI_Report360bc: React.Dispatch<React.SetStateAction<any>>
-    isAPI_Report360bcContainValidataion:any, 
-    setAPI_Report360bcContainValidataion:React.Dispatch<React.SetStateAction<any>>
-    API_Repo_Table8836e: any 
-    setAPI_Repo_Table8836e: React.Dispatch<React.SetStateAction<any>>
-    isAPI_Repo_Table8836eContainValidataion:any, 
-    setAPI_Repo_Table8836eContainValidataion:React.Dispatch<React.SetStateAction<any>>
-    Connected_App_Tablecff73: any 
-    setConnected_App_Tablecff73: React.Dispatch<React.SetStateAction<any>>
-    isConnected_App_Tablecff73ContainValidataion:any, 
-    setConnected_App_Tablecff73ContainValidataion:React.Dispatch<React.SetStateAction<any>>
-    Info_Groupaab7f: any 
-    setInfo_Groupaab7f: React.Dispatch<React.SetStateAction<any>>
-    isInfo_Groupaab7fContainValidataion:any, 
-    setInfo_Groupaab7fContainValidataion:React.Dispatch<React.SetStateAction<any>>
-    Summary_Table98cb0: any 
-    setSummary_Table98cb0: React.Dispatch<React.SetStateAction<any>>
-    isSummary_Table98cb0ContainValidataion:any, 
-    setSummary_Table98cb0ContainValidataion:React.Dispatch<React.SetStateAction<any>>
-    API_Process_Log_Table4f441: any 
-    setAPI_Process_Log_Table4f441: React.Dispatch<React.SetStateAction<any>>
-    isAPI_Process_Log_Table4f441ContainValidataion:any, 
-    setAPI_Process_Log_Table4f441ContainValidataion:React.Dispatch<React.SetStateAction<any>>
-    API_Info80710: any 
-    setAPI_Info80710: React.Dispatch<React.SetStateAction<any>>
-    isAPI_Info80710ContainValidataion:any, 
-    setAPI_Info80710ContainValidataion:React.Dispatch<React.SetStateAction<any>>
-    Consent_Logs_Table87d37: any 
-    setConsent_Logs_Table87d37: React.Dispatch<React.SetStateAction<any>>
-    isConsent_Logs_Table87d37ContainValidataion:any, 
-    setConsent_Logs_Table87d37ContainValidataion:React.Dispatch<React.SetStateAction<any>>
-    disable:any
-    setDisable:React.Dispatch<React.SetStateAction<any>>
-    hide:any
-    setHide:React.Dispatch<React.SetStateAction<any>>
-    refetch: any,
-    setRefetch: React.Dispatch<React.SetStateAction<any>>
-    searchParam: string,
-    setSearchParam: React.Dispatch<React.SetStateAction<string>>
-    disableParam: any,
-    setDisableParam: React.Dispatch<React.SetStateAction<any>>
-    globalState: any,
-    setGlobalState: React.Dispatch<React.SetStateAction<any>>
-    // for all textInput validation
-    validate: any,
-    setValidate: React.Dispatch<React.SetStateAction<any>>
+  formdaeb3: any 
+  setformdaeb3: React.Dispatch<React.SetStateAction<any>>
+  formdaeb3Props: any 
+  setformdaeb3Props: React.Dispatch<React.SetStateAction<any>>
+  postgres7f5c4: any 
+  setpostgres7f5c4: React.Dispatch<React.SetStateAction<any>>
+  postgres7f5c4Props: any 
+  setpostgres7f5c4Props: React.Dispatch<React.SetStateAction<any>>
+  transactions10ab7: any 
+  settransactions10ab7: React.Dispatch<React.SetStateAction<any>>
+  transactions10ab7Props: any 
+  settransactions10ab7Props: React.Dispatch<React.SetStateAction<any>>
+  clientnamed83af: any,
+  setclientnamed83af:React.Dispatch<React.SetStateAction<any>>
+  check1238c5: any,
+  setcheck1238c5:React.Dispatch<React.SetStateAction<any>>
+  radio12a158: any,
+  setradio12a158:React.Dispatch<React.SetStateAction<any>>
+  group1a5574: any,
+  setgroup1a5574:React.Dispatch<React.SetStateAction<any>>
+  card90449: any,
+  setcard90449:React.Dispatch<React.SetStateAction<any>>
+  areatext565ce: any,
+  setareatext565ce:React.Dispatch<React.SetStateAction<any>>
+  mobile5fccb: any,
+  setmobile5fccb:React.Dispatch<React.SetStateAction<any>>
+  check2f409e: any,
+  setcheck2f409e:React.Dispatch<React.SetStateAction<any>>
+  radio28c1aa: any,
+  setradio28c1aa:React.Dispatch<React.SetStateAction<any>>
+  group254618: any,
+  setgroup254618:React.Dispatch<React.SetStateAction<any>>
+  card2f1076: any,
+  setcard2f1076:React.Dispatch<React.SetStateAction<any>>
+  areatext22664f: any,
+  setareatext22664f:React.Dispatch<React.SetStateAction<any>>
+  datepicker947d2: any,
+  setdatepicker947d2:React.Dispatch<React.SetStateAction<any>>
+  datepicker24ce5c: any,
+  setdatepicker24ce5c:React.Dispatch<React.SetStateAction<any>>
+  save21b74b: any,
+  setsave21b74b:React.Dispatch<React.SetStateAction<any>>
+  save4565e: any,
+  setsave4565e:React.Dispatch<React.SetStateAction<any>>
+  billingid842ca: any,
+  setbillingid842ca:React.Dispatch<React.SetStateAction<any>>
+  billingparty7a9f7: any,
+  setbillingparty7a9f7:React.Dispatch<React.SetStateAction<any>>
+  transaction_idb85fc: any,
+  settransaction_idb85fc:React.Dispatch<React.SetStateAction<any>>
+  amount13d15: any,
+  setamount13d15:React.Dispatch<React.SetStateAction<any>>
+  transaction_type036bb: any,
+  settransaction_type036bb:React.Dispatch<React.SetStateAction<any>>
 
-    //its used for validate once again on button click
-    validateRefetch: any,
-    setValidateRefetch: React.Dispatch<React.SetStateAction<any>>
-    accessProfile:any,
-    setAccessProfile:React.Dispatch<React.SetStateAction<any>>
-    memoryVariables:any
-    setMemoryVariables:React.Dispatch<React.SetStateAction<any>>
-    property:any
-    setProperty:React.Dispatch<React.SetStateAction<any>>
-    triggerRefresh: () => void,
-    refresh: any ,
-    setRefresh: React.Dispatch<React.SetStateAction<any>>
-    lockedData: any,
-    setLockedData: React.Dispatch<React.SetStateAction<any>>
-    eventEmitterData:any,
-    setEventEmitterData:React.Dispatch<React.SetStateAction<any>>
-    userDetails:any,
-    setUserDetails:React.Dispatch<React.SetStateAction<any>>
-    encAppFalg:any,
-    setEncAppFalg:React.Dispatch<React.SetStateAction<any>>,
-    selectedTheme: RealTheme,
-    setSelectedTheme: React.Dispatch<React.SetStateAction<RealTheme>>
+////// screen states 
+  showprofile_v1Props: any 
+  setshowprofile_v1Props: React.Dispatch<React.SetStateAction<any>>
+  transactionsuf_v1Props: any 
+  settransactionsuf_v1Props: React.Dispatch<React.SetStateAction<any>>
+
+///////// dfd
+  transactionsdfd_v1Props: any 
+  settransactionsdfd_v1Props: React.Dispatch<React.SetStateAction<any>>
+  testtablecheck2_v1Props: any 
+  settesttablecheck2_v1Props: React.Dispatch<React.SetStateAction<any>>
+  vesseldfd_v1Props: any 
+  setvesseldfd_v1Props: React.Dispatch<React.SetStateAction<any>>
+  v_billingdfd_v1Props: any 
+  setv_billingdfd_v1Props: React.Dispatch<React.SetStateAction<any>>
+
+  refetch: any,
+  setRefetch: React.Dispatch<React.SetStateAction<any>>
+  searchParam: string,
+  setSearchParam: React.Dispatch<React.SetStateAction<string>>
+  disableParam: any,
+  setDisableParam: React.Dispatch<React.SetStateAction<any>>
+  globalState: any,
+  setGlobalState: React.Dispatch<React.SetStateAction<any>>
+  // for all textInput validation
+  validate: any,
+  setValidate: React.Dispatch<React.SetStateAction<any>>
+
+  //its used for validate once again on button click
+  validateRefetch: any,
+  setValidateRefetch: React.Dispatch<React.SetStateAction<any>>
+  accessProfile:any,
+  setAccessProfile:React.Dispatch<React.SetStateAction<any>>
+  memoryVariables:any
+  setMemoryVariables:React.Dispatch<React.SetStateAction<any>>
+  property:any
+  setProperty:React.Dispatch<React.SetStateAction<any>>
+  triggerRefresh: () => void,
+  refresh: any ,
+  setRefresh: React.Dispatch<React.SetStateAction<any>>
+  lockedData: any,
+  setLockedData: React.Dispatch<React.SetStateAction<any>>
+  eventEmitterData:any,
+  setEventEmitterData:React.Dispatch<React.SetStateAction<any>>
+  userDetails:any,
+  setUserDetails:React.Dispatch<React.SetStateAction<any>>
+  encAppFalg:any,
+  setEncAppFalg:React.Dispatch<React.SetStateAction<any>>,
+  selectedTheme: RealTheme,
+  setSelectedTheme: React.Dispatch<React.SetStateAction<RealTheme>>
 }
 
 export const TotalContext = React.createContext<TotalContextProps | {}>({})
 
 const GlobalContext = ({children} : {children: React.ReactNode}) => {
-  const controlObj:any = {    textGLOBAL_BANK0cbf9:false,
-    cardMost_Used_APIs15d75:false,
-    cardActive_APIs19760:false,
-    cardTotal_Requestsb08ba:false,
-    carderrorbc458:false,
-    textAPI_Repository09e8a:false,
-    buttonView_Logs316db:false,
-    columnAPI_Name37bd3:false,
-    columnVersion2dcd9:false,
-    columnAPI_Categoryda1d9:false,
-    columnRelease_Dateb7995:false,
-    columnActions0b6ca:false,
-    columnStatus97236:false,
-    textConnected_Applicationfcee9:false,
-    columnApp_Nameb4def:false,
-    columntppName25084:false,
-    columnType354d8:false,
-    columnStatus815f5:false,
-    textInfofa480:false,
-    textAPI_Nameb99e4:false,
-    textVersion419ad:false,
-    textStatus6e86f:false,
-    textApi_Categoryaf733:false,
-    textRelease_Date7992c:false,
-    textAPI_ResourcePath581bc:false,
-    textinputApi_Name5264d:false,
-    textinputVersionf9dea:false,
-    textinputStatus0a91d:false,
-    textinputApi_Categoryb5688:false,
-    textinputRelease_Date731a0:false,
-    textinputAPI_ResourcePath1fa90:false,
-    textIntegration_Metrics_Summary3134b:false,
-    cardtotal_calls2f181:false,
-    cardsuccess_ratee5646:false,
-    carderror_rate4859e:false,
-    textAPI_Process_Logsd7e00:false,
-    buttonView_Logse088f:false,
-    columnTrs_created_date9b7c4:false,
-    columnRequestData7bfe6:false,
-    columnResponseData30122:false,
-    textGLOBAL_BANK9c46f:false,
-    textAPI_Infoa27cf:false,
-    textConsent_Logs533e1:false,
-    columnbaseconsentid3e843:false,
-    columninteractionid3a719:false,
-    columnpermissions5db4a:false,
-    columnstatusfc8c6:false,
-    columnrevokedby8f386:false,
-    columnexpirationdatetime6e1bc:false,
-}
-        const [API_Report360bc, setAPI_Report360bc ] = React.useState<any>({}) 
-    const [isAPI_Report360bcContainValidataion,setAPI_Report360bcContainValidataion]= React.useState<any>({
-    validation:false,
-    required:false,
-    refetch:false})
+      //////////
+        const [formdaeb3, setformdaeb3 ] = React.useState<any>({}) 
+    const [formdaeb3Props, setformdaeb3Props ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
     
-    const [API_Repo_Table8836e, setAPI_Repo_Table8836e ] = React.useState<any[]>([]) 
-    const [isAPI_Repo_Table8836eContainValidataion,setAPI_Repo_Table8836eContainValidataion]= React.useState<any>({
-    validation:false,
-    required:false,
+    const [postgres7f5c4, setpostgres7f5c4 ] = React.useState<any>([]) 
+    const [postgres7f5c4Props, setpostgres7f5c4Props ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[],
+      refresh:false,
+      }) 
+    
+    const [transactions10ab7, settransactions10ab7 ] = React.useState<any>([]) 
+    const [transactions10ab7Props, settransactions10ab7Props ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[],
+      refresh:false,
+      }) 
+   const [clientnamed83af,setclientnamed83af] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
     refetch:false,
-    selectedIds:[]
-  })
-    
-    const [Connected_App_Tablecff73, setConnected_App_Tablecff73 ] = React.useState<any[]>([]) 
-    const [isConnected_App_Tablecff73ContainValidataion,setConnected_App_Tablecff73ContainValidataion]= React.useState<any>({
-    validation:false,
-    required:false,
+    refresh:false,
+    }) 
+   const [check1238c5,setcheck1238c5] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
     refetch:false,
-    selectedIds:[]
-  })
-        const [Info_Groupaab7f, setInfo_Groupaab7f ] = React.useState<any>({}) 
-    const [isInfo_Groupaab7fContainValidataion,setInfo_Groupaab7fContainValidataion]= React.useState<any>({
-    validation:false,
-    required:false,
-    refetch:false})
-        const [Summary_Table98cb0, setSummary_Table98cb0 ] = React.useState<any>({}) 
-    const [isSummary_Table98cb0ContainValidataion,setSummary_Table98cb0ContainValidataion]= React.useState<any>({
-    validation:false,
-    required:false,
-    refetch:false})
-    
-    const [API_Process_Log_Table4f441, setAPI_Process_Log_Table4f441 ] = React.useState<any[]>([]) 
-    const [isAPI_Process_Log_Table4f441ContainValidataion,setAPI_Process_Log_Table4f441ContainValidataion]= React.useState<any>({
-    validation:false,
-    required:false,
+    refresh:false,
+    }) 
+   const [radio12a158,setradio12a158] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
     refetch:false,
-    selectedIds:[]
-  })
-        const [API_Info80710, setAPI_Info80710 ] = React.useState<any>({}) 
-    const [isAPI_Info80710ContainValidataion,setAPI_Info80710ContainValidataion]= React.useState<any>({
-    validation:false,
-    required:false,
-    refetch:false})
-    
-    const [Consent_Logs_Table87d37, setConsent_Logs_Table87d37 ] = React.useState<any[]>([]) 
-    const [isConsent_Logs_Table87d37ContainValidataion,setConsent_Logs_Table87d37ContainValidataion]= React.useState<any>({
-    validation:false,
-    required:false,
+    refresh:false,
+    }) 
+   const [group1a5574,setgroup1a5574] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
     refetch:false,
-    selectedIds:[]
-  })
-    
-    const [disable, setDisable] = React.useState<any>({      textGLOBAL_BANK0cbf9:false,
-      cardMost_Used_APIs15d75:false,
-      cardActive_APIs19760:false,
-      cardTotal_Requestsb08ba:false,
-      carderrorbc458:false,
-      textAPI_Repository09e8a:false,
-      buttonView_Logs316db:false,
-      columnAPI_Name37bd3:false,
-      columnVersion2dcd9:false,
-      columnAPI_Categoryda1d9:false,
-      columnRelease_Dateb7995:false,
-      columnActions0b6ca:false,
-      columnStatus97236:false,
-      textConnected_Applicationfcee9:false,
-      columnApp_Nameb4def:false,
-      columntppName25084:false,
-      columnType354d8:false,
-      columnStatus815f5:false,
-      textInfofa480:false,
-      textAPI_Nameb99e4:false,
-      textVersion419ad:false,
-      textStatus6e86f:false,
-      textApi_Categoryaf733:false,
-      textRelease_Date7992c:false,
-      textAPI_ResourcePath581bc:false,
-      textinputApi_Name5264d:false,
-      textinputVersionf9dea:false,
-      textinputStatus0a91d:false,
-      textinputApi_Categoryb5688:false,
-      textinputRelease_Date731a0:false,
-      textinputAPI_ResourcePath1fa90:false,
-      textIntegration_Metrics_Summary3134b:false,
-      cardtotal_calls2f181:false,
-      cardsuccess_ratee5646:false,
-      carderror_rate4859e:false,
-      textAPI_Process_Logsd7e00:false,
-      buttonView_Logse088f:false,
-      columnTrs_created_date9b7c4:false,
-      columnRequestData7bfe6:false,
-      columnResponseData30122:false,
-      textGLOBAL_BANK9c46f:false,
-      textAPI_Infoa27cf:false,
-      textConsent_Logs533e1:false,
-      columnbaseconsentid3e843:false,
-      columninteractionid3a719:false,
-      columnpermissions5db4a:false,
-      columnstatusfc8c6:false,
-      columnrevokedby8f386:false,
-      columnexpirationdatetime6e1bc:false,
-})
-    const [hide, setHide] = React.useState<any>({      textGLOBAL_BANK0cbf9:false,
-      cardMost_Used_APIs15d75:false,
-      cardActive_APIs19760:false,
-      cardTotal_Requestsb08ba:false,
-      carderrorbc458:false,
-      textAPI_Repository09e8a:false,
-      buttonView_Logs316db:false,
-      columnAPI_Name37bd3:false,
-      columnVersion2dcd9:false,
-      columnAPI_Categoryda1d9:false,
-      columnRelease_Dateb7995:false,
-      columnActions0b6ca:false,
-      columnStatus97236:false,
-      textConnected_Applicationfcee9:false,
-      columnApp_Nameb4def:false,
-      columntppName25084:false,
-      columnType354d8:false,
-      columnStatus815f5:false,
-      textInfofa480:false,
-      textAPI_Nameb99e4:false,
-      textVersion419ad:false,
-      textStatus6e86f:false,
-      textApi_Categoryaf733:false,
-      textRelease_Date7992c:false,
-      textAPI_ResourcePath581bc:false,
-      textinputApi_Name5264d:false,
-      textinputVersionf9dea:false,
-      textinputStatus0a91d:false,
-      textinputApi_Categoryb5688:false,
-      textinputRelease_Date731a0:false,
-      textinputAPI_ResourcePath1fa90:false,
-      textIntegration_Metrics_Summary3134b:false,
-      cardtotal_calls2f181:false,
-      cardsuccess_ratee5646:false,
-      carderror_rate4859e:false,
-      textAPI_Process_Logsd7e00:false,
-      buttonView_Logse088f:false,
-      columnTrs_created_date9b7c4:false,
-      columnRequestData7bfe6:false,
-      columnResponseData30122:false,
-      textGLOBAL_BANK9c46f:false,
-      textAPI_Infoa27cf:false,
-      textConsent_Logs533e1:false,
-      columnbaseconsentid3e843:false,
-      columninteractionid3a719:false,
-      columnpermissions5db4a:false,
-      columnstatusfc8c6:false,
-      columnrevokedby8f386:false,
-      columnexpirationdatetime6e1bc:false,
-})
-    const [refresh, setRefresh] = React.useState<any>({       textGLOBAL_BANK0cbf9:false,
-       cardMost_Used_APIs15d75:false,
-       cardActive_APIs19760:false,
-       cardTotal_Requestsb08ba:false,
-       carderrorbc458:false,
-       textAPI_Repository09e8a:false,
-       buttonView_Logs316db:false,
-       columnAPI_Name37bd3:false,
-       columnVersion2dcd9:false,
-       columnAPI_Categoryda1d9:false,
-       columnRelease_Dateb7995:false,
-       columnActions0b6ca:false,
-       columnStatus97236:false,
-       textConnected_Applicationfcee9:false,
-       columnApp_Nameb4def:false,
-       columntppName25084:false,
-       columnType354d8:false,
-       columnStatus815f5:false,
-       textInfofa480:false,
-       textAPI_Nameb99e4:false,
-       textVersion419ad:false,
-       textStatus6e86f:false,
-       textApi_Categoryaf733:false,
-       textRelease_Date7992c:false,
-       textAPI_ResourcePath581bc:false,
-       textinputApi_Name5264d:false,
-       textinputVersionf9dea:false,
-       textinputStatus0a91d:false,
-       textinputApi_Categoryb5688:false,
-       textinputRelease_Date731a0:false,
-       textinputAPI_ResourcePath1fa90:false,
-       textIntegration_Metrics_Summary3134b:false,
-       cardtotal_calls2f181:false,
-       cardsuccess_ratee5646:false,
-       carderror_rate4859e:false,
-       textAPI_Process_Logsd7e00:false,
-       buttonView_Logse088f:false,
-       columnTrs_created_date9b7c4:false,
-       columnRequestData7bfe6:false,
-       columnResponseData30122:false,
-       textGLOBAL_BANK9c46f:false,
-       textAPI_Infoa27cf:false,
-       textConsent_Logs533e1:false,
-       columnbaseconsentid3e843:false,
-       columninteractionid3a719:false,
-       columnpermissions5db4a:false,
-       columnstatusfc8c6:false,
-       columnrevokedby8f386:false,
-       columnexpirationdatetime6e1bc:false,
-       groupAPI_Report360bc:false,
-       tableAPI_Repo_Table8836e:false,
-       tableConnected_App_Tablecff73:false,
-       groupInfo_Groupaab7f:false,
-       groupSummary_Table98cb0:false,
-       tableAPI_Process_Log_Table4f441:false,
-       groupAPI_Info80710:false,
-       tableConsent_Logs_Table87d37:false,
+    refresh:false,
+    }) 
+   const [card90449,setcard90449] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [areatext565ce,setareatext565ce] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [mobile5fccb,setmobile5fccb] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [check2f409e,setcheck2f409e] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [radio28c1aa,setradio28c1aa] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [group254618,setgroup254618] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [card2f1076,setcard2f1076] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [areatext22664f,setareatext22664f] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [datepicker947d2,setdatepicker947d2] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [datepicker24ce5c,setdatepicker24ce5c] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [save21b74b,setsave21b74b] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [save4565e,setsave4565e] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [billingid842ca,setbillingid842ca] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [billingparty7a9f7,setbillingparty7a9f7] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [transaction_idb85fc,settransaction_idb85fc] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [amount13d15,setamount13d15] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [transaction_type036bb,settransaction_type036bb] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+    ///////////
+    const [refresh, setRefresh] = React.useState<any>({       textinputclientnamed83af:false,
+       checkboxcheck1238c5:false,
+       radiobuttonradio12a158:false,
+       radiogroupgroup1a5574:false,
+       cardcard90449:false,
+       textareaareatext565ce:false,
+       textinputmobile5fccb:false,
+       checkboxcheck2f409e:false,
+       radiobuttonradio28c1aa:false,
+       radiogroupgroup254618:false,
+       cardcard2f1076:false,
+       textareaareatext22664f:false,
+       datepickerdatePicker947d2:false,
+       datepickerdatepicker24ce5c:false,
+       buttonsave21b74b:false,
+       buttonsave4565e:false,
+       columnbillingid842ca:false,
+       columnbillingparty7a9f7:false,
+       columntransaction_idb85fc:false,
+       columnamount13d15:false,
+       columntransaction_type036bb:false,
+       groupformdaeb3:false,
+       tablepostgres7f5c4:false,
+       tabletransactions10ab7:false,
       })
+
+  ////// screen states 
+   const [showprofile_v1Props,setshowprofile_v1Props] = React.useState<any>([])
+   const [transactionsuf_v1Props,settransactionsuf_v1Props] = React.useState<any>([])
+
+///////// dfd
+  const [transactionsdfd_v1Props,settransactionsdfd_v1Props] = React.useState<any>([])
+  const [testtablecheck2_v1Props,settesttablecheck2_v1Props] = React.useState<any>([])
+  const [vesseldfd_v1Props,setvesseldfd_v1Props] = React.useState<any>([])
+  const [v_billingdfd_v1Props,setv_billingdfd_v1Props] = React.useState<any>([])
     const [searchParam , setSearchParam] = React.useState<string>("")
     const [disableParam , setDisableParam] = React.useState<any>({})
     const [globalState , setGlobalState] = React.useState<any>({})
@@ -360,10 +353,116 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     const [userDetails , setUserDetails] = React.useState<any>({})
     const [encAppFalg , setEncAppFalg] = React.useState<any>({})
     const theme = getCookie('cfg_theme')
-    const [selectedTheme , setSelectedTheme] = React.useState<RealTheme>(theme || "light")
+    const [selectedTheme , setSelectedTheme] = React.useState<RealTheme>(theme || "")
+    
     
   return (
-    <TotalContext.Provider value={{API_Report360bc, setAPI_Report360bc,isAPI_Report360bcContainValidataion,setAPI_Report360bcContainValidataion,API_Repo_Table8836e, setAPI_Repo_Table8836e,isAPI_Repo_Table8836eContainValidataion,setAPI_Repo_Table8836eContainValidataion,Connected_App_Tablecff73, setConnected_App_Tablecff73,isConnected_App_Tablecff73ContainValidataion,setConnected_App_Tablecff73ContainValidataion,Info_Groupaab7f, setInfo_Groupaab7f,isInfo_Groupaab7fContainValidataion,setInfo_Groupaab7fContainValidataion,Summary_Table98cb0, setSummary_Table98cb0,isSummary_Table98cb0ContainValidataion,setSummary_Table98cb0ContainValidataion,API_Process_Log_Table4f441, setAPI_Process_Log_Table4f441,isAPI_Process_Log_Table4f441ContainValidataion,setAPI_Process_Log_Table4f441ContainValidataion,API_Info80710, setAPI_Info80710,isAPI_Info80710ContainValidataion,setAPI_Info80710ContainValidataion,Consent_Logs_Table87d37, setConsent_Logs_Table87d37,isConsent_Logs_Table87d37ContainValidataion,setConsent_Logs_Table87d37ContainValidataion,refetch, setRefetch,searchParam , setSearchParam,disableParam , setDisableParam,globalState , setGlobalState,validate, setValidate,validateRefetch, setValidateRefetch,accessProfile,setAccessProfile,property, setProperty,disable, setDisable,hide, setHide, setRefresh, refresh,memoryVariables, setMemoryVariables,lockedData, setLockedData,eventEmitterData,setEventEmitterData, userDetails , setUserDetails,encAppFalg , setEncAppFalg , selectedTheme , setSelectedTheme}}>
+    <TotalContext.Provider 
+      value={
+      {
+      //
+        formdaeb3, 
+        setformdaeb3,
+        formdaeb3Props, 
+        setformdaeb3Props,
+        postgres7f5c4, 
+        setpostgres7f5c4,
+        postgres7f5c4Props, 
+        setpostgres7f5c4Props,
+        transactions10ab7, 
+        settransactions10ab7,
+        transactions10ab7Props, 
+        settransactions10ab7Props,
+        clientnamed83af,
+        setclientnamed83af, 
+        check1238c5,
+        setcheck1238c5, 
+        radio12a158,
+        setradio12a158, 
+        group1a5574,
+        setgroup1a5574, 
+        card90449,
+        setcard90449, 
+        areatext565ce,
+        setareatext565ce, 
+        mobile5fccb,
+        setmobile5fccb, 
+        check2f409e,
+        setcheck2f409e, 
+        radio28c1aa,
+        setradio28c1aa, 
+        group254618,
+        setgroup254618, 
+        card2f1076,
+        setcard2f1076, 
+        areatext22664f,
+        setareatext22664f, 
+        datepicker947d2,
+        setdatepicker947d2, 
+        datepicker24ce5c,
+        setdatepicker24ce5c, 
+        save21b74b,
+        setsave21b74b, 
+        save4565e,
+        setsave4565e, 
+        billingid842ca,
+        setbillingid842ca, 
+        billingparty7a9f7,
+        setbillingparty7a9f7, 
+        transaction_idb85fc,
+        settransaction_idb85fc, 
+        amount13d15,
+        setamount13d15, 
+        transaction_type036bb,
+        settransaction_type036bb, 
+        ////// screen states 
+          showprofile_v1Props,
+          setshowprofile_v1Props,
+          transactionsuf_v1Props,
+          settransactionsuf_v1Props,
+        //////////
+
+        ///////// dfd
+        transactionsdfd_v1Props,
+        settransactionsdfd_v1Props,
+        testtablecheck2_v1Props,
+        settesttablecheck2_v1Props,
+        vesseldfd_v1Props,
+        setvesseldfd_v1Props,
+        v_billingdfd_v1Props,
+        setv_billingdfd_v1Props,
+        refetch,
+        setRefetch,
+        searchParam,
+        setSearchParam,
+        disableParam,
+        setDisableParam,
+        globalState,
+        setGlobalState,
+        validate,
+        setValidate,
+        validateRefetch,
+        setValidateRefetch,
+        accessProfile,
+        setAccessProfile,
+        property,
+        setProperty,
+        setRefresh,
+        refresh,
+        memoryVariables,
+        setMemoryVariables,
+        lockedData,
+        setLockedData,
+        eventEmitterData,
+        setEventEmitterData,
+        userDetails,
+        setUserDetails,
+        encAppFalg,
+        setEncAppFalg,
+        selectedTheme, 
+        setSelectedTheme
+        }}
+      >
       {children}
     </TotalContext.Provider>
   )

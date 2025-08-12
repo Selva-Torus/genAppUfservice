@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tg2-uf-v11-ingress
+  namespace: tg2-uf-v11
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - tgadev.gsstvl.com
+      secretName: tg2-uf-v11-tls
+  rules:
+    - host: tgadev.gsstvl.com
+      http:
+        paths:
+          - path: /ct003/cg/tg2/v11
+            pathType: Prefix
+            backend:
+              service:
+                name: tg2-uf-generator
+                port:
+                  number: 443

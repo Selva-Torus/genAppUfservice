@@ -1,463 +1,137 @@
 datasource db {
-  provider = "mongodb"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas = ["ct003_cg", "ct003_tg2"]
 }
 
 generator client {
 provider = "prisma-client-js"
+previewFeatures = ["multiSchema"]
 }
-model tob_consent_status {
-  id  String @id @default(auto()) @map("_id") @db.ObjectId 
-  lfi    TOB_CONSENT_LFI? 
 
-  trs_created_date    DateTime     @default(now())  
-  trs_created_by    String?       
-  trs_modified_date    DateTime     @updatedAt  
-  trs_modified_by    String?       
-  trs_status    String?       
-  trs_next_status    String?  
-  trs_process_id    String?
-  trs_access_profile    String?
-  trs_org_grp_code    String?
-  trs_org_code    String?
-  trs_role_grp_code    String?
-  trs_role_code    String?
-  trs_ps_grp_code    String?
-  trs_ps_code     String?
- 
+model seacore {
+clientid  Int  @id @default(autoincrement()) 
+clientname  String?   
+mobile  Int?   
+weburl  String?   
+addressline1  String?   
+country  String?   
+city  String?   
+email  String?   
+person  String?   
+clienttype  String?   
+vesseltype  String?   
+dateonly  DateTime?   
+timeonly  DateTime?   
+trs_creator_email    String?
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
 
-  @@map("ct242_tob002.tob_consent_status")
-  
+@@schema("ct003_tg2")
 }
-model tob_consents {
-  id  String @id @default(auto()) @map("_id") @db.ObjectId 
-  requesturl    String?        
-  requesttimestamp    DateTime?      
-  method    String?        
-  baseconsentid    String?        
-  resourceconsentid    String?        
-  consentgroupid    String?        
-  consenttype    String?        
-  requestdata    Json?      
-  responsedata    Json?      
-  isauthorized    Boolean?      @default(false)
 
-  trs_created_date    DateTime     @default(now())  
-  trs_created_by    String?       
-  trs_modified_date    DateTime     @updatedAt  
-  trs_modified_by    String?       
-  trs_status    String?       
-  trs_next_status    String?  
-  trs_process_id    String?
-  trs_access_profile    String?
-  trs_org_grp_code    String?
-  trs_org_code    String?
-  trs_role_grp_code    String?
-  trs_role_code    String?
-  trs_ps_grp_code    String?
-  trs_ps_code     String?
- 
+model billing {
+billingid  Int  @id @default(autoincrement()) 
+billingparty  String?   
+vessels  String?   
+personcharge  String?   
+emailparty  String?   
+mobileparty  BigInt?   
+cou_ammount  String?   
+amount  Int?   
+tax  Int?   
+interest  Int?   
+cou_amount2  String?   
+amount2  Int?   
+addressline1  String?   
+country  String?   
+state  String?   
+pininput  Int?   
+remark  String?   
+trs_creator_email    String?
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
 
-  @@map("ct242_tob002.tob_consents")
-  
+@@schema("ct003_tg2")
 }
-model tob_consents_history {
-  id  String @id @default(auto()) @map("_id") @db.ObjectId 
-  requesturl    String?        
-  requesttimestamp    DateTime?      
-  method    String?        
-  baseconsentid    String?        
-  resourceconsentid    String?        
-  consentgroupid    String?        
-  consenttype    String?        
-  requestdata    Json?      
-  responsedata    Json?      
 
-  trs_created_date    DateTime     @default(now())  
-  trs_created_by    String?       
-  trs_modified_date    DateTime     @updatedAt  
-  trs_modified_by    String?       
-  trs_status    String?       
-  trs_next_status    String?  
-  trs_process_id    String?
-  trs_access_profile    String?
-  trs_org_grp_code    String?
-  trs_org_code    String?
-  trs_role_grp_code    String?
-  trs_role_code    String?
-  trs_ps_grp_code    String?
-  trs_ps_code     String?
- 
+model accounts {
+account_id  Int  @id @default(autoincrement()) 
+customer_name  String?   
+phone_number  BigInt?   
+dob  Int?   
+account_type  String?   
+email  String?   
+trs_creator_email    String?
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+transactions   transactions[]    
 
-  @@map("ct242_tob002.tob_consents_history")
-  
+@@schema("ct003_tg2")
 }
-model tob_lfi_consent {
-  id  String @id @default(auto()) @map("_id") @db.ObjectId 
-  data    TOB_LFI_DATA 
 
-  trs_created_date    DateTime     @default(now())  
-  trs_created_by    String?       
-  trs_modified_date    DateTime     @updatedAt  
-  trs_modified_by    String?       
-  trs_status    String?       
-  trs_next_status    String?  
-  trs_process_id    String?
-  trs_access_profile    String?
-  trs_org_grp_code    String?
-  trs_org_code    String?
-  trs_role_grp_code    String?
-  trs_role_code    String?
-  trs_ps_grp_code    String?
-  trs_ps_code     String?
- 
+model transactions {
+transaction_id  Int  @id @default(autoincrement()) 
+amount  BigInt?   
+transaction_type  String?   
+trs_creator_email    String?
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+account_id Int? 
+accounts   accounts?  @relation(fields: [account_id], references: [account_id])  
 
-  @@map("ct242_tob002.tob_lfi_consent")
-  
+@@schema("ct003_tg2")
 }
-type TOB_CONSENT_LFI{
-  lfi_code    String?      
-  lfi_name    String?      
-  onbehalfof    TOB_CONSENT_ONBEHALFOF[]      
-  }
-type TOB_CONSENT_ONBEHALFOF{
-  tradingname    String?      
-  legalname    String?      
-  identifiertype    String?      
-  identifier    String?      
-  consentkey    TOB_CONSENT_CONSENTKEY[]      
-  }
-type TOB_CONSENT_CONSENTKEY{
-  accountid    String?      
-  accounttype  accounttype_tob_consent_consentkey?    
-  accountsubtype  accountsubtype_tob_consent_consentkey?    
-  consentgroup    String?      
-  consenttype  consenttype_tob_consent_consentkey?    
-  permissions  permissions_tob_consent_consentkey?    
-  lastbaseconsentid    String?      
-  laststatus    String?      
-  }
-type TOB_LFI_DATA{
-  ids    String      
-  parid    String?      
-  rartype    String?      
-  standardversion    String?      
-  consentgroupid    String?      
-  requesturl    String?      
-  consenttype    String      
-  status    String?      
-  consentid    String?      
-  }
-model tob_consent_request {
-  id  String @id @default(auto()) @map("_id") @db.ObjectId 
-  ids    String?        
-  consentgroupid    String?        
-  requesturl    String?        
-  consenttype    String?        
-  status    String?        
-  request    TOB_CONSENT_REQ? 
-  consentbody    TOB_CONSENTBODY? 
-  authorizationchannel  authorizationchannel_tob_consent_request?    
-  interactionid    String?        
-  tpp    TOB_TPP? 
-  updatedat    Int?       
-  parid    String?        
-  rartype    String?        
-  standardversion    String?        
-  psuidentifiers    TOB_psuidentifiers? 
-  accountids    String[]      
-  connecttoken    String?        
-
-  tob_api_process_logs   tob_api_process_logs[]    
-  trs_created_date    DateTime     @default(now())  
-  trs_created_by    String?       
-  trs_modified_date    DateTime     @updatedAt  
-  trs_modified_by    String?       
-  trs_status    String?       
-  trs_next_status    String?  
-  trs_process_id    String?
-  trs_access_profile    String?
-  trs_org_grp_code    String?
-  trs_org_code    String?
-  trs_role_grp_code    String?
-  trs_role_code    String?
-  trs_ps_grp_code    String?
-  trs_ps_code     String?
- 
-
-  @@map("ct242_tob002.tob_consent_request")
-  
-}
-model tob_api_repository {
-  id  String @id @default(auto()) @map("_id") @db.ObjectId 
-  api_name    String?        
-  version    String?        
-  release_date    DateTime?      
-  api_category    String?        
-  server_url    String?        
-  status    String?        
-  api_resourcepath    String?        
-
-  tob_api_process_logs   tob_api_process_logs[]    
-  trs_created_date    DateTime     @default(now())  
-  trs_created_by    String?       
-  trs_modified_date    DateTime     @updatedAt  
-  trs_modified_by    String?       
-  trs_status    String?       
-  trs_next_status    String?  
-  trs_process_id    String?
-  trs_access_profile    String?
-  trs_org_grp_code    String?
-  trs_org_code    String?
-  trs_role_grp_code    String?
-  trs_role_code    String?
-  trs_ps_grp_code    String?
-  trs_ps_code     String?
- 
-
-  @@map("ct242_tob002.tob_api_repository")
-  
-}
-model tob_api_process_logs {
-  id  String @id @default(auto()) @map("_id") @db.ObjectId 
-  apiendpoint    String?        
-  requestdata    Json?      
-  responsedata    Json?      
-  apiname    String?        
-  sample    String?        
-
-  tob_consent_requestid String? @db.ObjectId
-  tob_consent_request   tob_consent_request?   @relation(fields: [tob_consent_requestid], references: [id])   
-  tob_api_repositoryid String? @db.ObjectId
-  tob_api_repository   tob_api_repository?   @relation(fields: [tob_api_repositoryid], references: [id])   
-  trs_created_date    DateTime     @default(now())  
-  trs_created_by    String?       
-  trs_modified_date    DateTime     @updatedAt  
-  trs_modified_by    String?       
-  trs_status    String?       
-  trs_next_status    String?  
-  trs_process_id    String?
-  trs_access_profile    String?
-  trs_org_grp_code    String?
-  trs_org_code    String?
-  trs_role_grp_code    String?
-  trs_role_code    String?
-  trs_ps_grp_code    String?
-  trs_ps_code     String?
- 
-
-  @@map("ct242_tob002.tob_api_process_logs")
-  
-}
-type TOB_SUBSCRIPTION_Webhook{
-  url    String?      
-  isactive    Boolean?      
-  }
-type TOB_SUBSCRIPTION_CONSENTREQ{
-  webhook    TOB_SUBSCRIPTION_Webhook      
-  }
-type TOB_SUB_Webhook{
-  url    String?      
-  isactive    Boolean?      
-  }
-type TOB_SUBSCRIPTION_CONSENTBODY{
-  webhook    TOB_SUB_Webhook      
-  }
-type TOB_CTBODY_ONBEHALFOF{
-  tradingname    String?      
-  legalname    String?      
-  identifiertype  identifiertype_tob_ctbody_onbehalfof?    
-  identifier    String?      
-  }
-type TOB_REQUEST_CONSENT{
-  baseconsentid    String?      
-  expirationdatetime    DateTime?      
-  transactionfromdatetime    DateTime?      
-  transactiontodatetime    DateTime?      
-  accounttype  accounttype_tob_request_consent[]    
-  accountsubtype  accountsubtype_tob_request_consent[]    
-  onbehalfof    TOB_REQUEST_ONBEHALFOF      
-  consentid    String?      
-  permissions  permissions_tob_request_consent[]    
-  openfinancebilling    TOB_OPENFINANCE_BILLING      
-  }
-type TOB_REQUEST_ONBEHALFOF{
-  tradingname    String?      
-  legalname    String?      
-  identifiertype  identifiertype_tob_request_onbehalfof?    
-  identifier    String?      
-  }
-type TOB_OPENFINANCE_BILLING{
-  usertype  usertype_tob_openfinance_billing?    
-  purpose  purpose_tob_openfinance_billing?    
-  }
-type TOB_CONSENTBODY{
-  data    TOB_CTBODY_DATA      
-  meta    TOB_CONBODY_MultipleAuth      
-  subscription    TOB_SUBSCRIPTION_CONSENTBODY      
-  }
-type TOB_CTBODY_DATA{
-  baseconsentid    String?      
-  expirationdatetime    String?      
-  transactionfromdatetime    String?      
-  transactiontodatetime    String?      
-  accounttype  accounttype_tob_ctbody_data[]    
-  accountsubtype  accountsubtype_tob_ctbody_data[]    
-  onbehalfof    TOB_CTBODY_ONBEHALFOF      
-  status  status_tob_ctbody_data?    
-  purpose  purpose_tob_ctbody_data[]    
-  revokedby  revokedby_tob_ctbody_data?    
-  openfinancebilling    TOB_CTBODY_OPENFINANCEBILLING      
-  creationdatetime    String?      
-  consentid    String?      
-  permissions  permissions_tob_ctbody_data[]    
-  }
-type TOB_TPP{
-  clientid    String?      
-  tppid    String?      
-  tppname    String?      
-  softwarestatementid    String?      
-  directoryrecord    String?      
-  decodedssa    TOB_DECODEDSSA      
-  orgid    String?      
-  }
-type TOB_DECODEDSSA{
-  redirect_uris    String[]      
-  client_name    String?      
-  client_uri    String?      
-  logo_uri    String?      
-  jwks_uri    String?      
-  client_id    String?      
-  roles    String[]      
-  sector_identifier_uri    String?      
-  application_type    String?      
-  organisation_id    String?      
-  }
-type TOB_CONBODY_MultipleAuth{
-  multipleauthorizers    TOB_MULTIAUTH      
-  }
-type TOB_MULTIAUTH{
-  totalrequired    Int?      
-  authorizations    TOB_MULTIAUTH_TOTALREQ[]      
-  }
-type TOB_MULTIAUTH_TOTALREQ{
-  authorizerid    String?      
-  authorizertype    String?      
-  authorizationdate    DateTime?      
-  authorizationstatus  authorizationstatus_tob_multiauth_totalreq?    
-  }
-type TOB_CONSENT_REQ{
-  type  type_tob_consent_req?    
-  consent    TOB_REQUEST_CONSENT      
-  subscription    TOB_SUBSCRIPTION_CONSENTREQ      
-  }
-type TOB_CTBODY_OPENFINANCEBILLING{
-  islargecorporate    Boolean?      
-  usertype  usertype_tob_ctbody_openfinancebilling?    
-  purpose  purpose_tob_ctbody_openfinancebilling?    
-  }
-type TOB_psuidentifiers{
-  userid    String?      
-  }
 
 
-enum accounttype_tob_consent_consentkey{
-    Retail
-    SME
-    Corporate
-}
-enum accountsubtype_tob_consent_consentkey{
-    Current
-    Savings
-}
-enum consenttype_tob_consent_consentkey{
-    account_access_consent
-    service_initiation_consent
-    insurance_consent
-}
-enum permissions_tob_consent_consentkey{
-    ReadAccountsBasic
-    ReadAccountsDetails
-}
-enum authorizationchannel_tob_consent_request{
-    App
-    Web
-}
-enum identifiertype_tob_ctbody_onbehalfof{
-    Other
-}
-enum accounttype_tob_request_consent{
-    Retail
-    SME
-    Corporate
-}
-enum accountsubtype_tob_request_consent{
-    CurrentAccount
-    SavingsAccount
-}
-enum permissions_tob_request_consent{
-    ReadAccountsBasic
-    ReadAccountsDetails
-}
-enum identifiertype_tob_request_onbehalfof{
-    Other
-}
-enum usertype_tob_openfinance_billing{
-    Retail
-    SME
-    Corporate
-}
-enum purpose_tob_openfinance_billing{
-    AccountAggregation
-    RiskAssessment
-}
-enum accounttype_tob_ctbody_data{
-    Retail
-    SME
-    Corporate
-}
-enum accountsubtype_tob_ctbody_data{
-    Savings
-    CurrentAccount
-}
-enum status_tob_ctbody_data{
-    Authorized
-    Rejected
-    Revoked
-    Expired
-    Consumed
-    Suspended
-}
-enum purpose_tob_ctbody_data{
-    Account_Aggregation
-    Personal_Finance_Manager
-    Other
-}
-enum revokedby_tob_ctbody_data{
-    LFI
-    TPP
-    LFIInitiatedByUser
-    TPPInitiatedByUser
-}
-enum permissions_tob_ctbody_data{
-    ReadAccountsBasic
-    ReadAccountsDetail
-    ReadBalances
-}
-enum authorizationstatus_tob_multiauth_totalreq{
-    Pending
-    Approved
-    Rejected
-}
-enum type_tob_consent_req{
-    account_access_consent
-}
-enum usertype_tob_ctbody_openfinancebilling{
-    Retail
-    SME
-    Corporate
-}
-enum purpose_tob_ctbody_openfinancebilling{
-    AccountAggregation
-    RiskAssessment
-}
+
+
+

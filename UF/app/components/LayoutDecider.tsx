@@ -1,3 +1,4 @@
+
 'use client'
 import React, { useContext, useEffect, useMemo, useState } from 'react'
 import TopNav from './TopNav'
@@ -7,10 +8,9 @@ import { TotalContext, TotalContextProps } from '../globalContext'
 import { AxiosService } from './axiosService'
 import { deleteAllCookies, getCookie } from './cookieMgment'
 import { useInfoMsg } from './infoMsgHandler'
-import { MenuItem } from '../interfaces/interfaces'
+import { MenuItem, ScreenDetail } from '../interfaces/interfaces'
 import decodeToken from './decodeToken'
 import { useGravityThemeClass } from '../utils/useGravityUITheme'
-
 const LayoutDecider = ({
   mode = 'detached',
   navigationStyles = 'vertical',
@@ -31,70 +31,69 @@ const LayoutDecider = ({
   const [fullView, setFullView] = useState(
     sidebarStyle == 'default' || sidebarStyle == 'condensed' ? true : false
   )
-  const {
-    property,
-    setProperty,
-    userDetails,
-    setUserDetails,
-    encAppFalg,
-    setEncAppFalg
-  } = useContext(TotalContext) as TotalContextProps
-  const encryptionFlagApp: boolean = true
-  const encryptionDpd: string =
-    'CK:CT242:FNGK:AF:FNK:CDF-DPD:CATK:TOB001:AFGK:TOB002:AFK:TOBDPD:AFVK:v1'
-  const encryptionMethod: string = ''
+  const { property, setProperty, userDetails , setUserDetails,encAppFalg , setEncAppFalg } = useContext(
+    TotalContext
+  ) as TotalContextProps
+  const encryptionFlagApp: boolean = false;    
+  const encryptionDpd: string = "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:CG:AFGK:TG2:AFK:TG2DPD:AFVK:v1";
+  const encryptionMethod: string = "";
   const brandColor = property?.brandColor || '#1F2D3D'
   const hoverColor = property?.hoverColor || '#1F2D3D'
   const selectionColor = property?.selectionColor || '#1F2D3D'
   const sidebarColor = property?.menubarColor || '#1F2D3D'
-  const topbarColor = property?.topbarColor || ''
-  const logo = ''
-  const appName = 'TOBApp'
+ // const topbarColor = property?.topbarColor || ''
+  const logo = "https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT003/resources/images/image.jfif"
+  const appName = "TG2"
   const toast = useInfoMsg()
   const [loading, setLoading] = useState(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
   const navData: MenuItem[] = [
-    {
-      menuGroup: 'admin',
-      menuGroupLabel: 'Admin',
-      screenDetails: [
-        {
-          name: 'logs',
-          label: 'Logs',
-          key: 'Logs Screen',
-          static: true,
-          icon: 'https://minapi.gsstvl.com/torus/9.1/resources/icons/document-add-svgrepo-com.svg'
-        },
-        {
-          name: 'user',
-          label: 'User',
-          key: 'User Screen',
-          static: true,
-          icon: 'https://minapi.gsstvl.com/torus/9.1/resources/icons/user-plus-svgrepo-com.svg'
-        }
-      ],
-      items: [],
-      icon: 'https://minapi.gsstvl.com/torus/9.1/resources/icons/admin-svgrepo-com.svg'
-    },
-    {
-      menuGroup: 'tob_schema',
-      menuGroupLabel: 'TOB_Schema',
-      screenDetails: [
-        {
-          name: 'tob_screen_1',
-          label: 'TOB_Screen_1',
-          key: 'CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TOB001:AFGK:TOB002:AFK:TOB_Dashboard_Screen:AFVK:v1',
-          static: false
-        }
-      ],
-      items: []
-    }
-  ]
-  const token: string = getCookie('token')
+  {
+    "menuGroup": "admin",
+    "menuGroupLabel": "Admin",
+    "screenDetails": [
+      {
+        "name": "logs",
+        "label": "Logs",
+        "key": "Logs Screen",
+        "allowedAccessProfile": [],
+        "static": true,
+        "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/document-add-svgrepo-com.svg"
+      },
+      {
+        "name": "user",
+        "label": "User",
+        "key": "User Screen",
+        "allowedAccessProfile": [],
+        "static": true,
+        "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/user-plus-svgrepo-com.svg"
+      }
+    ],
+    "items": [],
+    "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  }
+]
+  const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.selectedAccessProfile
   const themeClass = useGravityThemeClass()
-
   const getSideNavClassName = useMemo(() => {
     if (
       navigationStyles === 'horizontal' ||
@@ -166,50 +165,6 @@ const LayoutDecider = ({
     window.location.href = '/'
   }
 
-  const checkSecurity = async (
-    artifactKey: string,
-    accessProfile: string[],
-    token: string
-  ): Promise<Boolean> => {
-    if (!artifactKey) return false
-    try {
-      setEncAppFalg({
-        flag: encryptionFlagApp,
-        dpd: encryptionDpd,
-        method: encryptionMethod
-      })
-      let orchestrationBody: any = {
-        key: artifactKey,
-        accessProfile: accessProfile,
-        from: 'layoutDecider'
-      }
-      if (encryptionFlagApp) {
-        orchestrationBody['dpdKey'] = encryptionDpd
-        orchestrationBody['method'] = encryptionMethod
-      }
-      const orchestrationData = await AxiosService.post(
-        '/UF/Orchestration',
-        orchestrationBody,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-      )
-      const securityResponse = orchestrationData?.data?.security
-      if (
-        securityResponse &&
-        typeof securityResponse == 'string' &&
-        securityResponse.toLowerCase() == 'ba'
-      ) {
-        return false
-      } else {
-        return true
-      }
-    } catch (error) {
-      return false
-    }
-  }
 
   const processMenuItems = async (
     items: MenuItem[],
@@ -226,11 +181,7 @@ const LayoutDecider = ({
         for (const screen of newItem.screenDetails) {
           if (screen.static) validScreens.push(screen)
           if (screen.key && !screen.static) {
-            const isValid = await checkSecurity(
-              screen.key,
-              accessProfile,
-              token
-            )
+            const isValid = screen.allowedAccessProfile.includes(user) ? true : false
             if (isValid) validScreens.push(screen)
           }
         }
@@ -257,9 +208,9 @@ const LayoutDecider = ({
 
   async function checkAccessProfile(token: string) {
     try {
-      let myAccount: any
-      if (encryptionFlagApp) {
-        myAccount = await AxiosService.get('/UF/myAccount-for-client', {
+      let myAccount:any;
+      if (encryptionFlagApp) {  
+         myAccount = await AxiosService.get('/UF/myAccount-for-client', {
           headers: {
             Authorization: `Bearer ${token}`
           },
@@ -268,7 +219,7 @@ const LayoutDecider = ({
             method: encryptionMethod
           }
         })
-      } else {
+      }else{
         myAccount = await AxiosService.get('/UF/myAccount-for-client', {
           headers: {
             Authorization: `Bearer ${token}`
@@ -276,7 +227,9 @@ const LayoutDecider = ({
         })
       }
       setUserDetails(myAccount?.data)
-      if (user != '' && user != null) {
+      if (
+       user != "" && user != null
+      ) {
         const processedMenuItems = await processMenuItems(
           navData,
           [user],
@@ -316,10 +269,9 @@ const LayoutDecider = ({
     return false
   }
 
-  if (loading == true)
-    return (
-     <div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><img src="" alt="loadingImage" /></div>
-    )
+   if (loading == true){
+    return (<div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><img src="https://varnishdev.gsstvl.com/files/torus/9.1/CT003/resources/splashImage/loading.gif" alt="loadingImage" /></div>);
+  }
   return (
     <div className={`flex h-screen w-screen flex-col`}>
       <div className={`g-root flex-shrink-0 ${themeClass}`}>
@@ -330,7 +282,7 @@ const LayoutDecider = ({
           selectionColor={selectionColor}
           brandColor={brandColor}
           hoverColor={hoverColor}
-          topbarColor={topbarColor}
+       //   topbarColor={topbarColor}
           appName={appName}
           logo={logo}
           userDetails={userDetails}
@@ -340,7 +292,7 @@ const LayoutDecider = ({
         <div
           className={`cursor-pointer transition-all duration-700 ease-in-out ${getSideNavClassName}`}
           style={{
-            // backgroundColor: `${sidebarColor}`,
+            //backgroundColor: `${sidebarColor}`,
             borderColor: 'var(--g-color-line-generic)'
           }}
         >

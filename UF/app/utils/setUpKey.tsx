@@ -50,11 +50,11 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
   const [data, setData] = useState<SetupKeyData | null>(null);
   const token:string = getCookie('token'); 
   const encryptionFlagApp: boolean = true;
-  const encryptionDpd: string = "CK:CT242:FNGK:AF:FNK:CDF-DPD:CATK:TOB001:AFGK:TOB002:AFK:TOBDPD:AFVK:v1";
+  const encryptionDpd: string = "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:CG:AFGK:TG2:AFK:TG2DPD:AFVK:v1";
   const encryptionMethod: string = "";
   const fetchSetupKey = async () => {
     try {
-      let setUpKeyDto:any = {key:"CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CT242:AFK:PROFILE:AFVK:v1:tpc"};
+      let setUpKeyDto:any = {key:"CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT003:AFGK:CG:AFK:TG2:AFVK:v1:appearance"};
       if (encryptionFlagApp) {
         setUpKeyDto["dpdKey"] = encryptionDpd;
         setUpKeyDto["method"] = encryptionMethod;
@@ -87,15 +87,14 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
       document.documentElement.style.setProperty('--hover-color', hoverColor);
       document.documentElement.style.setProperty('--border-radius', borderRadius);
       document.documentElement.style.setProperty('--g--font-size', fontSize);
-      document.documentElement.style.setProperty('--page-bg-color', data['page-bg-color']);
-      document.documentElement.style.setProperty('--group-bg-color', data['group-bg-color']);
+     // document.documentElement.style.setProperty('--page-bg-color', data['page-bg-color']);
+     // document.documentElement.style.setProperty('--group-bg-color', data['group-bg-color']);
 
-      setProperty({ language, direction, layoutMode, navigationStyles, sidebarStyle,brandColor,selectionColor,hoverColor,menubarColor,topbarColor });
+      setProperty({ language, direction, layoutMode, navigationStyles, sidebarStyle,brandColor,selectionColor,hoverColor }); //add menubarColor,topbarColor
     }
   }, [data, setProperty]);
-  
-  
-  if (!data) return <div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><img src="" alt="loadingImage" /></div>;;
+
+  if (!data) return <div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><img src="https://varnishdev.gsstvl.com/files/torus/9.1/CT003/resources/splashImage/loading.gif" alt="loadingImage" /></div>;
 
 
   return <div>{children}</div>;

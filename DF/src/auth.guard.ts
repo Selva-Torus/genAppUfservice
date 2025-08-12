@@ -23,10 +23,10 @@ export class AuthGuard implements CanActivate {
  async canActivate(context: ExecutionContext): Promise<boolean>{
   const request = context.switchToHttp().getRequest();
   try {
-   
-    if(await this.redisService.exist(request.body.key+'PO')){
+    
+    if(await this.redisService.exist(request.body.key+'PO',process.env.CLIENTCODE)){
       var seckey = request.body.key+'PO'
-    }else if(await this.redisService.exist(request.body.key+'DO')){
+    }else if(await this.redisService.exist(request.body.key+'DO',process.env.CLIENTCODE)){
       var seckey = request.body.key+'DO'
     }
      const sjsoncheck = await this.securityService.getSecurityTemplate(seckey,request.session.token)

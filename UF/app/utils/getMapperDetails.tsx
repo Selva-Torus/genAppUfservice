@@ -1,6 +1,9 @@
 export  async function getDropdownDetails(dfData:any,mapperColumn: string,category: any, bindtranValue: any, code: any) {
-    let codName:any
-    if (!category && !bindtranValue && !code) {
+  let codName:any
+    if(!category && dfData && mapperColumn && !bindtranValue && !code){
+      let result = dfData.map((item: any) => item[mapperColumn]);
+      return result;
+    } else if (!category && !bindtranValue && !code) {
       let data = dfData
       return data
     } else if (category && !bindtranValue && !code) {
@@ -43,7 +46,7 @@ export  async function getDropdownDetails(dfData:any,mapperColumn: string,catego
       for (let j = 0; j < categoryData.length; j++) {
         Object.keys(categoryData[j]).map(keyName => {
           if (
-            categoryData[j].parentCode === code &&
+            categoryData[j].parentcode === code &&
             mapperColumn === keyName
           ) {
             dropdownData.push(categoryData[j][keyName])

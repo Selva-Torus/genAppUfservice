@@ -50,7 +50,7 @@ const RenderNodesInfo = ({
       const { subFlowKey, subFlowUpId } = node.subFlowInfo
       setIsExpanded(subFlowUpId)
       const response = await AxiosService.post(
-        '/subFlowLog',
+        'http://192.168.2.96:7000/subFlowLog',
         {
           key: subFlowKey,
           upId: subFlowUpId

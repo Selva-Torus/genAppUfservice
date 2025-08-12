@@ -16,12 +16,12 @@ const ParentComponent = () => {
   const [nodeData, setNodeData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [app, setApp] = useState({
-    code: 'TOB002',
-    name: 'TOBApp'
+    code: 'TG2',
+    name: 'TG2'
   })
   const [appGroup, setappGroup] = useState({
-    code: 'TOB001',
-    name: 'TOB'
+    code: 'CG',
+    name: 'CG'
   })
   const token: string = getCookie('token')
   const decodedTokenObj: any = decodeToken(token)
@@ -38,7 +38,6 @@ const ParentComponent = () => {
     totalPages: 0
   })
   const search = useDeferredValue(searchTerm)
-
   const suffixes: any = {
   DF: ["DFD"],
   UF: ["UFM", "UFW"],
@@ -47,14 +46,33 @@ const ParentComponent = () => {
   AIF: ["AIFD"],
   CDF: ["DPD", "IFD"],
 };  
-
   let payload:any = useMemo(() => {
     return {
-      tenant: 'CT242',
-      fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
-              suffixes[prefix]
-                ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
-                : []
+    "tenant": "CT242",
+    "fabric": [],
+    "appgroup": {
+        "code": "TPPTEST001",
+        "name": "TPPTEST"
+    },
+    "app": {
+        "code": "TPPTEST002",
+        "name": "VOFApp"
+    },
+    "user": [
+        "mari"
+    ],
+    "FromDate": "2025-08-06",
+    "ToDate": "2025-08-08",
+    "page": 1,
+    "limit": 10,
+    "searchParam": ""
+}
+    return {
+      tenant: 'CT003',
+       fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
+            suffixes[prefix]
+              ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
+              : []
           ) : [],
       appgroup: appGroup,
       app: app,
@@ -65,22 +83,22 @@ const ParentComponent = () => {
       limit: jsonData.limit,
       searchParam: search
     }
-  }, [activeTab, jsonData, search , range , fabrics , user])  
+  }, [activeTab, jsonData, search , range , fabrics, user])
 
   const fetchData = async (signal: AbortSignal) => {
     try {
-      if (encAppFalg.flag) {
-        payload['dpdKey'] = encAppFalg.dpd;
-        payload['method'] = 'vault';
-      }
+      // if (encAppFalg.flag) {
+      //   payload['dpdKey'] = encAppFalg.dpd;
+      //   payload['method'] = 'vault';
+      // }
       console.log('Fetching data...', payload)
       setLoading(true)
       const response = await AxiosService.post(
-        `/${activeTab === 'torus' ? 'expLog' : 'prcLog'}`,
+        `${activeTab === 'torus' ? 'expLog' : 'http://192.168.2.96:7000/prcLog'}`,
         payload,
-        {
-          signal: signal
-        }
+        // {
+        //   signal: signal
+        // }
       )
 
       const result = response.data

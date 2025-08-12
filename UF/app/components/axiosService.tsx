@@ -1,10 +1,11 @@
 import axios from 'axios'
-import { getData } from '../redis/utils/redisFunction'
+import * as crypto from 'crypto'
 import { encryptData } from '../utils/encrypt'
 import { decryptData } from '../utils/decrypt'
 import { clientDecrypt } from '../utils/clientDecrypt'
 import { clientEncrypt } from '../utils/clientEncrypt'
-
+import getEnvData from '../getEnvData'
+import {localEncrypt, localDecrypt} from '../utils/localCrypto'
 const url = process.env.NEXT_PUBLIC_API_BASE_URL
 
 const AxiosService = axios.create({
@@ -21,20 +22,22 @@ AxiosService.interceptors.request.use(
       let dpdKey = config.data.dpdKey
       let method = config.data.method
       let authTag: any
-      let deploymentData =  await getData(config.data.dpdKey+":NDP","ReJSON-RL")
-      let deploymentId = Object.keys(deploymentData)[0]
-      for (let i = 0; i < deploymentData[deploymentId].data.encryption.encryptionInfo.items.length; i++) {
-      if (deploymentData[deploymentId].data.encryption.encryptionInfo.items[i].type === config.data.method) {
-        encryptionData["credentials"] = deploymentData[deploymentId].data.encryption.encryptionInfo.items[i];        
+      let deploymentData:any =  await getEnvData(config.data.dpdKey,method)
+      // let deploymentId = Object.keys(deploymentData)[0]
+      for (let i = 0; i < deploymentData.encryptionInfo.items.length; i++) {
+      if (deploymentData.encryptionInfo.items[i].type === config.data.method) {
+        encryptionData["credentials"] = deploymentData.encryptionInfo.items[i];        
         }            
       }
       delete config.data.dpdKey
       delete config.data.method
       let ciphertext : any;
       if(method == "vault"){
-        ciphertext = await encryptData(encryptionData.credentials,config.data,"ct242_tob001_tob002_v1")
+        const encrypt = { Credentials: encryptionData.credentials, value: config.data, context: "ct003_cg_tg2_v11" }
+        const vaultEncrypt = await localEncrypt(encrypt)
+        ciphertext = await encryptData(vaultEncrypt)
       }else{
-        ciphertext = await clientEncrypt(encryptionData.credentials,config.data,"ct242_tob001_tob002_v1")
+        ciphertext = await clientEncrypt(encryptionData.credentials,config.data,"ct003_cg_tg2_v11")
       }
       if(method == "AESGCM"){
         authTag = ciphertext?.authTag
@@ -55,20 +58,21 @@ AxiosService.interceptors.response.use(
       let encryptionData:any = {};
       let dpdKey = response.data.dpdKey
       let method = response.data.method
-      let deploymentData =  await getData(response.data.dpdKey+":NDP","ReJSON-RL")
-      let deploymentId = Object.keys(deploymentData)[0]
-      for (let i = 0; i < deploymentData[deploymentId].data.encryption.encryptionInfo.items.length; i++) {
-        if (deploymentData[deploymentId].data.encryption.encryptionInfo.items[i].type === response.data.method) {
-          encryptionData["credentials"] = deploymentData[deploymentId].data.encryption.encryptionInfo.items[i];        
+      let deploymentData =  await getEnvData(response.data.dpdKey,method)
+      // let deploymentId = Object.keys(deploymentData)[0]
+      for (let i = 0; i < deploymentData.encryptionInfo.items.length; i++) {
+      if (deploymentData.encryptionInfo.items[i].type === response.data.method) {
+        encryptionData["credentials"] = deploymentData.encryptionInfo.items[i];        
         }            
       }
       delete response.data.dpdKey
       delete response.data.method
 
       if(method == "vault"){
-        response.data = await decryptData(encryptionData.credentials,response.data,"ct242_tob001_tob002_v1")
+        let vault = await decryptData(response.data, dpdKey)
+        response.data = await localDecrypt(vault)
       }else{
-        response.data = await clientDecrypt(encryptionData.credentials,response.data,"ct242_tob001_tob002_v1")
+        response.data = await clientDecrypt(encryptionData.credentials,response.data,"ct003_cg_tg2_v11")
       }
     }
     return response

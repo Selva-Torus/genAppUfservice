@@ -30,12 +30,12 @@ const ContextSelector = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false)
   const [time, setTime] = useState('')
-    let landingScreen:string = 'CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TOB001:AFGK:TOB002:AFK:TOB_Dashboard_Screen:AFVK:v1';
+    let landingScreen:string = 'User Screen';
        let screenDetails: any = {
            keys:[
   {
-    "screensName": "tob_screen_1-v1",
-    "ufKey": "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TOB001:AFGK:TOB002:AFK:TOB_Dashboard_Screen:AFVK:v1"
+    "screensName": "formitem-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1"
   }
 ]
         }
@@ -137,7 +137,7 @@ const ContextSelector = () => {
         }
       )
       if (res.status == 201) {
-        setCookie('token', res.data)
+        setCookie('token', res.data.token)
         setCookie(
           'tp_ps',
           btoa(

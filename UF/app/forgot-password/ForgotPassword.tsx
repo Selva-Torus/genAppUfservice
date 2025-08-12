@@ -9,15 +9,15 @@ import { AxiosService } from '../components/axiosService'
 import { useInfoMsg } from '../components/infoMsgHandler'
 
 interface Props {
-  logo?: string
-  appName?: string
-  brandColor?: string
+  logo: string
+  appName: string
+  brandColor: string
 }
 
 const ForgotPassword = ({
   logo,
-  appName = 'TOBApp',
-  brandColor = '#76C432'
+  appName ,
+  brandColor
 }: Props) => {
   const [formData, setFormData] = useState<Record<string, string>>({email: ''})
   const toast = useInfoMsg()

@@ -11,12 +11,12 @@ export default function HomePage() {
   const router = useRouter()
   const token = getCookie('token');
   const decodedToken = decodeToken(token)
-  const encryptionFlagApp: boolean = true;
-  let landingScreen:string = 'CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TOB001:AFGK:TOB002:AFK:TOB_Dashboard_Screen:AFVK:v1';
+  const encryptionFlagApp: boolean = false;    
+  let landingScreen:string = 'User Screen';
 
   const securityCheck = async () => {
     try {
-      const encryptionDpd: string = "CK:CT242:FNGK:AF:FNK:CDF-DPD:CATK:TOB001:AFGK:TOB002:AFK:TOBDPD:AFVK:v1";
+      const encryptionDpd: string = "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:CG:AFGK:TG2:AFK:TG2DPD:AFVK:v1";
       const encryptionMethod: string = "";
       let introspect:any;
       if(encryptionFlagApp){
@@ -64,7 +64,8 @@ export default function HomePage() {
 
   return (
     <>
-      <LoginForm logo="" image='https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/nodeicons/DF-DFD/ext-streamnode.svg' loginType='standard'/>
+      <LoginForm logo="https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT003/resources/images/image.jfif"   loginType="rightFloat"   image=""/>
     </>
   )
 }
+ 

@@ -1,14 +1,44 @@
 import { Injectable, Logger } from '@nestjs/common';
 const Redis = require('ioredis');
 import 'dotenv/config';
+import { Db, MongoClient } from 'mongodb';
+const _ = require("lodash")
+import { connectToMongo, connectToRedis, getDb, getRedis } from './mongoClient';
 
-export const redis = new Redis({
-  host: process.env.HOST,
-  port: parseInt(process.env.PORT),
-}).on('error', (err) => {
-  Logger.log('Redis Client Error', err);
-  throw err;
-});
+let db: Db;
+let redis
+
+  connectToMongo().then(() => { 
+    db = getDb();
+    console.log('Database initialized'); 
+  }).catch((error) => {
+    console.error('Error connecting to MongoDB:', error);
+  }); 
+
+   connectToRedis().then(() => { 
+    redis = getRedis();
+    console.log('Redis initialized'); 
+  }).catch((error) => {
+    console.error('Error connecting to Redis:', error);
+  });
+
+//export const redis = new Redis({
+  //host: process.env.HOST,
+  //port: parseInt(process.env.PORT),
+//}).on('error', (err) => {
+  //Logger.log('Redis Client Error', err);
+  //throw err;
+//});
+
+//export const client = new MongoClient(process.env.MONGODB_URL);
+//client.connect()
+  //.then(() => {
+    //console.log('Connected to the database successfully!');
+  //})
+  //.catch((err) => {
+    //console.error('Error connecting to the database:', err);
+  //});
+//var db = client.db(process.env.MONGODB_NAME)
 
 @Injectable()
 export class RedisService {
@@ -19,10 +49,28 @@ export class RedisService {
    * @returns The JSON data retrieved from Redis.
    * @throws {Error} If there is an error retrieving the JSON data.
    */
-  async getJsonData(key: string) {
+  async getJsonData(key: string, collectionName: string) {
     try {
-      var request: any = await redis.call('JSON.GET', key);
-      return request;
+      let returnValue: any;
+    
+      let redisResult = await redis.call('JSON.GET', key);    
+      if (redisResult) {
+        returnValue = redisResult;
+      } 
+      else {
+        var mongoResult:any = await this.getDocument(collectionName,key)       
+        
+        if(mongoResult?.length>0 && mongoResult[0]?.value){          
+          
+          await redis.call('JSON.SET', key, '$', JSON.stringify(mongoResult[0]?.value));
+         
+          returnValue = JSON.stringify(mongoResult[0]?.value);
+        }else{
+          returnValue = null;
+        }      
+      }
+
+      return returnValue;
     } catch (error) {
       throw error;
     }
@@ -36,19 +84,33 @@ export class RedisService {
    * @returns The JSON value at the specified path.
    * @throws {Error} If there is an error retrieving the JSON value.
 +   */
-  async getJsonDataWithPath(key: string, path: string) {  
-    try {
-      var request = await redis.call('JSON.GET', key, path);
-      return request;
+  async getJsonDataWithPath(key: string, path:any,collectionName: string) {         
+    try {    
+      return await redis.call('JSON.GET', key, path);    
     } catch (error) {
-      throw error;
+      console.log('ERROR',error.message); 
+      let mongoResult = await this.getDocument(collectionName,key,path)    
+      if(mongoResult && mongoResult?.length>0){
+        return mongoResult
+      }else{
+        throw error;
+      }      
     }
   }
 
-  async AppendJsonArr(key: string, value: any,path?: string) {
+  async AppendJsonArr(key: string, value: any,collectionName:string, path?: string) {
     try {
-      var request = await redis.call('JSON.ARRAPPEND', key, '$', value)            
-      return request;
+      if(path){
+        var request = await redis.call('JSON.ARRAPPEND', key, '$.'+path, value)   
+      }else{
+        var request = await redis.call('JSON.ARRAPPEND', key, '$', value)   
+      }            
+      
+      if(request){
+        await this.appendDocumentData(collectionName,key,JSON.parse(value))  
+      }      
+      return request; 
+     
     } catch (error) {
       throw error
     }    
@@ -64,15 +126,22 @@ export class RedisService {
    * @returns A string indicating that the value was stored.
    * @throws {Error} If there is an error storing the JSON data.
    */
-  async setJsonData(key: string, value: any, path?: string) {
+   async setJsonData(key: string, value: any, collectionName:string, path?: string) {
     try {      
-      if (path) {
-        var defpath = '.' + path;
+      if (path) {       
+        var defpath = '.' + path
       } else {
         var defpath = '$';
       }
-      await redis.call('JSON.SET', key, defpath, value);
-      return 'Value Stored';
+      
+      let redisResult = await redis.call('JSON.SET', key, defpath, value);
+      // if(redisResult == 'OK')
+      //   var mongoResult:any  = await this.setDocument(collectionName,key, JSON.parse(value),path)
+      
+      // if(mongoResult?.value)
+        return 'Value Stored';    
+
+
     } catch (error) {
       throw error;
     }
@@ -89,8 +158,16 @@ export class RedisService {
    */
 
   async setStreamData(streamName: string, key: string, strValue: any) {
-    try {
+    try {     
       var result = await redis.xadd(streamName, '*', key, strValue);
+      // if(result){     
+       
+        // strValue = {[result]: JSON.parse(strValue)}
+
+        // strValue = Object.assign(JSON.parse(strValue),{EntryId:result})
+        
+        // await this.appendStreamDocument(streamName,key, strValue)
+      // }
       return result;
     } catch (error) {
       throw error;
@@ -103,14 +180,30 @@ export class RedisService {
    * @returns The result of the EXISTS command (0 or 1).
    * @throws {Error} If there is an error executing the EXISTS command.
    */
-  async exist(key){
+
+  async exist(key,collectionName: string) {
     try {
-      var request = await redis.call('EXISTS', key);
-      return request;
+      let redisResult = await redis.call('EXISTS', key);
+      if(redisResult){
+        return redisResult;
+      }else{
+        let mongoResult = await this.existsDocument(collectionName,key)
+        if(mongoResult){
+          let doc = await this.getDocument(collectionName,key)
+           if(doc?.length>0 && doc[0]?.value){          
+          
+          await redis.call('JSON.SET', key, '$', JSON.stringify(doc[0]?.value));}
+          //await redis.call('JSON.SET', key, '$', JSON.stringify(doc));
+          return 1
+        }else{
+         return mongoResult
+        }
+      }
     } catch (error) {
       throw error;
     }
   }
+
 
  
    /**
@@ -119,14 +212,21 @@ export class RedisService {
    * @returns An array of messages in the stream.
    * @throws {Error} If there is an error retrieving the stream data.
    */
+  
   async getStreamData(streamName) {
     try {
-      var messages = await redis.xread('STREAMS', streamName, 0);
-      return messages;
+      var messages = await redis.xread('STREAMS', streamName, 0);     
+      if(messages && messages != null){
+        return messages;        
+      }else{
+        return await this.convertStreamStruct(streamName)
+      }
     } catch (error) {
       throw error;
     }
   }
+
+
    /**
    * Retrieves stream data from Redis using XRANGE command.
    * 
@@ -137,7 +237,11 @@ export class RedisService {
   async getStreamRange(streamName){
     try {
       var messages = await redis.call('XRANGE', streamName, '-', '+');
-      return messages;
+      if(messages?.length == 0){    
+        return await this.convertStreamRangeStruct(streamName)
+      }else{
+        return messages;
+      }
     } catch (error) {
       throw error;
     }
@@ -243,15 +347,9 @@ export class RedisService {
   async readConsumerGroup(streamName, groupName, consumerName) {
     try {     
       var res = [];
-      var result = await redis.xreadgroup(
-        'GROUP',
-        groupName,
-        consumerName,
-        'STREAMS',
-        streamName,
-        '>',
-      );
+      var result = await redis.xreadgroup('GROUP',groupName,consumerName,'STREAMS',streamName,'>');
       
+
       if (result) {
         result.forEach(([key, message]) => {
           message.forEach(([messageId, data]) => {           
@@ -312,25 +410,30 @@ export class RedisService {
    * @throws {Error} - If there is an error retrieving the keys.
    */
   
-  async getKeys(key: string , isKeySuffix = false) {
+  async getKeys(key: string , collectionName: string, isKeySuffix = false) {
     try {
       var redisKey = isKeySuffix ? '*:'+ key : key + ':*';
       var keys = await redis.keys(redisKey);   
-      
-      return keys;
+      if(keys?.length == 0){
+        return await this.getDocumentKeys(collectionName,key)
+      }else{
+        return keys;
+      }
     } catch (error) {
       throw error;
     }
   }
+  
   /**
    * Deletes a key in Redis.
    * @param {string} key - The key to delete.
    * @returns {Promise<void>} - A promise that resolves when the key is deleted.
    * @throws {Error} - If there is an error deleting the key.
    */
-  async deleteKey(key: any) {
+  async deleteKey(key: any,collectionName: string) {
     try {
-      var response = await redis.del(key);     
+      var response = await redis.del(key); 
+      //await this.deleteDocument(collectionName,key)     
       return response
     } catch (error) {
       throw error;
@@ -355,26 +458,371 @@ export class RedisService {
     }
   }
 
-  async renameKey(oldKey, newKey) {
+  async renameKey(oldKey, newKey,client) {
     try {
       var result = await redis.call('RENAME', oldKey, newKey);
+       let mongoResult = await this.existsDocument(client,oldKey)
+       if(mongoResult){
+        await this.renameDocumentId(client,oldKey,newKey)
+       }
       return result;
     } catch (error) {
       throw error;
     }
   }
 
-  async copyData(sourceKey: string, destinationKey: string) {
+  async copyData(sourceKey: string, destinationKey: string,collectionName) {
     try {
-      const destinationExist = await redis.exists(destinationKey);
+      const destinationExist = await this.exist(destinationKey,collectionName);
       if(destinationExist){
-        await this.deleteKey(destinationKey);
+        await this.deleteKey(destinationKey,collectionName);
       }
-      var result = await redis.call('COPY', sourceKey, destinationKey);
+      let mongdoc;
+       let mongoResult = await this.existsDocument(collectionName,sourceKey)
+       if(mongoResult){
+         mongdoc = await this.getDocument(collectionName,sourceKey)
+       
+       }else{
+         mongdoc = JSON.parse(await this.getJsonData(sourceKey,collectionName))
+       }
+      // await this.setDocument(collectionName,destinationKey,mongdoc)
+      var result = await redis.call('COPY', sourceKey, destinationKey);  
       return result;
     } catch (error) {
       throw error;
     }
   }  
+
+  async getstreamKey(key: string) {
+    try {
+      let keys
+       keys = await redis.keys(key); 
+      if(keys?.length == 0){
+        keys = await this.getDocumentKeys(key)
+      }
+      return keys;
+    } catch (error) {
+      throw error;
+    }
+  }
+
  
+  //------------------------ MONGO DB ----------------------------//
+
+  async setDocument(collectionName: string, key: string, value: any,path?:any,filter?:object){
+    try {
+     
+      const collection = db.collection(collectionName+'_AMDKEYS');
+ 
+      let customId:any = { _id:key}
+     
+      let customVal:any = { $set: { value } }      
+     
+      if(filter)    
+        customId = Object.assign(customId,filter) 
+
+      if(path){
+        if(path.includes('[') && path.includes(']')){ 
+          path = path.replace(']', '');
+          path = path.replace('[', '');
+        }
+        path = 'value.'+path
+        customVal = { $set: { [path]:value } }
+      }
+     
+      var result = await collection.findOneAndUpdate(customId,customVal,{ upsert: true, returnDocument: 'after' })
+   
+      if (result) {
+        return result
+      } else {
+        return 0
+      }
+    } catch (error) {
+      throw error
+    }
+  }  
+
+  async getDocumentKeys(collectionName: string, key?: string){
+    try {
+      let collection;
+      let result
+      if(key){
+         collection = db.collection(collectionName+'_AMDKEYS'); 
+         const regex = new RegExp(`${key}`, 'i');
+          result = await collection.find({ _id: regex }).toArray();    
+        }
+      else{
+        collection = db.collection(collectionName);
+         result = await collection.find().toArray();
+        }  
+        
+       let arrID=[]
+      if (result && result.length>0) {
+       
+        for(let v=0; v<result.length; v++){
+          arrID.push(result[v]?._id)
+        }
+        return arrID
+      } else {
+        return arrID
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async getDocument(collectionName: string, key: string, path?:any,filter?:object){
+    try {
+     
+      const collection = db.collection(collectionName+'_AMDKEYS');   
+     
+      let customId:any = {
+        _id: new RegExp(`${key}`, 'i')
+      }    
+          
+      var result = await collection.find(customId).toArray();  
+      console.log(1,JSON.stringify(result));     
+      if (result?.length>0) {       
+        if(path){   
+          return await _.get(result?.[0],'value'+path)         
+        }
+        return result
+      } else {
+        return 0
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async getCollection(collectionName: string){
+    try {     
+      const collection = db.collection(collectionName+'_AMDKEYS'); 
+      var result = await collection.find().toArray();  
+       
+      if (result?.length>0) { 
+        return result
+      } else {
+        return 0
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async listCollections(collectionName?:string){
+    try {
+      let collections = []
+      let collectionList = await db.listCollections().toArray();
+      collectionList.forEach(collection => {
+        if(collectionName){
+          if(collection.name.includes(collectionName)){
+            collections.push(collection.name);
+          }
+        }else{
+          collections.push(collection.name);
+        }
+      });
+      if(collections.length > 0){
+        return collections
+      }else{
+        return 0
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async existsDocument(collectionName: string, key: string){
+    try {      
+      const collection = db.collection(collectionName+'_AMDKEYS'); 
+      let customId:any = {_id:key}  
+     
+      var result = await collection.findOne(customId,{ projection: { _id: 1 } })   
+       
+      if (result) {
+        return result
+      } else {
+        return 0
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async appendDocumentData(collectionName: string, key: string,AppendValue:any){
+    try {
+      const collection:any = db.collection(collectionName+'_AMDKEYS'); 
+      let customId:any = {_id:key}
+
+      var result:any = await collection.find(customId).toArray()
+     
+      if(result?.length>0){                
+        let pushQry = { $push: { ['value'] : AppendValue } }
+               
+        return await collection.updateOne(customId, pushQry);
+             
+      }else{  
+        return await this.setDocument(collectionName,key,[AppendValue])
+      }
+
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async appendStreamDocument(collectionName: string, key: string,AppendValue:any){
+    try {
+      const collection:any = db.collection(collectionName); 
+      let customId:any = {_id:key}
+
+      var result:any = await collection.find(customId).toArray()
+     
+      if(result?.length>0){                
+        let pushQry = { $push: { ['value'] : AppendValue } }
+               
+        return await collection.updateOne(customId, pushQry);
+             
+      }else{  
+        return await this.setStreamDocument(collectionName,key,[AppendValue])
+      }
+
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async setStreamDocument(collectionName: string, key: string, value: any,path?:any,filter?:object){
+    try {
+     
+      const collection = db.collection(collectionName);
+ 
+      let customId:any = { _id:key}
+     
+      let customVal:any = { $set: { value } }      
+     
+      if(filter)    
+        customId = Object.assign(customId,filter) 
+
+      if(path){
+        if(path.includes('[') && path.includes(']')){ 
+          path = path.replace(']', '');
+          path = path.replace('[', '');
+        }
+        path = 'value.'+path
+        customVal = { $set: { [path]:value } }
+      }
+     
+      var result = await collection.findOneAndUpdate(customId,customVal,{ upsert: true, returnDocument: 'after' })
+   
+      if (result) {
+        return result
+      } else {
+        return 0
+      }
+    } catch (error) {
+      throw error
+    }
+  }  
+
+  async convertStreamStruct(collectionName){
+    try {   
+    const collection = db.collection(collectionName); 
+    let docs: any =  await collection.find().toArray();  
+      
+    let FinalArr = [];  
+    
+    if (docs?.length > 0) {
+      let EntryIdArr = []
+      for (let d = 0; d < docs.length; d++) {
+        let singleDoc = docs[d];
+        let singleDocId = singleDoc._id;
+        let singleDocValArr = singleDoc.value;
+
+       
+        for(let v = 0; v < singleDocValArr.length; v++){
+          let fieldKeyArr = [];
+          let EntryId = singleDocValArr[v].EntryId
+          delete singleDocValArr[v].EntryId
+      
+          await redis.xadd(collectionName, EntryId, singleDocId, JSON.stringify(singleDocValArr[v]));
+
+          fieldKeyArr.push(EntryId,[singleDocId,JSON.stringify(singleDocValArr[v])]);
+        
+          EntryIdArr.push(fieldKeyArr);
+        }      
+
+      }
+      FinalArr.push([collectionName,EntryIdArr]);
+      return FinalArr
+     
+    }
+
+    } catch (error) {
+      throw error
+    }
+  }
+
+   async convertStreamRangeStruct(collectionName){
+    try {   
+    const collection = db.collection(collectionName); 
+    let docs: any =  await collection.find().toArray(); 
+    
+    if (docs?.length > 0) {
+      let EntryIdArr = []
+      for (let d = 0; d < docs.length; d++) {
+        let singleDoc = docs[d];
+        let singleDocId = singleDoc._id;
+        let singleDocValArr = singleDoc.value;
+
+       
+        for(let v = 0; v < singleDocValArr.length; v++){
+          let fieldKeyArr = [];
+          let EntryId = singleDocValArr[v].EntryId
+          delete singleDocValArr[v].EntryId
+      
+          await redis.xadd(collectionName, EntryId, singleDocId, JSON.stringify(singleDocValArr[v]));
+
+          fieldKeyArr.push(EntryId,[singleDocId,JSON.stringify(singleDocValArr[v])]);
+        
+          EntryIdArr.push(fieldKeyArr);
+        }      
+       
+      }     
+      return EntryIdArr
+     
+    }
+
+    } catch (error) {
+      throw error
+    }
+  }
+   
+
+ async renameDocumentId(collectionName: string,oldId: string,newId: string): Promise<string> {
+  try {    
+    const collection = db.collection<any>(collectionName +'_AMDKEYS');    
+    const doc = await collection.findOne({ _id: oldId });
+    if (!doc) {
+      throw (`_id "${oldId}" not found`);
+    }    
+    doc._id = newId;
+    await collection.insertOne(doc);  
+    return newId;
+  } catch (error) {
+    throw error
+  }
+}
+
+
+async deleteDocument(collectionName:string,key:any){
+  try{
+    const collection = db.collection(collectionName+'_AMDKEYS');
+      let res = await collection.deleteOne({_id:key} )
+      return res;
+  }catch(err){
+    throw err;
+  }
+}
+  
 }

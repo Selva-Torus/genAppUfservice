@@ -13,7 +13,7 @@ export class SecurityService {
   
       var artifact = key.split('AFK')[1].split(':')[1]  
         
-      var pojson = JSON.parse(await this.redisService.getJsonData(key)) 
+      var pojson = JSON.parse(await this.redisService.getJsonData(key,process.env.CLIENTCODE)) 
       if(pojson != null){
         var security = pojson.securityData       
         if(security.afk && key.includes(security.afk)){ 
@@ -21,7 +21,7 @@ export class SecurityService {
             if(security.accessProfile.length > 0){
               let tokenDecode = await this.commonService.MyAccountForClient(token)
               let tokenFlg = 0
-              for(var i=0; i<security.accessProfile.length; i++){
+              for(var i=0; i< security.accessProfile.length; i++){
                 var accessProfile = security.accessProfile[i] 
                 if(tokenDecode){                
                   if(tokenDecode.accessProfile.includes(accessProfile.accessProfile)){

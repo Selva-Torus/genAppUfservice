@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tg2-df-v11-ingress
+  namespace: tg2-df-v11
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - tgadev.gsstvl.com
+      secretName: tg2-df-v11-tls
+  rules:
+    - host: tgadev.gsstvl.com
+      http:
+        paths:
+          - path: /ct003/cg/tg2/v11/api-int(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: tg2-df-generator
+                port:
+                  number: 443

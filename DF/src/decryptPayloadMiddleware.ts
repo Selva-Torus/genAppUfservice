@@ -11,7 +11,7 @@ export class DecryptPayloadMiddleware implements NestMiddleware {
     const dpdKey:string = req?.body?.dpdKey;
     const method:string = req?.body?.method;
     if (req?.body?.ciphertext) {
-         let decryptedData:any = await this.commonService.commondecryption(dpdKey,method,req?.body,'ct242_tob001_tob002_v1');
+         let decryptedData:any = await this.commonService.commondecryption(dpdKey,method,req?.body,'ct003_cg_tg2_v11');
          req.body = JSON.parse(decryptedData);
          req.body['dpdKey'] = dpdKey;
          req.body['method'] = method;

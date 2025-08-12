@@ -1,5 +1,6 @@
+
 "use client"
-import React, { useMemo, useState } from 'react'
+import React, { useContext,useMemo, useState } from 'react'
 import { Logo } from '../components/Logo'
 import { isLightColor } from '../components/utils';
 import axios from 'axios';
@@ -11,6 +12,7 @@ import { Spin } from '@gravity-ui/uikit';
 import { DefaultLoginImage } from '../utils/svgApplications';
 import { BsEyeFill, BsEyeSlash } from 'react-icons/bs'
 import Link from 'next/link';
+import { TotalContext, TotalContextProps } from '../globalContext';
  
 interface LoginProps {
     logo?: string;
@@ -20,14 +22,15 @@ interface LoginProps {
     image?: string;
 }
  
-const Login = ({ logo, appName = "TOBApp", brandColor = "#76C432", loginType = "rightAligned", image }: LoginProps) => {
+const Login = ({ logo, appName = "TG2", brandColor = "#dce0ea", loginType = "standard", image }: LoginProps) => {
+    const { selectedTheme, setSelectedTheme } = useContext(TotalContext) as TotalContextProps
     const [formData, setFormData] = useState<Record<string, string>>({ email: '', password: '' });
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false)
     const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL;
     const toast = useInfoMsg()
     const router = useRouter()
-    const onBoardingKey:string = "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TOB001:AFGK:TOB002:AFK:TOB_Dashboard_Screen:AFVK:v1"
+    const onBoardingKey:string = "User Screen"
     const tenant = process.env.NEXT_PUBLIC_TENANT_CODE;
  
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -39,11 +42,13 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#76C432", loginType = "
         try {
             if (tenant && formData.email && formData.password) {
                 setLoading(true)
+                setCookie('cfg_theme','dark')
+                setSelectedTheme('dark')
                 const api_signinBody: api_signinDto = {
                     client: tenant,
                     username: formData.email,
                     password: formData.password,
-                    key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT242:AFGK:TOB001:AFK:TOB002:AFVK:v1:bldc"
+                    key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:CG:AFK:TG2:AFVK:v11:bldc"
                 }
                 const api_signin = await axios.post(`${baseUrl}/UF/signin`, api_signinBody)
                 if (api_signin?.data?.error === true) {
@@ -62,8 +67,8 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#76C432", loginType = "
                     let screenDetails: any = {
                         keys:[
   {
-    "screensName": "tob_screen_1-v1",
-    "ufKey": "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TOB001:AFGK:TOB002:AFK:TOB_Dashboard_Screen:AFVK:v1"
+    "screensName": "formitem-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1"
   }
 ]
                     }
@@ -107,9 +112,7 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#76C432", loginType = "
     }
  
     return (
-        <div className={'flex w-screen h-screen'} style={{
-            flexDirection : loginType == "leftAligned" ?  "row-reverse" : "row"
-        }}>
+        <div className={'flex w-screen h-screen'} style={{flexDirection : loginType == "leftAligned" ?  "row-reverse" : "row"}}>
             {loginType !== "standard" &&
                 <div className='flex flex-col w-1/2 h-full justify-center items-center'>
                     {image ? <img className='h-full w-full' src={image} alt='login' /> : <DefaultLoginImage />}
@@ -148,7 +151,6 @@ const Login = ({ logo, appName = "TOBApp", brandColor = "#76C432", loginType = "
                         <h1 className='font-bold text-[1.5vw] py-[2.24vh]'>
                             Login
                         </h1>
- 
                         <label className='flex flex-col gap-[0.62vh] text-[0.83vw]'>
                             Email Address
                             <input

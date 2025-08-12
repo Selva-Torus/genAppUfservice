@@ -2,10 +2,21 @@
 import vault from 'node-vault';
 import { publicEncrypt } from 'crypto';
 import * as crypto from 'crypto';
+import getEnvData from '../getEnvData';
+import { localEncrypt } from '../utils/localCrypto';
 
-export async function decryptData(Credentials:any,value:any,context:string) {
-      try {          
+
+export async function decryptData(value:any, dpdKey:string) {
+      try {       
+        let Credentials: any = {};
+        let deploymentData =  await getEnvData(dpdKey,"vault");
+        for (let i = 0; i < deploymentData.encryptionInfo.items.length; i++) {
+        if (deploymentData.encryptionInfo.items[i].type === "vault") {
+          Credentials = deploymentData.encryptionInfo.items[i];       
+          }
+        }
         const Method = Credentials.type;
+        const context = "ct003_cg_tg2_v11";
         let getCredentials: any = {
           encCredentials:Credentials,
           encMethod:Method
@@ -36,8 +47,9 @@ export async function decryptData(Credentials:any,value:any,context:string) {
                 'utf8'
               )
               let res = JSON.parse(JSON.parse(decoded))    
-              return  res 
-            }else {
+              res = await localEncrypt(res)
+              return res
+            } else {
               throw 'Invalied Decryption Method'
             }
           }

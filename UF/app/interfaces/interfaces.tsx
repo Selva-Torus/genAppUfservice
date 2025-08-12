@@ -32,9 +32,12 @@ export interface uf_fetchRuleDetailsDto{
 export interface te_refreshDto{
     key?:string;
     upId?:string;
-    refreshFlag?: string
-    dpdKey?: string
-    method?:string
+    refreshFlag?: string;
+    dpdKey?: string;
+    method?:string;
+    count?:number;
+    page?:number;
+    filterData?:any[];
   }
 export interface api_paginationDto{
     key?:string;
@@ -42,15 +45,15 @@ export interface api_paginationDto{
     count?:number;
     filterDetails?:any;
     searchFilter?:any
-    dpdKey?:string
-    method?:string
+    dpdKey?:string;
+    method?:string;
   }
 export interface uf_paginationDataFilterDto{
     data?:any;
     key?:string;
-    dfdType?:string
-    dpdKey?:string
-    method?:string
+    dfdType?:string;
+    dpdKey?:string;
+    method?:string;
   }
   //button
 export interface uf_getPFDetailsDto{
@@ -78,7 +81,7 @@ export interface te_eventEmitterDto {
   nodeId?:string;
   nodeName?:string;
   nodeType?:string;
-    upId?:string
+    upId?:string;
 }
 export interface uf_ifoDto{
   dpdKey?:string;
@@ -87,7 +90,7 @@ export interface uf_ifoDto{
   key?:string;
   groupId?:string;
   controlId?:string;
-  isTable?:Boolean
+  isTable?:Boolean;
 }
 
 export interface te_updateDto{
@@ -112,34 +115,35 @@ export interface te_dfDto{
   }
 
 export interface TopContentProps {
-    columns?: any
-    filterValue?: string
-    setRefetch?: any
-    setFilterValue?: any
-    setPage?: any
-    filterColumn?: string
-    setFilterColumn?: any
-    paginationData?:any
-    onSearch?:any
+    columns?: any;
+    filterValue?: string;
+    setRefetch?: any;
+    setFilterValue?: any;
+    setPage?: any;
+    filterColumn?: string;
+    setFilterColumn?: any;
+    paginationData?:any;
+    onSearch?:any;
   }
 
 export interface api_signinDto {
-    client: string, 
-    username: string, 
-    password: string,
-    key?:string
+    client: string;
+    username: string;
+    password: string;
+    key?:string;
 }
 
 export interface api_screenRouteDto {
   keys:any[];
 }
 
-interface ScreenDetail {
+export interface ScreenDetail {
   name: string;
   key: string;
   label?: string;
   static?:boolean;
-  icon?:string
+  icon?:string;
+  allowedAccessProfile:any;
 }
 
 export interface MenuItem {

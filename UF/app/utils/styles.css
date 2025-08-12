@@ -1,19 +1,19 @@
-@import url('');  
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&amp;display=swap');  
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 /* @charset "UTF-8";. */
 .g-root {
   background: var(--g-color-base-background);
   color: var(--g-color-text-primary);
   --g-font-family-sans: "Inter", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
-  --g-font-family-Inter:"Inter" ;
+  --g-font-family-Roboto:"Roboto" ;
   --g-font-family-monospace: "Menlo", "Monaco", "Consolas", "Ubuntu Mono", "Liberation Mono",
    "DejaVu Sans Mono", "Courier New", "Courier", monospace; 
-  --g-text-body-font-family:var(--g-font-family-sans);
-  --g-text-caption-font-family:var(--g-font-family-sans);
-  --g-text-header-font-family:var(--g-font-family-monospace);
+  --g-text-body-font-family:var(--g-font-family-Roboto);
+  --g-text-caption-font-family:var(--g-font-family-Roboto);
+  --g-text-header-font-family:var(--g-font-family-Roboto);
   --g-text-subheader-font-family: var(--g-font-family-sans);
-  --g-text-display-font-family:var(--g-font-family-sans);
-  --g-text-code-font-family:var(--g-font-family-sans);
+  --g-text-display-font-family:var(--g-font-family-Roboto);
+  --g-text-code-font-family:var(--g-font-family-Roboto);
   --g-text-body-font-weight: 400;
   --g-text-caption-font-weight: 400;
   --g-text-header-font-weight: 600;
@@ -915,6 +915,11 @@ body.g-root {
   --g-color-scroll-corner: var(--g-color-private-white-150);
   --g-color-infographics-axis: var(--g-color-private-white-150-solid);
   --g-color-infographics-tooltip-bg: var(--g-color-private-white-opaque-150);
+  --g-text-input-text-color:var(--g-color-private-black-750);
+  --g-text-input-label-color: var(--g-color-private-black-750);
+  --g-text-input-placeholder-color: var(--g-color-private-black-450);
+  --g-text-area-text-color:var(--g-color-private-black-750);
+  --g-text-area-placeholder-color: var(--g-color-private-black-450);
 }
 .g-root_theme_light-hc {
   --g-color-private-white-50: rgba(255, 255, 255, 0.05);
@@ -1723,6 +1728,11 @@ body.g-root {
   --g-color-scroll-corner: var(--g-color-private-white-150);
   --g-color-infographics-axis: var(--g-color-private-white-150-solid);
   --g-color-infographics-tooltip-bg: var(--g-color-private-white-opaque-150);
+  --g-text-input-text-color:var(--g-color-private-black-750);
+  --g-text-input-label-color: var(--g-color-private-black-750);
+  --g-text-input-placeholder-color: var(--g-color-private-black-450);
+  --g-text-area-text-color:var(--g-color-private-black-750);
+  --g-text-area-placeholder-color: var(--g-color-private-black-450);
 }
 
 .g-root:not(.g-root_mobile):not(.g-root_native-scrollbar) {

@@ -2,11 +2,12 @@
 import vault from 'node-vault';
 import { publicEncrypt } from 'crypto';
 import * as crypto from 'crypto';
+import { localDecrypt } from '../utils/localCrypto';
 
-
-export async function encryptData(Credentials:any,value:string,context:string) {
+export async function encryptData(ciphertext: any) {
     try {        
-        // const { Credentials, Method,value, context } = body;
+        const body = await localDecrypt(ciphertext)
+        const { Credentials ,value, context } = body;
         const Method = Credentials.type;
         let getCredentials :any = {
           encCredentials:Credentials,
@@ -15,8 +16,6 @@ export async function encryptData(Credentials:any,value:string,context:string) {
         if(getCredentials){
           let encryptCredentials = getCredentials?.encCredentials
           let encMethod = getCredentials?.encMethod
-    
-          console.log(context,'encryptCredentials',encryptCredentials);
     
           if(encMethod && encryptCredentials){
             if(encMethod == 'vault'){

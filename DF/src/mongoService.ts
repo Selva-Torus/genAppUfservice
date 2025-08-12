@@ -1,18 +1,28 @@
 import { BadRequestException, Logger } from "@nestjs/common";
 import jsonata from "jsonata";
-import { GridFSBucket, MongoClient, ObjectId } from "mongodb";
+import { Db, GridFSBucket, MongoClient, ObjectId } from "mongodb";
 import { Readable } from 'stream';
 import axios from 'axios';
+import { connectToMongo, getDb } from './mongoClient';
 
-export const client = new MongoClient(process.env.MONGODB_URL);
-client.connect()
-  .then(() => {
-    console.log('Connected to the database successfully!');
-  })
-  .catch((err) => {
-    console.error('Error connecting to the database:', err);
+let db: Db;
+  connectToMongo().then(() => { 
+    db = getDb();
+    console.log('Database initialized'); 
+  }).catch((error) => {
+    console.error('Error connecting to MongoDB:', error);
   });
-var db = client.db(process.env.MONGODB_NAME)
+
+
+// export const client = new MongoClient(process.env.MONGODB_URL);
+// client.connect()
+//   .then(() => {
+//     console.log('Connected to the database successfully!');
+//   })
+//   .catch((err) => {
+//     console.error('Error connecting to the database:', err);
+//   });
+// var db = client.db(process.env.MONGODB_NAME)
 
 export class MongoService {
     
@@ -49,13 +59,52 @@ export class MongoService {
     }
   }
 
-  async insertDocument(collectionName: any, insertValue: any) {
+  async insertDocument(collectionName: any,key:string,insertValue: any) {
     const collection = db.collection(collectionName);
-    var result = await collection.insertOne(insertValue)
+    let customIdAndValue:any = { _id:key}
+    customIdAndValue.value = insertValue
+   
+    // console.log('customIdAndValue', customIdAndValue);
+    
+    var result = await collection.insertOne(customIdAndValue)
     if (result) {
       return result
     } else {
       return 0
+    }
+  }
+
+  async appendFileInToDocument(collectionName: string, key: string,AppendKey:string,AppendValue:any){
+    try {
+      const collection:any = db.collection(collectionName); 
+      let customId:any = {_id:key}
+
+      var result:any = await collection.find(customId).toArray()
+     
+      if(result?.length>0){                
+        let pushQry = { $push: { [AppendKey] : AppendValue } }               
+        return await collection.updateOne(customId, pushQry);             
+      }
+
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async existsDocument(collectionName: string, key: string){
+    try {      
+      const collection = db.collection(collectionName); 
+      let customId:any = {_id:key}  
+     
+      var result = await collection.findOne(customId,{ projection: { _id: 1 } })   
+       
+      if (result) {
+        return result
+      } else {
+        return 0
+      }
+    } catch (error) {
+      throw error
     }
   }
 
@@ -366,7 +415,7 @@ export class MongoService {
 
    async saveFileToGridFS(bucketName: string, objectName: string, objectData:any, encryptionFlag?: string): Promise<any> { //metaData?: object, 
     try {      
-      this.logger.log('SaveFileToGridFS started');
+      //this.logger.log('SaveFileToGridFS started');
       if(!bucketName || !objectName || !objectData) throw 'Invalid Input'
       
       this.gridfsBucket = new GridFSBucket(db, {bucketName});     

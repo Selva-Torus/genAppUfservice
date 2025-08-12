@@ -31,8 +31,8 @@ export function setCookie(cname: string, cvalue: string, exdays: number = 10) {
       const eqPos = cookie.indexOf("=");
       const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
       if(!name.includes("cfg")){
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-      }
+      document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+       }
     }
   }
   

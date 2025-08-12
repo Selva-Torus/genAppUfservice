@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   PieChart,
   Pie,
@@ -16,29 +16,38 @@ import {
   LineChart,
   Line,
 } from 'recharts'
-import { Card, Text } from '@gravity-ui/uikit'
+import { Card } from '@gravity-ui/uikit'
 import { Select } from '@gravity-ui/uikit'
 
 export interface ExpenseData {
   name: string
-  [key: string]: string | number // Allows dynamic department keys
+  [key: string]: string | number
 }
 
 interface DynamicChartProps {
   title?: string
   type?: ChartType
-  expenseData?: any[]
-  total?: any
+  expenseData?: ExpenseData[]
+  total?: number
+  showCurrencySign?: string
 }
 
-type ChartType = 'donut' | 'bar' | 'line'
+type ChartType = 'donut' | 'bar' | 'line' | 'default'
 
-export function DynamicChart({ title = 'Chart', type = 'donut', expenseData = [], total = {} }: DynamicChartProps) {
-  const [chartType, setChartType] = useState<ChartType>(type)
+export function DynamicChart({ title , type='default' , expenseData = [], total = 0 , showCurrencySign}: DynamicChartProps) {
+  
 
-  const colors = ['#FF9F40', '#FF6B6B', '#36A2EB', '#4CAF50']
+  const initialType = type === 'default' ? 'donut' : type
+  const [chartType, setChartType] = useState<ChartType>(initialType)
 
-  // Transform expenseData for Pie/Donut chart
+  useEffect(() => {
+    if (type && type !== 'default') {
+      setChartType(type)
+    }
+  }, [type])
+
+  const colors = ['#FF9F40', '#FF6B6B', '#36A2EB', '#4CAF50', '#9C27B0', '#00BCD4']
+
   const pieChartData = expenseData.map((item) => ({
     name: item.name,
     value: Object.keys(item)
@@ -46,7 +55,6 @@ export function DynamicChart({ title = 'Chart', type = 'donut', expenseData = []
       .reduce((acc, key) => acc + (item[key] as number), 0),
   }))
 
-  // Custom Tooltip for Pie Chart
   const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const { name } = payload[0].payload
@@ -59,7 +67,7 @@ export function DynamicChart({ title = 'Chart', type = 'donut', expenseData = []
               .filter((key) => key !== 'name')
               .map((key) => (
                 <p key={key}>
-                  {key}: {selectedData[key]}
+                  {key}: {showCurrencySign}{selectedData[key]}
                 </p>
               ))}
           </div>
@@ -70,6 +78,8 @@ export function DynamicChart({ title = 'Chart', type = 'donut', expenseData = []
   }
 
   const renderChart = () => {
+      
+
     switch (chartType) {
       case 'donut':
         return (
@@ -94,13 +104,12 @@ export function DynamicChart({ title = 'Chart', type = 'donut', expenseData = []
               <Legend
                 verticalAlign='bottom'
                 align='center'
-                // height={36}
                 wrapperStyle={{ fontSize: '12px' }}
-                
                 formatter={(value, entry) => (
-                  <span style={{ color: entry.color }}>{value}-{entry?.payload?.value}</span>
+                  <span style={{ color: entry.color }}>{value} - {showCurrencySign}{entry?.payload?.value}</span>
                 )}
               />
+              
               <text
                 x='50%'
                 y='50%'
@@ -109,8 +118,9 @@ export function DynamicChart({ title = 'Chart', type = 'donut', expenseData = []
                 fill='#000'
                 fontSize='16'
               >
-                Total: ₹{total}
+                Total: {showCurrencySign}{total}
               </text>
+              
             </PieChart>
           </ResponsiveContainer>
         )
@@ -122,7 +132,7 @@ export function DynamicChart({ title = 'Chart', type = 'donut', expenseData = []
               <CartesianGrid strokeDasharray='3 3' />
               <XAxis dataKey='name' />
               <YAxis />
-              <Tooltip formatter={(value, name) => [`₹${value}`, name]} />
+              <Tooltip formatter={(value, name) => [`${showCurrencySign}${value}`, name]} />              
               <Legend />
               {Object.keys(expenseData[0] || {})
                 .filter((key) => key !== 'name')
@@ -140,7 +150,7 @@ export function DynamicChart({ title = 'Chart', type = 'donut', expenseData = []
               <CartesianGrid strokeDasharray='3 3' />
               <XAxis dataKey='name' />
               <YAxis />
-              <Tooltip formatter={(value, name) => [`₹${value}`, name]} />
+              <Tooltip formatter={(value, name) => [`${showCurrencySign}${value}`, name]} />
               <Legend />
               {Object.keys(expenseData[0] || {})
                 .filter((key) => key !== 'name')
@@ -166,15 +176,14 @@ export function DynamicChart({ title = 'Chart', type = 'donut', expenseData = []
     <Card className='w-full'>
       <div className='flex flex-row items-center justify-between pb-2'>
         <h3 className='text-base font-normal'>{title}</h3>
-        <div className='flex gap-2'>
+        {type === 'default' && (
           <Select value={[chartType]} onUpdate={(value) => setChartType(value[0] as ChartType)}>
             <Select.Option value='donut'>Donut</Select.Option>
             <Select.Option value='bar'>Bar</Select.Option>
             <Select.Option value='line'>Line</Select.Option>
           </Select>
-        </div>
+        )}
       </div>
-
       <div className='relative h-[300px] w-full'>
         {expenseData.length > 0 ? renderChart() : <p>No data available</p>}
       </div>

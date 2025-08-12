@@ -464,7 +464,6 @@ const UserCreationModal = ({
                                 {
                                   className:
                                     'g-select-control__button g-select-control__button_size_m g-select-control__button_view_normal g-select-control__button_pin_round-round',
-                                  ...props
                                 },
                                 'Multiple Templates'
                               )}
@@ -484,9 +483,9 @@ const UserCreationModal = ({
                                 >
                                   <path
                                     fill='currentColor'
-                                    fill-rule='evenodd'
+                                    fillRule='evenodd'
                                     d='M2.97 5.47a.75.75 0 0 1 1.06 0L8 9.44l3.97-3.97a.75.75 0 1 1 1.06 1.06l-4.5 4.5a.75.75 0 0 1-1.06 0l-4.5-4.5a.75.75 0 0 1 0-1.06'
-                                    clip-rule='evenodd'
+                                    clipRule='evenodd'
                                   ></path>
                                 </svg>
                               </svg>

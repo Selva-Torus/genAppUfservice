@@ -2,6 +2,7 @@
 
 import { publicEncrypt } from 'crypto';
 import * as crypto from 'crypto';
+const NodeRSA = require('node-rsa')
 
 
 
@@ -16,8 +17,6 @@ export async function clientEncrypt(Credentials:any,value:string,context:string)
         if(getCredentials){
           let encryptCredentials = getCredentials?.encCredentials
           let encMethod = getCredentials?.encMethod
-    
-          console.log(context,'encryptCredentials',encryptCredentials);
     
           if(encMethod && encryptCredentials){
             if(encMethod == 'AESCTR'){
@@ -39,11 +38,23 @@ export async function clientEncrypt(Credentials:any,value:string,context:string)
               const authTag = cipher.getAuthTag().toString('base64');
                      
               return {ciphertext,authTag};
-            }else if(encMethod == 'RSA'){
-              const encrypted = publicEncrypt(encryptCredentials.publicKey, Uint8Array.from(Buffer.from(value)));
-              console.log('Encrypted (base64):', encrypted.toString('base64'));
-              return encrypted.toString('base64')   
-            }else{
+            }else if (encMethod == 'RSA') {
+            try {
+              const publicKey = encryptCredentials.publicKey
+              const encryptData = async (data: string) => {
+                const key = new NodeRSA(publicKey)
+                return key.encrypt(data, 'base64') 
+              }
+
+              const sensitiveData = value
+              const encryptedData = await encryptData(
+                JSON.stringify(sensitiveData)
+              )
+              return encryptedData
+              } catch (error) {
+              console.error('RSA encryption error:', error)
+              }
+            } else{
               throw 'Invalied Encryption Method'
             }
           }

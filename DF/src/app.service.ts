@@ -9,6 +9,7 @@ export class AppService implements OnModuleInit{
 
   async onModuleInit() {
     console.log('Application started, calling API...');
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiUGVlckA3ODYiLCJjbGllbnQiOiJDVDAwMyIsInR5cGUiOiJjIiwibG9nVHlwZSI6ImRmcyIsImlhdCI6MTc1NDg4NjE5MCwiZXhwIjoxNzU0OTcyNTkwfQ.OtZeaY3qK5DMruOHkIW8Dbe2JhAID7_41WOJhEaoYZw';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
     if(Object.keys(preParedData).includes('erdWithData'))
       {
@@ -16,16 +17,24 @@ export class AppService implements OnModuleInit{
       let erdDatas: any = {};
       endPointData.data = preParedData?.erdWithData||{}
       endPointData.type =  "json";
-    //  let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData);
-     // erdDatas.endpoint = res.data
-    //  erdDatas.tenant =  "CT242";
-    //  erdDatas.domain = "TOB001";
-    //  erdDatas.collection = "TOB002";
-    //  erdDatas.data = preParedData?.erdWithData||{}
-    //  erdDatas.fabric = 'API-APIPD-INT';
-    //  erdDatas.loginId = "john";    
-     // erdDatas.erdFlag = true;  
-      //await axios.post(this.apiUrl+'/createApiCollection', erdDatas);
+      let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData,{
+        headers: {
+          Authorization: `Bearer ${token}`, 
+        }
+      });
+      erdDatas.endpoint = res.data
+      erdDatas.tenant =  "CT003";
+      erdDatas.domain = "CG";
+      erdDatas.collection = "TG2";
+      erdDatas.data = preParedData?.erdWithData||{}
+      erdDatas.fabric = 'API-APIPD-INT';
+      erdDatas.loginId = "Peer@786";    
+      erdDatas.erdFlag = true;  
+      await axios.post(this.apiUrl+'/createApiCollection', erdDatas,{
+        headers: {
+          Authorization: `Bearer ${token}`, 
+        }
+      });
       }
 
     if(Object.keys(preParedData).includes('torusApis'))
@@ -36,12 +45,12 @@ export class AppService implements OnModuleInit{
       //endPointData.type =  "json";
       //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData);
       //torusData.endpoint = res.data;
-      torusData.tenant =  "CT242";
-      torusData.domain = "TOB001"; 
-      torusData.collection = "TOB002";
+      torusData.tenant =  "CT003";
+      torusData.domain = "CG"; 
+      torusData.collection = "TG2";
       torusData.fabric = 'API-APIPD-TORUS';
       torusData.data = preParedData?.torusApis||{}
-      torusData.loginId = "john";    
+      torusData.loginId = "Peer@786";    
       //await axios.post(this.apiUrl, torusData);
     }
   }

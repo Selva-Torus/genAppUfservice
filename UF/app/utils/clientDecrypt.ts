@@ -2,6 +2,7 @@
 
 import { publicEncrypt } from 'crypto';
 import * as crypto from 'crypto';
+const NodeRSA = require('node-rsa')
 
 export async function clientDecrypt(Credentials:any,value:any,context:string) {
       try {          
@@ -44,11 +45,16 @@ export async function clientDecrypt(Credentials:any,value:any,context:string) {
               
               return   JSON.parse(JSON.parse(decrypted)) 
             } else if (encMethod == 'RSA') {
-              const encrypted = publicEncrypt(
-                encryptCredentials.publicKey,
-                Uint8Array.from(Buffer.from(value))
-              )
-              return (encrypted.toString('base64'))
+              try {
+              const encryptedBase64 = value.ciphertext
+              const key = new NodeRSA(encryptCredentials.privateKey)
+
+              const decrypted = key.decrypt(encryptedBase64, 'utf8')
+              return JSON.parse(JSON.parse(decrypted))
+              } catch (error) {
+              console.error('Decryption error:', error)
+              throw error
+              }
             } else {
               throw 'Invalied Decryption Method'
             }

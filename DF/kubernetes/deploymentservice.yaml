@@ -2,10 +2,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: tob002-df-generator
-  namespace: tob002-df-v1
+  name: tg2-df-generator
+  namespace: tg2-df-v11
   labels:
-    app: tob002-df-generator
+    app: tg2-df-generator
 spec:
   replicas: 1
   strategy:
@@ -18,15 +18,15 @@ spec:
       - setWeight: 100  # 100% Canary (Stable)
   selector:
     matchLabels:
-      app: tob002-df-generator
+      app: tg2-df-generator
   template:
     metadata:
       labels:
-        app: tob002-df-generator
+        app: tg2-df-generator
     spec:
       containers:
-      - name: tob002-df-generator-backend-container
-        image: 192.168.2.164:5000/tob002-df-v1:docker_tag
+      - name: tg2-df-generator-backend-container
+        image: 192.168.2.164:5000/tg2-df-v11:docker_tag
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -41,13 +41,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: tob002-df-generator
-  namespace: tob002-df-v1
+  name: tg2-df-generator
+  namespace: tg2-df-v11
   labels:
-    app: tob002-df-generator
+    app: tg2-df-generator
 spec:
   selector:
-    app: tob002-df-generator
+    app: tg2-df-generator
   ports:
     - name: http
       protocol: TCP

@@ -7,6 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { MenuItem, MenuStructure } from '../interfaces/interfaces'
 import { isLightColor } from './utils'
 import Image from 'next/image'
+import {PersonFill} from '@gravity-ui/icons';
 import { useGravityThemeClass } from '../utils/useGravityUITheme'
 
 const TopNav = ({
@@ -16,7 +17,7 @@ const TopNav = ({
   selectionColor = '#fff',
   brandColor = '#fff',
   hoverColor = '#fff',
-  topbarColor = '#fff',
+ // topbarColor = '#fff',
   appName,
   logo,
   userDetails
@@ -27,7 +28,7 @@ const TopNav = ({
   selectionColor: string
   brandColor: string
   hoverColor: string
-  topbarColor: string
+//  topbarColor: string
   appName: string
   logo?: string
   userDetails:any
@@ -35,14 +36,13 @@ const TopNav = ({
   const router = useRouter()
   const token: string = getCookie('token')
   const decodedTokenObj: any = decodeToken(token)
-  const user = decodedTokenObj?.users
+  const user = decodedTokenObj?.loginId
   const pathname = usePathname()
   const menuRef = useRef<HTMLDivElement>(null)
   const [visibleItems, setVisibleItems] = useState<MenuItem[]>(navData || [])
   const [hiddenItems, setHiddenItems] = useState<MenuItem[]>([])
   const tp_ps = getCookie('tp_ps')
   const themeClass = useGravityThemeClass()
-
   useEffect(() => {
     const checkOverflow = () => {
       if (!menuRef.current) return
@@ -115,7 +115,7 @@ const TopNav = ({
   async function logout() {
     localStorage.clear()
     deleteAllCookies()
-    window.location.href = '/ct242/tob001/tob002/v1'
+    window.location.href = '/ct003/cg/tg2/v11'
   }
   const hasMatchingName = (obj: any, input: string): boolean => {
     if (typeof obj !== 'object' || obj === null) return false
@@ -174,6 +174,9 @@ const TopNav = ({
         )}
         <h3
           className='text-center text-[1.5vw] font-bold '
+          // style={{
+          //  color: brandColor
+          // }}
         >
           {appName}
         </h3>

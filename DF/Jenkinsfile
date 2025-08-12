@@ -8,7 +8,7 @@ pipeline {
     }
     environment {
         DOCKERHUB_USERNAME = "192.168.2.164:5000"
-        APP_NAME = "tob002-df-v1"
+        APP_NAME = "tg2-df-v11"
         IMAGE_NAME = "${DOCKERHUB_USERNAME}/${APP_NAME}"
         BUILD_NUMBER = "${BUILD_NUMBER}"
         GITHUB_CREDENTIALS = "GIT_HUB_PAT"
@@ -26,21 +26,21 @@ pipeline {
         stage('Code Checkout') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${GITHUB_CREDENTIALS}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/TorusDev2023/Claims3UF.git'
+                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/TorusDev2023/TGA_TURBO.git'
                 }
             }
         }
 
-        stage('Detect Changes in CT242 App') {
+        stage('Detect Changes in CT003 App') {
             steps {
                 script {
                     def diff = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
-                    if (diff.split('\n').any { it.startsWith('apps/CT242/TOB001/TOB002/v1/Nest-df/') }) {
+                    if (diff.split('\n').any { it.startsWith('apps/CT003/CG/TG2/v11/Nest-df/') }) {
                         env.NEST_DF_CHANGED = "true"
-                        echo "Changes detected in apps/CT242/TOB001/TOB002/v1/Nest-df"
+                        echo "Changes detected in apps/CT003/CG/TG2/v11/Nest-df"
                     } else {
                         env.NEST_DF_CHANGED = "false"
-                        echo "No changes in apps/CT242/TOB001/TOB002/v1/Nest-df. Skipping build and deployment stages."
+                        echo "No changes in apps/CT003/CG/TG2/v11/Nest-df. Skipping build and deployment stages."
                     }
                 }
             }
@@ -60,8 +60,8 @@ pipeline {
                         docker buildx build \
                           --build-arg BUILDKIT_INLINE_CACHE=1 \
                           --tag ${IMAGE_NAME}:${IMAGE_TAG} \
-                          --file apps/CT242/TOB001/TOB002/v1/Nest-df/Dockerfile \
-                          apps/CT242/TOB001/TOB002/v1/Nest-df \
+                          --file apps/CT003/CG/TG2/v11/Nest-df/Dockerfile \
+                          apps/CT003/CG/TG2/v11/Nest-df \
                           --push
                         """
                     }
@@ -75,7 +75,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CT242/TOB001/TOB002/v1/Nest-df/kubernetes/deploymentservice.yaml"
+                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CT003/CG/TG2/v11/Nest-df/kubernetes/deploymentservice.yaml"
                 }
             }
         }
@@ -87,7 +87,9 @@ pipeline {
             steps {
                 script {
                     withKubeConfig(credentialsId: 'kubernetes-224', serverUrl: 'https://lb.kubesphere.local:6443') {
-                        sh "kubectl apply -f apps/CT242/TOB001/TOB002/v1/Nest-df/kubernetes/deploymentservice.yaml"
+                        sh "kubectl get ns tg2-df-v11 || kubectl create ns tg2-df-v11"
+                        sh "kubectl apply -f apps/CT003/CG/TG2/v11/Nest-df/kubernetes/deploymentservice.yaml"
+                        sh "kubectl apply -f apps/CT003/CG/TG2/v11/Nest-df/kubernetes/df-ingress.yaml"                        
                     }
                 }
             }

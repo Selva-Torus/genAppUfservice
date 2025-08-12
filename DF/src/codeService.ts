@@ -1,7 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "./redisService";
  const _= require('lodash');
- 
+import * as babelParser from '@babel/parser';
+import traverse from '@babel/traverse';
+import generate from '@babel/generator';
+import * as t from '@babel/types';
+
 @Injectable()
 export class CodeService{
   constructor(    
@@ -10,26 +14,76 @@ export class CodeService{
   private readonly logger = new Logger(CodeService.name);
 
  
- 
+
+async replaceVariable(code: string, variableName: string, newValue: any): Promise<string> {
+  
+function buildLiteralAST(value: any, seen = new Set()): t.Expression {
+  if (value === null) return t.nullLiteral();
+  if (typeof value === 'boolean') return t.booleanLiteral(value);
+  if (typeof value === 'number') return t.numericLiteral(value);
+  if (typeof value === 'string') return t.stringLiteral(value);
+
+  if (typeof value === 'object') {
+    if (seen.has(value)) {
+      // Prevent infinite recursion
+      return t.stringLiteral('[Circular]');
+    }
+    seen.add(value);
+
+    if (Array.isArray(value)) {
+      return t.arrayExpression(value.map((item) => buildLiteralAST(item, seen)));
+    }
+
+    return t.objectExpression(
+      Object.entries(value).map(([key, val]) =>
+        t.objectProperty(t.stringLiteral(key), buildLiteralAST(val, seen))
+      )
+    );
+  }
+
+  throw new Error(`Unsupported value type: ${typeof value}`);
+}
+
+  const ast = babelParser.parse(code, {
+    sourceType: 'module',
+    plugins: ['typescript', 'jsx'],
+  });
+
+  traverse(ast, {
+    VariableDeclarator(path) {
+      if (t.isIdentifier(path.node.id) && path.node.id.name === variableName) {
+        path.node.init = buildLiteralAST(newValue); // ✅ Call it as a standalone function
+      }
+    },
+  });
+
+  return generate(ast).code;
+}
+
 
  async customCode(key,code,data,fabric){
-    const declaredVars:any = this.extractDeclaredVariables(code);
+    const declaredVars:any = await this.extractDeclaredVariables(code);
     var arr:{ [key: string]: object | any[] } = {};
     if(declaredVars?.length>0){
        for(let a=0;a< declaredVars.length;a++){ 
       if(fabric == "DF-DFD"){
-         if(data.hasOwnProperty(declaredVars[a])){
+         if(data && data.hasOwnProperty(declaredVars[a])){
        
          arr[declaredVars[a]] = data[declaredVars[a]]
       }else{
-         var customres = JSON.parse(await this.redisService.getJsonDataWithPath(key + ':NPV:'+declaredVars[a]+'.PRO','.customResponse'))
+         var customres = JSON.parse(await this.redisService.getJsonDataWithPath(key + ':NPV:'+declaredVars[a]+'.PRO','.customResponse',process.env.CLIENTCODE))
       
-         if(customres)
-         arr[declaredVars[a]] = [customres]
+         if(customres){
+            if(Array.isArray(customres) && customres.length > 0){
+              arr[declaredVars[a]] = customres
+            }else if(Object.keys(customres).length > 0){
+              arr[declaredVars[a]] = [customres]
+            }          
+         }
         }
       }else if(fabric == "PF-PFD"){
-         if(await this.redisService.exist(key + ':NPV:'+declaredVars[a]+'.PRO')){
-        var pro:any = JSON.parse(await this.redisService.getJsonData(key + ':NPV:'+declaredVars[a]+'.PRO')) 
+         if(await this.redisService.exist(key + ':NPV:'+declaredVars[a]+'.PRO',process.env.CLIENTCODE)){
+        var pro:any = JSON.parse(await this.redisService.getJsonData(key + ':NPV:'+declaredVars[a]+'.PRO',process.env.CLIENTCODE)) 
       
         arr[declaredVars[a]] = pro.response
       }
@@ -37,42 +91,46 @@ export class CodeService{
     }
     }
     let updatedFunctionString = code;
-  
+      console.log('code startTime',new Date());
+      
       for (let [key, value] of Object.entries(arr)) {
-        updatedFunctionString = this.replaceVariable(updatedFunctionString, key, value);
+        updatedFunctionString = await this.replaceVariable(updatedFunctionString, key, value);
       }
+
+      console.log('code EndTime',new Date());
+
+    //   const vm = new VM({
+    //  timeout: 1000,
+    //  sandbox: {},
+    // });
     
-    console.log(2, updatedFunctionString)
-  const output = await eval(updatedFunctionString);
-  console.log('output',output);
-  
-    Object.assign(data, output)   
-    return data
+    // ✅ Step 3: Execute the function in VM
+  //   const output = vm.run(`
+  //     ${updatedFunctionString}
+  //     test(); 
+  //  `);
+
+      const output =  eval(updatedFunctionString);
+    
+    if(data){
+      Object.assign(data, output)   
+      return data
+    }else{
+      return output
+    }
   
    }
 
-   async containsForLoop(code) {
-        const forLoopPattern = /\bfor\s*\(.*?\)\s*\{/s; // handles multiline
-        return forLoopPattern.test(code);
-  }
+ 
+ async fastReplaceVariable(code: string, variableName: string, newValue: any)  {
+  const valueString = JSON.stringify(newValue, null, 2);
+  const regex = new RegExp(
+    `(const|let|var)\\s+${variableName}\\s*=\\s*[^;]*;`,
+    'g'
+  );
 
-  async replaceVariable(code: string, variableName: string, newValue: object | any[]): Promise<any> {
-      const newValueString = JSON.stringify(newValue, null, 2);
-        const pattern = new RegExp(
-      `${variableName}\\s*=\\s*(\\{(?:[^{}]*|\\{[^{}]*\\})*\\}|\\[(?:[^\\[\\]]*|\\[[^\\[\\]]*\\])*\\])\\s*([;,]?)`,
-      'm'
-    );
-    
-
-    var isForLoop = this.containsForLoop(code);
-    if(isForLoop){
-      return code.replace(pattern, `${variableName} = ${newValueString};`);
-    }else{
-    const pattern = new RegExp(`${variableName}\\s*=\\s*[^;\\n]+`, 'm');
-      return code.replace(pattern, `${variableName} = ${newValueString}`);
-  }
-      
-    }
+  return code.replace(regex, `$1 ${variableName} = ${valueString};`);
+}
 
   async extractDeclaredVariables(funcStr: string): Promise<any> {
       const letMatch = funcStr.match(/let\s+([\s\S]*?);/); 
@@ -105,3 +163,5 @@ export class CodeService{
 
 
 }
+
+
