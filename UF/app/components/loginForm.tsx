@@ -50,11 +50,10 @@ const Login = ({ logo, appName = "TG2", brandColor = "#dce0ea", loginType = "sta
                     password: formData.password,
                     key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:CG:AFK:TG2:AFVK:v11:bldc"
                 }
-                const api_signin = await axios.post(`${baseUrl}/UF/signin`, api_signinBody)
-                if (api_signin?.data?.error === true) {
-                    toast(api_signin?.data?.errorDetails, 'danger')
-                    return
-                }
+                const api_signin = await axios.post(`${baseUrl}/UF/signin`, api_signinBody , {
+                    validateStatus : () => true
+                })
+             
                 if (api_signin.status == 201) {
                     if(api_signin?.data?.token == null || api_signin?.data?.token == undefined || api_signin?.data?.authorized == null || api_signin?.data?.authorized == undefined || api_signin?.data?.email == null || api_signin?.data?.email == undefined){
                         toast("Invalid credentials", 'danger')
@@ -95,13 +94,16 @@ const Login = ({ logo, appName = "TG2", brandColor = "#dce0ea", loginType = "sta
                     router.push('/' + defaultScreen)
                 }
                 } else {
+
+                    toast(api_signin.data.message ||  "Error occured during login", 'danger')
                     setLoading(false)
                 }
             } else {
-                // setCheckDetails(true)
                 setLoading(false)
             }
         } catch (error: any) {
+            console.log(error);
+            
             toast(error?.response?.data?.errorDetails, 'danger')
             if (error?.response) {
                 setLoading(false)

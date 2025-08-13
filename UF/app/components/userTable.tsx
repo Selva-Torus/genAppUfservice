@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import {
+  Button,
+  Icon,
   Pagination,
+  Popover,
   Select,
   Table,
   Text,
@@ -11,9 +14,9 @@ import { getCookie } from '@/app/components/cookieMgment'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import { Modal } from '@gravity-ui/uikit'
 import UserCreationModal from './userCreationModal'
-import { EditIcon } from './svgApplication'
 import { SetupScreenContext, SetupScreenContextType } from './setup'
 import { useGravityThemeClass } from '../utils/useGravityUITheme'
+import { Ellipsis, PersonPlus, Pencil } from '@gravity-ui/icons'
 
 export interface UserData {
   users: string
@@ -29,6 +32,7 @@ export interface UserData {
   lastActive: string
   edit: string
   mobile?: string
+  isAppAdmin?: boolean
 }
 
 const CustomTable = withTableSelection(Table)
@@ -126,7 +130,7 @@ const UserTable: React.FC<{
     })
     setData(updatedData)
   }
-
+  
   const getAccessProfiles = async () => {
     try {
       const res = await AxiosService.get(
@@ -249,7 +253,7 @@ const UserTable: React.FC<{
         item.accessProfile && item.accessProfile.length > 1 ? (
           <Select
             renderControl={props => (
-              <div className='g-select-control g-select-control_size_m g-select-control_pin_round-round g-select-control_has-value'>
+              <div className='g-select-control g-select-control_size_m g-select-control_pin_round-round g-select-control_has-value' onClick={props.triggerProps.onClick}>
                 {React.createElement(
                   'div',
                   {
@@ -339,8 +343,8 @@ const UserTable: React.FC<{
               <input
                 className='cursor-pointer px-[0.5vw] py-[0.5vh] border rounded'
                 style={{
-                    backgroundColor: 'var(--g-color-base-background)',
-                      color: 'var(--g-color-text-primary)',
+                  backgroundColor: 'var(--g-color-base-background)',
+                  color: 'var(--g-color-text-primary)',
                       borderColor: 'var(--g-color-line-generic)',
                 }}
                 type='date'
@@ -387,27 +391,51 @@ const UserTable: React.FC<{
       width: 80,
       align: 'center',
       template: (item: any) => (
-        <div>
-          <button
-            onClick={() => {
-              setEditUserModalOpen(true)
-              setUserData(item)
-            }}
-          >
-            <EditIcon />
-          </button>
-          <Modal open={editUserModalOpen} disableOutsideClick>
-            <UserCreationModal
-              setModalOpen={setEditUserModalOpen}
-              newUser={userData}
-              setNewUser={setUserData}
-              accessProfiles={accessProfiles}
-              data={data}
-              setData={setData}
-              isEdit={true}
-            />
-          </Modal>
-        </div>
+        <Popover
+          content={
+            <div className='flex flex-col gap-[1vh]'>
+              <Button
+                onClick={() => {
+                  setEditUserModalOpen(true)
+                  setUserData(item)
+                }}
+                view='flat'
+              >
+                <Icon data={Pencil} size={18} /> Edit
+              </Button>
+              <Modal open={editUserModalOpen} disableOutsideClick>
+                <UserCreationModal
+                  setModalOpen={setEditUserModalOpen}
+                  newUser={userData}
+                  setNewUser={setUserData}
+                  accessProfiles={accessProfiles}
+                  data={data}
+                  setData={setData}
+                  isEdit={true}
+                />
+              </Modal>
+              <div>
+                <Button
+                  view='flat'
+                  onClick={() => {
+                    if (item.isAppAdmin) {
+                      handledatachange(item, 'isAppAdmin', undefined)
+                    } else {
+                      handledatachange(item, 'isAppAdmin', true)
+                    }
+                  }}
+                >
+                  <Icon data={PersonPlus} size={18} />
+                  {item.isAppAdmin ? 'Revoke Admin Access' : 'Grant Admin Access'}
+                </Button>
+              </div>
+            </div>
+          }
+          openOnHover={false}
+          placement={"bottom-end"}
+        >
+          <Ellipsis />
+        </Popover>
       )
     }
   ]

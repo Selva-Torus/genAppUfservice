@@ -1,7 +1,6 @@
 import {
   BadGatewayException,
   HttpStatus,
-  UnauthorizedException,
   NotFoundException,
   Injectable,
 } from '@nestjs/common';
@@ -14,6 +13,7 @@ import {
   CustomException,
   ForbiddenException,
   ConflictException,
+  UnauthorizedException,
 } from 'src/customException';
 import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 import * as nodemailer from 'nodemailer';
@@ -2969,7 +2969,7 @@ export class UfService {
         psCode: parts.slice(0, 6).join('-'),
       };
       const payload = await this.jwt.decode(token);
-      const { type, client, loginId } = payload;
+      const { type, client, loginId , isAppAdmin } = payload;
       const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
 
       const updatedToken = await this.jwt.signAsync(
@@ -2977,6 +2977,7 @@ export class UfService {
           type,
           client,
           loginId,
+          isAppAdmin,
           ag,
           app,
           selectedAccessProfile,
@@ -3256,6 +3257,7 @@ export class UfService {
             client: payload.client,
             loginId: payload.loginId,
             type: payload.type,
+            isAppAdmin: payload.isAppAdmin,
             ag,
             app,
           },
@@ -3375,7 +3377,7 @@ export class UfService {
         'HpZnm7V6YeshFDVbwACyOtx6oa6QSbraZoNyU9fwtGYUL1Rnc6PN5QUosu9BcqVBo5L6QeSs';
 
       let token = await this.jwt.signAsync(
-        { loginId: loggedInUser.loginId, client, type, ag, app },
+        { loginId: loggedInUser.loginId, client, type, ag, app , isAppAdmin : loggedInUser?.isAppAdmin ?? undefined },
         {
           secret: auth_secret,
           expiresIn: '24h',
@@ -3449,6 +3451,7 @@ export class UfService {
             token = await this.jwt.signAsync(
               {
                 loginId: loggedInUser.loginId,
+                isAppAdmin : loggedInUser?.isAppAdmin ?? undefined,
                 client,
                 type,
                 ag,
@@ -3656,21 +3659,15 @@ export class UfService {
       if (responseFromRedis) {
         const existingUserList: any[] = JSON.parse(responseFromRedis);
         data.forEach((newUser) => {
-          if (newUser.password) {
-            userList.push({
-              ...newUser,
-              password: this.hashPassword(newUser.password),
-            });
-          } else {
             const existingUserObj = existingUserList.find(
               (existinguser) => existinguser.email == newUser.email,
             );
             userList.push({
               ...existingUserObj,
               ...newUser,
+              isAppAdmin: newUser?.isAppAdmin,
               password: existingUserObj?.password,
             });
-          }
         });
       } else {
         userList = data.map((item) => ({

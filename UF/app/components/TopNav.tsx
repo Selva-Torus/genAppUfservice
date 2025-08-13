@@ -1,13 +1,19 @@
 import { deleteAllCookies, getCookie } from '@/app/components/cookieMgment'
 import decodeToken from '@/app/components/decodeToken'
 import { Logo } from '@/app/components/Logo'
-import { DropdownMenu, UserLabel } from '@gravity-ui/uikit'
+import {
+  Avatar,
+  Button,
+  DropdownMenu,
+  Icon,
+  Text,
+  UserLabel
+} from '@gravity-ui/uikit'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { MenuItem, MenuStructure } from '../interfaces/interfaces'
 import { isLightColor } from './utils'
-import Image from 'next/image'
-import {PersonFill} from '@gravity-ui/icons';
+import { Ellipsis } from '@gravity-ui/icons'
 import { useGravityThemeClass } from '../utils/useGravityUITheme'
 
 const TopNav = ({
@@ -17,7 +23,7 @@ const TopNav = ({
   selectionColor = '#fff',
   brandColor = '#fff',
   hoverColor = '#fff',
- // topbarColor = '#fff',
+  // topbarColor = '#fff',
   appName,
   logo,
   userDetails
@@ -28,15 +34,16 @@ const TopNav = ({
   selectionColor: string
   brandColor: string
   hoverColor: string
-//  topbarColor: string
+  //  topbarColor: string
   appName: string
   logo?: string
-  userDetails:any
+  userDetails: any
 }) => {
   const router = useRouter()
   const token: string = getCookie('token')
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.loginId
+  const selectedAccessProfile = decodedTokenObj?.selectedAccessProfile
   const pathname = usePathname()
   const menuRef = useRef<HTMLDivElement>(null)
   const [visibleItems, setVisibleItems] = useState<MenuItem[]>(navData || [])
@@ -61,7 +68,7 @@ const TopNav = ({
         testElement.textContent = menu.menuGroup || menu.screenDetails[0]?.name
         document.body.appendChild(testElement)
 
-        const itemWidth = testElement.clientWidth + 50 // Add padding/margin
+        const itemWidth = testElement.clientWidth + 70 // Add padding/margin
         document.body.removeChild(testElement)
 
         if (totalWidth + itemWidth < maxWidth) {
@@ -157,13 +164,14 @@ const TopNav = ({
   return (
     <div
       suppressHydrationWarning
-      className={`flex items-center justify-between p-2 ${mode === 'detached' ? 'shadow-md' : ''} g-root ${themeClass} `}
-      // style={{ backgroundColor: topbarColor }}
+      className={`flex items-center justify-between p-2 ${
+        mode === 'detached' ? 'shadow-md' : ''
+      } g-root ${themeClass} `}
     >
       <div className='flex items-center gap-1'>
         {logo ? (
           <img
-            className='h-[1.1vw] w-[1.25vw]'
+            className='h-[16px] w-[20px]'
             width={100}
             height={100}
             src={logo}
@@ -172,123 +180,113 @@ const TopNav = ({
         ) : (
           <Logo />
         )}
-        <h3
-          className='text-center text-[1.5vw] font-bold '
-          // style={{
-          //  color: brandColor
-          // }}
-        >
-          {appName}
-        </h3>
+        <h3 className='text-center font-bold '>{appName}</h3>
       </div>
       {listMenuItems && (
         <>
-          <div
-            className='flex max-w-[62vw] items-center gap-2 overflow-hidden'
-            ref={menuRef}
-          >
-            {navData &&
-              visibleItems.map((menu, index) => {
-                if (menu.menuGroup) {
-                  return (
-                    <button
-                      key={index}
-                      className='rounded-full px-[0.85vw]  py-[0.5vh]'
-                      style={getDropDownStyles(menu.menuGroup)}
-                    >
-                      <DropdownMenu
-                        renderSwitcher={(props: any) => (
-                          <p
-                            {...props}
-                            className='max-w-[5.55vw] truncate text-[0.83vw] font-medium leading-[1.5vh]'
-                            style={{
-                              transition: 'all 0.2s ease-in-out'
-                            }}
-                          >
-                            {menu.menuGroupLabel}
-                          </p>
-                        )}
-                        key={index}
-                        items={getNestedMenu(menu)}
-                        popupProps={{
-                          style: {
-                            backgroundColor: brandColor,
-
-                            fontSize: '0.82vw',
-                            color: `${isLightColor(brandColor)}`
-                          }
-                        }}
-                      />
-                    </button>
-                  )
-                } else {
-                  const routingName =
-                    '/' +
-                    menu.screenDetails[0].name.replace(/ /g, '_') +
-                    '_' +
-                    menu.screenDetails[0].key.split(':').at(-1)
-                  return (
-                    <button
-                      style={{
-                        backgroundColor:
-                          routingName == pathname
-                            ? `${brandColor}`
-                            : 'transparent',
-                        color:
-                          routingName == pathname
-                            ? `${isLightColor(brandColor)}`
-                            : 'unset'
-                      }}
-                      className='rounded-full px-[0.85vw]  py-[0.5vh] text-[0.83vw]'
-                      key={index}
-                      onClick={() => router.push(routingName)}
-                    >
-                      {menu.menuGroupLabel}
-                    </button>
-                  )
-                }
-              })}
-            {hiddenItems.length > 0 && (
-              <DropdownMenu
-                renderSwitcher={(props: any) => (
-                  <button
-                    {...props}
-                    className='rounded-full px-[0.85vw] py-[0.5vh]'
-                  >
-                    ...
-                  </button>
-                )}
-                items={hiddenItems.map(menu => {
+          <div className='flex w-full justify-center gap-1'>
+            <div
+              className='flex max-w-[62%] items-center gap-2 overflow-hidden'
+              ref={menuRef}
+            >
+              {navData &&
+                visibleItems.map((menu, index) => {
                   if (menu.menuGroup) {
-                    return {
-                      text: menu.menuGroupLabel,
-                      items: getNestedMenu(menu)
-                    }
+                    return (
+                      <div key={index}>
+                        <DropdownMenu
+                          renderSwitcher={(props: any) => (
+                            <Button
+                              view='flat'
+                              {...props}
+                              className='max-w-[100px] truncate font-medium leading-[1.5vh]'
+                              style={{
+                                ...getDropDownStyles(menu.menuGroup),
+                                transition: 'all 0.2s ease-in-out'
+                              }}
+                            >
+                              {menu.menuGroupLabel}
+                            </Button>
+                          )}
+                          key={index}
+                          items={getNestedMenu(menu)}
+                          popupProps={{
+                            style: {
+                              backgroundColor: brandColor,
+                              color: `${isLightColor(brandColor)}`
+                            }
+                          }}
+                        />
+                      </div>
+                    )
                   } else {
-                    return {
-                      text: menu.menuGroupLabel,
-                      action: () => {
-                        if (menu.screenDetails) {
-                          const routingName =
-                            '/' +
-                            menu.screenDetails[0].name.replace(/ /g, '_') +
-                            '_' +
-                            menu.screenDetails[0].key.split(':').at(-1)
-                          router.push(routingName)
+                    const routingName =
+                      '/' +
+                      menu.screenDetails[0].name.replace(/ /g, '_') +
+                      '_' +
+                      menu.screenDetails[0].key.split(':').at(-1)
+                    return (
+                      <Button
+                        view='flat'
+                        style={{
+                          backgroundColor:
+                            routingName == pathname
+                              ? `${brandColor}`
+                              : 'transparent',
+                          color:
+                            routingName == pathname
+                              ? `${isLightColor(brandColor)}`
+                              : 'unset'
+                        }}
+                        className='rounded-full px-2  py-2 '
+                        key={index}
+                        onClick={() => router.push(routingName)}
+                      >
+                        {menu.menuGroupLabel}
+                      </Button>
+                    )
+                  }
+                })}
+            </div>
+            <div>
+              {hiddenItems.length > 0 && (
+                <DropdownMenu
+                  renderSwitcher={(props: any) => (
+                    <Button {...props} view='flat'>
+                      <Icon data={Ellipsis} />
+                    </Button>
+                  )}
+                  items={hiddenItems.map(menu => {
+                    if (menu.menuGroup) {
+                      return {
+                        text: menu.menuGroupLabel,
+                        items: getNestedMenu(menu)
+                      }
+                    } else {
+                      return {
+                        text: menu.menuGroupLabel,
+                        action: () => {
+                          if (menu.screenDetails) {
+                            const routingName =
+                              '/' +
+                              menu.screenDetails[0].name.replace(/ /g, '_') +
+                              '_' +
+                              menu.screenDetails[0].key.split(':').at(-1)
+                            router.push(routingName)
+                          }
                         }
                       }
                     }
-                  }
-                })}
-                popupProps={{
-                  style: {
-                    backgroundColor: brandColor,
-                    fontSize: '0.82vw',
-                    color: `${isLightColor(brandColor)}`
-                  }
-                }}
-              />
-            )}
+                  })}
+                  popupProps={{
+                    style: {
+                      backgroundColor: brandColor,
+                      color: `${isLightColor(brandColor)}`
+                    }
+                  }}
+                />
+              )}
+            </div>
           </div>
           <div>
             <DropdownMenu
@@ -298,8 +296,7 @@ const TopNav = ({
                   avatar={userDetails?.profile}
                   {...props}
                 >
-                  {' '}
-                  {user}
+                  <Text>{user}</Text>
                 </UserLabel>
               )}
               items={[
@@ -326,8 +323,6 @@ const TopNav = ({
               popupProps={{
                 style: {
                   backgroundColor: brandColor,
-
-                  fontSize: '0.82vw',
                   color: `${isLightColor(brandColor)}`
                 }
               }}

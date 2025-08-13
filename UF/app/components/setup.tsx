@@ -188,6 +188,7 @@ const SetupScreen = ({
             accessExpires: item?.accessExpires,
             lastActive: item?.lastActive ?? 'NA',
             dateAdded: item.dateAdded,
+            isAppAdmin: item.isAppAdmin,
             edit: ''
           }))
           setUserProfileData(result)

@@ -458,7 +458,7 @@ const UserCreationModal = ({
                       newUser?.accessProfile.length > 1 ? (
                         <Select
                           renderControl={props => (
-                            <div className='g-select-control g-select-control_size_m g-select-control_pin_round-round g-select-control_has-value'>
+                            <div className='g-select-control g-select-control_size_m g-select-control_pin_round-round g-select-control_has-value' onClick={props.triggerProps.onClick}>
                               {React.createElement(
                                 'div',
                                 {

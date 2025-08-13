@@ -74,7 +74,7 @@ const LayoutDecider = ({
   },
   {
     "menuGroup": "form",
-    "menuGroupLabel": "form",
+    "menuGroupLabel": "form1",
     "screenDetails": [
       {
         "name": "formitem",
@@ -88,7 +88,311 @@ const LayoutDecider = ({
       }
     ],
     "items": []
-  }
+  },
+  {
+    "menuGroupLabel": "Mycomponents",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form2",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form3",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form4",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form5",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form6",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form7",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form8",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form9",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form10",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form11",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form12",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form13",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form14",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form15",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form16",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form17",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "form",
+    "menuGroupLabel": "form18",
+    "screenDetails": [
+      {
+        "name": "formitem",
+        "label": "formItem",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "allowedAccessProfile": [
+          "Employee",
+          "userTemplate"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
 ]
   const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token)

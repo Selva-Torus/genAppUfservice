@@ -1,10 +1,8 @@
 'use client'
 import {
   Avatar,
-  Button,
   DropdownMenu,
   Tooltip,
-  UserLabel
 } from '@gravity-ui/uikit'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { useCallback, useMemo } from 'react'
@@ -47,6 +45,7 @@ const SideNav = ({
   const token: string = getCookie('token')
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.loginId
+  const selectedAccessProfile = decodedTokenObj?.selectedAccessProfile
   const pathname = usePathname()
   const themeClass = useGravityThemeClass()
 
@@ -56,7 +55,6 @@ const SideNav = ({
       nestedMenu.push({
         text: (
           <p
-            className='m-0 p-0'
             style={{
               transition: 'all 0.2s ease-in-out'
             }}
@@ -78,7 +76,7 @@ const SideNav = ({
         },
         icon: screen.icon ? (
           <Image
-            className='h-[1.1vw] w-[1.25vw]'
+            className='h-[16px] w-[20px]'
             width={100}
             height={100}
             alt='icon'
@@ -107,7 +105,6 @@ const SideNav = ({
         nestedMenu.push({
           text: (
             <p
-              className='m-0 p-0'
               style={{
                 transition: 'all 0.2s ease-in-out'
               }}
@@ -119,7 +116,7 @@ const SideNav = ({
           items: getNestedMenu(item),
           icon: item.icon ? (
             <Image
-              className='h-[1.1vw] w-[1.25vw]'
+              className='h-[16px] w-[20px]'
               width={100}
               height={100}
               alt='icon'
@@ -189,7 +186,7 @@ const SideNav = ({
         return {
           backgroundColor: brandColor,
           height: '6vh',
-          color: themeClass.includes('dark') ? '#ffffff' : '#000000'
+          color: isLightColor(brandColor)
         }
       }
 
@@ -228,7 +225,6 @@ const SideNav = ({
                   disabled={fullView}
                   style={{
                     backgroundColor: `${brandColor}`,
-                    fontSize: '0.82vw',
                     color: isLightColor(brandColor)
                   }}
                 >
@@ -253,7 +249,7 @@ const SideNav = ({
                               <div className='flex w-[20%] items-center justify-end'>
                                 {menu.icon ? (
                                   <Image
-                                    className='h-[1.1vw] w-[1.25vw]'
+                                    className='h-[16px] w-[20px]'
                                     width={100}
                                     height={100}
                                     alt='icon'
@@ -274,6 +270,10 @@ const SideNav = ({
                                     height='20'
                                     width='20'
                                     fill={
+                                      typeof getDropDownStyles(
+                                        menu.menuGroup,
+                                        true
+                                      ) == 'boolean' ? isLightColor(brandColor) :
                                       themeClass.includes('dark')
                                         ? '#fff'
                                         : '#1C274C'
@@ -292,7 +292,7 @@ const SideNav = ({
                                 className='flex items-center justify-center whitespace-nowrap bg-transparent pl-2 text-center transition-all delay-0 duration-75 ease-in-out'
                               >
                                 <p
-                                  className='max-w-[5.55vw] truncate text-[0.93vw] font-medium leading-[2vh]'
+                                  className='max-w-[100px] truncate font-medium leading-[2vh]'
                                   style={{
                                     transition: 'all 0.2s ease-in-out'
                                   }}
@@ -305,7 +305,7 @@ const SideNav = ({
                             <span className='flex items-center'>
                               {menu.icon ? (
                                 <Image
-                                  className='h-[1.1vw] w-[1.25vw]'
+                                  className='h-[16px] w-[20px]'
                                   width={100}
                                   height={100}
                                   alt='icon'
@@ -326,6 +326,10 @@ const SideNav = ({
                                   height='20'
                                   width='20'
                                   fill={
+                                     typeof getDropDownStyles(
+                                        menu.menuGroup,
+                                        true
+                                      ) == 'boolean' ? isLightColor(brandColor) :
                                     themeClass.includes('dark')
                                       ? '#fff'
                                       : '#1C274C'
@@ -341,7 +345,6 @@ const SideNav = ({
                       popupProps={{
                         style: {
                           backgroundColor: brandColor,
-                          fontSize: '0.82vw',
                           color: `${isLightColor(brandColor)}`
                         },
                         placement: `${sidebarStyle !== 'compact' ? 'bottom-end' : 'right-end'}`
@@ -387,7 +390,7 @@ const SideNav = ({
                   >
                     {menu.screenDetails[0].icon ? (
                       <Image
-                        className='h-[1.1vw] w-[1.25vw]'
+                        className='h-[16px] w-[20px]'
                         width={100}
                         height={100}
                         alt='icon'
@@ -427,6 +430,7 @@ const SideNav = ({
             user={user}
             fullView={fullView}
             userDetails={userDetails}
+            selectedAccessProfile={selectedAccessProfile}
           />
         ) : (
           <PartialViewAvatar
@@ -449,13 +453,15 @@ const FullViewAvatar = ({
   user,
   brandColor,
   fullView,
-  userDetails
+  userDetails,
+  selectedAccessProfile
 }: {
   fullView: boolean
   logout: () => void
   user: string
   brandColor: string
   userDetails: any
+  selectedAccessProfile: string
 }) => {
   const router = useRouter()
   const tp_ps = getCookie('tp_ps')
@@ -481,7 +487,7 @@ const FullViewAvatar = ({
             </div>
             <div className='flex w-[60%] select-none flex-col items-start justify-start '>
               <span
-                className='m-0 p-0 text-start text-[0.82vw] font-bold   '
+                className='text-start font-bold   '
                 style={{
                   color: isLightColor(brandColor)
                 }}
@@ -490,12 +496,12 @@ const FullViewAvatar = ({
                 {user}{' '}
               </span>
               <span
-                className='m-0 p-0 text-start text-[0.72vw] font-semibold '
+                className='text-start font-semibold '
                 style={{
                   color: `${isLightColor(brandColor)}`
                 }}
               >
-                {'Role'}
+                {selectedAccessProfile}
               </span>
             </div>
           </div>
@@ -525,7 +531,6 @@ const FullViewAvatar = ({
         popupProps={{
           style: {
             backgroundColor: brandColor,
-            fontSize: '0.82vw',
             color: isLightColor(brandColor)
           },
           placement: 'right-end'
@@ -590,7 +595,6 @@ const PartialViewAvatar = ({
         popupProps={{
           style: {
             backgroundColor: brandColor,
-            fontSize: '0.82vw',
             color: isLightColor(brandColor)
           },
           placement: 'right-end'

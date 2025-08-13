@@ -350,6 +350,9 @@ const AccessTemplateTable = ({}) => {
                       ? setSelectedRows(new Set([]))
                       : setSelectedRows(new Set(['all']))
                   }}
+                  disabled={
+                    currentGroups.some((item: any) => item['no.ofusers'] !== 0)
+                  }
                 />
               </th>
               <th className='px-5 py-4'>Access Template</th>
@@ -449,7 +452,6 @@ const AccessTemplateTable = ({}) => {
                       size='l'
                       placeholder='Select DAP'
                       className='w-full'
-                      disabled
                     >
                       {accessPrivilegeData.map((item, index) => (
                         <Select.Option key={index} value={item}>
