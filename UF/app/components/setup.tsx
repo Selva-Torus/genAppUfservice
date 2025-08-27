@@ -17,7 +17,7 @@ import {
   handleDelete,
   handleDeleteGroupAndMembers
 } from '../components/utils'
-import { Modal } from '@gravity-ui/uikit'
+import { Button, Card, Menu, Modal, Text } from '@gravity-ui/uikit'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import { getCookie } from '@/app/components/cookieMgment'
 import { AxiosService } from '@/app/components/axiosService'
@@ -175,8 +175,8 @@ const SetupScreen = ({
               item.firstName && item.lastName
                 ? item.loginId + item.firstName + ' ' + item.lastName
                 : item.loginId
-                  ? item.loginId
-                  : '',
+                ? item.loginId
+                : '',
             email: item.email,
             profile: item?.profile ?? '',
             firstName: item.firstName,
@@ -206,60 +206,32 @@ const SetupScreen = ({
     if (userManagementAccess) {
       return [
         {
-          items: [
-            {
-              name: 'General',
-              svg: (
-                <GeneralSettingsIcon
-                  fill={`${selectedMenuItem === 'general' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
-                />
-              ),
-              code: 'general'
-            },
-            {
-              name: 'Organizational Matrix',
-              svg: (
-                <Org
-                  fill={`${selectedMenuItem === 'org' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
-                />
-              ),
-              code: 'org'
-            },
-            {
-              name: 'Access Template',
-              svg: (
-                <Security
-                  fill={`${selectedMenuItem === 'st' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
-                />
-              ),
-              code: 'st'
-            },
-            {
-              name: 'User Management',
-              svg: (
-                <Management
-                  fill={`${selectedMenuItem === 'user' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
-                />
-              ),
-              code: 'user'
-            }
-          ]
+          name: 'General',
+          svg: <GeneralSettingsIcon fill={`var(--g-color-text-primary)`} />,
+          code: 'general'
+        },
+        {
+          name: 'Organizational Matrix',
+          svg: <Org fill={`var(--g-color-text-primary)`} />,
+          code: 'org'
+        },
+        {
+          name: 'Access Template',
+          svg: <Security fill={`var(--g-color-text-primary)`} />,
+          code: 'st'
+        },
+        {
+          name: 'User Management',
+          svg: <Management fill={`var(--g-color-text-primary)`} />,
+          code: 'user'
         }
       ]
     } else {
       return [
         {
-          items: [
-            {
-              name: 'General',
-              svg: (
-                <GeneralSettingsIcon
-                  fill={`${selectedMenuItem === 'general' ? brandcolor : themeClass.includes('dark') ? '#fff' : '#000000'}`}
-                />
-              ),
-              code: 'general'
-            }
-          ]
+          name: 'General',
+          svg: <GeneralSettingsIcon fill={`var(--g-color-text-primary)`} />,
+          code: 'general'
         }
       ]
     }
@@ -628,52 +600,42 @@ const SetupScreen = ({
           }}
         >
           <div
-            className={`g-root flex h-[90vh] w-full flex-col overflow-y-hidden ${themeClass}`}
+            className={`g-root flex h-[90%] w-full flex-col overflow-hidden ${themeClass}`}
           >
-            <div className='flex h-[6.66vh] w-[65%] items-center justify-between px-[0.58vw]'>
-              <div
-                style={{
-                  fontSize: `0.93vw`
-                }}
-                className='flex items-center gap-[0.58vw] font-semibold leading-[2.22vh]'
-              >
+            <div className='flex w-full  items-center justify-between px-2'>
+              <Text variant='header-1' className='text-nowrap'>
                 User Management
-              </div>
-              <div className='flex gap-[0.35vw]'>
+              </Text>
+              <div className='flex items-center gap-2 pb-2'>
                 <div
                   style={{
                     visibility:
-                      selectedMenuItem == 'general' ? 'hidden' : 'unset'
+                      selectedMenuItem == 'general' ? 'hidden' : 'unset',
+                    borderColor: 'var(--g-color-line-generic)'
                   }}
-                  className={
-                    'relative h-[4.2vh] w-[25.75vw] items-center rounded-md'
-                  }
+                  className='flex h-fit items-center gap-2 rounded border px-2'
                 >
-                  <span className='absolute inset-y-0 left-0 flex h-[2.18vw] w-[2.18vw] p-[0.58vw] '>
+                  <span>
                     <SearchIcon
                       fill={themeClass.includes('dark') ? '#ffffff' : '#000000'}
-                      height='0.83vw'
-                      width='0.83vw'
+                      height='12'
+                      width='12'
                     />
                   </span>
                   <input
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
                     placeholder={'Search'}
-                    onFocus={e => (e.target.style.borderColor = brandcolor)}
-                    onBlur={e => (e.target.style.borderColor = '#00000026')}
                     style={{
                       backgroundColor: 'var(--g-color-base-background)',
-                      color: 'var(--g-color-text-primary)',
-                      borderColor: 'var(--g-color-line-generic)',
-                      fontSize: `0.72vw`
+                      color: 'var(--g-color-text-primary)'
                     }}
-                    className={`h-[4.2vh] w-full rounded-md border p-[0.29vw] pl-[1.76vw] font-medium focus:outline-none`}
+                    className='px-2 py-1.5 outline-none'
                   />
                 </div>
-                <div className='mb-[0.5vh] flex items-center gap-[0.75vw]'>
+                <div className=' flex items-center'>
                   <div
-                    className='mb-[0.5vh] flex items-center gap-[0.29vw]'
+                    className=' flex items-center gap-2'
                     style={{
                       visibility:
                         selectedMenuItem == 'general' ? 'hidden' : 'unset'
@@ -686,90 +648,110 @@ const SetupScreen = ({
                         opacity:
                           selectedMenuItem === 'org' && !focusedPath ? 0.5 : 1
                       }}
-                      className={`rounded-md px-[0.5vw] py-[0.82vh] outline-none`}
+                      className={`rounded-md px-2 py-1.5 outline-none`}
                       disabled={
                         tenantAccess != 'edit' ||
                         (selectedMenuItem === 'org' && !focusedPath)
                       }
                     >
-                      <PlusIcon fill={isLightColor(brandcolor)} />
+                      <PlusIcon
+                        fill={isLightColor(brandcolor)}
+                        height='16'
+                        width='16'
+                      />
                     </button>
 
                     <button
-                      className={`${selectedMenuItem === 'org' ? 'hidden' : ''} outline-none ${((selectedMenuItem === 'st' || selectedMenuItem === 'user') && Array.from(selectedRows).filter(Boolean).length > 0) || (Object.keys(selectedItems).length > 0 && Object.values(selectedItems).includes(true)) ? 'bg-[#F14336]' : 'bg-[#F14336]/50'} rounded-md px-[0.5vw] py-[0.82vh]`}
+                      className={`${
+                        selectedMenuItem === 'org' ? 'hidden' : ''
+                      } outline-none ${
+                        ((selectedMenuItem === 'st' ||
+                          selectedMenuItem === 'user') &&
+                          Array.from(selectedRows).filter(Boolean).length >
+                            0) ||
+                        (Object.keys(selectedItems).length > 0 &&
+                          Object.values(selectedItems).includes(true))
+                          ? 'bg-[#F14336]'
+                          : 'bg-[#F14336]/50'
+                      } rounded-md px-2 py-1.5`}
                       disabled={
                         selectedMenuItem === 'st' || selectedMenuItem === 'user'
                           ? Array.from(selectedRows).filter(Boolean).length > 0
                             ? false
                             : true
                           : Object.keys(selectedItems).length > 0 &&
-                              Object.values(selectedItems).includes(true)
-                            ? tenantAccess != 'edit'
-                              ? true
-                              : false
-                            : true
+                            Object.values(selectedItems).includes(true)
+                          ? tenantAccess != 'edit'
+                            ? true
+                            : false
+                          : true
                       }
                       onClick={() => setDeleteModalOpen(true)}
                     >
-                      <DeleteIcon fill='white' height='1.25vw' width='1.25vw' />
+                      <DeleteIcon fill='white' height='16' width='16' />
                     </button>
                     <Modal open={deleteModalOpen} disableOutsideClick>
-                      <div className='flex w-[28vw] flex-col items-center gap-[1.5vh] py-[1.5vh]'>
-                        <div className='flex w-full items-center justify-between px-[1vw]'>
-                          <h1 className='flex items-center gap-[0.2vw] text-[1vw] font-semibold text-[#EB5757]'>
-                            <DeleteIcon
-                              fill='#EB5757'
-                              height='1.2vw'
-                              width='1.2vw'
-                            />
+                      <Card className='p-2'>
+                        <div className='flex w-full items-center justify-between px-2 pb-2'>
+                          <Text
+                            variant='header-1'
+                            className='flex items-center gap-2 text-[#EB5757]'
+                          >
+                            <DeleteIcon fill='#EB5757' />
                             {selectedMenuItem === 'st'
                               ? 'Delete AccessTemplate'
                               : selectedMenuItem === 'user' && 'Delete User'}
-                          </h1>
+                          </Text>
                           <button onClick={() => setDeleteModalOpen(false)}>
-                            <Multiply />
+                            <Multiply fill='var(--g-color-text-secondary)' />
                           </button>
                         </div>
-                        <hr className='w-full' />
-                        <div className='flex w-full flex-col gap-[1.5vh] px-[1vw]'>
-                          <h1 className='text-[1vw] font-medium'>
+                        <hr
+                          className='w-full'
+                          style={{ borderColor: 'var(--g-color-line-generic)' }}
+                        />
+                        <div className='flex w-full flex-col gap-2 p-2'>
+                          <Text variant='header-2'>
                             {selectedMenuItem === 'st'
                               ? 'Are you sure you want to delete this template?'
                               : selectedMenuItem === 'user' &&
                                 'Are you sure you want to delete this user?'}
-                          </h1>
-                          <p className='text-[0.83vw] font-medium text-black/35'>
+                          </Text>
+                          <Text variant='body-1' color='secondary'>
                             {selectedMenuItem === 'st'
                               ? 'Deleting the template will remove all associated'
                               : selectedMenuItem === 'user' &&
                                 'Deleting the user will remove all associated'}
-                          </p>
+                          </Text>
                         </div>
-                        <hr className='w-full' />
-                        <div className='flex w-full items-center justify-end gap-[0.5vw] pr-[1vw]'>
-                          <button
+                        <hr
+                          className='w-full'
+                          style={{ borderColor: 'var(--g-color-line-generic)' }}
+                        />
+                        <div className='flex w-full items-center justify-end gap-2 p-2 pb-0'>
+                          <Button
+                            view='flat'
                             onClick={() => setDeleteModalOpen(false)}
-                            className='flex items-center gap-[0.5vw] rounded-md  px-[0.5vw] py-[0.82vh] outline-none'
                           >
-                            <h1 className='text-[1vw] font-medium'>Cancel</h1>
-                          </button>
-                          <button
+                            Cancel
+                          </Button>
+                          <Button
+                            view='flat'
                             onClick={handleDeleteButtonClick}
-                            className='flex items-center gap-[0.5vw] rounded-md px-[0.5vw] py-[0.82vh] text-white outline-none'
-                            style={{ backgroundColor: '#EB5757' }}
+                            style={{ backgroundColor: '#EB5757' , color: 'white' }}
                           >
-                            <h1 className='text-[1vw] font-medium'>Delete</h1>
-                          </button>
+                            Delete
+                          </Button>
                         </div>
-                      </div>
+                      </Card>
                     </Modal>
 
                     <button
                       onClick={handleSaveButtonClick}
-                      className={`rounded-md bg-[#1C274C] px-[0.5vw] py-[0.82vh] outline-none`}
+                      className={`rounded-md bg-[#1C274C] px-2 py-1.5 outline-none`}
                       disabled={tenantAccess != 'edit'}
                     >
-                      <SaveIcon />
+                      <SaveIcon height='18' width='18' />
                     </button>
                   </div>
                 </div>
@@ -779,43 +761,26 @@ const SetupScreen = ({
               style={{ borderColor: 'var(--g-color-line-generic)' }}
               className=' w-full'
             ></hr>
-            <div className='flex h-[92.8vh]'>
+            <div className='flex h-[85vh]'>
               <div
                 style={{ borderRight: `1px solid var(--g-color-line-generic)` }}
-                className='flex h-[92.8vh] w-[10.57vw] flex-col gap-[3vh] p-[0.83vw]'
               >
-                {menuItems.map((section, index) => (
-                  <ul className='flex flex-col gap-[2vh]' key={index}>
-                    {section.items.map(item => (
-                      <li
-                        key={item.code}
-                        style={{
-                          color:
-                            selectedMenuItem === item.code
-                              ? brandcolor
-                              : themeClass.includes('dark')
-                                ? '#fff'
-                                : '#000'
-                        }}
-                        className={`cursor-pointer`}
-                        onClick={() =>
-                          handleMenuClick(item.code as SettingTabs)
-                        }
-                      >
-                        <div
-                          style={{ fontSize: `0.72vw` }}
-                          className='flex items-center  leading-[1.04vw]'
-                        >
-                          <div className='mr-[0.58vw]'>{item.svg}</div>
-                          <span className='text-nowrap'>{item.name}</span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                ))}
+                <Menu size='xl' className='h-full'>
+                  {menuItems.map(item => (
+                    <Menu.Item
+                      iconStart={item.svg}
+                      key={item.code}
+                      className='text-nowrap'
+                      active={selectedMenuItem === item.code}
+                      onClick={() => handleMenuClick(item.code as SettingTabs)}
+                    >
+                      {item.name}
+                    </Menu.Item>
+                  ))}
+                </Menu>
               </div>
               <div
-                className='relative flex h-full w-full overflow-hidden px-[1.20vw] py-[1.25vh]'
+                className='flex h-full w-full overflow-hidden px-2 py-3'
                 style={{ overflow: selectedMenuItem == 'org' ? 'auto' : '' }}
               >
                 {selectedMenuItem == 'general' ? (
@@ -827,7 +792,7 @@ const SetupScreen = ({
                   />
                 ) : selectedMenuItem === 'org' ? (
                   <div className='w-full'>
-                    <OrgMatrix tenantAccess={tenantAccess} />
+                    <OrgMatrix tenantAccess={"edit"} />
                   </div>
                 ) : (
                   selectedMenuItem === 'st' && <AccessTemplateTable />

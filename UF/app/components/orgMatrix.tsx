@@ -1,5 +1,5 @@
-"use client";
-import React, { use, useContext, useEffect, useMemo, useRef, useState } from 'react'
+'use client'
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
 import {
   DeleteIcon,
   DownArrow,
@@ -9,13 +9,13 @@ import {
 } from '../components/svgApplication'
 import _ from 'lodash'
 import { findPath } from '../components/utils'
-// import { Pagination } from "../torusComponents/torusTable";
 import { SetupScreenContext, SetupScreenContextType } from './setup'
 import { isLightColor } from '@/app/components/utils'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
-import { Pagination, Popup, TextInput } from '@gravity-ui/uikit'
+import { Button, Pagination, Popup, Text } from '@gravity-ui/uikit'
 import { TotalContext, TotalContextProps } from '@/app/globalContext'
-import { useGravityThemeClass } from '../utils/useGravityUITheme';
+import { useGravityThemeClass } from '../utils/useGravityUITheme'
+import { twMerge } from 'tailwind-merge'
 
 type ProductService = {
   psCode: string
@@ -148,7 +148,7 @@ const RenderMembers = ({
     psList,
     currentPage
   } = React.useContext(OrgMatrixContext) as OrgMatrixContextType
-  const themeClass = useGravityThemeClass();
+  const themeClass = useGravityThemeClass()
 
   const updatedParentCode = parentCode ? `${parentCode}-` : ''
   const isFocused = focusedPath == `${path}.${chilldArrayKeyName}`
@@ -237,28 +237,29 @@ const RenderMembers = ({
   return (
     <div
       draggable={!isNonDeletable}
-      className={`group relative mr-1 flex w-full flex-[0_0_18%] cursor-pointer items-center rounded border p-[0.58vw]`}
+      className={twMerge(
+        `group relative flex flex-[0_0_18%] w-full cursor-pointer items-center rounded border p-2`,
+        keyOfName == 'orgGrpName' ? '' : 'mt-1'
+      )}
       style={{
         width: `${
-          keyOfName === 'orgName'
+            keyOfName === 'orgName'
             ? '12vw'
             : keyOfName === 'roleGrpName'
-              ? '11vw'
-              : keyOfName === 'roleName'
-                ? '10.5vw'
-                : keyOfName === 'psGrpName'
-                  ? '10vw'
-                  : '9.4vw'
+            ? '11vw'
+            : keyOfName === 'roleName'
+            ? '10.5vw'
+            : keyOfName === 'psGrpName'
+            ? '10vw'
+            : '9.4vw'
         }`,
         borderColor: isFocused
           ? brandcolor
-          // : keyOfName == 'orgName'
-          //   ? 'transparent'
-            : themeClass.includes("dark") ? "#ffffff59" : '#00000059',
-        margin:
-          expanded && keyOfName === 'orgName'
-            ? '0.3vw 0.3vw 0.6vw'
-            : '0.2vw 0.2vw 0.3vw 0.2vw'
+          : keyOfName == 'orgName'
+          ? 'transparent'
+          : themeClass.includes('dark')
+          ? '#ffffff59'
+          : '#00000059'
       }}
       onContextMenu={e => {
         e.preventDefault()
@@ -277,27 +278,13 @@ const RenderMembers = ({
       }
     >
       <span>
-        <SixDotsSvg fill={themeClass.includes("dark") ? '#ffffff' : '#000000'} />
+        <SixDotsSvg
+          fill={"var(--g-color-text-secondary)"}
+        />
       </span>
       {
         <span
-          className={`flex flex-col leading-[2.22vh]`}
-          style={{
-            fontSize: `0.83vw`,
-            width: `${
-              keyOfName === 'orgName'
-                ? '8vw'
-                : keyOfName === 'roleGrpName'
-                  ? '6.5vw'
-                  : keyOfName === 'roleName'
-                    ? '6vw'
-                    : keyOfName === 'psGrpName'
-                      ? '5.5vw'
-                      : keyOfName === 'psName'
-                        ? '6vw'
-                        : '8vw'
-            }`
-          }}
+          className={`flex w-3/5 flex-col leading-[2.22vh]`}
           onDoubleClick={e => {
             e.stopPropagation()
             setIsInput(`${path}.${keyOfName}`)
@@ -323,18 +310,28 @@ const RenderMembers = ({
               }}
             />
           ) : (
-            <span className='w-full truncate'>{name}</span>
+            <Text variant='body-2' className='w-full truncate' title={name}>
+              {name}
+            </Text>
           )}
           {code.replace(updatedParentCode, '') ? (
-            <span className='w-full truncate text-[0.63vw]'>
+            <Text
+              variant='body-1'
+              color='secondary'
+              className='w-full truncate'
+              title={code.replace(updatedParentCode, '')}
+            >
               {code.replace(updatedParentCode, '')}
-            </span>
+            </Text>
           ) : (
             <input
               className={`bg-transparent outline-none`}
               defaultValue={code.replace(updatedParentCode, '')}
               placeholder={`Enter ${keyOfName.replace('Name', 'Code')}`}
-              onChange={(e) => {handleSetRestrictionBasedOnParentCode(e);  e.target.value = e.target.value.replace(/[^a-zA-Z0-9_]/g, "")}}
+              onChange={e => {
+                handleSetRestrictionBasedOnParentCode(e)
+                e.target.value = e.target.value.replace(/[^a-zA-Z0-9_]/g, '')
+              }}
               onBlur={e =>
                 updateData(
                   `${path}.${keyOfName.replace('Name', 'Code')}`,
@@ -358,7 +355,7 @@ const RenderMembers = ({
           <button
             ref={buttonElement as any}
             onClick={() => setOpen(prevOpen => !prevOpen)}
-            className='ml-auto mr-[0.29vw] flex h-full items-center justify-center opacity-0 transition-opacity focus:outline-none group-hover:opacity-100'
+            className='ml-auto mr-1 flex h-full items-center justify-center opacity-0 transition-opacity focus:outline-none group-hover:opacity-100'
           >
             <DeleteIcon fill='#EF4444' />
           </button>
@@ -368,23 +365,22 @@ const RenderMembers = ({
             open={open}
             placement='bottom'
           >
-            <div className='flex flex-col gap-[0.58vw] px-[1.46vw] py-[0.58vw]'>
-              <p
-                style={{ fontSize: `0.72vw` }}
-                className='w-[10vw] text-wrap font-medium leading-[2.22vh]'
+            <div className='flex flex-col gap-2 px-3 py-2 w-64'>
+              <Text
+                variant='body-2'
               >
                 Selected {keyOfName} cannot be deleted as it assigned with some
                 template , please try deleting after deleting the template
-              </p>
+              </Text>
             </div>
           </Popup>
         </>
-      ) : keyOfName == 'orgGrpName' ? (
+      ) : (
         <>
           <button
             ref={buttonElement as any}
             onClick={() => setOpen(prevOpen => !prevOpen)}
-            className='ml-auto mr-[0.29vw] flex h-full items-center justify-center opacity-0 transition-opacity focus:outline-none group-hover:opacity-100'
+            className='ml-auto mr-1 flex h-full items-center justify-center opacity-0 transition-opacity focus:outline-none group-hover:opacity-100'
           >
             <DeleteIcon fill='#EF4444' />
           </button>
@@ -394,14 +390,13 @@ const RenderMembers = ({
             open={open}
             placement='bottom'
           >
-            <div className='flex flex-col gap-[0.58vw] px-[1.46vw] py-[0.58vw]'>
-              <p
-                style={{ fontSize: `0.72vw` }}
-                className='w-[10vw] text-wrap font-medium leading-[2.22vh]'
+            <div className='flex flex-col gap-2 px-3 py-2 w-64'>
+              <Text
+                variant='body-2'
               >
-                Are you sure, you want to delete this Organisation?
-              </p>
-              <button
+                {`Are you sure, you want to delete this ${keyOfName == "orgGrpName" ? "Organisation" : "Structure"}?`}
+              </Text>
+              <Button
                 onClick={() => {
                   deleteItems(
                     path,
@@ -409,35 +404,31 @@ const RenderMembers = ({
                   )
                   setOpen(false)
                 }}
-                className={
-                  'ml-auto rounded-md bg-[#EF4444] px-[0.58vw] py-[0.64vh] leading-[2.22vh] text-white outline-none'
-                }
-                style={{ fontSize: `0.72vw` }}
+                style={{
+                  backgroundColor: '#EF4444',
+                  color: '#FFFFFF',
+                }}
+                view='flat'
               >
                 Delete
-              </button>
+              </Button>
             </div>
           </Popup>
         </>
-      ) : (
-        <button
-          onClick={() => {
-            deleteItems(path, keyOfName == 'orgGrpName' ? true : undefined)
-          }}
-          className='ml-auto mr-[0.29vw] flex h-full items-center justify-center opacity-0 transition-opacity focus:outline-none group-hover:opacity-100'
-        >
-          <DeleteIcon fill='#EF4444' />
-        </button>
       )}
-      {setExpanded && (
+      {typeof setExpanded == "function" && (
         <div
           className={`transition-all duration-300 ease-in-out focus:outline-none`}
           onClick={() => setExpanded(!expanded)}
         >
           {expanded ? (
-            <UpArrow fill={themeClass.includes('dark') ? '#ffffff' : '#000000'} />
+            <UpArrow
+              fill={"var(--g-color-text-secondary)"}
+            />
           ) : (
-            <DownArrow fill={themeClass.includes('dark') ? '#ffffff' : '#000000'} />
+            <DownArrow
+              fill={"var(--g-color-text-secondary)"}
+            />
           )}
         </div>
       )}
@@ -452,7 +443,7 @@ const RenderPSGrp = ({
   path,
   parentCode
 }: ProductServiceGroup & { path: string; parentCode: string }) => {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   return (
     <div>
       <RenderMembers
@@ -492,7 +483,7 @@ const RenderRole = ({
   path,
   parentCode
 }: Role & { path: string; parentCode: string }) => {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   return (
     <div>
       <RenderMembers
@@ -532,7 +523,7 @@ const RenderRoleGroup = ({
   path,
   parentCode
 }: RoleGroup & { path: string; parentCode: string }) => {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   return (
     <div>
       <RenderMembers
@@ -572,8 +563,8 @@ const RenderOrg = ({
   path,
   parentCode
 }: Organization & { path: string; parentCode: string }) => {
-  const [expanded, setExpanded] = useState(false)
-  const themeClass = useGravityThemeClass();
+  const [expanded, setExpanded] = useState(true)
+  const themeClass = useGravityThemeClass()
 
   return (
     <div
@@ -583,7 +574,9 @@ const RenderOrg = ({
       className='flex justify-end'
     >
       <div
-        style={{ borderColor: themeClass.includes('dark') ? '#ffffff26' : '#00000026' }}
+        style={{
+          borderColor: themeClass.includes('dark') ? '#ffffff26' : '#00000026'
+        }}
         className='cursor-pointer rounded border pb-2'
       >
         <RenderMembers
@@ -641,8 +634,7 @@ const OrgMatrix = ({
   const [isInput, setIsInput] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const toast = useInfoMsg()
-  const themeClass = useGravityThemeClass();
-
+  const themeClass = useGravityThemeClass()
 
   const filteredData = Object.entries(data)
     .filter(([key, value]) => {
@@ -792,32 +784,27 @@ const OrgMatrix = ({
         currentPage
       }}
     >
-      <div className={`flex w-full items-center justify-between g-root ${themeClass}`}>
-        <h1
-          style={{
-            fontSize: `1.25vw`
-          }}
-          className=' font-semibold leading-[1.04vw]'
-        >
-          {'Organization Matrix'}
-        </h1>
+      <div
+        className={`g-root flex w-full items-center justify-between ${themeClass}`}
+      >
+        <Text variant='header-1'>{'Organization Matrix'}</Text>
         <button
           id='orpsAdditionBtnWithFocus'
           className={`hidden`}
           onClick={handleAddValue}
         >
-          <PlusIcon fill='white' width={'1.04vw'} height={'1.04vw'} />
+          {/* btn needed for triggering orps addition in setup screen */}
         </button>
       </div>
       <div
-        className='mt-[2vh] flex items-center justify-between rounded-xl px-3 border'
+        className='mt-2 flex items-center justify-between rounded-xl border px-3'
         style={{
           borderColor: themeClass.includes('dark') ? '#ffffff26' : '#00000026'
         }}
       >
         <div
           ref={headerSectionRef}
-          className='scrollbar-hide flex w-full gap-[0.88vw] overflow-x-auto p-[0.29vw]'
+          className='scrollbar-hide flex w-full gap-6 overflow-x-auto p-2'
         >
           {currentGroups.map((node: any, id: number) => (
             <RenderMembers
@@ -832,15 +819,17 @@ const OrgMatrix = ({
           ))}
         </div>
         <button
-          className='mr-[0.29vw] flex items-center rounded px-[0.58vw] py-[1vh] focus:outline-none'
+          className='mr-2 flex items-center rounded px-2 py-1.5 focus:outline-none'
           onClick={addTopLevelOrganization}
           style={{
-            borderColor: themeClass.includes('dark') ? '#ffffff26' : '#00000026',
+            borderColor: themeClass.includes('dark')
+              ? '#ffffff26'
+              : '#00000026',
             backgroundColor: brandcolor
           }}
           disabled={tenantAccess !== 'edit'}
         >
-          <PlusIcon fill={isLightColor(brandcolor)} />
+          <PlusIcon fill={isLightColor(brandcolor)} width='16' height='16' />
         </button>
       </div>
       <div
@@ -848,7 +837,7 @@ const OrgMatrix = ({
         className={`scrollbar-thin mt-2 flex h-[70%] w-[95%] overflow-x-auto`}
       >
         {currentGroups.map((node: any, id: number) => (
-          <div className='flex flex-[0_0_19.5%] flex-col gap-[1vh]' key={id}>
+          <div className='flex flex-[0_0_19.5%] flex-col gap-2' key={id}>
             {node.org.map((org: any, index: number) => {
               return (
                 <RenderOrg
@@ -865,13 +854,13 @@ const OrgMatrix = ({
         ))}
       </div>
 
-        <Pagination
-          className='justify-center'
-          page={currentPage}
-          pageSize={groupsPerPage}
-          onUpdate={setCurrentPage}
-          total={data.length}
-        />
+      <Pagination
+        className='justify-center'
+        page={currentPage}
+        pageSize={groupsPerPage}
+        onUpdate={setCurrentPage}
+        total={data.length}
+      />
     </OrgMatrixContext.Provider>
   )
 }

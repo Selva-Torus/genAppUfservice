@@ -50,8 +50,8 @@ export const DeleteIcon = ({ width = '16', height = '16', fill = 'black' }) => {
 
 export const Management = ({
   fill = 'black',
-  width = '0.83vw',
-  height = '0.83vw'
+  width = '16',
+  height = '16'
 }) => {
   return (
     <svg
@@ -80,8 +80,8 @@ export const Management = ({
 export const GeneralSettingsIcon = ({ fill = 'black' }) => {
   return (
     <svg
-      width='0.83vw'
-      height='0.83vw'
+      width='16'
+      height='16'
       viewBox='0 0 16 16'
       fill='none'
       xmlns='http://www.w3.org/2000/svg'
@@ -101,8 +101,8 @@ export const GeneralSettingsIcon = ({ fill = 'black' }) => {
 export const Org = ({ fill = 'black' }) => {
   return (
     <svg
-      width='0.83vw'
-      height='0.83vw'
+      width='16'
+      height='16'
       viewBox='0 0 16 16'
       fill='none'
       xmlns='http://www.w3.org/2000/svg'
@@ -197,11 +197,11 @@ export const PlusIcon = ({
   )
 }
 
-export const SaveIcon = () => {
+export const SaveIcon = ({height = "1.25vw" , width = "1.25vw"}) => {
   return (
     <svg
-      width='1.25vw'
-      height='1.25vw'
+      width={width}
+      height={height}
       viewBox='0 0 24 25'
       fill='none'
       xmlns='http://www.w3.org/2000/svg'
@@ -220,8 +220,8 @@ export const SaveIcon = () => {
 export const Security = ({ fill = 'black' }) => {
   return (
     <svg
-      width='0.83vw'
-      height='0.83vw'
+      width='16'
+      height='16'
       viewBox='0 0 16 16'
       fill='none'
       xmlns='http://www.w3.org/2000/svg'
@@ -1931,8 +1931,8 @@ export const DarkHCTheme = ({ width = "12vw" }) => {
 export const FilterIcon = ({ fill = '#FFFFFF' }) => {
   return (
     <svg
-      width='0.9vw'
-      height='0.9vw'
+      width='18'
+      height='18'
       viewBox='0 0 16 16'
       fill='none'
       xmlns='http://www.w3.org/2000/svg'

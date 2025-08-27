@@ -3,24 +3,21 @@ import {
   Button,
   Modal,
   Pagination,
-  Popup,
   Table,
   TableProps,
   Tabs,
+  Text,
   withTableActions,
-  withTableSelection,
   withTableSorting
 } from '@gravity-ui/uikit'
 import React, { SetStateAction, useMemo, useRef, useState } from 'react'
 import JsonView from 'react18-json-view'
 import 'react18-json-view/src/style.css'
 import { useGravityThemeClass } from '@/app/utils/useGravityUITheme'
-import { RangeCalendar } from '@gravity-ui/date-components'
 import { DateTime } from '@gravity-ui/date-utils'
 import { FilterIcon } from '@/app/components/svgApplication'
 import LogsFilterationModal from './LogsFilterationModal'
-const fontSize = 1
-import { CopyCheckXmark , Copy } from '@gravity-ui/icons';
+import { CopyCheckXmark, Copy } from '@gravity-ui/icons'
 
 interface selectionId {
   id: string
@@ -50,24 +47,24 @@ interface TableHeaderProps {
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>
   activeTab: string
   setActiveTab: React.Dispatch<SetStateAction<'process' | 'torus'>>
-  setNodeData: React.Dispatch<SetStateAction<any>>,
+  setNodeData: React.Dispatch<SetStateAction<any>>
   range: {
-    start: DateTime;
-    end: DateTime;
-},
-  setRange : React.Dispatch<React.SetStateAction<{
-    start: DateTime;
-    end: DateTime;
-}>>
-fabrics: Array<string>;
-setFabrics: React.Dispatch<React.SetStateAction<Array<string>>>
-user: Array<string>;
-setUser: React.Dispatch<React.SetStateAction<Array<string>>>
+    start: DateTime
+    end: DateTime
+  }
+  setRange: React.Dispatch<
+    React.SetStateAction<{
+      start: DateTime
+      end: DateTime
+    }>
+  >
+  fabrics: Array<string>
+  setFabrics: React.Dispatch<React.SetStateAction<Array<string>>>
+  user: Array<string>
+  setUser: React.Dispatch<React.SetStateAction<Array<string>>>
 }
 
-const MyTable = withTableSorting(
-  withTableActions<TableProps<any>>(Table)
-)
+const MyTable = withTableSorting(withTableActions<TableProps<any>>(Table))
 
 const TableHeader: React.FC<TableHeaderProps> = ({
   loading,
@@ -105,13 +102,12 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   ]
   const [copied, setCopied] = useState<string | null>(null)
   const [selectionId, setSelectionId] = useState<selectionId | null>(null)
-  const themeClass = useGravityThemeClass();
+  const themeClass = useGravityThemeClass()
   const handleUpdate = (newPage: number, newPageSize: number) => {
     onPageChange(newPage, newPageSize)
   }
-  const [open , setOpen ] = useState(false)
+  const [open, setOpen] = useState(false)
   const buttonElement = useRef<HTMLButtonElement>(null)
-  
 
   const nodeFiner = (data: any) => {
     const returnedData = Object.values(data).flat()
@@ -211,53 +207,42 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     switch (type) {
       case 'node':
         return (
-          <div className='flex h-full w-full flex-col items-center justify-center gap-[0.5vh]'>
+          <div className='flex h-full w-full flex-col items-center justify-center gap-1'>
             {(data?.node ?? []).map((item: any, indexOfNode: number) => (
-              <div
-                key={indexOfNode}
-                className='font-medium leading-[1.34vh]'
-                style={{ fontSize: `${fontSize * 0.72}vw` }}
-              >
+              <Text key={indexOfNode} variant='body-2' color='secondary'>
                 {item.name}
-              </div>
+              </Text>
             ))}
           </div>
         )
       case 'time':
         return (
-          <div className='flex h-full w-full flex-col items-center justify-center gap-[0.5vh]'>
+          <div className='flex h-full w-full flex-col items-center justify-center gap-1'>
             {(data?.time ?? []).map((item: any, indexOfTime: number) => (
-              <div
-                key={`${item}${indexOfTime}`}
-                className='font-medium leading-[1.34vh]'
-                style={{
-                  opacity: 0.7,
-                  fontSize: `${fontSize * 0.72}vw`
-                }}
-              >
+              <Text key={indexOfTime} variant='body-2' color='secondary'>
                 {formatTableDate(item)}
-              </div>
+              </Text>
             ))}
           </div>
         )
       case 'status':
         if (data.status == 'Failed') {
           return (
-            <div
-              className={`rounded-full bg-red-500 px-[0.87vw] py-[0.29vw] text-center text-white`}
-              style={{ fontSize: `${fontSize * 0.625}vw` }}
+            <Text
+              variant='body-2'
+              className='rounded-full bg-red-500 px-3 py-1 text-center text-white'
             >
               Failed
-            </div>
+            </Text>
           )
         } else {
           return (
-            <div
-              className={`rounded-full bg-green-500 px-[0.87vw] py-[0.29vw] text-center text-white`}
-              style={{ fontSize: `${fontSize * 0.625}vw` }}
+            <Text
+              variant='body-2'
+              className={`rounded-full bg-green-500 px-3 py-1 text-center text-white`}
             >
               Success
-            </div>
+            </Text>
           )
         }
       default:
@@ -279,37 +264,27 @@ const TableHeader: React.FC<TableHeaderProps> = ({
       }
     }
     return (
-      <div className='flex w-[40%] flex-col gap-[0.29vw]' onClick={() => setNodeData(nodeData)}>
-        <div
-          className='font-bold leading-[1.85vh]'
-          style={{ fontSize: `${fontSize * 0.833}vw` }}
-        >
-          {artifact}
-        </div>
-        <div
-          className='leading-[1.85vh]'
-          style={{
-            opacity: 0.4,
-            fontSize: `${fontSize * 0.625}vw`
-          }}
-        >
+      <div
+        className='flex w-[40%] flex-col gap-1'
+        onClick={() => setNodeData(nodeData)}
+      >
+        <Text variant='subheader-2'>{artifact}</Text>
+        <Text variant='body-1' color='secondary'>
           {grpDetails}
-        </div>
+        </Text>
         {processId && (
           <div
-            className='flex items-center gap-1 rounded-full p-2 font-medium leading-[1.85vh] w-fit'
+            className='flex w-fit rounded-full p-2'
             style={{
-              backgroundColor: 'var(--selection-color)',
-              fontSize: `${fontSize * 0.625}vw`
+              backgroundColor: 'var(--selection-color)'
             }}
           >
-            UID: {processId}
+            <Text variant='body-2'>UID: {processId}</Text>
             <Button
               view='flat'
               size='xs'
               className='border-none'
-              
-              onClick={(e) => {
+              onClick={e => {
                 e.stopPropagation()
                 handleCopyToClipboard(processId)
               }}
@@ -332,39 +307,27 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         return displayArtifactName(item, item)
       case 'version':
         return (
-          <div
-            className='text-center font-medium leading-[1.34vh]'
-            style={{ fontSize: `${fontSize * 0.72}vw` }}
-          >
+          <Text variant='body-2' className='block text-center'>
             {item.version}
-          </div>
+          </Text>
         )
       case 'user':
         return (
-          <div
-            className='text-center font-medium leading-[1.34vh]'
-            style={{ fontSize: `${fontSize * 0.72}vw` }}
-          >
+          <Text variant='body-2' className='block text-center'>
             {item.user}
-          </div>
+          </Text>
         )
       case 'fabric':
         return (
-          <div
-            className='text-center font-medium leading-[1.34vh]'
-            style={{ fontSize: `${fontSize * 0.72}vw` }}
-          >
+          <Text variant='body-2' className='block text-center'>
             {item.fabric}
-          </div>
+          </Text>
         )
       case 'jobType':
         return (
-          <div
-            className='text-center font-medium leading-[1.34vh]'
-            style={{ fontSize: `${fontSize * 0.72}vw` }}
-          >
+          <Text variant='body-2' className='block text-center'>
             {item.jobType}
-          </div>
+          </Text>
         )
       case 'status':
         return displayNodeData(item, 'status')
@@ -387,7 +350,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     return result
   })
 
-  const torusRow = (jsonData.data || []).map((item , index) => ({
+  const torusRow = (jsonData.data || []).map((item, index) => ({
     'Artifact Name': (
       <>
         <ArtifactNameContainer
@@ -399,50 +362,39 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     ),
     Version: (
       <>
-        <RowElementContainer color={themeClass.includes("dark") ? "#fff" : "#000"} alignment='start' item={item.AFVK} />
+        <RowElementContainer item={item.AFVK} />
       </>
     ),
     Fabric: (
       <>
-        <RowElementContainer color={themeClass.includes("dark") ? "#fff" : "#000"} alignment='start' item={item.FNK} />
+        <RowElementContainer item={item.FNK} />
       </>
     ),
-    'Session Info':
-      item.AFSK && Object.keys(item.AFSK).length > 0
-        ? sessionFinder(item.AFSK, 'session').map((i, index) => {
-            return (
-              <div
-                key={index}
-                className='mt-2 flex w-[75%] flex-col items-start justify-start'
-              >
-                <RowElementContainer
-                  item={i?.user}
-                  alignment='start'
-                  color={themeClass.includes("dark") ? "#fff" : "#000"}
-                />
-                <RowElementContainer
-                  item={i?.accessProfile}
-                  alignment='start'
-                  color={themeClass.includes("dark") ? "#fff" : "#000"}
-                />
-              </div>
-            )
-          })
-        : 'N/A',
+    'Session Info': (
+      <>
+        {item.AFSK && Object.keys(item.AFSK).length > 0
+          ? sessionFinder(item.AFSK, 'session').map((i, index) => {
+              return (
+                <div key={index} className='mt-2'>
+                  <RowElementContainer item={i?.user} />
+                  <RowElementContainer item={i?.accessProfile} />
+                </div>
+              )
+            })
+          : 'N/A'}
+      </>
+    ),
     'Time Stamp':
       item.AFSK && Object.keys(item.AFSK).length > 0
         ? sessionFinder(item.AFSK, 'dateandtime').map((i, index) => {
             return (
-              <div
+              <Text
                 key={index}
-                className='mt-2 flex w-[75%] flex-col items-start justify-start'
+                variant='body-2'
+                className='block py-1.5 text-center'
               >
-                <RowElementContainer
-                  item={i}
-                  alignment='start'
-                  color={themeClass.includes("dark") ? "#fff" : "#000"}
-                />
-              </div>
+                {i}
+              </Text>
             )
           })
         : 'N/A',
@@ -450,16 +402,9 @@ const TableHeader: React.FC<TableHeaderProps> = ({
       item.AFSK && Object.keys(item.AFSK).length > 0
         ? sessionFinder(item.AFSK, 'errorcode').map((i, index) => {
             return (
-              <div
-                key={index}
-                className='mt-2 flex w-[75%] flex-col items-start justify-start'
-              >
-                <RowElementContainer
-                  item={i}
-                  alignment='start'
-                  color={themeClass.includes("dark") ? "#fff" : "#000"}
-                />
-              </div>
+              <Text key={index} variant='body-2' className='block text-center'>
+                {i}
+              </Text>
             )
           })
         : 'N/A',
@@ -468,16 +413,13 @@ const TableHeader: React.FC<TableHeaderProps> = ({
       item.AFSK && Object.keys(item.AFSK).length > 0
         ? sessionFinder(item.AFSK, 'description').map((i, index) => {
             return (
-              <div
+              <Text
                 key={index}
-                className='mt-2 flex w-[75%] flex-col items-start justify-start'
+                variant='body-2'
+                className='block py-1.5 text-center'
               >
-                <RowElementContainer
-                  item={i}
-                  alignment='start'
-                  color={themeClass.includes("dark") ? "#ffffff56" : "#0000005"}
-                />
-              </div>
+                {i}
+              </Text>
             )
           })
         : 'N/A',
@@ -496,8 +438,8 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 index === 0
                   ? 'rounded-l-md'
                   : index === headerProcessRowsItem.length - 1
-                    ? 'rounded-r-md'
-                    : ''
+                  ? 'rounded-r-md'
+                  : ''
               }
             />
           )
@@ -519,8 +461,8 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 index === 0
                   ? 'rounded-l-md'
                   : index === headerProcessRowsItem.length - 1
-                    ? 'rounded-r-md'
-                    : ''
+                  ? 'rounded-r-md'
+                  : ''
               }
             />
           )
@@ -536,7 +478,9 @@ const TableHeader: React.FC<TableHeaderProps> = ({
 
   const jsonViewerData = useMemo(() => {
     if (selectionId) {
-      let values = jsonData.data.find((item , index) => (item._id ?? index + 1) === selectionId.id)
+      let values = jsonData.data.find(
+        (item, index) => (item._id ?? index + 1) === selectionId.id
+      )
       return values
     }
 
@@ -549,62 +493,60 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   }
 
   return (
-    <div className={`grid h-full grid-cols-12 g-root ${themeClass}`}>
+    <div className={`g-root grid h-full grid-cols-12 ${themeClass}`}>
       <div className='col-span-12'>
-        <div
-          className='flex flex-col rounded-md'
-          style={{
-            backgroundColor: 'transparent'
-          }}
-        >
+        <div className='flex flex-col rounded-md'>
           <div className='flex w-full items-center justify-between'>
             <div className=' ml-3.5 flex items-center justify-start gap-1.5 '>
-              <LogsHub fill={themeClass.includes("dark") ? "#fff" : "#000"} width='1.55vw' height='1.55vw' />
-              <HeaderElementContainer
-                header='Logs Hub'
-                rounded=''
+              <LogsHub
+                fill={themeClass.includes('dark') ? '#fff' : '#000'}
+                width='24'
+                height='24'
               />
+              <HeaderElementContainer header='Logs Hub' rounded='' />
             </div>
-            <div className='flex items-center justify-center w-[70%] gap-2'>
-            <input
-              type='text'
-              placeholder='Search...'
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value.trim())}
-              className='w-[50%] rounded-md border px-2 text-[0.82vw] shadow-md focus:border xl:py-1 2xl:py-2 outline-none'
-              style={{
-                      backgroundColor: 'var(--g-color-base-background)',
-                      color: 'var(--g-color-text-primary)',
-                      borderColor: 'var(--g-color-line-generic)',
-                    }}
-            />
+            <div className='flex w-[70%] items-center justify-center gap-2'>
+              <input
+                type='text'
+                placeholder='Search...'
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value.trim())}
+                className='w-[50%] rounded-md border px-2 shadow-md outline-none focus:border xl:py-1 2xl:py-2'
+                style={{
+                  backgroundColor: 'var(--g-color-base-background)',
+                  color: 'var(--g-color-text-primary)',
+                  borderColor: 'var(--g-color-line-generic)'
+                }}
+              />
 
               <div>
-                <Button  ref={buttonElement} onClick={() => setOpen(!open)}>
+                <Button ref={buttonElement} onClick={() => setOpen(!open)}>
                   <span className='flex items-center gap-2'>
-                  Filter <FilterIcon fill='var(--g-color-text-primary)'/>
+                    Filter <FilterIcon fill='var(--g-color-text-primary)' />
                   </span>
                 </Button>
                 <Modal open={open}>
-                <LogsFilterationModal 
-                  setOpen={setOpen} 
-                  range={range} 
-                  setRange={setRange} 
-                  fabrics={fabrics} 
-                  setFabrics={setFabrics}
-                  user={user}
-                  setUser={setUser}
-                />
-              </Modal>
+                  <LogsFilterationModal
+                    setOpen={setOpen}
+                    range={range}
+                    setRange={setRange}
+                    fabrics={fabrics}
+                    setFabrics={setFabrics}
+                    user={user}
+                    setUser={setUser}
+                  />
+                </Modal>
               </div>
-              </div>
+            </div>
 
             {/* { PLS DON'T DELETE } */}
             <LogSwitcher activeTab={activeTab} setActiveTab={handleTabChange} />
           </div>
           <div className='flex w-full '>
             <div
-              className={` transition-all delay-0 duration-300 ease-out xl:h-[68vh] 2xl:h-[80vh] ${activeTab === 'torus' ? 'block w-[75%] ' : 'w-[100%]'}  `}
+              className={` transition-all delay-0 duration-300 ease-out xl:h-[68vh] 2xl:h-[80vh] ${
+                activeTab === 'torus' ? 'block w-1/2 md:w-3/4' : 'w-[100%]'
+              }  `}
             >
               <MyTable
                 className='h-[100%] w-full'
@@ -615,8 +557,8 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                       ? []
                       : torusRow
                     : loading
-                      ? []
-                      : (processRow as any)
+                    ? []
+                    : (processRow as any)
                 }
                 width='auto'
                 wordWrap={false}
@@ -627,7 +569,9 @@ const TableHeader: React.FC<TableHeaderProps> = ({
               />
             </div>
             <div
-              className={`${activeTab === 'torus' ? 'block w-[25%] ' : 'hidden w-0'} h-[100%] `}
+              className={`${
+                activeTab === 'torus' ? 'block w-1/2 md:w-1/4 ' : 'hidden'
+              } h-[100%] `}
             >
               <div className='flex w-full items-center justify-center'>
                 <JsonViewer tabdata={jsonViewerData} />
@@ -636,7 +580,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
           </div>
         </div>
         <Pagination
-          className='mt-4 flex w-full select-none items-center justify-center text-[0.82vw]'
+          className='mt-4 flex w-full select-none items-center justify-center'
           page={jsonData.page}
           pageSize={jsonData.limit}
           pageSizeOptions={[3, 5, 10, 20, 50, 100]}
@@ -654,64 +598,28 @@ const TableHeader: React.FC<TableHeaderProps> = ({
 
 export default TableHeader
 
-const StatusContainer = ({ status }: any) => {
+const RowElementContainer = ({ item }: { item: string }) => {
   return (
-    <div
-      className='w-[65%] rounded-full py-[0.15vw] text-center text-sm font-bold text-white'
-      style={{
-        backgroundColor: `${status === 'Success' ? '#00CE7D' : '#F14336'}`
-      }}
-    >
-      <RowElementContainer item={status} color={'white'} alignment={'center'} />
-    </div>
-  )
-}
-
-const RowElementContainer = ({
-  item,
-  color,
-  alignment = 'start',
-  size = '0.83vw'
-}: {
-  item: string
-  color: string
-  alignment?: 'left' | 'right' | 'center' | 'justify' | 'start'
-  size?: string
-}) => {
-  return (
-    <p
-      className='m-0 whitespace-nowrap p-0 text-start'
-      style={{
-        color: color || 'black',
-        fontSize: size,
-        fontWeight: '500',
-        textAlign: alignment
-      }}
-    >
+    <Text variant='body-2' className='text-start'>
       {item}
-    </p>
+    </Text>
   )
 }
 
 const HeaderElementContainer = ({
   header,
-  rounded,
+  rounded
 }: {
   header: string
   rounded: string
 }) => {
   return (
     <div
-      className={`h-full w-full px-1 py-[0.75vw] text-center ${rounded ? rounded : 'rounded-none'} `}
+      className={`h-full w-full px-1 py-1 text-center ${
+        rounded ? rounded : 'rounded-none'
+      } `}
     >
-      <h3
-        style={{
-          fontSize: '0.72vw',
-          fontWeight: '400'
-        }}
-      >
-        {header.toLocaleUpperCase()}
-      </h3>
+      <Text variant='subheader-1'>{header.toLocaleUpperCase()}</Text>
     </div>
   )
 }
@@ -725,33 +633,13 @@ const ArtifactNameContainer = ({
   app: string
   appGroup: string
 }) => {
-  const themeClass = useGravityThemeClass();
   return (
     <div>
-      <RowElementContainer
-        item={artifactName}
-        color={themeClass.includes('dark' ) ? 'white' : 'black'}
-        alignment={'start'}
-      />
+      <RowElementContainer item={artifactName} />
       <div className='flex items-center justify-start gap-1'>
-        <RowElementContainer
-          item={app}
-          color={themeClass.includes('dark') ? '#ffffff59' : '#00000059'}
-          alignment={'center'}
-          size='0.62vw'
-        />
-        <RowElementContainer
-          item={'>'}
-          color={themeClass.includes('dark') ? '#ffffff59' : '#00000059'}
-          alignment={'center'}
-          size='0.62vw'
-        />
-        <RowElementContainer
-          item={appGroup}
-          color={themeClass.includes('dark') ? '#ffffff59' : '#00000059'}
-          alignment={'center'}
-          size='0.62vw'
-        />
+        <RowElementContainer item={app} />
+        <RowElementContainer item={'>'} />
+        <RowElementContainer item={appGroup} />
       </div>
     </div>
   )
@@ -764,31 +652,18 @@ const LogSwitcher = ({
   activeTab: string
   setActiveTab: (item: string) => void
 }) => {
-  const themeClass = useGravityThemeClass();
   return (
-    <Tabs className={' pr-[0.58vw]'} activeTab={activeTab}>
+    <Tabs className={'pr-2'} activeTab={activeTab}>
       <Tabs.Item
         id='process'
-        title={
-          <RowElementContainer
-            color={themeClass.includes('dark') ? '#ffffff59' : '#00000059'}
-            alignment='start'
-            item={'Process Log'}
-          />
-        }
+        title={'Process Log'}
         onClick={item => {
           setActiveTab('process')
         }}
       />
       <Tabs.Item
         id='torus'
-        title={
-          <RowElementContainer
-            color={themeClass.includes('dark') ? '#ffffff59' : '#00000059'}
-            alignment='start'
-            item={'System Log'}
-          />
-        }
+        title={'System Log'}
         onClick={item => {
           setActiveTab('torus')
         }}
@@ -823,40 +698,30 @@ const JsonViewer = ({ tabdata }: any) => {
 
   return (
     <div
-      className={`w-[100%] ${tabdata ? 'xl:h-[68vh] 2xl:h-[80vh]' : ' h-[20vh]'} mr-[0.87vw] mt-[0.58vw] items-center rounded-lg`}
-      // style={{ backgroundColor: '#F7F8F8' }}
+      className={`mt-2
+      h-full w-full items-center rounded-lg`}
     >
-      <p
-        className='p-[0.87vw] text-left font-semibold leading-[2.22vh]'
-        style={{
-          opacity: 0.7,
-          fontSize: `0.72vw`
-        }}
-      >
+      <Text variant='subheader-2' className='p-2'>
         Error Details
-      </p>
-      <div className={`ml-4 h-[92%] w-[100%]`}>
+      </Text>
+      <div className={`ml-2 h-[92%] w-[100%]`}>
         {tabdata ? (
           <JsonView
             theme='atom'
             enableClipboard={false}
             src={jsonViewerData ?? { data: 'data not available' }}
-            style={{ fontSize: '0.833vw' }}
-            className='max-h-[60vh] overflow-y-scroll'
+            className='max-h-[60vh] overflow-y-scroll md:max-h-[80vh]'
           />
         ) : (
-          <p
-            className='flex h-full w-full items-center justify-center'
-            style={{ fontSize: '0.833vw', color: 'black' }}
-          >
+          <Text variant='body-2' className='p-2 text-center'>
             No Data available
-          </p>
+          </Text>
         )}
       </div>
     </div>
   )
 }
-const LogsHub = ({ width = '1.25vw', height = '1.25vw', fill = 'black' }) => {
+const LogsHub = ({ width = '18', height = '18', fill = 'black' }) => {
   return (
     <svg
       width={width}

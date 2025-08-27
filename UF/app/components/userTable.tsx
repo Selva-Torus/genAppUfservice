@@ -338,10 +338,10 @@ const UserTable: React.FC<{
       width: 150,
       template: (item: any) => (
         <div className='flex flex-col'>
-          <div className={`flex rounded-md text-[0.72vw] leading-[1.04vw]`}>
+          <div className={`flex rounded-md`}>
             <form onSubmit={e => e.preventDefault()}>
               <input
-                className='cursor-pointer px-[0.5vw] py-[0.5vh] border rounded'
+                className='cursor-pointer px-2 py-1 border rounded'
                 style={{
                   backgroundColor: 'var(--g-color-base-background)',
                   color: 'var(--g-color-text-primary)',
@@ -364,11 +364,11 @@ const UserTable: React.FC<{
       name: 'Last Active',
       width: 150,
       template: (item: any) => (
-        <div className='text-[0.72vw]'>
+        <Text variant='body-2'>
           {!item.lastActive || item.lastActive === 'NA'
             ? 'NA'
             : formatDate(item.lastActive)}
-        </div>
+        </Text>
       )
     },
     {
@@ -377,11 +377,11 @@ const UserTable: React.FC<{
       width: 100,
       align: 'center',
       template: (item: any) => (
-        <div className='text-[0.72vw]'>
+        <Text variant='body-2'>
           {!item.dateAdded || item.dateAdded === 'NA'
             ? 'NA'
             : formatDate(item.dateAdded)}
-        </div>
+        </Text>
       )
     },
 
@@ -393,7 +393,7 @@ const UserTable: React.FC<{
       template: (item: any) => (
         <Popover
           content={
-            <div className='flex flex-col gap-[1vh]'>
+            <div className='flex flex-col gap-2'>
               <Button
                 onClick={() => {
                   setEditUserModalOpen(true)
@@ -461,16 +461,13 @@ const UserTable: React.FC<{
           />
         </Modal>
       </div>
-      <h1
-        style={{
-          fontSize: `1.25vw`,
-        }}
-        className=" leading-[1.04vw] font-semibold"
+      <Text 
+        variant='header-1'
       >
         {"User Management"}
-      </h1>
+      </Text>
       <CustomTable
-        className='h-[73vh] mt-[2vh]'
+        className='h-[73vh] mt-2'
         data={currentGroups}
         columns={columns as any}
         emptyMessage='No data available'
@@ -478,7 +475,7 @@ const UserTable: React.FC<{
         onSelectionChange={indices => handleRowSelection(indices)}
       />
       <Pagination
-        className='justify-center mt-[1vh]'
+        className='justify-center mt-1'
         page={currentPage}
         pageSize={userDataPerPage}
         onUpdate={setCurrentPage}

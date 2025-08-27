@@ -3,6 +3,7 @@ import { DownArrow, SearchIcon } from "./svgApplication";
 import useClickOutside from "./useClickOutsideRef";
 import { TotalContext, TotalContextProps } from "@/app/globalContext";
 import { useGravityThemeClass } from "../utils/useGravityUITheme";
+import { Text } from "@gravity-ui/uikit";
 
 const CustomGrpMemberDropdown = ({
     data,
@@ -153,9 +154,9 @@ const CustomGrpMemberDropdown = ({
     const handleParentHierarchy = (grp: any) => {
         if (parentKey) {
             return (
-                <span style={{ fontSize: "0.62vw" }}>
+                <Text variant="code-1" >
                     {grp[parentKey]}
-                </span>
+                </Text>
             );
         }
     };
@@ -168,12 +169,12 @@ const CustomGrpMemberDropdown = ({
                     borderColor : 'var(--g-color-line-generic)'
                 }}
                 className={`p-3 outline-none ${groupKey == "orgGrp"
-                        ? "w-[13.33vw]"
+                        ? "w-[220px]"
                         : groupKey == "roleGrp"
-                            ? "w-[10.52vw]"
+                            ? "w-[180px]"
                             : groupKey == "psGrp"
-                                ? "w-[12.18vw]"
-                                : "w-[40vw]"
+                                ? "w-[200px]"
+                                : "w-[220px]"
                     } flex justify-between items-center border rounded disabled:opacity-50 `}
                 onClick={() => setOpen(!isOpen)}
                 disabled={isDisabled}
@@ -190,52 +191,39 @@ const CustomGrpMemberDropdown = ({
                       borderColor : 'var(--g-color-line-generic)',
                       backgroundColor: 'var(--g-color-base-background)',
                     }}
-                    className={`flex flex-col gap-1 absolute z-20 ${dropUp ? "bottom-full mb-[0.5vw]" : "top-full mt-[0.5vw]"
+                    className={`flex flex-col gap-1 absolute z-20 ${dropUp ? "bottom-full mb-0.5" : "top-full mt-0.5"
                         } ${filteredData.length > 2 ? "h-[21.5vh] overflow-y-auto" : ""} ${groupKey == "orgGrp"
-                            ? "w-[13.33vw]"
+                            ? "w-[220px]"
                             : groupKey == "roleGrp"
-                                ? "w-[10.52vw]"
+                                ? "w-[180px]"
                                 : groupKey == "psGrp"
-                                    ? "w-[12.18vw]"
+                                    ? "w-[200px]"
                                     : ""
-                        } p-[0.5vw] rounded border`}
+                        } p-2 rounded border`}
                 >
                     {/* Search input */}
                     <div
-                        className="relative items-center h-[4vh]"
+                        className="flex rounded-md items-center w-full p-1 gap-2"
+                        style={{
+                                backgroundColor: "#FFFFFF",
+                                color: "#000000",
+                                borderColor: "#00000026",
+                            }}
                         onClick={() => searchInputRef.current?.focus()}
                     >
-                        <span className="absolute inset-y-0 left-0 flex p-[0.58vw] h-[2.18vw] w-[2.18vw]">
                             <SearchIcon
                                 fill={"#000000"}
-                                height="0.83vw"
-                                width="0.83vw"
+                                height="16"
+                                width="16"
                             />
-                        </span>
                         <input
                             autoFocus
                             ref={searchInputRef}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Search"
-                            onFocus={(e) => (e.target.style.borderColor = brandcolor)}
-                            onBlur={(e) =>
-                                (e.target.style.borderColor = "#00000026")
-                            }
-                            style={{
-                                backgroundColor: "#FFFFFF",
-                                color: "#000000",
-                                fontSize: `0.72vw`,
-                                borderColor: "#00000026",
-                            }}
-                            className={`${groupKey == "orgGrp"
-                                    ? "w-[12.33vw]"
-                                    : groupKey == "roleGrp"
-                                        ? "w-[9.52vw]"
-                                        : groupKey == "psGrp"
-                                            ? "w-[11.18vw]"
-                                            : ""
-                                } p-[0.29vw] h-[4vh] focus:outline-none border pl-[1.76vw] font-medium rounded-md`}
+                            className="border-none outline-none w-full"
+                            
                         />
                     </div>
 
@@ -249,25 +237,24 @@ const CustomGrpMemberDropdown = ({
                             return (
                                 <div className="flex flex-col gap-1" key={index}>
                                     <button
-                                        className="flex gap-[0.5vw] items-center outline-none"
+                                        className="flex gap-1 items-center outline-none"
                                         key={grp[groupCodeKey]}
                                         onClick={() => handleSelectGrp(grp)}
                                     >
                                         <input
-                                            className="w-[0.72vw] h-[0.72vw]"
                                             type="checkbox"
                                             style={{ accentColor: brandcolor }}
                                             checked={isParentSelected}
                                             readOnly
                                         />
-                                        <span>{grp[groupNameKey]}</span>
+                                        <Text variant="body-2">{grp[groupNameKey]}</Text>
                                         <span className="w-full text-end">
                                             {handleParentHierarchy(grp)}
                                         </span>
                                     </button>
 
                                     {/* Members */}
-                                    <div className="flex flex-col gap-1 ml-[1.5vw]">
+                                    <div className="flex flex-col gap-1 ml-3">
                                         {grp[memberKey].map((member: any, memberIndex: number) => {
                                             const existingGrp = selected.find(
                                                 (grpdata: any) =>
@@ -294,8 +281,7 @@ const CustomGrpMemberDropdown = ({
                                                     aria-label={member[memberCodeKey]}
                                                 >
                                                     <input
-                                                        className="w-[0.72vw] h-[0.72vw]"
-                                                        type="checkbox"
+                                                    type="checkbox"
                                                         style={{ accentColor: brandcolor }}
                                                         checked={isMemberSelected}
                                                         readOnly

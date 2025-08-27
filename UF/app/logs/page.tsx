@@ -48,26 +48,6 @@ const ParentComponent = () => {
 };  
   let payload:any = useMemo(() => {
     return {
-    "tenant": "CT242",
-    "fabric": [],
-    "appgroup": {
-        "code": "TPPTEST001",
-        "name": "TPPTEST"
-    },
-    "app": {
-        "code": "TPPTEST002",
-        "name": "VOFApp"
-    },
-    "user": [
-        "mari"
-    ],
-    "FromDate": "2025-08-06",
-    "ToDate": "2025-08-08",
-    "page": 1,
-    "limit": 10,
-    "searchParam": ""
-}
-    return {
       tenant: 'CT003',
        fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
             suffixes[prefix]
@@ -87,18 +67,17 @@ const ParentComponent = () => {
 
   const fetchData = async (signal: AbortSignal) => {
     try {
-      // if (encAppFalg.flag) {
-      //   payload['dpdKey'] = encAppFalg.dpd;
-      //   payload['method'] = 'vault';
-      // }
-      console.log('Fetching data...', payload)
+      if (encAppFalg.flag) {
+        payload['dpdKey'] = encAppFalg.dpd;
+        payload['method'] = 'vault';
+      }
       setLoading(true)
       const response = await AxiosService.post(
-        `${activeTab === 'torus' ? 'expLog' : 'http://192.168.2.96:7000/prcLog'}`,
+        `${activeTab === 'torus' ? 'expLog' : 'prcLog'}`,
         payload,
-        // {
-        //   signal: signal
-        // }
+        {
+          signal: signal
+        }
       )
 
       const result = response.data

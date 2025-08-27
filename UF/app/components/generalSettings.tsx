@@ -7,7 +7,7 @@ import {
 } from './svgApplication'
 import { fetchAMDKey } from '../utils/fetchAMDKey.api'
 import { getCookie, setCookie } from './cookieMgment'
-import { Select } from '@gravity-ui/uikit'
+import { Select, Text } from '@gravity-ui/uikit'
 import { getLanguagesJson } from '../utils/getLanguagesJson.api'
 import { TotalContext, TotalContextProps } from '../globalContext'
 import { useGravityThemeClass } from '../utils/useGravityUITheme'
@@ -22,27 +22,27 @@ const GeneralSettings = () => {
     TotalContext
   ) as TotalContextProps
   let brandcolor: string = property?.brandColor ?? '#0736c4'
-  const themeClass = useGravityThemeClass();
+  const themeClass = useGravityThemeClass()
 
   const themeOptions = [
     {
       label: 'Light',
-      icon: <LightTheme />,
+      icon: <LightTheme width='200px'/>,
       code: 'light'
     },
     {
       label: 'Dark',
-      icon: <DarkTheme />,
+      icon: <DarkTheme width='200px'/>,
       code: 'dark'
     },
     {
       label: 'Light with High Contrast',
-      icon: <LightHCTheme />,
+      icon: <LightHCTheme width='200px'/>,
       code: 'light-hc'
     },
     {
       label: 'Dark with High Contrast',
-      icon: <DarkHCTheme />,
+      icon: <DarkHCTheme width='200px'/>,
       code: 'dark-hc'
     }
   ]
@@ -67,7 +67,6 @@ const GeneralSettings = () => {
     setSelectedLanguage(value)
     setCookie('cfg_lang', value)
     const languageJson = await getLanguagesJson(value, token)
-    console.log(languageJson)
   }
 
   const handleThemeChange = (value: any) => {
@@ -76,52 +75,30 @@ const GeneralSettings = () => {
   }
 
   return (
-    <div className={`h-full w-full g-root ${themeClass}`}>
+    <div className={`g-root h-full w-full ${themeClass} overflow-auto`}>
       <div className='flex w-full items-center justify-between'>
-        <div className='flex flex-col gap-[1vh]'>
-          <h1
-            style={{
-              fontSize: `1.25vw`
-            }}
-            className=' font-semibold leading-[1.04vw]'
-          >
-            {'General'}
-          </h1>
-          <p
-            style={{
-              opacity: '0.5',
-              fontSize: `0.83vw`
-            }}
-          >
+        <div className='flex flex-col gap-2'>
+          <Text variant='header-1'>General</Text>
+          <Text variant='body-2' color='secondary'>
             {' '}
             Manage appearance, language, and basic preferences.
-          </p>
+          </Text>
         </div>
       </div>
       {/* Divider Line */}
-      <hr className='my-[1vh] w-full border' style={{ borderColor : 'var(--g-color-line-generic)'}} />
+      <hr
+        className='my-2 w-full border'
+        style={{ borderColor: 'var(--g-color-line-generic)' }}
+      />
       {/* Theme Selection */}
       <div className='flex flex-col gap-[2.49vh]'>
         <div className='flex flex-col gap-[0.62vh]'>
-          <h1
-            className='font-semibold leading-[1.85vh]'
-            style={{
-              fontSize: `0.72vw`
-            }}
-          >
-            {'Interface Theme'}
-          </h1>
-          <p
-            className='leading-[1.85vh]'
-            style={{
-              fontSize: '0.72vw',
-              opacity: '0.5'
-            }}
-          >
+          <Text variant='subheader-2'>{'Interface Theme'}</Text>
+          <Text variant='body-2' color='secondary'>
             {'Select the Theme of the application'}.
-          </p>
+          </Text>
         </div>
-        <div className='flex gap-[1.17vw]'>
+        <div className='flex gap-2 flex-wrap'>
           {themeOptions.map(val => (
             <div
               key={val.label}
@@ -145,7 +122,7 @@ const GeneralSettings = () => {
                       type='checkbox'
                       readOnly
                       checked={true}
-                      className='transition-color fade-in h-[0.8vw] w-[0.8vw] cursor-pointer rounded-lg outline-none duration-700'
+                      className='transition-color fade-in h-4 w-4 cursor-pointer rounded-lg outline-none duration-700'
                       style={{
                         color: `${brandcolor}`,
                         borderColor: `${brandcolor}`,
@@ -155,42 +132,27 @@ const GeneralSettings = () => {
                   )}
                 </div>
               </div>
-              <span
-                className='flex items-center justify-center font-medium leading-[1.85vh]'
-                style={{
-                  fontSize: '0.72vw'
-                }}
-              >
+              <Text variant='body-1' color='secondary'>
                 {val.label}
-              </span>
+              </Text>
             </div>
           ))}
         </div>
       </div>
       {/* Divider Line */}
-      <hr className='my-[1vh] w-full border' style={{ borderColor : 'var(--g-color-line-generic)'}} />
+      <hr
+        className='my-2 w-full border'
+        style={{ borderColor: 'var(--g-color-line-generic)' }}
+      />
       {/* Language Selection */}
-      <div className='flex items-center'>
-        <div className='flex w-[20vw] flex-col gap-[0.62vh]'>
-          <h1
-            className='font-semibold leading-[1.85vh] '
-            style={{
-              fontSize: '0.72vw'
-            }}
-          >
-            {'Language'}
-          </h1>
-          <p
-            className='leading-[1.85vh]'
-            style={{
-              fontSize: `0.72vw`,
-              opacity: '0.5'
-            }}
-          >
+      <div className='flex items-center flex-wrap'>
+        <div className='flex w-1/2 lg:w-1/3 flex-col'>
+          <Text variant='subheader-2'>{'Language'}</Text>
+          <Text variant='body-2' color='secondary' className='text-nowrap'>
             {'Select the language of the application'}.
-          </p>
+          </Text>
         </div>
-        <div className='w-[10vw]'>
+        <div className='w-[200px]'>
           <Select
             value={selectedLanguage}
             onUpdate={handleLanguageChange}
@@ -201,7 +163,10 @@ const GeneralSettings = () => {
         </div>
       </div>
       {/* Divider Line */}
-      <hr className='my-[1vh] w-full border' style={{ borderColor : 'var(--g-color-line-generic)'}} />
+      <hr
+        className='my-2 w-full border'
+        style={{ borderColor: 'var(--g-color-line-generic)' }}
+      />
     </div>
   )
 }

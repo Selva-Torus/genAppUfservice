@@ -1,4 +1,4 @@
-import { Select } from '@gravity-ui/uikit'
+import { Button, Select, Text } from '@gravity-ui/uikit'
 import React, { useContext, useMemo, useRef, useState } from 'react'
 import { CameraIcon, Multiply } from './svgApplication'
 import { isLightColor } from '@/app/components/utils'
@@ -260,8 +260,8 @@ const UserCreationModal = ({
                 item.firstName && item.lastName
                   ? item.loginId + item.firstName + ' ' + item.lastName
                   : item.loginId
-                    ? item.loginId
-                    : '',
+                  ? item.loginId
+                  : '',
               email: item.email,
               profile: item?.profile ?? '',
               firstName: item.firstName,
@@ -331,26 +331,15 @@ const UserCreationModal = ({
 
   return (
     <div
-      className={`g-root flex w-[44.73vw] flex-col items-center justify-center ${themeClass}`}
+      className={`g-root flex min-w-[700px] flex-col items-center justify-center ${themeClass}`}
     >
-      <div className='flex w-full items-center justify-between px-[0.87vw] py-[1.87vh]'>
-        <h1
-          style={{
-            fontSize: `1.04vw`
-          }}
-          className='font-medium leading-[2.22vh]'
-        >
-          {isEdit ? 'Edit User Info' : 'Add User'}
-        </h1>
+      <div className='flex w-full items-center justify-between px-4 py-2'>
+        <Text variant='header-1'>{isEdit ? 'Edit User Info' : 'Add User'}</Text>
         <button
           onClick={handleCloseModal}
           className='cursor-pointer outline-none'
         >
-          <Multiply
-            width='0.83vw'
-            height='0.83vw'
-            fill={themeClass.includes('dark') ? '#ffffff' : '#000000'}
-          />
+          <Multiply fill={'var(--g-color-text-secondary)'} />
         </button>
       </div>
 
@@ -359,35 +348,23 @@ const UserCreationModal = ({
         className='w-full'
       />
 
-      <div className='flex flex-col gap-[2.18vh] py-[1.87vh] pl-[1.46vw]'>
+      <div className='flex w-full flex-col gap-5 px-4 py-4'>
         {userAdditionDetails &&
           userAdditionDetails
             .toSpliced(6)
             .map(({ heading, subHeading, formData }, index) => (
-              <div key={index} className='flex gap-[0.58vw]'>
-                <div className='flex w-[21vw] flex-col gap-[0.62vh]'>
-                  <h1
-                    style={{
-                      fontSize: `0.72vw`
-                    }}
-                    className='font-semibold leading-[1.85vh]'
-                  >
-                    {heading}
-                  </h1>
-                  <p
-                    style={{
-                      fontSize: `0.72vw`,
-                      opacity: '0.6'
-                    }}
-                    className='leading-[1.85vh]'
-                  >
+              <div key={index} className='flex w-full '>
+                <div className='flex w-1/2 flex-col gap-0.5'>
+                  <Text variant='subheader-2'>{heading}</Text>
+                  <Text variant='body-2' color='secondary'>
                     {subHeading}
-                  </p>
+                  </Text>
                 </div>
+                <div className='flex w-1/2 gap-2'>
                 {formData.map(({ type, name, label, readOnly }) => (
-                  <div key={name}>
+                  <div key={name} className='flex w-full items-center gap-4'>
                     {type == 'file' && (
-                      <div>
+                      <div className='w-full'>
                         <input
                           type='file'
                           accept='image/png, image/jpeg, image/x-icon'
@@ -398,7 +375,7 @@ const UserCreationModal = ({
                         <button
                           id='previewImagebtnprofileforacc'
                           onClick={() => fileInputRef.current?.click()}
-                          className='flex h-[8.1vw] w-[8.1vw] cursor-pointer items-center justify-center rounded-full outline-none'
+                          className='flex h-32 w-32 cursor-pointer items-center justify-center rounded-full outline-none'
                         >
                           {newUser?.profile || selectedFile ? (
                             <img
@@ -408,13 +385,13 @@ const UserCreationModal = ({
                                   : newUser.profile
                               }
                               alt='preview'
-                              className='h-[8.1vw] w-[8.1vw] rounded-full object-cover'
+                              className='h-32 w-32 rounded-full object-cover'
                               width={100}
                               height={100}
                             />
                           ) : (
                             <span
-                              className='flex h-[8.1vw] w-[8.1vw] items-center justify-center rounded-full'
+                              className='flex h-32 w-32 items-center justify-center rounded-full'
                               style={{ backgroundColor: '#F4F5FA' }}
                             >
                               <CameraIcon fill={'#000000'} />
@@ -433,10 +410,9 @@ const UserCreationModal = ({
                         style={{
                           backgroundColor: 'var(--g-color-base-background)',
                           color: 'var(--g-color-text-primary)',
-                          borderColor: 'var(--g-color-line-generic)',
-                          fontSize: `0.83vw`
+                          borderColor: 'var(--g-color-line-generic)'
                         }}
-                        className={`border outline-none ${name == 'accessExpires' || name == 'loginId' ? 'w-[20.88vw]' : 'w-[10.18vw]'} rounded-lg px-[0.58vw] py-[1.24vh] leading-[2.22vh]`}
+                        className={`border outline-none w-full rounded-lg px-2 py-2 `}
                         onChange={handleInputChange}
                         min={
                           name === 'accessExpires'
@@ -447,23 +423,25 @@ const UserCreationModal = ({
                           readOnly && name == 'domain'
                             ? emailDomain
                             : readOnly && name == 'email'
-                              ? newUser.email.split('@')[0]
-                              : newUser[name]
+                            ? newUser.email.split('@')[0]
+                            : newUser[name]
                         }
                       />
                     )}
-                    {
-                      type == 'dropdown' && (
-                      newUser?.accessProfile &&
+                    {type == 'dropdown' &&
+                      (newUser?.accessProfile &&
                       newUser?.accessProfile.length > 1 ? (
                         <Select
                           renderControl={props => (
-                            <div className='g-select-control g-select-control_size_m g-select-control_pin_round-round g-select-control_has-value' onClick={props.triggerProps.onClick}>
+                            <div
+                              className='g-select-control g-select-control_size_m g-select-control_pin_round-round g-select-control_has-value'
+                              onClick={props.triggerProps.onClick}
+                            >
                               {React.createElement(
                                 'div',
                                 {
                                   className:
-                                    'g-select-control__button g-select-control__button_size_m g-select-control__button_view_normal g-select-control__button_pin_round-round',
+                                    'g-select-control__button g-select-control__button_size_m g-select-control__button_view_normal g-select-control__button_pin_round-round'
                                 },
                                 'Multiple Templates'
                               )}
@@ -543,39 +521,29 @@ const UserCreationModal = ({
                             ))}
                           </Select>
                         </>
-                      ))
-                    }
+                      ))}
                   </div>
                 ))}
+              </div>
               </div>
             ))}
       </div>
 
-      <hr style={{ borderColor: '#var(--g-color-line-generic)' }} className='w-full' />
+      <hr
+        style={{ borderColor: 'var(--g-color-line-generic)' }}
+        className='w-full'
+      />
 
-      <div className='flex w-full justify-end gap-[0.58vw] px-[0.58vw] py-[1.24vh]'>
-        <button
-          onClick={handleCloseModal}
-          style={{
-            fontSize: `0.83vw`,
-            backgroundColor: '#F4F5FA',
-            color: '#000000'
-          }}
-          className={`rounded-md px-[1.17vw] py-[1.24vh] leading-[2.22vh] outline-none`}
-        >
+      <div className='flex w-full justify-end gap-2 px-2 py-4'>
+        <Button onClick={handleCloseModal} view='outlined'>
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           onClick={() => handleAddUser('profile')}
-          style={{
-            fontSize: `0.83vw`,
-            backgroundColor: brandcolor,
-            color: isLightColor(brandcolor)
-          }}
-          className={`rounded-md px-[1.46vw] py-[1.24vh] leading-[2.22vh] outline-none`}
+          view='outlined-success'
         >
           Save
-        </button>
+        </Button>
       </div>
     </div>
   )

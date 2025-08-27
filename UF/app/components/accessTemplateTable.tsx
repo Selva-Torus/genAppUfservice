@@ -355,7 +355,7 @@ const AccessTemplateTable = ({}) => {
                   }
                 />
               </th>
-              <th className='px-5 py-4'>Access Template</th>
+              <th className='px-4 py-4'>Access Template</th>
               <th className='px-4 py-4'>Data Access Privilege</th>
               <th className='px-4 py-4'>Organization</th>
               <th className='px-4 py-4'>Roles</th>
@@ -367,7 +367,7 @@ const AccessTemplateTable = ({}) => {
           <tbody>
             {currentGroups.map((template: any, index: number) => (
               <tr key={index}>
-                <td className='px-[0.29vw] py-[0.31vh]'>
+                <td className='px-1 py-1'>
                   <input
                     type='checkbox'
                     className='cursor-pointer'
@@ -380,12 +380,12 @@ const AccessTemplateTable = ({}) => {
                     hidden={template['no.ofusers'] !== 0}
                   />
                 </td>
-                <td className='px-[0.29vw] py-[0.31vh]'>
+                <td className='px-1 py-1'>
                   <div
                     onDoubleClick={() =>
                       TemplateNotEditable(template, template.originalIndex)
                     }
-                    className={`ml-3 w-[12.29vw]  p-3 ${template['no.ofusers'] == 0 ? 'cursor-pointer' : 'cursor-default'}`}
+                    className={`ml-3 w-[12.29vw] truncate p-3 ${template['no.ofusers'] == 0 ? 'cursor-pointer' : 'cursor-default'}`}
                   >
                     {template['no.ofusers'] == 0 &&
                     editingCell ===
@@ -461,7 +461,7 @@ const AccessTemplateTable = ({}) => {
                     </Select>
                   </div>
                 </td>
-                <td className='px-[0.29vw] py-[0.31vh]'>
+                <td className='px-1 py-1'>
                   <div>
                     <CustomGrpMemberDropdown
                       data={orgGrpData}
@@ -480,7 +480,7 @@ const AccessTemplateTable = ({}) => {
                     />
                   </div>
                 </td>
-                <td className='px-[0.29vw] py-[0.31vh]'>
+                <td className='px-1 py-1'>
                   <div>
                     <CustomGrpMemberDropdown
                       data={allOptions[template?.createdOn]?.roleOptions ?? []}
@@ -501,7 +501,7 @@ const AccessTemplateTable = ({}) => {
                     />
                   </div>
                 </td>
-                <td className='px-[0.29vw] py-[0.31vh]'>
+                <td className='px-1 py-1'>
                   <div>
                     <CustomGrpMemberDropdown
                       data={allOptions[template?.createdOn]?.psOptions ?? []}
@@ -520,10 +520,10 @@ const AccessTemplateTable = ({}) => {
                     />
                   </div>
                 </td>
-                <td className='px-[0.29vw] py-[0.31vh] text-center'>
+                <td className='px-1 py-1 text-center'>
                   {template['no.ofusers']}
                 </td>
-                <td className='px-[0.29vw] py-[0.31vh]'>
+                <td className='px-1 py-1'>
                   {template.createdOn}
                 </td>
               </tr>

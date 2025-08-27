@@ -5,7 +5,7 @@ import {
 } from '@/app/components/svgApplication'
 import { RangeCalendar } from '@gravity-ui/date-components'
 import { DateTime } from '@gravity-ui/date-utils'
-import { Avatar, Button, Checkbox, Popup , Loader } from '@gravity-ui/uikit'
+import { Avatar, Button, Checkbox, Popup , Loader, Text } from '@gravity-ui/uikit'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Calendar , Person } from '@gravity-ui/icons'
 import { getCookie } from '@/app/components/cookieMgment'
@@ -96,19 +96,19 @@ const LogsFilterationModal = ({
   }, [])
 
   return (
-    <div className='h-fit w-[30vw]'>
+    <div className='h-fit w-[50vw] lg:w-[30vw]'>
       <div className='flex w-full items-center justify-between px-[0.7vw] py-[1vh]'>
-        <div className='flex gap-2 text-[0.9vw]'>
+        <Text variant='subheader-2' className='flex gap-2'>
           <FilterIcon fill='var(--g-color-text-primary)' /> Filter
-        </div>
+        </Text>
         <Button
           className='flex items-center justify-center'
           onClick={() => setOpen(false)}
         >
           {' '}
           <Multiply
-            width='0.83vw'
-            height='0.83vw'
+            width='12'
+            height='12'
             fill={'var(--g-color-text-primary)'}
           />
         </Button>
@@ -118,10 +118,10 @@ const LogsFilterationModal = ({
         className='w-full'
       />
       {/* Date Range Selection */}
-      <div className='flex flex-col gap-[1.24vh] px-[0.58vw] py-[1.24vh]'>
-        <h1 className='text-[0.72vw] font-medium leading-[2.22vh]'>
+      <div className='flex flex-col gap-3 px-2 py-3'>
+        <Text variant='subheader-1' >
           SORT BY DATE
-        </h1>
+        </Text>
         <div
           onClick={e => {
             setDateRangeOpen(!isDateRangeOpen)
@@ -133,12 +133,12 @@ const LogsFilterationModal = ({
             borderColor: 'var(--g-color-line-generic)'
           }}
         >
-          <div className='flex flex-col gap-[0.5vh]'>
-            <span className='text-[0.72vw] opacity-50'>Select Date </span>
-            <span className='text-[0.72vw]'>
+          <div className='flex flex-col gap-1'>
+            <Text variant='body-2' color='secondary'>Select Date </Text>
+            <Text variant='body-2' >
               {selectedDateRange.start.format('DD/MM/YYYY')} -{' '}
               {selectedDateRange.end.format('DD/MM/YYYY')}
-            </span>
+            </Text>
           </div>
           <span className='flex self-end'>
             <Calendar color='var(--g-color-text-primary)' opacity={0.5} />
@@ -156,8 +156,8 @@ const LogsFilterationModal = ({
         </Popup>
       </div>
       {/* Fabric Selection */}
-      <div className='flex flex-col gap-[1.24vh] px-[0.58vw] py-[1.24vh]'>
-        <h1 className='text-[0.72vw] font-medium leading-[2.22vh]'>FABRICS</h1>
+      <div className='flex flex-col gap-3 px-2 py-3'>
+        <Text variant='subheader-1'>FABRICS</Text>
         <div className='flex flex-col gap-[1.5vh]'>
           {fabricList.map((item, index) => (
             <Checkbox
@@ -174,21 +174,18 @@ const LogsFilterationModal = ({
                 })
               }
               checked={selectedKeys.includes(item.key)}
-              style={{
-                fontSize: '0.72vw'
-              }}
             />
           ))}
         </div>
       </div>
       {/* if admin User  */}
       {isAdminUser && (
-        <div className='flex flex-col gap-[1.24vh] px-[0.58vw] py-[1.24vh]'>
-          <h1 className='text-[0.72vw] font-medium leading-[2.22vh]'>USERS</h1>
+        <div className='flex flex-col gap-3 px-2 py-3'>
+          <Text variant='subheader-1'>USERS</Text>
           {/* Search section */}
           <div
             className={
-              'flex w-full items-center gap-[0.5vw] rounded border px-[0.58vw]'
+              'flex w-full items-center gap-[0.5vw] rounded border px-2'
             }
             style={{
               borderColor: 'var(--g-color-line-generic)'
@@ -197,8 +194,8 @@ const LogsFilterationModal = ({
             <span>
               <SearchIcon
                 fill={'var(--g-color-text-primary)'}
-                height='0.83vw'
-                width='0.83vw'
+                height='16'
+                width='16'
               />
             </span>
             <input
@@ -208,16 +205,15 @@ const LogsFilterationModal = ({
               style={{
                 backgroundColor: 'var(--g-color-base-background)',
                 color: 'var(--g-color-text-primary)',
-                fontSize: `0.72vw`
               }}
-              className={`h-[4.2vh] w-full rounded-md border-none font-medium outline-none`}
+              className={`h-8 w-full rounded-md border-none font-medium outline-none`}
             />
           </div>
           {/* user list section */}
           <div
             className='scrollbar-none flex flex-col gap-[1vh] overflow-scroll'
             style={{
-              height: userList.length > 3 ? '15vh' : 'auto'
+              height: userList.length > 3 ? '160px' : 'auto'
             }}
           >
             {loading ? (
@@ -240,16 +236,16 @@ const LogsFilterationModal = ({
                           className={`transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
                           icon={Person}
                         />
-                        <div className='flex flex-col gap-[0.5vh]'>
-                          <span>
+                        <div className='flex flex-col gap-1'>
+                          <Text variant='body-2'>
                             {userObj?.firstName + ' ' + userObj?.lastName}
-                          </span>
-                          <span>{userObj?.loginId}</span>
+                          </Text>
+                          <Text variant='body-1' >{userObj?.loginId}</Text>
                         </div>
                       </div>
                     }
                     value={userObj?.loginId}
-                    className='flex items-center gap-[0.58vw] text-[0.72vw]'
+                    className='flex items-center gap-2 text-[0.72vw]'
                     onChange={e =>
                       setSelectedUsers(prev => {
                         if (e.target.checked) {
@@ -274,7 +270,7 @@ const LogsFilterationModal = ({
         className='w-full'
       />
 
-      <div className='flex justify-end gap-[1vw] px-[0.58vw] py-[1.24vh]'>
+      <div className='flex justify-end gap-[1vw] px-2 py-3'>
         <Button view='raised' onClick={() => setOpen(false)}>
           Cancel
         </Button>

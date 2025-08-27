@@ -3,7 +3,7 @@ import JsonView from 'react18-json-view'
 import { ArrowLeft, Copy, CopyCheckXmark, ChevronDown } from '@gravity-ui/icons'
 import 'react18-json-view/src/style.css'
 import { twMerge } from 'tailwind-merge'
-import { Button, Loader } from '@gravity-ui/uikit'
+import { Button, Loader, Text } from '@gravity-ui/uikit'
 import { AxiosService } from '../components/axiosService'
 
 const fontSize = 1
@@ -50,7 +50,7 @@ const RenderNodesInfo = ({
       const { subFlowKey, subFlowUpId } = node.subFlowInfo
       setIsExpanded(subFlowUpId)
       const response = await AxiosService.post(
-        'http://192.168.2.96:7000/subFlowLog',
+        'subFlowLog',
         {
           key: subFlowKey,
           upId: subFlowUpId
@@ -79,33 +79,32 @@ const RenderNodesInfo = ({
   }
 
   return (
-    <div className='scrollbar-hide flex  h-full flex-col overflow-auto py-1'>
+    <div className='scrollbar-hide flex h-full flex-col overflow-auto py-1'>
       {nodes.map((item: Record<string, any>, index: number) => (
         <div key={index}>
           <div
-            className={`mx-[0.2vw] flex cursor-pointer items-center justify-between rounded p-[0.87vw] transition-colors duration-300 ease-in-out`}
+            className={`mx-0.5 flex cursor-pointer items-center justify-between rounded p-3 transition-colors duration-300 ease-in-out`}
             onClick={e => {
               e.stopPropagation()
               handleSubFlowNodes(item)
             }}
           >
             <div className='flex flex-col items-start rounded-md'>
-              <span
+              <Text
+                variant='body-1'
                 style={{
-                  fontSize: `${fontSize * 0.72}vw`,
                   color:
                     JSON.stringify(selectedNode) === JSON.stringify(item) ? 'var(--brand-color)' : ''
                 }}
-                className='px-[0.58vw] py-[0.42vh] leading-[1.25vw]'
+                className='px-2 py-1'
               >
                 {item.name}
-              </span>
+              </Text>
               {item.subFlowInfo && (
                 <div
-                  className='flex w-fit items-center gap-1 rounded-full p-2 font-medium leading-[1.85vh]'
+                  className='flex w-fit items-center gap-1 rounded-full p-2'
                   style={{
                     backgroundColor: 'var(--selection-color)',
-                    fontSize: `${fontSize * 0.625}vw`
                   }}
                 >
                   UID: {item?.subFlowInfo?.subFlowUpId}
@@ -151,7 +150,7 @@ const RenderNodesInfo = ({
               item?.subFlowInfo?.subFlowUpId &&
               isExpanded == item?.subFlowInfo?.subFlowUpId && (
                 <div
-                  className='border-b pl-[0.2vw]'
+                  className='border-b pl-0.5'
                   style={{ borderColor: 'var(--g-color-line-generic)' }}
                 >
                   <RenderNodesInfo
@@ -268,73 +267,66 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
   return (
     <div className='grid h-full grid-cols-12'>
       <div
-        style={{
-          backgroundColor: 'transparent'
-        }}
-        className='col-span-12 flex h-full w-full gap-5 overflow-hidden'
+        className='col-span-12 flex h-full w-full gap-2 overflow-hidden'
       >
         <div
-          className='flex h-full w-[20%] flex-col rounded-lg border'
+          className='flex h-full min-w-[200px] flex-col rounded-lg border px-2'
           style={{ borderColor: 'var(--g-color-line-generic)' }}
         >
           <div
-            className='flex flex-col border-b py-[1vh]'
+            className='flex flex-col border-b py-2'
             style={{ borderColor: 'var(--g-color-line-generic)' }}
           >
             <div
               onClick={() => setNodeData(null)}
-              className='flex items-center justify-between px-[0.87vw] py-[1vh]'
+              className='flex items-center justify-between px-3 py-2'
             >
+              <div className='flex gap-2'>
               <ArrowLeft
                 className='cursor-pointer'
                 role='button'
                 onClick={() => setNodeData(null)}
               />
-              <h1
-                style={{
-                  fontSize: `${fontSize * 0.83}vw`
-                }}
-                className='mx-[0.29vw] w-[80%] truncate font-semibold leading-[1.25vw]'
+              <Text variant='subheader-1'
                 title={artifact.toUpperCase()}
               >
                 {artifact.toUpperCase()}
-              </h1>
-              <p
+              </Text>
+              </div>
+              <Text variant='body-1'
                 style={{
-                  fontSize: `${fontSize * 0.52}vw`,
                   backgroundColor: 'var(--brand-color)'
                 }}
-                className='rounded-xl px-[0.87vw] leading-[1.25vw]'
+                className='rounded-xl px-3'
               >
                 {version}
-              </p>
+              </Text>
             </div>
             {processId && (
-              <div
-                className='flex w-fit items-center self-center rounded-full p-[0.2vw] font-medium leading-[1.85vh]'
-                style={{
-                  backgroundColor: 'var(--selection-color)',
-                  fontSize: `${fontSize * 0.625}vw`
-                }}
-              >
-                UID: {processId}
-                <Button
-                  view='flat'
-                  size='xs'
-                  className='border-none'
-                  onClick={e => {
-                    e.stopPropagation()
-                    handleCopyToClipboard(processId)
-                  }}
-                >
-                  {copied && copied === processId ? (
-                    <CopyCheckXmark className='text-green-500' />
-                  ) : (
-                    <Copy />
-                  )}
-                </Button>
-              </div>
-            )}
+                      <div
+                        className='flex w-fit rounded-full p-2'
+                        style={{
+                          backgroundColor: 'var(--selection-color)'
+                        }}
+                      >
+                        <Text variant='body-1'>UID: {processId}</Text>
+                        <Button
+                          view='flat'
+                          size='xs'
+                          className='border-none'
+                          onClick={e => {
+                            e.stopPropagation()
+                            handleCopyToClipboard(processId)
+                          }}
+                        >
+                          {copied && copied === processId ? (
+                            <CopyCheckXmark className='text-green-500' />
+                          ) : (
+                            <Copy />
+                          )}
+                        </Button>
+                      </div>
+                    )}
           </div>
           {/* seperate */}
           <RenderNodesInfo
@@ -347,54 +339,38 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
         </div>
 
         <div
-          className='flex h-full w-[80%] flex-col rounded-lg border'
+          className='flex h-full w-full overflow-x-auto flex-col rounded-lg border'
           style={{ borderColor: 'var(--g-color-line-generic)' }}
         >
           <div className='flex h-full w-full rounded-lg'>
-            <div className='flex h-full w-[70%] flex-col gap-[0.87vw] p-[0.58vw]'>
+            <div className='flex h-full w-[70%] min-w-[400px]  flex-col gap-3 p-2'>
               <div
                 style={{
                   backgroundColor: 'var(--selection-color)'
                 }}
-                className='flex w-full gap-[0.58vw] rounded-lg p-[1.46vw]'
+                className='flex w-full gap-2 rounded-lg p-3'
               >
-                <div className='flex gap-[0.87vw]'>
-                  <div className='mt-[3vh] flex flex-col gap-[1.46vw]'>
-                    <div className='flex flex-col gap-[0.58vw]'>
-                      <p
-                        style={{
-                          fontSize: `${fontSize * 0.62}vw`
-                        }}
-                        className='text-end font-medium leading-[0.26vw]'
+                <div className='flex gap-3'>
+                  <div className='mt-3 flex flex-col gap-3'>
+                    <div className='flex flex-col gap-2'>
+                      <Text variant='body-1' className='text-nowrap text-end'
                       >
                         Process started at
-                      </p>
-                      <p
-                        style={{
-                          fontSize: `${fontSize * 0.62}vw`
-                        }}
-                        className='text-nowrap font-medium leading-[0.26vw]'
+                      </Text>
+                      <Text variant='body-1' color='secondary' className='text-nowrap'
                       >
                         {formatDate(selectedNode?.time)}
-                      </p>
+                      </Text>
                     </div>
-                    <div className='flex flex-col gap-[0.58vw] py-[1.25vw]'>
-                      <p
-                        style={{
-                          fontSize: `${fontSize * 0.62}vw`
-                        }}
-                        className='text-end font-medium leading-[0.26vw]'
+                    <div className='flex flex-col gap-2 py-2'>
+                      <Text variant='body-1' className='text-nowrap text-end'
                       >
                         Finished at
-                      </p>
-                      <p
-                        style={{
-                          fontSize: `${fontSize * 0.62}vw`
-                        }}
-                        className='text-nowrap font-medium leading-[0.26vw]'
+                      </Text>
+                      <Text variant='body-1' color='secondary' className='text-nowrap'
                       >
                         {handleGetFinishingTime(selectedNode?.time).endTime}
-                      </p>
+                      </Text>
                     </div>
                   </div>
 
@@ -411,18 +387,18 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                           style={{
                             backgroundColor: 'var(--brand-color)'
                           }}
-                          className='h-[0.58vw] w-[0.58vw] rounded-full'
+                          className='h-2 w-2 rounded-full'
                         ></div>
-                        <div className='h-[4.09vw]'></div>
+                        <div className='h-20'></div>
                       </div>
                       <div className='flex items-center '>
                         <div
                           style={{
                             backgroundColor: 'var(--brand-color)'
                           }}
-                          className='h-[0.58vw] w-[0.58vw] rounded-full'
+                          className='h-2 w-2 rounded-full'
                         ></div>
-                        <div className='h-[4.09vw]'></div>
+                        <div className='h-16'></div>
                       </div>
                     </div>
                   </div>
@@ -430,28 +406,24 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
 
                 <div className='flex w-full justify-between '>
                   <div>
-                    <p
-                      style={{
-                        fontSize: `${fontSize * 0.83}vw`
-                      }}
-                      className='text-nowrap font-medium leading-[1.04vw]'
+                    <Text variant='body-2' className='text-nowrap'
                     >
                       {
                         handleGetFinishingTime(selectedNode?.time)
                           .processingTime
                       }
-                    </p>
+                    </Text>
                   </div>
-                  <div className='flex gap-[0.87vw] text-center'>
-                    <p
+                  <div className='flex gap-3 text-center'>
+                    <Text
+                      variant='body-1'
                       style={{
                         ...determineStatusColorClass(selectedNode?.status),
-                        fontSize: `${fontSize * 0.62}vw`
                       }}
-                      className={`flex items-center rounded-full px-2 text-center font-semibold leading-[1.04vw] `}
+                      className={`rounded-full px-2`}
                     >
                       {selectedNode ? selectedNode.status : status}
-                    </p>
+                    </Text>
                   </div>
                 </div>
               </div>
@@ -462,63 +434,56 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
               style={{ borderColor: 'var(--g-color-line-generic)' }}
             />
 
-            <div className={`flex h-full w-[45%] p-[1.46vw] text-center`}>
+            <div className={`flex h-full w-1/2 min-w-[400px] p-3 text-center`}>
               <div className='w-full'>
                 <div
-                  className='flex w-[98%] items-center gap-[0.58vw] rounded-md border'
+                  className='flex w-full items-center gap-2 rounded-md border p-0.5'
                   style={{ borderColor: 'var(--g-color-line-generic)' }}
                 >
-                  <div
+                  <Text
+                    variant='subheader-1'
                     onClick={() => {
                       setActiveTab('request')
                     }}
-                    style={{
-                      fontSize: `${fontSize * 0.67}vw`
-                    }}
                     className={twMerge(
-                      `w-1/3 cursor-pointer rounded-md py-[0.58vw] text-center font-medium leading-[1.04vw] outline-none`,
+                      `w-1/3 cursor-pointer rounded-md py-2`,
                       activeTab === 'request' && 'bg-[var(--selection-color)]'
                     )}
                   >
                     Request
-                  </div>
-                  <div
+                  </Text>
+                  <Text
+                    variant='subheader-1'
                     onClick={() => {
                       setActiveTab('response')
                     }}
-                    style={{
-                      fontSize: `${fontSize * 0.67}vw`
-                    }}
                     className={twMerge(
-                      `w-1/3 cursor-pointer rounded-md py-[0.60vw] font-medium leading-[1.04vw] outline-none`,
+                      `w-1/3 cursor-pointer rounded-md py-2`,
                       activeTab === 'response' && 'bg-[var(--selection-color)]'
                     )}
                   >
                     Response
-                  </div>
-                  <div
+                  </Text>
+                  <Text
+                    variant='subheader-1'
                     onClick={() => {
                       setActiveTab('exception')
                     }}
-                    style={{
-                      fontSize: `${fontSize * 0.67}vw`
-                    }}
                     className={twMerge(
-                      `w-1/3 cursor-pointer rounded-md py-[0.60vw] font-medium leading-[1.04vw] outline-none`,
+                      `w-1/3 cursor-pointer rounded-md py-2`,
                       activeTab === 'exception' && 'bg-[var(--selection-color)]'
                     )}
                   >
                     Exception
-                  </div>
+                  </Text>
                 </div>
 
                 <div
-                  className={`scrollbar-thin h-[95.5%] overflow-auto pl-[0.58vw] pt-[3vh]`}
+                  className={`h-[95.5%] overflow-auto pl-2 pt-3`}
                 >
                   {['request', 'response', 'exception'].map(tabId => (
                     <div
                       style={{
-                        fontSize: `${fontSize * 1}vw`,
                         display: activeTab === tabId ? 'block' : 'none'
                       }}
                       key={tabId}
@@ -532,6 +497,7 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                         theme='atom'
                         enableClipboard={false}
                         style={{ fill: '#1A2024' }}
+                        className='g-text g-text_variant_code-2'
                       />
                     </div>
                   ))}
