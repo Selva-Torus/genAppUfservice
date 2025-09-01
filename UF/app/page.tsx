@@ -2,10 +2,15 @@
 'use client'
 import LoginForm from './components/loginForm'
 import { AxiosService } from './components/axiosService'
-import { deleteAllCookies, getCookie } from './components/cookieMgment'
+import {
+  deleteAllCookies,
+  deleteCookie,
+  getCookie
+} from './components/cookieMgment'
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import decodeToken from './components/decodeToken'
+import { useInfoMsg } from './components/infoMsgHandler'
 
 export default function HomePage() {
   const router = useRouter()
@@ -13,6 +18,16 @@ export default function HomePage() {
   const decodedToken = decodeToken(token)
   const encryptionFlagApp: boolean = false;    
   let landingScreen:string = 'User Screen';
+  const toast = useInfoMsg()
+  let screenDetails: any = {
+    keys: [
+      {
+        screensName: 'formitem-v1',
+        ufKey:
+          'CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1'
+      }
+    ]
+  }
 
   const securityCheck = async () => {
     try {
@@ -45,8 +60,17 @@ export default function HomePage() {
           }
           else if (landingScreen === 'Logs Screen') {
           router.push('/logs')
+        } else {
+          let defaultScreen: any = ''
+          screenDetails.map((screen: any) => {
+            if (landingScreen === screen.ufKey) {
+              defaultScreen = screen.screensName
+            }
+          })
+          defaultScreen =
+            defaultScreen.split('-')[0] + '_' + defaultScreen.split('-').at(-1)
+          if (defaultScreen) router.push('/' + defaultScreen)
         }
-
       } else {
         await deleteAllCookies()
       }
@@ -56,16 +80,22 @@ export default function HomePage() {
   }
 
   useEffect(() => {
-    if(token)
-    {
+    if(token){
       securityCheck()
+    }
+    if (getCookie('server_error')) {
+      toast(decodeURIComponent(getCookie('server_error')), 'danger')
+      deleteCookie('server_error')
     }
   }, [token])
 
   return (
     <>
-      <LoginForm logo="https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT003/resources/images/image.jfif"   loginType="rightFloat"   image=""/>
+      <LoginForm
+        logo='https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT003/resources/images/image.jfif'
+        loginType='rightAligned'
+        image=''
+      />
     </>
   )
 }
- 

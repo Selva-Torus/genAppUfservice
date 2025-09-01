@@ -1,9 +1,4 @@
-import {
-  BadGatewayException,
-  HttpStatus,
-  NotFoundException,
-  Injectable,
-} from '@nestjs/common';
+import { BadGatewayException, HttpStatus, Injectable } from '@nestjs/common';
 import { CommonService } from 'src/common.Service';
 import { RedisService } from 'src/redisService';
 import * as v from 'valibot';
@@ -14,6 +9,7 @@ import {
   ForbiddenException,
   ConflictException,
   UnauthorizedException,
+  NotFoundException,
 } from 'src/customException';
 import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
 import * as nodemailer from 'nodemailer';
@@ -22,9 +18,7 @@ import { JwtServices } from 'src/jwt.services';
 import { RuleService } from 'src/ruleService';
 import { MongoService } from 'src/mongoService';
 const jsonata = require('jsonata');
-import * as fs from 'fs';
-import { table } from 'console';
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
 import { Readable } from 'stream';
 import * as FormData from 'form-data';
 import { v4 as uuidv4 } from 'uuid';
@@ -43,6 +37,7 @@ const auth_secret =
 const tenant = process.env.TENANT;
 const ag = process.env.APPGROUPCODE;
 const app = process.env.APPCODE;
+const appName = process.env.APPNAME;
 
 @Injectable()
 export class UfService {
@@ -3293,15 +3288,14 @@ export class UfService {
   }
 
   async signIntoTorus(
-    client: string,
     username: string,
     password: string,
-    type: 't' | 'c' = 't',
+    isOauthUser: boolean = false,
   ) {
     try {
-      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
 
-      const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
+      const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
 
       const userResponse = await this.redisService.getJsonData(
         userCachekey,
@@ -3313,13 +3307,20 @@ export class UfService {
         (user: any) => user.loginId === username || user.email === username,
       );
 
-      const isPasswordMatch = this.comparePasswords(
-        password,
-        loggedInUser.password,
-      );
+      if (!loggedInUser && isOauthUser) {
+        return false;
+      }
 
-      if (!isPasswordMatch) {
-        throw new UnauthorizedException('Invalid credentials');
+      if (!loggedInUser) {
+        throw new NotFoundException(`Invalid Credentials`);
+      }
+
+      const isPasswordMatch = isOauthUser
+        ? true
+        : this.comparePasswords(password, loggedInUser.password);
+
+      if (!isPasswordMatch && !isOauthUser) {
+        throw new UnauthorizedException('Invalid username or password');
       }
 
       const isUserAccessExpired = (user: {
@@ -3356,6 +3357,12 @@ export class UfService {
         );
       }
 
+      if (isOauthUser && !loggedInUser?.accessProfile?.length) {
+        throw new UnauthorizedException(
+          `User access pending for ${loggedInUser.loginId ?? loggedInUser?.email} , you'll be notified when approved`,
+        );
+      }
+
       const userIndex = userList.findIndex(
         (user: any) => user.loginId === username || user.email === username,
       );
@@ -3377,7 +3384,14 @@ export class UfService {
         'HpZnm7V6YeshFDVbwACyOtx6oa6QSbraZoNyU9fwtGYUL1Rnc6PN5QUosu9BcqVBo5L6QeSs';
 
       let token = await this.jwt.signAsync(
-        { loginId: loggedInUser.loginId, client, type, ag, app , isAppAdmin : loggedInUser?.isAppAdmin ?? undefined },
+        {
+          loginId: loggedInUser.loginId,
+          client: tenant,
+          type: 't',
+          ag,
+          app,
+          isAppAdmin: loggedInUser?.isAppAdmin ?? undefined,
+        },
         {
           secret: auth_secret,
           expiresIn: '24h',
@@ -3398,7 +3412,7 @@ export class UfService {
         };
       }
 
-      const accessProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`;
+      const accessProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`;
 
       const accessProfileCache = await this.redisService.getJsonData(
         accessProfileCacheKey,
@@ -3451,9 +3465,9 @@ export class UfService {
             token = await this.jwt.signAsync(
               {
                 loginId: loggedInUser.loginId,
-                isAppAdmin : loggedInUser?.isAppAdmin ?? undefined,
-                client,
-                type,
+                isAppAdmin: loggedInUser?.isAppAdmin ?? undefined,
+                client: tenant,
+                type: 't',
                 ag,
                 app,
                 ...orpAccessObj,
@@ -5962,6 +5976,95 @@ export class UfService {
       }
     } catch (error) {
       console.log('Reference Error', error);
+      await this.throwCustomException(error);
+    }
+  }
+
+  async notifyUserAccessPending(oauthUser: any, userList: any[]) {
+    try {
+      const adminList = userList
+        ?.filter((user: any) => user?.isAppAdmin === true)
+        .map((user: any) => user?.email);
+      let mailOptions = {};
+      const emailTemplateResponseFromRedis =
+        await this.redisService.getJsonData(
+          `CK:TRL:FNGK:AFR:FNK:PORTAL:CATK:EMAILTEMPLATE:AFGK:TORUS:AFK:OAUTHUSERACCESSREQUEST:AFVK:v1:TPI`,
+          process.env.CLIENTCODE,
+        );
+      const template = emailTemplateResponseFromRedis ? JSON.parse(emailTemplateResponseFromRedis) : {};
+      if (adminList.length) {
+        mailOptions = {
+          from: 'support@torus.tech',
+          to: adminList,
+          subject: template.subject.replaceAll('${appName}', appName).replaceAll('${name}', oauthUser?.name).replaceAll('${email}', oauthUser?.email),
+          html: template.html.replaceAll('${appName}', appName).replaceAll('${name}', oauthUser?.name).replaceAll('${email}', oauthUser?.email).replaceAll('${appUrl}', process.env.APPFRONTENDURL),
+        };
+      } else {
+        mailOptions = {
+          from: 'support@torus.tech',
+          to: ['support@torus.tech'],
+          subject: template.html.replaceAll('${appName}', appName).replaceAll('${name}', oauthUser?.name).replaceAll('${email}', oauthUser?.email),
+          html: template.html.replaceAll('${appName}', appName).replaceAll('${name}', oauthUser?.name).replaceAll('${email}', oauthUser?.email).replaceAll('${appUrl}', process.env.APPFRONTENDURL)
+        };
+      }
+
+      transporter.sendMail(mailOptions, async (error, info) => {
+        if (error) {
+          console.log(error);
+        } else {
+          console.log('Email sent: ' + info.response);
+        }
+      });
+
+      return true;
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+
+  async oauthSignIn(user: any) {
+    try {
+      if (!user) {
+        throw new BadRequestException('Account details not enough to continue');
+      }
+      const isExistingUser = await this.signIntoTorus(user?.email, '', true);
+      if (isExistingUser) {
+        return isExistingUser;
+      } else {
+        const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+        const userObject = {
+          users: user?.name ?? '',
+          email: user?.email ?? '',
+          password: '',
+          firstName: user?.name ?? '',
+          lastName: user?.name ?? '',
+          loginId: user?.name ?? '',
+          mobile: '',
+          accessProfile: [],
+          dateAdded: new Date(),
+          status: 'active',
+          isRestricted: false,
+          profile: user?.image ?? '',
+          accessExpires: '',
+          lastActive: '',
+          noOfProductsService: 0,
+          isAppAdmin: false,
+          originalIndex: '',
+        };
+        const userListResponse = await this.redisService.getJsonData(
+          userCachekey,
+          process.env.CLIENTCODE,
+        );
+        const userList = userListResponse ? JSON.parse(userListResponse) : [];
+        await this.redisService.setJsonData(
+          userCachekey,
+          JSON.stringify([...userList, userObject]),
+          process.env.CLIENTCODE,
+        );
+        await this.notifyUserAccessPending(user, userList);
+        return await this.signIntoTorus(user?.email, '', true);
+      }
+    } catch (error) {
       await this.throwCustomException(error);
     }
   }

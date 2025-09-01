@@ -697,8 +697,8 @@ export class UfController {
     @Body(new ValidationPipe({ transform: true })) body: signinToTorusDto,
     @Req() req: any
   ) {
-    const { client, username, password, type, dpdKey, method } = body;
-    let result:any = await this.appService.signIntoTorus(client, username, password, type);
+    const { username, password, dpdKey, method } = body;
+    let result:any = await this.appService.signIntoTorus(username, password);
     if(dpdKey && method){
       result["dpdKey"] = dpdKey
       result["method"] = method
@@ -1009,5 +1009,11 @@ export class UfController {
   async resetPassword(@Body() body: any) {
     const { email, password } = body;
     return this.appService.resetPassword(email, password);
+  }
+
+  @Post("oauthSignIn")
+  async oauthSignIn(@Body() body:any) {
+    const { user } = body;
+    return this.appService.oauthSignIn(user)
   }
 }
