@@ -5997,14 +5997,14 @@ export class UfService {
           from: 'support@torus.tech',
           to: adminList,
           subject: template.subject.replaceAll('${appName}', appName).replaceAll('${name}', oauthUser?.name).replaceAll('${email}', oauthUser?.email),
-          html: template.html.replaceAll('${appName}', appName).replaceAll('${name}', oauthUser?.name).replaceAll('${email}', oauthUser?.email).replaceAll('${appUrl}', process.env.APPFRONTENDURL),
+          html: template.html.replaceAll('${appName}', appName).replaceAll('${name}', oauthUser?.name).replaceAll('${email}', oauthUser?.email).replaceAll('${appUrl}', process.env.BE_URL.replace('/api-int' , '')),
         };
       } else {
         mailOptions = {
           from: 'support@torus.tech',
           to: ['support@torus.tech'],
           subject: template.html.replaceAll('${appName}', appName).replaceAll('${name}', oauthUser?.name).replaceAll('${email}', oauthUser?.email),
-          html: template.html.replaceAll('${appName}', appName).replaceAll('${name}', oauthUser?.name).replaceAll('${email}', oauthUser?.email).replaceAll('${appUrl}', process.env.APPFRONTENDURL)
+          html: template.html.replaceAll('${appName}', appName).replaceAll('${name}', oauthUser?.name).replaceAll('${email}', oauthUser?.email).replaceAll('${appUrl}', process.env.BE_URL.replace('/api-int' , ''))
         };
       }
 
