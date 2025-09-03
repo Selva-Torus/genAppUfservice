@@ -7,8 +7,8 @@ import { api_screenRouteDto, api_signinDto } from '../interfaces/interfaces'
 import { useInfoMsg } from '../components/infoMsgHandler'
 import { setCookie } from '../components/cookieMgment'
 import { useRouter } from 'next/navigation'
-import { Button, Spin, Text } from '@gravity-ui/uikit'
-import { DefaultLoginImage } from '../utils/svgApplications'
+import { Button, Icon, Spin, Text } from '@gravity-ui/uikit'
+import { DefaultLoginImage, GitHubIcon, GoogleIcon } from '../utils/svgApplications'
 import { BsEyeFill, BsEyeSlash } from 'react-icons/bs'
 import Link from 'next/link'
 import { TotalContext, TotalContextProps } from '../globalContext'
@@ -175,7 +175,7 @@ const Login = ({
           loginType !== 'standard' ? 'w-full md:w-1/2' : 'w-full'
         }`}
       >
-        <div className='flex h-4/5 flex-col items-center justify-center gap-[5.24vh]'>
+        <div className='flex h-full flex-col items-center justify-center gap-[5.24vh]'>
           <div className='flex flex-col items-center gap-[1.24vh]'>
             {imageandLogoValid.logo ? (
               <img
@@ -255,9 +255,8 @@ const Login = ({
             <Button
               onClick={handleFormSubmit}
               size='xl'
-              
             >
-              {loading ? <Spin size='s' /> : 'Login'}
+              {loading ? <Spin size='s' style={{marginTop : "10px"}}/> : 'Login'}
             </Button>
 
             {process.env.NEXT_PUBLIC_NEXT_AUTH_NEEDED === 'true' && (
@@ -265,15 +264,19 @@ const Login = ({
                 <Button
                   onClick={() => singleSignOn('google')}
                   width='max'
-                  size='m'
+                  size='l'
+                  view='raised'
                 >
+                  <Icon data={GoogleIcon} />
                   Google
                 </Button>
                 <Button
                   onClick={() => singleSignOn('github')}
                   width='max'
-                  size='m'
+                  size='l'
+                  view='raised'
                 >
+                  <Icon data={GitHubIcon} />
                   {' '}
                   Github
                 </Button>
@@ -283,10 +286,16 @@ const Login = ({
             <div className='flex justify-center'>
               <Text>
                 Don&apos;t have an account?{' '}
+                <a
+                href="https://outlook.office.com/mail/deeplink/compose?to=support@torus.tech"
+                target="_blank"
+                rel="noopener noreferrer"
+                >
                 <Text color='brand'
                 >
                   Contact Admin
                 </Text>
+                </a>
               </Text>
             </div>
           </div>
