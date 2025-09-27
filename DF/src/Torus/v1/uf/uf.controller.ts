@@ -727,7 +727,13 @@ export class UfController {
     @Req() req: any
   ) {
     const { username, password, dpdKey, method, ufClientType } = body;
-    let result:any = await this.appService.signIntoTorus(username, password, ufClientType);
+    const { DEFAULT_AUTHENTICATION , FUSIONAUTH_TENANTID , FUSIONAUTH_APPLICATIONID } = process.env;
+    let result : any;
+    if(DEFAULT_AUTHENTICATION == "fusionauth" &&  FUSIONAUTH_TENANTID && FUSIONAUTH_APPLICATIONID) {
+       result = await this.appService.signInViaIAM(username, password, ufClientType);
+    }else{
+       result = await this.appService.signIntoTorus(username, password, ufClientType);
+    }
     if(dpdKey && method){
       result["dpdKey"] = dpdKey
       result["method"] = method
