@@ -174,7 +174,7 @@ const removeFile = async (
           className='flex w-full items-center justify-center px-1 py-0'
           {...getRootProps()}
         >
-          <div className='flex w-[95%] justify-start'>
+          <div className={`flex w-[95%] justify-start ${className}`}>
             <TorusButton
               pin='round-round'
               width='max'

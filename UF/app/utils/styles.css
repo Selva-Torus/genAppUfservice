@@ -1,19 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&amp;display=swap');  
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 /* @charset "UTF-8";. */
 .g-root {
   background: var(--g-color-base-background);
   color: var(--g-color-text-primary);
   --g-font-family-sans: "Inter", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
-  --g-font-family-Roboto:"Roboto" ;
   --g-font-family-monospace: "Menlo", "Monaco", "Consolas", "Ubuntu Mono", "Liberation Mono",
    "DejaVu Sans Mono", "Courier New", "Courier", monospace; 
-  --g-text-body-font-family:var(--g-font-family-Roboto);
-  --g-text-caption-font-family:var(--g-font-family-Roboto);
-  --g-text-header-font-family:var(--g-font-family-Roboto);
+  --g-text-body-font-family:var(--g-font-family-sans);
+  --g-text-caption-font-family:var(--g-font-family-sans);
+  --g-text-header-font-family:var(--g-font-family-monospace);
   --g-text-subheader-font-family: var(--g-font-family-sans);
-  --g-text-display-font-family:var(--g-font-family-Roboto);
-  --g-text-code-font-family:var(--g-font-family-Roboto);
+  --g-text-display-font-family:var(--g-font-family-sans);
+  --g-text-code-font-family:var(--g-font-family-sans);
   --g-text-body-font-weight: 400;
   --g-text-caption-font-weight: 400;
   --g-text-header-font-weight: 600;

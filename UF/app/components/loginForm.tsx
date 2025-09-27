@@ -1,3 +1,4 @@
+
 'use client'
 import React, { useContext, useMemo, useState } from 'react'
 import { Logo } from '../components/Logo'
@@ -13,6 +14,7 @@ import { BsEyeFill, BsEyeSlash } from 'react-icons/bs'
 import Link from 'next/link'
 import { TotalContext, TotalContextProps } from '../globalContext'
 import { singleSignOn } from '../utils/serverUtils'
+import decodeToken from './decodeToken'
 
 interface LoginProps {
   logo?: string
@@ -22,13 +24,7 @@ interface LoginProps {
   image?: string
 }
 
-const Login = ({
-  logo,
-  appName = 'TG2',
-  brandColor = '#dce0ea',
-  loginType = 'standard',
-  image
-}: LoginProps) => {
+const Login = ({ logo, appName = "application", brandColor = "#ffffff", loginType = "standard", image }: LoginProps) => {
   const { selectedTheme, setSelectedTheme } = useContext(
     TotalContext
   ) as TotalContextProps
@@ -41,7 +37,7 @@ const Login = ({
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
   const toast = useInfoMsg()
   const router = useRouter()
-  const onBoardingKey: string = 'User Screen'
+  const onBoardingKey:string = "CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
@@ -57,13 +53,16 @@ const Login = ({
     try {
       if (tenant && formData.email && formData.password) {
         setLoading(true)
-        setCookie('cfg_theme', 'dark')
-        setSelectedTheme('dark')
+
+        setCookie('cfg_theme','light')
+        setSelectedTheme('light')
+        
         const api_signinBody: api_signinDto = {
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: 'CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:CG:AFK:TG2:AFVK:v11:bldc'
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT266:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+          ufClientType: 'UFW'
         }
         const api_signin = await axios.post(
           `${baseUrl}/UF/signin`,
@@ -90,14 +89,25 @@ const Login = ({
           setCookie('tenant', tenant)
           document.cookie = `language=${'en'}`
           let screenDetails: any = {
-            keys: [
-              {
-                screensName: 'formitem-v1',
-                ufKey:
-                  'CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1'
-              }
-            ]
+            keys:[
+  {
+    "screensName": "userform-v1",
+    "ufKey": "CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1"
+  }
+]
           }
+          const ORM: any = decodeToken(api_signin.data.token)
+          sessionStorage.setItem(
+            'organizationDetails',
+            JSON.stringify({
+              orgGrpCode: ORM.orgGrpCode,
+              orgCode: ORM.orgCode,
+              roleGrpCode: ORM.roleGrpCode,
+              roleCode: ORM.roleCode,
+              psGrpCode: ORM.psGrpCode,
+              psCode: ORM.psCode
+            })
+          )
           screenDetails = screenDetails.keys
           let defaultScreen = ''
           if (onBoardingKey === 'User Screen') {
@@ -254,7 +264,7 @@ const Login = ({
             </Link>
             <Button
               onClick={handleFormSubmit}
-              size='xl'
+              size='xl'              
             >
               {loading ? <Spin size='s' style={{marginTop : "10px"}}/> : 'Login'}
             </Button>
@@ -267,7 +277,7 @@ const Login = ({
                   size='l'
                   view='raised'
                 >
-                  <Icon data={GoogleIcon} />
+                <Icon data={GoogleIcon} />
                   Google
                 </Button>
                 <Button
@@ -276,7 +286,7 @@ const Login = ({
                   size='l'
                   view='raised'
                 >
-                  <Icon data={GitHubIcon} />
+                <Icon data={GitHubIcon} />
                   {' '}
                   Github
                 </Button>

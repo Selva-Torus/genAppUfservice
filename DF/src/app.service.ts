@@ -1,4 +1,7 @@
 
+
+
+
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import axios from 'axios';
 import * as fs from 'fs';
@@ -9,34 +12,34 @@ export class AppService implements OnModuleInit{
 
   async onModuleInit() {
     console.log('Application started, calling API...');
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiUGVlckA3ODYiLCJjbGllbnQiOiJDVDAwMyIsInR5cGUiOiJjIiwibG9nVHlwZSI6ImRmcyIsImlhdCI6MTc1NDg4NjE5MCwiZXhwIjoxNzU0OTcyNTkwfQ.OtZeaY3qK5DMruOHkIW8Dbe2JhAID7_41WOJhEaoYZw';
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnQiOiJDVDAwMyIsImxvZ2luSWQiOiJQZWVyQDc4NiIsInNpZCI6ImJhNWQwZmUyLTY0MWEtNDc0MC04MWNmLTEwNjk1ODMwODY1NSIsImxvZ1R5cGUiOiJkZnMiLCJ0eXBlIjoiYyIsImlhdCI6MTc1ODg2NTU5NiwiZXhwIjoxNzU4ODY2Nzk2fQ.Jx5e-DpSUNRXuthY0b9QhXi6Gxgje5h8MBovFGDsIPw';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
     if(Object.keys(preParedData).includes('erdWithData'))
       {
-      let endPointData : any = {};
-      let erdDatas: any = {};
-      endPointData.data = preParedData?.erdWithData||{}
-      endPointData.type =  "json";
-      let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData,{
-        headers: {
-          Authorization: `Bearer ${token}`, 
-        }
-      });
-      erdDatas.endpoint = res.data
-      erdDatas.tenant =  "CT003";
-      erdDatas.domain = "CG";
-      erdDatas.collection = "TG2";
-      erdDatas.data = preParedData?.erdWithData||{}
-      erdDatas.fabric = 'API-APIPD-INT';
-      erdDatas.loginId = "Peer@786";    
-      erdDatas.erdFlag = true;  
-      await axios.post(this.apiUrl+'/createApiCollection', erdDatas,{
-        headers: {
-          Authorization: `Bearer ${token}`, 
-        }
-      });
-      }
+     // let endPointData : any = {};
+    //  let erdDatas: any = {};
+    //  endPointData.data = preParedData?.erdWithData||{}
+     // endPointData.type =  "json";
+     // let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData,{
+   //     headers: {
+    //      Authorization: `Bearer ${token}`, 
+    //    }
+   //   });
+      // erdDatas.endpoint = res.data
+      // erdDatas.tenant =  "CT266";
+      // erdDatas.domain = "appgroup";
+      // erdDatas.collection = "application";
+      // erdDatas.data = preParedData?.erdWithData||{}
+      // erdDatas.fabric = 'API-APIPD';
+      // erdDatas.loginId = "Peer@786";    
+      // erdDatas.erdFlag = true;  
+    //  await axios.post(this.apiUrl+'/createApiCollection', erdDatas,{
+      //  headers: {
+     //     Authorization: `Bearer ${token}`, 
+      //  }
+      //});
 
+      }
     if(Object.keys(preParedData).includes('torusApis'))
     {
       let torusData: any = {};
@@ -45,9 +48,9 @@ export class AppService implements OnModuleInit{
       //endPointData.type =  "json";
       //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData);
       //torusData.endpoint = res.data;
-      torusData.tenant =  "CT003";
-      torusData.domain = "CG"; 
-      torusData.collection = "TG2";
+      torusData.tenant =  "CT266";
+      torusData.domain = "appgroup"; 
+      torusData.collection = "application";
       torusData.fabric = 'API-APIPD-TORUS';
       torusData.data = preParedData?.torusApis||{}
       torusData.loginId = "Peer@786";    

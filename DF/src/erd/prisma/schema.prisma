@@ -1,137 +1,35 @@
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
-  schemas = ["ct003_cg", "ct003_tg2"]
 }
 
 generator client {
 provider = "prisma-client-js"
-previewFeatures = ["multiSchema"]
 }
+model collection {
+  id  String @id @default(auto()) @map("_id") @db.ObjectId 
+  name    String?        
+  age    Int?       
 
-model seacore {
-clientid  Int  @id @default(autoincrement()) 
-clientname  String?   
-mobile  Int?   
-weburl  String?   
-addressline1  String?   
-country  String?   
-city  String?   
-email  String?   
-person  String?   
-clienttype  String?   
-vesseltype  String?   
-dateonly  DateTime?   
-timeonly  DateTime?   
-trs_creator_email    String?
-trs_created_date    DateTime     @default(now())  
-trs_created_by    String?       
-trs_modified_date    DateTime     @updatedAt  
-trs_modified_by    String?       
-trs_status    String?    
-trs_next_status    String?    
-trs_process_id    String? 
-trs_access_profile    String?
-trs_org_grp_code    String?
-trs_org_code    String?
-trs_role_grp_code    String?
-trs_role_code    String?
-trs_ps_grp_code    String?
-trs_ps_code    String?  
+  trs_creator_email    String?       
+  trs_created_date    DateTime     @default(now())  
+  trs_created_by    String?       
+  trs_modified_date    DateTime     @updatedAt  
+  trs_modified_by    String?       
+  trs_status    String?       
+  trs_next_status    String?  
+  trs_process_id    String?
+  trs_access_profile    String?
+  trs_org_grp_code    String?
+  trs_org_code    String?
+  trs_role_grp_code    String?
+  trs_role_code    String?
+  trs_ps_grp_code    String?
+  trs_ps_code     String?
+ 
 
-@@schema("ct003_tg2")
+  @@map("ct266_a001.collection")
+  
 }
-
-model billing {
-billingid  Int  @id @default(autoincrement()) 
-billingparty  String?   
-vessels  String?   
-personcharge  String?   
-emailparty  String?   
-mobileparty  BigInt?   
-cou_ammount  String?   
-amount  Int?   
-tax  Int?   
-interest  Int?   
-cou_amount2  String?   
-amount2  Int?   
-addressline1  String?   
-country  String?   
-state  String?   
-pininput  Int?   
-remark  String?   
-trs_creator_email    String?
-trs_created_date    DateTime     @default(now())  
-trs_created_by    String?       
-trs_modified_date    DateTime     @updatedAt  
-trs_modified_by    String?       
-trs_status    String?    
-trs_next_status    String?    
-trs_process_id    String? 
-trs_access_profile    String?
-trs_org_grp_code    String?
-trs_org_code    String?
-trs_role_grp_code    String?
-trs_role_code    String?
-trs_ps_grp_code    String?
-trs_ps_code    String?  
-
-@@schema("ct003_tg2")
-}
-
-model accounts {
-account_id  Int  @id @default(autoincrement()) 
-customer_name  String?   
-phone_number  BigInt?   
-dob  Int?   
-account_type  String?   
-email  String?   
-trs_creator_email    String?
-trs_created_date    DateTime     @default(now())  
-trs_created_by    String?       
-trs_modified_date    DateTime     @updatedAt  
-trs_modified_by    String?       
-trs_status    String?    
-trs_next_status    String?    
-trs_process_id    String? 
-trs_access_profile    String?
-trs_org_grp_code    String?
-trs_org_code    String?
-trs_role_grp_code    String?
-trs_role_code    String?
-trs_ps_grp_code    String?
-trs_ps_code    String?  
-transactions   transactions[]    
-
-@@schema("ct003_tg2")
-}
-
-model transactions {
-transaction_id  Int  @id @default(autoincrement()) 
-amount  BigInt?   
-transaction_type  String?   
-trs_creator_email    String?
-trs_created_date    DateTime     @default(now())  
-trs_created_by    String?       
-trs_modified_date    DateTime     @updatedAt  
-trs_modified_by    String?       
-trs_status    String?    
-trs_next_status    String?    
-trs_process_id    String? 
-trs_access_profile    String?
-trs_org_grp_code    String?
-trs_org_code    String?
-trs_role_grp_code    String?
-trs_role_code    String?
-trs_ps_grp_code    String?
-trs_ps_code    String?  
-account_id Int? 
-accounts   accounts?  @relation(fields: [account_id], references: [account_id])  
-
-@@schema("ct003_tg2")
-}
-
-
-
 
 

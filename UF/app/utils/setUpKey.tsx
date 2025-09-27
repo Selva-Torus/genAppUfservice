@@ -50,11 +50,11 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
   const [data, setData] = useState<SetupKeyData | null>(null);
   const token:string = getCookie('token'); 
   const encryptionFlagApp: boolean = true;
-  const encryptionDpd: string = "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:CG:AFGK:TG2:AFK:TG2DPD:AFVK:v1";
+  const encryptionDpd: string = "CK:CT266:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:myDPD:AFVK:v1";
   const encryptionMethod: string = "";
   const fetchSetupKey = async () => {
     try {
-      let setUpKeyDto:any = {key:"CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT003:AFGK:CG:AFK:TG2:AFVK:v1:appearance"};
+      let setUpKeyDto:any = {key:"CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT266:AFGK:AG001:AFK:A001:AFVK:v1:appearance"};
       if (encryptionFlagApp) {
         setUpKeyDto["dpdKey"] = encryptionDpd;
         setUpKeyDto["method"] = encryptionMethod;
@@ -94,7 +94,7 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
     }
   }, [data, setProperty]);
 
-  if (!data) return <div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><img src="https://varnishdev.gsstvl.com/files/torus/9.1/CT003/resources/splashImage/loading.gif" alt="loadingImage" /></div>;
+  if (!data) return <div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><span>Loading...</span></div>;
 
 
   return <div>{children}</div>;

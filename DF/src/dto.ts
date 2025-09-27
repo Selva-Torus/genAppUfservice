@@ -124,7 +124,7 @@ export class readAPIDTO {
       public filterData?:object
       ) {}
     }
-
+ 
     export class pfDto {
       @IsNotEmpty()
       @IsString()
@@ -133,7 +133,7 @@ export class readAPIDTO {
       event: string      
       data: object
       token:string    
-      nodeId: string     
+      nodeId: string    
       nodeName:string    
       nodeType:string  
       sourceId:string
@@ -319,6 +319,8 @@ export class paginationDataFilterDto{
   dpdKey?:string
   @ApiProperty({description: 'method'})
   method?:string
+  @ApiProperty({description: 'primaryKey'})
+  primaryKey?:string
 }
 
 export class InitiatePFDto{
@@ -434,6 +436,9 @@ export class signinToTorusDto{
 
   @ApiProperty({description: 'method'})
   method?:string
+
+  @ApiProperty({description: 'ufClientType'})
+  ufClientType?:string
 }
 
 export interface errorObj{

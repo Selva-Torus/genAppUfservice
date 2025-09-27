@@ -763,7 +763,7 @@ const SetupScreen = ({
             ></hr>
             <div className='flex h-[85vh]'>
               <div
-                style={{ borderRight: `1px solid var(--g-color-line-generic)` , minWidth : '200px' }}
+               style={{ borderRight: `1px solid var(--g-color-line-generic)` , minWidth : '200px' }}
               >
                 <Menu size='xl' className='h-full'>
                   {menuItems.map(item => (

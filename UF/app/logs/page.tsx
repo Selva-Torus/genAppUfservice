@@ -16,12 +16,12 @@ const ParentComponent = () => {
   const [nodeData, setNodeData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [app, setApp] = useState({
-    code: 'TG2',
-    name: 'TG2'
+    code: 'A001',
+    name: 'application'
   })
   const [appGroup, setappGroup] = useState({
-    code: 'CG',
-    name: 'CG'
+    code: 'AG001',
+    name: 'appgroup'
   })
   const token: string = getCookie('token')
   const decodedTokenObj: any = decodeToken(token)
@@ -48,7 +48,7 @@ const ParentComponent = () => {
 };  
   let payload:any = useMemo(() => {
     return {
-      tenant: 'CT003',
+      tenant: 'CT266',
        fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
             suffixes[prefix]
               ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
@@ -71,9 +71,10 @@ const ParentComponent = () => {
         payload['dpdKey'] = encAppFalg.dpd;
         payload['method'] = 'vault';
       }
+      console.log('Fetching data...', payload)
       setLoading(true)
       const response = await AxiosService.post(
-        `${activeTab === 'torus' ? 'expLog' : 'prcLog'}`,
+        `/${activeTab === 'torus' ? 'expLog' : 'prcLog'}`,
         payload,
         {
           signal: signal

@@ -61,11 +61,14 @@ function buildLiteralAST(value: any, seen = new Set()): t.Expression {
 }
 
 
- async customCode(key,code,data,fabric){
+ async customCode(key,code,data,fabric,SessionInfo){
     const declaredVars:any = await this.extractDeclaredVariables(code);
     var arr:{ [key: string]: object | any[] } = {};
     if(declaredVars?.length>0){
        for(let a=0;a< declaredVars.length;a++){ 
+         if(declaredVars[a] == 'sessionInfo'){
+          arr[declaredVars[a]] = SessionInfo
+        }
       if(fabric == "DF-DFD"){
          if(data && data.hasOwnProperty(declaredVars[a])){
        
@@ -81,7 +84,7 @@ function buildLiteralAST(value: any, seen = new Set()): t.Expression {
             }          
          }
         }
-      }else if(fabric == "PF-PFD"){
+      }else if(fabric == "PF-PFD" || fabric == "PF-SFD"){
          if(await this.redisService.exist(key + ':NPV:'+declaredVars[a]+'.PRO',process.env.CLIENTCODE)){
         var pro:any = JSON.parse(await this.redisService.getJsonData(key + ':NPV:'+declaredVars[a]+'.PRO',process.env.CLIENTCODE)) 
       
@@ -91,13 +94,13 @@ function buildLiteralAST(value: any, seen = new Set()): t.Expression {
     }
     }
     let updatedFunctionString = code;
-      console.log('code startTime',new Date());
+      //console.log('code startTime',new Date());
       
       for (let [key, value] of Object.entries(arr)) {
         updatedFunctionString = await this.replaceVariable(updatedFunctionString, key, value);
       }
 
-      console.log('code EndTime',new Date());
+      //console.log('code EndTime',new Date());
 
     //   const vm = new VM({
     //  timeout: 1000,
@@ -112,7 +115,7 @@ function buildLiteralAST(value: any, seen = new Set()): t.Expression {
 
       const output =  eval(updatedFunctionString);
     
-    if(data){
+   if(data && fabric == 'DF-DFD' ){  
       Object.assign(data, output)   
       return data
     }else{

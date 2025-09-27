@@ -26,7 +26,6 @@ export function TorusTextToSpeechOutput(props: TorusTextToSpeechOutputProps) {
         {...props}
         value={text}
         minRows={4}
-        placeholder='Type text to speak...'
         onUpdate={(val) => {
           setText(val);
           props.onUpdate?.(val);

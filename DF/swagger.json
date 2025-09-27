@@ -43,6 +43,20 @@
         ]
       }
     },
+    "/subFlowLog": {
+      "post": {
+        "operationId": "AppController_getSubFlowLog",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "App"
+        ]
+      }
+    },
     "/dropLog": {
       "post": {
         "operationId": "AppController_deleteLog",
@@ -143,7 +157,7 @@
         ]
       }
     },
-    "/UF/Downloadfile": {
+    "/UF/downloadFile": {
       "post": {
         "description": "Download file from the stored MongoDb GridFSBucket on specified path",
         "operationId": "UfController_getFile",
@@ -661,16 +675,6 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/myAccountForClientdto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Returns a list of all payments made by users.",
@@ -767,16 +771,6 @@
             }
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/introspectDto"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Returns a list of all payments made by users.",
@@ -1136,10 +1130,10 @@
         ]
       }
     },
-    "/seacore/schema": {
+    "/collection/schema": {
       "get": {
-        "description": "Retrive the datatype of the seacore table",
-        "operationId": "seacoreController_findSchema",
+        "description": "Retrive the datatype of the collection table",
+        "operationId": "collectionController_findSchema",
         "parameters": [
           {
             "name": "Authorization",
@@ -1157,7 +1151,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/seacoreEntity"
+                  "$ref": "#/components/schemas/collectionEntity"
                 }
               }
             }
@@ -1169,10 +1163,10 @@
         ]
       }
     },
-    "/seacore/get": {
+    "/collection/get": {
       "get": {
-        "description": "Filter all the records from the seacore table",
-        "operationId": "seacoreController_findAllmethod",
+        "description": "Filter all the records from the collection table",
+        "operationId": "collectionController_findAllmethod",
         "parameters": [
           {
             "name": "limit",
@@ -1201,7 +1195,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/seacoreEntity"
+                    "$ref": "#/components/schemas/collectionEntity"
                   }
                 }
               }
@@ -1214,17 +1208,17 @@
         ]
       }
     },
-    "/seacore/{clientid}": {
+    "/collection/{id}": {
       "get": {
-        "description": "Read only one records from the seacore table",
-        "operationId": "seacoreController_findOne",
+        "description": "Read all the records from the collection table",
+        "operationId": "collectionController_findOne",
         "parameters": [
           {
-            "name": "clientid",
+            "name": "id",
             "required": true,
             "in": "path",
             "schema": {
-              "type": "number"
+              "type": "string"
             }
           },
           {
@@ -1243,27 +1237,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/seacoreEntity"
+                  "$ref": "#/components/schemas/collectionEntity"
                 }
               }
             }
           }
         },
-        "summary": "Fetch the only one record",
+        "summary": "Read all the records",
         "tags": [
           "ERD API"
         ]
       },
       "patch": {
-        "description": "Update the record for the seacore table",
-        "operationId": "seacoreController_update",
+        "description": "Update the record for the collection table",
+        "operationId": "collectionController_update",
         "parameters": [
           {
-            "name": "clientid",
+            "name": "id",
             "required": true,
             "in": "path",
             "schema": {
-              "type": "number"
+              "type": "string"
             }
           },
           {
@@ -1281,7 +1275,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateseacoreDto"
+                "$ref": "#/components/schemas/UpdatecollectionDto"
               }
             }
           }
@@ -1292,7 +1286,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/seacoreEntity"
+                  "$ref": "#/components/schemas/collectionEntity"
                 }
               }
             }
@@ -1304,15 +1298,15 @@
         ]
       },
       "delete": {
-        "description": "Delete the record for the seacore table",
-        "operationId": "seacoreController_remove",
+        "description": "Delete the record for the collection table",
+        "operationId": "collectionController_remove",
         "parameters": [
           {
-            "name": "clientid",
+            "name": "id",
             "required": true,
             "in": "path",
             "schema": {
-              "type": "number"
+              "type": "string"
             }
           },
           {
@@ -1331,7 +1325,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/seacoreEntity"
+                  "$ref": "#/components/schemas/collectionEntity"
                 }
               }
             }
@@ -1343,19 +1337,57 @@
         ]
       }
     },
-    "/seacore": {
-      "get": {
-        "description": "Read all the records from the seacore table",
-        "operationId": "seacoreController_findAll",
+    "/collection/query": {
+      "post": {
+        "description": "Read all the records from the collection table",
+        "operationId": "collectionController_findAllwithquery",
         "parameters": [
           {
-            "name": "clientid",
-            "required": false,
-            "in": "query",
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer token for authentication",
+            "required": true,
             "schema": {
-              "type": "number"
+              "type": "string"
             }
-          },
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuerycollectionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/collectionEntity"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Read all the records",
+        "tags": [
+          "ERD API"
+        ]
+      }
+    },
+    "/collection": {
+      "get": {
+        "description": "Read all the records from the collection table",
+        "operationId": "collectionController_findAll",
+        "parameters": [
           {
             "name": "Authorization",
             "in": "header",
@@ -1374,7 +1406,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/seacoreEntity"
+                    "$ref": "#/components/schemas/collectionEntity"
                   }
                 }
               }
@@ -1387,8 +1419,8 @@
         ]
       },
       "post": {
-        "description": "Create the record for the seacore table",
-        "operationId": "seacoreController_create",
+        "description": "Create the record for the collection table",
+        "operationId": "collectionController_create",
         "parameters": [
           {
             "name": "Authorization",
@@ -1405,7 +1437,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateseacoreDto"
+                "$ref": "#/components/schemas/CreatecollectionDto"
               }
             }
           }
@@ -1416,7 +1448,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/seacoreEntity"
+                  "$ref": "#/components/schemas/collectionEntity"
                 }
               }
             }
@@ -1428,10 +1460,10 @@
         ]
       }
     },
-    "/billing/schema": {
+    "/collection/find/first": {
       "get": {
-        "description": "Retrive the datatype of the billing table",
-        "operationId": "billingController_findSchema",
+        "description": "Read first record from the collection table",
+        "operationId": "collectionController_findFirst",
         "parameters": [
           {
             "name": "Authorization",
@@ -1449,281 +1481,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/billingEntity"
+                  "$ref": "#/components/schemas/collectionEntity"
                 }
               }
             }
           }
         },
-        "summary": "schema validation",
+        "summary": "Fetch the first record",
         "tags": [
           "ERD API"
         ]
       }
     },
-    "/billing/get": {
+    "/collection/find/last": {
       "get": {
-        "description": "Filter all the records from the billing table",
-        "operationId": "billingController_findAllmethod",
-        "parameters": [
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Number of records to fetch",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/billingEntity"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "summary": "Filter the records",
-        "tags": [
-          "ERD API"
-        ]
-      }
-    },
-    "/billing/{billingid}": {
-      "get": {
-        "description": "Read only one records from the billing table",
-        "operationId": "billingController_findOne",
-        "parameters": [
-          {
-            "name": "billingid",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/billingEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Fetch the only one record",
-        "tags": [
-          "ERD API"
-        ]
-      },
-      "patch": {
-        "description": "Update the record for the billing table",
-        "operationId": "billingController_update",
-        "parameters": [
-          {
-            "name": "billingid",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatebillingDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/billingEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Update the record",
-        "tags": [
-          "ERD API"
-        ]
-      },
-      "delete": {
-        "description": "Delete the record for the billing table",
-        "operationId": "billingController_remove",
-        "parameters": [
-          {
-            "name": "billingid",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/billingEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Delete the record",
-        "tags": [
-          "ERD API"
-        ]
-      }
-    },
-    "/billing": {
-      "get": {
-        "description": "Read all the records from the billing table",
-        "operationId": "billingController_findAll",
-        "parameters": [
-          {
-            "name": "billingid",
-            "required": false,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/billingEntity"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "summary": "Read all the records",
-        "tags": [
-          "ERD API"
-        ]
-      },
-      "post": {
-        "description": "Create the record for the billing table",
-        "operationId": "billingController_create",
-        "parameters": [
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatebillingDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/billingEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Create the record",
-        "tags": [
-          "ERD API"
-        ]
-      }
-    },
-    "/accounts/schema": {
-      "get": {
-        "description": "Retrive the datatype of the accounts table",
-        "operationId": "accountsController_findSchema",
+        "description": "Read last record from the collection table",
+        "operationId": "collectionController_findLast",
         "parameters": [
           {
             "name": "Authorization",
@@ -1741,548 +1514,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/accountsEntity"
+                  "$ref": "#/components/schemas/collectionEntity"
                 }
               }
             }
           }
         },
-        "summary": "schema validation",
-        "tags": [
-          "ERD API"
-        ]
-      }
-    },
-    "/accounts/get": {
-      "get": {
-        "description": "Filter all the records from the accounts table",
-        "operationId": "accountsController_findAllmethod",
-        "parameters": [
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Number of records to fetch",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/accountsEntity"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "summary": "Filter the records",
-        "tags": [
-          "ERD API"
-        ]
-      }
-    },
-    "/accounts/{account_id}": {
-      "get": {
-        "description": "Read only one records from the accounts table",
-        "operationId": "accountsController_findOne",
-        "parameters": [
-          {
-            "name": "account_id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/accountsEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Fetch the only one record",
-        "tags": [
-          "ERD API"
-        ]
-      },
-      "patch": {
-        "description": "Update the record for the accounts table",
-        "operationId": "accountsController_update",
-        "parameters": [
-          {
-            "name": "account_id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateaccountsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/accountsEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Update the record",
-        "tags": [
-          "ERD API"
-        ]
-      },
-      "delete": {
-        "description": "Delete the record for the accounts table",
-        "operationId": "accountsController_remove",
-        "parameters": [
-          {
-            "name": "account_id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/accountsEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Delete the record",
-        "tags": [
-          "ERD API"
-        ]
-      }
-    },
-    "/accounts": {
-      "get": {
-        "description": "Read all the records from the accounts table",
-        "operationId": "accountsController_findAll",
-        "parameters": [
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/accountsEntity"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "summary": "Read all the records",
-        "tags": [
-          "ERD API"
-        ]
-      },
-      "post": {
-        "description": "Create the record for the accounts table",
-        "operationId": "accountsController_create",
-        "parameters": [
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateaccountsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/accountsEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Create the record",
-        "tags": [
-          "ERD API"
-        ]
-      }
-    },
-    "/transactions/schema": {
-      "get": {
-        "description": "Retrive the datatype of the transactions table",
-        "operationId": "transactionsController_findSchema",
-        "parameters": [
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/transactionsEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "schema validation",
-        "tags": [
-          "ERD API"
-        ]
-      }
-    },
-    "/transactions/get": {
-      "get": {
-        "description": "Filter all the records from the transactions table",
-        "operationId": "transactionsController_findAllmethod",
-        "parameters": [
-          {
-            "name": "limit",
-            "required": false,
-            "in": "query",
-            "description": "Number of records to fetch",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/transactionsEntity"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "summary": "Filter the records",
-        "tags": [
-          "ERD API"
-        ]
-      }
-    },
-    "/transactions/{transaction_id}": {
-      "get": {
-        "description": "Read only one records from the transactions table",
-        "operationId": "transactionsController_findOne",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/transactionsEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Fetch the only one record",
-        "tags": [
-          "ERD API"
-        ]
-      },
-      "patch": {
-        "description": "Update the record for the transactions table",
-        "operationId": "transactionsController_update",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatetransactionsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/transactionsEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Update the record",
-        "tags": [
-          "ERD API"
-        ]
-      },
-      "delete": {
-        "description": "Delete the record for the transactions table",
-        "operationId": "transactionsController_remove",
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/transactionsEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Delete the record",
-        "tags": [
-          "ERD API"
-        ]
-      }
-    },
-    "/transactions": {
-      "get": {
-        "description": "Read all the records from the transactions table",
-        "operationId": "transactionsController_findAll",
-        "parameters": [
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/transactionsEntity"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "summary": "Read all the records",
-        "tags": [
-          "ERD API"
-        ]
-      },
-      "post": {
-        "description": "Create the record for the transactions table",
-        "operationId": "transactionsController_create",
-        "parameters": [
-          {
-            "name": "Authorization",
-            "in": "header",
-            "description": "Bearer token for authentication",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatetransactionsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/transactionsEntity"
-                }
-              }
-            }
-          }
-        },
-        "summary": "Create the record",
+        "summary": "Fetch the last record",
         "tags": [
           "ERD API"
         ]
@@ -2292,7 +1530,7 @@
   "info": {
     "title": "Nest API",
     "description": "The Nestjs API documentation",
-    "version": "0.11",
+    "version": "0.1",
     "contact": {}
   },
   "tags": [
@@ -2307,7 +1545,7 @@
   ],
   "servers": [
     {
-      "url": "http://192.168.2.57:3010",
+      "url": "http://192.168.2.86:3108",
       "description": "Production Server"
     }
   ],
@@ -2472,13 +1710,18 @@
           "method": {
             "type": "string",
             "description": "method"
+          },
+          "primaryKey": {
+            "type": "string",
+            "description": "primaryKey"
           }
         },
         "required": [
           "key",
           "data",
           "dpdKey",
-          "method"
+          "method",
+          "primaryKey"
         ]
       },
       "InitiatePFDto": {
@@ -2571,6 +1814,10 @@
           "method": {
             "type": "string",
             "description": "method"
+          },
+          "ufClientType": {
+            "type": "string",
+            "description": "ufClientType"
           }
         },
         "required": [
@@ -2579,54 +1826,11 @@
           "password",
           "type",
           "dpdKey",
-          "method"
-        ]
-      },
-      "myAccountForClientdto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "description": "key"
-          },
-          "dpdKey": {
-            "type": "string",
-            "description": "dpdKey"
-          },
-          "method": {
-            "type": "string",
-            "description": "method"
-          }
-        },
-        "required": [
-          "key",
-          "dpdKey",
-          "method"
+          "method",
+          "ufClientType"
         ]
       },
       "logoutDto": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "description": "key"
-          },
-          "dpdKey": {
-            "type": "string",
-            "description": "dpdKey"
-          },
-          "method": {
-            "type": "string",
-            "description": "method"
-          }
-        },
-        "required": [
-          "key",
-          "dpdKey",
-          "method"
-        ]
-      },
-      "introspectDto": {
         "type": "object",
         "properties": {
           "key": {
@@ -2656,212 +1860,32 @@
         "type": "object",
         "properties": {}
       },
-      "seacoreEntity": {
+      "collectionEntity": {
         "type": "object",
         "properties": {
-          "clientid": {
-            "type": "number",
-            "example": "number"
+          "id": {
+            "type": "string"
           },
-          "clientname": {
-            "type": "string",
-            "example": "string"
+          "name": {
+            "type": "string"
           },
-          "mobile": {
-            "type": "number",
-            "example": "number"
-          },
-          "weburl": {
-            "type": "string",
-            "example": "string"
-          },
-          "addressline1": {
-            "type": "string",
-            "example": "string"
-          },
-          "country": {
-            "type": "string",
-            "example": "string"
-          },
-          "city": {
-            "type": "string",
-            "example": "string"
-          },
-          "email": {
-            "type": "string",
-            "example": "string"
-          },
-          "person": {
-            "type": "string",
-            "example": "string"
-          },
-          "clienttype": {
-            "type": "string",
-            "example": "string"
-          },
-          "vesseltype": {
-            "type": "string",
-            "example": "string"
-          },
-          "dateonly": {
-            "format": "date-time",
-            "type": "string",
-            "example": "date"
-          },
-          "timeonly": {
-            "format": "date-time",
-            "type": "string",
-            "example": "date"
+          "age": {
+            "type": "integer",
+            "format": "int32"
           },
           "trs_creator_email": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_created_date": {
             "format": "date-time",
-            "type": "string",
-            "example": "datetime"
+            "type": "string"
           },
           "trs_created_by": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_modified_date": {
             "format": "date-time",
-            "type": "string",
-            "example": "datetime"
-          },
-          "trs_modified_by": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_status": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_next_status": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_process_id": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_access_profile": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_org_grp_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_org_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_role_grp_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_role_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_ps_grp_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_ps_code": {
-            "type": "string",
-            "example": "string"
-          }
-        },
-        "required": [
-          "clientid",
-          "clientname",
-          "mobile",
-          "weburl",
-          "addressline1",
-          "country",
-          "city",
-          "email",
-          "person",
-          "clienttype",
-          "vesseltype",
-          "dateonly",
-          "timeonly",
-          "trs_creator_email",
-          "trs_created_date",
-          "trs_created_by",
-          "trs_modified_date",
-          "trs_modified_by",
-          "trs_status",
-          "trs_next_status",
-          "trs_process_id",
-          "trs_access_profile",
-          "trs_org_grp_code",
-          "trs_org_code",
-          "trs_role_grp_code",
-          "trs_role_code",
-          "trs_ps_grp_code",
-          "trs_ps_code"
-        ]
-      },
-      "CreateseacoreDto": {
-        "type": "object",
-        "properties": {
-          "clientname": {
             "type": "string"
-          },
-          "mobile": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "weburl": {
-            "type": "string"
-          },
-          "addressline1": {
-            "type": "string"
-          },
-          "country": {
-            "type": "string"
-          },
-          "city": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "person": {
-            "type": "string"
-          },
-          "clienttype": {
-            "type": "string"
-          },
-          "vesseltype": {
-            "type": "string"
-          },
-          "dateonly": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "timeonly": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_creator_email": {
-            "type": "string"
-          },
-          "trs_created_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_created_by": {
-            "type": "string"
-          },
-          "trs_modified_date": {
-            "type": "string",
-            "format": "date-time"
           },
           "trs_modified_by": {
             "type": "string"
@@ -2898,18 +1922,9 @@
           }
         },
         "required": [
-          "clientname",
-          "mobile",
-          "weburl",
-          "addressline1",
-          "country",
-          "city",
-          "email",
-          "person",
-          "clienttype",
-          "vesseltype",
-          "dateonly",
-          "timeonly",
+          "id",
+          "name",
+          "age",
           "trs_creator_email",
           "trs_created_date",
           "trs_created_by",
@@ -2927,961 +1942,66 @@
           "trs_ps_code"
         ]
       },
-      "UpdateseacoreDto": {
+      "QuerycollectionDto": {
         "type": "object",
         "properties": {
-          "clientname": {
+          "name": {
             "type": "string"
           },
-          "mobile": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "weburl": {
-            "type": "string"
-          },
-          "addressline1": {
-            "type": "string"
-          },
-          "country": {
-            "type": "string"
-          },
-          "city": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "person": {
-            "type": "string"
-          },
-          "clienttype": {
-            "type": "string"
-          },
-          "vesseltype": {
-            "type": "string"
-          },
-          "dateonly": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "timeonly": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_creator_email": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_created_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_created_by": {
-            "type": "string"
-          },
-          "trs_modified_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_modified_by": {
-            "type": "string"
-          },
-          "trs_status": {
-            "type": "string"
-          },
-          "trs_next_status": {
-            "type": "string"
-          },
-          "trs_process_id": {
-            "type": "string"
-          },
-          "trs_access_profile": {
-            "type": "string"
-          },
-          "trs_org_grp_code": {
-            "type": "string"
-          },
-          "trs_org_code": {
-            "type": "string"
-          },
-          "trs_role_grp_code": {
-            "type": "string"
-          },
-          "trs_role_code": {
-            "type": "string"
-          },
-          "trs_ps_grp_code": {
-            "type": "string"
-          },
-          "trs_ps_code": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "clientname",
-          "mobile",
-          "weburl",
-          "addressline1",
-          "country",
-          "city",
-          "email",
-          "person",
-          "clienttype",
-          "vesseltype",
-          "dateonly",
-          "timeonly",
-          "trs_creator_email",
-          "trs_created_date",
-          "trs_created_by",
-          "trs_modified_date",
-          "trs_modified_by",
-          "trs_status",
-          "trs_next_status",
-          "trs_process_id",
-          "trs_access_profile",
-          "trs_org_grp_code",
-          "trs_org_code",
-          "trs_role_grp_code",
-          "trs_role_code",
-          "trs_ps_grp_code",
-          "trs_ps_code"
-        ]
-      },
-      "billingEntity": {
-        "type": "object",
-        "properties": {
-          "billingid": {
-            "type": "number",
-            "example": "number"
-          },
-          "billingparty": {
-            "type": "string",
-            "example": "string"
-          },
-          "vessels": {
-            "type": "string",
-            "example": "string"
-          },
-          "personcharge": {
-            "type": "string",
-            "example": "string"
-          },
-          "emailparty": {
-            "type": "string",
-            "example": "string"
-          },
-          "mobileparty": {
-            "format": "int64",
-            "type": "integer",
-            "example": "bigint"
-          },
-          "cou_ammount": {
-            "type": "string",
-            "example": "string"
-          },
-          "amount": {
-            "type": "number",
-            "example": "number"
-          },
-          "tax": {
-            "type": "number",
-            "example": "number"
-          },
-          "interest": {
-            "type": "number",
-            "example": "number"
-          },
-          "cou_amount2": {
-            "type": "string",
-            "example": "string"
-          },
-          "amount2": {
-            "type": "number",
-            "example": "number"
-          },
-          "addressline1": {
-            "type": "string",
-            "example": "string"
-          },
-          "country": {
-            "type": "string",
-            "example": "string"
-          },
-          "state": {
-            "type": "string",
-            "example": "string"
-          },
-          "pininput": {
-            "type": "number",
-            "example": "number"
-          },
-          "remark": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_creator_email": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_created_date": {
-            "format": "date-time",
-            "type": "string",
-            "example": "datetime"
-          },
-          "trs_created_by": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_modified_date": {
-            "format": "date-time",
-            "type": "string",
-            "example": "datetime"
-          },
-          "trs_modified_by": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_status": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_next_status": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_process_id": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_access_profile": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_org_grp_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_org_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_role_grp_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_role_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_ps_grp_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_ps_code": {
-            "type": "string",
-            "example": "string"
-          }
-        },
-        "required": [
-          "billingid",
-          "billingparty",
-          "vessels",
-          "personcharge",
-          "emailparty",
-          "mobileparty",
-          "cou_ammount",
-          "amount",
-          "tax",
-          "interest",
-          "cou_amount2",
-          "amount2",
-          "addressline1",
-          "country",
-          "state",
-          "pininput",
-          "remark",
-          "trs_creator_email",
-          "trs_created_date",
-          "trs_created_by",
-          "trs_modified_date",
-          "trs_modified_by",
-          "trs_status",
-          "trs_next_status",
-          "trs_process_id",
-          "trs_access_profile",
-          "trs_org_grp_code",
-          "trs_org_code",
-          "trs_role_grp_code",
-          "trs_role_code",
-          "trs_ps_grp_code",
-          "trs_ps_code"
-        ]
-      },
-      "CreatebillingDto": {
-        "type": "object",
-        "properties": {
-          "billingparty": {
-            "type": "string"
-          },
-          "vessels": {
-            "type": "string"
-          },
-          "personcharge": {
-            "type": "string"
-          },
-          "emailparty": {
-            "type": "string"
-          },
-          "mobileparty": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "cou_ammount": {
-            "type": "string"
-          },
-          "amount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "tax": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "interest": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "cou_amount2": {
-            "type": "string"
-          },
-          "amount2": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "addressline1": {
-            "type": "string"
-          },
-          "country": {
-            "type": "string"
-          },
-          "state": {
-            "type": "string"
-          },
-          "pininput": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "remark": {
-            "type": "string"
-          },
-          "trs_creator_email": {
-            "type": "string"
-          },
-          "trs_created_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_created_by": {
-            "type": "string"
-          },
-          "trs_modified_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_modified_by": {
-            "type": "string"
-          },
-          "trs_status": {
-            "type": "string"
-          },
-          "trs_next_status": {
-            "type": "string"
-          },
-          "trs_process_id": {
-            "type": "string"
-          },
-          "trs_access_profile": {
-            "type": "string"
-          },
-          "trs_org_grp_code": {
-            "type": "string"
-          },
-          "trs_org_code": {
-            "type": "string"
-          },
-          "trs_role_grp_code": {
-            "type": "string"
-          },
-          "trs_role_code": {
-            "type": "string"
-          },
-          "trs_ps_grp_code": {
-            "type": "string"
-          },
-          "trs_ps_code": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "billingparty",
-          "vessels",
-          "personcharge",
-          "emailparty",
-          "mobileparty",
-          "cou_ammount",
-          "amount",
-          "tax",
-          "interest",
-          "cou_amount2",
-          "amount2",
-          "addressline1",
-          "country",
-          "state",
-          "pininput",
-          "remark",
-          "trs_creator_email",
-          "trs_created_date",
-          "trs_created_by",
-          "trs_modified_date",
-          "trs_modified_by",
-          "trs_status",
-          "trs_next_status",
-          "trs_process_id",
-          "trs_access_profile",
-          "trs_org_grp_code",
-          "trs_org_code",
-          "trs_role_grp_code",
-          "trs_role_code",
-          "trs_ps_grp_code",
-          "trs_ps_code"
-        ]
-      },
-      "UpdatebillingDto": {
-        "type": "object",
-        "properties": {
-          "billingparty": {
-            "type": "string"
-          },
-          "vessels": {
-            "type": "string"
-          },
-          "personcharge": {
-            "type": "string"
-          },
-          "emailparty": {
-            "type": "string"
-          },
-          "mobileparty": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "cou_ammount": {
-            "type": "string"
-          },
-          "amount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "tax": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "interest": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "cou_amount2": {
-            "type": "string"
-          },
-          "amount2": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "addressline1": {
-            "type": "string"
-          },
-          "country": {
-            "type": "string"
-          },
-          "state": {
-            "type": "string"
-          },
-          "pininput": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "remark": {
-            "type": "string"
-          },
-          "trs_creator_email": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_created_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_created_by": {
-            "type": "string"
-          },
-          "trs_modified_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_modified_by": {
-            "type": "string"
-          },
-          "trs_status": {
-            "type": "string"
-          },
-          "trs_next_status": {
-            "type": "string"
-          },
-          "trs_process_id": {
-            "type": "string"
-          },
-          "trs_access_profile": {
-            "type": "string"
-          },
-          "trs_org_grp_code": {
-            "type": "string"
-          },
-          "trs_org_code": {
-            "type": "string"
-          },
-          "trs_role_grp_code": {
-            "type": "string"
-          },
-          "trs_role_code": {
-            "type": "string"
-          },
-          "trs_ps_grp_code": {
-            "type": "string"
-          },
-          "trs_ps_code": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "billingparty",
-          "vessels",
-          "personcharge",
-          "emailparty",
-          "mobileparty",
-          "cou_ammount",
-          "amount",
-          "tax",
-          "interest",
-          "cou_amount2",
-          "amount2",
-          "addressline1",
-          "country",
-          "state",
-          "pininput",
-          "remark",
-          "trs_creator_email",
-          "trs_created_date",
-          "trs_created_by",
-          "trs_modified_date",
-          "trs_modified_by",
-          "trs_status",
-          "trs_next_status",
-          "trs_process_id",
-          "trs_access_profile",
-          "trs_org_grp_code",
-          "trs_org_code",
-          "trs_role_grp_code",
-          "trs_role_code",
-          "trs_ps_grp_code",
-          "trs_ps_code"
-        ]
-      },
-      "accountsEntity": {
-        "type": "object",
-        "properties": {
-          "account_id": {
-            "type": "number",
-            "example": "number"
-          },
-          "customer_name": {
-            "type": "string",
-            "example": "string"
-          },
-          "phone_number": {
-            "format": "int64",
-            "type": "integer",
-            "example": "bigint"
-          },
-          "dob": {
-            "type": "number",
-            "example": "number"
-          },
-          "account_type": {
-            "type": "string",
-            "example": "string"
-          },
-          "email": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_creator_email": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_created_date": {
-            "format": "date-time",
-            "type": "string",
-            "example": "datetime"
-          },
-          "trs_created_by": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_modified_date": {
-            "format": "date-time",
-            "type": "string",
-            "example": "datetime"
-          },
-          "trs_modified_by": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_status": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_next_status": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_process_id": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_access_profile": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_org_grp_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_org_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_role_grp_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_role_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_ps_grp_code": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_ps_code": {
-            "type": "string",
-            "example": "string"
-          }
-        },
-        "required": [
-          "account_id",
-          "customer_name",
-          "phone_number",
-          "dob",
-          "account_type",
-          "email",
-          "trs_creator_email",
-          "trs_created_date",
-          "trs_created_by",
-          "trs_modified_date",
-          "trs_modified_by",
-          "trs_status",
-          "trs_next_status",
-          "trs_process_id",
-          "trs_access_profile",
-          "trs_org_grp_code",
-          "trs_org_code",
-          "trs_role_grp_code",
-          "trs_role_code",
-          "trs_ps_grp_code",
-          "trs_ps_code"
-        ]
-      },
-      "CreateaccountsDto": {
-        "type": "object",
-        "properties": {
-          "customer_name": {
-            "type": "string"
-          },
-          "phone_number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "dob": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "account_type": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "trs_creator_email": {
-            "type": "string"
-          },
-          "trs_created_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_created_by": {
-            "type": "string"
-          },
-          "trs_modified_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_modified_by": {
-            "type": "string"
-          },
-          "trs_status": {
-            "type": "string"
-          },
-          "trs_next_status": {
-            "type": "string"
-          },
-          "trs_process_id": {
-            "type": "string"
-          },
-          "trs_access_profile": {
-            "type": "string"
-          },
-          "trs_org_grp_code": {
-            "type": "string"
-          },
-          "trs_org_code": {
-            "type": "string"
-          },
-          "trs_role_grp_code": {
-            "type": "string"
-          },
-          "trs_role_code": {
-            "type": "string"
-          },
-          "trs_ps_grp_code": {
-            "type": "string"
-          },
-          "trs_ps_code": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "customer_name",
-          "phone_number",
-          "dob",
-          "account_type",
-          "email",
-          "trs_creator_email",
-          "trs_created_date",
-          "trs_created_by",
-          "trs_modified_date",
-          "trs_modified_by",
-          "trs_status",
-          "trs_next_status",
-          "trs_process_id",
-          "trs_access_profile",
-          "trs_org_grp_code",
-          "trs_org_code",
-          "trs_role_grp_code",
-          "trs_role_code",
-          "trs_ps_grp_code",
-          "trs_ps_code"
-        ]
-      },
-      "UpdateaccountsDto": {
-        "type": "object",
-        "properties": {
-          "customer_name": {
-            "type": "string"
-          },
-          "phone_number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "dob": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "account_type": {
-            "type": "string"
-          },
-          "email": {
-            "type": "string"
-          },
-          "trs_creator_email": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_created_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_created_by": {
-            "type": "string"
-          },
-          "trs_modified_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_modified_by": {
-            "type": "string"
-          },
-          "trs_status": {
-            "type": "string"
-          },
-          "trs_next_status": {
-            "type": "string"
-          },
-          "trs_process_id": {
-            "type": "string"
-          },
-          "trs_access_profile": {
-            "type": "string"
-          },
-          "trs_org_grp_code": {
-            "type": "string"
-          },
-          "trs_org_code": {
-            "type": "string"
-          },
-          "trs_role_grp_code": {
-            "type": "string"
-          },
-          "trs_role_code": {
-            "type": "string"
-          },
-          "trs_ps_grp_code": {
-            "type": "string"
-          },
-          "trs_ps_code": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "customer_name",
-          "phone_number",
-          "dob",
-          "account_type",
-          "email",
-          "trs_creator_email",
-          "trs_created_date",
-          "trs_created_by",
-          "trs_modified_date",
-          "trs_modified_by",
-          "trs_status",
-          "trs_next_status",
-          "trs_process_id",
-          "trs_access_profile",
-          "trs_org_grp_code",
-          "trs_org_code",
-          "trs_role_grp_code",
-          "trs_role_code",
-          "trs_ps_grp_code",
-          "trs_ps_code"
-        ]
-      },
-      "transactionsEntity": {
-        "type": "object",
-        "properties": {
-          "transaction_id": {
-            "type": "number",
-            "example": "number"
-          },
-          "amount": {
-            "format": "int64",
-            "type": "integer",
-            "example": "bigint"
-          },
-          "transaction_type": {
-            "type": "string",
-            "example": "string"
-          },
-          "account_id": {
+          "age": {
             "type": "number"
           },
           "trs_creator_email": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_created_date": {
-            "format": "date-time",
             "type": "string",
-            "example": "datetime"
+            "format": "date-time"
           },
           "trs_created_by": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_modified_date": {
-            "format": "date-time",
             "type": "string",
-            "example": "datetime"
+            "format": "date-time"
           },
           "trs_modified_by": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_status": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_next_status": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_process_id": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_access_profile": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_org_grp_code": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_org_code": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_role_grp_code": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_role_code": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_ps_grp_code": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           },
           "trs_ps_code": {
-            "type": "string",
-            "example": "string"
+            "type": "string"
           }
         },
         "required": [
-          "transaction_id",
-          "amount",
-          "transaction_type",
-          "account_id",
+          "name",
+          "age",
           "trs_creator_email",
           "trs_created_date",
           "trs_created_by",
@@ -3899,17 +2019,90 @@
           "trs_ps_code"
         ]
       },
-      "CreatetransactionsDto": {
+      "CreatecollectionDto": {
         "type": "object",
         "properties": {
-          "amount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "transaction_type": {
+          "name": {
             "type": "string"
           },
-          "account_id": {
+          "age": {
+            "type": "number"
+          },
+          "trs_creator_email": {
+            "type": "string"
+          },
+          "trs_created_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "trs_created_by": {
+            "type": "string"
+          },
+          "trs_modified_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "trs_modified_by": {
+            "type": "string"
+          },
+          "trs_status": {
+            "type": "string"
+          },
+          "trs_next_status": {
+            "type": "string"
+          },
+          "trs_process_id": {
+            "type": "string"
+          },
+          "trs_access_profile": {
+            "type": "string"
+          },
+          "trs_org_grp_code": {
+            "type": "string"
+          },
+          "trs_org_code": {
+            "type": "string"
+          },
+          "trs_role_grp_code": {
+            "type": "string"
+          },
+          "trs_role_code": {
+            "type": "string"
+          },
+          "trs_ps_grp_code": {
+            "type": "string"
+          },
+          "trs_ps_code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "age",
+          "trs_creator_email",
+          "trs_created_date",
+          "trs_created_by",
+          "trs_modified_date",
+          "trs_modified_by",
+          "trs_status",
+          "trs_next_status",
+          "trs_process_id",
+          "trs_access_profile",
+          "trs_org_grp_code",
+          "trs_org_code",
+          "trs_role_grp_code",
+          "trs_role_code",
+          "trs_ps_grp_code",
+          "trs_ps_code"
+        ]
+      },
+      "UpdatecollectionDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "age": {
             "type": "integer",
             "format": "int32"
           },
@@ -3962,93 +2155,8 @@
           }
         },
         "required": [
-          "amount",
-          "transaction_type",
-          "account_id",
-          "trs_creator_email",
-          "trs_created_date",
-          "trs_created_by",
-          "trs_modified_date",
-          "trs_modified_by",
-          "trs_status",
-          "trs_next_status",
-          "trs_process_id",
-          "trs_access_profile",
-          "trs_org_grp_code",
-          "trs_org_code",
-          "trs_role_grp_code",
-          "trs_role_code",
-          "trs_ps_grp_code",
-          "trs_ps_code"
-        ]
-      },
-      "UpdatetransactionsDto": {
-        "type": "object",
-        "properties": {
-          "amount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "transaction_type": {
-            "type": "string"
-          },
-          "account_id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "trs_creator_email": {
-            "type": "string",
-            "example": "string"
-          },
-          "trs_created_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_created_by": {
-            "type": "string"
-          },
-          "trs_modified_date": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "trs_modified_by": {
-            "type": "string"
-          },
-          "trs_status": {
-            "type": "string"
-          },
-          "trs_next_status": {
-            "type": "string"
-          },
-          "trs_process_id": {
-            "type": "string"
-          },
-          "trs_access_profile": {
-            "type": "string"
-          },
-          "trs_org_grp_code": {
-            "type": "string"
-          },
-          "trs_org_code": {
-            "type": "string"
-          },
-          "trs_role_grp_code": {
-            "type": "string"
-          },
-          "trs_role_code": {
-            "type": "string"
-          },
-          "trs_ps_grp_code": {
-            "type": "string"
-          },
-          "trs_ps_code": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "amount",
-          "transaction_type",
-          "account_id",
+          "name",
+          "age",
           "trs_creator_email",
           "trs_created_date",
           "trs_created_by",

@@ -8,7 +8,7 @@ pipeline {
     }
     environment {
         DOCKERHUB_USERNAME = "192.168.2.164:5000"
-        APP_NAME = "tg2-uf-v11"
+        APP_NAME = "a001-uf-v1"
         IMAGE_NAME = "${DOCKERHUB_USERNAME}/${APP_NAME}"
         BUILD_NUMBER = "${BUILD_NUMBER}"
         GITHUB_CREDENTIALS = "GIT_HUB_PAT"
@@ -26,21 +26,21 @@ pipeline {
         stage('Code Checkout') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${GITHUB_CREDENTIALS}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/TorusDev2023/TGA_TURBO.git'
+                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/TorusDev2023/Claims5UF.git'
                 }
             }
         }
 
-        stage('Detect Changes in CT003 App') {
+        stage('Detect Changes in CT266 App') {
             steps {
                 script {
                     def diff = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
-                    if (diff.split('\n').any { it.startsWith('apps/CT003/CG/TG2/v11/Next-uf/') }) {
+                    if (diff.split('\n').any { it.startsWith('apps/CT266/AG001/A001/v1/Next-uf/') }) {
                         env.NEXT_UF_CHANGED = "true"
-                        echo "Changes detected in apps/CT003/CG/TG2/v11/Next-uf"
+                        echo "Changes detected in apps/CT266/AG001/A001/v1/Next-uf"
                     } else {
                         env.NEXT_UF_CHANGED = "false"
-                        echo "No changes in apps/CT003/CG/TG2/v11/Next-uf. Skipping build and deployment stages."
+                        echo "No changes in apps/CT266/AG001/A001/v1/Next-uf. Skipping build and deployment stages."
                     }
                 }
             }
@@ -54,7 +54,7 @@ pipeline {
                 script {
                     docker.withRegistry("http://${DOCKERHUB_USERNAME}", '') {
                         sh """
-                        docker build -t ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG} -f apps/CT003/CG/TG2/v11/Next-uf/Dockerfile apps/CT003/CG/TG2/v11/Next-uf
+                        docker build -t ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG} -f apps/CT266/AG001/A001/v1/Next-uf/Dockerfile apps/CT266/AG001/A001/v1/Next-uf
                         docker push ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG}
                         """
                     }
@@ -68,7 +68,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CT003/CG/TG2/v11/Next-uf/kubernetes/deploymentservice.yaml"
+                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CT266/AG001/A001/v1/Next-uf/kubernetes/deploymentservice.yaml"
                 }
             }
         }
@@ -80,7 +80,7 @@ pipeline {
             steps {
                 script {
                     withKubeConfig(credentialsId: 'kubernetes-165', serverUrl: 'https://lb.kubesphere.local:6443') {
-                        sh "kubectl apply -f apps/CT003/CG/TG2/v11/Next-uf/kubernetes/deploymentservice.yaml"
+                        sh "kubectl apply -f apps/CT266/AG001/A001/v1/Next-uf/kubernetes/deploymentservice.yaml"
                     }
                 }
             }

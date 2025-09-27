@@ -23,7 +23,7 @@ const TopNav = ({
   selectionColor = '#fff',
   brandColor = '#fff',
   hoverColor = '#fff',
-  // topbarColor = '#fff',
+ // topbarColor = '#fff',
   appName,
   logo,
   userDetails
@@ -34,10 +34,10 @@ const TopNav = ({
   selectionColor: string
   brandColor: string
   hoverColor: string
-  //  topbarColor: string
+//  topbarColor: string
   appName: string
   logo?: string
-  userDetails: any
+  userDetails:any
 }) => {
   const router = useRouter()
   const token: string = getCookie('token')
@@ -122,7 +122,7 @@ const TopNav = ({
   async function logout() {
     localStorage.clear()
     deleteAllCookies()
-    window.location.href = '/ct003/cg/tg2/v11'
+    window.location.href = '/ct266/ag001/a001/v1'
   }
   const hasMatchingName = (obj: any, input: string): boolean => {
     if (typeof obj !== 'object' || obj === null) return false
@@ -296,7 +296,7 @@ const TopNav = ({
                   avatar={userDetails?.profile}
                   {...props}
                 >
-                  <Text>{user}</Text>
+                 <Text>{user}</Text>
                 </UserLabel>
               )}
               items={[

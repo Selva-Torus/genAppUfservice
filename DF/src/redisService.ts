@@ -22,23 +22,6 @@ let redis
     console.error('Error connecting to Redis:', error);
   });
 
-//export const redis = new Redis({
-  //host: process.env.HOST,
-  //port: parseInt(process.env.PORT),
-//}).on('error', (err) => {
-  //Logger.log('Redis Client Error', err);
-  //throw err;
-//});
-
-//export const client = new MongoClient(process.env.MONGODB_URL);
-//client.connect()
-  //.then(() => {
-    //console.log('Connected to the database successfully!');
-  //})
-  //.catch((err) => {
-    //console.error('Error connecting to the database:', err);
-  //});
-//var db = client.db(process.env.MONGODB_NAME)
 
 @Injectable()
 export class RedisService {
@@ -88,7 +71,7 @@ export class RedisService {
     try {    
       return await redis.call('JSON.GET', key, path);    
     } catch (error) {
-      console.log('ERROR',error.message); 
+      //console.log('ERROR',error.message); 
       let mongoResult = await this.getDocument(collectionName,key,path)    
       if(mongoResult && mongoResult?.length>0){
         return mongoResult
@@ -128,25 +111,25 @@ export class RedisService {
    */
    async setJsonData(key: string, value: any, collectionName:string, path?: string) {
     try {      
-      if (path) {       
+      if (path) {      
         var defpath = '.' + path
       } else {
         var defpath = '$';
       }
+        await this.exist(key,collectionName)       
+        let redisResult = await redis.call('JSON.SET', key, defpath, value);
       
-      let redisResult = await redis.call('JSON.SET', key, defpath, value);
-      // if(redisResult == 'OK')
-      //   var mongoResult:any  = await this.setDocument(collectionName,key, JSON.parse(value),path)
+        if(redisResult == 'OK')
+          var mongoResult:any  = await this.setDocument(collectionName,key, JSON.parse(value),path)
+              
+        if(mongoResult?.value)
+          return 'Value Stored';    
       
-      // if(mongoResult?.value)
-        return 'Value Stored';    
-
-
+ 
     } catch (error) {
       throw error;
     }
   }
-
   //To store Stream data in redis
  /**
    * Stores stream data in Redis.
@@ -385,6 +368,14 @@ export class RedisService {
     }
   }
 
+  async deleteWithEntryId(streamName, msgId) {
+    try {      
+      return await redis.call('XDEL',streamName,msgId) 
+    } catch (error) {
+      throw error;
+    }
+  }
+
 
 
    /**
@@ -581,7 +572,7 @@ export class RedisService {
       }    
           
       var result = await collection.find(customId).toArray();  
-      console.log(1,JSON.stringify(result));     
+     // console.log(1,JSON.stringify(result));     
       if (result?.length>0) {       
         if(path){   
           return await _.get(result?.[0],'value'+path)         

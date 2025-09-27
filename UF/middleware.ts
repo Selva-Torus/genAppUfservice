@@ -3,7 +3,31 @@ import { NextRequest, NextResponse } from 'next/server'
 export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value
   const path = request.nextUrl.pathname
-  const landingScreen = '/user'
+   let screenName:string = 'CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1';
+    let screenDetails: any = {
+        keys:[
+  {
+    "screensName": "userform-v1",
+    "ufKey": "CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1"
+  }
+]
+    }
+    screenDetails = screenDetails.keys
+        
+    if (screenName === 'User Screen') {
+        screenName = 'user'
+    }else if (screenName === 'Logs Screen') {
+        screenName = 'logs'
+    }
+   else{
+        screenDetails.forEach((screen: any)   => {
+        if (screenName === screen.ufKey) {
+            screenName = screen.screensName
+        }  
+        });
+        screenName =screenName.split('-')[0]+'_'+screenName.split('-').at(-1)
+    }
+  const landingScreen = `/${screenName}`
 
   if (!token && path !== '/')
     return NextResponse.redirect(

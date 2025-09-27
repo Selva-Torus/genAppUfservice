@@ -30,12 +30,12 @@ const ContextSelector = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false)
   const [time, setTime] = useState('')
-    let landingScreen:string = 'User Screen';
+    let landingScreen:string = 'CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1';
        let screenDetails: any = {
            keys:[
   {
-    "screensName": "formitem-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1"
+    "screensName": "userform-v1",
+    "ufKey": "CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1"
   }
 ]
         }
@@ -128,7 +128,8 @@ const ContextSelector = () => {
         {
           psCode: selectedPsCode,
           selectedAccessProfile: selectedAccessProfile[0],
-          dap : accessProfiles.find((item) => item.accessProfile === selectedAccessProfile[0])?.dap ?? undefined
+          dap : accessProfiles.find((item) => item.accessProfile === selectedAccessProfile[0])?.dap ?? undefined,
+          ufClientType: 'UFW'
         },
         {
           headers: {
@@ -144,7 +145,18 @@ const ContextSelector = () => {
             JSON.stringify({ psCode: selectedPsCode, selectedAccessProfile })
           )
         )
-
+      const ORM: any = decodeToken(res.data.token)
+        sessionStorage.setItem(
+          'organizationDetails',
+          JSON.stringify({
+            orgGrpCode: ORM.orgGrpCode,
+            orgCode: ORM.orgCode,
+            roleGrpCode: ORM.roleGrpCode,
+            roleCode: ORM.roleCode,
+            psGrpCode: ORM.psGrpCode,
+            psCode: ORM.psCode
+          })
+        )
         // here we have to set the default authentication route
         router.push(landingScreen)
         setLoading(false)

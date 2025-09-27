@@ -1,51 +1,85 @@
-import { BadRequestException, CanActivate, ExecutionContext,Injectable, Logger } from "@nestjs/common";
-import { RedisService } from "src/redisService";
-import { SecurityService } from "src/securityService";
-import { CommonService } from "./common.Service";
+import { BadRequestException, CanActivate, ExecutionContext,Injectable, Logger, UnauthorizedException } from "@nestjs/common";
+import { FastifyRequest } from 'fastify';
+import { SecurityService } from './securityService';
+import { CommonService } from './common.Service';
+import { RedisService } from './redisService';
 
 
-declare module 'express-session' {
-  interface Session {
-    psArray: Array<any>;
-  }
-}
+//declare module 'express-session' {
+  //interface Session {
+    //psArray: Array<any>;
+  //}
+//}
+
 @Injectable()
 export class AuthGuard implements CanActivate {
- constructor( private readonly securityService: SecurityService,private readonly teCommonService: CommonService,private readonly redisService: RedisService) {}
+   private readonly logger = new Logger(AuthGuard.name);
+  constructor(
+    private readonly securityService: SecurityService,
+    private readonly teCommonService: CommonService,
+    private readonly redisService: RedisService,
+  ) {}
  
- /**
-+   * This function is a guard which checks whether the user is logged in and has the required permissions to access the route.
-+   * If the user is logged in and has the required permissions, the function returns true and the request is allowed to continue.
-+   * If the user is not logged in or does not have the required permissions, the function returns false and the request is blocked.
-+   * @param context The context of the request.
-+   * @returns A boolean indicating whether the request is allowed to continue.
-+   */
- async canActivate(context: ExecutionContext): Promise<boolean>{
-  const request = context.switchToHttp().getRequest();
-  try {
-    
-    if(await this.redisService.exist(request.body.key+'PO',process.env.CLIENTCODE)){
-      var seckey = request.body.key+'PO'
-    }else if(await this.redisService.exist(request.body.key+'DO',process.env.CLIENTCODE)){
-      var seckey = request.body.key+'DO'
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<FastifyRequest>();
+
+    const authHeader = request.headers.authorization;
+    if (!authHeader) {
+      throw new UnauthorizedException('Authorization header is missing');
     }
-     const sjsoncheck = await this.securityService.getSecurityTemplate(seckey,request.session.token)
-     if(sjsoncheck){  
-      if(Array.isArray(sjsoncheck)){
-        if(sjsoncheck.length > 0){
-          Logger.log("Auth Guard started..")
-          request.session.node = sjsoncheck 
-          return true
-        }  
-      } 
-    }else{
-      await this.teCommonService.getTSL(request.body.key,request.session.token,'Badrequest in security template',400)
-      throw 'Badrequest in security template'
+
+    const [type, token] = authHeader.split(' ');
+
+    if (type !== 'Bearer' || !token) {
+      throw new UnauthorizedException('Invalid authorization format. Expected "Bearer <token>"');
     }
-    
-  } catch (error) {
-    var tslerror = await this.teCommonService.getTSL(request.body.key,request.session.token,error,400)
-    throw new BadRequestException(tslerror)
-  } 
- }
+
+    try {
+      
+      const body = request.body as any; 
+      
+      if (!body || typeof body.key !== 'string') {
+        throw new Error('Invalid request body or key not found');
+      }
+      const key = body.key;
+
+
+      let seckey: string;
+      if (await this.redisService.exist(key + 'PO', process.env.CLIENTCODE)) {
+        seckey = key + 'PO';
+      } else if (await this.redisService.exist(key + 'DO', process.env.CLIENTCODE)) {
+        seckey = key + 'DO';
+      }
+
+      if (!seckey) {
+        throw new Error('Security key not found in Redis');
+      }
+
+      const sjsoncheck = await this.securityService.getSecurityTemplate(seckey, token);
+      if (sjsoncheck && Array.isArray(sjsoncheck) && sjsoncheck.length > 0) {
+        this.logger.log("Auth Guard started..");
+        
+     
+        if ((request as any).session) {
+          (request as any).session.node = sjsoncheck;
+        } else {
+          this.logger.error('request.session is not available');
+        }
+        
+        return true;
+      } else {
+        await this.teCommonService.getTSL(key, token, 'Badrequest in security template', 400);
+        throw new BadRequestException('Badrequest in security template');
+      }
+
+    } catch (error) {
+      const tslerror = await this.teCommonService.getTSL(
+        (request.body as any)?.key,
+        token,
+        error instanceof Error ? error.message : String(error),
+        400,
+      );
+      throw new BadRequestException(tslerror);
+    }
+  }
 }

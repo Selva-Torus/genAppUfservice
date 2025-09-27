@@ -16,7 +16,7 @@ export async function decryptData(value:any, dpdKey:string) {
           }
         }
         const Method = Credentials.type;
-        const context = "ct003_cg_tg2_v11";
+        const context = "ct266_ag001_a001_v1";
         let getCredentials: any = {
           encCredentials:Credentials,
           encMethod:Method

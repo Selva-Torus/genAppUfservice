@@ -36,6 +36,18 @@ export class AppController {
       return result
     }
 
+    @Post('subFlowLog')
+    async getSubFlowLog(@Body() input): Promise<any> {
+      const { dpdKey,method } = input;
+    
+      let result:any =  await this.apiService.getSubFlowLog(input.key,input.upId)
+      if(dpdKey && method){
+        result["dpdKey"] = dpdKey
+        result["method"] = method        
+      }
+      return result
+    }
+
     @Post('dropLog')
     async deleteLog(@Body() input): Promise<any> {
       const { dpdKey,method } = input;

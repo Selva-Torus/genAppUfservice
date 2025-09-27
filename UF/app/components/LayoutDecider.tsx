@@ -35,15 +35,15 @@ const LayoutDecider = ({
     TotalContext
   ) as TotalContextProps
   const encryptionFlagApp: boolean = false;    
-  const encryptionDpd: string = "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:CG:AFGK:TG2:AFK:TG2DPD:AFVK:v1";
+  const encryptionDpd: string = "CK:CT266:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:myDPD:AFVK:v1";
   const encryptionMethod: string = "";
   const brandColor = property?.brandColor || '#1F2D3D'
   const hoverColor = property?.hoverColor || '#1F2D3D'
   const selectionColor = property?.selectionColor || '#1F2D3D'
   const sidebarColor = property?.menubarColor || '#1F2D3D'
  // const topbarColor = property?.topbarColor || ''
-  const logo = "https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT003/resources/images/image.jfif"
-  const appName = "TG2"
+  const logo = ""
+  const appName = "application"
   const toast = useInfoMsg()
   const [loading, setLoading] = useState(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
@@ -73,326 +73,19 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
-    "menuGroup": "form",
-    "menuGroupLabel": "form1",
+    "menuGroupLabel": "Userform",
     "screenDetails": [
       {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
+        "name": "userform",
+        "key": "CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1",
         "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
+          "Template 1"
         ],
         "static": false
       }
     ],
     "items": []
-  },
-  {
-    "menuGroupLabel": "Mycomponents",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form2",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form3",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form4",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form5",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form6",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form7",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form8",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form9",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form10",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form11",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form12",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form13",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form14",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form15",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form16",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form17",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form18",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
+  }
 ]
   const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token)
@@ -520,13 +213,17 @@ const LayoutDecider = ({
           },
           params: {
             dpdKey: encryptionDpd,
-            method: encryptionMethod
+            method: encryptionMethod,
+            key:"Logs Screen"
           }
         })
       }else{
         myAccount = await AxiosService.get('/UF/myAccount-for-client', {
           headers: {
             Authorization: `Bearer ${token}`
+            },
+          params: {
+            key:"Logs Screen"
           }
         })
       }
@@ -574,7 +271,7 @@ const LayoutDecider = ({
   }
 
    if (loading == true){
-    return (<div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><img src="https://varnishdev.gsstvl.com/files/torus/9.1/CT003/resources/splashImage/loading.gif" alt="loadingImage" /></div>);
+    return (<div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><span>Loading...</span></div>);
   }
   return (
     <div className={`flex h-screen w-screen flex-col`}>

@@ -64,7 +64,7 @@ export class CommonService{
   }
   async onModuleInit() {
     const collection = client.db("UploadFile")
-    this.bucket = new GridFSBucket(collection, { bucketName: 'CT003/CG/TG2/v11' });
+    this.bucket = new GridFSBucket(collection, { bucketName: 'CT266/AG001/A001/v1' });
   }
   private readonly logger = new Logger(CommonService.name) 
 
@@ -106,7 +106,7 @@ export class CommonService{
         }
 
       } catch (error) {
-        console.log('ERROR',error);
+        //console.log('ERROR',error);
         throw error
       }
     }
@@ -118,7 +118,7 @@ export class CommonService{
           let encryptCredentials = getCredentials?.encCredentials
           let encMethod = getCredentials?.encMethod
           
-          console.log('encryptCredentials',encryptCredentials);
+          //console.log('encryptCredentials',encryptCredentials);
 
           if(encMethod && encryptCredentials){
             if(encMethod == 'vault'){
@@ -185,7 +185,7 @@ export class CommonService{
           let encryptCredentials = getCredentials.encCredentials
           let encMethod = getCredentials.encMethod
   
-          console.log('encryptCredentials',encryptCredentials);  
+         // console.log('encryptCredentials',encryptCredentials);  
           if(encMethod && encryptCredentials){
             if(encMethod == 'vault'){
               const vaultClient = vault({
@@ -285,13 +285,13 @@ export class CommonService{
       return files[0];
     }
 
-    async uploadFile(file: Express.Multer.File, context:string) {
-      const encrypted = await this.encryptFile(file.buffer, context);
-      const uploadStream = this.bucket.openUploadStream(file.originalname, {
-        metadata: { isEncrypted: true },
+    async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number },context: string): Promise<any> {
+      //const encrypted = await this.encryptFile(file.buffer, context);
+      const uploadStream = this.bucket.openUploadStream(file.filename, {
+        metadata: { isEncrypted: false },
         contentType: file.mimetype,
       });
-      uploadStream.end(Buffer.from(encrypted)); 
+      uploadStream.end(Buffer.from(file.buffer)); 
       return { message: 'Encrypted file uploaded successfully', fileId: uploadStream.id.toString() };
     }
    
@@ -301,10 +301,10 @@ export class CommonService{
       return new Promise<Buffer>((resolve, reject) => {
         downloadStream.on('data', (chunk) => chunks.push(chunk));
         downloadStream.on('end', async () => {
-          const ciphertext = Buffer.concat(chunks).toString(); 
+          const ciphertext = Buffer.concat(chunks)
           try {
-            const decrypted = await this.decryptFile(ciphertext,context);
-            resolve(decrypted);
+            //const decrypted = await this.decryptFile(ciphertext,context);
+            resolve(ciphertext);
           } catch (err) {
             reject(err);
           }
@@ -380,7 +380,7 @@ export class CommonService{
           errorMessage,
           statusCode,
         );
-        throw errObj;
+        //throw errObj;
       }
 
       async readMDK(readMDdto: any) {
@@ -640,8 +640,10 @@ export class CommonService{
       .catch((err) => {throw err});  
     }
 
-
-  
+    async axiosPostCall(url,body,headers?){ 
+      let response = await axios.post(url,body,headers)
+      return response.data;
+    }  
 
     
     async responseData(statuscode:any, data: any,): Promise<any> {
@@ -665,8 +667,10 @@ export class CommonService{
       return await axios.get(url,headers)
       .then((res) => this.responseData(res.status, res.data).then((res) => res))
       .catch((err) => {throw err});  
-    }  
-    async getRuleCodeMapper(currentNode, inputparam,processedKey,fabric  ){
+    } 
+    
+    
+     async getRuleCodeMapper(currentNode, inputparam,processedKey,fabric ,SessionInfo ){
       try {
         var ResultObj = {}
         var rule = currentNode.rule
@@ -683,24 +687,29 @@ export class CommonService{
                 throw 'Field not found in rule'
             }            
           }
-        }
+        
         var gparamreq = {}; 
-          if(inputparam && inputparam[field]){
-            gparamreq[field] = inputparam[field]
+        if(field) {
+          let data = await this.getNestedValue(inputparam, field)        
+          if(data){          
+            //gparamreq[field] = data
+            await this.setNestedValue(gparamreq, field, data)          
             var goruleres = await this.ruleEngine.goRule(rule, gparamreq) 
             
             if(Object.keys(goruleres.result).length > 0){
               var zenresult = goruleres.result.output
             }else{
-              throw `Rule doesn't matched with this value ${inputparam[field]}`
+              throw `Rule doesn't matched with this value ${data}`
             } 
           }else{
             throw `${field} not found in given request to take decision`                    
-          }       
+          }  
+        }           
+      }     
       }   
       //customCode='function test(){ let shama = shama_val,  sum = sum_val,  salary = salary_val; return {shama:shama,sum:sum,salary:salary}}test();'
       if (customCode ) {
-        var customcoderesult = await this.codeService.customCode(processedKey, customCode, inputparam,fabric)
+        var customcoderesult = await this.codeService.customCode(processedKey, customCode, inputparam,fabric,SessionInfo)
       }    
   
       if(zenresult)
@@ -713,6 +722,46 @@ export class CommonService{
       } catch (error) {
         throw error
       }          
+    }
+
+     getNestedValue(obj: any, path: string): any {
+      return path.split('.').reduce((acc, part) => {
+        const match = part.match(/(\w+)\[(\d+)\]/);
+        if (match) {
+          const [, key, index] = match;
+          return acc?.[key]?.[parseInt(index)];
+        }
+        return acc?.[part];
+      }, obj);
+    }
+
+      setNestedValue(obj: any, path: string, value: any): void {
+      const parts = path.split('.');
+      let current = obj;
+
+      for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        const match = part.match(/(\w+)\[(\d+)\]/);
+
+        if (match) {
+          const [, key, indexStr] = match;
+          const index = parseInt(indexStr);
+          current[key] = current[key] || [];
+          current[key][index] = current[key][index] || {};
+          if (i === parts.length - 1) {
+            current[key][index] = value;
+          } else {
+            current = current[key][index];
+          }
+        } else {
+          if (i === parts.length - 1) {
+            current[part] = value;
+          } else {
+            current[part] = current[part] || {};
+            current = current[part];
+          }
+        }
+      }
     }
 
     async getTPL(key: any, upId: any,pfjson:any,status:string,stoken:any,fabric:string,sourceStatus?:string,request?:any,response?:any){
@@ -743,10 +792,7 @@ export class CommonService{
 
         if(status == 'Success'){
           if(request)
-            processInfo['request'] = request;  
-          
-          if(pfjson.nodeType == 'subflow_node')
-            console.log('RESPONSE',response);
+            processInfo['request'] = request;                     
                  
           if(response){
             let childObj = {}
@@ -882,9 +928,11 @@ export class CommonService{
        if(stoken){
         // let token:any = this.jwtService.decode(stoken,{ json: true })
         let token = await this.MyAccountForClient(stoken)
+        if(token){
         sessionInfo['user'] = token.loginId || 'user'    
         sessionInfo['accessProfile'] = token.accessProfile 
-        sessionInfo['client'] = token.client     
+        sessionInfo['client'] = token.client   
+        }  
         }else{
           sessionInfo = commonerr
         }    
@@ -893,15 +941,15 @@ export class CommonService{
         let logs = {}
         logs['sessionInfo'] = sessionInfo
         if(key){
-          if(fabric == 'PF-PFD' || fabric == 'DF-DFD')
+          if(fabric == 'PF-PFD' || fabric == 'DF-DFD' || fabric == 'PF-SFD' )
             logs['processInfo'] = prcdet
           }
         logs['errorDetails'] = errorDetails   
         
         if(typeof key != 'string')
         key = 'commonError'
-        tenant=tenant || "CT003"
-        app=app ||  "TG2"
+        tenant=tenant || "CT266"
+        app=app ||  "A001"
         await this.redisService.setStreamData(tenant+'-'+app+'-TSL',key,JSON.stringify(logs))    
         return logs
 
@@ -910,7 +958,7 @@ export class CommonService{
       }
     }
 
-    async MyAccountForClient(token: string) {
+   async MyAccountForClient(token: string) {
       const ag = process.env.APPGROUPCODE;
       const app = process.env.APPCODE;
       try {
@@ -926,11 +974,13 @@ export class CommonService{
           }
          const responseFromRedis = await this.redisService.getJsonData(userCachekey,process.env.CLIENTCODE);
           const userList = JSON.parse(responseFromRedis);
-          const reqiredUser = userList.find(
-            (user) => user.loginId === payload.loginId,
-          );
-          delete reqiredUser.password;
-          return { ...reqiredUser, client: payload.client };
+          if(userList?.length>0){
+            const reqiredUser = userList.find(
+              (user) => user.loginId === payload.loginId,
+            );
+            delete reqiredUser.password;
+            return { ...reqiredUser, client: payload.client };
+          } 
         }
       } catch (error) {
         throw new BadRequestException(error)
@@ -1002,7 +1052,7 @@ export class CommonService{
         
         const allCollections:any = await this.redisService.listCollections(fileName);
        
-        if(!(Array.isArray(allCollections)) && allCollections?.length == 0) throw `Data not found in ${fileName}`
+        if(!allCollections || !(Array.isArray(allCollections)) || allCollections?.length == 0) throw `Data not found in ${fileName}`
 
         const targetCollections = allCollections.filter(name => name.endsWith(type));
 
@@ -1036,10 +1086,45 @@ export class CommonService{
       }
     }
  
-    @Cron(CronExpression.EVERY_30_SECONDS)
+    async getSubFlowLog(SubFlowKey,subFlowUpId){
+      try {
+        if(!SubFlowKey || !subFlowUpId) throw 'Invalid Payload'
+
+        let tenant = await this.splitcommonkey(SubFlowKey,'CK')
+        let fabric = await this.splitcommonkey(SubFlowKey,'FNK')
+        let appgroupcode = await this.splitcommonkey(SubFlowKey,'CATK')
+        let appcode = await this.splitcommonkey(SubFlowKey,'AFGK')
+      
+        let subFlowResult:any = await this.getMongoProcessLogs({
+          tenant,
+          fabric:[fabric],
+          appgroup:{
+            code:appgroupcode
+          },
+          app:{
+            code:appcode
+          },
+          page: 1,
+          limit: 10,
+          searchParam: subFlowUpId
+        },'TPL')
+
+        if(subFlowResult?.data && Array.isArray(subFlowResult?.data) && subFlowResult?.data.length > 0){         
+          return Object.values(subFlowResult.data[0]['AFSK']).flat()
+        }else{
+          return []
+        }
+
+      } catch (error) {
+        //console.log('ERROR', error);        
+        throw error
+      }
+    }
+    
+    @Cron(process.env.MY_CRON)
     async prcLog(): Promise<any> { //Default Mongo
       try {       
-        this.logger.log('ProcessLog start Listening')
+        //this.logger.log('ProcessLog start Listening')
        
         let tplstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TPL'
        let tslstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TSL'
@@ -1111,11 +1196,17 @@ export class CommonService{
             let AFVK = await this.splitcommonkey(strmarr[s][0], 'AFVK')
             
             let isDocExist:any = await this.mongoService.existsDocument(streamName,strmarr[s][0])
-            if(isDocExist && Object.keys(isDocExist).length > 0 && isDocExist._id){
-              await this.mongoService.appendFileInToDocument(streamName,strmarr[s][0],'value.AFSK.'+AfskValue,afskvalue);
-              resultFlg++                          
+             if(isDocExist && Object.keys(isDocExist).length > 0 && isDocExist._id){
+              let appendRes:any = await this.mongoService.appendFileInToDocument(streamName,strmarr[s][0],'value.AFSK.'+AfskValue,afskvalue);
+                        
+              resultFlg++ 
+              if(appendRes.modifiedCount){
+                await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])   
+                await this.redisService.deleteWithEntryId(streamName,msgid[s])                            
+              }
             }else{
-              await this.mongoService.insertDocument(streamName,strmarr[s][0],{
+              await db.collection(streamName).createIndex({ "value.CK": 1, "value.FNGK": 1, "value.FNK": 1, "value.CATK": 1, "value.AFGK": 1, "value.AFK": 1, "value.AFVK": 1, "value.DATE": 1, "value.USER": 1 });
+              let insertRes:any = await this.mongoService.insertDocument(streamName,strmarr[s][0],{
                 CK,
                 FNGK,
                 FNK,
@@ -1130,8 +1221,13 @@ export class CommonService{
                   {[AfskValue]:[afskvalue]}
                 
               })
-              resultFlg++                          
-            }         
+             
+              resultFlg++ 
+              if(insertRes.insertedId) {
+                await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])    
+                await this.redisService.deleteWithEntryId(streamName,msgid[s])                    
+              }     
+            }          
           }
          
           if(resultFlg == msgid.length){           
