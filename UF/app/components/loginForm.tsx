@@ -281,7 +281,7 @@ const Login = ({ logo, appName = "application", brandColor = "#ffffff", loginTyp
                   Google
                 </Button>
                 <Button
-                  onClick={() => singleSignOn('github')}
+                  onClick={() => singleSignOn('fusionauth')}
                   width='max'
                   size='l'
                   view='raised'
