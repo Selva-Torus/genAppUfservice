@@ -16,12 +16,12 @@ const ParentComponent = () => {
   const [nodeData, setNodeData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [app, setApp] = useState({
-    code: 'A001',
-    name: 'application'
+    code: 'TG4CGFA',
+    name: 'TG4CGFA'
   })
   const [appGroup, setappGroup] = useState({
-    code: 'AG001',
-    name: 'appgroup'
+    code: 'CGFA',
+    name: 'CGFA'
   })
   const token: string = getCookie('token')
   const decodedTokenObj: any = decodeToken(token)
@@ -39,16 +39,16 @@ const ParentComponent = () => {
   })
   const search = useDeferredValue(searchTerm)
   const suffixes: any = {
-  DF: ["DFD"],
-  UF: ["UFM", "UFW"],
-  PF: ["PFD"],
-  API: ["APID", "ERD"],
-  AIF: ["AIFD"],
-  CDF: ["DPD", "IFD"],
-};  
+    DF: ['DFD'],
+    UF: ['UFM', 'UFW'],
+    PF: ['PFD', 'CAFD', 'PAFD'],
+    API: ['MSD', 'ERD', 'APIPD', 'APICD'],
+    AIF: ['AIFD'],
+    CDF: ['DPD', 'IFD']
+  };
   let payload:any = useMemo(() => {
     return {
-      tenant: 'CT266',
+      tenant: 'TT407',
        fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
             suffixes[prefix]
               ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
@@ -205,7 +205,7 @@ const ParentComponent = () => {
     return () => {
       controller.abort()
     }
-  }, [jsonData.page, jsonData.limit, search, activeTab , range])
+  }, [jsonData.page, jsonData.limit, search, activeTab , range, fabrics])
 
   const handlePageChange = (newPage: number, newPageSize: number) => {
     setJsonData(prev => ({

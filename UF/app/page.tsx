@@ -13,17 +13,17 @@ export default function HomePage() {
   const token = getCookie('token');
   const decodedToken = decodeToken(token)
   const encryptionFlagApp: boolean = false;    
-  let landingScreen:string = 'CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1';
+  let landingScreen:string = 'Logs Screen';
   const toast = useInfoMsg()
   let screenDetails: any = [
   {
-    "screensName": "userform-v1",
-    "ufKey": "CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1"
+    "screensName": "test-v1",
+    "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1"
   }
 ]
   const securityCheck = async () => {
     try {
-      const encryptionDpd: string = "CK:CT266:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:myDPD:AFVK:v1";
+      const encryptionDpd: string = "CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:forFA:AFVK:v1";
       const encryptionMethod: string = "";
       let introspect:any;
       if(encryptionFlagApp){

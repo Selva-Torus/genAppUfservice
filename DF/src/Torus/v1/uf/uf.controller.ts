@@ -727,9 +727,9 @@ export class UfController {
     @Req() req: any
   ) {
     const { username, password, dpdKey, method, ufClientType } = body;
-    const { DEFAULT_AUTHENTICATION , FUSIONAUTH_TENANTID , FUSIONAUTH_APPLICATIONID } = process.env;
+    const { DEFAULT_AUTHENTICATION , FUSIONAUTH_TENANTID , FUSIONAUTH_APPLICATIONID,FUSIONAUTH_APPCLIENTSECRET } = process.env;
     let result : any;
-    if(DEFAULT_AUTHENTICATION == "fusionauth" &&  FUSIONAUTH_TENANTID && FUSIONAUTH_APPLICATIONID) {
+    if(DEFAULT_AUTHENTICATION == "fusionauth" &&  FUSIONAUTH_TENANTID && FUSIONAUTH_APPLICATIONID && FUSIONAUTH_APPCLIENTSECRET) {
        result = await this.appService.signInViaIAM(username, password, ufClientType);
     }else{
        result = await this.appService.signIntoTorus(username, password, ufClientType);
@@ -990,6 +990,11 @@ export class UfController {
     const { data } = body;
     return this.appService.postAppUserList(data);
   }
+  @Post('appSecurityTemplateData')
+  async appSecurityTemplateData(@Body() body) {
+    const {data} = body
+    return this.appService.AppSecurityTemplateData(data);
+  }
 
   @Post('setJson')
   async setJson(
@@ -1000,14 +1005,6 @@ export class UfController {
     const data = body.data;
     return await this.appService.setJson(key, data);
   }
-
-  @Post('appUserAddition')
-  async appUserAddition(@Body() body) {
-    const { data } = body;
-    return this.appService.appUserAddition(data);
-  }
-
-
   @Post('uploadimg')
    async post_upload(@Req() req: FastifyRequest) {
       if (!req.isMultipart()) {
@@ -1072,5 +1069,13 @@ export class UfController {
   async oauthSignIn(@Body() body:any) {
     const { user } = body;
     return this.appService.oauthSignIn(user)
+  }
+
+  @Post("getNavbarData")
+  async getNavbarData(@Body() body:any, @Req() req: any) {
+    const { key } = body;
+    const token: string = req.headers.authorization.split(' ')[1];
+    const clientCode: string = process.env.CLIENTCODE;
+    return this.appService.getNavbarData(key,clientCode,token)
   }
 }

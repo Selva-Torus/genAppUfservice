@@ -64,7 +64,7 @@ export class CommonService{
   }
   async onModuleInit() {
     const collection = client.db("UploadFile")
-    this.bucket = new GridFSBucket(collection, { bucketName: 'CT266/AG001/A001/v1' });
+    this.bucket = new GridFSBucket(collection, { bucketName: 'TT407/CGFA/TG4CGFA/v1' });
   }
   private readonly logger = new Logger(CommonService.name) 
 
@@ -670,12 +670,13 @@ export class CommonService{
     } 
     
     
-     async getRuleCodeMapper(currentNode, inputparam,processedKey,fabric ,SessionInfo ){
-      try {
+    async getRuleCodeMapper(currentNode, inputparam,processedKey,fabric ,SessionInfo ){
+      try {       
+        let zenresult
         var ResultObj = {}
         var rule = currentNode.rule
         var customCode = currentNode.code   
-                
+
       if(rule && Object.keys(rule).length > 0){
         var nodes = rule.nodes     
         if(nodes && nodes.length > 0){
@@ -687,54 +688,70 @@ export class CommonService{
                 throw 'Field not found in rule'
             }            
           }
-        
-        var gparamreq = {}; 
-        if(field) {
-          let data = await this.getNestedValue(inputparam, field)        
-          if(data){          
-            //gparamreq[field] = data
-            await this.setNestedValue(gparamreq, field, data)          
-            var goruleres = await this.ruleEngine.goRule(rule, gparamreq) 
+
+          var gparamreq = {}; 
+          if(field) {   
+            let connectedNodeName = field.split('.')[0]
+            let connectedField = field.split('.')[1]
+            console.log(processedKey + ':NPV:'+connectedNodeName+'.PRO');
             
-            if(Object.keys(goruleres.result).length > 0){
-              var zenresult = goruleres.result.output
-            }else{
-              throw `Rule doesn't matched with this value ${data}`
-            } 
-          }else{
-            throw `${field} not found in given request to take decision`                    
-          }  
-        }           
-      }     
+            let afpVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.response',process.env.CLIENTCODE))
+              console.log('connectedField',connectedField);      
+              let data = await this.getNestedValue(afpVal, connectedField)    
+              console.log('data',data);
+              if(data){                
+                await this.setNestedValue(gparamreq, field, data)          
+                var goruleres = await this.ruleEngine.goRule(rule, gparamreq) 
+
+                if(Object.keys(goruleres.result).length > 0){                   
+                  zenresult = goruleres.result.output
+                }else{
+                  throw `Rule doesn't matched with this value ${data}`
+                }                
+              }else{
+                throw `${field} not found in given request to take decision`                    
+              }  
+            // }
+          }               
+        }     
       }   
-      //customCode='function test(){ let shama = shama_val,  sum = sum_val,  salary = salary_val; return {shama:shama,sum:sum,salary:salary}}test();'
+    
       if (customCode ) {
         var customcoderesult = await this.codeService.customCode(processedKey, customCode, inputparam,fabric,SessionInfo)
+        //console.log('customcoderesult',customcoderesult);        
       }    
-  
+      
       if(zenresult)
         ResultObj['rule'] = zenresult
-      
+
       if(customcoderesult)
         ResultObj['code'] = customcoderesult
-       
+
       return ResultObj 
       } catch (error) {
         throw error
       }          
     }
 
-     getNestedValue(obj: any, path: string): any {
-      return path.split('.').reduce((acc, part) => {
-        const match = part.match(/(\w+)\[(\d+)\]/);
-        if (match) {
-          const [, key, index] = match;
-          return acc?.[key]?.[parseInt(index)];
-        }
-        return acc?.[part];
-      }, obj);
-    }
+    getNestedValue(obj: any, path: string): any {           
 
+      let zenresultArr = []               
+      if (obj) {          
+       // if(obj && Array.isArray(obj) && obj.length > 1)
+         // throw 'Array of records found in Decision Node'
+      
+        if(obj && Array.isArray(obj) && obj.length>0){            
+        return obj[0][path]
+
+        }else if(typeof obj == 'object' && Object.keys(obj).length>0){
+          if (obj[path]) {             
+            return obj[path]
+          }
+        }
+      }
+      return zenresultArr
+    }
+    
       setNestedValue(obj: any, path: string, value: any): void {
       const parts = path.split('.');
       let current = obj;
@@ -948,8 +965,8 @@ export class CommonService{
         
         if(typeof key != 'string')
         key = 'commonError'
-        tenant=tenant || "CT266"
-        app=app ||  "A001"
+        tenant=tenant || "TT407"
+        app=app ||  "TG4CGFA"
         await this.redisService.setStreamData(tenant+'-'+app+'-TSL',key,JSON.stringify(logs))    
         return logs
 
@@ -989,7 +1006,7 @@ export class CommonService{
 
 
 
-    async getMongoProcessLogs(input, type): Promise<any> {
+      async getMongoProcessLogs(input, type): Promise<any> {
       try {
         this.logger.log('get MongoProcess started');
 
@@ -1004,27 +1021,27 @@ export class CommonService{
         let fileName = `${tenant}-${app?.code || ''}`;
      
         const filter: any = {
-          'value.CK': tenant,
+          'CK': tenant,
         };
 
         if (user?.length >0 ) {
-          filter['value.USER'] = { $in: user };
+          filter['USER'] = { $in: user };
         }
 
         if (fabric?.length >0 ) {
-          filter['value.FNK'] = { $in: fabric };
+          filter['FNK'] = { $in: fabric };
         }
 
         if (appgroup?.code) {
-          filter['value.CATK'] = appgroup.code;
+          filter['CATK'] = appgroup.code;
         }
 
         if (app?.code) {
-          filter['value.AFGK'] = app.code;
+          filter['AFGK'] = app.code;
         }
 
         if (FromDate || ToDate) {
-          filter['value.DATE'] = {
+          filter['DATE'] = {
             ...(FromDate && { $gte: FromDate }),
             ...(ToDate && { $lte: ToDate }),
           };
@@ -1033,20 +1050,20 @@ export class CommonService{
         if (searchParam) {
           const regex = { $regex: searchParam, $options: 'i' };
           filter['$or'] = [
-            { 'value.CK': regex },
-            { 'value.FNGK': regex },
-            { 'value.FNK': regex },
-            { 'value.CATK': regex },
-            { 'value.AFGK': regex },
-            { 'value.AFK': regex },
-            { 'value.AFVK': regex },
-            { 'value.USER': regex },
-            { 'value.DATE': regex },
-            { 'value.UPID': regex },
+            { 'CK': regex },
+            { 'FNGK': regex },
+            { 'FNK': regex },
+            { 'CATK': regex },
+            { 'AFGK': regex },
+            { 'AFK': regex },
+            { 'AFVK': regex },
+            { 'USER': regex },
+            { 'DATE': regex },
+            { 'UPID': regex },
           ];
         }
 
-        //console.log('filter', filter);
+        // console.log('filter', filter);
         //console.log('fileName', fileName);
         
         
@@ -1058,16 +1075,15 @@ export class CommonService{
 
       
         const documentPromises = targetCollections.map(name =>
-          this.mongoService.findDocument(name, filter, { _id: 0, value: 1 })
+          this.mongoService.findDocument(name, filter, { _id: 0})//value: 1 
         );
-
+        
         const allDocs = (await Promise.all(documentPromises)).flat();
-
-      
+             
         const totalDocuments = allDocs.length;
         if (totalDocuments === 0) throw `Data not found in ${fileName}`;
 
-        const paginatedData = allDocs.slice((page - 1) * limit, page * limit).map(d => d.value);
+        const paginatedData = allDocs.slice((page - 1) * limit, page * limit)//.map(d => d.value);
 
         this.logger.log('get MongoProcess completed');
 
@@ -1165,9 +1181,9 @@ export class CommonService{
           var AfskValue = "logInfo"
           let resultFlg = 0
           for (var s = 0; s < msgid.length; s++) {
-  
+            let streamKey = strmarr[s][0]
             if(streamName.endsWith('-TPL')){              
-              var upidsplit = strmarr[s][0].split(':');
+              var upidsplit = streamKey.split(':');
               if (upidsplit.length > 14) {
                 var upid = upidsplit[upidsplit.length - 1]
                 AfskValue = upid
@@ -1183,30 +1199,35 @@ export class CommonService{
             var user
             if (afskvalue?.sessionInfo && Object.keys(afskvalue.sessionInfo).length > 0) {
               user = afskvalue.sessionInfo.user
-            } else {
-              user = 'user'
-            }
+            } 
+            // else {
+            //   user = 'user'
+            // }
 
-            let CK = await this.splitcommonkey(strmarr[s][0], 'CK')
-            let FNGK = await this.splitcommonkey(strmarr[s][0], 'FNGK')
-            let FNK = await this.splitcommonkey(strmarr[s][0], 'FNK')
-            let CATK = await this.splitcommonkey(strmarr[s][0], 'CATK')
-            let AFGK = await this.splitcommonkey(strmarr[s][0], 'AFGK')
-            let AFK = await this.splitcommonkey(strmarr[s][0], 'AFK')
-            let AFVK = await this.splitcommonkey(strmarr[s][0], 'AFVK')
+            let CK = await this.splitcommonkey(streamKey, 'CK')
+            let FNGK = await this.splitcommonkey(streamKey, 'FNGK')
+            let FNK = await this.splitcommonkey(streamKey, 'FNK')
+            let CATK = await this.splitcommonkey(streamKey, 'CATK')
+            let AFGK = await this.splitcommonkey(streamKey, 'AFGK')
+            let AFK = await this.splitcommonkey(streamKey, 'AFK')
+            let AFVK = await this.splitcommonkey(streamKey, 'AFVK')
             
-            let isDocExist:any = await this.mongoService.existsDocument(streamName,strmarr[s][0])
+            let isDocExist:any = await this.mongoService.existsDocument(streamName,'',{UPID:AfskValue})
              if(isDocExist && Object.keys(isDocExist).length > 0 && isDocExist._id){
-              let appendRes:any = await this.mongoService.appendFileInToDocument(streamName,strmarr[s][0],'value.AFSK.'+AfskValue,afskvalue);
+              let appendRes:any = await this.mongoService.appendFileInToDocument(streamName,isDocExist._id,'AFSK.'+AfskValue,afskvalue);
                         
               resultFlg++ 
               if(appendRes.modifiedCount){
                 await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])   
-                await this.redisService.deleteWithEntryId(streamName,msgid[s])                            
+                await this.redisService.deleteWithEntryId(streamName,msgid[s])    
+                let isStreamExist = await this.redisService.getStreamRange(streamName)
+                if(!isStreamExist || isStreamExist.length == 0){
+                  await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
+                }                        
               }
             }else{
-              await db.collection(streamName).createIndex({ "value.CK": 1, "value.FNGK": 1, "value.FNK": 1, "value.CATK": 1, "value.AFGK": 1, "value.AFK": 1, "value.AFVK": 1, "value.DATE": 1, "value.USER": 1 });
-              let insertRes:any = await this.mongoService.insertDocument(streamName,strmarr[s][0],{
+              await db.collection(streamName).createIndex({ "CK": 1, "FNGK": 1, "FNK": 1, "CATK": 1, "AFGK": 1, "AFK": 1, "AFVK": 1, "DATE": 1, "USER": 1 });
+              let insertRes:any = await this.mongoService.insertDocument(streamName,'',{
                 CK,
                 FNGK,
                 FNK,
@@ -1225,7 +1246,11 @@ export class CommonService{
               resultFlg++ 
               if(insertRes.insertedId) {
                 await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])    
-                await this.redisService.deleteWithEntryId(streamName,msgid[s])                    
+                await this.redisService.deleteWithEntryId(streamName,msgid[s])   
+                let isStreamExist = await this.redisService.getStreamRange(streamName)
+                if(!isStreamExist || isStreamExist.length == 0){
+                  await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
+                }                  
               }     
             }          
           }

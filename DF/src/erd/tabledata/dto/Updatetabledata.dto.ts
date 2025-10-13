@@ -7,7 +7,7 @@ import { IsString } from 'class-validator';
 
 
 
-export class  UpdatecollectionDto {
+export class  UpdatetabledataDto {
         @ApiProperty()
         name?: string;
         @ApiProperty({
@@ -15,6 +15,8 @@ export class  UpdatecollectionDto {
             format: `int32`,
         })
         age?: number;
+        @ApiProperty()
+        address?: string;
         @ApiProperty()
         trs_creator_email?: string;
         @ApiProperty({

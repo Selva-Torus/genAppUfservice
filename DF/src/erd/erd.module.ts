@@ -1,5 +1,5 @@
 import { HttpStatus, Module } from '@nestjs/common';
-    import { collectionModule } from './collection/collection.module';   
+    import { tabledataModule } from './tabledata/tabledata.module';   
 
 import { RuleService } from "src/ruleService";
 import { CodeService } from "src/codeService";
@@ -7,7 +7,7 @@ import { RedisService } from "src/redisService";
 
 
 @Module({
-  imports: [collectionModule],
+  imports: [tabledataModule],
   controllers:[],
   providers:[RuleService,CodeService,RedisService]
 })

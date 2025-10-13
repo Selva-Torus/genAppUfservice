@@ -171,12 +171,7 @@ const SetupScreen = ({
         }
         if (response.data.users && Array.isArray(response.data.users)) {
           const result = response.data.users.map((item: any, i: number) => ({
-            users:
-              item.firstName && item.lastName
-                ? item.loginId + item.firstName + ' ' + item.lastName
-                : item.loginId
-                ? item.loginId
-                : '',
+         user:"",
             email: item.email,
             profile: item?.profile ?? '',
             firstName: item.firstName,
@@ -189,7 +184,8 @@ const SetupScreen = ({
             lastActive: item?.lastActive ?? 'NA',
             dateAdded: item.dateAdded,
             isAppAdmin: item.isAppAdmin,
-            edit: ''
+            edit: '',
+            userUniqueId:item?.userUniqueId
           }))
           setUserProfileData(result)
           setMasterState(prev => ({ ...prev, user: result }))
@@ -382,7 +378,8 @@ const SetupScreen = ({
             orgGrp: item.orgGrp ?? [],
             'products/Services': item['products/Services'] ?? [],
             'no.ofusers': item['no.ofusers'],
-            createdOn: item.createdOn
+            createdOn: item.createdOn,
+            roleUniqueId: item.roleUniqueId
           }
         })
         onUpdateSecurityData(result)
@@ -448,7 +445,7 @@ const SetupScreen = ({
   ) => {
     try {
       const res = await AxiosService.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/setJson`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/appSecurityTemplateData`,
         {
           data: data ? data : securityData
         },
@@ -642,6 +639,7 @@ const SetupScreen = ({
                     }}
                   >
                     <button
+                      hidden = {selectedMenuItem=='user'?true:false}
                       onClick={handlePlusButtonClick}
                       style={{
                         backgroundColor: brandcolor,
@@ -662,6 +660,7 @@ const SetupScreen = ({
                     </button>
 
                     <button
+                      hidden = {selectedMenuItem=='user'?true:false}
                       className={`${
                         selectedMenuItem === 'org' ? 'hidden' : ''
                       } outline-none ${
@@ -750,9 +749,10 @@ const SetupScreen = ({
                       onClick={handleSaveButtonClick}
                       className={`rounded-md bg-[#1C274C] px-2 py-1.5 outline-none`}
                       disabled={tenantAccess != 'edit'}
+                      hidden = {selectedMenuItem=='user'?true:false}
                     >
                       <SaveIcon height='18' width='18' />
-                    </button>
+                    </button> 
                   </div>
                 </div>
               </div>

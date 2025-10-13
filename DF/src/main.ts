@@ -1,9 +1,9 @@
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT266:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
-  "deploymentArtifactKey": "CK:CT266:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:myDPD:AFVK:v1",
-  "appGroupDesc": "appgroup",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:TT407:AFGK:CGFA:AFK:TG4CGFA:AFVK:v1:bldc",
+  "deploymentArtifactKey": "CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:forFA:AFVK:v1",
+  "appGroupDesc": "CGFA",
   "logType": "mongodb",
-  "appDesc": "application",
+  "appDesc": "TG4CGFA",
   "isOld": true,
   "clientCode": "CT003",
   "loginDetails": {
@@ -19,7 +19,7 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-09-25T05:58:52.890Z",
+    "lastActive": "2025-10-11T05:24:04.889Z",
     "profile": "https://varnishdev.gsstvl.com/files/torus/9.1/CT003/resources/images/Peer@786/pexels-pixabay-33109.jpg",
     "quickLinks": [
       {
@@ -63,7 +63,7 @@ import multipart from '@fastify/multipart';
 async function bootstrap() {
     const fastifyAdapter = new FastifyAdapter({
     bodyLimit: 500 * 1024 * 1024, // 500MB limit
-    logger: true,
+    logger: !true,
   });
   
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -104,7 +104,11 @@ async function bootstrap() {
     .setVersion('0.1')
     .addTag('ERD API')
     .addTag('Torus API')
-    .addServer('http://192.168.2.86:3108','Production Server')
+    .addBearerAuth(
+    { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 
+    'JWT-auth',
+    )
+    .addServer('https://tgadev.gsstvl.com/tt407/cgfa/tg4cgfa/v1/api-int','Production Server')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger.json', JSON.stringify(document, null, 2));

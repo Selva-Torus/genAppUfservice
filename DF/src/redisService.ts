@@ -142,6 +142,7 @@ export class RedisService {
 
   async setStreamData(streamName: string, key: string, strValue: any) {
     try {     
+      if(!streamName || !key || !strValue) throw 'Invalid Stream Parameter'
       var result = await redis.xadd(streamName, '*', key, strValue);
       // if(result){     
        
@@ -217,14 +218,15 @@ export class RedisService {
    * @returns {Promise<string[][]>} - An array of messages in the stream.
    * @throws {Error} - If there is an error retrieving the stream data.
    */
+
   async getStreamRange(streamName){
     try {
       var messages = await redis.call('XRANGE', streamName, '-', '+');
-      if(messages?.length == 0){    
-        return await this.convertStreamRangeStruct(streamName)
-      }else{
+      // if(messages?.length == 0){    
+      //   return await this.convertStreamRangeStruct(streamName)
+      // }else{
         return messages;
-      }
+      // }
     } catch (error) {
       throw error;
     }
@@ -456,28 +458,6 @@ export class RedisService {
        if(mongoResult){
         await this.renameDocumentId(client,oldKey,newKey)
        }
-      return result;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  async copyData(sourceKey: string, destinationKey: string,collectionName) {
-    try {
-      const destinationExist = await this.exist(destinationKey,collectionName);
-      if(destinationExist){
-        await this.deleteKey(destinationKey,collectionName);
-      }
-      let mongdoc;
-       let mongoResult = await this.existsDocument(collectionName,sourceKey)
-       if(mongoResult){
-         mongdoc = await this.getDocument(collectionName,sourceKey)
-       
-       }else{
-         mongdoc = JSON.parse(await this.getJsonData(sourceKey,collectionName))
-       }
-      // await this.setDocument(collectionName,destinationKey,mongdoc)
-      var result = await redis.call('COPY', sourceKey, destinationKey);  
       return result;
     } catch (error) {
       throw error;

@@ -61,12 +61,13 @@ export class MongoService {
 
   async insertDocument(collectionName: any,key:string,insertValue: any) {
     const collection = db.collection(collectionName);
-    let customIdAndValue:any = { _id:key}
-    customIdAndValue.value = insertValue
-   
-    // console.log('customIdAndValue', customIdAndValue);
-    
-    var result = await collection.insertOne(customIdAndValue)
+    if(key){      
+      let customIdAndValue:any = { _id:key}
+      customIdAndValue.value = insertValue     
+      var result = await collection.insertOne(customIdAndValue)
+    }else{     
+      var result = await collection.insertOne(insertValue)     
+    }
     if (result) {
       return result
     } else {
@@ -78,24 +79,25 @@ export class MongoService {
     try {
       const collection:any = db.collection(collectionName); 
       let customId:any = {_id:key}
-
-      var result:any = await collection.find(customId).toArray()
-     
-      if(result?.length>0){                
-        let pushQry = { $push: { [AppendKey] : AppendValue } }               
-        return await collection.updateOne(customId, pushQry);             
-      }
-
+               
+      let pushQry = { $push: { [AppendKey] : AppendValue } }               
+      return await collection.updateOne(customId, pushQry);            
+      
     } catch (error) {
       throw error
     }
   }
 
-  async existsDocument(collectionName: string, key: string){
+  async existsDocument(collectionName: string, key: string,filter?:object){
     try {      
       const collection = db.collection(collectionName); 
-      let customId:any = {_id:key}  
-     
+      let customId:any   
+      if(key){
+        customId = {_id:key}
+      }else{
+        customId = filter
+      }
+   
       var result = await collection.findOne(customId,{ projection: { _id: 1 } })   
        
       if (result) {

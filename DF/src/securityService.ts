@@ -31,6 +31,8 @@ export class SecurityService {
                   for (let a = 0; a < profile.length; a++) {
                     securityProfile.push(profile[a].accessProfile)
                   }
+                }else{
+                 throw new CustomException(`CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${appgrp}:AFK:${app}:AFVK:v1:securityTemplate does not exist`, 404)
                 }
                 for (var i = 0; i < security.accessProfile.length; i++) {
                   var accessProfile = security.accessProfile[i]

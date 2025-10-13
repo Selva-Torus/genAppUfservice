@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: a001-df-v1-ingress
-  namespace: a001-df-v1
+  name: tg4cgfa-df-v1-ingress
+  namespace: tg4cgfa-df-v1
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /$2
@@ -12,15 +12,15 @@ spec:
   tls:
     - hosts:
         - tgadev.gsstvl.com
-      secretName: a001-df-v1-tls
+      secretName: tg4cgfa-df-v1-tls
   rules:
     - host: tgadev.gsstvl.com
       http:
         paths:
-          - path: /ct266/ag001/a001/v1/api-int(/|$)(.*)
+          - path: /tt407/cgfa/tg4cgfa/v1/api-int(/|$)(.*)
             pathType: ImplementationSpecific
             backend:
               service:
-                name: a001-df-generator
+                name: tg4cgfa-df-generator
                 port:
                   number: 443

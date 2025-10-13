@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: a001-uf-v1-ingress
-  namespace: a001-uf-v1
+  name: tg4cgfa-uf-v1-ingress
+  namespace: tg4cgfa-uf-v1
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
@@ -10,15 +10,15 @@ spec:
   tls:
     - hosts:
         - tgadev.gsstvl.com
-      secretName: a001-uf-v1-tls
+      secretName: tg4cgfa-uf-v1-tls
   rules:
     - host: tgadev.gsstvl.com
       http:
         paths:
-          - path: /ct266/ag001/a001/v1
+          - path: /tt407/cgfa/tg4cgfa/v1
             pathType: Prefix
             backend:
               service:
-                name: a001-uf-generator
+                name: tg4cgfa-uf-generator
                 port:
                   number: 443

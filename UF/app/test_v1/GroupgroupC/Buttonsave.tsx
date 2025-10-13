@@ -82,9 +82,7 @@ const Buttonsave =  ({ lockedData,setLockedData,primaryTableData, setPrimaryTabl
    //another screen
   const {root, setroot}= useContext(TotalContext) as TotalContextProps  
   const {rootProps, setrootProps}= useContext(TotalContext) as TotalContextProps  
-  const {name8eedd, setname8eedd}= useContext(TotalContext) as TotalContextProps  
-  const {age7d25a, setage7d25a}= useContext(TotalContext) as TotalContextProps  
-  const {save3d5e3, setsave3d5e3}= useContext(TotalContext) as TotalContextProps  
+  const {save99cfb, setsave99cfb}= useContext(TotalContext) as TotalContextProps  
   //////////////
 
 
@@ -109,15 +107,15 @@ const Buttonsave =  ({ lockedData,setLockedData,primaryTableData, setPrimaryTabl
   useEffect(()=>{
     handleMapper()
     eventBus.on("triggerButton", (id:any) => {
-      if (id === "save3d5e3") {
+      if (id === "save99cfb") {
         buttonRef.current?.click();
       }
     });
 
-  },[save3d5e3?.refresh])
+  },[save99cfb?.refresh])
 
   const handleClick=async()=>{
-    if(forma62ffProps?.validation==true && forma62ffProps?.required==true || forma62ffProps?.required==true)
+    if(groupc59a19Props?.validation==true && groupc59a19Props?.required==true || groupc59a19Props?.required==true)
     {
       if(validateRefetch.init==0)
       {
@@ -155,19 +153,21 @@ const Buttonsave =  ({ lockedData,setLockedData,primaryTableData, setPrimaryTabl
   }
 
 
- if (save3d5e3?.isHidden) {
+ if (save99cfb?.isHidden) {
     return <></>
   }
 
   return (
     <div 
-      style={{gridColumn: `10 / 11`,gridRow: `2 / 3`,marginTop: `auto`, gap:``}} >
+      style={{gridColumn: `6 / 8`,gridRow: `4 / 5`,marginTop: `auto`, gap:``}} >
         <TorusButton 
           ref={buttonRef}
           className="w-full "
           onClick={handleClick}
           onBlur={handleBlur}
-          disabled= {save3d5e3?.isDisabled ? true : false}
+          view='action'
+          size='s'           
+          disabled= {save99cfb?.isDisabled ? true : false}
         >
               {keyset("save")}
         </TorusButton>

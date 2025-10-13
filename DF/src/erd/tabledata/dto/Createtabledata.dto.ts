@@ -13,12 +13,15 @@ import {
 
  
 
-export class QuerycollectionDto{
+export class CreatetabledataDto{
     @ApiProperty()
     @IsString()
     name?: string;
     @ApiProperty()
     age?: number;
+    @ApiProperty()
+    @IsString()
+    address?: string;
     @ApiProperty()
     trs_creator_email?: string;
     @ApiProperty({
@@ -56,8 +59,6 @@ export class QuerycollectionDto{
     @ApiProperty()
     trs_ps_code?: string;
 }
-
-
 
 
 

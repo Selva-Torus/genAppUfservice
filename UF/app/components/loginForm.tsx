@@ -15,7 +15,7 @@ import Link from 'next/link'
 import { TotalContext, TotalContextProps } from '../globalContext'
 import { singleSignOn } from '../utils/serverUtils'
 import decodeToken from './decodeToken'
-
+import {Shield} from '@gravity-ui/icons';
 interface LoginProps {
   logo?: string
   appName?: string
@@ -24,7 +24,7 @@ interface LoginProps {
   image?: string
 }
 
-const Login = ({ logo, appName = "application", brandColor = "#ffffff", loginType = "standard", image }: LoginProps) => {
+const Login = ({ logo, appName = "TG4CGFA", brandColor = "#ffffff", loginType = "standard", image }: LoginProps) => {
   const { selectedTheme, setSelectedTheme } = useContext(
     TotalContext
   ) as TotalContextProps
@@ -37,7 +37,7 @@ const Login = ({ logo, appName = "application", brandColor = "#ffffff", loginTyp
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
   const toast = useInfoMsg()
   const router = useRouter()
-  const onBoardingKey:string = "CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1"
+  const onBoardingKey:string = "Logs Screen"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
@@ -61,7 +61,7 @@ const Login = ({ logo, appName = "application", brandColor = "#ffffff", loginTyp
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT266:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:TT407:AFGK:CGFA:AFK:TG4CGFA:AFVK:v1:bldc",
           ufClientType: 'UFW'
         }
         const api_signin = await axios.post(
@@ -91,8 +91,8 @@ const Login = ({ logo, appName = "application", brandColor = "#ffffff", loginTyp
           let screenDetails: any = {
             keys:[
   {
-    "screensName": "userform-v1",
-    "ufKey": "CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1"
+    "screensName": "test-v1",
+    "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1"
   }
 ]
           }
@@ -270,25 +270,15 @@ const Login = ({ logo, appName = "application", brandColor = "#ffffff", loginTyp
             </Button>
 
             {process.env.NEXT_PUBLIC_NEXT_AUTH_NEEDED === 'true' && (
-              <div className='flex w-full gap-2'>
-                <Button
-                  onClick={() => singleSignOn('google')}
-                  width='max'
-                  size='l'
-                  view='raised'
-                >
-                <Icon data={GoogleIcon} />
-                  Google
-                </Button>
+              <div className='flex w-full'>
                 <Button
                   onClick={() => singleSignOn('fusionauth')}
                   width='max'
                   size='l'
                   view='raised'
                 >
-                <Icon data={GitHubIcon} />
-                  {' '}
-                  Github
+                <Icon data={Shield} />
+                  ViaFusionAuth
                 </Button>
               </div>
             )}

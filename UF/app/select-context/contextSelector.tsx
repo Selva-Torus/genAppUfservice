@@ -30,12 +30,12 @@ const ContextSelector = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false)
   const [time, setTime] = useState('')
-    let landingScreen:string = 'CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1';
+    let landingScreen:string = 'Logs Screen';
        let screenDetails: any = {
            keys:[
   {
-    "screensName": "userform-v1",
-    "ufKey": "CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1"
+    "screensName": "test-v1",
+    "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1"
   }
 ]
         }

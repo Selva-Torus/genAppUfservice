@@ -4,7 +4,7 @@ import { ApiProperty } from '@nestjs/swagger';
 
 
      
-  export class collectionEntity {
+  export class tabledataEntity {
         @ApiProperty()
         id: string;
         @ApiProperty()
@@ -14,6 +14,8 @@ import { ApiProperty } from '@nestjs/swagger';
           format: `int32`,
         })
         age?: number;
+        @ApiProperty()
+        address?: string;
         @ApiProperty()
         trs_creator_email: string;
         @ApiProperty()
@@ -47,7 +49,7 @@ import { ApiProperty } from '@nestjs/swagger';
       }
           
 
-  export class  collection_OnlyParentEntity {
+  export class  tabledata_OnlyParentEntity {
         @ApiProperty()
         id?: string;
         @ApiProperty()
@@ -57,6 +59,8 @@ import { ApiProperty } from '@nestjs/swagger';
           format: `int32`,
         })
         age?: number;
+        @ApiProperty()
+        address?: string;
         @ApiProperty()
         trs_creator_email: string;
         @ApiProperty()

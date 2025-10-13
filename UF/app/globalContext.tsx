@@ -6,30 +6,50 @@ import { RealTheme } from '@gravity-ui/uikit'
 import React from 'react'
 import { getCookie } from './components/cookieMgment'
 export interface TotalContextProps {
-  forma62ff: any 
-  setforma62ff: React.Dispatch<React.SetStateAction<any>>
-  forma62ffProps: any 
-  setforma62ffProps: React.Dispatch<React.SetStateAction<any>>
+  main6d2c7: any 
+  setmain6d2c7: React.Dispatch<React.SetStateAction<any>>
+  main6d2c7Props: any 
+  setmain6d2c7Props: React.Dispatch<React.SetStateAction<any>>
+  groupad476b: any 
+  setgroupad476b: React.Dispatch<React.SetStateAction<any>>
+  groupad476bProps: any 
+  setgroupad476bProps: React.Dispatch<React.SetStateAction<any>>
+  groupb66b0d: any 
+  setgroupb66b0d: React.Dispatch<React.SetStateAction<any>>
+  groupb66b0dProps: any 
+  setgroupb66b0dProps: React.Dispatch<React.SetStateAction<any>>
+  groupc59a19: any 
+  setgroupc59a19: React.Dispatch<React.SetStateAction<any>>
+  groupc59a19Props: any 
+  setgroupc59a19Props: React.Dispatch<React.SetStateAction<any>>
+  groupde191f: any 
+  setgroupde191f: React.Dispatch<React.SetStateAction<any>>
+  groupde191fProps: any 
+  setgroupde191fProps: React.Dispatch<React.SetStateAction<any>>
   root: any,
   setroot:React.Dispatch<React.SetStateAction<any>>
   rootProps: any 
   setrootProps: React.Dispatch<React.SetStateAction<any>>
-  name8eedd: any,
-  setname8eedd:React.Dispatch<React.SetStateAction<any>>
-  name8eeddProps: any 
-  setname8eeddProps: React.Dispatch<React.SetStateAction<any>>
-  age7d25a: any,
-  setage7d25a:React.Dispatch<React.SetStateAction<any>>
-  age7d25aProps: any 
-  setage7d25aProps: React.Dispatch<React.SetStateAction<any>>
-  save3d5e3: any,
-  setsave3d5e3:React.Dispatch<React.SetStateAction<any>>
-  save3d5e3Props: any 
-  setsave3d5e3Props: React.Dispatch<React.SetStateAction<any>>
+  namefcda5: any,
+  setnamefcda5:React.Dispatch<React.SetStateAction<any>>
+  namefcda5Props: any 
+  setnamefcda5Props: React.Dispatch<React.SetStateAction<any>>
+  age9919a: any,
+  setage9919a:React.Dispatch<React.SetStateAction<any>>
+  age9919aProps: any 
+  setage9919aProps: React.Dispatch<React.SetStateAction<any>>
+  save99cfb: any,
+  setsave99cfb:React.Dispatch<React.SetStateAction<any>>
+  save99cfbProps: any 
+  setsave99cfbProps: React.Dispatch<React.SetStateAction<any>>
+  address332cb: any,
+  setaddress332cb:React.Dispatch<React.SetStateAction<any>>
+  address332cbProps: any 
+  setaddress332cbProps: React.Dispatch<React.SetStateAction<any>>
 
 ////// screen states 
-  userform_v1Props: any 
-  setuserform_v1Props: React.Dispatch<React.SetStateAction<any>>
+  forpfcheckuf_v1Props: any 
+  setforpfcheckuf_v1Props: React.Dispatch<React.SetStateAction<any>>
 
 ///////// dfd
 
@@ -59,6 +79,8 @@ export interface TotalContextProps {
   setRefresh: React.Dispatch<React.SetStateAction<any>>
   lockedData: any,
   setLockedData: React.Dispatch<React.SetStateAction<any>>
+  paginationDetails: any,
+  setpaginationDetails: React.Dispatch<React.SetStateAction<any>>
   eventEmitterData:any,
   setEventEmitterData:React.Dispatch<React.SetStateAction<any>>
   userDetails:any,
@@ -73,8 +95,52 @@ export const TotalContext = React.createContext<TotalContextProps | {}>({})
 
 const GlobalContext = ({children} : {children: React.ReactNode}) => {
       //////////
-        const [forma62ff, setforma62ff ] = React.useState<any>({}) 
-    const [forma62ffProps, setforma62ffProps ] = React.useState<any>({
+        const [main6d2c7, setmain6d2c7 ] = React.useState<any>({}) 
+    const [main6d2c7Props, setmain6d2c7Props ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
+        const [groupad476b, setgroupad476b ] = React.useState<any>({}) 
+    const [groupad476bProps, setgroupad476bProps ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
+        const [groupb66b0d, setgroupb66b0d ] = React.useState<any>({}) 
+    const [groupb66b0dProps, setgroupb66b0dProps ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
+        const [groupc59a19, setgroupc59a19 ] = React.useState<any>({}) 
+    const [groupc59a19Props, setgroupc59a19Props ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
+        const [groupde191f, setgroupde191f ] = React.useState<any>({}) 
+    const [groupde191fProps, setgroupde191fProps ] = React.useState<any>({
       validation:false,
       required:false,
       refetch:false,
@@ -91,21 +157,28 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refetch:false,
     refresh:false,
     }) 
-   const [name8eedd,setname8eedd] = React.useState<any>({
+   const [namefcda5,setnamefcda5] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [age7d25a,setage7d25a] = React.useState<any>({
+   const [age9919a,setage9919a] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [save3d5e3,setsave3d5e3] = React.useState<any>({
+   const [save99cfb,setsave99cfb] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [address332cb,setaddress332cb] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
@@ -114,14 +187,19 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     }) 
     ///////////
     const [refresh, setRefresh] = React.useState<any>({       Canvasroot:false,
-       textinputname8eedd:false,
-       textinputage7d25a:false,
-       buttonsave3d5e3:false,
-       groupforma62ff:false,
+       textinputnamefcda5:false,
+       textinputage9919a:false,
+       buttonsave99cfb:false,
+       textareaaddress332cb:false,
+       groupmain6d2c7:false,
+       groupgroupAd476b:false,
+       groupgroupB66b0d:false,
+       groupgroupC59a19:false,
+       groupgroupDe191f:false,
       })
 
   ////// screen states 
-   const [userform_v1Props,setuserform_v1Props] = React.useState<any>([])
+   const [forpfcheckuf_v1Props,setforpfcheckuf_v1Props] = React.useState<any>([])
 
 ///////// dfd
     const [searchParam , setSearchParam] = React.useState<string>("")
@@ -137,6 +215,7 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     const [property, setProperty] = React.useState<any>({})
     const [memoryVariables, setMemoryVariables] = React.useState<any>({})
     const [lockedData, setLockedData] = React.useState<any>({})
+    const [paginationDetails, setpaginationDetails] = React.useState<any>({})
 
     const [eventEmitterData,setEventEmitterData] = React.useState<any>([])
     const [userDetails , setUserDetails] = React.useState<any>({})
@@ -150,21 +229,39 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       value={
       {
       //
-        forma62ff, 
-        setforma62ff,
-        forma62ffProps, 
-        setforma62ffProps,
+        main6d2c7, 
+        setmain6d2c7,
+        main6d2c7Props, 
+        setmain6d2c7Props,
+        groupad476b, 
+        setgroupad476b,
+        groupad476bProps, 
+        setgroupad476bProps,
+        groupb66b0d, 
+        setgroupb66b0d,
+        groupb66b0dProps, 
+        setgroupb66b0dProps,
+        groupc59a19, 
+        setgroupc59a19,
+        groupc59a19Props, 
+        setgroupc59a19Props,
+        groupde191f, 
+        setgroupde191f,
+        groupde191fProps, 
+        setgroupde191fProps,
         root,
         setroot, 
-        name8eedd,
-        setname8eedd, 
-        age7d25a,
-        setage7d25a, 
-        save3d5e3,
-        setsave3d5e3, 
+        namefcda5,
+        setnamefcda5, 
+        age9919a,
+        setage9919a, 
+        save99cfb,
+        setsave99cfb, 
+        address332cb,
+        setaddress332cb, 
         ////// screen states 
-          userform_v1Props,
-          setuserform_v1Props,
+          forpfcheckuf_v1Props,
+          setforpfcheckuf_v1Props,
         //////////
 
         ///////// dfd
@@ -190,6 +287,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         setMemoryVariables,
         lockedData,
         setLockedData,
+        paginationDetails,
+        setpaginationDetails,
         eventEmitterData,
         setEventEmitterData,
         userDetails,

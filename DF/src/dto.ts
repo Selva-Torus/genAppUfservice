@@ -108,16 +108,33 @@ export class readAPIDTO {
     isTable?:boolean
   }
 
- export class PoEvent {
+
+  //  export class PoEvent {
+//     constructor(
+//       public key: string,
+//       public upId: string,
+//       public event: string,
+//       public data: object,
+//       public token: string,
+//       public nodeId: string,
+//       public nodeName: string,
+//       public nodeType: string,
+//       public flag : string,
+//       public page?:number,
+//       public count?:number,
+//       public filterData?:object
+//       ) {}
+//     }
+
+    export class PoEvent {
     constructor(
-      public key: string,
-      public upId: string,
+     
+      public pfdto:pfDto,
       public event: string,
-      public data: object,
-      public token: string,
-      public nodeId: string,
-      public nodeName: string,
-      public nodeType: string,
+      public pfs : any,
+      public poJson: any,
+      public pfo: any,
+      public ndp : any,
       public flag : string,
       public page?:number,
       public count?:number,
@@ -131,7 +148,7 @@ export class readAPIDTO {
       key: string      
       upId: string    
       event: string      
-      data: object
+      data: any
       token:string    
       nodeId: string    
       nodeName:string    

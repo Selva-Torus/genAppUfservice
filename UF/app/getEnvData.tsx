@@ -1,5 +1,5 @@
 let data:any ={
-  "myDPD": {
+  "forFA": {
     "encryptionType": {
       "name": "encryptionType",
       "_type": "select",

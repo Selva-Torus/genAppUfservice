@@ -152,7 +152,7 @@ const SideNav = ({
     localStorage.clear()
     sessionStorage.clear()
     deleteAllCookies()
-    window.location.href = '/ct266/ag001/a001/v1'
+    window.location.href = '/tt407/cgfa/tg4cgfa/v1'
   }
 
   const hasMatchingName = (obj: any, input: string): boolean => {

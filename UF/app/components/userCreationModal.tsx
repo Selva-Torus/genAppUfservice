@@ -1,4 +1,4 @@
-import { Button, Select, Text } from '@gravity-ui/uikit'
+import { Button, Select, Text ,Switch} from '@gravity-ui/uikit'
 import React, { useContext, useMemo, useRef, useState } from 'react'
 import { CameraIcon, Multiply } from './svgApplication'
 import { isLightColor } from '@/app/components/utils'
@@ -113,6 +113,17 @@ const UserCreationModal = ({
           label: 'Select date'
         }
       ]
+    },
+    {
+      heading: "Grant Admin Access",
+      subHeading: "Toggle to grant or revoke admin access to this user",
+      formData: [
+        {
+          type: "switch",
+          name: "isAppAdmin",
+          label: "isAppAdmin",
+        },
+      ],
     }
   ]
 
@@ -212,14 +223,18 @@ const UserCreationModal = ({
     } else {
       try {
         if (isEdit) {
+          let editeduser: any = newUser;
+          delete editeduser?.password;
+          delete editeduser?.edit;
           const userResult = data.map((item: any) =>
             item.loginId === newUser.loginId ? { ...item, ...user } : item
           )
+
           setData([])
           const res = await AxiosService.post(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/postAppUserList`,
             {
-              data: userResult
+              data: editeduser
             },
             {
               headers: {
@@ -234,7 +249,7 @@ const UserCreationModal = ({
           }
           return
         }
-
+        return 
         const userAdditionResponse = await AxiosService.post(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/appUserAddition`,
           {
@@ -351,7 +366,7 @@ const UserCreationModal = ({
       <div className='flex w-full flex-col gap-5 px-4 py-4'>
         {userAdditionDetails &&
           userAdditionDetails
-            .toSpliced(6)
+            .toSpliced(7)
             .map(({ heading, subHeading, formData }, index) => (
               <div key={index} className='flex w-full '>
                 <div className='flex w-1/2 flex-col gap-0.5'>
@@ -522,6 +537,15 @@ const UserCreationModal = ({
                           </Select>
                         </>
                       ))}
+                      {type == 'switch' && (
+                        <Switch
+                          size='l'
+                          checked={newUser[name] == true ? true : false}
+                          onChange={() => setNewUser((pre:any)=>({...pre,isAppAdmin:!pre[name]}))
+                            
+                          }
+                        />
+                      )}
                   </div>
                 ))}
               </div>

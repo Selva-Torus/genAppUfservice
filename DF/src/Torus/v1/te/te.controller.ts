@@ -4,6 +4,7 @@ import { TeService } from './te.service';
 import { CommonService } from 'src/common.Service';
 import { pfDto } from 'src/dto';
 import { LockService } from 'src/lock.service';
+import { CustomException } from 'src/customException';
 
 
 //@UseGuards(AuthGuard)
@@ -31,11 +32,35 @@ export class TeController {
         return result;
       }else{
         //if(pfdto.data && pfdto.event && pfdto.nodeId && pfdto.nodeType){
-          if(!pfdto.upId){
-            if(Array.isArray(pfdto.data) && pfdto.data?.length>0){
-              for(let d=0;d< pfdto.data.length;d++){
-                let singleData = pfdto.data[d]
-                eventval.data= singleData[d]
+          if(!pfdto.upId){           
+              let result :any = await this.teService.EventEmitter(pfdto);
+              if(dpdKey && method){
+                result["dpdKey"] = dpdKey
+                result["method"] = method
+              }
+              return result;          
+          }else{
+            if(pfdto.upId && pfdto.upId.length == 0)
+               throw new CustomException('Process Id is empty',400)
+            var refupid = pfdto.upId
+            var key = pfdto.key
+            var nodeId=pfdto.nodeId
+            var nodeName=pfdto.nodeName
+            var nodetype=pfdto.nodeType
+            var data=pfdto.data
+            var event=pfdto.event
+            var sourceId = pfdto.sourceId
+            if(refupid.length>0 && data.length>0){
+              for(var k=0;k< refupid.length;k++){
+                const upId = refupid[k]
+                eventval.upId = upId
+                eventval.key=key
+                eventval.nodeId=nodeId
+                eventval.nodeName=nodeName
+                eventval.nodeType=nodetype
+                eventval.data=data[k]
+                eventval.event=event
+                eventval.sourceId=sourceId
                 var res:any = await this.teService.EventEmitter(eventval); 
                 upidarr.push(res.upId)
               }
@@ -48,60 +73,15 @@ export class TeController {
                 finalres["dpdKey"] = dpdKey
                 finalres["method"] = method
               }
-            return finalres
-            }else{
-              let result :any = await this.teService.EventEmitter(pfdto);
-              if(dpdKey && method){
-                result["dpdKey"] = dpdKey
-                result["method"] = method
-              }
-              return result;
+              return finalres
+            } else{
+              throw new CustomException('Invalid payload',422)
             }
-           
-          }else{
-            if(pfdto.upId && pfdto.upId.length == 0)
-              throw new BadRequestException('Process Id is empty')
-            var refupid = pfdto.upId
-            var key = pfdto.key
-           var nodeId=pfdto.nodeId
-            var nodeName=pfdto.nodeName
-            var nodetype=pfdto.nodeType
-            var data=pfdto.data
-            var event=pfdto.event
-            var sourceId = pfdto.sourceId
-            if(refupid.length>0){
-            for(var k=0;k< refupid.length;k++){
-              const upId = refupid[k]
-              eventval.upId = upId
-              eventval.key=key
-              eventval.nodeId=nodeId
-              eventval.nodeName=nodeName
-              eventval.nodeType=nodetype
-              eventval.data=data[k]
-              eventval.event=event
-              eventval.sourceId=sourceId
-              var res:any = await this.teService.EventEmitter(eventval); 
-              upidarr.push(res.upId)
-            }
-            var finalres = {
-              upId:upidarr,
-              message:res.message,
-              event:res.event
-            }
-            if(dpdKey && method){
-              finalres["dpdKey"] = dpdKey
-              finalres["method"] = method
-            }
-            return finalres
-          }
           }
        // }else{
          // throw 'data/event/nodeId/nodeType should not be empty'
-        //}
-        
-      } 
-         
-        
+        //}        
+      }  
   }
 
   @Post('update')

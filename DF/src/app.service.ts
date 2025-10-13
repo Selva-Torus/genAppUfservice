@@ -26,9 +26,9 @@ export class AppService implements OnModuleInit{
     //    }
    //   });
       // erdDatas.endpoint = res.data
-      // erdDatas.tenant =  "CT266";
-      // erdDatas.domain = "appgroup";
-      // erdDatas.collection = "application";
+      // erdDatas.tenant =  "TT407";
+      // erdDatas.domain = "CGFA";
+      // erdDatas.collection = "TG4CGFA";
       // erdDatas.data = preParedData?.erdWithData||{}
       // erdDatas.fabric = 'API-APIPD';
       // erdDatas.loginId = "Peer@786";    
@@ -48,9 +48,9 @@ export class AppService implements OnModuleInit{
       //endPointData.type =  "json";
       //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData);
       //torusData.endpoint = res.data;
-      torusData.tenant =  "CT266";
-      torusData.domain = "appgroup"; 
-      torusData.collection = "application";
+      torusData.tenant =  "TT407";
+      torusData.domain = "CGFA"; 
+      torusData.collection = "TG4CGFA";
       torusData.fabric = 'API-APIPD-TORUS';
       torusData.data = preParedData?.torusApis||{}
       torusData.loginId = "Peer@786";    

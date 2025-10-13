@@ -11,6 +11,7 @@ import { useInfoMsg } from './infoMsgHandler'
 import { MenuItem, ScreenDetail } from '../interfaces/interfaces'
 import decodeToken from './decodeToken'
 import { useGravityThemeClass } from '../utils/useGravityUITheme'
+import axios from 'axios'
 const LayoutDecider = ({
   mode = 'detached',
   navigationStyles = 'vertical',
@@ -35,7 +36,7 @@ const LayoutDecider = ({
     TotalContext
   ) as TotalContextProps
   const encryptionFlagApp: boolean = false;    
-  const encryptionDpd: string = "CK:CT266:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:myDPD:AFVK:v1";
+  const encryptionDpd: string = "CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:forFA:AFVK:v1";
   const encryptionMethod: string = "";
   const brandColor = property?.brandColor || '#1F2D3D'
   const hoverColor = property?.hoverColor || '#1F2D3D'
@@ -43,11 +44,13 @@ const LayoutDecider = ({
   const sidebarColor = property?.menubarColor || '#1F2D3D'
  // const topbarColor = property?.topbarColor || ''
   const logo = ""
-  const appName = "application"
+  const appName = "TG4CGFA"
   const toast = useInfoMsg()
   const [loading, setLoading] = useState(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
-  const navData: MenuItem[] = [
+  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:TT407:AFGK:CGFA:AFK:TG4CGFA:AFVK:v1:bldc"
+  const [rawNavData, setRawNavData] = useState<MenuItem[] | null>(null);
+  /*const navData: MenuItem[] = [
   {
     "menuGroup": "admin",
     "menuGroupLabel": "Admin",
@@ -73,20 +76,18 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
-    "menuGroupLabel": "Userform",
+    "menuGroupLabel": "test",
     "screenDetails": [
       {
-        "name": "userform",
-        "key": "CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1"
-        ],
+        "name": "test",
+        "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1",
+        "allowedAccessProfile": [],
         "static": false
       }
     ],
     "items": []
   }
-]
+]*/
   const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.selectedAccessProfile
@@ -203,7 +204,93 @@ const LayoutDecider = ({
     )
   }
 
-  async function checkAccessProfile(token: string) {
+    const getNavData = async() => {
+ try {
+   const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/getNavbarData`,
+    { key: aKey },
+    { headers: { authorization: `Bearer ${token}` } }
+   )
+   //console.log(res.data);
+   setRawNavData(res.data); // Set the raw data into state
+  } catch (error) {
+   console.error("Failed to fetch nav data:", error);
+   toast('Failed to load navigation data', 'danger');
+   setLoading(false);
+  }
+ }
+
+   async function checkAccessProfile(token: string, navData: MenuItem[]) {
+  try {
+   let myAccount:any;
+   if (encryptionFlagApp) {
+    myAccount = await AxiosService.get('/UF/myAccount-for-client', {
+     headers: {
+      Authorization: `Bearer ${token}`
+     },
+     params: {
+      dpdKey: encryptionDpd,
+      method: encryptionMethod,
+      key:"Logs Screen"
+     }
+    })
+   }else{
+    myAccount = await AxiosService.get('/UF/myAccount-for-client', {
+     headers: {
+      Authorization: `Bearer ${token}`
+      },
+     params: {
+      key:"Logs Screen"
+     }
+    })
+   }
+   setUserDetails(myAccount?.data)
+   if (
+   user != "" && user != null
+   ) {
+    const processedMenuItems = await processMenuItems(
+     navData, // Use the passed-in navData
+     [user],
+     token
+    )
+    setUpdatedNavData(processedMenuItems)
+    setLoading(false)
+   } else {
+    toast('user lack access to any screen', 'danger')
+    logout()
+   }
+  } catch (err: any) {
+   console.error(err)
+   toast('user lack access to any screen', 'danger')
+   logout()
+  }
+ }  
+
+ useEffect(() => {
+  if (typeof window !== undefined) {
+   const currentToken = getCookie('token')
+   if (currentToken) {
+    // 4a. Initial fetch of raw navigation data
+    getNavData()
+   } else {
+    // Handle missing token scenario if necessary
+    setLoading(false);
+    // Optional: Redirect to login/logout()
+   }
+  }
+ }, []) 
+
+  useEffect(() => {
+  if (rawNavData) {
+   const currentToken = getCookie('token')
+   if (currentToken) {
+    checkAccessProfile(currentToken, rawNavData)
+   }
+  }
+ }, [rawNavData])
+
+ ///////////
+ /* async function checkAccessProfile(token: string) {
     try {
       let myAccount:any;
       if (encryptionFlagApp) {  
@@ -256,7 +343,7 @@ const LayoutDecider = ({
         checkAccessProfile(token)
       }
     }
-  }, [])
+  }, []) */
 
   const listMenuItems = () => {
     if (navigationStyles == 'horizontal' || mode == 'closed') {

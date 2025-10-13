@@ -10,6 +10,7 @@ import { CommonService } from "src/common.Service";
 import { AxiosRequestConfig } from "axios";
 const { convert } = require("json-to-json-schema");
 import { CustomException } from "src/customException";
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class TeService {
@@ -17,11 +18,13 @@ export class TeService {
     private readonly redisService:RedisService,   
     private readonly securityService:SecurityService,
     private readonly teCommonService:CommonService,
+    private readonly jwtService:JwtService,
    ){}
    private readonly logger = new Logger(TeService.name) 
 
       
-  async EventEmitter(pfdto: pfDto, node?) {
+ 
+   async EventEmitter(pfdto: pfDto, node?) {
     let tenant = await this.teCommonService.splitcommonkey(pfdto.key, 'CK');
     let app = await this.teCommonService.splitcommonkey(pfdto.key, 'AFGK');
     const page = pfdto.page;
@@ -43,6 +46,7 @@ export class TeService {
       let node;
       let pfjson;
       let poJson;
+      let pfo;
       let hlrId;
       let sourceId;
       var processedKey;
@@ -81,18 +85,21 @@ export class TeService {
       //     throw new CustomException('data not found', 404);
        }
 
-      let d_Pfs, d_Po;
+      let d_Pfs, d_Po,d_Pfo;
       if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD') {
         d_Pfs = 'PFS';
         d_Po = 'PO';
+        d_Pfo = 'PFO';
       } else if (currentFabric == 'DF-DFD') {
         d_Pfs = 'DFS';
         d_Po = 'DO';
+        d_Pfo = 'DFO';
       }
-
-      let tokenDecode = await this.teCommonService.MyAccountForClient(
-        pfdto.token,
-      );
+      
+      if(currentFabric != 'DF-DFD' && (!pfdto.data || pfdto.data.length == 0 || Object.keys(pfdto.data).length == 0))
+        throw new CustomException('data not found', 404);
+        
+      let tokenDecode = this.jwtService.decode(pfdto.token,{ json: true })
       if (!tokenDecode || !tokenDecode.loginId)
         throw new CustomException('Invalid token', 401);
 
@@ -110,6 +117,9 @@ export class TeService {
       );
       poJson = JSON.parse(
         await this.redisService.getJsonData(pfdto.key + d_Po, client),
+      );
+      pfo = JSON.parse(
+        await this.redisService.getJsonData(pfdto.key + d_Pfo, client),
       );
 
       dstkey = processedKey.replace('DF-DFD', 'DF-DST');
@@ -192,6 +202,10 @@ export class TeService {
         if (!pfdto.nodeType) {
           pfdto.nodeType = poNode[i].nodeType;
         }
+        if (!pfdto.nodeName) {
+          pfdto.nodeName = poNode[i].nodeName;
+        }
+       
 
         let srcQueue;
         let srcStatus;
@@ -219,10 +233,11 @@ export class TeService {
               await this.teCommonService.getTPL(processedKey, pfdto.upId,  poNode[i], 'Success', pfdto.token, 'PF');
               pfdto.nodeId = null;
               pfdto.nodeType = null;
+              pfdto.nodeName = null;
 
             }
           } else {
-            if (poNode[i].nodeType == 'startnode' && pid == undefined) {
+            if (poNode[i].nodeType == 'startnode' && pid == undefined && pfdto.nodeId == poNode[1].nodeId) {
 
               if (!pfdto.upId) pfdto.upId = Xid.next();
               await this.pfPreProcessor(processedKey, pfjson, pfdto.upId, currentFabric);
@@ -234,6 +249,7 @@ export class TeService {
               await this.teCommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', pfdto.token, 'PF');
               pfdto.nodeId = null;
               pfdto.nodeType = null;
+              pfdto.nodeName = null;
             }
           }
       } else if (
@@ -357,11 +373,16 @@ export class TeService {
                   //       sourceId +
                   //       '_' +
                   //       pfdto.event);
-                  
+                 
+                  pfdto.data = pfdto.data['childData']?pfdto.data:{ [poNode[i].nodeName]: pfdto.data }
                   eventResponse = await firstValueFrom(
                     this.poClient.send(ufname +'_' + poNode[i].nodeId + '_' +sourceId +'_' +pfdto.event,
-                      new PoEvent(pfdto.key, pfdto.upId,pfdto.event, pfdto.data['childData']?pfdto.data:{ [poNode[i].nodeName]: pfdto.data },
-                        pfdto.token,pfdto.nodeId, poNode[i].nodeName, pfdto.nodeType, refflag, page,count)));
+                    new PoEvent(pfdto,pfdto.event,pfjson,pfo, poJson,Ndp ,refflag,page,count)))
+
+                       
+                    
+                      // new PoEvent(pfdto.key, pfdto.upId,pfdto.event, pfdto.data['childData']?pfdto.data:{ [poNode[i].nodeName]: pfdto.data },
+                      //   pfdto.token,pfdto.nodeId, poNode[i].nodeName, pfdto.nodeType, refflag, page,count)));
 
                   if (!eventResponse.status && eventResponse.status != 200) {
                     throw eventResponse;
@@ -383,6 +404,7 @@ export class TeService {
                   pfdto.event = null;
                   pfdto.nodeId = null;
                   pfdto.nodeType = null;
+                  pfdto.nodeName = null;
                   event = eventResponse.targetStatus;
                   sourceId = null;
                   // }
@@ -390,6 +412,7 @@ export class TeService {
               } else {
                 pfdto.nodeId = null;
                 pfdto.nodeType = null;
+                pfdto.nodeName = null;
                 invalidEventFlg++;
               }
             } else {
@@ -513,16 +536,16 @@ export class TeService {
               eventResponse = await firstValueFrom(
                 this.poClient.send(
                   ufname +'_' +poNode[i].nodeId +'_' +sourceId +'_' +event,
-                  new PoEvent(pfdto.key,pfdto.upId,event,pfdto.data,pfdto.token,pfdto.nodeId,poNode[i].nodeName,pfdto.nodeType,refflag),
-                ),
-              );
+                  // new PoEvent(pfdto.key,pfdto.upId,event,pfdto.data,pfdto.token,pfdto.nodeId,poNode[i].nodeName,pfdto.nodeType,refflag),
+                      new PoEvent(pfdto,event,pfjson,pfo, poJson,Ndp ,refflag,page,count)))
+                
             } else {
               eventResponse = await firstValueFrom(
                 this.poClient.send(
                   artifact + '_' + poNode[i].nodeId + '_' + event,
-                  new PoEvent(pfdto.key,pfdto.upId,event,pfdto.data,pfdto.token,pfdto.nodeId,poNode[i].nodeName,pfdto.nodeType,refflag),
-                ),
-              );
+                  // new PoEvent(pfdto.key,pfdto.upId,event,pfdto.data,pfdto.token,pfdto.nodeId,poNode[i].nodeName,pfdto.nodeType,refflag),
+                      new PoEvent(pfdto,event,pfjson,pfo, poJson,Ndp ,refflag,page,count)))
+               
             }
 
             if (!eventResponse.status && eventResponse.status != 200) {
@@ -546,11 +569,13 @@ export class TeService {
             pfdto.event = null;
             pfdto.nodeId = null;
             pfdto.nodeType = null;
+            pfdto.nodeName = null;
             event = eventResponse.targetStatus;
             sourceId = null;
           } else {
             pfdto.nodeId = null;
             pfdto.nodeType = null;
+            pfdto.nodeName = null;
           }
         } 
         else if (poNode[i].nodeType == 'datasetnode') {// && currentFabric == 'PF-PAFD'
@@ -645,12 +670,14 @@ export class TeService {
               if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD') {
                 eventResponse = await firstValueFrom(this.poClient.send(
                   ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event,
-                  new PoEvent(pfdto.key, pfdto.upId, event, pfdto.data, pfdto.token, pfdto.nodeId, poNode[i].nodeName, pfdto.nodeType, refflag),
-                ))
+                  // new PoEvent(pfdto.key, pfdto.upId, event, pfdto.data, pfdto.token, pfdto.nodeId, poNode[i].nodeName, pfdto.nodeType, refflag),
+                 new PoEvent(pfdto,event,pfjson,pfo, poJson,Ndp ,refflag,page,count)))
+                
               } else {
                 eventResponse = await firstValueFrom(this.poClient.send
                   (artifact + '_' + poNode[i].nodeId + '_' + event,
-                    new PoEvent(pfdto.key, pfdto.upId, event, pfdto.data, pfdto.token, pfdto.nodeId, poNode[i].nodeName, pfdto.nodeType, refflag)));
+                    // new PoEvent(pfdto.key, pfdto.upId, event, pfdto.data, pfdto.token, pfdto.nodeId, poNode[i].nodeName, pfdto.nodeType, refflag)));
+                     new PoEvent(pfdto,event,pfjson,pfo, poJson,Ndp ,refflag,page,count)))
 
               }
              
@@ -677,6 +704,7 @@ export class TeService {
               pfdto.event = null
               pfdto.nodeId = null
               pfdto.nodeType = null
+              pfdto.nodeName = null;
               sourceId = null
               event = eventResponse.targetStatus
               
@@ -686,6 +714,7 @@ export class TeService {
             } else {
               pfdto.nodeId = null
               pfdto.nodeType = null
+              pfdto.nodeName = null;
             }
           }
         }
@@ -771,8 +800,8 @@ export class TeService {
             if(event == srcStatus){           
               eventResponse = await firstValueFrom(this.poClient.send(
                 ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event,
-                new PoEvent(pfdto.key, pfdto.upId, event, pfdto.data, pfdto.token, pfdto.nodeId, poNode[i].nodeName, pfdto.nodeType, refflag)
-              ));
+                 new PoEvent(pfdto,event,pfjson,pfo, poJson,Ndp ,refflag,page,count)))
+              
            
             if (!eventResponse.status && eventResponse.status != 200) {
               throw eventResponse
@@ -793,6 +822,7 @@ export class TeService {
             pfdto.event = null
             pfdto.nodeId = null
             pfdto.nodeType = null
+            pfdto.nodeName = null;
             event = eventResponse?.targetStatus           
             sourceId = null
 
@@ -801,6 +831,7 @@ export class TeService {
             }else{
               pfdto.nodeId = null
               pfdto.nodeType = null
+              pfdto.nodeName = null;
             }
           }
         }
@@ -889,10 +920,10 @@ export class TeService {
             }  
             if (event == srcStatus) {
               // console.log('op-event',ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event);
-              
+             
               eventResponse = await firstValueFrom(this.poClient.send
                 (ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event,
-                  new PoEvent(pfdto.key, pfdto.upId, event, pfdto.data, pfdto.token, pfdto.nodeId, poNode[i].nodeName, pfdto.nodeType, refflag)));
+                  new PoEvent(pfdto,event,pfjson,pfo, poJson,Ndp ,refflag,page,count)))
 
               if (eventResponse == undefined) { throw 'Event Response is undefined' }
 
@@ -914,6 +945,7 @@ export class TeService {
               pfdto.event = null
               pfdto.nodeId = null
               pfdto.nodeType = null
+              pfdto.nodeName = null;
               event = eventResponse?.targetStatus
               sourceId = null
 
@@ -922,6 +954,7 @@ export class TeService {
             } else {
               pfdto.nodeId = null
               pfdto.nodeType = null
+              pfdto.nodeName = null;
             }
           }
         } 
@@ -1014,28 +1047,15 @@ export class TeService {
                     let flg = 0;
                     let arr = [];
                     for (let pfs = 0; pfs < pfjson.length; pfs++) {
-                      let levelkey =
-                        Ndp[pfjson[pfs].nodeId]?.data?.pro?.levelKeyName;
+                      let levelkey =Ndp[pfjson[pfs].nodeId]?.data?.pro?.levelKeyName;
                       arr.push(levelkey);
+                      // console.log("arr",arr)
 
-                      if (
-                        getNodeResponse[getNodeResponse.length - 1].nodeId ==
-                        pfjson[pfs].nodeId
-                      ) {
+                      if (getNodeResponse[getNodeResponse.length - 1].nodeId ==pfjson[pfs].nodeId) {
                         let pfresponse = eventResponse;
                         if (!pfresponse)
-                          pfresponse =
-                            await this.redisService.getJsonDataWithPath(
-                              processedKey +
-                                pfdto.upId +
-                                ':NPV:' +
-                                pfjson[pfs].nodeName +
-                                '_' +
-                                pfjson[pfs].nodeId +
-                                '.PRO',
-                              '.response',
-                              client,
-                            );
+                          pfresponse = await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId +':NPV:' + pfjson[pfs].nodeName + '_' + pfjson[pfs].nodeId +'.PRO','.response',client,);
+                        
 
                         let routeArray = pfjson[pfs].routeArray;
                         for (let r = 0; r < routeArray.length; r++) {
@@ -1256,26 +1276,27 @@ export class TeService {
                       }
                       pfdto.data = { data: mergearr[m] };
                       //console.log('mergeEvent', artifact+'_'+poNode[i].nodeId+'_'+event);
-
+                   
                       eventResponse = await firstValueFrom(
                         this.poClient.send(
                           artifact + '_' + poNode[i].nodeId + '_' + event,
-                          new PoEvent(
-                            pfdto.key,
-                            pfdto.upId,
-                            event,
-                            pfdto.data,
-                            pfdto.token,
-                            pfdto.nodeId,
-                            poNode[i].nodeName,
-                            pfdto.nodeType,
-                            refflag,
-                            page,
-                            count,
-                            pfdto.filterData,
-                          ),
-                        ),
-                      );
+                          // new PoEvent(
+                          //   pfdto.key,
+                          //   pfdto.upId,
+                          //   event,
+                          //   pfdto.data,
+                          //   pfdto.token,
+                          //   pfdto.nodeId,
+                          //   poNode[i].nodeName,
+                          //   pfdto.nodeType,
+                          //   refflag,
+                          //   page,
+                          //   count,
+                          //   pfdto.filterData,
+                          // ),
+
+                        new PoEvent(pfdto,event,pfjson,pfo, poJson,Ndp ,refflag,page,count)))
+                       
 
                      
                       if (!eventResponse.status || eventResponse.status != 200) {
@@ -1316,26 +1337,26 @@ export class TeService {
                       if (skipNodedata) {
                         pfdto.data = skipNodedata;
                       }
-                   
+                    
                       eventResponse = await firstValueFrom(
                         this.poClient.send(
                           artifact + '_' + poNode[i].nodeId + '_' + event,
-                          new PoEvent(
-                            pfdto.key,
-                            pfdto.upId,
-                            event,
-                            pfdto.data,
-                            pfdto.token,
-                            pfdto.nodeId,
-                            poNode[i].nodeName,
-                            pfdto.nodeType,
-                            refflag,
-                            page,
-                            count,
-                            pfdto.filterData,
-                          ),
-                        ),
-                      );
+                          // new PoEvent(
+                          //   pfdto.key,
+                          //   pfdto.upId,
+                          //   event,
+                          //   pfdto.data,
+                          //   pfdto.token,
+                          //   pfdto.nodeId,
+                          //   poNode[i].nodeName,
+                          //   pfdto.nodeType,
+                          //   refflag,
+                          //   page,
+                          //   count,
+                          //   pfdto.filterData,
+                          // ),
+                          new PoEvent(pfdto,event,pfjson,pfo, poJson,Ndp ,refflag,page,count)))
+                       
 
                      
                       if (
@@ -1372,13 +1393,13 @@ export class TeService {
                       
                     } else {
                       // console.log('else-event',ufname +'_' +poNode[i].nodeId + '_' + sourceId +'_' +event);
-                      
+                  
                       eventResponse = await firstValueFrom(
                         this.poClient.send(ufname +'_' +poNode[i].nodeId + '_' + sourceId +'_' +event,
-                          new PoEvent( pfdto.key, pfdto.upId, event,pfdto.data, pfdto.token, pfdto.nodeId,
-                            poNode[i].nodeName, pfdto.nodeType, refflag, page,count)
-                        ),
-                      );
+                          // new PoEvent( pfdto.key, pfdto.upId, event,pfdto.data, pfdto.token, pfdto.nodeId,
+                          //   poNode[i].nodeName, pfdto.nodeType, refflag, page,count)
+                            new PoEvent(pfdto,event,pfjson,pfo, poJson,Ndp ,refflag,page,count)))
+                       
                       if (eventResponse.data && pfdto.nodeType == 'apinode') {
                         //prevres[poNode[i].nodeId] = eventResponse.data;
                         prevres[poNode[i].nodeId] = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId +':NPV:' + poNode[i].nodeName +'.PRO','.response', client))
@@ -1425,12 +1446,14 @@ export class TeService {
                   pfdto.event = null;
                   pfdto.nodeId = null;
                   pfdto.nodeType = null;
+                  pfdto.nodeName = null;
                   event = eventResponse.targetStatus;
                   sourceId = null;
                 } else {
                   sourceId = null;
                   pfdto.nodeId = null;
                   pfdto.nodeType = null;
+                  pfdto.nodeName = null;
                   invalidEventFlg++;
                 }
                 
@@ -1473,8 +1496,7 @@ export class TeService {
         }        
       }
     }
-  }
-
+  }            
 
   keysToLowerCaseOnly(obj: any): any {
     if (Array.isArray(obj)) {

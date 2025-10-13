@@ -6,10 +6,11 @@ datasource db {
 generator client {
 provider = "prisma-client-js"
 }
-model collection {
+model tabledata {
   id  String @id @default(auto()) @map("_id") @db.ObjectId 
   name    String?        
   age    Int?       
+  address    String?        
 
   trs_creator_email    String?       
   trs_created_date    DateTime     @default(now())  
@@ -28,7 +29,7 @@ model collection {
   trs_ps_code     String?
  
 
-  @@map("ct266_a001.collection")
+  @@map("tt407_tg4cgfa.tabledata")
   
 }
 

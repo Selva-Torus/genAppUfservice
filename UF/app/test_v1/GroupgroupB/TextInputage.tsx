@@ -2,6 +2,9 @@
 
 
 
+    
+
+     
 import React, { useState,useContext,useEffect } from 'react'
 import { TorusTextInput } from '@/app/TorusComponents/TextInput';
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
@@ -18,41 +21,14 @@ import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys'
 
 
 const TextInputage = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}:any) => {  
- const actionDetails :any = {
-  "action": {
-    "lock": {
-      "lockMode": "",
-      "name": "",
-      "ttl": ""
-    },
-    "stateTransition": {
-      "sourceQueue": "",
-      "sourceStatus": "",
-      "targetQueue": "",
-      "targetStatus": ""
-    },
-    "pagination": {
-      "page": "1",
-      "count": "10"
-    },
-    "encryption": {
-      "isEnabled": false,
-      "selectedDpd": "",
-      "encryptionMethod": ""
-    },
-    "events": {}
-  },
-  "code": "",
-  "rule": {},
-  "events": {},
-  "mapper": []
-}
+  const token: string = getCookie('token');
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
   const {validateRefetch , setValidateRefetch} = useContext(TotalContext) as TotalContextProps;
   const {validate , setValidate} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
-  const token: string = getCookie('token');
+  const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
+  const actionDetails :any = {}
   const toast:any=useInfoMsg()
   const keyset:any=i18n.keyset("language"); 
   const [allCode,setAllCode]=useState<any>("");
@@ -61,20 +37,24 @@ const TextInputage = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFla
   const routes = useRouter()
   const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState(false);
   const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
-  const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagCont: boolean = encryptionFlagCompData?.flag || false;
-
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagCompData?.dpd;
   let encryptionMethod: string = "";
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData?.method;
   /////////////
    //another screen
-  const {forma62ff, setforma62ff}= useContext(TotalContext) as TotalContextProps  
-  const {forma62ffProps, setforma62ffProps}= useContext(TotalContext) as TotalContextProps  
-  const {name8eedd, setname8eedd}= useContext(TotalContext) as TotalContextProps  
-  const {age7d25a, setage7d25a}= useContext(TotalContext) as TotalContextProps  
-  const {save3d5e3, setsave3d5e3}= useContext(TotalContext) as TotalContextProps  
+  const {main6d2c7, setmain6d2c7}= useContext(TotalContext) as TotalContextProps;
+  const {main6d2c7Props, setmain6d2c7Props}= useContext(TotalContext) as TotalContextProps;
+  const {groupad476b, setgroupad476b}= useContext(TotalContext) as TotalContextProps;
+  const {groupad476bProps, setgroupad476bProps}= useContext(TotalContext) as TotalContextProps;
+  const {groupb66b0d, setgroupb66b0d}= useContext(TotalContext) as TotalContextProps;
+  const {groupb66b0dProps, setgroupb66b0dProps}= useContext(TotalContext) as TotalContextProps;
+  const {age9919a, setage9919a}= useContext(TotalContext) as TotalContextProps;
+  const {groupc59a19, setgroupc59a19}= useContext(TotalContext) as TotalContextProps;
+  const {groupc59a19Props, setgroupc59a19Props}= useContext(TotalContext) as TotalContextProps;
+  const {groupde191f, setgroupde191f}= useContext(TotalContext) as TotalContextProps;
+  const {groupde191fProps, setgroupde191fProps}= useContext(TotalContext) as TotalContextProps;
   //////////////
   
 
@@ -83,29 +63,37 @@ const TextInputage = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFla
 
   const handleChange = async(e: any) => {
     if(dynamicStateandType.type=="number"){
-    setforma62ff((prev: any) => ({ ...prev, age: +e.target.value }))
+    setgroupb66b0d((prev: any) => ({ ...prev, age: +e.target.value }))
     }
     else{
-    setforma62ff((prev: any) => ({ ...prev, age: e.target.value }))
+    setgroupb66b0d((prev: any) => ({ ...prev, age: e.target.value }))
     }
   }
   const handleBlur=async () => {
     let code:any=allCode
      if (code != '') {
       let codeStates: any = {}
-      codeStates['form']  = forma62ff,
-      codeStates['setform'] = setforma62ff,
+      codeStates['main']  = main6d2c7,
+      codeStates['setmain'] = setmain6d2c7,
+      codeStates['groupa']  = groupad476b,
+      codeStates['setgroupa'] = setgroupad476b,
+      codeStates['groupb']  = groupb66b0d,
+      codeStates['setgroupb'] = setgroupb66b0d,
+      codeStates['groupc']  = groupc59a19,
+      codeStates['setgroupc'] = setgroupc59a19,
+      codeStates['groupd']  = groupde191f,
+      codeStates['setgroupd'] = setgroupde191f,
     codeExecution(code,codeStates)
     }
   }
-    const handleMapperValue=async()=>{
+  const handleMapperValue=async()=>{
     try{
       const orchestrationData: any = await AxiosService.post(
         '/UF/Orchestration',
         {
-          key: "CK:CT266:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:userform:AFVK:v1",
-          componentId: "d1ef2bef95ab46a1b105470f5f1a62ff",
-          controlId: "446c581c759348d3bd0509ef69b7d25a",
+          key: "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1",
+          componentId: "4031f31d86804f2282d6b4b8bec66b0d",
+          controlId: "3f5f3360c14d4473b8538d431639919a",
           isTable: false,
           from:"TextInputage",
           accessProfile:accessProfile
@@ -136,7 +124,7 @@ const TextInputage = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFla
         return
       }else{
       //  if(Object.keys(orchestrationData?.data?.dstData).length>0) 
-       // setforma62ff((pre:any)=>({...pre,age:orchestrationData?.data?.dstData}))
+       // setgroupb66b0d((pre:any)=>({...pre,age:orchestrationData?.data?.dstData}))
       }
     }
     catch(err)
@@ -144,27 +132,33 @@ const TextInputage = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFla
       console.log(err)
     }
   }
-    useEffect(()=>{
-        handleMapperValue()
-        handleBlur()
-    },[validateRefetch.value])
 
-    if (age7d25a?.isHidden) {
-      return <></>
-    }
+  useEffect(()=>{
+      handleMapperValue()
+      handleBlur()
+  },[validateRefetch.value])
+
+  if (age9919a?.isHidden) {
+    return <></>
+  }
   return (   
     <div 
-      style={{gridColumn: `6 / 9`,gridRow: `2 / 3`,marginTop: `auto`, gap:``}} >
-        <TorusTextInput
-          className=""
-          label={keyset("age")}
-          onChange= {handleChange}
-          onBlur={()=>handleBlur()}
-          type={dynamicStateandType.type}
-          value={forma62ff?.age||""}
-          readOnly= {age7d25a?.isDisabled ? true : false}
-        />
+      style={{gridColumn: `3 / 11`,gridRow: `2 / 3`, gap:``, height: `100%`, overflow: 'auto'}} >
+      <TorusTextInput
+        className=""
+        label={keyset("age")}
+        onChange= {handleChange}
+        onBlur={()=>handleBlur()}
+        type={dynamicStateandType.type}
+        value={groupb66b0d?.age||""}
+        pin='brick-brick'     
+        placeholder='type here....'      
+        readOnly= {age9919a?.isDisabled ? true : false}
+        size='m'      
+        view='normal'
+      />
     </div> 
   )
 }
+
 export default TextInputage

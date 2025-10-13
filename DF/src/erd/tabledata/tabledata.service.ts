@@ -8,11 +8,11 @@ import { CustomException } from 'src/customException';
 
 
 @Injectable()
-export class collectionService {
+export class tabledataService {
   constructor(private readonly prismaService: PrismaService,
   private readonly commonService: CommonService) {}
   private encryptedCols: any={
-  "collection": []
+  "tabledata": []
 }
 
   async encryptData(data: any, tableName: string, method) {
@@ -202,6 +202,7 @@ export class collectionService {
       id:"string",
       name:"string",
       age:"number",
+      address:"string",
       trs_creator_email:"string",
       trs_created_date:"Date",
       trs_created_by:"string",
@@ -239,6 +240,7 @@ export class collectionService {
       let query: any = {}; 
       const { name }: {name : Date} = queryValue;
       const { age }: {age : number} = queryValue;
+      const { address }: {address : Date} = queryValue;
 
       if(name){ 
         query.name = { [queryCondition['name']]: name };
@@ -246,15 +248,18 @@ export class collectionService {
       if(age){ 
         query.age = { [queryCondition['age']]: age };
       }
+      if(address){ 
+        query.address = { [queryCondition['address']]: address };
+      }
       const skip = (page - 1) * limit;
       if (Object.keys(query).length > 0) {
-        const banks = await this.prismaService.collection.findMany({
+        const banks = await this.prismaService.tabledata.findMany({
           select:Object.keys(columns).length >0 ?columns: undefined,
           where:Object.keys(query).length >0 ?query: undefined,
         });
         let decryptedRes: any = [];
         for (const indiviual of banks) {
-          const decryptedData = await this.decryptData(indiviual, 'collection');
+          const decryptedData = await this.decryptData(indiviual, 'tabledata');
           decryptedRes.push(decryptedData);
         }
         return decryptedRes;
@@ -262,31 +267,31 @@ export class collectionService {
 
       if(!skip && !limit && Object.keys(query).length == 0){
 
-        const banks = await this.prismaService.collection.findMany({
+        const banks = await this.prismaService.tabledata.findMany({
            select:Object.keys(columns).length >0 ? columns: undefined,
         });
         let decryptedRes: any = [];
         for (const indiviual of banks) {
-          const decryptedData = await this.decryptData(indiviual, 'collection');
+          const decryptedData = await this.decryptData(indiviual, 'tabledata');
           decryptedRes.push(decryptedData);
         }
         return decryptedRes;
       }
 
-      const banks = await this.prismaService.collection.findMany({
+      const banks = await this.prismaService.tabledata.findMany({
         select:Object.keys(columns).length >0 ? columns: undefined,
         where:Object.keys(query).length >0 ?query: undefined,
         skip: skip || undefined,
         take: limit || undefined,
       });
 
-      const totalItems = await this.prismaService.collection.count({
+      const totalItems = await this.prismaService.tabledata.count({
         where:Object.keys(query).length >0 ?query: undefined,
       });
 
       let decryptedRes: any = [];
       for (const indiviual of banks) {
-        const decryptedData = await this.decryptData(indiviual, 'collection');
+        const decryptedData = await this.decryptData(indiviual, 'tabledata');
         decryptedRes.push(decryptedData);
       }
       return {
@@ -301,7 +306,7 @@ export class collectionService {
         'Fatal',
         "TG020",
         errorMessage,
-        "CK:CT266:FNGK:AF:FNK:API-MSD:CATK:AG001:AFGK:A001:AFK:mytable:AFVK:v1",
+        "CK:TT407:FNGK:AF:FNK:API-MSD:CATK:CGFA:AFGK:TG4CGFA:AFK:mytable:AFVK:v1",
         token
       );
       throw new CustomException(errorMessage, error);
@@ -310,11 +315,11 @@ export class collectionService {
 
     async findOne(id:string,token : string) {
     try{
-      const res = await this.prismaService.collection.findUnique({ 
+      const res = await this.prismaService.tabledata.findUnique({ 
       where: {id,},
-      select: {id:true,age:true,trs_creator_email:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true}
+      select: {id:true,age:true,address:true,trs_creator_email:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true}
     });
-    return await this.decryptData(res, 'collection');
+    return await this.decryptData(res, 'tabledata');
   } catch (error) {
     const errorMessage = 'find one Error';
         await this.commonService.errorLog(
@@ -323,7 +328,7 @@ export class collectionService {
           'Fatal',
           "TG023",
           error,
-          "CK:CT266:FNGK:AF:FNK:API-MSD:CATK:AG001:AFGK:A001:AFK:mytable:AFVK:v1",
+          "CK:TT407:FNGK:AF:FNK:API-MSD:CATK:CGFA:AFGK:TG4CGFA:AFK:mytable:AFVK:v1",
           token
         );
         throw new CustomException(errorMessage, error);
@@ -332,12 +337,12 @@ export class collectionService {
 
   async findAll(token : string) {
     try{
-      const res = await this.prismaService.collection.findMany({ 
-      select: {id:true,name:true,age:true,trs_creator_email:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true}
+      const res = await this.prismaService.tabledata.findMany({ 
+      select: {id:true,name:true,age:true,address:true,trs_creator_email:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true}
       });
       let decryptedRes: any = [];
       for (const indiviual of res) {
-        const decryptedData = await this.decryptData(indiviual, 'collection');
+        const decryptedData = await this.decryptData(indiviual, 'tabledata');
         decryptedRes.push(decryptedData);
       }
       return decryptedRes;
@@ -349,23 +354,23 @@ export class collectionService {
           'Fatal',
           "TG023",
           error,
-          "CK:CT266:FNGK:AF:FNK:API-MSD:CATK:AG001:AFGK:A001:AFK:mytable:AFVK:v1",
+          "CK:TT407:FNGK:AF:FNK:API-MSD:CATK:CGFA:AFGK:TG4CGFA:AFK:mytable:AFVK:v1",
           token
         );
       throw new CustomException(errorMessage, error);
     }
     }
     
-  async findAllwithquery(token : string,whereClause : Prisma.collectionWhereInput) {
+  async findAllwithquery(token : string,whereClause : Prisma.tabledataWhereInput) {
     try{
-      whereClause = await this.encryptData(whereClause,'collection','getAll')
-      const res = await this.prismaService.collection.findMany({ 
+      whereClause = await this.encryptData(whereClause,'tabledata','getAll')
+      const res = await this.prismaService.tabledata.findMany({ 
       where: whereClause,
-      select: {id:true,name:true,age:true,trs_creator_email:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true}
+      select: {id:true,name:true,age:true,address:true,trs_creator_email:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true}
       });
       let decryptedRes: any = [];
       for (const indiviual of res) {
-        const decryptedData = await this.decryptData(indiviual, 'collection');
+        const decryptedData = await this.decryptData(indiviual, 'tabledata');
         decryptedRes.push(decryptedData);
       }
       return decryptedRes;
@@ -377,20 +382,20 @@ export class collectionService {
           'Fatal',
           "TG023",
           error,
-          "CK:CT266:FNGK:AF:FNK:API-MSD:CATK:AG001:AFGK:A001:AFK:mytable:AFVK:v1",
+          "CK:TT407:FNGK:AF:FNK:API-MSD:CATK:CGFA:AFGK:TG4CGFA:AFK:mytable:AFVK:v1",
           token
         );
         throw new CustomException(errorMessage, error);
     }
     }
     
-  async create(createcollectionDto: Prisma.collectionCreateInput,token:string) {
+  async create(createtabledataDto: Prisma.tabledataCreateInput,token:string) {
     try{
-      const res = await this.prismaService.collection.create({ 
-      data: await this.encryptData(createcollectionDto,'collection','create'), 
-      select:{id:true,name:true,age:true,trs_creator_email:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true}
+      const res = await this.prismaService.tabledata.create({ 
+      data: await this.encryptData(createtabledataDto,'tabledata','create'), 
+      select:{id:true,name:true,age:true,address:true,trs_creator_email:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true}
     })
-    return await this.decryptData(res, 'collection');
+    return await this.decryptData(res, 'tabledata');
   } catch (error) {
     const errorMessage = 'Create Error';
 
@@ -400,7 +405,7 @@ export class collectionService {
       'Fatal',
       "TG022",
       error,
-      "CK:CT266:FNGK:AF:FNK:API-MSD:CATK:AG001:AFGK:A001:AFK:mytable:AFVK:v1",
+      "CK:TT407:FNGK:AF:FNK:API-MSD:CATK:CGFA:AFGK:TG4CGFA:AFK:mytable:AFVK:v1",
       token
 
     );
@@ -409,14 +414,14 @@ export class collectionService {
     
   }
 
-    async update(id:string,updatecollectionDto: Prisma.collectionUpdateInput,token:string) {    
+    async update(id:string,updatetabledataDto: Prisma.tabledataUpdateInput,token:string) {    
       try{
-      const res = await this.prismaService.collection.update({
+      const res = await this.prismaService.tabledata.update({
       where: {id,},
-      data: await this.encryptData(updatecollectionDto,'collection','update'),
-      select: {id:true,name:true,age:true,trs_creator_email:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true},
+      data: await this.encryptData(updatetabledataDto,'tabledata','update'),
+      select: {id:true,name:true,age:true,address:true,trs_creator_email:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true},
     });
-    return await this.decryptData(res, 'collection');
+    return await this.decryptData(res, 'tabledata');
     } catch (error) {
         const errorMessage = 'update Error';
         await this.commonService.errorLog(
@@ -425,7 +430,7 @@ export class collectionService {
           'Fatal',
           "TG023",
           error,
-          "CK:CT266:FNGK:AF:FNK:API-MSD:CATK:AG001:AFGK:A001:AFK:mytable:AFVK:v1",
+          "CK:TT407:FNGK:AF:FNK:API-MSD:CATK:CGFA:AFGK:TG4CGFA:AFK:mytable:AFVK:v1",
           token
         );
         throw new CustomException(errorMessage, error);
@@ -434,9 +439,9 @@ export class collectionService {
 
     async remove(id:string,token : string) {
     try{
-      const res = await this.prismaService.collection.delete({
+      const res = await this.prismaService.tabledata.delete({
       where: {id, },
-      select: {id:true,name:true,age:true,trs_creator_email:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true}
+      select: {id:true,name:true,age:true,address:true,trs_creator_email:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true}
     });
     return res;
   } catch (error) {
@@ -447,7 +452,7 @@ export class collectionService {
         'Fatal',
         "TG026",
         error,
-        "CK:CT266:FNGK:AF:FNK:API-MSD:CATK:AG001:AFGK:A001:AFK:mytable:AFVK:v1",
+        "CK:TT407:FNGK:AF:FNK:API-MSD:CATK:CGFA:AFGK:TG4CGFA:AFK:mytable:AFVK:v1",
         token
       );
       throw new CustomException(errorMessage, error);
@@ -455,10 +460,10 @@ export class collectionService {
   }
   async findFirst(token : string) {
     try{
-      const res = await this.prismaService.collection.findFirst({ 
+      const res = await this.prismaService.tabledata.findFirst({ 
         orderBy: { trs_created_date: 'asc' },
       });
-      return  await this.decryptData(res, 'collection');
+      return  await this.decryptData(res, 'tabledata');
     } catch (error) {
       const errorMessage = 'Error in findFirst';
         await this.commonService.errorLog(
@@ -467,7 +472,7 @@ export class collectionService {
           'Fatal',
           "TG028",
           error,
-          "CK:CT266:FNGK:AF:FNK:API-MSD:CATK:AG001:AFGK:A001:AFK:mytable:AFVK:v1",
+          "CK:TT407:FNGK:AF:FNK:API-MSD:CATK:CGFA:AFGK:TG4CGFA:AFK:mytable:AFVK:v1",
           token
         );
         throw new CustomException(errorMessage, error);
@@ -475,10 +480,10 @@ export class collectionService {
   }
   async findLast(token : string) {
     try{
-      const res = await this.prismaService.collection.findFirst({ 
+      const res = await this.prismaService.tabledata.findFirst({ 
         orderBy: { trs_created_date: 'desc' },
       });
-      return  await this.decryptData(res, 'collection');
+      return  await this.decryptData(res, 'tabledata');
     } catch (error) {
       const errorMessage = 'Error in findLast';
         await this.commonService.errorLog(
@@ -487,7 +492,7 @@ export class collectionService {
           'Fatal',
           "TG028",
           error,
-          "CK:CT266:FNGK:AF:FNK:API-MSD:CATK:AG001:AFGK:A001:AFK:mytable:AFVK:v1",
+          "CK:TT407:FNGK:AF:FNK:API-MSD:CATK:CGFA:AFGK:TG4CGFA:AFK:mytable:AFVK:v1",
           token
         );
         throw new CustomException(errorMessage, error);

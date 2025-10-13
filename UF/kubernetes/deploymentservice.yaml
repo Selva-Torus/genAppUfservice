@@ -1,10 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: a001-uf-generator
-  namespace: a001-uf-v1
+  name: tg4cgfa-uf-generator
+  namespace: tg4cgfa-uf-v1
   labels:
-    app: a001-uf-generator
+    app: tg4cgfa-uf-generator
 spec:
   replicas: 1
   strategy:
@@ -17,15 +17,15 @@ spec:
       - setWeight: 100  # 100% Canary (Stable)
   selector:
     matchLabels:
-      app: a001-uf-generator
+      app: tg4cgfa-uf-generator
   template:
     metadata:
       labels:
-        app: a001-uf-generator
+        app: tg4cgfa-uf-generator
     spec:
       containers:
-      - name: a001-uf-generator-frontend-container
-        image: 192.168.2.164:5000/a001-uf-v1:docker_tag
+      - name: tg4cgfa-uf-generator-frontend-container
+        image: 192.168.2.164:5000/tg4cgfa-uf-v1:docker_tag
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -35,13 +35,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: a001-uf-generator
-  namespace: a001-uf-v1
+  name: tg4cgfa-uf-generator
+  namespace: tg4cgfa-uf-v1
   labels:
-    app: a001-uf-generator
+    app: tg4cgfa-uf-generator
 spec:
   selector:
-    app: a001-uf-generator
+    app: tg4cgfa-uf-generator
   ports:
     - name: http
       protocol: TCP

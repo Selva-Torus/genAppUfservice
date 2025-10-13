@@ -25,8 +25,8 @@ import axios, { AxiosRequestConfig } from 'axios';
 import { Readable } from 'stream';
 import * as FormData from 'form-data';
 import { v4 as uuidv4 } from 'uuid';
+import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet } from 'src/fusionAuth.api';
 // import { RuleService } from 'src/ruleService';
-
 const transporter = nodemailer.createTransport({
   host: 'smtp-mail.outlook.com',
   port: 587,
@@ -47,6 +47,7 @@ const fusionAuthApplicationId = process.env.FUSIONAUTH_APPLICATIONID;
 const fusionAuthAppClientSecret = process.env.FUSIONAUTH_APPCLIENTSECRET;
 const fusionAuthBaseUrl = process.env.FUSIONAUTH_BASEURL;
 const fusionAuthApiKey = process.env.FUSIONAUTH_APIKEY;
+const defaultAuth =  process.env.DEFAULT_AUTHENTICATION
 
 @Injectable()
 export class UfService {
@@ -312,7 +313,7 @@ export class UfService {
     }
   }
 
-  async getpagination(
+   async getpagination(
     key: any,
     page,
     count,
@@ -391,21 +392,21 @@ export class UfService {
               if (result?.error) {
                 break;
               } else if (result?.result?.output === true) {
-                if (tokenDecode?.dap == 'f') {
+                // if (tokenDecode?.dap == 'f') {
                   finalData.push(data[j]);
-                } else if (
-                  tokenDecode.orgGrpCode == data[j]['trs_org_grp_code'] &&
-                  tokenDecode.orgCode == data[j]['trs_org_code'] &&
-                  tokenDecode.roleGrpCode == data[j]['trs_role_grp_code'] &&
-                  tokenDecode.roleCode == data[j]['trs_role_code'] &&
-                  tokenDecode.psGrpCode == data[j]['trs_ps_grp_code'] &&
-                  tokenDecode.psCode == data[j]['trs_ps_code'] &&
-                  tokenDecode.selectedAccessProfile ==
-                    data[j]['trs_access_profile'] &&
-                  tokenDecode.loginId == data[j]['trs_created_by']
-                ) {
-                  finalData.push(data[j]);
-                }
+                // } else if (
+                //   tokenDecode.orgGrpCode == data[j]['trs_org_grp_code'] &&
+                //   tokenDecode.orgCode == data[j]['trs_org_code'] &&
+                //   tokenDecode.roleGrpCode == data[j]['trs_role_grp_code'] &&
+                //   tokenDecode.roleCode == data[j]['trs_role_code'] &&
+                //   tokenDecode.psGrpCode == data[j]['trs_ps_grp_code'] &&
+                //   tokenDecode.psCode == data[j]['trs_ps_code'] &&
+                //   tokenDecode.selectedAccessProfile ==
+                //     data[j]['trs_access_profile'] &&
+                //   tokenDecode.loginId == data[j]['trs_created_by']
+                // ) {
+                //   finalData.push(data[j]);
+                // }
               }
             }
 
@@ -414,24 +415,24 @@ export class UfService {
                 var s = 0;
                 for (var q = 0; q < searchkey.length; q++) {
                   if (finalData[x][searchkey[q]] == searchval[q]) {
-                    if (tokenDecode?.dap == 'f') {
+                    // if (tokenDecode?.dap == 'f') {
                       s++;
-                    } else if (
-                      tokenDecode.orgGrpCode ==
-                        finalData[x]['trs_org_grp_code'] &&
-                      tokenDecode.orgCode == finalData[x]['trs_org_code'] &&
-                      tokenDecode.roleGrpCode ==
-                        finalData[x]['trs_role_grp_code'] &&
-                      tokenDecode.roleCode == finalData[x]['trs_role_code'] &&
-                      tokenDecode.psGrpCode ==
-                        finalData[x]['trs_ps_grp_code'] &&
-                      tokenDecode.psCode == finalData[x]['trs_ps_code'] &&
-                      tokenDecode.selectedAccessProfile ==
-                        finalData[x]['trs_access_profile'] &&
-                      tokenDecode.loginId == finalData[x]['trs_created_by']
-                    ) {
-                      s++;
-                    }
+                    // } else if (
+                    //   tokenDecode.orgGrpCode ==
+                    //     finalData[x]['trs_org_grp_code'] &&
+                    //   tokenDecode.orgCode == finalData[x]['trs_org_code'] &&
+                    //   tokenDecode.roleGrpCode ==
+                    //     finalData[x]['trs_role_grp_code'] &&
+                    //   tokenDecode.roleCode == finalData[x]['trs_role_code'] &&
+                    //   tokenDecode.psGrpCode ==
+                    //     finalData[x]['trs_ps_grp_code'] &&
+                    //   tokenDecode.psCode == finalData[x]['trs_ps_code'] &&
+                    //   tokenDecode.selectedAccessProfile ==
+                    //     finalData[x]['trs_access_profile'] &&
+                    //   tokenDecode.loginId == finalData[x]['trs_created_by']
+                    // ) {
+                    //   s++;
+                    // }
                   }
                 }
                 // if(searchset.includes(searchkey.toLowerCase())){
@@ -459,21 +460,21 @@ export class UfService {
             var s = 0;
             for (var q = 0; q < searchkey.length; q++) {
               if (data[x][searchkey[q]] == searchval[q]) {
-                if (tokenDecode?.dap == 'f') {
+                // if (tokenDecode?.dap == 'f') {
                   s++;
-                } else if (
-                  tokenDecode.orgGrpCode == data[x]['trs_org_grp_code'] &&
-                  tokenDecode.orgCode == data[x]['trs_org_code'] &&
-                  tokenDecode.roleGrpCode == data[x]['trs_role_grp_code'] &&
-                  tokenDecode.roleCode == data[x]['trs_role_code'] &&
-                  tokenDecode.psGrpCode == data[x]['trs_ps_grp_code'] &&
-                  tokenDecode.psCode == data[x]['trs_ps_code'] &&
-                  tokenDecode.selectedAccessProfile ==
-                    data[x]['trs_access_profile'] &&
-                  tokenDecode.loginId == data[x]['trs_created_by']
-                ) {
-                  s++;
-                }
+                // } else if (
+                //   tokenDecode.orgGrpCode == data[x]['trs_org_grp_code'] &&
+                //   tokenDecode.orgCode == data[x]['trs_org_code'] &&
+                //   tokenDecode.roleGrpCode == data[x]['trs_role_grp_code'] &&
+                //   tokenDecode.roleCode == data[x]['trs_role_code'] &&
+                //   tokenDecode.psGrpCode == data[x]['trs_ps_grp_code'] &&
+                //   tokenDecode.psCode == data[x]['trs_ps_code'] &&
+                //   tokenDecode.selectedAccessProfile ==
+                //     data[x]['trs_access_profile'] &&
+                //   tokenDecode.loginId == data[x]['trs_created_by']
+                // ) {
+                //   s++;
+                // }
               }
             }
             // if(searchset.includes(searchkey.toLowerCase())){ searchkey
@@ -484,21 +485,21 @@ export class UfService {
 
         if (data?.length > 0) {
           for (let i = 0; i < data.length; i++) {
-            if (tokenDecode?.dap == 'f') {
+            // if (tokenDecode?.dap == 'f') {
               dataArr.push(data[i]);
-            } else if (
-              tokenDecode.orgGrpCode == data[i]['trs_org_grp_code'] &&
-              tokenDecode.orgCode == data[i]['trs_org_code'] &&
-              tokenDecode.roleGrpCode == data[i]['trs_role_grp_code'] &&
-              tokenDecode.roleCode == data[i]['trs_role_code'] &&
-              tokenDecode.psGrpCode == data[i]['trs_ps_grp_code'] &&
-              tokenDecode.psCode == data[i]['trs_ps_code'] &&
-              tokenDecode.selectedAccessProfile ==
-                data[i]['trs_access_profile'] &&
-              tokenDecode.loginId == data[i]['trs_created_by']
-            ) {
-              dataArr.push(data[i]);
-            }
+            // } else if (
+            //   tokenDecode.orgGrpCode == data[i]['trs_org_grp_code'] &&
+            //   tokenDecode.orgCode == data[i]['trs_org_code'] &&
+            //   tokenDecode.roleGrpCode == data[i]['trs_role_grp_code'] &&
+            //   tokenDecode.roleCode == data[i]['trs_role_code'] &&
+            //   tokenDecode.psGrpCode == data[i]['trs_ps_grp_code'] &&
+            //   tokenDecode.psCode == data[i]['trs_ps_code'] &&
+            //   tokenDecode.selectedAccessProfile ==
+            //     data[i]['trs_access_profile'] &&
+            //   tokenDecode.loginId == data[i]['trs_created_by']
+            // ) {
+            //   dataArr.push(data[i]);
+            // }
           }
         }
         return await this.filterpagination(start, end, dataArr);
@@ -3031,7 +3032,7 @@ export class UfService {
         {
           type,
           client,
-          loginId,
+          loginId,       
           isAppAdmin,
           ag,
           app,
@@ -3200,7 +3201,7 @@ export class UfService {
         // verifying the refresh token is valid or not if it a fusionauth refresh token
         if (
           process.env.DEFAULT_AUTHENTICATION == 'fusionauth' &&
-          sessionList[index]?.refreshTokenId
+          sessionList[index]?.refreshTokenId && fusionAuthBaseUrl && fusionAuthAppClientSecret && fusionAuthApplicationId
         ) {
           const accessToken = sessionList[index]?.accessToken;
           let accessTokenPayload = await this.jwt.decode(accessToken);
@@ -3479,26 +3480,35 @@ export class UfService {
 
       if (tenantUser?.length > 0) {
         let loginUser: any =
-          tenantUser.find((user: any) =>
-            (user.loginId === username || user.email === username) &&
-            isOauthUser
-              ? true
-              : this.comparePasswords(password, user.password),
-          ) || null;
-        if (!loginUser) throw new NotFoundException('User not found');
+          tenantUser.find((user: any) => {
+            const isUserMatch =
+              user.loginId === username || user.email === username;
+            if (!isUserMatch) return false;
+            if (isOauthUser) {
+              return true;
+            } else {
+              return user?.password?this.comparePasswords(password, user.password):false
+            }
+          }) || null;
+        if (!loginUser){
+          if(isOauthUser)
+            return false;
+          else 
+            throw new NotFoundException('User not found');
+        } 
         appUser = JSON.parse(
           await this.redisService.getJsonData(
             appUserKey,
             process.env.CLIENTCODE,
-          ),
-        );
-        const loggedInUser = appUser.find(
+          ), 
+        ) || []; // app user are null
+        let loggedInUser = appUser.find(
           (user: any) => loginUser?.userUniqueId === user?.userUniqueId,
         );
-
         if (!loggedInUser) {
-          throw new NotFoundException(`User not found in application users`);
+          throw new NotFoundException(`User did not have access to the application`);
         }
+        loggedInUser={...loggedInUser,firstName:loginUser?.firstName,lastName:loginUser?.lastName,profile:loginUser?.profile}
         const isExpiredUser = this.isUserAccessExpired(loggedInUser);
 
         if (isExpiredUser) {
@@ -3508,6 +3518,11 @@ export class UfService {
         }
 
         if (isOauthUser && !loggedInUser?.accessProfile?.length) {
+          throw new UnauthorizedException(
+            `User access pending for ${loggedInUser.loginId ?? loginUser?.email} , you'll be notified when approved`,
+          );
+        }
+        else if (!loggedInUser?.accessProfile?.length) {
           throw new UnauthorizedException(
             `User access pending for ${loggedInUser.loginId ?? loginUser?.email} , you'll be notified when approved`,
           );
@@ -3683,6 +3698,10 @@ export class UfService {
           redirectToORPSelector,
         };
       } else {
+        if(isOauthUser)
+        {
+          return false
+        }
         throw new NotFoundException(`Invalid Credentials`);
       }
     } catch (error) {
@@ -3720,7 +3739,7 @@ export class UfService {
 
       if (!res.ok) {
         const errorData = await res.text();
-        throw new UnauthorizedException(errorData ?? 'invalid credentials');
+        throw new UnauthorizedException(JSON.parse(errorData)?.error_description ?? 'invalid credentials');
       }
       const fusionAuthLoginResponse = await res.json();
       const torusSignIn = await this.signIntoTorus(
@@ -3796,7 +3815,55 @@ export class UfService {
     return `${salt}:${hash}`;
   }
   // static screen's apis
-
+  async getTenantUser(tenantCode: string, client: string) {
+    try {
+      let key: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenantCode}:AFK:PROFILE:AFVK:v1:users`;
+      const res = JSON.parse(await this.redisService.getJsonData(key, client));
+      return res || [];
+    } catch (err: any) {
+      throw new UnauthorizedException('Invalid tenant key');
+    }
+  }
+    async getAppUserList(
+      tenant: string,
+      ag: string,
+      app: string,
+      client: string,
+    ) {
+      try {
+        if (!tenant || !ag || !app || !client) {
+          return [];
+        }
+        const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+        const responseFromRedis = JSON.parse(
+          await this.redisService.getJsonData(userCachekey, client),
+        );
+        return responseFromRedis || [];
+      } catch (error) {
+        throw new UnauthorizedException('Please check credentials');
+      }
+    }
+  async getTenantAppUser(tenant, client, ag, app){
+    try {
+      let setAssignUsers = []
+     
+      const tenantUser: any[] = await this.getTenantUser(tenant, client);
+      const tenantAppUser: any[] = await this.getAppUserList(tenant, ag, app, client);
+      tenantAppUser.filter((appUser: any) =>
+        tenantUser.some(
+          (tenantUser: any) => {
+            if(appUser.userUniqueId === tenantUser.userUniqueId){
+              setAssignUsers.push({...appUser,...tenantUser})
+            }
+          }
+        ),
+      );
+      // return {data:setAssignUsers}
+       return setAssignUsers
+    }catch (error) {
+         throw new UnauthorizedException('Please check credentials');
+      }
+    }
   async getAppSecurityData() {
     try {
       if (!tenant)
@@ -3804,7 +3871,7 @@ export class UfService {
           'Either AppGroup or Application not available',
         );
       const appCachePrefix = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1`;
-      const cacheKeyArray = ['orgMatrix', 'users', 'appearance'];
+      const cacheKeyArray = ['orgMatrix', 'appearance'];
       const securityResponse = {};
       for (let index = 0; index < cacheKeyArray.length; index++) {
         const cacheKey = `${appCachePrefix}:${cacheKeyArray[index]}`;
@@ -3825,7 +3892,7 @@ export class UfService {
             (data ?? cacheKeyArray[index] == 'appearance') ? {} : [];
         }
       }
-
+      securityResponse['users'] = await this.getTenantAppUser(tenant, process.env.CLIENTCODE, ag, app);
       return securityResponse;
     } catch (error) {
       await this.throwCustomException(error);
@@ -3904,43 +3971,161 @@ export class UfService {
     }
   }
 
-  async postAppUserList(data: any[]) {
+   async postAppUserList(data: any) {
     try {
-      if (!tenant || !data || !Array.isArray(data)) {
+      if (!tenant || !data || !ag || !app || !process.env.CLIENTCODE) {
         throw new BadRequestException('Invalid credentials');
       }
       const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
-
-      var userList = [];
-      const responseFromRedis = await this.redisService.getJsonData(
-        userCachekey,
-        process.env.CLIENTCODE,
+      const responseFromRedis = JSON.parse(
+        await this.redisService.getJsonData(userCachekey, process.env.CLIENTCODE),
       );
+      // let setupData: any = await this.getFustionAuthDetaiols(tenant, process.env.CLIENTCODE);
 
-      if (responseFromRedis) {
-        const existingUserList: any[] = JSON.parse(responseFromRedis);
-        data.forEach((newUser) => {
-          const existingUserObj = existingUserList.find(
-            (existinguser) => existinguser.email == newUser.email,
-          );
-          userList.push({
-            ...existingUserObj,
-            ...newUser,
-            isAppAdmin: newUser?.isAppAdmin,
-            password: existingUserObj?.password,
-          });
-        });
+      // let applicationUniqueId = '';
+      // let defaultAuthenticationMethod = setupData?.defaultAuthentication || '';
+      // let tenantUniqueId = setupData?.tenantUniqueId || '';
+
+      // setupData?.AG.map((AppGrp: any) => {
+      //   if (AppGrp?.code == ag) {
+      //     AppGrp?.APPS.map((App: any) => {
+      //       if (App?.code == app) {
+      //         applicationUniqueId = App?.applicationUniqueId;
+      //       }
+      //     });
+      //   }
+      // });
+
+      let dataExistOrNot: any = await FusionAuthUserApplicatonGet(
+        fusionAuthTenantId,
+        data?.userUniqueId,
+        fusionAuthApplicationId,
+      );
+      if (responseFromRedis == null || responseFromRedis?.length == 0) {
+        if (
+          defaultAuth === 'fusionauth' &&
+          fusionAuthTenantId &&
+          data?.userUniqueId &&
+          fusionAuthApplicationId
+        ) {
+          if (dataExistOrNot?.isNotExist) {
+            await FusionAuthApplicatonAssign(
+              fusionAuthTenantId,
+              data?.userUniqueId,
+              fusionAuthApplicationId,
+              data.firstName,
+              data.lastName,
+              data.loginId,
+              data.email,
+              'POST',
+              data?.accessProfile || [],
+            );
+          }
+        }
+        return await this.redisService.setJsonData(
+          userCachekey,
+          JSON.stringify([data]),
+          process.env.CLIENTCODE,
+        );
       } else {
-        userList = data.map((item) => ({
-          ...item,
-          password: this.hashPassword(item.password),
-        }));
+        let userExist: boolean = false;
+        let updateIndex: any = null;
+
+        responseFromRedis.forEach((user: any, index: number) => {
+          if (data?.userUniqueId === user?.userUniqueId) {
+            userExist = true;
+            updateIndex = index;
+          }
+        });
+        if (userExist) {
+          responseFromRedis[updateIndex] = data;
+          if (
+            defaultAuth === 'fusionauth' &&
+            fusionAuthTenantId &&
+            data?.userUniqueId &&
+            fusionAuthApplicationId
+          ) {
+            if (dataExistOrNot?.isNotExist) {
+              await FusionAuthApplicatonAssign(
+                fusionAuthTenantId,
+                data?.userUniqueId,
+                fusionAuthApplicationId,
+                data.firstName,
+                data.lastName,
+                data.loginId,
+                data.email,
+                'POST',
+                data?.accessProfile || [],
+              );
+            } else if (dataExistOrNot?.registration) {
+              await FusionAuthApplicatonAssign(
+                fusionAuthTenantId,
+                data?.userUniqueId,
+                fusionAuthApplicationId,
+                data.firstName,
+                data.lastName,
+                data.loginId,
+                data.email,
+                'PUT',
+                data?.accessProfile || [],
+              );
+            }
+          }
+          ////////////
+          let uniqueData: any[] = responseFromRedis?.filter(
+            (obj) => 'userUniqueId' in obj,
+          );
+          uniqueData = uniqueData.filter(
+            (item: any, index: any, self: any) =>
+              index ===
+              self.findIndex((t: any) => t.userUniqueId === item.userUniqueId),
+          );
+          ////////////
+
+          const res = await this.redisService.setJsonData(
+            userCachekey,
+            JSON.stringify(uniqueData), // set JSON.stringify(responseFromRedis), this once all app keys have correct object
+            process.env.CLIENTCODE,
+          );
+          return res;
+        } else {
+          if (
+            defaultAuth === 'fusionauth' &&
+            fusionAuthTenantId &&
+            data?.userUniqueId &&
+            fusionAuthApplicationId
+          ) {
+            if (dataExistOrNot?.isNotExist) {
+              await FusionAuthApplicatonAssign(
+                fusionAuthTenantId,
+                data?.userUniqueId,
+                fusionAuthApplicationId,
+                data.firstName,
+                data.lastName,
+                data.loginId,
+                data.email,
+                'POST',
+                data?.accessProfile || [],
+              );
+            }
+          }
+          responseFromRedis.push(data);
+          //////////
+          let uniqueData: any[] = responseFromRedis;
+          uniqueData = uniqueData.filter(
+            (item: any, index: any, self: any) =>
+              index ===
+              self.findIndex((t: any) => t.userUniqueId === item.userUniqueId),
+          );
+          ////////////
+          const res = await this.redisService.setJsonData(
+            userCachekey,
+            JSON.stringify(uniqueData), // set JSON.stringify(responseFromRedis), this once all app keys have correct object
+            process.env.CLIENTCODE,
+          );
+          return res;
+        }
       }
-      return await this.redisService.setJsonData(
-        userCachekey,
-        JSON.stringify([...userList]),
-        process.env.CLIENTCODE,
-      );
     } catch (error) {
       await this.throwCustomException(error);
     }
@@ -3958,7 +4143,7 @@ export class UfService {
     }
   }
 
-  async appUserAddition(data: any) {
+  async appUserAddition(data: any,isFusionAuth:boolean=false) {
     try {
       if (!tenant || !ag || !app || !data) {
         throw new BadRequestException('Invalid input parameters');
@@ -4019,7 +4204,6 @@ export class UfService {
 
       userList.push({
         ...data,
-        password: this.hashPassword(data.password),
         isRestricted: true,
       });
       await this.redisService.setJsonData(
@@ -4214,34 +4398,107 @@ export class UfService {
     }
   }
 
-  async resetPassword(email: string, password: string) {
-    try {
-      if (!email || !password)
-        throw new BadRequestException(
-          'Please provide valid email and password',
-        );
-      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
-      const userResponse = await this.redisService.getJsonData(
-        userCachekey,
-        process.env.CLIENTCODE,
-      );
-      if (!userResponse) throw new NotFoundException('no data found');
-      const userList: any[] = JSON.parse(userResponse);
-      const foundedUser = userList.find(
-        (user) => user.email.toLowerCase() === email.toLowerCase(),
-      );
-      if (!foundedUser) throw new NotFoundException('user not found');
-      foundedUser.password = this.hashPassword(password);
-      await this.redisService.setJsonData(
-        userCachekey,
-        JSON.stringify(userList),
-        process.env.CLIENTCODE,
-      );
-      return 'Password updated successfully';
-    } catch (error) {
-      await this.throwCustomException(error);
+async resetPassword(email: string, password: string) {
+  try {
+    if (!email || !password) {
+      throw new BadRequestException('Please provide valid email and password');
     }
+
+    const tenantUserKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
+    const tenantUserResponse = await this.redisService.getJsonData(
+      tenantUserKey,
+      process.env.CLIENTCODE,
+    );
+    if (!tenantUserResponse) {
+      throw new NotFoundException('No data found');
+    }
+
+    const tenantList: any[] = JSON.parse(tenantUserResponse);
+    const index = tenantList.findIndex(
+      (user) => user.email.toLowerCase() === email.toLowerCase(),
+    );
+    if (index === -1) {
+      throw new NotFoundException('User not found');
+    }
+    const tenantUser = tenantList[index];
+
+    // --- FusionAuth flow ---
+    if (process.env.DEFAULT_AUTHENTICATION === 'fusionauth') {
+      const fusionAuthTenantId = process.env.FUSIONAUTH_TENANTID;
+      const uniqueId = tenantUser.userUniqueId;
+
+      if (!fusionAuthTenantId || !uniqueId) {
+        throw new NotFoundException(
+          `Missing FusionAuth tenantId or userUniqueId`,
+        );
+      }
+
+      const value = await this.handleFusionResetPassWord(
+        fusionAuthTenantId,
+        password,
+        uniqueId,
+      );
+      console.log("value", value)
+      if (value.status !== 200) {
+        throw new UnauthorizedException(
+          value?.error ?? 'FusionAuth password update failed',
+        );
+      }
+    }
+
+    // --- Update Redis only after FusionAuth success (or if not fusionauth) ---
+    tenantUser.password = this.hashPassword(password);
+    tenantList.splice(index, 1, tenantUser);
+    await this.redisService.setJsonData(
+      tenantUserKey,
+      JSON.stringify(tenantList),
+      process.env.CLIENTCODE,
+    );
+
+    return 'Password updated successfully';
+  } catch (error) {
+    await this.throwCustomException(error);
   }
+  }
+   async handleFusionResetPassWord(
+      fusionAuthTenantId: string,
+      password: string,
+      uniqueId: string,
+    ) {
+      try {
+        const url = `${process.env.FUSIONAUTH_BASEURL}/api/user/${uniqueId}`;
+        const res = await fetch(url, {
+          method: 'PATCH',
+          headers: {
+            Authorization: process.env.FUSIONAUTH_APIKEY, // ✅ FIXED
+            'Content-Type': 'application/json',
+            'X-FusionAuth-TenantId': fusionAuthTenantId,
+          },
+          body: JSON.stringify({
+            user: {
+              password: password,
+            },
+          }),
+        });
+        if (!res.ok) {
+          const error = await res.text();
+          throw new UnauthorizedException(
+            `FusionAuth password update failed: ${error}`,
+          );
+        }
+
+        const data = await res.json();
+        return {
+          status: res.status,
+          data: data,
+        };
+      } catch (error) {
+        return {
+          error: error,
+          status: 500,
+        };
+      }
+   }
 
   async sendMailOTP(email: string) {
     try {
@@ -6302,6 +6559,12 @@ export class UfService {
       if (!user) {
         throw new BadRequestException('Account details not enough to continue');
       }
+        if(user?.provider =='fusionauth')
+        {
+          const fusionauthUser:any  = await FusionAuthUserGet(user?.providerAccountId)
+          user['email'] = fusionauthUser.user.email;
+        }
+
       const isExistingUser = await this.signIntoTorus(
         user?.email,
         '',
@@ -6311,14 +6574,19 @@ export class UfService {
       if (isExistingUser) {
         return isExistingUser;
       } else {
+        let tempId:string = uuidv4()
+        user['userUniqueId']=tempId
+        await this.postTenantUser(user)
         const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+        let temp: string = user?.email?.split('@').at(0) || '';
         const userObject = {
-          users: user?.name ?? '',
+          userUniqueId:user?.providerAccountId||user?.userUniqueId,
+          users: user?.name || temp,
           email: user?.email ?? '',
           password: '',
-          firstName: user?.name ?? '',
-          lastName: user?.name ?? '',
-          loginId: user?.name ?? '',
+          firstName: user?.name || temp,
+          lastName: user?.name || temp,
+          loginId: user?.name || temp,
           mobile: '',
           accessProfile: [],
           dateAdded: new Date(),
@@ -6351,6 +6619,374 @@ export class UfService {
       }
     } catch (error) {
       await this.throwCustomException(error);
+    }
+  }
+  async AppSecurityTemplateData(
+    data: any[],
+  ) {
+    try {
+      if (tenant && data) {
+        const clientCode = process.env.CLIENTCODE
+        let defaultAuthenticationMethod = 'nextAuth';
+        let applicationUniqueId = '';
+        let setupData: any = JSON.parse(
+          await this.redisService.getJsonData(
+            `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`,
+            clientCode,
+          ),
+        );
+        let newData: any = [];
+
+        setupData?.AG.map((AppGrp: any) => {
+          if (AppGrp?.code == ag) {
+            AppGrp?.APPS.map((App: any) => {
+              if (App?.code == app) {
+                applicationUniqueId = App?.applicationUniqueId;
+              }
+            });
+          }
+        });
+
+        let existRoles: any[] =
+          JSON.parse(
+            await this.redisService.getJsonData(
+              `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`,
+              clientCode,
+            ),
+          ) || [];
+
+        // return deletedRoles
+        existRoles.map((existRoleObj: any) => {
+          data.map((comingRoleObj: any) => {
+            if (
+              existRoleObj?.roleUniqueId == comingRoleObj?.roleUniqueId &&
+              existRoleObj?.accessProfile != comingRoleObj?.accessProfile
+            ) {
+              newData.push({ ...comingRoleObj, isForEdit: true });
+            }
+          });
+        });
+        if ('defaultAuthentication' in setupData)
+          [(defaultAuthenticationMethod = setupData.defaultAuthentication)];
+
+        if (Array.isArray(data)) {
+          for (let i = 0; i < data.length; i++) {
+            if (!('roleUniqueId' in data[i])) {
+              const newId = uuidv4();
+              data[i]['roleUniqueId'] = newId;
+              newData.push(data[i]);
+            }
+          }
+        }
+        // return newData
+        const inputTenantIds = data.map((r) => r.roleUniqueId).filter(Boolean);
+        const deletedRoles = existRoles.filter(
+          (r) => !inputTenantIds.includes(r.roleUniqueId),
+        );
+        if (
+          defaultAuthenticationMethod == 'fusionauth' &&
+          applicationUniqueId
+        ) {
+          for (const roleObj of deletedRoles) {
+            await FusionAutRoleCRUDAlongWithApp(
+              applicationUniqueId,
+              roleObj?.roleUniqueId,
+              roleObj?.accessProfile,
+              'DELETE',
+            );
+          }
+
+          for (const roleObj of newData) {
+            if (roleObj?.isForEdit) {
+              await FusionAutRoleCRUDAlongWithApp(
+                applicationUniqueId,
+                roleObj?.roleUniqueId,
+                roleObj?.accessProfile,
+                'DELETE',
+              );
+              await FusionAutRoleCRUDAlongWithApp(
+                applicationUniqueId,
+                roleObj?.roleUniqueId,
+                roleObj?.accessProfile,
+                'POST',
+              );
+            } else {
+              await FusionAutRoleCRUDAlongWithApp(
+                applicationUniqueId,
+                roleObj?.roleUniqueId,
+                roleObj?.accessProfile,
+                'POST',
+              );
+            }
+          }
+        }
+        return await this.redisService.setJsonData(
+          `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`,
+          JSON.stringify(data),
+          clientCode,
+        );
+      } else {
+        throw new BadRequestException(
+          'Please provide all necessary credentials',
+        );
+      }
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+
+  async screenDetailsData(data) {
+    const result = [];
+    // Traverse through the data and process the webArtifacts key
+    data.forEach((group) => {
+      // Initialize the group object
+      const groupObj = {
+        menuGroup: group.title.toLowerCase(),
+        menuGroupLabel: group.title,
+        screens: [],
+        items: [],
+        icon: group.icon,
+      };
+
+      if (group.items) {
+        // Traverse through the items of this group
+        group.items.forEach((item) => {
+          if (item.type === 'item') {
+            // If the item is of type 'item', extract the relevant properties for screens
+            groupObj.screens.push({
+              screenName: item.title.toLowerCase(),
+              screenNameLabel: item.title,
+              UF: item.keys?.uf || '',
+              PF: '',
+              SF: '',
+              static: item?.static || false,
+              icon: item.icon,
+            });
+          } else if (item.type === 'group') {
+            // If the item is of type 'group', we need to process the nested items as well
+            const groupItem = {
+              menuGroup: item.title.toLowerCase(),
+              menuGroupLabel: item.title,
+              screens: [],
+              items: [],
+              icon: item.icon,
+            };
+
+            // Process the items inside the group (of type 'item')
+            item.items.forEach((subItem) => {
+              groupItem.screens.push({
+                screenName: subItem.title.toLowerCase(),
+                screenNameLabel: subItem.title,
+                UF: subItem.keys?.uf || '',
+                PF: '',
+                SF: '',
+                static: item?.static || false,
+                icon: subItem.icon,
+              });
+            });
+
+            // Add the nested group to the parent group's 'items' array
+            groupObj.items.push(groupItem);
+          }
+        });
+      } else {
+        if (group.type === 'item') {
+          // If the item is of type 'item', extract the relevant properties for screens
+          groupObj.screens.push({
+            screenName: group.title.toLowerCase(),
+            DF: '',
+            UF: group.keys?.uf || '',
+            PF: '',
+            SF: '',
+            static: group?.static || false,
+            icon: group.icon,
+          });
+        }
+        delete groupObj.menuGroup;
+        delete groupObj.items;
+      }
+
+      // Add the group to the result array
+      result.push(groupObj);
+    });
+
+    return result;
+  }
+
+  async getAccessProfileForArtifact(key:string, clientCode: string, token: string)
+{
+  try {
+    const UO: any = await this.commonService.readAPI(
+      key ,
+      clientCode,
+      token,
+    );
+    let templateArray:any = UO?.securityData?.accessProfile||[];
+    let allowedAccessProfile:any=[]
+    templateArray.map((profile:any)=>{
+      if(profile?.security?.artifact?.SIFlag?.selectedValue=='AA'||profile?.security?.artifact?.SIFlag?.selectedValue=='RA' )
+      {
+      allowedAccessProfile.push(profile?.accessProfile);
+      }
+    })
+    return allowedAccessProfile
+  } catch (error) {
+    return []
+  }
+ }
+
+  async navbarDataPreparation(data: any, clientCode: string, token: string) {
+    const result = [];
+
+    // Traverse through the data and process each menu group
+    for (const group of data) {
+      // Initialize the group object
+      const groupObj = {
+        menuGroup: group.menuGroup,
+        menuGroupLabel: group.menuGroupLabel,
+        screenDetails: [],
+        items: [],
+        icon: group.icon,
+      };
+
+      // Process the screens and convert to the desired format
+      for (const screen of group.screens) {
+        let allowedAccessProfile: any = [];
+        if (screen.UF != 'Logs Screen' && screen.UF != 'User Screen') {
+          allowedAccessProfile = await this.getAccessProfileForArtifact(
+            screen.UF + ':UO',
+            clientCode,
+            token,
+          );
+        }
+        groupObj.screenDetails.push({
+          name: screen.screenName,
+          label: screen.screenNameLabel,
+          key: screen.UF,
+          allowedAccessProfile: allowedAccessProfile,
+          static: screen?.static || false,
+          icon: screen.icon,
+        });
+      }
+
+      // Process the items and handle nested menuGroups
+      if (group.items) {
+        for (const item of group.items) {
+          const itemObj = {
+            menuGroup: item.menuGroup,
+            menuGroupLabel: item.menuGroupLabel,
+            screenDetails: [],
+            items: [], // In case of further nesting
+            icon: item.icon,
+          };
+
+          // Process the screens of the nested menu group
+          for (const screen of item.screens) {
+            let allowedAccessProfile: any = [];
+            if (screen.UF != 'Logs Screen' && screen.UF != 'User Screen') {
+              allowedAccessProfile = await this.getAccessProfileForArtifact(
+                screen.UF + ':UO',
+                clientCode,
+                token,
+              );
+            }
+            itemObj.screenDetails.push({
+              name: screen.screenName,
+              label: screen.screenNameLabel,
+              key: screen.UF,
+              allowedAccessProfile: allowedAccessProfile,
+              static: screen?.static || false,
+              icon: screen.icon,
+            });
+          }
+
+          // Add the nested item to the parent item's 'items'
+          groupObj.items.push(itemObj);
+        }
+      }
+
+      // Add the formatted group object to the result array
+      result.push(groupObj);
+    }
+
+    return result;
+  }
+  async getNavbarData(key: string, clientCode: string, token: string) {
+    let webAssemblerData: any = await this.commonService.readAPI(
+      key,process.env.CLIENTCODE,token
+    )
+    let screenDetailsForNav: any =
+      await this.screenDetailsData(webAssemblerData.webArtifacts);
+    let navbarData = await this.navbarDataPreparation(
+      screenDetailsForNav,
+      clientCode,
+      token,
+    );
+    return navbarData;
+  }
+  async postTenantUser(userDetail: any) {
+    let tenantUserKey: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
+    const appUserKey: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+    let tenantUser: any = JSON.parse(
+      await this.redisService.getJsonData(
+        tenantUserKey,
+        process.env.CLIENTCODE,
+      ),
+    );
+    if (tenantUser?.length) {
+      const isExists: any = tenantUser.find(
+        (allUser: any) => allUser?.email == userDetail?.email,
+      );
+
+      if (!isExists) {
+        let temp: string = userDetail?.email?.split('@').at(0) || '';
+        let postOneUser: any = {
+          userUniqueId:userDetail?.providerAccountId||userDetail?.userUniqueId,
+          users: '',
+          email: userDetail?.email,
+          firstName: temp,
+          lastName: temp,
+          loginId: temp,
+          dateAdded: new Date().toISOString(),
+          status: 'inactive',
+        };
+        tenantUser.push(postOneUser);
+        await this.redisService.setJsonData(
+          tenantUserKey,
+          JSON.stringify(tenantUser),
+          process.env.CLIENTCODE,
+        );
+        postOneUser = {
+          ...postOneUser,
+          noOfProductsService: 0,
+          accessProfile: [],
+          isAppAdmin: false,
+        };
+      }
+    } else {
+      let temp: string = userDetail?.email?.split('@').at(0) || '';
+      let postOneUser: any = {
+        userUniqueId:userDetail?.providerAccountId||userDetail?.userUniqueId,
+        users: '',
+        email: userDetail?.email,
+        firstName: temp,
+        lastName: temp,
+        loginId: temp,
+        dateAdded: new Date().toISOString(),
+        status: 'inactive',
+      };
+      await this.redisService.setJsonData(
+        tenantUserKey,
+        JSON.stringify([postOneUser]),
+        process.env.CLIENTCODE,
+      );
+
+      postOneUser = {
+        ...postOneUser,
+        noOfProductsService: 0,
+        accessProfile: [],
+        isAppAdmin: false,
+      };;
     }
   }
 }
