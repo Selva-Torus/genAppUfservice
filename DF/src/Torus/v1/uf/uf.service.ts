@@ -65,7 +65,7 @@ export class UfService {
       for (let i = 0; i < keys.length; i++) {
         const UO: any = await this.commonService.readAPI(
           keys[i].ufKey + ':UO',
-          process.env.clientCode,
+          process.env.CLIENTCODE,
           token,
         );
         const securityData: any = UO.securityData;
@@ -134,14 +134,14 @@ export class UfService {
     try {
       const sKey: any = await this.commonService.readAPI(
         key,
-        process.env.clientCode,
+        process.env.CLIENTCODE,
         token,
       );
       if (sKey) {
         if (sKey?.tenantAppearancekey) {
           const presetData: any = await this.commonService.readAPI(
             sKey?.tenantAppearancekey,
-            process.env.clientCode,
+            process.env.CLIENTCODE,
             token,
           );
           if (sKey?.selectedPresetKey) {
@@ -540,7 +540,7 @@ export class UfService {
     try {
       const UO: any = await this.commonService.readAPI(
         key + ':UO',
-        process.env.clientCode,
+        process.env.CLIENTCODE,
         token,
       );
       const screenName: string = key.split(':')[11];
@@ -905,7 +905,7 @@ export class UfService {
             // for table group
             let dfSchemaKey = await this.commonService.readAPI(
               dfKey + 'DFO',
-              process.env.clientCode,
+              process.env.CLIENTCODE,
               token,
             );
             try {
@@ -974,7 +974,7 @@ export class UfService {
 
                     let dfSchemaKey = await this.commonService.readAPI(
                       dfdKey + ':DFO',
-                      process.env.clientCode,
+                      process.env.CLIENTCODE,
                       token,
                     );
 
@@ -998,7 +998,7 @@ export class UfService {
                     //  .replace(':DF-DFD:', ':DF-DST:');
                     // DS_Object = await this.commonService.readAPI(
                     //  dstKey + ':DS_Object',
-                    //  process.env.clientCode,
+                    //  process.env.CLIENTCODE,
                     //  token,
                     // );
 
@@ -1067,7 +1067,7 @@ export class UfService {
       let rule: string = '';
       const uoKey: any = await this.commonService.readAPI(
         key + ':UO',
-        process.env.clientCode,
+        process.env.CLIENTCODE,
         token,
       );
       let UO: any = uoKey;
@@ -1107,7 +1107,7 @@ export class UfService {
       let codName: any;
       const uoKey: any = await this.commonService.readAPI(
         key + ':UO',
-        process.env.clientCode,
+        process.env.CLIENTCODE,
         token,
       );
       let UO: any = uoKey;
@@ -1145,7 +1145,7 @@ export class UfService {
                       .replace(':DF-DFD:', ':DF-DST:');
                     let dfData: any = await this.commonService.readAPI(
                       dstKey + ':DS_Object',
-                      process.env.clientCode,
+                      process.env.CLIENTCODE,
                       token,
                     );
                     dfData = dfData;
@@ -1352,7 +1352,7 @@ export class UfService {
       let rule: string = '';
       const uoKey: any = await this.commonService.readAPI(
         key + ':UO',
-        process.env.clientCode,
+        process.env.CLIENTCODE,
         token,
       );
       let UO: any = uoKey;
@@ -1488,7 +1488,7 @@ export class UfService {
           let newKey = structuredClone(spiltedkey);
           const POdataKey: any = await this.commonService.readAPI(
             spiltedkey.join(':') + ':PO',
-            process.env.clientCode,
+            process.env.CLIENTCODE,
             token,
           );
           const POdata = POdataKey;
@@ -1583,7 +1583,7 @@ export class UfService {
           // return spiltedkey
           const POdataKey: any = await this.commonService.readAPI(
             spiltedkey.join(':') + ':PO',
-            process.env.clientCode,
+            process.env.CLIENTCODE,
             token,
           );
           const POdata = POdataKey;
@@ -1675,7 +1675,7 @@ export class UfService {
     try {
       const uoKey: any = await this.commonService.readAPI(
         key + ':UO',
-        process.env.clientCode,
+        process.env.CLIENTCODE,
         token,
       );
       let UO: any = uoKey;
@@ -1714,7 +1714,7 @@ export class UfService {
     try {
       const uoKey: any = await this.commonService.readAPI(
         key + ':UO',
-        process.env.clientCode,
+        process.env.CLIENTCODE,
         token,
       );
       let UO: any = uoKey;
@@ -1752,13 +1752,13 @@ export class UfService {
 
         const NDSdataKey: any = await this.commonService.readAPI(
           spiltedkey + ':NDS',
-          process.env.clientCode,
+          process.env.CLIENTCODE,
           token,
         );
         const NDSdata = NDSdataKey;
         const POdataKey: any = await this.commonService.readAPI(
           spiltedkey + ':PO',
-          process.env.clientCode,
+          process.env.CLIENTCODE,
           token,
         );
         const POdata = POdataKey;
@@ -1888,7 +1888,7 @@ export class UfService {
       let eventDetailsArray: any;
       const uoKey: any = await this.commonService.readAPI(
         key + ':UO',
-        process.env.clientCode,
+        process.env.CLIENTCODE,
         token,
       );
       let UO: any = uoKey;
@@ -2040,7 +2040,7 @@ export class UfService {
 
       const mapperPropertiesKey: any = await this.commonService.readAPI(
         ufKey + ':UO',
-        process.env.clientCode,
+        process.env.CLIENTCODE,
         token,
       );
       const mapperProperties: any = mapperPropertiesKey;
@@ -2148,7 +2148,7 @@ export class UfService {
       const target: string = 'redis';
       const mapperPropertiesKey: any = await this.commonService.readAPI(
         ufKey + ':UO',
-        process.env.clientCode,
+        process.env.CLIENTCODE,
         token,
       );
       const mapperProperties: any = mapperPropertiesKey;
@@ -2294,7 +2294,7 @@ export class UfService {
 
           //  value = await this.commonService.readAPI(
           // redisKey + ':DS_Object',
-          //  process.env.clientCode,
+          //  process.env.CLIENTCODE,
           //  token
           //  );
           // value = JSON.parse(await this.readKeys(value))
@@ -2421,7 +2421,7 @@ export class UfService {
             const target: string = 'redis';
             const mapperProperties: any = await this.commonService.readAPI(
               ufKey + ':UO',
-              process.env.clientCode,
+              process.env.CLIENTCODE,
               token
             );
             if (mapperProperties.mappedData) {
@@ -2506,7 +2506,7 @@ export class UfService {
               targetKeys.push({ targetKey: 'trs_ps_code', columnKey: 'trs_ps_code' });
               value = await this.commonService.readAPI(
                 redisKey + ':DS_Object',
-                process.env.clientCode,
+                process.env.CLIENTCODE,
                 token   
               );
               let temp = {};
@@ -2629,7 +2629,7 @@ export class UfService {
       const flag: any = await this.redisService.getJsonData(
         key,
         process.env.CLIENTCODE,
-      ); //await this.commonService.readAPI(key,process.env.clientCode,token);
+      ); //await this.commonService.readAPI(key,process.env.CLIENTCODE,token);
       let value: any = {
         params: {
           request: {},
@@ -2676,7 +2676,7 @@ export class UfService {
       const decodedToken: any = await this.jwtService.decodeToken(token);
       const DOKey: any = await this.commonService.readAPI(
         ufKey + ':UO',
-        process.env.clientCode,
+        process.env.CLIENTCODE,
         token,
       );
       const DO: any = DOKey;
