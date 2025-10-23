@@ -2,6 +2,7 @@
 
 
 
+
     
 
      
@@ -18,6 +19,7 @@ import { useRouter } from 'next/navigation'
 import {Modal} from '@gravity-ui/uikit';
 import { eventBus } from '@/app/eventBus';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
+import * as v from 'valibot';
 
 
 const TextInputname = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}:any) => {  
@@ -28,7 +30,46 @@ const TextInputname = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
-  const actionDetails :any = {}
+  const actionDetails :any = {
+  "action": {
+    "lock": {
+      "lockMode": "",
+      "name": "",
+      "ttl": ""
+    },
+    "stateTransition": {
+      "sourceQueue": "",
+      "sourceStatus": "",
+      "targetQueue": "",
+      "targetStatus": ""
+    },
+    "pagination": {
+      "page": "1",
+      "count": "10"
+    },
+    "encryption": {
+      "isEnabled": false,
+      "selectedDpd": "",
+      "encryptionMethod": ""
+    },
+    "events": {}
+  },
+  "code": "",
+  "rule": {},
+  "events": {},
+  "mapper": [
+    {
+      "sourceKey": [
+        "CK:TT407:FNGK:AF:FNK:DF-DFD:CATK:CGFA:AFGK:TG4CGFA:AFK:forDFcheck:AFVK:v1|f250a27ce95f46e08f508b2286c68d5d|properties.name"
+      ],
+      "targetKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1|414718cf9b784538acdbc0a9cb15384d|22020cb8573c4abda5b8fdfbda61ef9f"
+    }
+  ],
+  "schemaData": {
+    "type": "string"
+  }
+}
+  const [isRequredData,setIsRequredData]=useState(false)
   const toast:any=useInfoMsg()
   const keyset:any=i18n.keyset("language"); 
   const [allCode,setAllCode]=useState<any>("");
@@ -44,45 +85,67 @@ const TextInputname = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData?.method;
   /////////////
    //another screen
-  const {main6d2c7, setmain6d2c7}= useContext(TotalContext) as TotalContextProps;
-  const {main6d2c7Props, setmain6d2c7Props}= useContext(TotalContext) as TotalContextProps;
-  const {groupad476b, setgroupad476b}= useContext(TotalContext) as TotalContextProps;
-  const {groupad476bProps, setgroupad476bProps}= useContext(TotalContext) as TotalContextProps;
-  const {namefcda5, setnamefcda5}= useContext(TotalContext) as TotalContextProps;
-  const {groupb66b0d, setgroupb66b0d}= useContext(TotalContext) as TotalContextProps;
-  const {groupb66b0dProps, setgroupb66b0dProps}= useContext(TotalContext) as TotalContextProps;
-  const {groupc59a19, setgroupc59a19}= useContext(TotalContext) as TotalContextProps;
-  const {groupc59a19Props, setgroupc59a19Props}= useContext(TotalContext) as TotalContextProps;
-  const {groupde191f, setgroupde191f}= useContext(TotalContext) as TotalContextProps;
-  const {groupde191fProps, setgroupde191fProps}= useContext(TotalContext) as TotalContextProps;
+  const {group5384d, setgroup5384d}= useContext(TotalContext) as TotalContextProps;
+  const {group5384dProps, setgroup5384dProps}= useContext(TotalContext) as TotalContextProps;
+  const {save11c8e, setsave11c8e}= useContext(TotalContext) as TotalContextProps;
+  const {buttonreject8b1d9, setbuttonreject8b1d9}= useContext(TotalContext) as TotalContextProps;
+  const {label0cb72, setlabel0cb72}= useContext(TotalContext) as TotalContextProps;
+  const {name1ef9f, setname1ef9f}= useContext(TotalContext) as TotalContextProps;
+  const {age6bba1, setage6bba1}= useContext(TotalContext) as TotalContextProps;
+  const {street1e063, setstreet1e063}= useContext(TotalContext) as TotalContextProps;
   //////////////
   
 
-  // Validation
-  schemaArray = [] ;
+  // Validation  
+    const [error, setError] = useState<string>('');
+      /// vvv
 
+      /// vvv
+      /// vvv
+      /// vvv
+  schemaArray = [
+  "v.string()",
+  "v.nonEmpty('This field is required.')"
+] ;
+    const schema : any  = v.pipe(    v.string(),
+    v.nonEmpty('This field is required.'),
+)
   const handleChange = async(e: any) => {
+    if(e.target.value=="")
+    {
+      setIsRequredData(true)
+    }else{
+      setIsRequredData(false)
+    }
+    setError('')
+    setValidate((pre:any)=>({...pre,name:undefined}))
     if(dynamicStateandType.type=="number"){
-    setgroupad476b((prev: any) => ({ ...prev, name: +e.target.value }))
+    setgroup5384d((prev: any) => ({ ...prev, name: +e.target.value }))
     }
     else{
-    setgroupad476b((prev: any) => ({ ...prev, name: e.target.value }))
+    setgroup5384d((prev: any) => ({ ...prev, name: e.target.value }))
     }
   }
   const handleBlur=async () => {
+      if(group5384d?.name == "" || group5384d?.name == undefined){
+      group5384d.name = "";
+      const validate:any = v.safeParse(schema, group5384d?.name);
+        if(!validate.success){
+          setError(validate?.issues[0]?.message);
+          setValidate((pre:any)=>({...pre,name:"invalid"}))
+        }
+    }else if(group5384d?.name !== ""){
+    const validate:any = v.safeParse(schema, group5384d?.name);
+    if(!validate.success){
+      setError(validate?.issues[0]?.message);
+      setValidate((pre:any)=>({...pre,name:"invalid"}))
+    }
+    }
     let code:any=allCode
      if (code != '') {
       let codeStates: any = {}
-      codeStates['main']  = main6d2c7,
-      codeStates['setmain'] = setmain6d2c7,
-      codeStates['groupa']  = groupad476b,
-      codeStates['setgroupa'] = setgroupad476b,
-      codeStates['groupb']  = groupb66b0d,
-      codeStates['setgroupb'] = setgroupb66b0d,
-      codeStates['groupc']  = groupc59a19,
-      codeStates['setgroupc'] = setgroupc59a19,
-      codeStates['groupd']  = groupde191f,
-      codeStates['setgroupd'] = setgroupde191f,
+      codeStates['group']  = group5384d,
+      codeStates['setgroup'] = setgroup5384d,
     codeExecution(code,codeStates)
     }
   }
@@ -91,9 +154,9 @@ const TextInputname = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
       const orchestrationData: any = await AxiosService.post(
         '/UF/Orchestration',
         {
-          key: "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1",
-          componentId: "481d6113c9d2440fa4324e86e74d476b",
-          controlId: "db224842a2754b07bbdf2f0a22cfcda5",
+          key: "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1",
+          componentId: "414718cf9b784538acdbc0a9cb15384d",
+          controlId: "22020cb8573c4abda5b8fdfbda61ef9f",
           isTable: false,
           from:"TextInputname",
           accessProfile:accessProfile
@@ -124,7 +187,7 @@ const TextInputname = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
         return
       }else{
       //  if(Object.keys(orchestrationData?.data?.dstData).length>0) 
-       // setgroupad476b((pre:any)=>({...pre,name:orchestrationData?.data?.dstData}))
+       // setgroup5384d((pre:any)=>({...pre,name:orchestrationData?.data?.dstData}))
       }
     }
     catch(err)
@@ -135,27 +198,37 @@ const TextInputname = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
 
   useEffect(()=>{
       handleMapperValue()
-      handleBlur()
+      if(!group5384d?.name)
+      { 
+        setgroup5384dProps((pre:any)=>({...pre,required:true}))
+        setIsRequredData(true)
+      }
+      if(validateRefetch.init!=0)
+        handleBlur()
   },[validateRefetch.value])
 
-  if (namefcda5?.isHidden) {
+  if (name1ef9f?.isHidden) {
     return <></>
   }
   return (   
     <div 
-      style={{gridColumn: `3 / 11`,gridRow: `2 / 3`, gap:``, height: `100%`, overflow: 'auto'}} >
+      style={{gridColumn: `2 / 4`,gridRow: `57 / 67`, gap:``, height: `100%`, overflow: 'auto'}} >
       <TorusTextInput
+        require={isRequredData}
         className=""
         label={keyset("name")}
         onChange= {handleChange}
         onBlur={()=>handleBlur()}
         type={dynamicStateandType.type}
-        value={groupad476b?.name||""}
+        value={group5384d?.name||""}
+         disabled= {name1ef9f?.isDisabled ? true : false}
         pin='brick-brick'     
         placeholder='type here....'      
-        readOnly= {namefcda5?.isDisabled ? true : false}
+        readOnly= {name1ef9f?.isDisabled ? true : false}
         size='m'      
         view='normal'
+        validationState={validate?.name ? "invalid" : undefined}
+        errorMessage={error}
       />
     </div> 
   )

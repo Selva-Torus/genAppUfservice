@@ -10,7 +10,7 @@ model tabledata {
   id  String @id @default(auto()) @map("_id") @db.ObjectId 
   name    String?        
   age    Int?       
-  address    String?        
+  address    document? 
 
   trs_creator_email    String?       
   trs_created_date    DateTime     @default(now())  
@@ -32,5 +32,9 @@ model tabledata {
   @@map("tt407_tg4cgfa.tabledata")
   
 }
+type document{
+  street    String?      
+  phone    String?      
+  }
 
 

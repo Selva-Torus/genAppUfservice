@@ -8,18 +8,19 @@ import { useRouter } from 'next/navigation';
 import { getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import {Modal} from '@gravity-ui/uikit';
 import { eventBus } from '@/app/eventBus';
-import TextInputname  from "./TextInputname";
+import Editorreport  from "./Editorreport";
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { getCookie } from "@/app/components/cookieMgment";
 import { TotalContext, TotalContextProps } from '@/app/globalContext';
 
 
-const GroupgroupA = ({lockedData={},setLockedData,primaryTableData={}, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,dropdownData,setDropdownData,encryptionFlagPageData, nodeData, setNodeData,paginationDetails}:any)=> {
+const Groupr_group = ({lockedData={},setLockedData,primaryTableData={}, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,dropdownData,setDropdownData,encryptionFlagPageData, nodeData, setNodeData,paginationDetails}:any)=> {
   const token:string = getCookie('token'); 
   const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
+  let code:any = ``;
   const encryptionFlagComp: boolean = encryptionFlagPageData?.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagPageData?.dpd;
@@ -30,8 +31,52 @@ const GroupgroupA = ({lockedData={},setLockedData,primaryTableData={}, setPrimar
     "dpd":encryptionDpd,
     "method":encryptionMethod
   };
-  const securityData:any={};
-  let code:any = ``;
+  const securityData:any={
+  "User": {
+    "allowedControls": [
+      "report"
+    ],
+    "allowedGroups": [
+      "report",
+      "r_group"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
+  },
+  "Manager": {
+    "allowedControls": [
+      "report"
+    ],
+    "allowedGroups": [
+      "report",
+      "r_group"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
+  },
+  "Employee": {
+    "allowedControls": [
+      "report"
+    ],
+    "allowedGroups": [
+      "report",
+      "r_group"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
+  },
+  "user": {
+    "allowedControls": [
+      "report"
+    ],
+    "allowedGroups": [
+      "report",
+      "r_group"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
+  }
+};
   const prevRefreshRef = useRef(false);
   const [allowedComponent,setAllowedComponent]=useState<any>("");
   const [allowedControls,setAllowedControls]=useState<any>("");
@@ -43,21 +88,13 @@ const GroupgroupA = ({lockedData={},setLockedData,primaryTableData={}, setPrimar
   const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
  /////////////
    //another screen
-  const {main6d2c7, setmain6d2c7}= useContext(TotalContext) as TotalContextProps;
-  const {main6d2c7Props, setmain6d2c7Props}= useContext(TotalContext) as TotalContextProps;
-  const {groupad476b, setgroupad476b}= useContext(TotalContext) as TotalContextProps;
-  const {groupad476bProps, setgroupad476bProps}= useContext(TotalContext) as TotalContextProps;
-  const {namefcda5, setnamefcda5}= useContext(TotalContext) as TotalContextProps;
-  const {groupb66b0d, setgroupb66b0d}= useContext(TotalContext) as TotalContextProps;
-  const {groupb66b0dProps, setgroupb66b0dProps}= useContext(TotalContext) as TotalContextProps;
-  const {groupc59a19, setgroupc59a19}= useContext(TotalContext) as TotalContextProps;
-  const {groupc59a19Props, setgroupc59a19Props}= useContext(TotalContext) as TotalContextProps;
-  const {groupde191f, setgroupde191f}= useContext(TotalContext) as TotalContextProps;
-  const {groupde191fProps, setgroupde191fProps}= useContext(TotalContext) as TotalContextProps;
+  const {r_group358e4, setr_group358e4}= useContext(TotalContext) as TotalContextProps;
+  const {r_group358e4Props, setr_group358e4Props}= useContext(TotalContext) as TotalContextProps;
+  const {report1a36d, setreport1a36d}= useContext(TotalContext) as TotalContextProps;
   //////////////
   
   async function securityCheck() {
-  const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1",componentId:"481d6113c9d2440fa4324e86e74d476b",from:"GroupGroupa",accessProfile:accessProfile},{
+  const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1",componentId:"e3ed576185df4984b4c739bf735358e4",from:"GroupRGroup",accessProfile:accessProfile},{
     headers: {
       Authorization: `Bearer ${token}`
     }})
@@ -72,22 +109,14 @@ const GroupgroupA = ({lockedData={},setLockedData,primaryTableData={}, setPrimar
   setAllowedComponent(allowedGroups) 
     
   /////////////
-    if(orchestrationData?.data?.readableControls.includes("name")){
-      setnamefcda5({...namefcda5,isDisabled:true});
+    if(orchestrationData?.data?.readableControls.includes("report")){
+      setreport1a36d({...report1a36d,isDisabled:true});
     }
   //////////////
     if (code != '') {
       let codeStates: any = {};
-      codeStates['main']  = main6d2c7,
-      codeStates['setmain'] = setmain6d2c7,
-      codeStates['groupa']  = groupad476b,
-      codeStates['setgroupa'] = setgroupad476b,
-      codeStates['groupb']  = groupb66b0d,
-      codeStates['setgroupb'] = setgroupb66b0d,
-      codeStates['groupc']  = groupc59a19,
-      codeStates['setgroupc'] = setgroupc59a19,
-      codeStates['groupd']  = groupde191f,
-      codeStates['setgroupd'] = setgroupde191f,
+      codeStates['r_group']  = r_group358e4,
+      codeStates['setr_group'] = setr_group358e4,
 
     codeExecution(code,codeStates);
     } 
@@ -104,20 +133,39 @@ const GroupgroupA = ({lockedData={},setLockedData,primaryTableData={}, setPrimar
     securityCheck()   
     handleOnload()
     if (prevRefreshRef.current) {
-      if(!Array.isArray(groupad476b) && Object.keys(groupad476b)?.length>0)
+      if(!Array.isArray(r_group358e4) && Object.keys(r_group358e4)?.length>0)
       {
-        setgroupad476b({})
+        setr_group358e4({})
       }
     }else 
       prevRefreshRef.current= true
-  }, [groupad476bProps?.refresh])
+  }, [r_group358e4Props?.refresh])
 
   return (
-    <div style = {{"gridAutoRows":"50px","display":"grid","gridTemplateColumns":"repeat(12, 1fr)","gridTemplateRows":"repeat(auto-fill, minmax(50px, 1fr))","gridColumn":"2 / 7","gridRow":"2 / 9","height":"100vh","overflow":"auto"}}
+    <div style={{
+          gridAutoRows: '4px',
+          columnGap: '0px',
+          rowGap: '0px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(12, 1fr)',
+          gridTemplateRows: 'repeat(auto-fill, minmax(4px, 1fr))',
+          gridColumn: '1 / 13',
+          gridRow: '1 / 222',
+          height: '100%',
+          overflow: 'auto',
+          backgroundColor:'',
+          backgroundImage:'',
+          backgroundPosition: '',
+          backgroundSize: '',
+          backgroundRepeat: '',
+          backgroundAttachment: '',
+          backgroundClip: '',
+          backgroundBlendMode: ''
+        }}
         className=" rounded-md " >
-        {allowedControls.includes("name") ?<TextInputname   /* fcda5 */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
+        {allowedControls.includes("report")?<Editorreport   /* 1a36d */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
     </div>             
   )
 }
 
-export default GroupgroupA
+export default Groupr_group

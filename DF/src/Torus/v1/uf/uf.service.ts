@@ -548,7 +548,7 @@ export class UfService {
       const securityData: any = UO.securityData;
       let templateArray: any[] = securityData.accessProfile;
       const decodedToken: any = await this.jwtService.decodeToken(token);
-      let object = {};
+      let object:any = {};
       let security: any;
       let allowedGroup: any = [];
       let componentNameArray: string[] = [];
@@ -1015,6 +1015,18 @@ export class UfService {
                     // dstData: DS_Object?.data || [],
                     schemaData,
                   };
+                  if(mappedData[i].objElements[j]?.elementType== "editor")
+                  {
+                    let editorMapper:any=[]
+                    object?.mapper?.map((eachResource:any)=>{
+                      let temp:any={
+                        sourceKey:eachResource?.sourceKey[0]?.split('/')?.at(-1)|| "",
+                        targetKey:eachResource?.targetKey?.split('|')?.at(-1) || ""
+                      }
+                      editorMapper.push(temp)
+                    })
+                    object.mapper=editorMapper
+                  }
                   return object;
                 }
               }
@@ -4139,90 +4151,6 @@ export class UfService {
         process.env.CLIENTCODE,
       );
     } catch (error) {
-      await this.throwCustomException(error);
-    }
-  }
-
-  async appUserAddition(data: any,isFusionAuth:boolean=false) {
-    try {
-      if (!tenant || !ag || !app || !data) {
-        throw new BadRequestException('Invalid input parameters');
-      }
-      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
-      const clientProfileResourceKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`;
-
-      const userResponse = await this.redisService.getJsonData(
-        userCachekey,
-        process.env.CLIENTCODE,
-      );
-
-      const userList: any[] = userResponse ? JSON.parse(userResponse) : [];
-
-      const clientProfile = JSON.parse(
-        await this.redisService.getJsonData(
-          clientProfileResourceKey,
-          process.env.CLIENTCODE,
-        ),
-      );
-
-      const { email, firstName, lastName, password, loginId } = data;
-      const resForClientUserAddition = await this.redisService.getJsonData(
-        `CK:TRL:FNGK:AFR:FNK:PORTAL:CATK:EMAILTEMPLATE:AFGK:TORUS:AFK:CLIENTUSERADDITION:AFVK:v1:TPI`,
-        process.env.CLIENTCODE,
-      );
-
-      const clientUserAddition = JSON.parse(resForClientUserAddition);
-
-      const updatedSubject = (clientUserAddition.subject as string).replaceAll(
-        '${clientProfile.clientName}',
-        `${clientProfile.Name}`,
-      );
-      const updateclientUserAdditionHtml = (clientUserAddition.html as string)
-        .replaceAll('${clientProfile.clientName}', `${clientProfile.Name}`)
-        .replace('${firstName}', `${firstName}`)
-        .replace('${lastName}', `${lastName}`)
-        .replace('${clientCode}', `${tenant}`)
-        .replace('${username}', `${loginId}`)
-        .replace('${password}', `${password}`);
-
-      const mailOptions = {
-        from: 'support@torus.tech',
-        to: email,
-        subject: updatedSubject,
-        // text: updateclientUserAddition,
-        html: updateclientUserAdditionHtml,
-      };
-
-      transporter.sendMail(mailOptions, async (error, info) => {
-        if (error) {
-          throw new ForbiddenException('There is an issue with sending otp');
-        } else {
-          console.log('Email sent: ' + info.response);
-          // return `Email sent`;
-        }
-      });
-
-      userList.push({
-        ...data,
-        isRestricted: true,
-      });
-      await this.redisService.setJsonData(
-        userCachekey,
-        JSON.stringify(userList),
-        process.env.CLIENTCODE,
-      );
-      const newUserList = structuredClone(userList);
-
-      let result = [];
-
-      for (const user of newUserList) {
-        delete user.password;
-        result.push(user);
-      }
-
-      return result;
-    } catch (error) {
-      console.log(error, 'error');
       await this.throwCustomException(error);
     }
   }

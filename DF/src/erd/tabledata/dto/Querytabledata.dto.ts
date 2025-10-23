@@ -13,15 +13,30 @@ import {
 
  
 
+export class QuerydocumentDto{
+    @ApiProperty()
+    @IsString()
+    street?: string;
+    @ApiProperty()
+    @IsString()
+    phone?: string;
+}
+export class QuerydocumentWapperDto {
+    @ApiProperty({ type:QuerydocumentDto })
+    @ValidateNested()
+    @Type(() => QuerydocumentDto)
+    is: QuerydocumentDto;
+}
 export class QuerytabledataDto{
     @ApiProperty()
     @IsString()
     name?: string;
     @ApiProperty()
     age?: number;
-    @ApiProperty()
-    @IsString()
-    address?: string;
+    @ApiProperty({ type:QuerydocumentWapperDto })
+    @ValidateNested()
+    @Type(() => QuerydocumentWapperDto)
+     address?: QuerydocumentWapperDto;
     @ApiProperty()
     trs_creator_email?: string;
     @ApiProperty({

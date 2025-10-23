@@ -17,5 +17,6 @@ import { ConfigService } from '@nestjs/config';
   }),],
   controllers: [UfController],
   providers: [UfService, JwtModule,JwtServices,RedisService,CommonService,RuleService,CodeService,MongoService,ConfigService],
+  exports: [UfService]
 })
 export class UfModule {}

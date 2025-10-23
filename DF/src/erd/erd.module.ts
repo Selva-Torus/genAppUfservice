@@ -7,7 +7,7 @@ import { RedisService } from "src/redisService";
 
 
 @Module({
-  imports: [tabledataModule],
+  imports: [tabledataModule,],
   controllers:[],
   providers:[RuleService,CodeService,RedisService]
 })

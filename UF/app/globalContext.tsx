@@ -6,52 +6,82 @@ import { RealTheme } from '@gravity-ui/uikit'
 import React from 'react'
 import { getCookie } from './components/cookieMgment'
 export interface TotalContextProps {
-  main6d2c7: any 
-  setmain6d2c7: React.Dispatch<React.SetStateAction<any>>
-  main6d2c7Props: any 
-  setmain6d2c7Props: React.Dispatch<React.SetStateAction<any>>
-  groupad476b: any 
-  setgroupad476b: React.Dispatch<React.SetStateAction<any>>
-  groupad476bProps: any 
-  setgroupad476bProps: React.Dispatch<React.SetStateAction<any>>
-  groupb66b0d: any 
-  setgroupb66b0d: React.Dispatch<React.SetStateAction<any>>
-  groupb66b0dProps: any 
-  setgroupb66b0dProps: React.Dispatch<React.SetStateAction<any>>
-  groupc59a19: any 
-  setgroupc59a19: React.Dispatch<React.SetStateAction<any>>
-  groupc59a19Props: any 
-  setgroupc59a19Props: React.Dispatch<React.SetStateAction<any>>
-  groupde191f: any 
-  setgroupde191f: React.Dispatch<React.SetStateAction<any>>
-  groupde191fProps: any 
-  setgroupde191fProps: React.Dispatch<React.SetStateAction<any>>
-  root: any,
-  setroot:React.Dispatch<React.SetStateAction<any>>
-  rootProps: any 
-  setrootProps: React.Dispatch<React.SetStateAction<any>>
-  namefcda5: any,
-  setnamefcda5:React.Dispatch<React.SetStateAction<any>>
-  namefcda5Props: any 
-  setnamefcda5Props: React.Dispatch<React.SetStateAction<any>>
-  age9919a: any,
-  setage9919a:React.Dispatch<React.SetStateAction<any>>
-  age9919aProps: any 
-  setage9919aProps: React.Dispatch<React.SetStateAction<any>>
-  save99cfb: any,
-  setsave99cfb:React.Dispatch<React.SetStateAction<any>>
-  save99cfbProps: any 
-  setsave99cfbProps: React.Dispatch<React.SetStateAction<any>>
-  address332cb: any,
-  setaddress332cb:React.Dispatch<React.SetStateAction<any>>
-  address332cbProps: any 
-  setaddress332cbProps: React.Dispatch<React.SetStateAction<any>>
+  groupe162d: any 
+  setgroupe162d: React.Dispatch<React.SetStateAction<any>>
+  groupe162dProps: any 
+  setgroupe162dProps: React.Dispatch<React.SetStateAction<any>>
+  mytabled34a7: any 
+  setmytabled34a7: React.Dispatch<React.SetStateAction<any>>
+  mytabled34a7Props: any 
+  setmytabled34a7Props: React.Dispatch<React.SetStateAction<any>>
+  group5384d: any 
+  setgroup5384d: React.Dispatch<React.SetStateAction<any>>
+  group5384dProps: any 
+  setgroup5384dProps: React.Dispatch<React.SetStateAction<any>>
+  r_group358e4: any 
+  setr_group358e4: React.Dispatch<React.SetStateAction<any>>
+  r_group358e4Props: any 
+  setr_group358e4Props: React.Dispatch<React.SetStateAction<any>>
+  name57927: any,
+  setname57927:React.Dispatch<React.SetStateAction<any>>
+  name57927Props: any 
+  setname57927Props: React.Dispatch<React.SetStateAction<any>>
+  save1f20e: any,
+  setsave1f20e:React.Dispatch<React.SetStateAction<any>>
+  save1f20eProps: any 
+  setsave1f20eProps: React.Dispatch<React.SetStateAction<any>>
+  tabledata_id59734: any,
+  settabledata_id59734:React.Dispatch<React.SetStateAction<any>>
+  tabledata_id59734Props: any 
+  settabledata_id59734Props: React.Dispatch<React.SetStateAction<any>>
+  name067a9: any,
+  setname067a9:React.Dispatch<React.SetStateAction<any>>
+  name067a9Props: any 
+  setname067a9Props: React.Dispatch<React.SetStateAction<any>>
+  agec2723: any,
+  setagec2723:React.Dispatch<React.SetStateAction<any>>
+  agec2723Props: any 
+  setagec2723Props: React.Dispatch<React.SetStateAction<any>>
+  save11c8e: any,
+  setsave11c8e:React.Dispatch<React.SetStateAction<any>>
+  save11c8eProps: any 
+  setsave11c8eProps: React.Dispatch<React.SetStateAction<any>>
+  buttonreject8b1d9: any,
+  setbuttonreject8b1d9:React.Dispatch<React.SetStateAction<any>>
+  buttonreject8b1d9Props: any 
+  setbuttonreject8b1d9Props: React.Dispatch<React.SetStateAction<any>>
+  label0cb72: any,
+  setlabel0cb72:React.Dispatch<React.SetStateAction<any>>
+  label0cb72Props: any 
+  setlabel0cb72Props: React.Dispatch<React.SetStateAction<any>>
+  name1ef9f: any,
+  setname1ef9f:React.Dispatch<React.SetStateAction<any>>
+  name1ef9fProps: any 
+  setname1ef9fProps: React.Dispatch<React.SetStateAction<any>>
+  age6bba1: any,
+  setage6bba1:React.Dispatch<React.SetStateAction<any>>
+  age6bba1Props: any 
+  setage6bba1Props: React.Dispatch<React.SetStateAction<any>>
+  street1e063: any,
+  setstreet1e063:React.Dispatch<React.SetStateAction<any>>
+  street1e063Props: any 
+  setstreet1e063Props: React.Dispatch<React.SetStateAction<any>>
+  report1a36d: any,
+  setreport1a36d:React.Dispatch<React.SetStateAction<any>>
+  report1a36dProps: any 
+  setreport1a36dProps: React.Dispatch<React.SetStateAction<any>>
 
 ////// screen states 
-  forpfcheckuf_v1Props: any 
-  setforpfcheckuf_v1Props: React.Dispatch<React.SetStateAction<any>>
+  myuf_v1Props: any 
+  setmyuf_v1Props: React.Dispatch<React.SetStateAction<any>>
+  testasample_v1Props: any 
+  settestasample_v1Props: React.Dispatch<React.SetStateAction<any>>
+  reportcheck_v1Props: any 
+  setreportcheck_v1Props: React.Dispatch<React.SetStateAction<any>>
 
 ///////// dfd
+  dfd_fordfcheck_v1Props: any 
+  setdfd_fordfcheck_v1Props: React.Dispatch<React.SetStateAction<any>>
 
   refetch: any,
   setRefetch: React.Dispatch<React.SetStateAction<any>>
@@ -95,8 +125,8 @@ export const TotalContext = React.createContext<TotalContextProps | {}>({})
 
 const GlobalContext = ({children} : {children: React.ReactNode}) => {
       //////////
-        const [main6d2c7, setmain6d2c7 ] = React.useState<any>({}) 
-    const [main6d2c7Props, setmain6d2c7Props ] = React.useState<any>({
+        const [groupe162d, setgroupe162d ] = React.useState<any>({}) 
+    const [groupe162dProps, setgroupe162dProps ] = React.useState<any>({
       validation:false,
       required:false,
       refetch:false,
@@ -106,8 +136,20 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       isHidden: false,
       selectedIds:[]
       }) 
-        const [groupad476b, setgroupad476b ] = React.useState<any>({}) 
-    const [groupad476bProps, setgroupad476bProps ] = React.useState<any>({
+    
+    const [mytabled34a7, setmytabled34a7 ] = React.useState<any>([]) 
+    const [mytabled34a7Props, setmytabled34a7Props ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[],
+      refresh:false,
+      }) 
+        const [group5384d, setgroup5384d ] = React.useState<any>({}) 
+    const [group5384dProps, setgroup5384dProps ] = React.useState<any>({
       validation:false,
       required:false,
       refetch:false,
@@ -117,8 +159,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       isHidden: false,
       selectedIds:[]
       }) 
-        const [groupb66b0d, setgroupb66b0d ] = React.useState<any>({}) 
-    const [groupb66b0dProps, setgroupb66b0dProps ] = React.useState<any>({
+        const [r_group358e4, setr_group358e4 ] = React.useState<any>({}) 
+    const [r_group358e4Props, setr_group358e4Props ] = React.useState<any>({
       validation:false,
       required:false,
       refetch:false,
@@ -128,57 +170,84 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       isHidden: false,
       selectedIds:[]
       }) 
-        const [groupc59a19, setgroupc59a19 ] = React.useState<any>({}) 
-    const [groupc59a19Props, setgroupc59a19Props ] = React.useState<any>({
-      validation:false,
-      required:false,
-      refetch:false,
-      refresh:false,
-      isDisabled: false,
-      presetValues: '',
-      isHidden: false,
-      selectedIds:[]
-      }) 
-        const [groupde191f, setgroupde191f ] = React.useState<any>({}) 
-    const [groupde191fProps, setgroupde191fProps ] = React.useState<any>({
-      validation:false,
-      required:false,
-      refetch:false,
-      refresh:false,
-      isDisabled: false,
-      presetValues: '',
-      isHidden: false,
-      selectedIds:[]
-      }) 
-   const [root,setroot] = React.useState<any>({
+   const [name57927,setname57927] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [namefcda5,setnamefcda5] = React.useState<any>({
+   const [save1f20e,setsave1f20e] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [age9919a,setage9919a] = React.useState<any>({
+   const [tabledata_id59734,settabledata_id59734] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [save99cfb,setsave99cfb] = React.useState<any>({
+   const [name067a9,setname067a9] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [address332cb,setaddress332cb] = React.useState<any>({
+   const [agec2723,setagec2723] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [save11c8e,setsave11c8e] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [buttonreject8b1d9,setbuttonreject8b1d9] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [label0cb72,setlabel0cb72] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [name1ef9f,setname1ef9f] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [age6bba1,setage6bba1] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [street1e063,setstreet1e063] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [report1a36d,setreport1a36d] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
@@ -186,22 +255,31 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refresh:false,
     }) 
     ///////////
-    const [refresh, setRefresh] = React.useState<any>({       Canvasroot:false,
-       textinputnamefcda5:false,
-       textinputage9919a:false,
-       buttonsave99cfb:false,
-       textareaaddress332cb:false,
-       groupmain6d2c7:false,
-       groupgroupAd476b:false,
-       groupgroupB66b0d:false,
-       groupgroupC59a19:false,
-       groupgroupDe191f:false,
+    const [refresh, setRefresh] = React.useState<any>({       textinputname57927:false,
+       buttonsave1f20e:false,
+       columntabledata_id59734:false,
+       columnname067a9:false,
+       columnagec2723:false,
+       buttonsave11c8e:false,
+       buttonButtonReject8b1d9:false,
+       labellabel0cb72:false,
+       textinputname1ef9f:false,
+       textinputage6bba1:false,
+       textinputstreet1e063:false,
+       editorreport1a36d:false,
+       groupgroupe162d:false,
+       tablemytabled34a7:false,
+       groupgroup5384d:false,
+       groupr_group358e4:false,
       })
 
   ////// screen states 
-   const [forpfcheckuf_v1Props,setforpfcheckuf_v1Props] = React.useState<any>([])
+   const [myuf_v1Props,setmyuf_v1Props] = React.useState<any>([])
+   const [testasample_v1Props,settestasample_v1Props] = React.useState<any>([])
+   const [reportcheck_v1Props,setreportcheck_v1Props] = React.useState<any>([])
 
 ///////// dfd
+  const [dfd_fordfcheck_v1Props,setdfd_fordfcheck_v1Props] = React.useState<any>([])
     const [searchParam , setSearchParam] = React.useState<string>("")
     const [disableParam , setDisableParam] = React.useState<any>({})
     const [globalState , setGlobalState] = React.useState<any>({})
@@ -229,42 +307,58 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       value={
       {
       //
-        main6d2c7, 
-        setmain6d2c7,
-        main6d2c7Props, 
-        setmain6d2c7Props,
-        groupad476b, 
-        setgroupad476b,
-        groupad476bProps, 
-        setgroupad476bProps,
-        groupb66b0d, 
-        setgroupb66b0d,
-        groupb66b0dProps, 
-        setgroupb66b0dProps,
-        groupc59a19, 
-        setgroupc59a19,
-        groupc59a19Props, 
-        setgroupc59a19Props,
-        groupde191f, 
-        setgroupde191f,
-        groupde191fProps, 
-        setgroupde191fProps,
-        root,
-        setroot, 
-        namefcda5,
-        setnamefcda5, 
-        age9919a,
-        setage9919a, 
-        save99cfb,
-        setsave99cfb, 
-        address332cb,
-        setaddress332cb, 
+        groupe162d, 
+        setgroupe162d,
+        groupe162dProps, 
+        setgroupe162dProps,
+        mytabled34a7, 
+        setmytabled34a7,
+        mytabled34a7Props, 
+        setmytabled34a7Props,
+        group5384d, 
+        setgroup5384d,
+        group5384dProps, 
+        setgroup5384dProps,
+        r_group358e4, 
+        setr_group358e4,
+        r_group358e4Props, 
+        setr_group358e4Props,
+        name57927,
+        setname57927, 
+        save1f20e,
+        setsave1f20e, 
+        tabledata_id59734,
+        settabledata_id59734, 
+        name067a9,
+        setname067a9, 
+        agec2723,
+        setagec2723, 
+        save11c8e,
+        setsave11c8e, 
+        buttonreject8b1d9,
+        setbuttonreject8b1d9, 
+        label0cb72,
+        setlabel0cb72, 
+        name1ef9f,
+        setname1ef9f, 
+        age6bba1,
+        setage6bba1, 
+        street1e063,
+        setstreet1e063, 
+        report1a36d,
+        setreport1a36d, 
         ////// screen states 
-          forpfcheckuf_v1Props,
-          setforpfcheckuf_v1Props,
+          myuf_v1Props,
+          setmyuf_v1Props,
+          testasample_v1Props,
+          settestasample_v1Props,
+          reportcheck_v1Props,
+          setreportcheck_v1Props,
         //////////
 
         ///////// dfd
+        dfd_fordfcheck_v1Props,
+        setdfd_fordfcheck_v1Props,
         refetch,
         setRefetch,
         searchParam,

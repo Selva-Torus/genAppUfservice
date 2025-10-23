@@ -13,15 +13,24 @@ import {
 
  
 
+export class CreatedocumentDto{
+    @ApiProperty()
+    @IsString()
+    street?: string;
+    @ApiProperty()
+    @IsString()
+    phone?: string;
+}
 export class CreatetabledataDto{
     @ApiProperty()
     @IsString()
     name?: string;
     @ApiProperty()
     age?: number;
-    @ApiProperty()
-    @IsString()
-    address?: string;
+    @ApiProperty({ type:CreatedocumentDto })
+    @ValidateNested()
+    @Type(() => CreatedocumentDto)
+    address?: CreatedocumentDto;
     @ApiProperty()
     trs_creator_email?: string;
     @ApiProperty({

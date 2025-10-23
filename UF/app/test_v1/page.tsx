@@ -12,12 +12,41 @@ import decodeToken from "../components/decodeToken";
 import { Icon, Button,Text } from '@gravity-ui/uikit';
 import { ChevronLeft } from '@gravity-ui/icons';
 import { useRouter } from 'next/navigation';
-import Groupmain  from "./Groupmain/Groupmain";
+import Groupgroup  from "./Groupgroup/Groupgroup";
 
 
 export default function PageTestV1() {
   const [initialLoad, setInitialLoad] = useState(false);
-  const securityData:any={};
+  const securityData:any={
+  "User": {
+    "allowedGroups": [
+      "canvas",
+      "group",
+      "mytable"
+    ]
+  },
+  "Manager": {
+    "allowedGroups": [
+      "canvas",
+      "group",
+      "mytable"
+    ]
+  },
+  "Employee": {
+    "allowedGroups": [
+      "canvas",
+      "group",
+      "mytable"
+    ]
+  },
+  "user": {
+    "allowedGroups": [
+      "canvas",
+      "group",
+      "mytable"
+    ]
+  }
+};
   let code:any="";
   //const language=useLanguage();
   const routes = useRouter();
@@ -34,17 +63,12 @@ export default function PageTestV1() {
   const {paginationDetails, setpaginationDetails} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
-  const {forpfcheckuf_v1Props, setforpfcheckuf_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const [checkmain,setCheckmain,]=useState(false);
-  const [checkgroupa,setCheckgroupa,]=useState(false);
-  const [checkgroupb,setCheckgroupb,]=useState(false);
-  const [checkgroupc,setCheckgroupc,]=useState(false);
-  const [checkgroupd,setCheckgroupd,]=useState(false);
-  const {main6d2c7, setmain6d2c7} = useContext(TotalContext) as TotalContextProps;
-  const {groupad476b, setgroupad476b} = useContext(TotalContext) as TotalContextProps;
-  const {groupb66b0d, setgroupb66b0d} = useContext(TotalContext) as TotalContextProps;
-  const {groupc59a19, setgroupc59a19} = useContext(TotalContext) as TotalContextProps;
-  const {groupde191f, setgroupde191f} = useContext(TotalContext) as TotalContextProps;
+  const {myuf_v1Props, setmyuf_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const [checkgroup,setCheckgroup,]=useState(false);
+  const [checkmytable,setCheckmytable,]=useState(false);
+  const {groupe162d, setgroupe162d} = useContext(TotalContext) as TotalContextProps;
+  const {mytabled34a7, setmytabled34a7} = useContext(TotalContext) as TotalContextProps;
+  const {dfd_fordfcheck_v1Props, setdfd_fordfcheck_v1Props} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagPage: boolean = false|| encAppFalg.flag;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encAppFalg.dpd;
@@ -57,7 +81,7 @@ export default function PageTestV1() {
   }
 
   async function securityCheck() {
-    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1",accessProfile:[user],from:"pageTestV1"},{
+    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1",accessProfile:[user],from:"pageTestV1"},{
       headers: {
         Authorization: `Bearer ${token}`
       }});
@@ -82,7 +106,7 @@ export default function PageTestV1() {
             params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1"
+              key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
             }
           }) 
         }else{
@@ -91,7 +115,7 @@ export default function PageTestV1() {
               Authorization: `Bearer ${token}`
              },
             params: {
-              key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1"  
+              key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"  
             }
           })          
         }
@@ -116,7 +140,7 @@ export default function PageTestV1() {
           params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1"
+              key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
             }
         }) 
         }else{
@@ -125,7 +149,7 @@ export default function PageTestV1() {
              Authorization: `Bearer ${token}`
            },
             params: {
-              key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1"
+              key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
             }
          })          
         }
@@ -156,27 +180,41 @@ export default function PageTestV1() {
   "events": {}
 };
         try{
+        let fordfcheck_v1Body:te_refreshDto={
+          key: "CK:TT407:FNGK:AF:FNK:DF-DFD:CATK:CGFA:AFGK:TG4CGFA:AFK:forDFcheck:AFVK:v1"+":",
+          refreshFlag: "Y",
+          count:parseInt(pagination?.count) || 10,
+          page:parseInt(pagination?.page) || 1
+        }
+        if (encryptionFlagPage) {          
+          fordfcheck_v1Body["dpdKey"] = encryptionDpd;
+          fordfcheck_v1Body["method"] = encryptionMethod;
+        }
+        if(myuf_v1Props.length > 0){
+          let filterData :any[] =[];
+          for(let i=0;i< myuf_v1Props.length;i++){
+            if(myuf_v1Props[i].DFDkey == "CK:TT407:FNGK:AF:FNK:DF-DFD:CATK:CGFA:AFGK:TG4CGFA:AFK:forDFcheck:AFVK:v1"){
+              delete myuf_v1Props[i].DFDkey;
+              filterData.push(myuf_v1Props[i])
+            }           
+          }
+          fordfcheck_v1Body['filterData'] = filterData;
+        }
+        const fordfcheck_v1Data:any=await AxiosService.post("/te/eventEmitter",fordfcheck_v1Body,{
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+          setdfd_fordfcheck_v1Props(fordfcheck_v1Data?.data?.dataset?.data || []);
           if (security == 'AA') {
           allowedGroup.map((nodes:any)=>{
-            if(nodes?.groupName == 'main' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
+            if(nodes?.groupName == 'group' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
             {
-              setCheckmain(true)
+              setCheckgroup(true)
             }
-            if(nodes?.groupName == 'groupA' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
+            if(nodes?.groupName == 'mytable' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
             {
-              setCheckgroupa(true)
-            }
-            if(nodes?.groupName == 'groupB' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
-            {
-              setCheckgroupb(true)
-            }
-            if(nodes?.groupName == 'groupC' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
-            {
-              setCheckgroupc(true)
-            }
-            if(nodes?.groupName == 'groupD' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
-            {
-              setCheckgroupd(true)
+              setCheckmytable(true)
             }
           })
           }
@@ -191,16 +229,10 @@ export default function PageTestV1() {
         //Code Execution
         if (code !="" ) {
           let codeStates: any = {}
-          codeStates['main'] = main6d2c7;
-          codeStates['setmain'] = setmain6d2c7;
-          codeStates['groupa'] = groupad476b;
-          codeStates['setgroupa'] = setgroupad476b;
-          codeStates['groupb'] = groupb66b0d;
-          codeStates['setgroupb'] = setgroupb66b0d;
-          codeStates['groupc'] = groupc59a19;
-          codeStates['setgroupc'] = setgroupc59a19;
-          codeStates['groupd'] = groupde191f;
-          codeStates['setgroupd'] = setgroupde191f;
+          codeStates['group'] = groupe162d;
+          codeStates['setgroup'] = setgroupe162d;
+          codeStates['mytable'] = mytabled34a7;
+          codeStates['setmytable'] = setmytabled34a7;
           codeExecution(code,codeStates);
         }   
         setInitialLoad(true);        
@@ -221,8 +253,8 @@ export default function PageTestV1() {
   }, [])
   return (
     <>
-     <div style={{"gap":"16","gridAutoRows":"100px","minHeight":"100vh","padding":"0rem","backgroundColor":"#ffffff","display":"grid","gridTemplateColumns":"repeat(12, 1fr)"}}>
-        {checkmain && initialLoad &&<Groupmain  
+     <div style={{}}>
+        {checkgroup && initialLoad &&<Groupgroup  
           lockedData={lockedData} 
           setLockedData={setLockedData} 
           primaryTableData={primaryTableData}

@@ -7,6 +7,14 @@ import { IsString } from 'class-validator';
 
 
 
+export class  UpdatedocumentDto {
+        @ApiProperty()
+        street?: string;
+        @ApiProperty()
+        phone?: string;
+
+}
+
 export class  UpdatetabledataDto {
         @ApiProperty()
         name?: string;
@@ -15,8 +23,9 @@ export class  UpdatetabledataDto {
             format: `int32`,
         })
         age?: number;
-        @ApiProperty()
-        address?: string;
+        @ApiProperty({type : UpdatedocumentDto}) 
+        @Type(() => UpdatedocumentDto) 
+        address? : UpdatedocumentDto
         @ApiProperty()
         trs_creator_email?: string;
         @ApiProperty({

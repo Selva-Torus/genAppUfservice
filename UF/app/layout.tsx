@@ -32,8 +32,45 @@
       "screenDetails": [
         {
           "name": "test",
-          "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1",
-          "allowedAccessProfile": [],
+          "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1",
+          "allowedAccessProfile": [
+            "User",
+            "Manager",
+            "Employee",
+            "user"
+          ],
+          "static": false
+        }
+      ],
+      "items": []
+    },
+    {
+      "menuGroupLabel": "save",
+      "screenDetails": [
+        {
+          "name": "save",
+          "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1",
+          "allowedAccessProfile": [
+            "User",
+            "Manager"
+          ],
+          "static": false
+        }
+      ],
+      "items": []
+    },
+    {
+      "menuGroupLabel": "Report",
+      "screenDetails": [
+        {
+          "name": "report",
+          "key": "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1",
+          "allowedAccessProfile": [
+            "User",
+            "Manager",
+            "Employee",
+            "user"
+          ],
           "static": false
         }
       ],
@@ -49,6 +86,10 @@
         "type": ""
       },
       "applicationUniqueId": "16d22141-e230-402c-ac8f-239a362fc09d",
+      "deploymentArtifactKey": "CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:torusDev:AFVK:v1",
+      "lastBuildVersion": "v4",
+      "lastBuildOn": "2025-10-17T07:49:15.809Z",
+      "accessUrl": "https://tgadev.gsstvl.com/tt407/cgfa/tg4cgfa/v4",
       "appGrpName": "CGFA",
       "appGrpCode": "CGFA",
       "fusionAuthAppClientSecret": "BrATNorQH7qS5y9IzsRtS-CdKFoJhzjBIbF6J4MvVYA"
@@ -65,7 +106,7 @@
     "topbarColor": "#ffffff",
     "menubarColor": "#ffffff",
     "sidebarStyle": "",
-    "navigationStyles": "horizontal",
+    "navigationStyles": "vertical",
     "theme": "light",
     "layoutMode": "fluid",
     "mobileAppearance": {
@@ -122,7 +163,9 @@
   },
   "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TT407:AFGK:CGFA:AFK:TG4CGFA:AFVK:v1:appearance",
   "allKeys": [
-    "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1"
+    "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1",
+    "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1",
+    "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1"
   ],
   "loginDetails": {
     "firstName": "Peer",
@@ -137,7 +180,7 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-10-11T05:24:04.889Z",
+    "lastActive": "2025-10-22T06:10:34.078Z",
     "profile": "https://varnishdev.gsstvl.com/files/torus/9.1/CT003/resources/images/Peer@786/pexels-pixabay-33109.jpg",
     "quickLinks": [
       {
@@ -163,7 +206,8 @@
     ],
     "client": "CT003",
     "edit": "",
-    "noOfProductsService": 0
+    "noOfProductsService": 0,
+    "userUniqueId": "6828417e-5fe0-43bb-8c55-c465ee6581a0"
   },
   "webOnBoarding": {
     "landingScreen": "Logs Screen"
@@ -171,7 +215,15 @@
   "allKeyswithScreenNames": [
     {
       "screensName": "test-v1",
-      "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1"
+      "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
+    },
+    {
+      "screensName": "save-v1",
+      "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1"
+    },
+    {
+      "screensName": "report-v1",
+      "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1"
     }
   ],
   "deploymentArtifactKey": "CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:forFA:AFVK:v1",

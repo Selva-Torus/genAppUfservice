@@ -19,7 +19,7 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-10-11T05:24:04.889Z",
+    "lastActive": "2025-10-22T06:10:34.078Z",
     "profile": "https://varnishdev.gsstvl.com/files/torus/9.1/CT003/resources/images/Peer@786/pexels-pixabay-33109.jpg",
     "quickLinks": [
       {
@@ -45,7 +45,8 @@
     ],
     "client": "CT003",
     "edit": "",
-    "noOfProductsService": 0
+    "noOfProductsService": 0,
+    "userUniqueId": "6828417e-5fe0-43bb-8c55-c465ee6581a0"
   }
 } */
 import { NestFactory } from '@nestjs/core';

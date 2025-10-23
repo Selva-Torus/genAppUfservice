@@ -151,7 +151,7 @@ export class tabledataController {
     summary: 'Update the record',
     description: 'Update the record for the tabledata table',
   })
-    @ApiNotFoundResponse({
+      @ApiNotFoundResponse({
     description: 'Resource not found'
   })
 

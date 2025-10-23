@@ -108,25 +108,7 @@ export class readAPIDTO {
     isTable?:boolean
   }
 
-
-  //  export class PoEvent {
-//     constructor(
-//       public key: string,
-//       public upId: string,
-//       public event: string,
-//       public data: object,
-//       public token: string,
-//       public nodeId: string,
-//       public nodeName: string,
-//       public nodeType: string,
-//       public flag : string,
-//       public page?:number,
-//       public count?:number,
-//       public filterData?:object
-//       ) {}
-//     }
-
-    export class PoEvent {
+  export class PoEvent {
     constructor(
      
       public pfdto:pfDto,
@@ -138,7 +120,8 @@ export class readAPIDTO {
       public flag : string,
       public page?:number,
       public count?:number,
-      public filterData?:object
+      public filterData?:object,
+      public lock?:Object
       ) {}
     }
  
@@ -160,6 +143,7 @@ export class readAPIDTO {
       page?:number
       count?:number
       filterData?:object
+      lock?:Object
     }
   
     export class pageDto { 

@@ -80,8 +80,45 @@ const LayoutDecider = ({
     "screenDetails": [
       {
         "name": "test",
-        "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:forPFCheckUF:AFVK:v1",
-        "allowedAccessProfile": [],
+        "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1",
+        "allowedAccessProfile": [
+          "User",
+          "Manager",
+          "Employee",
+          "user"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroupLabel": "save",
+    "screenDetails": [
+      {
+        "name": "save",
+        "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1",
+        "allowedAccessProfile": [
+          "User",
+          "Manager"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroupLabel": "Report",
+    "screenDetails": [
+      {
+        "name": "report",
+        "key": "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1",
+        "allowedAccessProfile": [
+          "User",
+          "Manager",
+          "Employee",
+          "user"
+        ],
         "static": false
       }
     ],

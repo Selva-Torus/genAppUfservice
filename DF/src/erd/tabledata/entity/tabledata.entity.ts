@@ -4,6 +4,13 @@ import { ApiProperty } from '@nestjs/swagger';
 
 
      
+  export class documentEntity {
+        @ApiProperty()
+        street?: string;
+        @ApiProperty()
+        phone?: string;
+      }
+          
   export class tabledataEntity {
         @ApiProperty()
         id: string;
@@ -14,8 +21,8 @@ import { ApiProperty } from '@nestjs/swagger';
           format: `int32`,
         })
         age?: number;
-        @ApiProperty()
-        address?: string;
+        @ApiProperty({type :() => documentEntity}) 
+        address?: documentEntity
         @ApiProperty()
         trs_creator_email: string;
         @ApiProperty()
@@ -59,8 +66,8 @@ import { ApiProperty } from '@nestjs/swagger';
           format: `int32`,
         })
         age?: number;
-        @ApiProperty()
-        address?: string;
+        @ApiProperty({type :() => documentEntity}) 
+        address : documentEntity
         @ApiProperty()
         trs_creator_email: string;
         @ApiProperty()

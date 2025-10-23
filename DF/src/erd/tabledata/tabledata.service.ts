@@ -12,7 +12,15 @@ export class tabledataService {
   constructor(private readonly prismaService: PrismaService,
   private readonly commonService: CommonService) {}
   private encryptedCols: any={
-  "tabledata": []
+  "tabledata": [
+    {
+      "column": "address",
+      "isRequired": false,
+      "dataType": "Object",
+      "interRelation": "document"
+    }
+  ],
+  "document": []
 }
 
   async encryptData(data: any, tableName: string, method) {
@@ -202,7 +210,10 @@ export class tabledataService {
       id:"string",
       name:"string",
       age:"number",
-      address:"string",
+      address:{
+  "street": "string",
+  "phone": "string"
+},
       trs_creator_email:"string",
       trs_created_date:"Date",
       trs_created_by:"string",

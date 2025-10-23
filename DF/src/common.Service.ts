@@ -620,7 +620,7 @@ export class CommonService{
     //   //   process.env.TORUS_URL + '/api/readkey',
     //   //   readAPIBody,
     //   // );
-    //   let URL = process.env.MICROSERVICE_URL +'/readkey'
+    //   let URL = process.env.TORUS_URL +'/readkey'
     //   const readKey = await axios.post(
     //    URL,
     //      readAPIBody,
@@ -737,10 +737,10 @@ export class CommonService{
 
       let zenresultArr = []               
       if (obj) {          
-       // if(obj && Array.isArray(obj) && obj.length > 1)
-         // throw 'Array of records found in Decision Node'
+        if(obj && Array.isArray(obj) && obj.length > 1)
+          throw 'Array of records found in Decision Node'
       
-        if(obj && Array.isArray(obj) && obj.length>0){            
+        if(obj && Array.isArray(obj) && obj.length == 1){            
         return obj[0][path]
 
         }else if(typeof obj == 'object' && Object.keys(obj).length>0){
