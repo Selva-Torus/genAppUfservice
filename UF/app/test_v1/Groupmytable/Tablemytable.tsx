@@ -70,7 +70,7 @@ let defaultColumns = [
 for (let i = 0; i < defaultColumns.length; i++) {
   defaultColumns[i].id = defaultColumns[i].id.toLowerCase();
 }
-import { io, Socket } from 'socket.io-client';
+// import { io, Socket } from 'socket.io-client';
 
 const SOCKET_SERVER_URL = 'http://localhost:3000'; // Your NestJS backend URL
 
@@ -363,25 +363,25 @@ const Tablemytable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   }
 
 
-  const socketRef = useRef<Socket | null>(null);
+  // const socketRef = useRef<Socket | null>(null);
 
-  useEffect(() => {
-    socketRef.current = io(SOCKET_SERVER_URL, {
-      transports: ['websocket'],
-    });
+  // useEffect(() => {
+  //   socketRef.current = io(SOCKET_SERVER_URL, {
+  //     transports: ['websocket'],
+  //   });
 
-    socketRef.current.on('connect', () => {
-      console.log('Connected to socket server:', socketRef.current?.id);
-    });
+  //   socketRef.current.on('connect', () => {
+  //     console.log('Connected to socket server:', socketRef.current?.id);
+  //   });
 
-    socketRef.current.on('disconnect', () => {
-      console.log('Disconnected from socket server');
-    });
+  //   socketRef.current.on('disconnect', () => {
+  //     console.log('Disconnected from socket server');
+  //   });
 
-    return () => {
-      socketRef.current?.disconnect();
-    };
-  }, []);
+  //   return () => {
+  //     socketRef.current?.disconnect();
+  //   };
+  // }, []);
 
   async function fetchData(page:any = 1, pageSize:any = 10, searchParams = {},dfKey:any,isRulePresent:any=false,isOnLoad = false) {
     if(isRulePresent==undefined)

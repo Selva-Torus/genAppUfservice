@@ -1078,4 +1078,10 @@ export class UfController {
     const clientCode: string = process.env.CLIENTCODE;
     return this.appService.getNavbarData(key,clientCode,token)
   }
+
+  @Get('getFilterParamsSchema')
+  async getFilterParamsSchema(@Query('key') key: string ,  @Req() req: any) {
+     const token: string = req?.headers?.authorization?.split(' ')[1];
+    return this.appService.getFilterParamsSchema(key , token);
+  }
 }

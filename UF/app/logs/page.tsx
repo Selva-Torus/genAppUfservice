@@ -84,9 +84,32 @@ const ParentComponent = () => {
       const result = response.data
       if (activeTab === 'torus') {
         if (result && typeof result === 'object' && 'data' in result) {
+          const systemLogResult :any = [];
+          
+      for (const item of response.data.data) {
+        const { AFK, CATK, AFGK, AFVK, FNK } = item;
+
+        for (const log of item.AFSK.logInfo) {
+          const { sessionInfo, errorDetails, DateAndTime } = log;
+
+          systemLogResult.push({
+            artifact: AFK,
+            grpDetails: `${CATK} > ${AFGK}`,
+            version: AFVK,
+            fabric: FNK,
+            user: sessionInfo.user,
+            accessProfile: sessionInfo.accessProfile,
+            profile: sessionInfo.profile,
+            timeStamp: DateAndTime,
+            errorCode: errorDetails.T_ErrorCode,
+            errorDescription: typeof errorDetails.errorDetail === "string" ? errorDetails.errorDetail : "NA",
+            errorDetails,
+          });
+        }
+      }
           setJsonData(prevData => ({
             ...prevData,
-            data: result.data,
+            data: systemLogResult,
             page: result.page,
             limit: result.limit,
             totalDocuments: result.totalDocuments,

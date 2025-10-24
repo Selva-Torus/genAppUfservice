@@ -7,6 +7,7 @@ import {
   TableProps,
   Tabs,
   Text,
+  User,
   withTableActions,
   withTableSorting
 } from '@gravity-ui/uikit'
@@ -108,6 +109,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   }
   const [open, setOpen] = useState(false)
   const buttonElement = useRef<HTMLButtonElement>(null)
+  const [jsonViewerData, setJsonViewerData] = useState([])
 
   const nodeFiner = (data: any) => {
     const returnedData = Object.values(data).flat()
@@ -353,76 +355,61 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   const torusRow = (jsonData.data || []).map((item, index) => ({
     'Artifact Name': (
       <>
-        <ArtifactNameContainer
-          artifactName={item?.AFK}
-          app={item?.CATK}
-          appGroup={item?.AFGK}
-        />
+        <div className='flex w-full flex-col gap-[0.29vw] px-[1vw] text-left'>
+          <Text>{item.artifact}</Text>
+          <Text color='secondary'>{item.grpDetails}</Text>
+        </div>
       </>
     ),
     Version: (
-      <>
-        <RowElementContainer item={item.AFVK} />
-      </>
+      <div className='text-center'>
+        <Text color='secondary'>{item.version}</Text>
+      </div>
     ),
     Fabric: (
       <>
-        <RowElementContainer item={item.FNK} />
+        <RowElementContainer item={item.fabric} />
       </>
     ),
     'Session Info': (
       <>
-        {item.AFSK && Object.keys(item.AFSK).length > 0
-          ? sessionFinder(item.AFSK, 'session').map((i, index) => {
-              return (
-                <div key={index} className='mt-2'>
-                  <RowElementContainer item={i?.user} />
-                  <RowElementContainer item={i?.accessProfile} />
-                </div>
+        {item?.user ? (
+          <User
+            avatar={{ text: item.user, theme: 'brand' }}
+            name={item.user}
+            description={
+              item.accessProfile && Array.isArray(item.accessProfile) ? (
+                item.accessProfile.map((profile: string, i: number) => (
+                  <Text key={i} color='secondary' variant='caption-2'>
+                    {profile} {item.accessProfile.length - 1 === i ? '' : ','}
+                  </Text>
+                ))
+              ) : (
+                <></>
               )
-            })
-          : 'N/A'}
+            }
+            size='l'
+          />
+        ) : (
+          <div className='text-center'>N/A</div>
+        )}
       </>
     ),
-    'Time Stamp':
-      item.AFSK && Object.keys(item.AFSK).length > 0
-        ? sessionFinder(item.AFSK, 'dateandtime').map((i, index) => {
-            return (
-              <Text
-                key={index}
-                variant='body-2'
-                className='block py-1.5 text-center'
-              >
-                {i}
-              </Text>
-            )
-          })
-        : 'N/A',
-    'Error Code':
-      item.AFSK && Object.keys(item.AFSK).length > 0
-        ? sessionFinder(item.AFSK, 'errorcode').map((i, index) => {
-            return (
-              <Text key={index} variant='body-2' className='block text-center'>
-                {i}
-              </Text>
-            )
-          })
-        : 'N/A',
-
-    'Error Description':
-      item.AFSK && Object.keys(item.AFSK).length > 0
-        ? sessionFinder(item.AFSK, 'description').map((i, index) => {
-            return (
-              <Text
-                key={index}
-                variant='body-2'
-                className='block py-1.5 text-center'
-              >
-                {i}
-              </Text>
-            )
-          })
-        : 'N/A',
+    'Time Stamp': (
+      <Text key={index} variant='body-2' className='block py-1.5 text-center'>
+        {item?.timeStamp}
+      </Text>
+    ),
+    'Error Code': (
+      <Text key={index} variant='body-2' className='block text-center'>
+        {item?.errorCode}
+      </Text>
+    ),
+    'Error Description': (
+      <Text key={index} variant='body-2' className='block py-1.5 text-center'>
+        {item?.errorDescription}
+      </Text>
+    ),
     id: index + 1
   }))
 
@@ -474,18 +461,14 @@ const TableHeader: React.FC<TableHeaderProps> = ({
 
   const handleRowClick = (row: any) => {
     setSelectionId(row)
-  }
-
-  const jsonViewerData = useMemo(() => {
-    if (selectionId) {
-      let values = jsonData.data.find(
-        (item, index) => (item._id ?? index + 1) === selectionId.id
-      )
-      return values
+    const value = jsonData.data.find((item, index) => index + 1 == row.id)
+    if (value?.errorDetails) {
+      setJsonViewerData(value.errorDetails)
+    } else {
+      setJsonViewerData([])
     }
-
-    return []
-  }, [selectionId])
+  }
+  
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab === 'process' ? 'process' : 'torus')
@@ -672,30 +655,8 @@ const LogSwitcher = ({
   )
 }
 
+
 const JsonViewer = ({ tabdata }: any) => {
-  const sessionFinder = (data: any) => {
-    if (!data?.AFSK) return []
-
-    let values = Object.values(data.AFSK)
-
-    if (values.length === 0) return []
-
-    return values
-      .flat()
-      .map((item: any) => {
-        if (item.DateAndTime && item.errorDetails) {
-          return {
-            DateAndTime: item.DateAndTime,
-            errorDetails: item.errorDetails
-          }
-        }
-        return null
-      })
-      .filter(Boolean)
-  }
-
-  const jsonViewerData = useMemo(() => sessionFinder(tabdata), [tabdata])
-
   return (
     <div
       className={`mt-2
@@ -709,7 +670,7 @@ const JsonViewer = ({ tabdata }: any) => {
           <JsonView
             theme='atom'
             enableClipboard={false}
-            src={jsonViewerData ?? { data: 'data not available' }}
+            src={tabdata ?? { data: 'data not available' }}
             className='max-h-[60vh] overflow-y-scroll md:max-h-[80vh]'
           />
         ) : (

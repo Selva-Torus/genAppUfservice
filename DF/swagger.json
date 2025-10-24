@@ -1078,6 +1078,29 @@
         ]
       }
     },
+    "/UF/getFilterParamsSchema": {
+      "get": {
+        "operationId": "UfController_getFilterParamsSchema",
+        "parameters": [
+          {
+            "name": "key",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
     "/te/eventEmitter": {
       "post": {
         "operationId": "TeController_pfEventEmitter",

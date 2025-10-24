@@ -6917,4 +6917,89 @@ async resetPassword(email: string, password: string) {
       };;
     }
   }
+
+  getByPath(obj:  Record<string, any>, path: string | string[]) {
+  const keys = Array.isArray(path) ? path : path.split(".");
+  return keys.reduce((acc: any, key) => (acc == null ? undefined : acc[key]), obj);
+}
+
+  async getFilterParamsSchema(flowKey: string, token: string) {
+    try {
+      if (!flowKey || !token) {
+        throw new BadRequestException('key or token not found');
+      }
+
+      const UO = await this.commonService.readAPI(
+        `${flowKey}:UO`,
+        process.env.CLIENTCODE,
+        token,
+      );
+
+      const nodes = UO?.nodes;
+      if (!Array.isArray(nodes)) {
+        throw new NotFoundException('nodes not found');
+      }
+
+      const sourceNode = nodes.find((n) => n?.type === 'customSourceItems');
+      const dfo = sourceNode?.data?.dfo;
+
+      if (!dfo || typeof dfo !== 'object' || !Object.keys(dfo).length) {
+        throw new NotFoundException('dfo not found');
+      }
+
+      const result: any[] = [];
+
+      for (const dfoKey of Object.keys(dfo)) {
+        const nodeList = dfo[dfoKey];
+        if (!Array.isArray(nodeList)) continue;
+
+        for (const node of nodeList) {
+          const reports = node?.reportData;
+          if (!Array.isArray(reports)) continue;
+
+          for (const report of reports) {
+            const { type, ...rest } = this.getByPath(
+              node?.schema,
+              report?.referencePath,
+            );
+            let children = undefined;
+
+            if (
+              type === 'object' &&
+              rest?.properties &&
+              typeof rest.properties === 'object'
+            ) {
+              children = Object.entries(rest.properties).map(
+                ([propKey, propSchema]: any) => {
+                  return {
+                    displayName: '', // you don't have displayName for children in example
+                    referanceName: propKey,
+                    referencePath: `${report.referencePath}.properties.${propKey}`,
+                    type: propSchema?.type,
+                    key: dfoKey,
+                    nodeId: report?.nodeId,
+                  };
+                },
+              );
+            }
+
+            result.push({
+              displayName: report?.displayName,
+              referanceName: report?.referanceName,
+              referencePath: report?.referencePath,
+              nodeId: report?.nodeId,
+              key: dfoKey,
+              type,
+              ...(type === 'object' && children?.length ? { children } : {}),
+            });
+          }
+        }
+      }
+      return result;
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+
+
 }
