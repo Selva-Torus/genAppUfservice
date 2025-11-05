@@ -11,6 +11,7 @@ import { TotalContext, TotalContextProps } from '../globalContext'
 import { dateTime } from '@gravity-ui/date-utils'
 
 const ParentComponent = () => {
+  console.log("🚀 ~ TgService ~ codeGeneration ~ setupData:")
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<'process' | 'torus'>('process')
   const [nodeData, setNodeData] = useState(null)
@@ -27,8 +28,10 @@ const ParentComponent = () => {
   const decodedTokenObj: any = decodeToken(token)
   const [user, setUser] = useState<string[]>([decodedTokenObj?.loginId])
   const { encAppFalg,setEncAppFalg}= useContext(TotalContext) as TotalContextProps
-  const [range , setRange ] = useState({start: dateTime().subtract({days: 4}), end: dateTime()})
+  const [range , setRange ] = useState({start: dateTime().subtract({days: 7}), end: dateTime()})
   const [ fabrics , setFabrics ] = useState<Array<string>>([])
+  const [jsonViewerData, setJsonViewerData] = useState({})
+
 
   const [jsonData, setJsonData] = useState({
     data: [],
@@ -84,7 +87,7 @@ const ParentComponent = () => {
       const result = response.data
       if (activeTab === 'torus') {
         if (result && typeof result === 'object' && 'data' in result) {
-          const systemLogResult :any = [];
+          const systemLogResult :any  = [];
           
       for (const item of response.data.data) {
         const { AFK, CATK, AFGK, AFVK, FNK } = item;
@@ -102,10 +105,15 @@ const ParentComponent = () => {
             profile: sessionInfo.profile,
             timeStamp: DateAndTime,
             errorCode: errorDetails.T_ErrorCode,
-            errorDescription: typeof errorDetails.errorDetail === "string" ? errorDetails.errorDetail : "NA",
+            errorDescription: typeof errorDetails.errorDetail === "string" ? errorDetails.errorDetail : "Get More Info",
             errorDetails,
           });
         }
+      }
+      if(systemLogResult.length && systemLogResult[0].errorDetails){
+        setJsonViewerData(systemLogResult[0].errorDetails)
+      }else{
+        setJsonViewerData({})
       }
           setJsonData(prevData => ({
             ...prevData,
@@ -206,6 +214,7 @@ const ParentComponent = () => {
     } catch (error: any) {
       if (error?.code !== 'ERR_CANCELED') {
         setLoading(false)
+        setJsonViewerData({})
         setJsonData(prevData => ({
           ...prevData,
           data: [],
@@ -228,7 +237,7 @@ const ParentComponent = () => {
     return () => {
       controller.abort()
     }
-  }, [jsonData.page, jsonData.limit, search, activeTab , range, fabrics])
+  }, [jsonData.page, jsonData.limit, search, activeTab , range, fabrics , user])
 
   const handlePageChange = (newPage: number, newPageSize: number) => {
     setJsonData(prev => ({
@@ -258,6 +267,8 @@ const ParentComponent = () => {
           setFabrics={setFabrics}
           user={user}
           setUser={setUser}
+          jsonViewerData={jsonViewerData}
+          setJsonViewerData={setJsonViewerData}
         />
       )}
     </>

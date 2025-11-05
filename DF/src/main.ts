@@ -1,6 +1,6 @@
 /* {
   "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:TT407:AFGK:CGFA:AFK:TG4CGFA:AFVK:v1:bldc",
-  "deploymentArtifactKey": "CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:forFA:AFVK:v1",
+  "deploymentArtifactKey": "CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:oracleDPD:AFVK:v1",
   "appGroupDesc": "CGFA",
   "logType": "mongodb",
   "appDesc": "TG4CGFA",
@@ -19,30 +19,9 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-10-22T06:10:34.078Z",
+    "lastActive": "2025-11-05T10:58:00.611Z",
     "profile": "https://varnishdev.gsstvl.com/files/torus/9.1/CT003/resources/images/Peer@786/pexels-pixabay-33109.jpg",
-    "quickLinks": [
-      {
-        "label": "Company Profile",
-        "key": "PersonalcompanyProfile",
-        "routes": "/control-center/company-profile"
-      },
-      {
-        "label": "Build Application",
-        "key": "build",
-        "routes": "/"
-      },
-      {
-        "label": "My Account",
-        "key": "PersonalmyAccount",
-        "routes": "/control-center/account-profile"
-      },
-      {
-        "label": "Tenant",
-        "key": "tenant",
-        "routes": "/control-center/tenant"
-      }
-    ],
+    "quickLinks": [],
     "client": "CT003",
     "edit": "",
     "noOfProductsService": 0,
@@ -64,7 +43,7 @@ import multipart from '@fastify/multipart';
 async function bootstrap() {
     const fastifyAdapter = new FastifyAdapter({
     bodyLimit: 500 * 1024 * 1024, // 500MB limit
-    logger: !true,
+    logger: true,
   });
   
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -109,11 +88,11 @@ async function bootstrap() {
     { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 
     'JWT-auth',
     )
-    .addServer('https://tgadev.gsstvl.com/tt407/cgfa/tg4cgfa/v1/api-int','Production Server')
+    .addServer('https://tgadev.gsstvl.com/tt407/cgfa/tg4cgfa/v2/api','Production Server')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger.json', JSON.stringify(document, null, 2));
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('docs', app, document);
 
   //helmet
   await app.register(helmet,{

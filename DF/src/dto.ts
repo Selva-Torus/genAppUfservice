@@ -121,7 +121,8 @@ export class readAPIDTO {
       public page?:number,
       public count?:number,
       public filterData?:object,
-      public lock?:Object
+      public lock?:Object,
+      public childTable?:any
       ) {}
     }
  
@@ -144,6 +145,7 @@ export class readAPIDTO {
       count?:number
       filterData?:object
       lock?:Object
+      childTable?:any
     }
   
     export class pageDto { 

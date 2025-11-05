@@ -15,7 +15,7 @@ export class AppService implements OnModuleInit{
 
   async onModuleInit() {
     console.log('Application started, calling API...');
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnQiOiJDVDAwMyIsImxvZ2luSWQiOiJQZWVyQDc4NiIsInNpZCI6IjlhOGFlNTA5LTg0ZjMtNGM3ZS1iZjQ0LTUyOWYxNWIyMmNjMiIsImxvZ1R5cGUiOiJkZnMiLCJ0eXBlIjoiYyIsImlhdCI6MTc2MDQzOTM5MCwiZXhwIjoxNzYwNDQwNTkwfQ.5pSJBuKJUSkGBsNsfApTX72WP7QQ3b4BGsMsUeNCW9E';
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiUGVlckA3ODYiLCJjbGllbnQiOiJDVDAwMyIsInR5cGUiOiJjIiwibG9nVHlwZSI6ImRmcyIsInNpZCI6ImRmMmNmOWU4LWRkMGQtNDhjNS1hZGM1LWE2YTNmODVkYTYwNyIsImlhdCI6MTc2MjMzOTAyNCwiZXhwIjoxNzYyMzQwMjI0fQ.ZMbOatmKMkxfWr2pO1bIIE4POdarpyL6NXq6of0Axto';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
     if(Object.keys(preParedData).includes('erdWithData'))
       {
@@ -37,7 +37,7 @@ export class AppService implements OnModuleInit{
       erdDatas.fabric = 'API-APIPD';
       erdDatas.loginId = "Peer@786";    
       erdDatas.erdFlag = true;  
-      //await this.ufservice.createApiCollection(erdDatas,this.clientcode);
+      await this.ufservice.createApiCollection(erdDatas,this.clientcode);
       //await axios.post(this.apiUrl+'/createApiCollection', erdDatas,{
       //  headers: {
       //    Authorization: `Bearer ${token}`, 

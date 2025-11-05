@@ -17,12 +17,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
-    "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
-    "migration:generate": "npm run typeorm -- migration:generate -d ./src/erd/data.source.ts src/erd/migrations/migration",
-    "migration:run": "npm run typeorm -- migration:run -d ./src/erd/data.source.ts"
-  },
-  "dependencies": {
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+    },
+   "dependencies": {
     "@fastify/cookie": "^11.0.2",
     "@fastify/formbody": "^8.0.2",
     "@fastify/helmet": "^13.0.1",
@@ -34,15 +31,13 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
     "@nestjs/jwt": "^11.0.0",
+    "@nestjs/typeorm": "^11.0.0",
     "@nestjs/mapped-types": "*",
     "@nestjs/microservices": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
     "@nestjs/platform-fastify": "^11.1.6",
-    "@nestjs/platform-socket.io": "^11.1.7",
     "@nestjs/schedule": "^6.0.0",
     "@nestjs/swagger": "^11.2.0",
-    "@nestjs/typeorm": "^11.0.0",
-    "@nestjs/websockets": "^11.1.7",
     "@prisma/client": "^6.15.0",
     "@types/express-session": "^1.18.1",
     "ajv": "^8.17.1",
@@ -58,6 +53,7 @@
     "ioredis": "^5.4.1",
     "json-to-json-schema": "^0.0.4",
     "jsonata": "^2.0.6",
+    "mime-types": "^3.0.1",
     "minio": "^8.0.2",
     "mongodb": "^6.13.0",
     "node-rsa": "^1.1.1",
@@ -71,7 +67,6 @@
     "redlock": "^5.0.0-beta.2",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.8.1",
     "valibot": "^1.0.0-beta.9",
     "xid-js": "^1.0.1",
     "xlsx": "^0.18.5",
@@ -103,8 +98,8 @@
     "ts-jest": "^29.1.0",
     "ts-loader": "^9.4.3",
     "ts-node": "^10.9.1",
-    "tsconfig-paths": "^4.2.0",
     "typeorm": "^0.3.26",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "^5.1.3"
   },
   "jest": {
@@ -123,8 +118,5 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
-  },
-  "prisma": {
-    "schema": "src/erd/prisma/schema.prisma"
   }
 }

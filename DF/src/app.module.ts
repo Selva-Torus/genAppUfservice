@@ -18,7 +18,6 @@ import { mypfcheckModule } from './pfd/mypfcheck/v1/mypfcheck.module';
 //import { DecryptPayloadMiddleware } from './decryptPayloadMiddleware';
 import { EncryptInterceptor } from './encryptInterceptor';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { RoomGateway } from './room/Room.service';
 
 @Module({
   imports: [ScheduleModule.forRoot(),UfModule,TeModule,forDFcheckModule,mypfcheckModule,ErdModule],
@@ -26,7 +25,7 @@ import { RoomGateway } from './room/Room.service';
   providers: [AppService,CommonService,RuleService,CodeService,JwtService,RedisService,MongoService,ConfigService, {
       provide: APP_INTERCEPTOR,
       useClass: EncryptInterceptor,
-    },RoomGateway],
+    }],
 })
 export class AppModule implements NestModule {
   configure() {}

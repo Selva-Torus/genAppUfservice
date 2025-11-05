@@ -9,10 +9,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - tgadev.gsstvl.com
+        - tgadev.toruslowcode.com
       secretName: tg4cgfa-uf-v1-tls
   rules:
-    - host: tgadev.gsstvl.com
+    - host: tgadev.toruslowcode.com
       http:
         paths:
           - path: /tt407/cgfa/tg4cgfa/v1

@@ -35,24 +35,33 @@ export class RedisService {
   async getJsonData(key: string, collectionName: string) {
     try {
       let returnValue: any;
-    
-      let redisResult = await redis.call('JSON.GET', key);    
-      if (redisResult) {
-        returnValue = redisResult;
-      } 
-      else {
-        var mongoResult:any = await this.getDocument(collectionName,key)       
-        
-        if(mongoResult?.length>0 && mongoResult[0]?.value){          
+      if(collectionName){
+        const parts = key.split(":");
+        const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+        requiredMarkers.forEach(marker => {
+          const idx = parts.indexOf(marker);
+          if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === "undefined" || parts.length <= 14) {
+            throw new Error(`Invalid Redis key`);
+          }
+        });
+        let redisResult = await redis.call('JSON.GET', key);    
+        if (redisResult) {
+          returnValue = redisResult;
+        } else {
+          var mongoResult:any = await this.getDocument(collectionName,key)       
           
-          await redis.call('JSON.SET', key, '$', JSON.stringify(mongoResult[0]?.value));
-         
-          returnValue = JSON.stringify(mongoResult[0]?.value);
-        }else{
-          returnValue = null;
-        }      
+          if(mongoResult?.length>0 && mongoResult[0]?.value){          
+            
+            await redis.call('JSON.SET', key, '$', JSON.stringify(mongoResult[0]?.value));
+          
+            returnValue = JSON.stringify(mongoResult[0]?.value);
+          }else{
+            returnValue = null
+          }       
+        }
+      }else{
+        throw 'client not found'
       }
-
       return returnValue;
     } catch (error) {
       throw error;
@@ -68,7 +77,15 @@ export class RedisService {
    * @throws {Error} If there is an error retrieving the JSON value.
 +   */
   async getJsonDataWithPath(key: string, path:any,collectionName: string) {         
-    try {    
+    try {  
+      const parts = key.split(":");
+      const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+      requiredMarkers.forEach(marker => {
+        const idx = parts.indexOf(marker);
+        if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === "undefined" || parts.length <= 14) {
+          throw new Error(`Invalid Redis key`);
+        }
+      });    
       return await redis.call('JSON.GET', key, path);    
     } catch (error) {
       //console.log('ERROR',error.message); 
@@ -111,11 +128,18 @@ export class RedisService {
    */
    async setJsonData(key: string, value: any, collectionName:string, path?: string) {
     try {      
-      if (path) {      
-        var defpath = '.' + path
-      } else {
-        var defpath = '$';
-      }
+      if (!collectionName && !key) throw "client/key not found";
+   
+        const parts = key.split(":");
+        const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+        requiredMarkers.forEach(marker => {
+          const idx = parts.indexOf(marker);
+          if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === "undefined" || parts.length <= 14) {
+            throw new Error(`Invalid Redis key`);
+          }
+        });
+
+        const defpath = path ? `.${path}` : "$";
         await this.exist(key,collectionName)       
         let redisResult = await redis.call('JSON.SET', key, defpath, value);
       
@@ -123,8 +147,7 @@ export class RedisService {
           var mongoResult:any  = await this.setDocument(collectionName,key, JSON.parse(value),path)
               
         if(mongoResult?.value)
-          return 'Value Stored';    
-      
+          return 'Value Stored';
  
     } catch (error) {
       throw error;
@@ -167,21 +190,26 @@ export class RedisService {
 
   async exist(key,collectionName: string) {
     try {
-      let redisResult = await redis.call('EXISTS', key);
-      if(redisResult){
-        return redisResult;
-      }else{
-        let mongoResult = await this.existsDocument(collectionName,key)
-        if(mongoResult){
-          let doc = await this.getDocument(collectionName,key)
-           if(doc?.length>0 && doc[0]?.value){          
-          
-          await redis.call('JSON.SET', key, '$', JSON.stringify(doc[0]?.value));}
-          //await redis.call('JSON.SET', key, '$', JSON.stringify(doc));
-          return 1
+      if(collectionName){
+              
+        let redisResult = await redis.call('EXISTS', key);
+        if(redisResult){
+          return redisResult;
         }else{
-         return mongoResult
+          let mongoResult = await this.existsDocument(collectionName,key)
+          if(mongoResult){
+            let doc = await this.getDocument(collectionName,key)
+            if(doc?.length>0 && doc[0]?.value){          
+            
+            await redis.call('JSON.SET', key, '$', JSON.stringify(doc[0]?.value));}
+            //await redis.call('JSON.SET', key, '$', JSON.stringify(doc));
+            return 1
+          }else{
+          return mongoResult
+          }
         }
+      }else{
+        throw 'client not found'
       }
     } catch (error) {
       throw error;
@@ -334,7 +362,6 @@ export class RedisService {
       var res = [];
       var result = await redis.xreadgroup('GROUP',groupName,consumerName,'STREAMS',streamName,'>');
       
-
       if (result) {
         result.forEach(([key, message]) => {
           message.forEach(([messageId, data]) => {           
@@ -405,12 +432,55 @@ export class RedisService {
   
   async getKeys(key: string , collectionName: string, isKeySuffix = false) {
     try {
-      var redisKey = isKeySuffix ? '*:'+ key : key + ':*';
-      var keys = await redis.keys(redisKey);   
-      if(keys?.length == 0){
-        return await this.getDocumentKeys(collectionName,key)
+      let redisKey
+      if(collectionName){
+        if(key.endsWith(':'))
+          redisKey = isKeySuffix ? '*:'+ key : key + '*';
+        else
+          redisKey = isKeySuffix ? '*:'+ key : key + ':*';
+       
+        const parts = key.split(":").map(p => p.trim());
+        const KeyrequiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+        KeyrequiredMarkers.forEach(marker => {
+          const idx = parts.indexOf(marker);
+          if (parts[idx + 1] === "undefined" || parts[idx + 1] === '') {
+            throw new Error(`Invalid Redis key`);
+          }
+        });
+
+        let keys = await redis.keys(redisKey);
+        const arrID: string[] = [];
+        const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+        for (const item of keys) {
+          const _id = item         
+          const parts = _id.split(":").map(p => p.trim()); 
+            let isValid = true;  
+            for (const marker of requiredMarkers) {
+              const idx = parts.indexOf(marker);
+              
+              const next = parts[idx + 1];                
+              if (idx === -1 ||next === undefined ||next === null ||next.trim?.() === "" ||next.toLowerCase?.() === "undefined" || parts.length <= 14) {
+                isValid = false;
+                await this.deleteKey(_id,collectionName)
+                break;
+              }
+            }  
+            if (isValid && !arrID.includes(_id)) {
+              arrID.push(_id);
+            }                 
+        }
+        if(arrID.length>0)  keys = arrID 
+        let mkeys = await this.getDocumentKeys(collectionName,key)
+        if(keys?.length == mkeys?.length){
+          return keys
+        }else{
+         if(mkeys?.length > keys?.length)
+          return mkeys;
+         else
+          return keys;
+       }
       }else{
-        return keys;
+        throw 'client not found'
       }
     } catch (error) {
       throw error;
@@ -482,32 +552,39 @@ export class RedisService {
 
   async setDocument(collectionName: string, key: string, value: any,path?:any,filter?:object){
     try {
-     
-      const collection = db.collection(collectionName+'_AMDKEYS');
+      if(key && collectionName){
+        let collection;
+        if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
+          collection = db.collection('TORUS_AMDKEYS'); 
+        else
+          collection = db.collection(collectionName+'_AMDKEYS');
  
-      let customId:any = { _id:key}
-     
-      let customVal:any = { $set: { value } }      
-     
-      if(filter)    
-        customId = Object.assign(customId,filter) 
+        let customId:any = { _id:key}
+      
+        let customVal:any = { $set: { value } }      
+      
+        if(filter)    
+          customId = Object.assign(customId,filter) 
 
-      if(path){
-        if(path.includes('[') && path.includes(']')){ 
-          path = path.replace(']', '');
-          path = path.replace('[', '');
+        if(path){
+          if(path.includes('[') && path.includes(']')){ 
+            path = path.replace(']', '');
+            path = path.replace('[', '');
+          }
+          path = 'value.'+path
+          customVal = { $set: { [path]:value } }
         }
-        path = 'value.'+path
-        customVal = { $set: { [path]:value } }
-      }
-     
-      var result = await collection.findOneAndUpdate(customId,customVal,{ upsert: true, returnDocument: 'after' })
-   
-      if (result) {
-        return result
-      } else {
-        return 0
-      }
+      
+        var result = await collection.findOneAndUpdate(customId,customVal,{ upsert: true, returnDocument: 'after' })
+    
+        if (result) {
+          return result
+        } else {
+          return 0
+        }
+      }else{
+        throw 'key/client not found'
+      }      
     } catch (error) {
       throw error
     }
@@ -515,23 +592,58 @@ export class RedisService {
 
   async getDocumentKeys(collectionName: string, key?: string){
     try {
+      if (!collectionName) throw 'client not found';
       let collection;
       let result
-      if(key){
-         collection = db.collection(collectionName+'_AMDKEYS'); 
-         const regex = new RegExp(`${key}`, 'i');
-          result = await collection.find({ _id: regex }).toArray();    
+      if (key) {
+        if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
+          collection = db.collection('TORUS_AMDKEYS'); 
+        else
+          collection = db.collection(collectionName+'_AMDKEYS');
+
+        const parts = key.split(":").map(p => p.trim());
+        const KeyrequiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+        KeyrequiredMarkers.forEach(marker => {
+          const idx = parts.indexOf(marker);
+          if (parts[idx + 1] === "undefined" || parts[idx + 1] === '') {
+            throw new Error(`Invalid Redis key: missing value for ${marker}`);
+          }
+        });
+      
+        if (key.includes(':*:')) {
+          key = key.replaceAll(':*', '.*?')
         }
-      else{
+        result = await collection.find({ _id: { $regex: (`${key}`) } }).toArray();
+      }
+      else {
         collection = db.collection(collectionName);
-         result = await collection.find().toArray();
-        }  
+        result = await collection.find().toArray();
+      }  
         
-       let arrID=[]
-      if (result && result.length>0) {
-       
-        for(let v=0; v<result.length; v++){
-          arrID.push(result[v]?._id)
+      let arrID=[]
+      if (result && result.length>0) {       
+        const arrID: string[] = [];
+        const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+        for (const item of result) {
+          const _id = item?._id;
+          if (!_id || typeof _id !== "string") continue;
+
+          const parts = _id.split(":").map(p => p.trim());         
+        
+          let isValid = true;  
+          for (const marker of requiredMarkers) {
+            const idx = parts.indexOf(marker);
+            const next = parts[idx + 1];  
+            if (idx === -1 ||next === undefined ||next === null ||next.trim?.() === "" ||next.toLowerCase?.() === "undefined" || parts.length <= 14) {
+              isValid = false;
+              await this.deleteKey(_id,collectionName)
+              break;
+            }
+          }
+
+          if (isValid && !arrID.includes(_id)) {
+            arrID.push(_id);
+          }                  
         }
         return arrID
       } else {
@@ -544,16 +656,53 @@ export class RedisService {
 
   async getDocument(collectionName: string, key: string, path?:any,filter?:object){
     try {
+      if(!collectionName)  throw 'client not found'
+      let collection;
+      if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
+        collection = db.collection('TORUS_AMDKEYS'); 
+      else
+        collection = db.collection(collectionName+'_AMDKEYS');
      
-      const collection = db.collection(collectionName+'_AMDKEYS');   
-     
+      const parts = key.split(":").map(p => p.trim());
+      const KeyrequiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+      KeyrequiredMarkers.forEach(marker => {
+        const idx = parts.indexOf(marker);
+        if (parts[idx + 1] === "undefined" || parts[idx + 1] === '' || parts.length <= 14) {
+          throw new Error(`Invalid Redis key: missing value for ${marker}`);
+        }
+      });
+
       let customId:any = {
         _id: new RegExp(`${key}`, 'i')
       }    
           
       var result = await collection.find(customId).toArray();  
      // console.log(1,JSON.stringify(result));     
-      if (result?.length>0) {       
+      if (result?.length>0) { 
+        const arrID: string[] = [];
+        const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+        for (const item of result) {
+          const _id = item?._id;
+          if (!_id || typeof _id !== "string") continue;
+          const parts = _id.split(":").map(p => p.trim());  
+          let isValid = true;  
+          for (const marker of requiredMarkers) {
+            const idx = parts.indexOf(marker);
+            const next = parts[idx + 1];  
+            if (idx === -1 ||next === undefined ||next === null ||next.trim?.() === "" ||next.toLowerCase?.() === "undefined" || parts.length <= 14) {
+              isValid = false;
+              await this.deleteKey(_id,collectionName)
+              break;
+            }
+          }
+
+          if (isValid) {//&& !arrID.includes(_id)
+            arrID.push(item);
+          }                  
+        }       
+        
+        if(arrID.length>0) result = arrID
+              
         if(path){   
           return await _.get(result?.[0],'value'+path)         
         }
@@ -605,8 +754,14 @@ export class RedisService {
   }
 
   async existsDocument(collectionName: string, key: string){
-    try {      
-      const collection = db.collection(collectionName+'_AMDKEYS'); 
+    try {  
+      if(!collectionName) throw 'client not found'    
+      let collection;
+      if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
+        collection = db.collection('TORUS_AMDKEYS'); 
+      else
+        collection = db.collection(collectionName+'_AMDKEYS');
+
       let customId:any = {_id:key}  
      
       var result = await collection.findOne(customId,{ projection: { _id: 1 } })   
@@ -623,16 +778,20 @@ export class RedisService {
 
   async appendDocumentData(collectionName: string, key: string,AppendValue:any){
     try {
-      const collection:any = db.collection(collectionName+'_AMDKEYS'); 
+      if(!collectionName)  throw 'client not found'
+       let collection;
+      if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
+        collection = db.collection('TORUS_AMDKEYS'); 
+      else
+        collection = db.collection(collectionName+'_AMDKEYS');
+
       let customId:any = {_id:key}
 
       var result:any = await collection.find(customId).toArray()
      
       if(result?.length>0){                
-        let pushQry = { $push: { ['value'] : AppendValue } }
-               
-        return await collection.updateOne(customId, pushQry);
-             
+        let pushQry = { $push: { ['value'] : AppendValue } }               
+        return await collection.updateOne(customId, pushQry);             
       }else{  
         return await this.setDocument(collectionName,key,[AppendValue])
       }
@@ -788,7 +947,13 @@ export class RedisService {
 
 async deleteDocument(collectionName:string,key:any){
   try{
-    const collection = db.collection(collectionName+'_AMDKEYS');
+    if(!collectionName) throw 'client not found'
+      let collection;
+      if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
+        collection = db.collection('TORUS_AMDKEYS'); 
+      else
+        collection = db.collection(collectionName+'_AMDKEYS');
+
       let res = await collection.deleteOne({_id:key} )
       return res;
   }catch(err){

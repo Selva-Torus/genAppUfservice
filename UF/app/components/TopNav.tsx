@@ -180,7 +180,7 @@ const TopNav = ({
         ) : (
           <Logo />
         )}
-        <h3 className='text-center font-bold '>{appName}</h3>
+        <h3 className='text-center text-nowrap font-bold '>{appName}</h3>
       </div>
       {listMenuItems && (
         <>

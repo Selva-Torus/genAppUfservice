@@ -45,7 +45,8 @@ export class forDFcheckService {
         let page = input.page
         let count = input.count
         let filterData = pfdto.filterData
-        let lockDetails = pfdto.lock    
+        let lockDetails = pfdto.lock 
+        let childtable = pfdto.childTable   
         let params: any = (Object.keys(input))
         let missingKeys = params.filter(item => {
           if (item != 'data') {
@@ -56,7 +57,7 @@ export class forDFcheckService {
           return `${missingKeys.join(', ')} ${missingKeys.length > 1 ? 'are' : 'is'} empty`;
         }
         let currentFabric = await this.CommonService.splitcommonkey(pfdto.key, 'FNK')  
-        let pfresponse = await this.pfProcessor(pfdto, event , pfjson,pfo, poNode, ndp, currentFabric, flag, page, count, filterData, lockDetails);
+        let pfresponse = await this.pfProcessor(pfdto, event , pfjson,pfo, poNode, ndp, currentFabric, flag, page, count, filterData, lockDetails,childtable);
         return pfresponse
       } catch (error) {
         console.log('TS Error', error);
@@ -64,7 +65,7 @@ export class forDFcheckService {
       }
     }
 
-    async pfProcessor(pfdto, event, pfjson ,poJson,pfo, ndp,currentFabric, flag, page, count, filterData, lockDetails) {
+    async pfProcessor(pfdto, event, pfjson ,poJson,pfo, ndp,currentFabric, flag, page, count, filterData, lockDetails,childtable) {
       this.logger.log('Pf Processor started!');
       let upId= pfdto.upId
       this.logger.log('UPID', upId);
@@ -93,7 +94,8 @@ export class forDFcheckService {
       let SessionToken = await this.jwtService.decode(token, {json: true});  
       let tokenDecode  =  await this.CommonService.MyAccountForClient(token);
       let sobj = {}, SessionInfo = {}
-  
+      //this.logger.log("SessionToken",SessionToken)
+        
         sobj['session.orgGrpCode'] = SessionToken.orgGrpCode
         sobj['session.orgCode'] = SessionToken.orgCode
         sobj['session.roleGrpCode'] = SessionToken.roleGrpCode
@@ -108,7 +110,7 @@ export class forDFcheckService {
         sobj['session.roleName'] = SessionToken?.roleName;
         sobj['session.psGrpName'] = SessionToken?.psGrpName;
         sobj['session.psName'] =  SessionToken?.psName;
-      
+        sobj['session.trs_process_id'] = upId
           
         SessionInfo['loginId'] = SessionToken?.loginId;
         SessionInfo['accessProfile'] = SessionToken?.selectedAccessProfile;
@@ -166,6 +168,30 @@ export class forDFcheckService {
               customcoderesult = RCMresult.code
             }
             
+            let internalMappingNodes = poJson?.internalMappingNodes;
+            let internalMappedObj = {};
+            for (let n = 0; n < internalMappingNodes.length; n++) {
+              if (internalMappingNodes[n].nodeId == poNode[j].nodeId && internalMappingNodes[n].ifo?.length > 0) {
+                for (let f = 0; f < internalMappingNodes[n].ifo.length; f++) {
+                  if(internalMappingNodes[n].ifo[f].path.includes("|ifo|")){                  
+                    if (internalMappingNodes[n].ifo[f].value) {
+                      internalMappedObj[internalMappingNodes[n].ifo[f].key] = internalMappingNodes[n].ifo[f].value;
+                    } else {
+                      internalMappedObj[internalMappingNodes[n].ifo[f].key] = '';
+                    }
+                  }
+                }
+              }
+            }
+
+            let ifoObj = {};
+            if (internalMappedObj && Object.keys(internalMappedObj).length > 0) {
+              for (let item in internalMappedObj) {
+                ifoObj[item.toLowerCase()] = internalMappedObj[item];
+              }
+              await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
+            }
+
             if (customcoderesult != undefined) { 
               if (customcoderesult && Object.keys(customcoderesult).length > 0) {
                 for (let item in customcoderesult) {
@@ -181,10 +207,16 @@ export class forDFcheckService {
               } else if (typeof inputparam == 'object')
                 inputparam = Object.assign(inputparam, codeObj)              
             }  
-          
+            if(Object.keys(ifoObj).length>0 && Object.keys(codeObj).length>0){             
+              ifoObj = Object.assign(ifoObj, codeObj)                 
+              await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);            
+            }
+         
             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(inputparam), collectionName, 'response',);
             await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: inputparam, response: inputparam } }),);             
             await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', token, currentFabric, sourceStatus, inputparam, inputparam,);
+            
+            inputparam = { [nodeName]: inputparam }
            
             this.logger.log('HumanTask node completed');
             return { status: 200, targetStatus: targetStatus, data: inputparam };
@@ -272,20 +304,21 @@ export class forDFcheckService {
   
         //Api Node
         if (nodeType == 'apinode' && poNode[j].nodeId == nodeId) {
-           let lock: any;
+          let lock: any,rollbackConfig,apichildResult: any = []
           try {
             this.logger.log(`${poNode[j].nodeName} Api node Started`);
   
             if (!failureQueue) {
               failureQueue = srcQueue;
             }
+            rollbackConfig = ndp[poNode[j].nodeId]
             let customConfig = ndp[poNode[j].nodeId]
             let referenceKey = customConfig?.apiKey;
             let filterParams = customConfig?.data?.pro?.filterParams?.items;
             let requestContentType = customConfig?.data?.pro?.request?.content_type?.value;
             let responseContentType = customConfig?.data?.pro?.response?.content_type?.value;
-            let nodeVersion = customConfig?.nodeVersion;
-  
+            let nodeVersion = customConfig?.nodeVersion;            
+
             if (!referenceKey)
               throw new CustomException('Reference key not found', 404);
   
@@ -358,7 +391,7 @@ export class forDFcheckService {
                   // childInsertArr = mappedData.childInsertArr
                   // tempQryVal = mappedData.tempQryVal
                 } else {
-                  let mappedData = await this.mapEdgeValuesToParams(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName, statickeyword, numberArr, parameter, codeObj, pfo)
+                  let mappedData = await this.mapEdgeValuesToParams(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName, statickeyword, numberArr, parameter, codeObj, pfo,childtable)
                   childInsertArr = mappedData.childInsertArr
                   tempQryVal = mappedData.tempQryVal
                   textobj = mappedData.textobj
@@ -377,7 +410,7 @@ export class forDFcheckService {
               }
   
               await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
-              let apichildResult: any = [];
+              //let apichildResult: any = [];
   
               if (currentFabric == 'DF-DFD') {
                 let apiUrl = serverUrl + endPoint;
@@ -591,11 +624,12 @@ export class forDFcheckService {
                             apichildResult = apiResult;
                           } else if (apiResult && Array.isArray(apiResult) && apiResult.length > 0) {
                             for (let a = 0; a < apiResult.length; a++) {
-                              if (codeObj && Object.keys(codeObj).length > 0)
-                                apiResult[a] = Object.assign(apiResult[a], codeObj);
-  
+
                               if (ifoObj && Object.keys(ifoObj).length > 0)
                                 apiResult[a] = Object.assign(apiResult[a], ifoObj);
+
+                              if (codeObj && Object.keys(codeObj).length > 0)
+                                apiResult[a] = Object.assign(apiResult[a], codeObj);                                
   
                               if (inputparam) {
                                 if (Array.isArray(inputparam) && inputparam.length > 0) {
@@ -659,7 +693,21 @@ export class forDFcheckService {
   
                               apiResult = JSON.parse(DecapiResult);
                             } else {
-                              var apiResult = await this.CommonService.postCall(apiUrl, mapObj, requestConfig);
+                              let obj = {}
+                              if (childtable?.length > 0) {
+                                for (let i = 0; i < childtable.length; i++) {
+                                  if (Array.isArray(mapObj[childtable[i]])) {
+                                    let s = {}
+                                    s['create'] = mapObj[childtable[i]]
+                                    obj[childtable[i]] = s
+                                  } else {
+                                    obj[childtable[i]] = mapObj[childtable[i]]
+                                  }
+                                }
+                              }
+                              if(obj && Object.keys(obj).length>0)
+                              mapObj = Object.assign(mapObj,obj)
+                              var apiResult = await this.CommonService.postCall(apiUrl, mapObj, requestConfig);                              
                             }
                             if (apiResult.statusCode == 201 || apiResult.statusCode == 200) {
                               apiResult = apiResult?.result;
@@ -719,7 +767,7 @@ export class forDFcheckService {
                               Authorization: `Bearer ${token}`,
                             },
                           };
-                           let primaryKey = mapObj["claim_id"] 
+                          //let primaryKey = Object.keys(mapObj)[0]
                           if (mapObj && Object.keys(mapObj).length > 0) {
                             if (referenceKey.includes(':FNK:API-APIPD:')) {
                               mapObj['trs_status'] = sourceStatus;
@@ -731,40 +779,61 @@ export class forDFcheckService {
                             throw 'MappingObject is empty';
                           }
                           let tempEndpoint = endPoint.replace(/{(.*?)}/g, (_, key) => mapObj[key] || '',);
+                          let primaryKey
                           if (tempQryVal?.length > 0) {
                             for (let t = 0; t < tempQryVal.length; t++) {
                               if (mapObj[tempQryVal[t]['key']]) {
+                                primaryKey = mapObj[tempQryVal[t]['key']];
                                 delete mapObj[tempQryVal[t]['key']];
                               }
                             }
                           }
+                          if(!primaryKey) throw 'Primary Key not found'
+                          let split = endPoint.split('/')
+                          let tableName = split[1]
                           
                           try {
-                            if (lockDetails && lockDetails.lockMode == 'single' && lockDetails.ttl) { 
-                              this.logger.log('lock verified')    
-                              const resource = [`locks:${primaryKey}`];
-                              const ttl = lockDetails.ttl
-                              lock = await this.lockservice.acquireLock(resource, ttl);               
-                              this.logger.log(`Lock acquired for ${primaryKey}`);
-                              if (encCredentials?.selectedDpd && encCredentials?.encryptionMethod) {
-                              mapObj = await this.CommonService.commonEncryption(encCredentials.selectedDpd, encCredentials.encryptionMethod, mapObj, 'secretkey',);
-                              var EncryptedRqst: any = mapObj;
-                              var EncapiResult = await this.CommonService.patchCall(serverUrl + tempEndpoint, { data: mapObj }, requestConfig,);
-                              var DecapiResult = await this.CommonService.commondecryption(encCredentials.selectedDpd, encCredentials.encryptionMethod, EncapiResult.result, 'secretkey',);
-                              apiResult = JSON.parse(DecapiResult);
-                              } else {  
-                                var apiResult = await this.CommonService.patchCall(serverUrl + tempEndpoint, mapObj, requestConfig,);
+                            if (lockDetails && (lockDetails.lockMode).toLowerCase() == 'single' && lockDetails.ttl) {
+                              let isProcessing
+                              let obj:any
+                              const resource = [`locks:${tableName}:${primaryKey}`];
+                              const ttl = lockDetails.ttl                              
+                                     
+                              lock = await this.lockservice.acquireLock(resource, ttl);   
+                              // console.log('lock',lock.resources);
+                             
+                              if(await this.redisService.exist(processedKey+'lock',collectionName)){ 
+                                isProcessing = JSON.parse(await this.redisService.getJsonData(processedKey+'lock',collectionName)) 
+                                // console.log('isProcessing',isProcessing);                               
+                                if (isProcessing.tablename == tableName && isProcessing.primarykey == primaryKey && isProcessing.lockflag == true) {                                 
+                                  await this.lockservice.releaseLock(lock); 
+                                  return ('Another update is in progress. Please try again later.'); 
+                                }
+                                else await this.redisService.setJsonData(processedKey+'lock',JSON.stringify(true),collectionName,'lockflag') 
                               }
-                              if (apiResult.statusCode == 201 || apiResult.statusCode == 200) {
-                                apiResult = apiResult?.result;
-                              if(lockDetails && lockDetails.ttl){
-                              await new Promise((resolve) => setTimeout(resolve, 9000));
-                                await this.lockservice.releaseLock(lock);        
-                                this.logger.log(`Lock released for ${lockDetails.primaryKey}`);          
+                              else{ 
+                                obj = { 'tablename':tableName, 'primarykey' : primaryKey, 'lockflag': true } 
+                                await this.redisService.setJsonData(processedKey+'lock',JSON.stringify(obj),collectionName) 
                               }
-                              }
-                              else {
-                                throw apiResult;
+                              try { 
+                              
+                                apiResult = await this.CommonService.patchCall(serverUrl + tempEndpoint, mapObj, requestConfig); 
+                               
+                                if (apiResult.statusCode == 201 || apiResult.statusCode == 200) {
+                                  apiResult = apiResult?.result;
+                                } else { 
+                                  throw apiResult; 
+                                } 
+                               
+                                console.log(`Updated record with ID: ${primaryKey}`); 
+                               
+                                await this.redisService.setJsonData(processedKey+'lock',JSON.stringify(false),collectionName,'lockflag') 
+                                  // release(); 
+                                await this.lockservice.releaseLock(lock);                               
+                                //  return `Record with ID ${primaryKey} successfully updated.`; 
+                              } catch (error) { 
+                                await this.redisService.setJsonData(processedKey+'lock',JSON.stringify(false),collectionName,'lockflag')                                
+                                await this.lockservice.releaseLock(lock);                               
                               }
                             }
                             else{
@@ -786,18 +855,16 @@ export class forDFcheckService {
                               }
                             }
                           } catch (error) {
-                             if(lockDetails){  
-                              console.log(2)       
+                            if(lockDetails){                                      
                               if(lockDetails.ttl && JSON.stringify(error).includes('quorum')){
                                 throw new CustomException('Resource locked by other user', 423);
                               }
                               if(lock){
-                                  await this.lockservice.releaseLock(lock);
-                                  this.logger.log(`Lock released for ${primaryKey}`);
+                                await this.lockservice.releaseLock(lock);
+                                this.logger.log(`Lock released for ${primaryKey}`);
                               }           
                             } 
-                          }
-                          
+                          }                          
                           
   
                           if (typeof apiResult == 'string' || typeof apiResult == 'number' || typeof apiResult == 'boolean') {
@@ -842,6 +909,66 @@ export class forDFcheckService {
                             apichildResult.push(apiResult);
                           }
   
+                        } else {
+                          throw new CustomException('API Endpoint does not exist', 404);
+                        }
+                      }  else if(methodName == 'delete'){
+                         if (apiUrl) {                          
+                          let params = await this.buildRequestComponents(apiUrl, tempQryVal, mapObj);
+                          params.headers['Authorization'] = `Bearer ${token}`;
+                          apiUrl = params?.apiUrl;
+                          const requestConfig: AxiosRequestConfig = {
+                            headers: params.headers,
+                          };
+                          console.log("apiUrl",apiUrl);
+                          
+                          var apiResult = await this.CommonService.deleteCall(apiUrl, requestConfig,);
+                          if (apiResult.statusCode == 201 || apiResult.statusCode == 200) {
+                            apiResult = apiResult?.result;
+                          } else {
+                            throw apiResult;
+                          }
+  
+                          if (typeof apiResult == 'string' || typeof apiResult == 'number' || typeof apiResult == 'boolean') {
+                            apichildResult = apiResult;
+                          } else if (apiResult && Array.isArray(apiResult) && apiResult.length > 0) {
+                            for (let a = 0; a < apiResult.length; a++) {
+
+                              if (ifoObj && Object.keys(ifoObj).length > 0)
+                                apiResult[a] = Object.assign(apiResult[a], ifoObj);
+
+                              if (codeObj && Object.keys(codeObj).length > 0)
+                                apiResult[a] = Object.assign(apiResult[a], codeObj);                                
+  
+                              if (inputparam) {
+                                if (Array.isArray(inputparam) && inputparam.length > 0) {
+                                  for (let i = 0; i < inputparam.length; i++) {
+                                    inputparam[i] = Object.assign(inputparam[i], { [nodeName]: apiResult });
+                                  }
+                                } else if (typeof inputparam == 'object') {
+                                  inputparam = Object.assign(inputparam, { [nodeName]: apiResult[a] });
+                                }
+                              }
+                            }
+                            apichildResult = apiResult;
+                          } else if (apiResult && Object.keys(apiResult).length > 0) {
+                            if (codeObj && Object.keys(codeObj).length > 0)
+                              apiResult = Object.assign(apiResult, codeObj);
+  
+                            if (ifoObj && Object.keys(ifoObj).length > 0)
+                              apiResult = Object.assign(apiResult, ifoObj);
+  
+                            if (inputparam) {
+                              if (Array.isArray(inputparam) && inputparam.length > 0) {
+                                for (let i = 0; i < inputparam.length; i++) {
+                                  inputparam[i] = Object.assign(inputparam[i], { [nodeName]: apiResult });
+                                }
+                              } else if (typeof inputparam == 'object') {
+                                inputparam = Object.assign(inputparam, { [nodeName]: apiResult });
+                              }
+                            }
+                            apichildResult.push(apiResult);
+                          }
                         } else {
                           throw new CustomException('API Endpoint does not exist', 404);
                         }
@@ -1051,6 +1178,15 @@ export class forDFcheckService {
             else 
               return { status: 200, targetStatus: targetStatus, data: apires };
           } catch (error) {
+            // console.log('error',error);            
+            await this.CommonService.checkRollBack(ndp,collectionName,'rollback',{
+              key:processedKey + upId,
+              nodeid:rollbackConfig.nodeId,
+              nodename:rollbackConfig.nodeName,
+              savepoint:rollbackConfig.savePoint,
+              data:apichildResult}
+            ); 
+
             if (failureQueue)
               await this.redisService.setStreamData(failureQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: failureTargetStatus, data: { request: inputparam, response: error } }))
             if (suspiciousQueue)
@@ -1066,7 +1202,7 @@ export class forDFcheckService {
             else
               throw { statusCode: 400, message: error };
           }
-        }     
+        }   
   
         //AutomationNode
           if (nodeType == 'automationnode' && poNode[j].nodeId == nodeId) {
@@ -1448,6 +1584,7 @@ export class forDFcheckService {
                 if (storageType?.toLowerCase() == 'external') {
                   if (!dpdkey) throw new CustomException('DPD key not found', 404);
                   let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+                  if (!extdata) throw new CustomException('DPD value not found', 404);   
                   let nodedata = Object.keys(extdata)[0];
                   let configConnectors = extdata[nodedata].data['externalConnectors-DB']?.items;
                   if (configConnectors?.length > 0) {
@@ -1873,9 +2010,9 @@ export class forDFcheckService {
                   oprname = ndpPro?.operationName.value;
                   oprkey = Object.keys(ndpPro);
                   encryptionFlag = ndpPro?.encryptionFlag;
-                  fileFolderPath = ndpPro?.[oprname]?.pathName;
-                  fileType = ndpPro?.[oprname]?.fileType;
-                  fileName = ndpPro?.[oprname]?.fileName;
+                  // fileFolderPath = ndpPro?.[oprname]?.pathName;
+                  // fileType = ndpPro?.[oprname]?.fileType;
+                  // fileName = ndpPro?.[oprname]?.fileName;
                 }
                 //else if (nodeVersion.toLowerCase() == 'v2') {
   
@@ -1896,12 +2033,46 @@ export class forDFcheckService {
                     }
                   }
                 } else {
-                  url = process.env.FTP_OUTPUT_HOST
+                  url = process.env.SEAWEED_OUTPUT_HOST
                   userName = process.env.SEAWEED_USERNAME
                   password = process.env.SEAWEED_PASSWORD
                 }
-  
-                if (!url || !userName || !password)
+
+                let internalMappingNodes = poJson?.internalMappingNodes;
+                let internalMappedObj = {};
+                for (let n = 0; n < internalMappingNodes.length; n++) {
+                  if (internalMappingNodes[n].nodeId == poNode[j].nodeId && internalMappingNodes[n].ifo?.length > 0) {
+                    for (let f = 0; f < internalMappingNodes[n].ifo.length; f++) {
+                      if (internalMappingNodes[n].ifo[f].value) {
+                        internalMappedObj[internalMappingNodes[n].ifo[f].key] = internalMappingNodes[n].ifo[f].value;
+                      } else {
+                        internalMappedObj[internalMappingNodes[n].ifo[f].key] = '';
+                      }
+                    }
+                  }
+                }
+
+                let ifoObj = {};
+                if (internalMappedObj && Object.keys(internalMappedObj).length > 0) {
+                  for (let item in internalMappedObj) {
+                    ifoObj[item.toLowerCase()] = internalMappedObj[item];
+                  }
+                  await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
+                }
+                
+                let childInsertArr,textobj,tempQryVal = []
+                if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
+                  let currentNodeEdge = internalEdges[poNode[j].nodeId];  
+                  let mappedData = await this.mapEdgeValuesToParams(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName, statickeyword, numberArr, '', '', pfo)
+                    childInsertArr = mappedData.childInsertArr
+                    tempQryVal = mappedData.tempQryVal
+                    textobj = mappedData.textobj
+                }
+
+                console.log('childInsertArr',childInsertArr);
+                if(childInsertArr?.length == 0) throw new CustomException('File Config Mapping was Required', 404);
+                                  
+                if (!url || !userName || !password)                
                   throw 'Invalid File Credentials';
   
                 const seaWeedConfig = {
@@ -1911,26 +2082,31 @@ export class forDFcheckService {
                 };
   
                 if (oprname && oprkey.includes(oprname)) {
-                  if (!fileFolderPath) fileFolderPath = process.env.TENANT;
+                  let fileinfo = childInsertArr[0].fileinfo
+                  if(!fileinfo || Object.keys(fileinfo).length == 0) throw new CustomException('File Config Mapping was Required', 404);
+                  fileFolderPath = fileinfo.pathName
+                  fileName = fileinfo.fileName
+                  fileType = fileinfo.fileType
+                  // if (!fileFolderPath) fileFolderPath = process.env.TENANT;
   
-                  if (!fileName || !fileType || !oprname)
+                  if (!fileName || !oprname) //!fileType ||
                     throw new CustomException('Invalid Credentials', 422);
   
-                  fileType = fileType ? fileType : 'json'
-                  fileName = fileName + format(new Date(), 'yyyy-MM-dd HH:mm:ss:SSS')
+                  // fileType = fileType ? fileType : 'json'
+                  //fileName = fileName + format(new Date(), 'yyyy-MM-dd HH:mm:ss:SSS')
                   let fullPath = fileFolderPath + '/' + fileName + '.' + fileType;
   
                   if (oprname === 'read') {
-                    if (fileFolderPath && fileName + '.' + fileType) {
-                      fileres = await this.setfileKeys(seaWeedConfig, oprname, fileFolderPath, fileName + '.' + fileType);
+                    if (fileFolderPath && fileName ) { //&& fileType
+                      fileres = await this.setfileKeys(seaWeedConfig, oprname, fileFolderPath, fileName , fileType);
                     }
   
-                    if (!fileres || fileres?.status != 201 || (Array.isArray(fileres) && fileres.length == 0) || (typeof fileres == 'object' && Object.keys(fileres).length == 0)) {
+                    if (!fileres || (Array.isArray(fileres) && fileres.length == 0) || (typeof fileres == 'object' && Object.keys(fileres).length == 0)) {
                       throw new CustomException('Data not found', 404);
                     }
                   } else if (oprname === 'write') {
                     if (fileName + '.' + fileType && inputparam?.data) {
-                      fileres = await this.setfileKeys(seaWeedConfig, oprname, fileFolderPath, fileName + '.' + fileType, inputparam.data);
+                      fileres = await this.setfileKeys(seaWeedConfig, oprname, fileFolderPath, fileName , fileType, inputparam.data);
                       if (!fileres || fileres?.status != 201) {
                         throw new CustomException('write operation failed', 500);
                       }
@@ -2164,6 +2340,7 @@ export class forDFcheckService {
   
             if (!dpdkey) throw new CustomException('DPD key not found', 404);
             let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+            if (!extdata) throw new CustomException('DPD value not found', 404);   
             let nodedata = Object.keys(extdata)[0];
             let dpdKeyValue = extdata[nodedata].data;
             if (responseNodeName?.length == 0) throw new CustomException('outputDataNodes not found', 404);
@@ -2312,10 +2489,10 @@ export class forDFcheckService {
               } else if (connectorType == 'file') {
                 let seaWeedConfig, OPFileRes, conncectorname;
                 if (storageType == 'internal') {
-                  if (!process.env.FTP_OUTPUT_HOST || !process.env.SEAWEED_USERNAME || !process.env.SEAWEED_PASSWORD)
+                  if (!process.env.SEAWEED_OUTPUT_HOST || !process.env.SEAWEED_USERNAME || !process.env.SEAWEED_PASSWORD)
                     throw 'Invalid File Credentials';
                   seaWeedConfig = {
-                    url: process.env.FTP_OUTPUT_HOST,
+                    url: process.env.SEAWEED_OUTPUT_HOST,
                     username: process.env.SEAWEED_USERNAME,
                     password: process.env.SEAWEED_PASSWORD,
                   };
@@ -2340,14 +2517,14 @@ export class forDFcheckService {
                 }
                 logReq = inputData;
                 if (fileName + '.' + fileType && inputData) {
-                  OPFileRes = await this.setfileKeys(seaWeedConfig, 'write', folderPath, fileName + '.' + fileType, inputData);
+                  OPFileRes = await this.setfileKeys(seaWeedConfig, 'write', folderPath, fileName , fileType, inputData);
                   if (!OPFileRes || OPFileRes?.status != 201) {
                     throw new CustomException('write operation failed ', 500);
                   }
                 }
               } else if (connectorType == 'stream') {
                 if (storageType == 'internal') {
-                  let redisConfig = dpdKeyValue?.redis;
+                  let redisConfig = dpdKeyValue?.amdPersistence?.redis;
                   if (!redisConfig)
                     throw new CustomException('RedisConfig not found', 422);
                   if (!redisConfig.REDIS_HOST || !parseInt(redisConfig.REDIS_PORT)) {
@@ -2439,6 +2616,9 @@ export class forDFcheckService {
             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(event), collectionName, 'event')                        
             await this.redisService.setStreamData(srcQueue, collectionName + 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: inputparam } }))
             await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', token, currentFabric, sourceStatus, inputparam, { "PID": upId, "TID": nodeId, "EVENT": targetStatus })
+           
+            inputparam = { [nodeName]: inputparam }
+
             this.logger.log('api_inputnode Completed')
             return { status: 200, targetStatus: targetStatus, data: inputparam }
   
@@ -2700,8 +2880,67 @@ export class forDFcheckService {
                   }
                 }
                 this.logger.log('DataSetSchema Node Completed');
-                if (currentFabric == 'DF-DFD')
-                  return { status: 200, targetStatus: targetStatus, data: rootpatharr ? [finalRes] : finalRes };
+                if (currentFabric == 'DF-DFD'){
+                  let datasetSchemaRes  = rootpatharr ? [finalRes] : finalRes
+                  
+                  if (filterData && filterData.length > 0) {
+                    let currentFilterData;
+                    for (let f = 0; f < filterData.length; f++) {
+                      if (filterData[f].nodeId == poNode[j].nodeId) {
+                        delete filterData[f].nodeId;
+                        currentFilterData = filterData[f];
+                      }
+                    }
+                  
+                    let filterpath = {};
+                    for (let item in currentFilterData) {
+                      let s_item = item.split('.');
+                      let removedVal = s_item.filter((item) => !statickeyword.includes(item)).join('.');
+                     
+                      if (removedVal.startsWith('items.')) {
+                        removedVal = removedVal.replace('items.', '');
+                      }
+                      filterpath[removedVal] = currentFilterData[item];
+                    }
+                    let currentFilterRes;
+                  
+                    if (filterpath && Object.keys(filterpath).length > 0) {
+                      if (Array.isArray(datasetSchemaRes) && datasetSchemaRes?.length > 0) {
+                        currentFilterRes = [];
+                        for (let a = 0; a < datasetSchemaRes.length; a++) {
+                          let b = 0;
+                          for (let item in filterpath) {
+                            const expectedValue = filterpath[item];
+                            const result = this.findMatchingValuesFlexible(datasetSchemaRes[a], item, expectedValue,);
+                            if (result.length > 0) {
+                              b++;
+                            }
+                            if (b == Object.keys(filterpath).length)
+                              currentFilterRes.push(datasetSchemaRes[a]);
+                          }
+                        }
+                      } else if (datasetSchemaRes && Object.keys(datasetSchemaRes).length > 0) {
+                        currentFilterRes = {};
+                        let b = 0;
+                        for (let item in filterpath) {
+                          const expectedValue = filterpath[item];
+  
+                          const result = this.findMatchingValuesFlexible(datasetSchemaRes, item, expectedValue,);
+  
+                          if (result.length > 0) {
+                            b++;
+                          }
+                          if (b == Object.keys(filterpath).length)
+                            currentFilterRes = datasetSchemaRes;
+                        }
+                      }
+                      if (currentFilterRes) {
+                        datasetSchemaRes = currentFilterRes;
+                      }
+                    }
+                  }
+                  return { status: 200, targetStatus: targetStatus, data:  datasetSchemaRes};
+                }
                 else
                   return { status: 200, targetStatus: targetStatus, data: inputparam };
               } else {
@@ -2732,7 +2971,7 @@ export class forDFcheckService {
             this.logger.log(`${poNode[j].nodeName} Api output node Started`)
             if (!inputparam) throw new CustomException('Input param not found', 404)
             // let customConfig: any = JSON.parse(await this.redisService.getJsonDataWithPath(key + 'NDP', '.' + poNode[j].nodeId, collectionName))
-           // console.log('inputparam', inputparam);
+         
             
             let customConfig = ndp[poNode[j].nodeId]
             let referenceKey = customConfig?.apiKey
@@ -2758,13 +2997,42 @@ export class forDFcheckService {
               zenresult = RCMresult.rule
               customcoderesult = RCMresult.code
             }
+
+            let internalMappingNodes = poJson?.internalMappingNodes;
+            let internalMappedObj = {};
+            for (let n = 0; n < internalMappingNodes.length; n++) {
+              if (internalMappingNodes[n].nodeId == poNode[j].nodeId && internalMappingNodes[n].ifo?.length > 0) {
+                for (let f = 0; f < internalMappingNodes[n].ifo.length; f++) {
+                  if (internalMappingNodes[n].ifo[f].value) {
+                    internalMappedObj[internalMappingNodes[n].ifo[f].key] = internalMappingNodes[n].ifo[f].value;
+                  } else {
+                    internalMappedObj[internalMappingNodes[n].ifo[f].key] = '';
+                  }
+                }
+              }
+            }
+
+            let ifoObj = {};
+            if (internalMappedObj && Object.keys(internalMappedObj).length > 0) {
+              for (let item in internalMappedObj) {
+                ifoObj[item.toLowerCase()] = internalMappedObj[item];
+              }
+              await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
+              if (Array.isArray(inputparam) && inputparam?.length > 0) {
+                for (let i = 0; i < inputparam.length; i++) {
+                  inputparam[i] = Object.assign(inputparam[i], ifoObj)
+                }
+              } else if (typeof inputparam == 'object') {
+                inputparam = Object.assign(inputparam, ifoObj)
+              }
+            }
+           
+            let codeObj = {}
             if (customcoderesult != undefined) {
-              if (customcoderesult && Object.keys(customcoderesult).length > 0) {
-                let codeObj = {}
+              if (customcoderesult && Object.keys(customcoderesult).length > 0) {                
                 for (let item in customcoderesult) {
                   codeObj[item.toLowerCase()] = customcoderesult[item]
                 }
-
                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(codeObj), collectionName, 'code',);
                
                 if (Array.isArray(inputparam) && inputparam?.length > 0) {
@@ -2776,6 +3044,8 @@ export class forDFcheckService {
                 }
               }              
             }
+            // console.log('inputparam',JSON.stringify(inputparam));
+            
             let statickeyword = ['get', 'post', 'patch', '200', '201', '202', '204', '400','401','403','404', '500','requestBody','*/*','responses','content', 'application/json','text/plain', 'application/jwt', 'application/json; charset=utf-8','schema','properties','allOf', 'oneOf', 'inputschema','outputschema','items'];
             let SourceStatickeyword = ["get", "post", "200", "parameters", "requestBody", "responses", "content", "application/json", "schema", "properties", "allOf", "oneOf", "inputschema", "outputschema"]
             let numberArr: string[] = Array.from({ length: 101 }, (_, i) => (i).toString());
@@ -2869,6 +3139,14 @@ export class forDFcheckService {
             let rootarr = []
             let loopingkey = Object.keys(schema)
             for (let j = 0; j < edgesarr.length; j++) {
+              let srcNodename = null;
+              let sourceNodeId = edgesarr[j].source;
+              for (let c = 0; c < poNode.length; c++) {               
+                if (sourceNodeId == poNode[c].nodeId) {
+                  srcNodename = poNode[c].nodeName;
+                }                
+              }
+              
               let srcHandle = (edgesarr[j].sourceHandle).split('|')
               let keyname = ndp[edgesarr[j].source].apiKey
               if (keyname.endsWith(':DS_Schema')) {
@@ -2877,6 +3155,9 @@ export class forDFcheckService {
               keyname = keyname.split(':')
               let name = (keyname[1] + keyname[5] + keyname[7] + keyname[9] + keyname[11] + keyname[13]).replace(/[-_]/g, '')
               if (srcHandle) {
+                if (srcHandle.includes('ifo') && (Object.keys(codeObj).length>0 || Object.keys(ifoObj).length>0)) {
+                  srcNodename = null;
+                } 
                 dstVariable = srcHandle.includes('HeaderParams') ? srcHandle[2] : srcHandle[srcHandle.length - 1]
                 if (dstVariable.includes('.')) {
                   let src = srcHandle[1].split('.')
@@ -2889,17 +3170,30 @@ export class forDFcheckService {
                     dstVariable = dstVariable.replaceAll('.items.', '[0].')
                   }
                   if (methodName == 'post') {
-                    //dstVariable = dstVariable.toLowerCase()
-                    sourcepath.push(dstVariable)
+                    if (srcHandle.includes('ifo'))
+                      dstVariable = dstVariable.toLowerCase()
+                    if(srcNodename)
+                      sourcepath.push(srcNodename + '.' + dstVariable)
+                    else
+                      sourcepath.push(dstVariable)
                   } else {
+                    if (srcHandle.includes('ifo'))
+                      dstVariable = dstVariable.toLowerCase()
                     sourcepath.push(name + '_' + dstVariable)
                   }
                 }
                 else {
                   if (methodName == 'post') {
-                    //dstVariable = dstVariable.toLowerCase()
-                    sourcepath.push(dstVariable)
+                    if (srcHandle.includes('ifo'))
+                      dstVariable = dstVariable.toLowerCase()
+
+                    if(srcNodename)
+                      sourcepath.push(srcNodename + '.' + dstVariable)
+                    else
+                      sourcepath.push(dstVariable)
                   } else {
+                    if (srcHandle.includes('ifo'))
+                      dstVariable = dstVariable.toLowerCase()
                     sourcepath.push(name + '_' + dstVariable)
                   }
                 }
@@ -2935,7 +3229,11 @@ export class forDFcheckService {
               }
               if (targetarr.length > 0) {
                 edges['sourcepath'] = sourcearr
-                edges['targetpath'] = targetarr
+                edges['targetpath'] = targetarr   
+                // console.log('input',JSON.stringify(inputparam));
+                //console.log('edges',edges);
+                
+                            
                 let rootpath
                 if (methodName == 'get')
                   edges = await this.reorderTargetPaths(edges, orderSchema)
@@ -3033,7 +3331,7 @@ export class forDFcheckService {
             }
             this.logger.log(`Api output node Completed`)
             return { status: returnStscode, targetStatus: targetStatus, data: finalobj || { description: returnDescription } }
-          } catch (error) {
+          } catch (error) {           
             if (failureQueue)
               await this.redisService.setStreamData(failureQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: failureTargetStatus, data: { request: inputparam, response: error } }))
             if (suspiciousQueue)
@@ -3727,132 +4025,347 @@ export class forDFcheckService {
         }  
 
         //xlsx2jsonConverternode
-        if(nodeType == 'xlsx2jsonConverternode' && poNode[j].nodeId == nodeId){
-         try {
-          this.logger.log('xlsx2jsonConverter Node Started')
+        if(nodeType == 'xlsx2jsonconverternode' && poNode[j].nodeId == nodeId){
+          try {
+            this.logger.log('xlsx2jsonconverter Node Started')
 
-           let fileType,customConfig,checkdata,nodeVersion,mapobj   
-           customConfig = ndp[poNode[j].nodeId]     
-           nodeVersion = customConfig?.nodeVersion; 
-          if (!nodeVersion)
-            throw new CustomException('Node version not found', 404);
- 
-          if (nodeVersion.toLowerCase() == 'v1') {
-            fileType = customConfig?.data?.filetype.value
-          }          
-          
-           if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
-              let currentNodeEdge = internalEdges[poNode[j].nodeId];
-              let afp = {};
-              for (let s = 0; s < currentNodeEdge.length; s++) {
-                let connectedid = currentNodeEdge[s].source;
-                for (let h = 0; h < poNode.length; h++) {
-                  if (connectedid == poNode[h].nodeId) {
-                    let conncectedNodename = poNode[h].nodeName;
-                    afp[connectedid] = JSON.parse(await this.redisService.getJsonData(processedKey + upId + ':NPV:' + conncectedNodename + '.PRO', collectionName));
-                  }
-                }
-              }
-              for (let e = 0; e < currentNodeEdge.length; e++) {
-                let srcHandle = currentNodeEdge[e].sourceHandle;
-                let connectedid = currentNodeEdge[e].source;
-                if (srcHandle) {
-                  let srcSplit = srcHandle.split('|');
-                  let srcVal = srcSplit.includes('HeaderParams') ? srcSplit[1] : srcSplit[srcSplit.length - 1];
-                  let sourceFilteredVal
-                  if (srcVal.includes('.')) {
-                    let staticRemove = srcVal.split('.');
-                    sourceFilteredVal = staticRemove.filter((item) => !statickeyword.includes(item)).join('.');
-                    if (sourceFilteredVal.includes('.') && sourceFilteredVal.startsWith('parameters.')) {
-                      let apiKey = ndp[connectedid].apiKey;
-                      let apidata = JSON.parse(await this.redisService.getJsonData(apiKey, collectionName));
-                      let apinodeid = Object.keys(apidata)[0];
-                      let method = apidata[apinodeid].data?.method;
-                      let parameter = apidata[apinodeid].data[method.toLowerCase()];                        
-                    
-                      sourceFilteredVal = _.get(parameter, sourceFilteredVal);
-                    }
-                  } else {
-                    sourceFilteredVal = srcVal;
-                  }
-                  for (var h = 0; h < poNode.length; h++) {
-                    if (connectedid == poNode[h].nodeId) {
-                      var conncectedNodename = poNode[h].nodeName;
-                      var conncectedNodeType = poNode[h].nodeType;
-                    }
-                  }
+            let fileType, customConfig, nodeVersion, childInsertArr = [],zenresult,customcoderesult,codeObj = {}
+            customConfig = ndp[poNode[j].nodeId]
+            nodeVersion = customConfig?.nodeVersion;
+            if (!nodeVersion)
+              throw new CustomException('Node version not found', 404);
 
-                  if (srcVal.includes('requestBody') || conncectedNodeType == 'humantasknode' || srcVal.includes('parameters')) {
-                    inputCollection = afp[connectedid]['request'];
-                    let codedata = afp[connectedid]['code'];
-                    if (codedata && Object.keys(codedata).length > 0) {
-                      inputCollection = Object.assign(inputCollection, codedata);
-                    }
-                  } else if (srcVal.includes('responses') || conncectedNodeType == 'xml2jsonnode') {
-                    inputCollection = afp[connectedid]['response'];
-                    let codedata = afp[connectedid]['code'];
-                    if (inputCollection && Array.isArray(inputCollection) && inputCollection.length > 0) {
-                      inputCollection = inputCollection[0];
-                    }
-                    if (codedata && Object.keys(codedata).length > 0) {
-                      inputCollection = Object.assign(inputCollection, codedata);
-                    }
-                  } else {
-                    inputCollection = afp[connectedid]['ifo'];
-                    let codedata = afp[connectedid]['code'];
-                    if (codedata && Object.keys(codedata).length > 0) {
-                      inputCollection = Object.assign(inputCollection, codedata);
-                    }
-                  }
-                  checkdata = _.get(inputCollection, sourceFilteredVal)
-                }
-              }
+            if (nodeVersion.toLowerCase() == 'v1') {
+              fileType = customConfig?.data?.filetype?.value
             }
-         
-          let jsonData:any        
-          await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(checkdata),collectionName, 'request')
 
-          if (fileType === 'csv') {
-             jsonData = await this.parseCsv(checkdata);
-            }else if (fileType === 'xlsx' || fileType === 'ods') {
-              jsonData = await this.parseXlsx(checkdata);
-           }
-          if (Array.isArray(inputparam) && inputparam?.length > 0) {
+            if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
+              let currentNodeEdge = internalEdges[poNode[j].nodeId];             
+              let srcIdArr = []     
+              let mapObj,tempQryVal, targetVal,staticRemove,textobj    
+              
+              for (let s = 0; s < currentNodeEdge.length; s++) {
+                let source = currentNodeEdge[s].source
+                let sourceHandle = currentNodeEdge[s].sourceHandle
+                sourceHandle = (sourceHandle.split('|')).find(item => item.startsWith('responses.') || item.startsWith('requestBody.') || item == 'ifo');
+          
+                if (!sourceHandle || sourceHandle.startsWith('responses.')) {
+                  sourceHandle = 'responses'
+                } else if (sourceHandle.startsWith('requestBody.')) {
+                  sourceHandle = 'requestBody'
+                } else if (sourceHandle == 'ifo') {
+                  sourceHandle = 'ifo'
+                }
+                let existing = srcIdArr.find(item => item.source === source);
+          
+                if (existing) {
+                  existing.sourceHandle.push(sourceHandle);
+                } else {
+                  srcIdArr.push({
+                    source: source,
+                    sourceHandle: [sourceHandle]
+                  });
+                }
+              } 
+              let nodesArr = []
+              let filteredIds = [];
+            
+              for (let s = 0; s < srcIdArr.length; s++) {
+                let connectedid = srcIdArr[s].source  
+                let connectedHandle = srcIdArr[s].sourceHandle
+                
+                for (var h = 0; h < pfo.length; h++) {                              
+                  if (connectedid == pfo[h].nodeId) {          
+                    let tempArr = []
+                    var conncectedNodename = pfo[h].nodeName
+                    var conncectedNodeType = pfo[h].nodeType
+                    let innerpathVal
+                    
+                    let afpValue =  JSON.parse(await this.redisService.getJsonData(processedKey + upId + ':NPV:' + conncectedNodename + '.PRO', collectionName))  
+                                
+          
+                    if(connectedHandle.includes('requestBody')){
+                      innerpathVal = afpValue.request
+                      if(conncectedNodeType == 'api_inputnode'){
+                        innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
+                      }
+                      tempArr = await this.combineData(innerpathVal,tempArr)
+                    }    
+                    if(connectedHandle.includes('responses')){
+                      innerpathVal = afpValue.response                      
+                      if(conncectedNodeType == 'api_inputnode'){
+                        innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
+                      }
+                      if(poNode[j].nodeType == 'xlsx2jsonconverternode'){
+                        await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(innerpathVal), collectionName, 'request')
+           
+                        if (fileType === 'csv') {
+                          innerpathVal = await this.parseCsv(innerpathVal);
+                        } else if (fileType === 'xlsx' || fileType === 'ods') {                       
+                          let res = await this.parseXlsx(innerpathVal);
+                          let LowerArr = []
+                          for(let i = 0; i < res.length; i++){                            
+                            LowerArr.push( await this.keysToLowerCaseOnly(res[i]))
+                          }
+                          innerpathVal = LowerArr
+                        }else{
+                          throw new CustomException('File type not supported', 404);
+                        }           
+                        // console.log('innerpathVal',innerpathVal);
+                      }
+                      
+                      tempArr = await this.combineData(innerpathVal,tempArr)
+                    }
+                    if(connectedHandle.includes('ifo')){
+                      innerpathVal = afpValue.ifo
+                      if(conncectedNodeType == 'api_inputnode'){
+                        innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
+                      }
+                      tempArr = await this.combineData(innerpathVal,tempArr)
+                      
+                      innerpathVal = afpValue.code
+                      if(conncectedNodeType == 'api_inputnode'){
+                        innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
+                      }
+                      tempArr = await this.combineData(innerpathVal,tempArr)
+                    }
+                    // if(codeObj){
+                    //   innerpathVal = codeObj
+                    //   if(conncectedNodeType == 'api_inputnode'){
+                    //     innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
+                    //   }
+                    //   tempArr = await this.combineData(innerpathVal,tempArr)
+                    // }
+                          
+                    if(tempArr.length>0){
+                      nodesArr.push(tempArr)
+                      filteredIds.push(connectedid)          
+                    }
+                  }
+                }
+              }      
+              srcIdArr = filteredIds;   
+              let mergedRecords = await this.getCombinations(srcIdArr,nodesArr)
+              for(let m =0;m< mergedRecords.length;m++){
+                mapObj = {};
+                tempQryVal = [];
+                let inputCollection = mergedRecords[m]                        
+                for(let e = 0; e < currentNodeEdge.length; e++) {          
+                    let schemaRes = {};
+                    let b = 0;
+                    let sourceFilteredVal,targetFilteredVal
+                    let srcHandle = currentNodeEdge[e].sourceHandle;
+                    let targetHandle = currentNodeEdge[e].targetHandle;    
+                    let connectedid = currentNodeEdge[e].source;      
+                    if(srcIdArr.includes(connectedid)){              
+                      if (srcHandle) {
+                        let srcSplit = srcHandle.split('|');
+                        let srcVal = srcSplit.includes('HeaderParams') ? srcSplit[1] : srcSplit[srcSplit.length - 1];
+                        if (srcVal.includes('.') && !srcVal.includes('text/plain') && !srcVal.includes('*/*')) {
+                          let src = srcSplit[1].split('.');
+                          if (src[src.length - 1] == 'schema') {
+                            b++;
+                          }
+                        }
+                        if (srcVal.includes('.')) {
+                          let staticRemove = srcVal.split('.');
+                          sourceFilteredVal = staticRemove.filter((item) => !statickeyword.includes(item));
+                          if (sourceFilteredVal?.length > 0) {
+                            sourceFilteredVal = sourceFilteredVal.join('.');
+                            // if (sourceFilteredVal.includes('.') && sourceFilteredVal.startsWith('parameters.')) {
+                            //   sourceFilteredVal = _.get(parameter, sourceFilteredVal);
+                            // }
+                            if (sourceFilteredVal.startsWith('items.')) {
+                              sourceFilteredVal = sourceFilteredVal.replace('items.', '',);
+                            }
+                            sourceFilteredVal = sourceFilteredVal.toLowerCase();
+                            
+                            // if (sourceFilteredVal.includes('.items.')) {
+                            //   let spilt = sourceFilteredVal.split('.items.');
+                            //   var getdata = _.get(inputparam, spilt[0]);
+                            // }
+                            // if (getdata?.length > 0) {
+                            //   for (let a = 0; a < getdata.length; a++) {
+                            //     sourceFilteredVal = sourceFilteredVal.replace('.items.', '[' + a + ']',);
+                            //   }
+                            // }
+                            
+                            if (sourceFilteredVal.includes('.items.')) {
+                              sourceFilteredVal = sourceFilteredVal.replace('.items.', '[0]',);
+                            }
+                            
+                            if (sourceFilteredVal && sourceFilteredVal.includes('.')) {
+                              let dst = sourceFilteredVal.split('.')
+                              sourceFilteredVal = (dst.filter(item => !numberArr.includes(item))).join('.');
+                            }
+                            sourceFilteredVal = sourceFilteredVal.trim();
+                            sourceFilteredVal = connectedid + '.'+ sourceFilteredVal
+                          }              
+                        } else {
+                          sourceFilteredVal = srcVal.toLowerCase();
+                          sourceFilteredVal = srcVal.trim();                
+                          sourceFilteredVal = connectedid + '.'+ sourceFilteredVal
+                        }    
+                      
+                        // if (typeof inputCollection == 'object' && Object.keys(inputCollection).length > 0) {        
+                          
+                          if (targetHandle) {
+                            let targetSplit = targetHandle.split('|');
+                            targetVal = targetSplit.includes('HeaderParams') ? targetSplit[1] : targetSplit[targetSplit.length - 1];
+                            if (targetVal.includes('.')) {
+                              staticRemove = targetVal.split('.');
+                              targetFilteredVal = staticRemove.filter((item) => !statickeyword.includes(item));
+                              if (targetFilteredVal && targetFilteredVal.length > 0) {
+                                let tempobj = {};
+                                targetFilteredVal = targetFilteredVal.join('.');
+                                // if (targetFilteredVal.includes('.') && targetFilteredVal.startsWith('parameters.')) {
+                                //   var parameterPathValue = _.get(parameter, targetFilteredVal.replace('.name', '.in'));
+                                //   tempobj['key'] = _.get(parameter, targetFilteredVal);
+                                //   tempobj['type'] = parameterPathValue;
+                                //   targetFilteredVal = _.get(parameter, targetFilteredVal,);
+                                //   tempQryVal.push(tempobj);
+                                // }
+                                targetFilteredVal = targetFilteredVal.split('.');
+                                targetFilteredVal = targetFilteredVal.filter((item) => !numberArr.includes(item));
+                                targetFilteredVal = targetFilteredVal.join('.');
+              
+                                if (targetFilteredVal.includes('.items.')) {
+                                  targetFilteredVal = targetFilteredVal.replace('.items.', '[0]',);
+                                }
+                                if (targetFilteredVal.startsWith('items.')) {
+                                  targetFilteredVal = targetFilteredVal.replace('items.', '',);
+                                }
+              
+                                if (mapObj) {
+                                  var setdata = _.get(mapObj, targetFilteredVal);
+                                  if (setdata?.length) {
+                                    targetFilteredVal = targetFilteredVal.replace('[0]', '[' + setdata.length + ']');
+                                  }
+                                }    
+                                
+                                if (sourceFilteredVal && sourceFilteredVal.length > 0) {  
+                                  sourceFilteredVal = sourceFilteredVal.toLowerCase();
+                                sourceFilteredVal = sourceFilteredVal.trim();
+                              //  console.log("sourceFilteredVal",sourceFilteredVal);
+                              //  console.log("targetFilteredVal",targetFilteredVal);
+            
+                                  _.set(mapObj, targetFilteredVal, _.get(inputCollection, sourceFilteredVal));                      
+                                } else if (b == 0) {
+                                  // let testdata: any = inputCollection;                                        
+                                  let testdata = _.get(inputCollection, connectedid+'.schema')                        
+                                  testdata = testdata.replace(/\\n/g, '\n');
+                                  mapObj[targetFilteredVal] = testdata;
+                                }
+                              } else if (sourceFilteredVal && sourceFilteredVal.length > 0) {
+                                sourceFilteredVal = sourceFilteredVal.toLowerCase();
+                                sourceFilteredVal = sourceFilteredVal.trim();
+                                textobj = _.get(inputCollection, sourceFilteredVal);
+                              }
+                            } else {
+                                sourceFilteredVal = sourceFilteredVal.toLowerCase();
+                                sourceFilteredVal = sourceFilteredVal.trim();              
+                                _.set(mapObj, targetVal, _.get(inputCollection, sourceFilteredVal));                  
+                            }
+                            if (b > 0) {
+                              let obj = {};
+                              if (pfo?.length > 0) {
+                                for (let p = 0; p < pfo.length; p++) {
+                                  if (pfo[p].nodeId == connectedid) {
+                                    let schema = pfo[p]?.schema?.['requestBody']['content']['application/json']['schema'];
+                                    var res = await this.generateMockData(schema);
+                                    let keys = Object.keys(res);
+                                    for (let item of keys) {
+                                      if(Array.isArray(inputparam) && inputparam?.length>0){
+                                        let tempobj
+                                        for(let r=0;r< inputparam.length;r++){
+                                          tempobj = {}
+                                          _.set(tempobj, item, _.get(inputparam[r], item));
+                                          obj = Object.assign(obj, tempobj);
+                                        }
+                                      }else if(typeof inputparam == 'object'){
+                                        _.set(obj, item, _.get(inputparam, item));
+                                      }
+                                    }
+                                  }
+                                }
+                                schemaRes[targetFilteredVal] = obj;
+                              }
+                              if (schemaRes && Object.keys(schemaRes).length > 0) {
+                                mapObj = Object.assign(mapObj, schemaRes);
+                              }
+                            }
+                          }          
+                        // }
+                      }    
+                    }
+                }  
+                
+                if(Object.keys(mapObj).length > 0){
+                  childInsertArr.push(mapObj);    
+                }        
+              } 
+             // return {childInsertArr,tempQryVal,textobj}   
+            }
+            console.log('childInsertArr',childInsertArr);
+
+            if(childInsertArr?.length == 0) throw new CustomException(`Mapping was required in ${poNode[j].nodeName}`,404)
+              
+            
+           // let jsonData: any
+            // await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(inputparam), collectionName, 'request')
+           
+           
+            if (Array.isArray(inputparam) && inputparam?.length > 0) {
               for (let i = 0; i < inputparam.length; i++) {
-                inputparam[i] = Object.assign(inputparam[i], { [nodeName]: {xlsx2jsondata:jsonData} })
+                inputparam[i] = Object.assign(inputparam[i], { [nodeName]: childInsertArr })//{ xlsx2jsondata: childInsertArr }
               }
             } else if (typeof inputparam == 'object') {
-              inputparam = Object.assign(inputparam, { [nodeName]: {xlsx2jsondata:jsonData} })
+              inputparam = Object.assign(inputparam, { [nodeName]: childInsertArr })//{ xlsx2jsondata: childInsertArr }
             }
-        await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify({xlsx2jsondata:jsonData}),collectionName, 'response')
-        await this.CommonService.getTPL(processedKey, upId,  poNode[j], 'Success', token, currentFabric, sourceStatus, inputparam, inputparam)    
-        await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus ,data:{request:inputparam,response:{xlsx2jsondata:jsonData}}}))
-             
-        this.logger.log('xlparsernode node completed')
-        return { status: 200, targetStatus: targetStatus, data: inputparam }
-       
-         }catch (error) {
-        if(failureQueue)        
-          await this.redisService.setStreamData(failureQueue,'TASK - ' + upId,JSON.stringify({ PID: upId,TID: nodeId,EVENT: failureTargetStatus,data:{request:inputparam,response:error}}))
-          if(suspiciousQueue)
-          await this.redisService.setStreamData(suspiciousQueue,'TASK - ' + upId,JSON.stringify({ PID: upId,TID: nodeId,EVENT: failureTargetStatus,data:{request:inputparam,response:error}}))
-          if(errorQueue)
-          await this.redisService.setStreamData(errorQueue,'TASK - ' + upId,JSON.stringify({ PID: upId,TID: nodeId,EVENT: failureTargetStatus,data:{request:inputparam,response:error}}))
-          if (error?.response?.data)
-            throw { statusCode: error.status, message: error.response.data }
-          else if (error?.response && error?.status)
-            throw { statusCode: error.status, message: error.response };
-          else if (error?.message)
-            throw { statusCode: 404, message: error.message };
-          else
-            throw { statusCode: 400, message: error};
-      }
+            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(childInsertArr), collectionName, 'response')
+            let RCMresult: any = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+            if (RCMresult) {
+              zenresult = RCMresult.rule;
+              customcoderesult = RCMresult.code;
+            }
+            if (customcoderesult != undefined) {
+              if (customcoderesult && Object.keys(customcoderesult).length > 0) {
+                for (let item in customcoderesult) {
+                  codeObj[item.toLowerCase()] = customcoderesult[item];
+                }
+              }
+              await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(codeObj), collectionName, 'code',);
+            }
+            await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', token, currentFabric, sourceStatus, inputparam, childInsertArr)
+            await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: childInsertArr } }))
+
+            this.logger.log('xlparsernode node completed')
+            return { status: 200, targetStatus: targetStatus, data: inputparam }
+
+          } catch (error) {
+            console.log('Error', error);
+            
+            if (failureQueue)
+              await this.redisService.setStreamData(failureQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: failureTargetStatus, data: { request: inputparam, response: error } }))
+            if (suspiciousQueue)
+              await this.redisService.setStreamData(suspiciousQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: failureTargetStatus, data: { request: inputparam, response: error } }))
+            if (errorQueue)
+              await this.redisService.setStreamData(errorQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: failureTargetStatus, data: { request: inputparam, response: error } }))
+            if (error?.response?.data)
+              throw { statusCode: error.status, message: error.response.data }
+            else if (error?.response && error?.status)
+              throw { statusCode: error.status, message: error.response };
+            else if (error?.message)
+              throw { statusCode: 404, message: error.message };
+            else
+              throw { statusCode: 400, message: error };
+          }
         }
 
         //Procedure Execution node
-          if (nodeType == 'procedureexecutionnode' && poNode[j].nodeId == nodeId) {
+         if (nodeType == 'procedureexecutionnode' && poNode[j].nodeId == nodeId) {
           try {
-            this.logger.log('procedureExecution Node Started')
+            this.logger.log(`${poNode[j].nodeName} procedureexecutionnode Started`)
             let mapobj,status,params,customConfig,procedurequery,nodeVersion,dbType,connectorType,storageType,dpdkey,conncectorName,dbConfig,executecommand,inMemory
              customConfig = ndp[poNode[j].nodeId]           
              nodeVersion = customConfig.nodeVersion
@@ -3904,81 +4417,89 @@ export class forDFcheckService {
                    dbUrl = process.env.DATABASE_URL;
                 }
 
-
+            let childInsertArr
             if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
               let currentNodeEdge = internalEdges[poNode[j].nodeId];
-              let mappedData = await this.DFDMapEdgeValues(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName, statickeyword, numberArr, '', '', pfo,currentFabric)
-              mapobj = mappedData.mapObj
+              // let mappedData = await this.DFDMapEdgeValues(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName, statickeyword, numberArr, '', '', pfo,currentFabric)
+               let mappedData = await this.mapEdgeValuesToParams(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName, statickeyword, numberArr, '', '', pfo)
+               childInsertArr = mappedData.childInsertArr
+             
             }
+              //console.log('childInsertArr',childInsertArr);
                           
-              // if(dbType == 'postgres'){
+              if(childInsertArr?.length>0){
+                for(let i=0;i< childInsertArr.length;i++){
+                  mapobj = childInsertArr[i]                  
                 
-              // }           
-                   
-
-             if(params?.length>0){
-              for(let a=0;a< params.length;a++){
-                let key = params[a]?.key?.value
-                let value = params[a]?.value?.value
-                if(value?.includes("session.")){
-                  value = sobj[value] // typeof upId === 'string' ? `'${upId}'` : upId
+                  if(params?.length>0){
+                  for(let a=0;a< params.length;a++){
+                    let key = params[a]?.key?.value
+                    let value = params[a]?.value?.value
+                    if(value?.includes("session.")){
+                      value = sobj[value] // typeof upId === 'string' ? `'${upId}'` : upId
+                    }
+                    if(key && value)  
+                    mapobj[key] = value
+                  }
+                  }  
+                  
+                  if(mapobj && Object.keys(mapobj).length>0){
+                    Object.keys(mapobj).forEach(key => {
+                      const regex = new RegExp(`\\$\\$${key}`, 'g');
+                      const value = typeof mapobj[key] === 'string' ? `'${mapobj[key]}'` : mapobj[key];
+                      executecommand = executecommand.replace(regex, value);
+                    });
+                  }else{
+                    throw new CustomException('params was required in '+ nodeName, 400)
+                  }
+        
+                  if(dbType == 'postgres'){
+                    const { Client } = pg;
+                  const client = new Client({
+                    connectionString: dbUrl,
+                  });
+        
+                  await client.connect(); 
+                  await client.query(procedurequery)
+                  const result = await client.query(`${executecommand}`);
+                 
+                  await client.end();
+                    if ((result.rows)?.length>0) {
+                      status = result.rows[0]//"FileName_Validated"
+                    } else if (result) {
+                      status = 'Success'
+                    } else {
+                      status = result
+                    }   
+                  }else if(dbType == 'mysql'){
+                    const mysql = require('mysql2/promise');
+                      const connection = await mysql.createConnection({
+                      connectionString: dbUrl,
+                    });
+                      await connection.connect()
+                      const result = await connection.query(`${executecommand}`);
+                      await connection.end();
+                      if(result){
+                        status = 'Success'
+                      } else{
+                        status = result
+                      }                
+                  }else if(dbType == 'oracle'){
+                      const oracledb = require('oracledb');
+                      const connection = await oracledb.createConnection({
+                      connectionString: dbUrl,
+                      });  
+                      await connection.connect() 
+                      const result = await connection.query(`${executecommand}`);
+                      await connection.close();
+                      if(result){
+                        status = 'Success'
+                      } else{
+                        status = result
+                      } 
+                  }
                 }
-                if(key && value)  
-                mapobj[key] = value
-              }
-             }  
-              
-              if(mapobj && Object.keys(mapobj).length>0){
-                Object.keys(mapobj).forEach(key => {
-                  const regex = new RegExp(`\\$\\$${key}`, 'g');
-                  const value = typeof mapobj[key] === 'string' ? `'${mapobj[key]}'` : mapobj[key];
-                  executecommand = executecommand.replace(regex, value);
-                });
-              }else{
-                throw new CustomException('params was required in '+ nodeName, 400)
-              }
-              if(dbType == 'postgres'){
-                const { Client } = pg;
-              const client = new Client({
-                connectionString: dbUrl,
-              });
-
-              await client.connect(); 
-              await client.query(procedurequery)
-              const result = await client.query(`${executecommand}`);
-              await client.end();
-                  if(result){
-                    status = 'Success'
-                  } else{
-                    status = result
-                  }   
-              }else if(dbType == 'mysql'){
-                const mysql = require('mysql2/promise');
-                 const connection = await mysql.createConnection({
-                 connectionString: dbUrl,
-                });
-                  await connection.connect()
-                 const result = await connection.query(`${executecommand}`);
-                  await connection.end();
-                  if(result){
-                    status = 'Success'
-                  } else{
-                    status = result
-                  }                
-              }else if(dbType == 'oracle'){
-                 const oracledb = require('oracledb');
-                  const connection = await oracledb.createConnection({
-                  connectionString: dbUrl,
-                  });  
-                 await connection.connect() 
-                 const result = await connection.query(`${executecommand}`);
-                  await connection.close();
-                  if(result){
-                    status = 'Success'
-                  } else{
-                    status = result
-                  } 
-              }
+              }           
                            
             if (Array.isArray(inputparam) && inputparam?.length > 0) {
               for (let i = 0; i < inputparam.length; i++) {
@@ -3987,6 +4508,7 @@ export class forDFcheckService {
             } else if (typeof inputparam == 'object') {
               inputparam = Object.assign(inputparam, { [nodeName]: status })
             }            
+           
             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(status), collectionName, 'response')
             await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', token, currentFabric, sourceStatus, inputparam, inputparam)
             await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: status } }))
@@ -4009,7 +4531,7 @@ export class forDFcheckService {
             else
               throw { statusCode: 400, message: error };
           }
-        }    
+        } 
       }
     }
   
@@ -4026,28 +4548,34 @@ export class forDFcheckService {
     return result.data;
   }
 
-  async parseXlsx(xlsxString: any): Promise<any[]> {
-    //const buffer = Buffer.from(xlsxString, 'binary'); // or 'base64' if needed
-    //const workbook = XLSX.read(buffer, { type: 'buffer' });
-    const data = new Uint8Array(xlsxString);
-    const workbook = XLSX.read(data, { type: 'array' });       
+  async parseXlsx(xlsxString: any): Promise<any[]> {  
+    const buffer = Buffer.from(xlsxString, 'binary');
+    const workbook = XLSX.read(buffer, { type: 'buffer' });       
     const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];          
-    //let result = XLSX.utils.sheet_to_json(worksheet)
+    const worksheet = workbook.Sheets[sheetName];  
     return XLSX.utils.sheet_to_json(worksheet);
   }
 
-    async setfileKeys(config: any, operationName: string, folderPath: string, fileName: string, insertData?: any) {
+    async setfileKeys(config: any, operationName: string, folderPath: string, fileName: string,fileType?: string, insertData?: any) {
       try {
-        let fileUrl
-        if (folderPath) fileUrl = `${config.url}/${folderPath}/${fileName}`;
-        else fileUrl = `${config.url}/${fileName}`;
+        let fileUrl,existing
+        if(fileType){
+          if (folderPath) fileUrl = `${config.url}/${folderPath}/${fileName}.${fileType}`;
+          else fileUrl = `${config.url}/${fileName}.${fileType}`;
+        }else{
+          if (folderPath) fileUrl = `${config.url}/${folderPath}/${fileName}`;
+          else fileUrl = `${config.url}/${fileName}`;
+          fileType = fileName.split('.').pop();
+        }
         let auth = {
           username: config.username,
           password: config.password
         }
         if (operationName == 'read') {
-          const existing = await axios.get(fileUrl, { auth });
+          if(fileType == 'xlsx'){
+           existing = await axios.get<ArrayBuffer>(fileUrl, { auth,responseType:'arraybuffer' });
+          }else
+           existing = await axios.get(fileUrl, { auth });
           if (existing?.data) return existing?.data
         } else if (operationName == 'write' && insertData) {
   
@@ -4073,6 +4601,7 @@ export class forDFcheckService {
   
   
       } catch (error) {
+        console.log(error);        
         throw error
       }
     }
@@ -5013,253 +5542,314 @@ export class forDFcheckService {
       return {mapObj,tempQryVal}
     }
   
-    async mapEdgeValuesToParams( poNode: any[],currentNodeEdge: any, inputparam: any, processedKey: string, upId: string, collectionName: string,statickeyword: string[], numberArr: any, parameter: any, codeObj: any, pfo: any): Promise<any> {     
-      let childInsertArr = []
-      let srcIdArr = []     
-      let mapObj,tempQryVal, targetVal,staticRemove,textobj    
-      
-      for (let s = 0; s < currentNodeEdge.length; s++) {
-        let source = currentNodeEdge[s].source
-        let sourceHandle = currentNodeEdge[s].sourceHandle
-        sourceHandle = (sourceHandle.split('|')).find(item => item.startsWith('responses.') || item.startsWith('requestBody.') || item == 'ifo');
-  
-        if (!sourceHandle || sourceHandle.startsWith('responses.')) {
-          sourceHandle = 'responses'
-        } else if (sourceHandle.startsWith('requestBody.')) {
-          sourceHandle = 'requestBody'
-        } else if (sourceHandle == 'ifo') {
-          sourceHandle = 'ifo'
-        }
-        let existing = srcIdArr.find(item => item.source === source);
-  
-        if (existing) {
-          existing.sourceHandle.push(sourceHandle);
-        } else {
-          srcIdArr.push({
-            source: source,
-            sourceHandle: [sourceHandle]
-          });
-        }
-      } 
-      let nodesArr = []
-      let filteredIds = [];
-      for (let s = 0; s < srcIdArr.length; s++) {
-        let connectedid = srcIdArr[s].source  
-        let connectedHandle = srcIdArr[s].sourceHandle
+      async mapEdgeValuesToParams( poNode: any[],currentNodeEdge: any, inputparam: any, processedKey: string, upId: string, collectionName: string,statickeyword: string[], numberArr: any, parameter: any, codeObj: any, pfo: any,childtable?): Promise<any> {     
+      try {
+        let childInsertArr = []
+        let srcIdArr = []     
+        let mapObj,tempQryVal, targetVal,staticRemove,textobj    
         
-        for (var h = 0; h < pfo.length; h++) {                              
-          if (connectedid == pfo[h].nodeId) {          
-            let tempArr = []
-            var conncectedNodename = pfo[h].nodeName
-            var conncectedNodeType = pfo[h].nodeType
-            let innerpathVal
-            
-            let afpValue =  JSON.parse(await this.redisService.getJsonData(processedKey + upId + ':NPV:' + conncectedNodename + '.PRO', collectionName))  
-                        
-  
-            if(connectedHandle.includes('requestBody')){
-              innerpathVal = afpValue.request
-              if(conncectedNodeType == 'api_inputnode'){
-                innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
-              }
-              tempArr = await this.combineData(innerpathVal,tempArr)
-            }    
-            if(connectedHandle.includes('responses')){
-              innerpathVal = afpValue.response
-              if(conncectedNodeType == 'api_inputnode'){
-                innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
-              }
-              tempArr = await this.combineData(innerpathVal,tempArr)
-            }
-            if(connectedHandle.includes('ifo')){
-              innerpathVal = afpValue.ifo
-              if(conncectedNodeType == 'api_inputnode'){
-                innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
-              }
-              tempArr = await this.combineData(innerpathVal,tempArr)
+        for (let s = 0; s < currentNodeEdge.length; s++) {
+          let source = currentNodeEdge[s].source
+          let sourceHandle = currentNodeEdge[s].sourceHandle
+          sourceHandle = (sourceHandle.split('|')).find(item => item.startsWith('responses.') || item.startsWith('requestBody.') || item == 'ifo');
+    
+          if (!sourceHandle || sourceHandle.startsWith('responses.')) {
+            sourceHandle = 'responses'
+          } else if (sourceHandle.startsWith('requestBody.')) {
+            sourceHandle = 'requestBody'
+          } else if (sourceHandle == 'ifo') {
+            sourceHandle = 'ifo'
+          }
+          let existing = srcIdArr.find(item => item.source === source);
+    
+          if (existing) {
+            existing.sourceHandle.push(sourceHandle);
+          } else {
+            srcIdArr.push({
+              source: source,
+              sourceHandle: [sourceHandle]
+            });
+          }
+        } 
+        let nodesArr = []
+        let filteredIds = [];
+        for (let s = 0; s < srcIdArr.length; s++) {
+          let connectedid = srcIdArr[s].source  
+          let connectedHandle = srcIdArr[s].sourceHandle
+          
+          for (var h = 0; h < pfo.length; h++) {                              
+            if (connectedid == pfo[h].nodeId) {          
+              let tempArr = []
+              var conncectedNodename = pfo[h].nodeName
+              var conncectedNodeType = pfo[h].nodeType
+              let innerpathVal
               
-              innerpathVal = afpValue.code
-              if(conncectedNodeType == 'api_inputnode'){
-                innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
+              let afpValue =  JSON.parse(await this.redisService.getJsonData(processedKey + upId + ':NPV:' + conncectedNodename + '.PRO', collectionName))  
+                          
+    
+              if(connectedHandle.includes('requestBody')){
+                innerpathVal = afpValue.request
+                if(conncectedNodeType == 'api_inputnode'){
+                  innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
+                }
+                tempArr = await this.combineData(innerpathVal,tempArr)
+              }    
+              if(connectedHandle.includes('responses')){
+                innerpathVal = afpValue.response
+                if(conncectedNodeType == 'api_inputnode'){
+                  innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
+                }
+                tempArr = await this.combineData(innerpathVal,tempArr)              
               }
-              tempArr = await this.combineData(innerpathVal,tempArr)
-            }
-            if(codeObj){
-              innerpathVal = codeObj
-              if(conncectedNodeType == 'api_inputnode'){
-                innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
+              if(connectedHandle.includes('ifo')){
+                innerpathVal = afpValue.ifo
+                if(conncectedNodeType == 'api_inputnode'){
+                  innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
+                }
+                tempArr = await this.combineData(innerpathVal,tempArr)
+                
+                innerpathVal = afpValue.code
+                if(conncectedNodeType == 'api_inputnode'){
+                  innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
+                }
+                tempArr = await this.combineData(innerpathVal,tempArr)
               }
-              tempArr = await this.combineData(innerpathVal,tempArr)
-            }
-                  
-            if(tempArr.length>0){
-              nodesArr.push(tempArr)
-              filteredIds.push(connectedid)          
+              if(codeObj){
+                innerpathVal = codeObj
+                if(conncectedNodeType == 'api_inputnode'){
+                  innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)            
+                }
+                tempArr = await this.combineData(innerpathVal,tempArr)
+              }
+                    
+              if(tempArr.length>0){
+                nodesArr.push(tempArr)
+                filteredIds.push(connectedid)          
+              }
             }
           }
-        }
-      }      
-      srcIdArr = filteredIds;   
-      let mergedRecords = await this.getCombinations(srcIdArr,nodesArr)
-      for(let m =0;m< mergedRecords.length;m++){
-        mapObj = {};
-        tempQryVal = [];
-        let inputCollection = mergedRecords[m]         
-        for(let e = 0; e < currentNodeEdge.length; e++) {          
-            let schemaRes = {};
-            let b = 0;
-            let sourceFilteredVal,targetFilteredVal
-            let srcHandle = currentNodeEdge[e].sourceHandle;
-            let targetHandle = currentNodeEdge[e].targetHandle;    
-            let connectedid = currentNodeEdge[e].source;      
-            if(srcIdArr.includes(connectedid)){              
-              if (srcHandle) {
-                let srcSplit = srcHandle.split('|');
-                let srcVal = srcSplit.includes('HeaderParams') ? srcSplit[1] : srcSplit[srcSplit.length - 1];
-                if (srcVal.includes('.') && !srcVal.includes('text/plain') && !srcVal.includes('*/*')) {
-                  let src = srcSplit[1].split('.');
-                  if (src[src.length - 1] == 'schema') {
-                    b++;
-                  }
-                }
-                if (srcVal.includes('.')) {
-                  let staticRemove = srcVal.split('.');
-                  sourceFilteredVal = staticRemove.filter((item) => !statickeyword.includes(item));
-                  if (sourceFilteredVal?.length > 0) {
-                    sourceFilteredVal = sourceFilteredVal.join('.');
-                    if (sourceFilteredVal.includes('.') && sourceFilteredVal.startsWith('parameters.')) {
-                      sourceFilteredVal = _.get(parameter, sourceFilteredVal);
-                    }
-                    if (sourceFilteredVal.startsWith('items.')) {
-                      sourceFilteredVal = sourceFilteredVal.replace('items.', '',);
-                    }
-                    sourceFilteredVal = sourceFilteredVal.toLowerCase();
-                    
-                    // if (sourceFilteredVal.includes('.items.')) {
-                    //   let spilt = sourceFilteredVal.split('.items.');
-                    //   var getdata = _.get(inputparam, spilt[0]);
-                    // }
-                    // if (getdata?.length > 0) {
-                    //   for (let a = 0; a < getdata.length; a++) {
-                    //     sourceFilteredVal = sourceFilteredVal.replace('.items.', '[' + a + ']',);
-                    //   }
-                    // }
-                    
-                    if (sourceFilteredVal.includes('.items.')) {
-                      sourceFilteredVal = sourceFilteredVal.replace('.items.', '[0]',);
-                    }
-                    
-                    if (sourceFilteredVal && sourceFilteredVal.includes('.')) {
-                      let dst = sourceFilteredVal.split('.')
-                      sourceFilteredVal = (dst.filter(item => !numberArr.includes(item))).join('.');
-                    }
-                    sourceFilteredVal = sourceFilteredVal.trim();
-                    sourceFilteredVal = connectedid + '.'+ sourceFilteredVal
-                  }              
-                } else {
-                  sourceFilteredVal = srcVal.toLowerCase();
-                  sourceFilteredVal = srcVal.trim();                
-                  sourceFilteredVal = connectedid + '.'+ sourceFilteredVal
-                }    
+        }      
+        srcIdArr = filteredIds;   
+        let mergedRecords = await this.getCombinations(srcIdArr,nodesArr)
+       
+        for(let m =0;m< mergedRecords.length;m++){
+          mapObj = {};
+          tempQryVal = [];
+          let inputCollection = mergedRecords[m]  
               
-                // if (typeof inputCollection == 'object' && Object.keys(inputCollection).length > 0) {        
-                  
-                  if (targetHandle) {
-                    let targetSplit = targetHandle.split('|');
-                    targetVal = targetSplit.includes('HeaderParams') ? targetSplit[1] : targetSplit[targetSplit.length - 1];
-                    if (targetVal.includes('.')) {
-                      staticRemove = targetVal.split('.');
-                      targetFilteredVal = staticRemove.filter((item) => !statickeyword.includes(item));
-                      if (targetFilteredVal && targetFilteredVal.length > 0) {
-                        let tempobj = {};
-                        targetFilteredVal = targetFilteredVal.join('.');
-                        if (targetFilteredVal.includes('.') && targetFilteredVal.startsWith('parameters.')) {
-                          var parameterPathValue = _.get(parameter, targetFilteredVal.replace('.name', '.in'));
-                          tempobj['key'] = _.get(parameter, targetFilteredVal);
-                          tempobj['type'] = parameterPathValue;
-                          targetFilteredVal = _.get(parameter, targetFilteredVal,);
-                          tempQryVal.push(tempobj);
-                        }
-                        targetFilteredVal = targetFilteredVal.split('.');
-                        targetFilteredVal = targetFilteredVal.filter((item) => !numberArr.includes(item));
-                        targetFilteredVal = targetFilteredVal.join('.');
-      
-                        if (targetFilteredVal.includes('.items.')) {
-                          targetFilteredVal = targetFilteredVal.replace('.items.', '[0]',);
-                        }
-                        if (targetFilteredVal.startsWith('items.')) {
-                          targetFilteredVal = targetFilteredVal.replace('items.', '',);
-                        }
-      
-                        if (mapObj) {
-                          var setdata = _.get(mapObj, targetFilteredVal);
-                          if (setdata?.length) {
-                            targetFilteredVal = targetFilteredVal.replace('[0]', '[' + setdata.length + ']');
-                          }
-                        }    
-                        
-                        if (sourceFilteredVal && sourceFilteredVal.length > 0) {  
-                          sourceFilteredVal = sourceFilteredVal.toLowerCase();
-                        sourceFilteredVal = sourceFilteredVal.trim();
-                      //  console.log("sourceFilteredVal",sourceFilteredVal);
-                      //  console.log("targetFilteredVal",targetFilteredVal);
-    
-                          _.set(mapObj, targetFilteredVal, _.get(inputCollection, sourceFilteredVal));                      
-                        } else if (b == 0) {
-                          // let testdata: any = inputCollection;                                        
-                          let testdata = _.get(inputCollection, connectedid+'.schema')                        
-                          testdata = testdata.replace(/\\n/g, '\n');
-                          mapObj[targetFilteredVal] = testdata;
-                        }
-                      } else if (sourceFilteredVal && sourceFilteredVal.length > 0) {
-                        sourceFilteredVal = sourceFilteredVal.toLowerCase();
-                        sourceFilteredVal = sourceFilteredVal.trim();
-                        textobj = _.get(inputCollection, sourceFilteredVal);
-                      }
-                    } else {
-                        sourceFilteredVal = sourceFilteredVal.toLowerCase();
-                        sourceFilteredVal = sourceFilteredVal.trim();              
-                        _.set(mapObj, targetVal, _.get(inputCollection, sourceFilteredVal));                  
-                    }
-                    if (b > 0) {
-                      let obj = {};
-                      if (pfo?.length > 0) {
-                        for (let p = 0; p < pfo.length; p++) {
-                          if (pfo[p].nodeId == connectedid) {
-                            let schema = pfo[p]?.schema?.['requestBody']['content']['application/json']['schema'];
-                            var res = await this.generateMockData(schema);
-                            let keys = Object.keys(res);
-                            for (let item of keys) {
-                              if(Array.isArray(inputparam) && inputparam?.length>0){
-                                let tempobj
-                                for(let r=0;r< inputparam.length;r++){
-                                  tempobj = {}
-                                  _.set(tempobj, item, _.get(inputparam[r], item));
-                                  obj = Object.assign(obj, tempobj);
-                                }
-                              }else if(typeof inputparam == 'object'){
-                                _.set(obj, item, _.get(inputparam, item));
-                              }
+          for(let e = 0; e < currentNodeEdge.length; e++) {          
+              let schemaRes = {};
+              let b = 0;
+              let childName
+              let sourceFilteredVal,targetFilteredVal
+              let srcHandle = currentNodeEdge[e].sourceHandle;
+              let targetHandle = currentNodeEdge[e].targetHandle;    
+              let connectedid = currentNodeEdge[e].source;      
+              if(srcIdArr.includes(connectedid)){              
+                if (srcHandle) {
+                  let srcSplit = srcHandle.split('|'); 
+                  if(srcSplit.length>3 && childtable){
+                    var childid = srcSplit[srcSplit.length - 2]
+                  }
+                 
+                  if (pfo?.length > 0 && childid && childtable) {
+                    for (let p = 0; p < pfo.length; p++) {
+                      if(connectedid == pfo[p].nodeId){
+                        var childnodeType = pfo[p].nodeType
+                        let data = pfo[p].schema[srcSplit[0]][srcSplit[1]]
+                        if(data?.length>0){
+                          for(let i = 0; i < data.length; i++){
+                            if(data[i].id == childid){
+                              childName = data[i].name
                             }
                           }
                         }
-                        schemaRes[targetFilteredVal] = obj;
-                      }
-                      if (schemaRes && Object.keys(schemaRes).length > 0) {
-                        mapObj = Object.assign(mapObj, schemaRes);
                       }
                     }
-                  }          
-                // }
-              }    
-            }
-        }  
+                  }
+                  
+                  let srcVal = srcSplit.includes('HeaderParams') ? srcSplit[1] : srcSplit[srcSplit.length - 1];
+                  if (srcVal.includes('.') && !srcVal.includes('text/plain') && !srcVal.includes('*/*')) {
+                    let src = srcSplit[1].split('.');
+                    if (src[src.length - 1] == 'schema') {
+                      b++;
+                    }
+                  }
+                  if (srcVal.includes('.')) {
+                    let staticRemove = srcVal.split('.');
+                    sourceFilteredVal = staticRemove.filter((item) => !statickeyword.includes(item));
+                    if (sourceFilteredVal?.length > 0) {
+                      sourceFilteredVal = sourceFilteredVal.join('.');
+                      if (sourceFilteredVal.includes('.') && sourceFilteredVal.startsWith('parameters.')) {
+                        sourceFilteredVal = _.get(parameter, sourceFilteredVal);
+                      }
+                      if (sourceFilteredVal.startsWith('items.')) {
+                        sourceFilteredVal = sourceFilteredVal.replace('items.', '',);
+                      }
+                      sourceFilteredVal = sourceFilteredVal.toLowerCase();
+                      
+                      // if (sourceFilteredVal.includes('.items.')) {
+                      //   let spilt = sourceFilteredVal.split('.items.');
+                      //   var getdata = _.get(inputparam, spilt[0]);
+                      // }
+                      // if (getdata?.length > 0) {
+                      //   for (let a = 0; a < getdata.length; a++) {
+                      //     sourceFilteredVal = sourceFilteredVal.replace('.items.', '[' + a + ']',);
+                      //   }
+                      // }
+                      
+                      if (sourceFilteredVal.includes('.items.')) {
+                        sourceFilteredVal = sourceFilteredVal.replace('.items.', '[0]',);
+                      }
+                      
+                      if (sourceFilteredVal && sourceFilteredVal.includes('.')) {
+                        let dst = sourceFilteredVal.split('.')
+                        sourceFilteredVal = (dst.filter(item => !numberArr.includes(item))).join('.');
+                      }
+                      sourceFilteredVal = sourceFilteredVal.trim();
+                      
+                      if (childnodeType != 'humantasknode' && !childName && !childid) 
+                        sourceFilteredVal = connectedid + '.'+ sourceFilteredVal
+                    }              
+                  } else {
+                    sourceFilteredVal = srcVal.toLowerCase();
+                    sourceFilteredVal = srcVal.trim();
+                      if (childnodeType != 'humantasknode' && !childName && !childid)                                
+                        sourceFilteredVal = connectedid + '.'+ sourceFilteredVal
+                  }    
+                
+                  // if (typeof inputCollection == 'object' && Object.keys(inputCollection).length > 0) {        
+                    
+                    if (targetHandle) {
+                      let targetSplit = targetHandle.split('|');
+                      targetVal = targetSplit.includes('HeaderParams') ? targetSplit[1] : targetSplit[targetSplit.length - 1];
+                      if (targetVal.includes('.')) {
+                        staticRemove = targetVal.split('.');
+                        targetFilteredVal = staticRemove.filter((item) => !statickeyword.includes(item));
+                        if (targetFilteredVal && targetFilteredVal.length > 0) {
+                          let tempobj = {};
+                          targetFilteredVal = targetFilteredVal.join('.');
+                          if (targetFilteredVal.includes('.') && targetFilteredVal.startsWith('parameters.')) {
+                            var parameterPathValue = _.get(parameter, targetFilteredVal.replace('.name', '.in'));
+                            tempobj['key'] = _.get(parameter, targetFilteredVal);
+                            tempobj['type'] = parameterPathValue;
+                            targetFilteredVal = _.get(parameter, targetFilteredVal,);
+                            tempQryVal.push(tempobj);
+                          }
+                          targetFilteredVal = targetFilteredVal.split('.');
+                          targetFilteredVal = targetFilteredVal.filter((item) => !numberArr.includes(item));
+                          targetFilteredVal = targetFilteredVal.join('.');
         
-        if(Object.keys(mapObj).length > 0){
-          childInsertArr.push(mapObj);    
-        }        
-      } 
-      return {childInsertArr,tempQryVal,textobj}       
+                          if (targetFilteredVal.includes('.items.')) {
+                            targetFilteredVal = targetFilteredVal.replace('.items.', '[0]',);
+                          }
+                          if (targetFilteredVal.startsWith('items.')) {
+                            targetFilteredVal = targetFilteredVal.replace('items.', '',);
+                          }
+        
+                          if (mapObj) {
+                            var setdata = _.get(mapObj, targetFilteredVal);
+                            if (setdata?.length) {
+                              targetFilteredVal = targetFilteredVal.replace('[0]', '[' + setdata.length + ']');
+                            }
+                          }    
+                          
+                          if (sourceFilteredVal && sourceFilteredVal.length > 0) {  
+                            sourceFilteredVal = sourceFilteredVal.toLowerCase();
+                          sourceFilteredVal = sourceFilteredVal.trim();
+                          // console.log("sourceFilteredVal",sourceFilteredVal);
+                          // console.log("targetFilteredVal",targetFilteredVal);
+                          if (childnodeType == 'humantasknode' && childName && childid) {
+                            let childdata = inputCollection[connectedid][childName.toLowerCase()]                       
+                            if(childdata?.length>0){
+                              let temptargetFilteredVal = targetFilteredVal                            
+                              for(let i=0;i<childdata.length;i++){
+                                if(targetFilteredVal.includes('[0]')){
+                                  temptargetFilteredVal = targetFilteredVal.replace('[0]', '.'+[i]+'.',);                                                      
+                                  _.set(mapObj, temptargetFilteredVal, _.get(childdata[i], sourceFilteredVal));                                
+                                }                              
+                                
+                              }
+                            }
+                          }else    
+                            _.set(mapObj, targetFilteredVal, _.get(inputCollection, sourceFilteredVal));                      
+                          } else if (b == 0) {
+                            // let testdata: any = inputCollection;                                        
+                            let testdata = _.get(inputCollection, connectedid+'.schema')                        
+                            testdata = testdata.replace(/\\n/g, '\n');
+                            mapObj[targetFilteredVal] = testdata;
+                          }
+                        } else if (sourceFilteredVal && sourceFilteredVal.length > 0) {
+                          sourceFilteredVal = sourceFilteredVal.toLowerCase();
+                          sourceFilteredVal = sourceFilteredVal.trim();
+                          textobj = _.get(inputCollection, sourceFilteredVal);
+                        }
+                      } else {
+                          sourceFilteredVal = sourceFilteredVal.toLowerCase();
+                          sourceFilteredVal = sourceFilteredVal.trim();  
+                          if (childnodeType == 'humantasknode' && childName && childid) {
+                            let childdata = inputCollection[connectedid][childName.toLowerCase()]                         
+                            if(childdata?.length>0){
+                              let temptargetFilteredVal = targetVal                            
+                              for(let i=0;i<childdata.length;i++){
+                                if(targetFilteredVal.includes('[0]')){//&& !(_.get(childdata[i], targetFilteredVal))
+                                  temptargetFilteredVal = targetFilteredVal.replace('[0]', '.'+[i]+'.',);                                                      
+                                  _.set(mapObj, temptargetFilteredVal, _.get(childdata[i], sourceFilteredVal));                               
+                                }                              
+                                
+                              }
+                            }
+                          } 
+                          else           
+                          _.set(mapObj, targetVal, _.get(inputCollection, sourceFilteredVal));                  
+                      }
+                      if (b > 0) {
+                        let obj = {};
+                        if (pfo?.length > 0) {
+                          for (let p = 0; p < pfo.length; p++) {
+                            if (pfo[p].nodeId == connectedid) {
+                              let schema = pfo[p]?.schema?.['requestBody']['content']['application/json']['schema'];
+                              var res = await this.generateMockData(schema);
+                              let keys = Object.keys(res);                                           
+                              inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:'+ pfo[p].nodeName + '.PRO','.request',collectionName))
+                            
+                              for (let item of keys) {    
+                                if(inputparam){
+                                  if(Array.isArray(inputparam) && inputparam?.length>0){
+                                    let tempobj
+                                    for(let r=0;r< inputparam.length;r++){
+                                      tempobj = {}
+                                      _.set(tempobj, item, _.get(inputparam[r], item));
+                                      obj = Object.assign(obj, tempobj);
+                                    }
+                                  }else if(typeof inputparam == 'object'){
+                                    _.set(obj, item, _.get(inputparam, item));
+                                  }         
+                                } 
+                              }
+                            }
+                          }
+                          schemaRes[targetFilteredVal] = obj;
+                        }
+                        if (schemaRes && Object.keys(schemaRes).length > 0) {
+                          mapObj = Object.assign(mapObj, schemaRes);
+                        }
+                      }
+                    }          
+                  // }
+                }    
+              }
+          }  
+          
+          if(Object.keys(mapObj).length > 0){
+            childInsertArr.push(mapObj);    
+          }        
+        } 
+        return {childInsertArr,tempQryVal,textobj} 
+      } catch (error) {
+        console.log('Error', error);        
+        throw error
+      }      
     }
   
     async combineData(innerpathVal,tempArr){

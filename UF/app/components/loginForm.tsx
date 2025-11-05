@@ -24,7 +24,7 @@ interface LoginProps {
   image?: string
 }
 
-const Login = ({ logo, appName = "TG4CGFA", brandColor = "#ffffff", loginType = "standard", image }: LoginProps) => {
+const Login = ({ logo, appName = "TG4CGFA", brandColor = "#1976d2", loginType = "standard", image }: LoginProps) => {
   const { selectedTheme, setSelectedTheme } = useContext(
     TotalContext
   ) as TotalContextProps
@@ -91,16 +91,8 @@ const Login = ({ logo, appName = "TG4CGFA", brandColor = "#ffffff", loginType = 
           let screenDetails: any = {
             keys:[
   {
-    "screensName": "test-v1",
+    "screensName": "screen-v1",
     "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
-  },
-  {
-    "screensName": "save-v1",
-    "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1"
-  },
-  {
-    "screensName": "report-v1",
-    "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1"
   }
 ]
           }

@@ -241,6 +241,33 @@ export class CommonService{
       }
     }
 
+    async aes256ctrEncrypt(buffer: Buffer): Promise<Buffer> {
+      try {
+        const key = Buffer.from(process.env.AES_KEY, 'base64');
+        const iv = Buffer.from(process.env.AES_IV, 'base64');
+
+        const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
+        const encrypted = Buffer.concat([cipher.update(buffer), cipher.final()]);
+        return encrypted;
+      } catch (error) {
+        throw error
+      }
+    }
+
+    async aes256ctrDecrypt(encryptedBuffer: Buffer): Promise<Buffer> {
+      try {
+      const key = Buffer.from(process.env.AES_KEY!, 'base64');
+      const iv = Buffer.from(process.env.AES_IV!, 'base64');
+
+      const decipher = crypto.createDecipheriv('aes-256-ctr', key, iv);
+      const decrypted = Buffer.concat([decipher.update(encryptedBuffer), decipher.final()]);
+
+      return decrypted
+      } catch (error) {
+        throw error
+      }
+    }
+
     async encryptFile(buffer: Buffer,context:string): Promise<string> {
       const base64Plaintext = buffer.toString('base64');
       interface VaultEncryptResponse {
@@ -285,17 +312,24 @@ export class CommonService{
       return files[0];
     }
 
-    async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number },context: string): Promise<any> {
+    async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number },context: string, enableEncryption: string): Promise<any> {
       //const encrypted = await this.encryptFile(file.buffer, context);
+      let encrypted:Buffer 
+      if(enableEncryption === "true" ){
+       encrypted = await this.aes256ctrEncrypt(file.buffer);
+      }else{
+         encrypted = file.buffer;
+      }
       const uploadStream = this.bucket.openUploadStream(file.filename, {
-        metadata: { isEncrypted: false },
+        metadata: { isEncrypted: enableEncryption },
         contentType: file.mimetype,
       });
-      uploadStream.end(Buffer.from(file.buffer)); 
+      uploadStream.end(encrypted);
       return { message: 'Encrypted file uploaded successfully', fileId: uploadStream.id.toString() };
     }
    
-    async getFile(id: string, context: string) {
+    async getFile(id: string, context: string,enableEncryption: Boolean) {
+      let decrypted:Buffer
       const chunks: Buffer[] = [];
       const downloadStream = this.bucket.openDownloadStream(new ObjectId(id));
       return new Promise<Buffer>((resolve, reject) => {
@@ -304,7 +338,12 @@ export class CommonService{
           const ciphertext = Buffer.concat(chunks)
           try {
             //const decrypted = await this.decryptFile(ciphertext,context);
-            resolve(ciphertext);
+            if(enableEncryption){
+             decrypted = await this.aes256ctrDecrypt(ciphertext);
+            }else{
+               decrypted = ciphertext;
+            }
+            resolve(decrypted);
           } catch (err) {
             reject(err);
           }
@@ -674,52 +713,68 @@ export class CommonService{
       try {       
         let zenresult
         var ResultObj = {}
+        let fieldarr = []
         var rule = currentNode.rule
         var customCode = currentNode.code   
 
-      if(rule && Object.keys(rule).length > 0){
-        var nodes = rule.nodes     
-        if(nodes && nodes.length > 0){
-          for(var c=0;c < nodes.length;c++){
-            var content = nodes[c].content
-            if(content){
-              var field = content.inputs[0].field  
-              if(!field)
-                throw 'Field not found in rule'
-            }            
-          }
+        if(rule && Object.keys(rule).length > 0){
+          var nodes = rule.nodes     
+          if(nodes && nodes.length > 0){
+            for(var c=0;c < nodes.length;c++){
+              var content = nodes[c].content
+              if(content){
+                let inputs = content.inputs
+                if(inputs?.length > 0){
+                  for(let i=0;i < inputs.length;i++){
+                    fieldarr.push(content.inputs[i].field)
+                  }
+                }
+                
+                if(fieldarr?.length == 0)
+                  throw 'Field not found in rule'
+              }            
+            }
 
-          var gparamreq = {}; 
-          if(field) {   
-            let connectedNodeName = field.split('.')[0]
-            let connectedField = field.split('.')[1]
-            console.log(processedKey + ':NPV:'+connectedNodeName+'.PRO');
-            
-            let afpVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.response',process.env.CLIENTCODE))
-              console.log('connectedField',connectedField);      
-              let data = await this.getNestedValue(afpVal, connectedField)    
-              console.log('data',data);
-              if(data){                
-                await this.setNestedValue(gparamreq, field, data)          
-                var goruleres = await this.ruleEngine.goRule(rule, gparamreq) 
-
-                if(Object.keys(goruleres.result).length > 0){                   
-                  zenresult = goruleres.result.output
-                }else{
-                  throw `Rule doesn't matched with this value ${data}`
-                }                
+            var gparamreq = {}; 
+            for(let i=0;i < fieldarr.length;i++){  
+              let connectedNodeName = fieldarr[i].split('.')[0]
+              let connectedField = fieldarr[i].split('.')[1]
+              //console.log(processedKey + ':NPV:'+connectedNodeName+'.PRO');
+              
+              let afpVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.response',process.env.CLIENTCODE))
+              connectedField = connectedField.toLowerCase()     
+              //console.log('connectedField',connectedField); 
+               if(afpVal && Array.isArray(afpVal) && afpVal.length > 1){
+                var codeVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.code',process.env.CLIENTCODE))
+               if(codeVal[connectedField])
+                var data = await this.getNestedValue(codeVal, connectedField)   
+              else
+               throw 'Array of records found in Decision Node'
+              }else
+                var data = await this.getNestedValue(afpVal, connectedField)   
+                console.log('data',data);
+                if(data){                
+                  await this.setNestedValue(gparamreq, fieldarr[i], data) 
+                }
+                // else{
+                //   throw `${fieldarr[i]} not found in given request to take decision`                    
+                // }  
+              // }
+            }    
+           
+              var goruleres = await this.ruleEngine.goRule(rule, gparamreq)                  
+              if(Object.keys(goruleres.result).length > 0){                   
+                zenresult = goruleres.result.output
               }else{
-                throw `${field} not found in given request to take decision`                    
-              }  
-            // }
-          }               
-        }     
-      }   
-    
-      if (customCode ) {
-        var customcoderesult = await this.codeService.customCode(processedKey, customCode, inputparam,fabric,SessionInfo)
-        //console.log('customcoderesult',customcoderesult);        
-      }    
+                throw `Rule doesn't matched with this value ${data}`
+              }                         
+          }     
+        }   
+      
+        if (customCode ) {
+          var customcoderesult = await this.codeService.customCode(processedKey, customCode, inputparam,fabric,SessionInfo)
+          //console.log('customcoderesult',customcoderesult);        
+        }    
       
       if(zenresult)
         ResultObj['rule'] = zenresult
@@ -750,6 +805,100 @@ export class CommonService{
         }
       }
       return zenresultArr
+    }
+
+    //RollBack Check
+    async checkRollBack(Ndp,client,action,currentNode?){
+      try {       
+        for (let item in Ndp) {         
+          if(Ndp[item]?.rollback == "true"){          
+            if(action == 'check'){           
+              if(Ndp[item]?.savePoint){
+                if (!Ndp[item].data?.pro?.primaryKey) throw new CustomException(`PrimaryKey not found in ${Ndp[item].nodeName}`,404)
+                if(Ndp[item].nodeType == 'apinode') {        
+                  let apiKey = Ndp[item]?.apiKey
+                  if (!apiKey) throw new CustomException(`Reference not found in ${Ndp[item].nodeName}`,404)
+                  let apiNdp = JSON.parse(await this.redisService.getJsonData(apiKey, client))
+                  if (!apiNdp) throw new CustomException( `${apiKey} not found `,404)        
+                  let serverUrl: any = Object.values(apiNdp)[0]['data']['serverUrl']        
+                  let endPoint = Object.values(apiNdp)[0]['data']['apiEndpoint']        
+                  if (!serverUrl || !endPoint) throw new CustomException(`serverUrl/endPoint not found in ${apiKey}`,404)                    
+                }
+                else if(Ndp[item].nodeType == 'dbnode'){
+                  let tablename = Ndp[item].data?.pro?.tableName
+                  if(!tablename) throw new CustomException(`TableName not found in ${Ndp[item].nodeName}`,404)
+                }
+              }else{
+                throw new CustomException(`Savepoint not found in ${Ndp[item].nodeName}`,404)
+              }            
+            }else if(action == 'rollback'){                              
+              if(Ndp[item]?.savePoint == currentNode.savepoint){  
+                if (Ndp[item].nodeType == 'apinode') {                       
+                  let primaryKey = Ndp[item]?.data?.pro?.primaryKey
+                  let insertedData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO', '.response', client));
+                  if(!insertedData || (Object.keys(insertedData).length == 0) || insertedData.length == 0){
+                    insertedData = currentNode.data
+                  } 
+                  let apiKey = Ndp[item]?.apiKey                
+                  let apiNdp = JSON.parse(await this.redisService.getJsonData(apiKey, client))                     
+                  let serverUrl: any = Object.values(apiNdp)[0]['data']['serverUrl']        
+                  let endPoint = Object.values(apiNdp)[0]['data']['apiEndpoint']                 
+                  if(insertedData){                                   
+                    if(Array.isArray(insertedData) && insertedData.length > 0){
+                      for(let i=0;i< insertedData.length;i++){
+                        if(insertedData[i][primaryKey]){
+                          let rollBackurl = serverUrl + endPoint + '/' + insertedData[i][primaryKey]
+                          var deleteRes = await this.deleteCall(rollBackurl)
+                          console.log('deleteRes', deleteRes);
+                          if(deleteRes?.status == 'Success' && (deleteRes?.statusCode == 200 || deleteRes?.statusCode == 201) && deleteRes?.result){
+                            await this.redisService.deleteKey(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO',client)
+                            // let nodeRes = JSON.parse(await this.redisService.getJsonData(currentNode.key + ':nodeResponse', client));
+                            // if(nodeRes?.length > 0){
+                            //   nodeRes = nodeRes.filter(item => item.nodeId !== Ndp[item].nodeId);
+                            //   await this.redisService.setJsonData(currentNode.key + ':nodeResponse', JSON.stringify(nodeRes), client);
+                            // }
+                          }
+                        }
+                      }
+                    }else if(Object.keys(insertedData).length > 0){
+                      for(let item of insertedData){
+                        if(item[primaryKey]){
+                          let rollBackurl = serverUrl + endPoint + '/' + item[primaryKey]
+                          var deleteRes = await this.deleteCall(rollBackurl)
+                          console.log('deleteRes', deleteRes);
+                          if(deleteRes?.status == 'Success' && (deleteRes?.statusCode == 200 || deleteRes?.statusCode == 201) && deleteRes?.result){
+                            await this.redisService.deleteKey(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO',client)
+                            // let nodeRes = JSON.parse(await this.redisService.getJsonData(currentNode.key + ':nodeResponse', client));
+                            // if(nodeRes?.length > 0){
+                            //   nodeRes = nodeRes.filter(item => item.nodeId !== Ndp[item].nodeId);
+                            //   await this.redisService.setJsonData(currentNode.key + ':nodeResponse', JSON.stringify(nodeRes), client);
+                            // }
+                          }
+                        }
+                      }
+                    }
+                  }      
+                }   
+                // rollBackArr.push({
+                //   nodeName: Ndp[item].nodeName,
+                //   nodeId: Ndp[item].nodeId,
+                //   primaryKey: Ndp[item].data.pro.primaryKey,
+                //   savePoint:Ndp[item]?.savepoint
+                // })                                     
+              }
+            }
+          }
+        }
+        // return rollBackArr
+      } catch (error) {
+        throw error
+      }    
+    }
+
+    async deleteCall(url, headers?) {
+      return await axios.delete(url, headers)
+      .then((res) => this.responseData(res.status, res.data).then((res) => res))
+      .catch((err) => { return err });
     }
     
       setNestedValue(obj: any, path: string, value: any): void {
@@ -943,8 +1092,8 @@ export class CommonService{
         sessionInfo['accessDetails'] = key;       
        }
        if(stoken){
-        // let token:any = this.jwtService.decode(stoken,{ json: true })
-        let token = await this.MyAccountForClient(stoken)
+        let token:any = this.jwtService.decode(stoken,{ json: true })
+        //let token = await this.MyAccountForClient(stoken)
         if(token){
         sessionInfo['user'] = token.loginId || 'user'    
         sessionInfo['accessProfile'] = token.accessProfile 
@@ -1069,7 +1218,7 @@ export class CommonService{
         
         const allCollections:any = await this.redisService.listCollections(fileName);
        
-        if(!allCollections || !(Array.isArray(allCollections)) || allCollections?.length == 0) throw `Data not found in ${fileName}`
+        if(!allCollections || !(Array.isArray(allCollections)) || allCollections?.length == 0) throw `Data not found in ${fileName}-${type}`
 
         const targetCollections = allCollections.filter(name => name.endsWith(type));
 
@@ -1212,7 +1361,25 @@ export class CommonService{
             let AFK = await this.splitcommonkey(streamKey, 'AFK')
             let AFVK = await this.splitcommonkey(streamKey, 'AFVK')
             
-            let isDocExist:any = await this.mongoService.existsDocument(streamName,'',{UPID:AfskValue})
+            let isDocExist:any
+            if(AfskValue ==  "logInfo"){
+              let filter = {}               
+              filter['CK'] = CK
+              filter['FNGK'] = FNGK
+              filter['FNK'] = FNK
+              filter['CATK'] = CATK
+              filter['AFGK'] = AFGK
+              filter['AFK'] = AFK
+              filter['AFVK'] = AFVK
+              filter['DATE'] = entryId
+              if(user){
+                filter['USER'] = user
+              }
+              isDocExist = await this.mongoService.existsDocument(streamName,'',filter)
+            }else{
+              isDocExist = await this.mongoService.existsDocument(streamName,'',{UPID:AfskValue})              
+            }
+            
              if(isDocExist && Object.keys(isDocExist).length > 0 && isDocExist._id){
               let appendRes:any = await this.mongoService.appendFileInToDocument(streamName,isDocExist._id,'AFSK.'+AfskValue,afskvalue);
                         

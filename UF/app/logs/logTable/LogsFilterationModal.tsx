@@ -4,7 +4,7 @@ import {
   SearchIcon
 } from '@/app/components/svgApplication'
 import { RangeCalendar } from '@gravity-ui/date-components'
-import { DateTime } from '@gravity-ui/date-utils'
+import { dateTime, DateTime } from '@gravity-ui/date-utils'
 import { Avatar, Button, Checkbox, Popup , Loader, Text } from '@gravity-ui/uikit'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Calendar , Person } from '@gravity-ui/icons'
@@ -152,6 +152,7 @@ const LogsFilterationModal = ({
           <RangeCalendar
             value={selectedDateRange}
             onUpdate={setSelectedDateRange}
+            maxValue={dateTime()}
           />
         </Popup>
       </div>

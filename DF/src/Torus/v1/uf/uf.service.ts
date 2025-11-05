@@ -22,8 +22,8 @@ const jsonata = require('jsonata');
 import * as fs from 'fs';
 import { table } from 'console';
 import axios, { AxiosRequestConfig } from 'axios';
+import * as FormData from 'form-data'; // Use this
 import { Readable } from 'stream';
-import * as FormData from 'form-data';
 import { v4 as uuidv4 } from 'uuid';
 import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet } from 'src/fusionAuth.api';
 // import { RuleService } from 'src/ruleService';
@@ -111,19 +111,19 @@ export class UfService {
     }
   }
 
-  async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number },context: string): Promise<any> {
+  async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number },context: string, enableEncryption: string): Promise<any> {
     try {
-      const res = await this.commonService.uploadFile(file, context);
+      const res = await this.commonService.uploadFile(file, context, enableEncryption);
       return res;
     } catch (error) {
       throw new BadGatewayException(error);
     }
   }
 
-  async getFile(id: string, context: string) {
+  async getFile(id: string, context: string,enableEncryption: Boolean) {
     try {
       const file = await this.commonService.findFileById(id);
-      const res = await this.commonService.getFile(id, context);
+      const res = await this.commonService.getFile(id, context,enableEncryption);
       return { res, file };
     } catch (error) {
       throw new BadGatewayException(error);
@@ -857,6 +857,15 @@ export class UfService {
           /*---------security end-------------*/
           for (let i = 0; i < mappedData.length; i++) {
             if (componentId === mappedData[i].nodeId) {
+              for (let j = 0;j < mappedData[i].objElements.length;j++) {
+                if(mappedData[i].objElements[j].mapper.length > 0){
+                let mapperDetails:any ={};
+                mapperDetails["elementname"] = mappedData[i].objElements[j].elementName;
+                mapperDetails["sourcekey"] = mappedData[i].objElements[j].mapper[0].sourceKey[0];
+                mapperDetails["targetkey"] = mappedData[i].objElements[j].mapper[0].targetKey;
+                mappedData[i]?.mapper.push(mapperDetails);
+                }
+              }
               object = {
                 action: mappedData[i]?.action,
                 code: mappedData[i]?.code,
@@ -1615,8 +1624,14 @@ export class UfService {
                         }
                       }
                     }
-                    // return ff
-                    return filterItems;
+                    if('childTables' in formData)
+                    {
+                      formData.childTables.map((eachTable:any)=>{
+                        filterItems[eachTable]=formData[eachTable]
+                      })
+                      return filterItems;
+                    }else
+                      return filterItems;
                   }
                 }
               }
@@ -4155,44 +4170,172 @@ export class UfService {
     }
   }
 
+  async appUserAddition(data: any,isFusionAuth:boolean=false) {
+    try {
+      if (!tenant || !ag || !app || !data) {
+        throw new BadRequestException('Invalid input parameters');
+      }
+      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+      const clientProfileResourceKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`;
+
+      const userResponse = await this.redisService.getJsonData(
+        userCachekey,
+        process.env.CLIENTCODE,
+      );
+
+      const userList: any[] = userResponse ? JSON.parse(userResponse) : [];
+
+      const clientProfile = JSON.parse(
+        await this.redisService.getJsonData(
+          clientProfileResourceKey,
+          process.env.CLIENTCODE,
+        ),
+      );
+
+      const { email, firstName, lastName, password, loginId } = data;
+      const resForClientUserAddition = await this.redisService.getJsonData(
+        `CK:TRL:FNGK:AFR:FNK:PORTAL:CATK:EMAILTEMPLATE:AFGK:TORUS:AFK:CLIENTUSERADDITION:AFVK:v1:TPI`,
+        process.env.CLIENTCODE,
+      );
+
+      const clientUserAddition = JSON.parse(resForClientUserAddition);
+
+      const updatedSubject = (clientUserAddition.subject as string).replaceAll(
+        '${clientProfile.clientName}',
+        `${clientProfile.Name}`,
+      );
+      const updateclientUserAdditionHtml = (clientUserAddition.html as string)
+        .replaceAll('${clientProfile.clientName}', `${clientProfile.Name}`)
+        .replace('${firstName}', `${firstName}`)
+        .replace('${lastName}', `${lastName}`)
+        .replace('${clientCode}', `${tenant}`)
+        .replace('${username}', `${loginId}`)
+        .replace('${password}', `${password}`);
+
+      const mailOptions = {
+        from: 'support@torus.tech',
+        to: email,
+        subject: updatedSubject,
+        // text: updateclientUserAddition,
+        html: updateclientUserAdditionHtml,
+      };
+
+      transporter.sendMail(mailOptions, async (error, info) => {
+        if (error) {
+          throw new ForbiddenException('There is an issue with sending otp');
+        } else {
+          console.log('Email sent: ' + info.response);
+          // return `Email sent`;
+        }
+      });
+
+      userList.push({
+        ...data,
+        isRestricted: true,
+      });
+      await this.redisService.setJsonData(
+        userCachekey,
+        JSON.stringify(userList),
+        process.env.CLIENTCODE,
+      );
+      const newUserList = structuredClone(userList);
+
+      let result = [];
+
+      for (const user of newUserList) {
+        delete user.password;
+        result.push(user);
+      }
+
+      return result;
+    } catch (error) {
+      console.log(error, 'error');
+      await this.throwCustomException(error);
+    }
+  }
+async getDFS(fileUrl: string, enableEncryption: boolean): Promise<Buffer> {
+    try {
+      const url = fileUrl.replace(
+        'cdns3dfsdev.toruslowcode.com',
+        'https://cdndfsdev.toruslowcode.com/buckets'
+      );
+
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer',
+        auth: {
+          username: process.env.SEAWEED_USERNAME,
+          password: process.env.SEAWEED_PASSWORD,
+        },
+        validateStatus: (status) => status < 500,
+      });
+
+      if (response.status !== 200) {
+        throw new Error(`Failed to fetch file: ${response.status}`);
+      }
+
+      const ciphertext = Buffer.from(response.data);
+
+      // Decrypt if needed
+      const fileBuffer = enableEncryption
+        ? await this.commonService.aes256ctrDecrypt(ciphertext)
+        : ciphertext;
+
+      return fileBuffer;
+    } catch (error) {
+      console.error('Error fetching file from DFS:', error);
+      throw error;
+    }
+  }
+
   async uploadImage(
     file: Express.Multer.File,
     bucketFoldername?: string,
     folderPath?: string,
     filename?: string,
+    enableEncryption?: string
   ): Promise<string> {
     try {
-      const fileName = filename || file.originalname;
-      const bucket = bucketFoldername || ''; // e.g., 'torus'
-      const subFolder = folderPath || ''; // e.g., 'images'
+      const fileName = filename || file.filename || file.originalname;
+      const bucket = bucketFoldername || ''; // e.g. 'torus'
+      const subFolder = folderPath || ''; // e.g. 'images'
 
       const actualBuffer = Buffer.isBuffer(file.buffer)
         ? file.buffer
         : Buffer.from((file.buffer as any)?.data || []);
 
-      const form = new FormData();
-      form.append('file', Readable.from(actualBuffer), fileName);
+      const shouldEncrypt = enableEncryption === 'true';
 
-      const res = await axios.post(
-        `${process.env.FTP_OUTPUT_HOST}/buckets/${bucket}/${subFolder}/${fileName}`,
-        form,
-        {
-          headers: {
-            Accept: 'application/json',
-            ...form.getHeaders(),
-          },
-          auth: {
-            username: `${process.env.SEAWEED_USERNAME}`,
-            password: `${process.env.SEAWEED_PASSWORD}`,
-          },
-          validateStatus: (status) => status < 500,
+      const encryptedBuffer = shouldEncrypt
+        ? await this.commonService.aes256ctrEncrypt(actualBuffer)
+        : actualBuffer;
+
+      const form = new FormData();
+      form.append('file', Readable.from(encryptedBuffer), {
+        filename: fileName,
+        contentType: file.mimetype || 'application/octet-stream',
+      });
+
+      const uploadUrl = `${process.env.SEAWEED_OUTPUT_HOST?.replace(
+        /\/$/,
+        ''
+      )}/buckets/${bucket}/${subFolder}/${fileName}`;
+      const res = await axios.post(uploadUrl, form, {
+        headers: {
+          Accept: 'application/json',
+          ...form.getHeaders(),
         },
-      );
-      if (res.status == 201) {
-        return `${process.env.SEAWEED_OUTPUT_HOST}/${bucket}/${subFolder}/${fileName}`;
+        auth: {
+          username: `${process.env.SEAWEED_USERNAME}`,
+          password: `${process.env.SEAWEED_PASSWORD}`,
+        },
+        validateStatus: (status) => status < 500,
+      });
+
+      if (res.status === 201) {
+        return `${process.env.FTP_OUTPUT_HOST}/${bucket}/${subFolder}/${fileName}`;
       } else {
         throw new ConflictException(
-          res.data || 'Error Occured while uploading file',
+          res.data || 'Error occurred while uploading file'
         );
       }
     } catch (error) {
@@ -6446,7 +6589,7 @@ async resetPassword(email: string, password: string) {
             .replaceAll('${email}', oauthUser?.email)
             .replaceAll(
               '${appUrl}',
-              process.env.BE_URL.replace('/api-int', ''),
+              process.env.BE_URL.substring(0, process.env.BE_URL.lastIndexOf("/"))
             ),
         };
       } else {
@@ -6463,7 +6606,7 @@ async resetPassword(email: string, password: string) {
             .replaceAll('${email}', oauthUser?.email)
             .replaceAll(
               '${appUrl}',
-              process.env.BE_URL.replace('/api-int', ''),
+              process.env.BE_URL.substring(0, process.env.BE_URL.lastIndexOf("/")),
             ),
         };
       }
@@ -6917,89 +7060,4 @@ async resetPassword(email: string, password: string) {
       };;
     }
   }
-
-  getByPath(obj:  Record<string, any>, path: string | string[]) {
-  const keys = Array.isArray(path) ? path : path.split(".");
-  return keys.reduce((acc: any, key) => (acc == null ? undefined : acc[key]), obj);
-}
-
-  async getFilterParamsSchema(flowKey: string, token: string) {
-    try {
-      if (!flowKey || !token) {
-        throw new BadRequestException('key or token not found');
-      }
-
-      const UO = await this.commonService.readAPI(
-        `${flowKey}:UO`,
-        process.env.CLIENTCODE,
-        token,
-      );
-
-      const nodes = UO?.nodes;
-      if (!Array.isArray(nodes)) {
-        throw new NotFoundException('nodes not found');
-      }
-
-      const sourceNode = nodes.find((n) => n?.type === 'customSourceItems');
-      const dfo = sourceNode?.data?.dfo;
-
-      if (!dfo || typeof dfo !== 'object' || !Object.keys(dfo).length) {
-        throw new NotFoundException('dfo not found');
-      }
-
-      const result: any[] = [];
-
-      for (const dfoKey of Object.keys(dfo)) {
-        const nodeList = dfo[dfoKey];
-        if (!Array.isArray(nodeList)) continue;
-
-        for (const node of nodeList) {
-          const reports = node?.reportData;
-          if (!Array.isArray(reports)) continue;
-
-          for (const report of reports) {
-            const { type, ...rest } = this.getByPath(
-              node?.schema,
-              report?.referencePath,
-            );
-            let children = undefined;
-
-            if (
-              type === 'object' &&
-              rest?.properties &&
-              typeof rest.properties === 'object'
-            ) {
-              children = Object.entries(rest.properties).map(
-                ([propKey, propSchema]: any) => {
-                  return {
-                    displayName: '', // you don't have displayName for children in example
-                    referanceName: propKey,
-                    referencePath: `${report.referencePath}.properties.${propKey}`,
-                    type: propSchema?.type,
-                    key: dfoKey,
-                    nodeId: report?.nodeId,
-                  };
-                },
-              );
-            }
-
-            result.push({
-              displayName: report?.displayName,
-              referanceName: report?.referanceName,
-              referencePath: report?.referencePath,
-              nodeId: report?.nodeId,
-              key: dfoKey,
-              type,
-              ...(type === 'object' && children?.length ? { children } : {}),
-            });
-          }
-        }
-      }
-      return result;
-    } catch (error) {
-      await this.throwCustomException(error);
-    }
-  }
-
-
 }

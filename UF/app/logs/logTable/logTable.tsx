@@ -63,6 +63,8 @@ interface TableHeaderProps {
   setFabrics: React.Dispatch<React.SetStateAction<Array<string>>>
   user: Array<string>
   setUser: React.Dispatch<React.SetStateAction<Array<string>>>
+   jsonViewerData: any
+   setJsonViewerData: React.Dispatch<React.SetStateAction<any>>
 }
 
 const MyTable = withTableSorting(withTableActions<TableProps<any>>(Table))
@@ -81,7 +83,9 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   fabrics,
   setFabrics,
   user,
-  setUser
+  setUser,
+  jsonViewerData,
+  setJsonViewerData
 }) => {
   const headerProcessRowsItem = [
     'artifactName',
@@ -109,8 +113,6 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   }
   const [open, setOpen] = useState(false)
   const buttonElement = useRef<HTMLButtonElement>(null)
-  const [jsonViewerData, setJsonViewerData] = useState([])
-
   const nodeFiner = (data: any) => {
     const returnedData = Object.values(data).flat()
     const node: any[] = []
@@ -468,7 +470,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
       setJsonViewerData([])
     }
   }
-  
+    
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab === 'process' ? 'process' : 'torus')
@@ -655,8 +657,8 @@ const LogSwitcher = ({
   )
 }
 
+const JsonViewer = ({ tabdata }: any) => {  
 
-const JsonViewer = ({ tabdata }: any) => {
   return (
     <div
       className={`mt-2

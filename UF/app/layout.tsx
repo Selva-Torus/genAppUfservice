@@ -28,43 +28,11 @@
       "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
     },
     {
-      "menuGroupLabel": "test",
+      "menuGroupLabel": "screen",
       "screenDetails": [
         {
-          "name": "test",
+          "name": "screen",
           "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1",
-          "allowedAccessProfile": [
-            "User",
-            "Manager",
-            "Employee",
-            "user"
-          ],
-          "static": false
-        }
-      ],
-      "items": []
-    },
-    {
-      "menuGroupLabel": "save",
-      "screenDetails": [
-        {
-          "name": "save",
-          "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1",
-          "allowedAccessProfile": [
-            "User",
-            "Manager"
-          ],
-          "static": false
-        }
-      ],
-      "items": []
-    },
-    {
-      "menuGroupLabel": "Report",
-      "screenDetails": [
-        {
-          "name": "report",
-          "key": "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1",
           "allowedAccessProfile": [
             "User",
             "Manager",
@@ -99,7 +67,7 @@
     "group-bg-color": "#ffffff",
     "fontSize": "Medium",
     "direction": "LTR",
-    "brandColor": "#ffffff",
+    "brandColor": "#1976d2",
     "selectionColor": "#E95B86",
     "hoverColor": "#E95B86",
     "borderRadius": "s",
@@ -163,9 +131,7 @@
   },
   "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TT407:AFGK:CGFA:AFK:TG4CGFA:AFVK:v1:appearance",
   "allKeys": [
-    "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1",
-    "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1",
-    "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1"
+    "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
   ],
   "loginDetails": {
     "firstName": "Peer",
@@ -180,30 +146,9 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-10-22T06:10:34.078Z",
+    "lastActive": "2025-11-05T10:58:00.611Z",
     "profile": "https://varnishdev.gsstvl.com/files/torus/9.1/CT003/resources/images/Peer@786/pexels-pixabay-33109.jpg",
-    "quickLinks": [
-      {
-        "label": "Company Profile",
-        "key": "PersonalcompanyProfile",
-        "routes": "/control-center/company-profile"
-      },
-      {
-        "label": "Build Application",
-        "key": "build",
-        "routes": "/"
-      },
-      {
-        "label": "My Account",
-        "key": "PersonalmyAccount",
-        "routes": "/control-center/account-profile"
-      },
-      {
-        "label": "Tenant",
-        "key": "tenant",
-        "routes": "/control-center/tenant"
-      }
-    ],
+    "quickLinks": [],
     "client": "CT003",
     "edit": "",
     "noOfProductsService": 0,
@@ -214,19 +159,11 @@
   },
   "allKeyswithScreenNames": [
     {
-      "screensName": "test-v1",
+      "screensName": "screen-v1",
       "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
-    },
-    {
-      "screensName": "save-v1",
-      "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1"
-    },
-    {
-      "screensName": "report-v1",
-      "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1"
     }
   ],
-  "deploymentArtifactKey": "CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:forFA:AFVK:v1",
+  "deploymentArtifactKey": "CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:oracleDPD:AFVK:v1",
   "appGroupDesc": "CGFA",
   "logType": "mongodb",
   "appDesc": "TG4CGFA",
