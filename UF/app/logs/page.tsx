@@ -4,11 +4,12 @@
 import React, { useState, useEffect, useMemo, useDeferredValue, useContext } from 'react'
 import { AxiosService } from '@/app/components/axiosService'
 import TableHeader from './logTable/logTable'
-import { getCookie } from '@/app/components/cookieMgment'
+import { deleteAllCookies, getCookie, setCookie } from '@/app/components/cookieMgment'
 import decodeToken from '@/app/components/decodeToken'
 import Artifactdetails from './artifactdetails'
 import { TotalContext, TotalContextProps } from '../globalContext'
 import { dateTime } from '@gravity-ui/date-utils'
+import { useRouter } from 'next/navigation'
 
 const ParentComponent = () => {
   console.log("🚀 ~ TgService ~ codeGeneration ~ setupData:")
@@ -25,12 +26,15 @@ const ParentComponent = () => {
     name: 'CGFA'
   })
   const token: string = getCookie('token')
-  const decodedTokenObj: any = decodeToken(token)
-  const [user, setUser] = useState<string[]>([decodedTokenObj?.loginId])
+  const decodedToken: any = decodeToken(token)
+  const [user, setUser] = useState<string[]>([decodedToken?.loginId])
   const { encAppFalg,setEncAppFalg}= useContext(TotalContext) as TotalContextProps
   const [range , setRange ] = useState({start: dateTime().subtract({days: 7}), end: dateTime()})
   const [ fabrics , setFabrics ] = useState<Array<string>>([])
   const [jsonViewerData, setJsonViewerData] = useState({})
+  const encryptionFlagApp: boolean = false;
+  const router = useRouter()
+  let landingScreen:string = 'Logs Screen';
 
 
   const [jsonData, setJsonData] = useState({
@@ -246,6 +250,55 @@ const ParentComponent = () => {
       limit: newPageSize
     }))
   }
+
+ const securityCheck = async () => {
+    try {
+      const encryptionDpd: string =
+        'CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:oracleDPD:AFVK:v1'
+      const encryptionMethod: string = ''
+      let introspect: any
+      if (encryptionFlagApp) {
+        introspect = await AxiosService.get('/UF/introspect', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
+            dpdKey: encryptionDpd,
+            method: encryptionMethod,
+            key: 'Logs Screen'
+          }
+        })
+      } else {
+        introspect = await AxiosService.get('/UF/introspect', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
+            key: 'Logs Screen'
+          }
+        })
+      }
+
+      if (introspect?.data?.authenticated) {
+        if (!decodedToken.selectedAccessProfile) {
+          router.push('/select-context')
+        }
+        if (introspect?.data?.updatedToken) {
+          setCookie('token', introspect?.data.updatedToken)
+        }
+      } else {
+        await deleteAllCookies()
+      }
+    } catch (err: any) {
+      await deleteAllCookies()
+    }
+  }
+  
+    useEffect(() => {
+      if (token) {
+        securityCheck()
+      }
+    }, [token])
 
   return (
     <>

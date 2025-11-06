@@ -36,7 +36,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 const auth_secret =
-  'HpZnm7V6YeshFDVbwACyOtx6oa6QSbraZoNyU9fwtGYUL1Rnc6PN5QUosu9BcqVBo5L6QeSs';
+  process.env.AUTH_SECRET;
 const tenant = process.env.TENANT;
 const ag = process.env.APPGROUPCODE;
 const app = process.env.APPCODE;
@@ -47,7 +47,10 @@ const fusionAuthApplicationId = process.env.FUSIONAUTH_APPLICATIONID;
 const fusionAuthAppClientSecret = process.env.FUSIONAUTH_APPCLIENTSECRET;
 const fusionAuthBaseUrl = process.env.FUSIONAUTH_BASEURL;
 const fusionAuthApiKey = process.env.FUSIONAUTH_APIKEY;
-const defaultAuth =  process.env.DEFAULT_AUTHENTICATION
+const defaultAuth =  process.env.DEFAULT_AUTHENTICATION;
+const accessTokenExpiryTime = process.env.AUTH_ACCESSTOKEN_EXPIRY_TIME;
+const refreshTokenExpiryTime = process.env.AUTH_REFRESHTOKEN_EXPIRY_TIME;
+const fusionauthRefreshTokenExpiryTimeinMinutes = process.env.FUSIONAUTH_REFRESHTOKEN_EXPIRY_TIME_IN_MINUTES
 
 @Injectable()
 export class UfService {
@@ -2968,19 +2971,16 @@ export class UfService {
           tokens,
         );
       }
-      const sessionListCacheKey =
-        payload.type == 'c'
-          ? `CK:TGA:FNGK:SETUP:FNK:SF:CATK:CLIENT:AFGK:${payload.client}:AFK:PROFILE:AFVK:v1:session`
-          : `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${payload.client}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
+      const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
       const sessionListCache = await this.redisService.getJsonData(
         sessionListCacheKey,
         process.env.CLIENTCODE,
       );
+      const sessionList = sessionListCache && JSON.parse(sessionListCache) ? JSON.parse(sessionListCache) : [];
       if (
-        !sessionListCache ||
-        !JSON.parse(sessionListCache) ||
-        !Array.isArray(JSON.parse(sessionListCache)) ||
-        !JSON.parse(sessionListCache).length
+        !sessionList ||
+        !Array.isArray(sessionList) ||
+        !sessionList.length
       ) {
         await this.commonService.errorLog(
           'Technical',
@@ -2992,7 +2992,7 @@ export class UfService {
           tokens,
         );
       }
-      const sessionList = JSON.parse(sessionListCache);
+      
       const updatedSessionList = await this.checkSession(sessionList);
       if (updatedSessionList?.find((item: any) => item?.sid == payload.sid)) {
         await this.redisService.setJsonData(
@@ -3071,7 +3071,7 @@ export class UfService {
         },
         {
           secret: auth_secret,
-          expiresIn: '24h',
+          expiresIn: accessTokenExpiryTime as any,
         },
       );
 
@@ -3086,9 +3086,10 @@ export class UfService {
         const previousActiveSession = updatedSessionList.find(
           (session: any) => session?.sid === sid,
         );
-        updatedSessionList.filter((s: any) => s?.sid !== sid).push({
+       updatedSessionList = updatedSessionList.filter((s: any) => s?.sid !== sid).concat({
           ...previousActiveSession,
           accessToken : updatedToken,
+          updatedOn : new Date().toISOString(),
         });
       }
       await this.redisService.setJsonData(
@@ -3215,68 +3216,81 @@ export class UfService {
     }
   }
 
-  async checkSession(sessionList: any[]) {
+   toMinutes(value: any): number {
+    const regex = /^(\d+(?:\.\d+)?)(?:\s*([a-zA-Z]+))?$/;
+    const match = value.trim().match(regex);
+
+    if (!match) throw new Error(`Invalid time format: ${value}`);
+
+    const num = parseFloat(match[1]);
+    const unit = (match[2] || 'm').toLowerCase();
+
+    const unitMap: Record<string, number> = {
+      y: 525600,
+      year: 525600,
+      years: 525600,
+      yr: 525600,
+      yrs: 525600,
+      w: 10080,
+      week: 10080,
+      weeks: 10080,
+      d: 1440,
+      day: 1440,
+      days: 1440,
+      h: 60,
+      hr: 60,
+      hrs: 60,
+      hour: 60,
+      hours: 60,
+      m: 1,
+      min: 1,
+      mins: 1,
+      minute: 1,
+      minutes: 1,
+      s: 1 / 60,
+      sec: 1 / 60,
+      secs: 1 / 60,
+      second: 1 / 60,
+      seconds: 1 / 60,
+      ms: 1 / 60000,
+      msec: 1 / 60000,
+      msecs: 1 / 60000,
+      millisecond: 1 / 60000,
+      milliseconds: 1 / 60000,
+    };
+
+    const minutes = unitMap[unit];
+    if (minutes === undefined) throw new Error(`Unknown unit: ${unit}`);
+
+    return num * minutes;
+  }
+
+async checkSession(sessionList: any[]) {
     try {
+      const timeNow = Math.ceil(new Date().getTime() / 1000);
       const updatedSessionList = new Map();
       for (let index = 0; index < sessionList.length; index++) {
-        const token = sessionList[index]?.refreshToken;
+        const session = sessionList[index];
 
         // if there is no refresh token it will be removed from the session list
-        if (!token) {
+        if (!session['refreshToken'] || !session['createdOn']) {
           continue;
         }
-        // verifying the refresh token is valid or not if it a fusionauth refresh token
-        if (
-          process.env.DEFAULT_AUTHENTICATION == 'fusionauth' &&
-          sessionList[index]?.refreshTokenId && fusionAuthBaseUrl && fusionAuthAppClientSecret && fusionAuthApplicationId
-        ) {
-          const accessToken = sessionList[index]?.accessToken;
-          let accessTokenPayload = await this.jwt.decode(accessToken);
-          if (
-            !accessTokenPayload ||
-            !accessTokenPayload.sid ||
-            !accessTokenPayload.client
-          ) {
-            continue;
-          }
-          const value = await this.fusionAuthVerifyRefreshToken(token);
-          if (value) {
-            updatedSessionList.set(token, {
-              ...sessionList[index],
-              refreshToken: value?.refresh_token,
-              refreshTokenId: value?.refresh_token_id,
-            });
-          } else {
-            continue;
-          }
-        }
-        // if the refresh token is not a fusionauth token it will be verified with jwt refresh secret
-        else {
-          let payload;
-          try {
-            payload = await this.jwt.verifyAsync(token, {
-              secret: auth_secret,
-            });
-          } catch (error) {
-            // updatedSessionList.delete(token);
-            continue;
-          }
-          if (!payload || !payload.exp) {
-            // updatedSessionList.delete(token);
-            continue;
-          } else {
-            const timeNow = Math.ceil(new Date().getTime() / 1000);
-            const timegap = payload.exp - timeNow;
-
-            if (timegap > 0) {
-              updatedSessionList.set(token, sessionList[index]);
-            }
-          }
+        const sessionLastUpdatedTime =
+          new Date(session['updatedOn'] || session['createdOn']).getTime() /
+          1000;
+        const timegap = timeNow - sessionLastUpdatedTime;
+        const timegapInMinutes = Math.ceil(timegap / 60);
+        const expiryTImeInMinutes = session['refreshTokenId']
+          ? parseInt(fusionauthRefreshTokenExpiryTimeinMinutes)
+          : this.toMinutes(refreshTokenExpiryTime);
+        if (timegapInMinutes <= expiryTImeInMinutes) {
+          updatedSessionList.set(session['refreshToken'], session);
         }
       }
       return Array.from(updatedSessionList.values());
     } catch (error) {
-      await this.throwCustomException(error);
+      return []
     }
   }
 
@@ -3284,7 +3298,6 @@ export class UfService {
     if (authorization) {
       try {
         const payload: any = this.jwt.decode(token);
-        let sessionId:string = payload?._sessionId;
         if (!payload) {
           await this.commonService.errorLog(
             'Technical',
@@ -3296,12 +3309,8 @@ export class UfService {
             token,
           );
         } else {
-          let userCachekey;
-          if (payload.type === 'c') {
-            userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:CLIENT:AFGK:${payload.client}:AFK:PROFILE:AFVK:v1:users`;
-          } else {
-            userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${payload.client}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
-          }
+     
+          const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
           const responseFromRedis = await this.redisService.getJsonData(
             userCachekey,
             process.env.CLIENTCODE,
@@ -3311,7 +3320,7 @@ export class UfService {
             (user) => user.loginId === payload.loginId,
           );
           delete reqiredUser.password;
-          return { ...reqiredUser, client: payload.client };
+          return { ...reqiredUser, client: tenant };
         }
       } catch (error) {
         await this.commonService.errorLog(
@@ -3364,8 +3373,7 @@ export class UfService {
         );
       }
       const payload = await this.jwt.decode(token);
-      let sid: string = payload.sid;
-      if (!payload || !payload.client || !payload.type) {
+      if (!payload) {
         await this.commonService.errorLog(
           'Technical',
           'AK',
@@ -3376,25 +3384,31 @@ export class UfService {
           tokens,
         );
       }
-      const sessionListCacheKey =
-        payload.type == 'c'
-          ? `CK:TGA:FNGK:SETUP:FNK:SF:CATK:CLIENT:AFGK:${payload.client}:AFK:PROFILE:AFVK:v1:session`
-          : `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${payload.client}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
+      const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
       const sessionListCache = await this.redisService.getJsonData(
         sessionListCacheKey,
         process.env.CLIENTCODE,
       );
+      const sessionList = sessionListCache && JSON.parse(sessionListCache) ? JSON.parse(sessionListCache) : [];
+
       if (
-        !sessionListCache ||
-        !JSON.parse(sessionListCache) ||
-        !Array.isArray(JSON.parse(sessionListCache)) ||
-        !JSON.parse(sessionListCache).length
+        !sessionList ||
+        !Array.isArray(sessionList) ||
+        !sessionList.length
       ) {
+         await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG075',
+          'Invalid access token',
+          key,
+          tokens,
+        );
         throw new UnauthorizedException('Invalid access token');
       }
-      const sessionList = JSON.parse(sessionListCache);
       const updatedSessionList = await this.checkSession(sessionList);
-      const currentSession = updatedSessionList.find(
+      let currentSession = updatedSessionList.find(
         (item: any) => item?.sid == payload.sid,
       );
       if (!currentSession) {
@@ -3403,12 +3417,77 @@ export class UfService {
           JSON.stringify(updatedSessionList),
           process.env.CLIENTCODE,
         );
+         await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG075',
+          'Invalid access token',
+          key,
+          tokens,
+        );
         throw new UnauthorizedException('Invalid access token');
+      }
+      const refreshToken = currentSession['refreshToken'];
+      if (!refreshToken) {
+          await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG075',
+          'Session not available',
+          key,
+          tokens,
+        );
+        throw new UnauthorizedException('Session not available');
+      }
+      // if currentSession has refreshTokenId this token is from fusionAuth and we need to verify with fusionauth
+      if(currentSession['refreshTokenId']){
+        const value = await this.fusionAuthVerifyRefreshToken(refreshToken);
+        if (value) {
+          currentSession = {
+            ...currentSession,
+            refreshToken: value?.refresh_token,
+            refreshTokenId: value?.refresh_token_id,
+            updatedOn : new Date().toISOString()
+          }
+        }else{
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG075',
+            'Session not available',
+            key,
+            tokens,
+          );
+          throw new UnauthorizedException('Session not available');
+        }
+      }else{
+        try {
+         await this.jwt.verifyAsync(
+             currentSession['refreshToken'], {
+               secret : auth_secret
+             }
+           )
+        } catch (error) {
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG075',
+            'Session not available',
+            key,
+            tokens,
+          );
+          throw new UnauthorizedException('Session not available');
+        }
       }
       const timeNow = Math.ceil(new Date().getTime() / 1000);
       const timegap = payload.exp - timeNow;
-      if (timegap < 600) {
-        const updatedToken = await this.jwt.signAsync(
+      let updatedToken = undefined;
+      if (timegap < 300) {
+        updatedToken = await this.jwt.signAsync(
           {
             client: payload.client,
             loginId: payload.loginId,
@@ -3416,29 +3495,34 @@ export class UfService {
             isAppAdmin: payload.isAppAdmin,
             ag,
             app,
-            sid,
+            sid : payload.sid,
           },
           {
             secret: auth_secret,
-            expiresIn: '24h',
+            expiresIn: accessTokenExpiryTime as any,
           },
         );
-        await this.redisService.setJsonData(
+        currentSession = {
+          ...currentSession,
+          accessToken: updatedToken,
+          updatedOn : new Date().toISOString()
+        }
+      } else {
+         currentSession = {
+          ...currentSession,
+          updatedOn : new Date().toISOString()
+        }
+      }
+      await this.redisService.setJsonData(
           sessionListCacheKey,
           JSON.stringify(
             updatedSessionList
               .filter((s: any) => s.sid !== payload.sid)
-              .concat({
-                ...currentSession,
-                token: updatedToken,
-              }),
+              .concat(currentSession),
           ),
           process.env.CLIENTCODE,
         );
-        return { authenticated: true, updatedToken };
-      } else {
-        return { authenticated: true };
-      }
+      return { authenticated: true, updatedToken };
     } catch (error) {
       await this.commonService.errorLog(
         'Technical',
@@ -3588,7 +3672,7 @@ export class UfService {
           },
           {
             secret: auth_secret,
-            expiresIn: '24h',
+            expiresIn: accessTokenExpiryTime as any,
           },
         );
         let refreshToken: string;
@@ -3600,7 +3684,7 @@ export class UfService {
         } else {
           refreshToken = await this.jwt.signAsync(
             { loginId: loggedInUser.loginId, client: tenant, type: 't' },
-            { secret: auth_secret, expiresIn: '7d' },
+            { secret: auth_secret, expiresIn: refreshTokenExpiryTime as any },
           );
         }
 
@@ -3615,6 +3699,7 @@ export class UfService {
               sid,
               refreshToken,
               refreshTokenId,
+              createdOn : new Date().toISOString()
             },
             sessionListCacheKey,
           );
@@ -3644,6 +3729,7 @@ export class UfService {
               sid,
               refreshToken,
               refreshTokenId,
+              createdOn : new Date().toISOString()
             },
             sessionListCacheKey,
           );
@@ -3697,7 +3783,7 @@ export class UfService {
                 },
                 {
                   secret: auth_secret,
-                  expiresIn: '24h',
+                  expiresIn: accessTokenExpiryTime as any,
                 },
               );
             }
@@ -3710,6 +3796,7 @@ export class UfService {
             sid,
             refreshToken,
             refreshTokenId,
+            createdOn : new Date().toISOString()
           },
           sessionListCacheKey,
         );

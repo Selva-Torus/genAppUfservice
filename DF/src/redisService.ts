@@ -144,9 +144,9 @@ export class RedisService {
         let redisResult = await redis.call('JSON.SET', key, defpath, value);
       
         if(redisResult == 'OK')
-          var mongoResult:any  = await this.setDocument(collectionName,key, JSON.parse(value),path)
+        //   var mongoResult:any  = await this.setDocument(collectionName,key, JSON.parse(value),path)
               
-        if(mongoResult?.value)
+        // if(mongoResult?.value)
           return 'Value Stored';
  
     } catch (error) {

@@ -1,5 +1,5 @@
 'use client'
-import * as XLSX from 'xlsx'
+// import * as XLSX from 'xlsx'
 import { useEffect, useState } from 'react'
 import * as React from 'react'
 import { DropzoneOptions, useDropzone } from 'react-dropzone'
@@ -56,6 +56,8 @@ interface FilesType {
 }
 
 type Drag_file = FilesType[]
+  let XLSX :any
+
 
 const TorusDocumentUploader = ({
   dropzoneOptions,
