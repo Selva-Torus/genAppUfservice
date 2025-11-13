@@ -1,5 +1,5 @@
 'use client'
-import React, { useContext, useEffect, useMemo, useState } from 'react'
+import React, { useCallback,useContext, useEffect, useMemo, useState } from 'react'
 import { Select, Spin } from '@gravity-ui/uikit'
 import { SearchIcon } from '../components/svgApplication'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
@@ -26,16 +26,16 @@ const ContextSelector = () => {
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [accessProfiles, setAccessProfiles] = useState<any[]>([])
-  const [selectedPsCode, setSelectedPsCode] = useState('')
   const router = useRouter();
   const [loading, setLoading] = useState(false)
+  const [selectedCombination, setSelectedCombination] = useState({})
   const [time, setTime] = useState('')
     let landingScreen:string = 'User Screen';
        let screenDetails: any = {
            keys:[
   {
-    "screensName": "formitem-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1"
+    "screensName": "testroute-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
   }
 ]
         }
@@ -94,7 +94,7 @@ const ContextSelector = () => {
 
   useEffect(() => {
     if (tp_ps) {
-      setSelectedPsCode(JSON.parse(atob(tp_ps))?.psCode ?? '')
+      setSelectedCombination(JSON.parse(atob(tp_ps))?.selectedCombination ?? {})
       setSelectedAccessProfile(
         JSON.parse(atob(tp_ps))?.selectedAccessProfile ?? []
       )
@@ -117,7 +117,16 @@ const ContextSelector = () => {
   }
 
   const handleCardClick = (item: any) => {
-    setSelectedPsCode(item.psCode)
+    const { orgGrpCode, orgCode, psGrpCode, psCode, roleGrpCode, roleCode } =
+      item
+    setSelectedCombination({
+      orgGrpCode,
+      orgCode,
+      psGrpCode,
+      psCode,
+      roleGrpCode,
+      roleCode
+    })
   }
 
   const handleNavigationClick = async () => {
@@ -126,9 +135,13 @@ const ContextSelector = () => {
       const res = await axios.post(
         `${baseUrl}/UF/getAccessToken`,
         {
-          psCode: selectedPsCode,
+          selectedCombination: selectedCombination,
           selectedAccessProfile: selectedAccessProfile[0],
-          dap : accessProfiles.find((item) => item.accessProfile === selectedAccessProfile[0])?.dap ?? undefined
+          dap:
+            accessProfiles.find(
+              item => item.accessProfile === selectedAccessProfile[0]
+            )?.dap ?? undefined,
+          ufClientType: 'UFW'
         },
         {
           headers: {
@@ -141,10 +154,24 @@ const ContextSelector = () => {
         setCookie(
           'tp_ps',
           btoa(
-            JSON.stringify({ psCode: selectedPsCode, selectedAccessProfile })
+            JSON.stringify({
+              selectedCombination: selectedCombination,
+              selectedAccessProfile
+            })
           )
         )
-
+        const ORM: any = decodeToken(res.data.token)
+        sessionStorage.setItem(
+          'organizationDetails',
+          JSON.stringify({
+            orgGrpCode: ORM.orgGrpCode,
+            orgCode: ORM.orgCode,
+            roleGrpCode: ORM.roleGrpCode,
+            roleCode: ORM.roleCode,
+            psGrpCode: ORM.psGrpCode,
+            psCode: ORM.psCode
+          })
+        )
         // here we have to set the default authentication route
         router.push(landingScreen)
         setLoading(false)
@@ -153,6 +180,28 @@ const ContextSelector = () => {
       toast('Error Fetching AccessToken', 'danger')
     }
   }
+
+  const isSelectedCombination = useCallback(
+    (item: any) => {
+      const { orgGrpCode, orgCode, psGrpCode, psCode, roleGrpCode, roleCode } =
+        item
+      if (
+        JSON.stringify(selectedCombination) ==
+        JSON.stringify({
+          orgGrpCode,
+          orgCode,
+          psGrpCode,
+          psCode,
+          roleGrpCode,
+          roleCode
+        })
+      ) {
+        return true
+      }
+      return false
+    },
+    [selectedCombination]
+  )
 
   return (
     <div className='h-[100vh] w-full bg-[#F7F7F7]'>
@@ -193,7 +242,7 @@ const ContextSelector = () => {
               value={selectedAccessProfile}
               onUpdate={data => {
                 setSelectedAccessProfile(data)
-                setSelectedPsCode('')
+                setSelectedCombination({})
               }}
               width={'max'}
               size='l'
@@ -229,10 +278,9 @@ const ContextSelector = () => {
                   <button
                     key={index}
                     style={{
-                      border:
-                        item.psCode === selectedPsCode
-                          ? `2px solid ${brandColor}`
-                          : ''
+                      border: isSelectedCombination(item)
+                        ? `2px solid ${brandColor}`
+                        : ''
                     }}
                     className={`flex h-[215px] w-[240px] flex-col gap-[10px] rounded-md bg-white pl-[10px] pt-[10px] text-start text-white outline-none`}
                     onClick={() => handleCardClick(item)}
@@ -243,10 +291,8 @@ const ContextSelector = () => {
                       </h1>
                       <span className='pr-[10px] outline-none'>
                         <StarIcon
-                          fill={item.psCode === selectedPsCode ? '#F9D544' : ''}
-                          stroke={
-                            item.psCode === selectedPsCode ? '' : '#B6BAC3'
-                          }
+                          fill={isSelectedCombination(item) ? '#F9D544' : ''}
+                          stroke={isSelectedCombination(item) ? '' : '#B6BAC3'}
                         />
                       </span>
                     </div>
@@ -278,7 +324,7 @@ const ContextSelector = () => {
               color: isLightColor(brandColor)
             }}
             className='flex w-[200px] items-center justify-between rounded-md px-[10px] py-[10px] text-white outline-none'
-            disabled={!selectedPsCode}
+            disabled={!Object.keys(selectedCombination).length}
           >
             {loading ? (
               <span className='flex w-full items-center justify-center'>

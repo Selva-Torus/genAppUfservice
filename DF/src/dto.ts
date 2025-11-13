@@ -108,32 +108,33 @@ export class readAPIDTO {
     isTable?:boolean
   }
 
- export class PoEvent {
+  export class PoEvent {
     constructor(
-      public key: string,
-      public upId: string,
+     
+      public pfdto:pfDto,
       public event: string,
-      public data: object,
-      public token: string,
-      public nodeId: string,
-      public nodeName: string,
-      public nodeType: string,
+      public pfs : any,
+      public poJson: any,
+      public pfo: any,
+      public ndp : any,
       public flag : string,
       public page?:number,
       public count?:number,
-      public filterData?:object
+      public filterData?:object,
+      public lock?:Object,
+      public childTable?:any
       ) {}
     }
-
+ 
     export class pfDto {
       @IsNotEmpty()
       @IsString()
       key: string      
       upId: string    
       event: string      
-      data: object
+      data: any
       token:string    
-      nodeId: string     
+      nodeId: string    
       nodeName:string    
       nodeType:string  
       sourceId:string
@@ -143,6 +144,8 @@ export class readAPIDTO {
       page?:number
       count?:number
       filterData?:object
+      lock?:Object
+      childTable?:any
     }
   
     export class pageDto { 
@@ -319,6 +322,8 @@ export class paginationDataFilterDto{
   dpdKey?:string
   @ApiProperty({description: 'method'})
   method?:string
+  @ApiProperty({description: 'primaryKey'})
+  primaryKey?:string
 }
 
 export class InitiatePFDto{
@@ -434,6 +439,9 @@ export class signinToTorusDto{
 
   @ApiProperty({description: 'method'})
   method?:string
+
+  @ApiProperty({description: 'ufClientType'})
+  ufClientType?:string
 }
 
 export interface errorObj{

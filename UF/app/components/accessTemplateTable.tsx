@@ -89,106 +89,109 @@ const AccessTemplateTable = ({}) => {
   ) {
     // Helper function to find an object by code
     const findByCode = (arr: any[], code: string, key: string) =>
-      arr.find(item => item[key] === code)
+      arr.find((item) => item[key] === code);
 
     // Create a result array
-    const result: any[] = []
+    const result: any[] = [];
 
     // Iterate over each selected second-level member
-    selectedSecondLevel.forEach(secondLevel => {
-      const { orgGrpCode, orgCode, roleGrpCode, roles } = secondLevel
+    selectedSecondLevel.forEach((secondLevel) => {
+      const { orgGrpCode, orgCode, psGrpCode, ps } = secondLevel;
 
       // Find the corresponding orgGrp in the master
-      const orgGrp = findByCode(master, orgGrpCode, 'orgGrpCode')
-      if (!orgGrp) return
+      const orgGrp = findByCode(master, orgGrpCode, "orgGrpCode");
+      if (!orgGrp) return;
 
       // Find the corresponding org in the orgGrp
-      const org = findByCode(orgGrp.org, orgCode, 'orgCode')
-      if (!org) return
+      const org = findByCode(orgGrp.org, orgCode, "orgCode");
+      if (!org) return;
 
       // Find the corresponding roleGrp in the org
-      const roleGrp = findByCode(org.roleGrp, roleGrpCode, 'roleGrpCode')
-      if (!roleGrp) return
+      const psGrp = findByCode(org.psGrp, psGrpCode, "psGrpCode");
+      if (!psGrp) return;
 
       // Filter roles within the roleGrp based on the selection
-      const filteredRoles = roles
-        .map((role: any) => {
-          const selectedRole = findByCode(
-            roleGrp.roles,
-            role.roleCode,
-            'roleCode'
-          )
-          if (!selectedRole) return null
+      const filteredPS = ps
+        .map((prod: any) => {
+          const selectedPs = findByCode(
+            psGrp.ps,
+            prod.psCode,
+            "psCode"
+          );
+          if (!selectedPs) return null;
 
           // Filter psGrps within the role based on the third-level selection
-          const filteredPsGrps = role.psGrp
-            .map((psGrp: any) => {
-              const selectedPsGrp = findByCode(
-                selectedRole.psGrp,
-                psGrp.psGrpCode,
-                'psGrpCode'
-              )
-              if (!selectedPsGrp) return null
+          const filteredRoleGrps = prod.roleGrp
+            .map((roleGrp: any) => {
+              const selectedRoleGrp = findByCode(
+                selectedPs.roleGrp,
+                roleGrp.roleGrpCode,
+                "roleGrpCode"
+              );
+              if (!selectedRoleGrp) return null;
 
-              // Filter ps within the psGrp based on the third-level selection
-              const psInThirdLevel = findByCode(
+              // Filter role within the roleGrp based on the third-level selection
+              const roleInThirdLevel = findByCode(
                 selectedThirdLevel,
-                selectedPsGrp.psGrpCode,
-                'psGrpCode'
-              )
-              if (psInThirdLevel) {
+                selectedRoleGrp.roleGrpCode,
+                "roleGrpCode"
+              );
+              if (roleInThirdLevel) {
                 return {
-                  ...selectedPsGrp,
-                  ps: selectedPsGrp.ps.filter((ps: any) =>
-                    psInThirdLevel.ps.some(
-                      (selPs: any) => selPs.psCode === ps.psCode
+                  ...selectedRoleGrp,
+                  roles: selectedRoleGrp.roles.filter((role: any) =>
+                    roleInThirdLevel.roles.some(
+                      (selRole: any) => selRole.roleCode === role.roleCode
                     )
-                  )
-                }
+                  ),
+                };
               } else {
-                return selectedPsGrp
+                return {
+                  ...selectedRoleGrp,
+                  roles : []
+                };
               }
             })
-            .filter((psGrp: any) => psGrp !== null)
+            .filter((roleGrp: any) => roleGrp !== null);
 
           return {
-            ...selectedRole,
-            psGrp: filteredPsGrps
-          }
+            ...selectedPs,
+            roleGrp: filteredRoleGrps,
+          };
         })
-        .filter((role: any) => role !== null)
+        .filter((prod: any) => prod !== null);
 
       // Build the result object for this second-level selection
-      const existingOrgGrp = result.find(res => res.orgGrpCode === orgGrpCode)
+      const existingOrgGrp = result.find((res) => res.orgGrpCode === orgGrpCode);
 
       if (existingOrgGrp) {
         const existingOrg = existingOrgGrp.org.find(
           (o: any) => o.orgCode === orgCode
-        )
+        );
 
         if (existingOrg) {
-          const existingRoleGrp = existingOrg.roleGrp.find(
-            (rg: any) => rg.roleGrpCode === roleGrpCode
-          )
+          const existingPsGrp = existingOrg.psGrp.find(
+            (psg: any) => psg.psGrpCode === psGrpCode
+          );
 
-          if (existingRoleGrp) {
-            existingRoleGrp.roles.push(...filteredRoles)
+          if (existingPsGrp) {
+            existingPsGrp.ps.push(...filteredPS);
           } else {
-            existingOrg.roleGrp.push({
-              ...roleGrp,
-              roles: filteredRoles
-            })
+            existingOrg.psGrp.push({
+              ...psGrp,
+              ps: filteredPS,
+            });
           }
         } else {
           existingOrgGrp.org.push({
             ...org,
-            roleGrp: [
+            psGrp: [
               {
-                ...roleGrp,
-                roles: filteredRoles
-              }
-            ]
-          })
+                ...psGrp,
+                ps: filteredPS,
+              },
+            ],
+          });
         }
       } else {
         result.push({
@@ -196,19 +199,19 @@ const AccessTemplateTable = ({}) => {
           org: [
             {
               ...org,
-              roleGrp: [
+              psGrp: [
                 {
-                  ...roleGrp,
-                  roles: filteredRoles
-                }
-              ]
-            }
-          ]
-        })
+                  ...psGrp,
+                  ps: filteredPS,
+                },
+              ],
+            },
+          ],
+        });
       }
-    })
+    });
 
-    return result
+    return result;
   }
 
   const updateRolePsOptions = (
@@ -252,31 +255,31 @@ const AccessTemplateTable = ({}) => {
     }
   }
 
-  const handleOrgSelection = (item: any, org: any) => {
-    const copyOfSelectedOptions: any = structuredClone(selectedOptions)
-    copyOfSelectedOptions[item.createdOn].selectedOrg = org
-    copyOfSelectedOptions[item.createdOn].selectedRg = []
-    copyOfSelectedOptions[item.createdOn].selectedPsg = []
-    updateRolePsOptions(item.createdOn, 'role', org)
-    setSelectedOptions(copyOfSelectedOptions)
-  }
+  const handleOrgSelection = (item:any ,org: any) => {
+    const copyOfSelectedOptions = structuredClone(selectedOptions);
+    copyOfSelectedOptions[item.createdOn].selectedOrg = org;
+    copyOfSelectedOptions[item.createdOn].selectedRg = [];
+    copyOfSelectedOptions[item.createdOn].selectedPsg = [];
+    updateRolePsOptions(item.createdOn, "ps", org);
+    setSelectedOptions(copyOfSelectedOptions);
+  };
 
-  const handleRoleSelection = (item: any, role: any) => {
-    const copyOfSelectedOptions: any = structuredClone(selectedOptions)
-    copyOfSelectedOptions[item.createdOn].selectedRg = role
-    copyOfSelectedOptions[item.createdOn].selectedPsg = []
-    updateRolePsOptions(item.createdOn, 'ps', role)
-    setSelectedOptions(copyOfSelectedOptions)
-  }
+  const handlePsSelection = (item:any ,ps: any) => {
+    const copyOfSelectedOptions = structuredClone(selectedOptions);
+    copyOfSelectedOptions[item.createdOn].selectedPsg = ps;
+    copyOfSelectedOptions[item.createdOn].selectedRg = [];
+    updateRolePsOptions(item.createdOn, "role", ps);
+    setSelectedOptions(copyOfSelectedOptions);
+  };
 
-  const handlePsSelection = (item: any, ps: any) => {
-    const copyOfSelectedOptions: any = structuredClone(selectedOptions)
-    copyOfSelectedOptions[item.createdOn].selectedPsg = ps
-    const { selectedOrg, selectedRg } = copyOfSelectedOptions[item.createdOn]
-    const res = buildSelectedMembers(selectedOrg, selectedRg, ps)
-    updateValuesInSource(item, 'orgGrp', res, [selectedOrg, selectedRg, ps])
-    setSelectedOptions(copyOfSelectedOptions)
-  }
+  const handleRoleSelection = (item:any ,role: any) => {
+    const copyOfSelectedOptions = structuredClone(selectedOptions);
+    copyOfSelectedOptions[item.createdOn].selectedRg = role;
+    const { selectedOrg, selectedPsg } = copyOfSelectedOptions[item.createdOn];
+    const res = buildSelectedMembers(selectedOrg, selectedPsg , role);
+    updateValuesInSource(item, "orgGrp", res, [selectedOrg, role, selectedPsg]);
+    setSelectedOptions(copyOfSelectedOptions);
+  };
 
   const handleRowSelection = (accessProfile: string) => {
     const copyOfSelectedRows = structuredClone(selectedRows)
@@ -355,13 +358,13 @@ const AccessTemplateTable = ({}) => {
                   }
                 />
               </th>
-              <th className='px-4 py-4'>Access Template</th>
-              <th className='px-4 py-4'>Data Access Privilege</th>
-              <th className='px-4 py-4'>Organization</th>
-              <th className='px-4 py-4'>Roles</th>
-              <th className='px-4 py-4'>Products/ Services</th>
-              <th className='px-2 py-4'>No.ofusers</th>
-              <th className='px-4 py-4'>Created On</th>
+              <th className='px-4 py-4 w-[250px]'>Access Template</th>
+              <th className='px-4 py-4 w-[200px]'>Data Access Privilege</th>
+              <th className='px-4 py-4 w-[250px]'>Organization</th>
+              <th className='px-4 py-4 w-[220px]'>Products/ Services</th>
+              <th className='px-4 py-4 w-[220px]'>Roles</th>
+              <th className='px-2 py-4 w-[220px]'>No.ofusers</th>
+              <th className='px-4 py-4 w-[220px]'>Created On</th>
             </tr>
           </thead>
           <tbody>
@@ -380,7 +383,7 @@ const AccessTemplateTable = ({}) => {
                     hidden={template['no.ofusers'] !== 0}
                   />
                 </td>
-                <td className='px-1 py-1'>
+                <td className='px-1 py-1  w-[250px]'>
                   <div
                     onDoubleClick={() =>
                       TemplateNotEditable(template, template.originalIndex)
@@ -427,7 +430,7 @@ const AccessTemplateTable = ({}) => {
                     )}
                   </div>
                 </td>
-                <td>
+                <td className='px-1 py-1 w-[200px]'>
                   <div>
                     <Select
                       value={[
@@ -461,7 +464,7 @@ const AccessTemplateTable = ({}) => {
                     </Select>
                   </div>
                 </td>
-                <td className='px-1 py-1'>
+                <td className='px-1 py-1 w-[250px]'>
                   <div>
                     <CustomGrpMemberDropdown
                       data={orgGrpData}
@@ -480,7 +483,26 @@ const AccessTemplateTable = ({}) => {
                     />
                   </div>
                 </td>
-                <td className='px-1 py-1'>
+                <td className='px-1 py-1 w-[220px]'>
+                  <div>
+                    <CustomGrpMemberDropdown
+                      data={allOptions[template?.createdOn]?.psOptions ?? []}
+                      groupKey='psGrp'
+                      memberKey='ps'
+                      memberCodeKey='psCode'
+                      memberNameKey='psName'
+                      groupCodeKey='psGrpCode'
+                      groupNameKey='psGrpName'
+                      selected={
+                        selectedOptions[template?.createdOn]?.selectedPsg ?? []
+                      }
+                      setSelected={(ps: any) => handlePsSelection(template, ps)}
+                      isDisabled={false}
+                      parentKey='orgCode'
+                    />
+                  </div>
+                </td>
+                <td className='px-1 py-1 w-[220px]'>
                   <div>
                     <CustomGrpMemberDropdown
                       data={allOptions[template?.createdOn]?.roleOptions ?? []}
@@ -497,33 +519,15 @@ const AccessTemplateTable = ({}) => {
                         handleRoleSelection(template, role)
                       }
                       isDisabled={false}
-                      parentKey='orgCode'
+                      parentKey='psCode'
                     />
                   </div>
                 </td>
-                <td className='px-1 py-1'>
-                  <div>
-                    <CustomGrpMemberDropdown
-                      data={allOptions[template?.createdOn]?.psOptions ?? []}
-                      groupKey='psGrp'
-                      memberKey='ps'
-                      memberCodeKey='psCode'
-                      memberNameKey='psName'
-                      groupCodeKey='psGrpCode'
-                      groupNameKey='psGrpName'
-                      selected={
-                        selectedOptions[template?.createdOn]?.selectedPsg ?? []
-                      }
-                      setSelected={(ps: any) => handlePsSelection(template, ps)}
-                      isDisabled={false}
-                      parentKey='roleCode'
-                    />
-                  </div>
-                </td>
+                
                 <td className='px-1 py-1 text-center'>
                   {template['no.ofusers']}
                 </td>
-                <td className='px-1 py-1'>
+                <td className='px-1 py-1 w-[220px]'>
                   {template.createdOn}
                 </td>
               </tr>

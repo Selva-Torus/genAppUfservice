@@ -54,6 +54,7 @@ export interface uf_paginationDataFilterDto{
     dfdType?:string;
     dpdKey?:string;
     method?:string;
+    primaryKey?:string
   }
   //button
 export interface uf_getPFDetailsDto{
@@ -81,7 +82,9 @@ export interface te_eventEmitterDto {
   nodeId?:string;
   nodeName?:string;
   nodeType?:string;
-    upId?:string;
+  upId?:string;
+  lock?:any;
+  childTables?:string[]
 }
 export interface uf_ifoDto{
   dpdKey?:string;
@@ -131,6 +134,7 @@ export interface api_signinDto {
     username: string;
     password: string;
     key?:string;
+    ufClientType?:string
 }
 
 export interface api_screenRouteDto {

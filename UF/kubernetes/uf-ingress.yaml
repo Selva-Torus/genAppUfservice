@@ -1,24 +1,24 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: tg2-uf-v11-ingress
-  namespace: tg2-uf-v11
+  name: ct003-oprmatrix-uf-v1-ingress
+  namespace: ct003-oprmatrix-uf-v1
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - tgadev.gsstvl.com
-      secretName: tg2-uf-v11-tls
+        - tgadev.toruslowcode.com
+      secretName: ct003-oprmatrix-uf-v1-tls
   rules:
-    - host: tgadev.gsstvl.com
+    - host: tgadev.toruslowcode.com
       http:
         paths:
-          - path: /ct003/cg/tg2/v11
+          - path: /ct003/ag001/oprmatrix/v1
             pathType: Prefix
             backend:
               service:
-                name: tg2-uf-generator
+                name: ct003-oprmatrix-uf-generator
                 port:
                   number: 443

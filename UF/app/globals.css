@@ -25,4 +25,7 @@
     }
   }
   
- 
+.g-date-calendar__controls{
+    display: flex;
+    scale: 0.8;
+} 

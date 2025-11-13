@@ -128,8 +128,8 @@ const SetupScreen = ({
       accessProfile: `Template ${securityData.length + 1}`,
       dap: '',
       organization: [],
-      roles: [],
       'products/Services': [],
+      roles: [],
       'no.ofusers': 0,
       createdOn: formattedDate
     }
@@ -163,20 +163,21 @@ const SetupScreen = ({
         }
       )
       if (response.status === 200) {
-        if (response.data.orgMatrix && Array.isArray(response.data.orgMatrix)) {
-          setOrgGrpData(response.data.orgMatrix)
-          setMasterState(prev => ({ ...prev, org: response.data.orgMatrix }))
+        if (
+          response?.data?.orgMatrix &&
+          Array.isArray(response?.data?.orgMatrix)
+        ) {
+          setOrgGrpData(response?.data?.orgMatrix)
+          setMasterState(prev => ({
+            ...prev,
+            org: response?.data?.orgMatrix
+          }))
         } else {
           setMasterState(prev => ({ ...prev, org: [] }))
         }
         if (response.data.users && Array.isArray(response.data.users)) {
           const result = response.data.users.map((item: any, i: number) => ({
-            users:
-              item.firstName && item.lastName
-                ? item.loginId + item.firstName + ' ' + item.lastName
-                : item.loginId
-                ? item.loginId
-                : '',
+            user:"",
             email: item.email,
             profile: item?.profile ?? '',
             firstName: item.firstName,
@@ -189,7 +190,8 @@ const SetupScreen = ({
             lastActive: item?.lastActive ?? 'NA',
             dateAdded: item.dateAdded,
             isAppAdmin: item.isAppAdmin,
-            edit: ''
+            edit: '',
+            userUniqueId: item?.userUniqueId
           }))
           setUserProfileData(result)
           setMasterState(prev => ({ ...prev, user: result }))
@@ -210,11 +212,11 @@ const SetupScreen = ({
           svg: <GeneralSettingsIcon fill={`var(--g-color-text-primary)`} />,
           code: 'general'
         },
-        {
-          name: 'Organizational Matrix',
-          svg: <Org fill={`var(--g-color-text-primary)`} />,
-          code: 'org'
-        },
+        //{
+        //  name: 'Organizational Matrix',
+        //  svg: <Org fill={`var(--g-color-text-primary)`} />,
+        //  code: 'org'
+        //},
         {
           name: 'Access Template',
           svg: <Security fill={`var(--g-color-text-primary)`} />,
@@ -299,16 +301,16 @@ const SetupScreen = ({
     }
   }
 
-  const getRoleOptions = (organization: any) => {
+  const getRoleOptions = (psGrps: any) => {
     const initialRoleOptions: any[] = []
-    if (organization?.length) {
-      organization.forEach((grpOrg: any) => {
-        grpOrg.org.forEach((org: any) => {
-          org.roleGrp.forEach((roleGrp: any) => {
+    if (psGrps?.length) {
+      psGrps.forEach((grpPSG: any) => {
+        grpPSG.ps.forEach((ps: any) => {
+          ps.roleGrp.forEach((roleGrp: any) => {
             initialRoleOptions.push({
               ...roleGrp,
-              orgGrpCode: grpOrg.orgGrpCode,
-              orgCode: org.orgCode
+              psGrpCode: grpPSG.psGrpCode,
+              psCode: ps.psCode
             })
           })
         })
@@ -317,16 +319,16 @@ const SetupScreen = ({
     return initialRoleOptions
   }
 
-  const getPsOptions = (roles: any) => {
+  const getPsOptions = (organization: any) => {
     const initialProductServiceOptions: any[] = []
-    if (roles?.length) {
-      roles.forEach((grpRG: any) => {
-        grpRG.roles.forEach((role: any) => {
-          role.psGrp.forEach((psGrp: any) => {
+    if (organization?.length) {
+      organization.forEach((grpOrg: any) => {
+        grpOrg.org.forEach((org: any) => {
+          org.psGrp.forEach((psGrp: any) => {
             initialProductServiceOptions.push({
               ...psGrp,
-              roleGrpCode: grpRG.roleGrpCode,
-              roleCode: role.roleCode
+              orgGrpCode: grpOrg.orgGrpCode,
+              orgCode: org.orgCode
             })
           })
         })
@@ -382,7 +384,8 @@ const SetupScreen = ({
             orgGrp: item.orgGrp ?? [],
             'products/Services': item['products/Services'] ?? [],
             'no.ofusers': item['no.ofusers'],
-            createdOn: item.createdOn
+            createdOn: item.createdOn,
+            roleUniqueId: item.roleUniqueId
           }
         })
         onUpdateSecurityData(result)
@@ -401,8 +404,8 @@ const SetupScreen = ({
           setAllOptions((prevState: any) => ({
             ...prevState,
             [item.createdOn]: {
-              roleOptions: getRoleOptions(item?.organization ?? []),
-              psOptions: getPsOptions(item?.roles ?? [])
+              psOptions: getPsOptions(item?.organization ?? []),
+              roleOptions: getRoleOptions(item?.['products/Services'] ?? [])
             }
           }))
         })
@@ -448,7 +451,7 @@ const SetupScreen = ({
   ) => {
     try {
       const res = await AxiosService.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/setJson`,
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/appSecurityTemplateData`,
         {
           data: data ? data : securityData
         },
@@ -602,11 +605,11 @@ const SetupScreen = ({
           <div
             className={`g-root flex h-[90%] w-full flex-col overflow-hidden ${themeClass}`}
           >
-            <div className='flex w-full  items-center justify-between px-2'>
+            <div className='flex w-2/3  items-center justify-between px-2'>
               <Text variant='header-1' className='text-nowrap'>
                 User Management
               </Text>
-              <div className='flex items-center gap-2 pb-2'>
+              <div className='flex items-center gap-2 py-2'>
                 <div
                   style={{
                     visibility:
@@ -642,6 +645,7 @@ const SetupScreen = ({
                     }}
                   >
                     <button
+                      hidden={selectedMenuItem == 'user' ? true : false}
                       onClick={handlePlusButtonClick}
                       style={{
                         backgroundColor: brandcolor,
@@ -662,6 +666,7 @@ const SetupScreen = ({
                     </button>
 
                     <button
+                      hidden={selectedMenuItem == 'user' ? true : false}
                       className={`${
                         selectedMenuItem === 'org' ? 'hidden' : ''
                       } outline-none ${
@@ -738,7 +743,10 @@ const SetupScreen = ({
                           <Button
                             view='flat'
                             onClick={handleDeleteButtonClick}
-                            style={{ backgroundColor: '#EB5757' , color: 'white' }}
+                            style={{
+                              backgroundColor: '#EB5757',
+                              color: 'white'
+                            }}
                           >
                             Delete
                           </Button>
@@ -750,9 +758,10 @@ const SetupScreen = ({
                       onClick={handleSaveButtonClick}
                       className={`rounded-md bg-[#1C274C] px-2 py-1.5 outline-none`}
                       disabled={tenantAccess != 'edit'}
+                      hidden={selectedMenuItem == 'user' ? true : false}
                     >
                       <SaveIcon height='18' width='18' />
-                    </button>
+                    </button> 
                   </div>
                 </div>
               </div>
@@ -763,7 +772,10 @@ const SetupScreen = ({
             ></hr>
             <div className='flex h-[85vh]'>
               <div
-                style={{ borderRight: `1px solid var(--g-color-line-generic)` , minWidth : '200px' }}
+               style={{
+                  borderRight: `1px solid var(--g-color-line-generic)`,
+                  minWidth: '200px'
+                }}
               >
                 <Menu size='xl' className='h-full'>
                   {menuItems.map(item => (
@@ -792,7 +804,7 @@ const SetupScreen = ({
                   />
                 ) : selectedMenuItem === 'org' ? (
                   <div className='w-full'>
-                    <OrgMatrix tenantAccess={"edit"} />
+                    <OrgMatrix tenantAccess={'edit'} />
                   </div>
                 ) : (
                   selectedMenuItem === 'st' && <AccessTemplateTable />

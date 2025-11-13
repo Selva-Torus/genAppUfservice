@@ -4,7 +4,7 @@ import {
   SearchIcon
 } from '@/app/components/svgApplication'
 import { RangeCalendar } from '@gravity-ui/date-components'
-import { DateTime } from '@gravity-ui/date-utils'
+import { dateTime, DateTime } from '@gravity-ui/date-utils'
 import { Avatar, Button, Checkbox, Popup , Loader, Text } from '@gravity-ui/uikit'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { Calendar , Person } from '@gravity-ui/icons'
@@ -19,7 +19,8 @@ const LogsFilterationModal = ({
   fabrics,
   setFabrics,
   user,
-  setUser
+  setUser,
+  activeTab
 }: {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
   range: {
@@ -36,6 +37,7 @@ const LogsFilterationModal = ({
   setFabrics: React.Dispatch<React.SetStateAction<Array<string>>>
   user: Array<string>
   setUser: React.Dispatch<React.SetStateAction<Array<string>>>
+  activeTab:string
 }) => {
   const [isDateRangeOpen, setDateRangeOpen] = useState(false)
   const [selectedDateRange, setSelectedDateRange] = useState(range)
@@ -152,6 +154,7 @@ const LogsFilterationModal = ({
           <RangeCalendar
             value={selectedDateRange}
             onUpdate={setSelectedDateRange}
+            maxValue={dateTime()}
           />
         </Popup>
       </div>
@@ -159,7 +162,10 @@ const LogsFilterationModal = ({
       <div className='flex flex-col gap-3 px-2 py-3'>
         <Text variant='subheader-1'>FABRICS</Text>
         <div className='flex flex-col gap-[1.5vh]'>
-          {fabricList.map((item, index) => (
+          {(activeTab === 'process'
+            ? fabricList.filter(item => ['DF', 'PF'].includes(item.key))
+            : fabricList
+          ).map((item, index) => (
             <Checkbox
               key={index}
               content={item.label}

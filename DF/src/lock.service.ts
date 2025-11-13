@@ -13,10 +13,10 @@ export class LockService {
 
   constructor() {    
 
-     this.redlock = new Redlock([redisClient], {
-      retryCount:  parseInt(process.env.RETRYCOUNT),
-      retryDelay:  parseInt(process.env.RETRYDELAY), // time in ms
-      retryJitter:  parseInt(process.env.RETRYJITTER), // time in ms
+    this.redlock = new Redlock([redisClient], {
+      retryCount:  parseInt(process.env.RETRYCOUNT || '3'),
+      retryDelay:  parseInt(process.env.RETRYDELAY || '200'), // time in ms
+      retryJitter:  parseInt(process.env.RETRYJITTER || '100'), // time in ms
     });
 
     this.redlock.on('clientError', (err) => {

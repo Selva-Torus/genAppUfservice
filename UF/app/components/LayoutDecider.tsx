@@ -11,6 +11,7 @@ import { useInfoMsg } from './infoMsgHandler'
 import { MenuItem, ScreenDetail } from '../interfaces/interfaces'
 import decodeToken from './decodeToken'
 import { useGravityThemeClass } from '../utils/useGravityUITheme'
+import axios from 'axios'
 const LayoutDecider = ({
   mode = 'detached',
   navigationStyles = 'vertical',
@@ -35,19 +36,21 @@ const LayoutDecider = ({
     TotalContext
   ) as TotalContextProps
   const encryptionFlagApp: boolean = false;    
-  const encryptionDpd: string = "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:CG:AFGK:TG2:AFK:TG2DPD:AFVK:v1";
+  const encryptionDpd: string = "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1";
   const encryptionMethod: string = "";
   const brandColor = property?.brandColor || '#1F2D3D'
   const hoverColor = property?.hoverColor || '#1F2D3D'
   const selectionColor = property?.selectionColor || '#1F2D3D'
   const sidebarColor = property?.menubarColor || '#1F2D3D'
  // const topbarColor = property?.topbarColor || ''
-  const logo = "https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT003/resources/images/image.jfif"
-  const appName = "TG2"
+  const logo = ""
+  const appName = "oprmatrix"
   const toast = useInfoMsg()
   const [loading, setLoading] = useState(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
-  const navData: MenuItem[] = [
+  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc"
+  const [rawNavData, setRawNavData] = useState<MenuItem[] | null>(null);
+  /*const navData: MenuItem[] = [
   {
     "menuGroup": "admin",
     "menuGroupLabel": "Admin",
@@ -73,327 +76,18 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
-    "menuGroup": "form",
-    "menuGroupLabel": "form1",
+    "menuGroupLabel": "testroute",
     "screenDetails": [
       {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
+        "name": "testroute",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "allowedAccessProfile": [],
         "static": false
       }
     ],
     "items": []
-  },
-  {
-    "menuGroupLabel": "Mycomponents",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form2",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form3",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form4",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form5",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form6",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form7",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form8",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form9",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form10",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form11",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form12",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form13",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form14",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form15",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form16",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form17",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroup": "form",
-    "menuGroupLabel": "form18",
-    "screenDetails": [
-      {
-        "name": "formitem",
-        "label": "formItem",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:CG:AFGK:TG2:AFK:showProfile:AFVK:v1",
-        "allowedAccessProfile": [
-          "Employee",
-          "userTemplate"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-]
+  }
+]*/
   const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.selectedAccessProfile
@@ -510,7 +204,93 @@ const LayoutDecider = ({
     )
   }
 
-  async function checkAccessProfile(token: string) {
+    const getNavData = async() => {
+ try {
+   const res = await axios.post(
+    `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/getNavbarData`,
+    { key: aKey },
+    { headers: { authorization: `Bearer ${token}` } }
+   )
+   //console.log(res.data);
+   setRawNavData(res.data); // Set the raw data into state
+  } catch (error) {
+   console.error("Failed to fetch nav data:", error);
+   toast('Failed to load navigation data', 'danger');
+   setLoading(false);
+  }
+ }
+
+   async function checkAccessProfile(token: string, navData: MenuItem[]) {
+  try {
+   let myAccount:any;
+   if (encryptionFlagApp) {
+    myAccount = await AxiosService.get('/UF/myAccount-for-client', {
+     headers: {
+      Authorization: `Bearer ${token}`
+     },
+     params: {
+      dpdKey: encryptionDpd,
+      method: encryptionMethod,
+      key:"Logs Screen"
+     }
+    })
+   }else{
+    myAccount = await AxiosService.get('/UF/myAccount-for-client', {
+     headers: {
+      Authorization: `Bearer ${token}`
+      },
+     params: {
+      key:"Logs Screen"
+     }
+    })
+   }
+   setUserDetails(myAccount?.data)
+   if (
+   user != "" && user != null
+   ) {
+    const processedMenuItems = await processMenuItems(
+     navData, // Use the passed-in navData
+     [user],
+     token
+    )
+    setUpdatedNavData(processedMenuItems)
+    setLoading(false)
+   } else {
+    toast('user lack access to any screen', 'danger')
+    logout()
+   }
+  } catch (err: any) {
+   console.error(err)
+   toast('user lack access to any screen', 'danger')
+   logout()
+  }
+ }  
+
+ useEffect(() => {
+  if (typeof window !== undefined) {
+   const currentToken = getCookie('token')
+   if (currentToken) {
+    // 4a. Initial fetch of raw navigation data
+    getNavData()
+   } else {
+    // Handle missing token scenario if necessary
+    setLoading(false);
+    // Optional: Redirect to login/logout()
+   }
+  }
+ }, []) 
+
+  useEffect(() => {
+  if (rawNavData) {
+   const currentToken = getCookie('token')
+   if (currentToken) {
+    checkAccessProfile(currentToken, rawNavData)
+   }
+  }
+ }, [rawNavData])
+
+ ///////////
+ /* async function checkAccessProfile(token: string) {
     try {
       let myAccount:any;
       if (encryptionFlagApp) {  
@@ -520,13 +300,17 @@ const LayoutDecider = ({
           },
           params: {
             dpdKey: encryptionDpd,
-            method: encryptionMethod
+            method: encryptionMethod,
+            key:"Logs Screen"
           }
         })
       }else{
         myAccount = await AxiosService.get('/UF/myAccount-for-client', {
           headers: {
             Authorization: `Bearer ${token}`
+            },
+          params: {
+            key:"Logs Screen"
           }
         })
       }
@@ -559,7 +343,7 @@ const LayoutDecider = ({
         checkAccessProfile(token)
       }
     }
-  }, [])
+  }, []) */
 
   const listMenuItems = () => {
     if (navigationStyles == 'horizontal' || mode == 'closed') {
@@ -574,7 +358,7 @@ const LayoutDecider = ({
   }
 
    if (loading == true){
-    return (<div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><img src="https://varnishdev.gsstvl.com/files/torus/9.1/CT003/resources/splashImage/loading.gif" alt="loadingImage" /></div>);
+    return (<div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><span>Loading...</span></div>);
   }
   return (
     <div className={`flex h-screen w-screen flex-col`}>

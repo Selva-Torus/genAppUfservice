@@ -55,6 +55,7 @@ const SideNav = ({
       nestedMenu.push({
         text: (
           <p
+            className='m-0 p-0'
             style={{
               transition: 'all 0.2s ease-in-out'
             }}
@@ -151,7 +152,7 @@ const SideNav = ({
     localStorage.clear()
     sessionStorage.clear()
     deleteAllCookies()
-    window.location.href = '/ct003/cg/tg2/v11'
+    window.location.href = '/ct003/ag001/oprmatrix/v1'
   }
 
   const hasMatchingName = (obj: any, input: string): boolean => {
@@ -270,7 +271,7 @@ const SideNav = ({
                                     height='20'
                                     width='20'
                                     fill={
-                                      typeof getDropDownStyles(
+                                    typeof getDropDownStyles(
                                         menu.menuGroup,
                                         true
                                       ) == 'boolean' ? isLightColor(brandColor) :
@@ -326,7 +327,7 @@ const SideNav = ({
                                   height='20'
                                   width='20'
                                   fill={
-                                     typeof getDropDownStyles(
+                                  typeof getDropDownStyles(
                                         menu.menuGroup,
                                         true
                                       ) == 'boolean' ? isLightColor(brandColor) :
@@ -487,7 +488,7 @@ const FullViewAvatar = ({
             </div>
             <div className='flex w-[60%] select-none flex-col items-start justify-start '>
               <span
-                className='text-start font-bold   '
+                className='text-start font-bold'
                 style={{
                   color: isLightColor(brandColor)
                 }}

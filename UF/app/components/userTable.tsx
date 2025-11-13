@@ -35,7 +35,7 @@ export interface UserData {
   isAppAdmin?: boolean
 }
 
-const CustomTable = withTableSelection(Table)
+const CustomTable = Table
 
 const UserTable: React.FC<{
   data: UserData[]
@@ -384,16 +384,13 @@ const UserTable: React.FC<{
         </Text>
       )
     },
-
     {
       id: 'edit',
-      name: '',
+      name: 'action',
       width: 80,
       align: 'center',
       template: (item: any) => (
-        <Popover
-          content={
-            <div className='flex flex-col gap-2'>
+             <div className='flex flex-col items-center gap-2'>
               <Button
                 onClick={() => {
                   setEditUserModalOpen(true)
@@ -401,7 +398,7 @@ const UserTable: React.FC<{
                 }}
                 view='flat'
               >
-                <Icon data={Pencil} size={18} /> Edit
+                <Icon data={Pencil} size={18} />
               </Button>
               <Modal open={editUserModalOpen} disableOutsideClick>
                 <UserCreationModal
@@ -414,28 +411,7 @@ const UserTable: React.FC<{
                   isEdit={true}
                 />
               </Modal>
-              <div>
-                <Button
-                  view='flat'
-                  onClick={() => {
-                    if (item.isAppAdmin) {
-                      handledatachange(item, 'isAppAdmin', undefined)
-                    } else {
-                      handledatachange(item, 'isAppAdmin', true)
-                    }
-                  }}
-                >
-                  <Icon data={PersonPlus} size={18} />
-                  {item.isAppAdmin ? 'Revoke Admin Access' : 'Grant Admin Access'}
-                </Button>
-              </div>
             </div>
-          }
-          openOnHover={false}
-          placement={"bottom-end"}
-        >
-          <Ellipsis />
-        </Popover>
       )
     }
   ]
@@ -471,8 +447,6 @@ const UserTable: React.FC<{
         data={currentGroups}
         columns={columns as any}
         emptyMessage='No data available'
-        selectedIds={getSelectedIds}
-        onSelectionChange={indices => handleRowSelection(indices)}
       />
       <Pagination
         className='justify-center mt-1'

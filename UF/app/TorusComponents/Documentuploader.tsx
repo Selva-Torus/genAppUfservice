@@ -1,5 +1,6 @@
 'use client'
-
+import * as XLSX from 'xlsx'
+import { useEffect, useState } from 'react'
 import * as React from 'react'
 import { DropzoneOptions, useDropzone } from 'react-dropzone'
 import {
@@ -65,7 +66,11 @@ const TorusDocumentUploader = ({
   preview = true,
   draggable = false,
   id,
-  singleSelect = true
+  singleSelect = true,
+  viewType="modal",
+  DbType,
+  enableEncryption,
+  fileNamingPreference="use_system_generated_name"
 }: any) => {
   const [files, setFiles] = React.useState<Drag_file>(value)
   const [open, setOpen] = React.useState(false)
@@ -124,11 +129,30 @@ const TorusDocumentUploader = ({
       })
  
       if (newFiles.length === 0) return prevFiles
-      const filesWithUrls: FilesType[] = newFiles.map(file => ({
-        file,
-        url: URL.createObjectURL(file)
-      }))
- 
+
+      const filesWithUrls: FilesType[] = newFiles.map(file => {
+        const ext = file.name.split('.').pop() || '';
+        const baseName = file.name.replace(`.${ext}`, '');
+        const uniqueName = `${baseName}${fileNamingPreference=="use_system_generated_name"?"_"+Date.now():""}.${ext}`; // name_time format
+
+        const renamedFile = new File([file], uniqueName, { type: file.type });
+        Object.defineProperty(renamedFile, 'DbType', {
+          value: DbType,
+          writable: true,
+          enumerable: true
+        })
+        
+        Object.defineProperty(renamedFile, 'enableEncryption', {
+          value: enableEncryption,
+          writable: true,
+          enumerable: true
+        })
+        return {
+          file: renamedFile,
+          url: URL.createObjectURL(renamedFile)
+        }
+      })
+
       if (singleSelect) {
         if (typeof onChange === 'function') {
           onChange([{ file: filesWithUrls[0].file, url: filesWithUrls[0].url }])
@@ -167,46 +191,8 @@ const removeFile = async (
     ...dropzoneOptions
   })
 
-  return (
-    <div className='w-full'>
-      <div>
-        <div
-          className='flex w-full items-center justify-center px-1 py-0'
-          {...getRootProps()}
-        >
-          <div className='flex w-[95%] justify-start'>
-            <TorusButton
-              pin='round-round'
-              width='max'
-              view='outlined-info'
-              size='l'
-              startContent={
-                <span className='flex h-full items-center justify-center'>
-                  <TorusIcon className='flex items-center justify-center bg-transparent px-[0.15vw] py-[0.25vh]'>
-                    <MdFileUpload
-                      className='flex items-center justify-center bg-transparent'
-                      size={20}
-                    />
-                  </TorusIcon>
-                </span>
-              }
-              onClick={e => {
-                setOpen(true)
-                e.stopPropagation()
-              }}
-            >
-              Upload
-            </TorusButton>
-          </div>
-        </div>
-        <TorusModal
-          open={open}
-          onClose={e => {
-            setOpen(false)
-            e.stopPropagation()
-          }}
-        >
-          <div className='h-full w-full' {...getRootProps()}>
+  const viewTypeUI=()=>{
+    return           <div className='h-full w-full' {...getRootProps()}>
             <div className={` h-[52vh] w-[37.55vw] `}>
               <div className='flex items-center justify-between px-2 py-2'>
                 <div className='flex items-center justify-center gap-2'>
@@ -218,12 +204,13 @@ const removeFile = async (
                     </div>
                   </div>
                 </div>
+                      {viewType=='modal'?
                 <span
                   className='flex cursor-pointer items-center justify-center'
                   onClick={() => setOpen(false)}
                 >
                   <IoCloseCircleOutline fill='black' size={15} />
-                </span>
+                </span> : null}
               </div>
               <input {...getInputProps()} className='hidden' />
 
@@ -257,7 +244,7 @@ const removeFile = async (
                           Choose a file to upload
                         </span>
                         <span className='text-xs text-black/50'>
-                          JPEG, PNG, DOC, PDF and formats up to 5MB
+                          JPEG,PNG,DOC,PDF,XLS,CSV and formats up to 5MB
                         </span>
 
                         <TorusButton
@@ -281,7 +268,7 @@ const removeFile = async (
                         <FaArrowCircleDown size={20} />
                         <span className='text-sm text-black'>Drop here</span>
                         <span className='text-xs text-black/50'>
-                          JPEG, PNG, DOC, PDF and formats up to 5MB
+                          JPEG,PNG,DOC,PDF,XLS,CSV and formats up to 5MB
                         </span>
                       </>
                     )}
@@ -341,7 +328,49 @@ const removeFile = async (
               </div>
             </div>
           </div>
-        </TorusModal>
+  }
+  return (
+    <div className='w-full'>
+      <div>
+        <div
+          className='flex w-full items-center justify-center px-1 py-0'
+          {...getRootProps()}
+        >
+          {viewType=='modal'?
+          <div className={`flex w-[95%] justify-start ${className}`}>
+            <TorusButton
+              pin='round-round'
+              width='max'
+              view='outlined-info'
+              size='l'
+              startContent={
+                <span className='flex h-full items-center justify-center'>
+                  <TorusIcon className='flex items-center justify-center bg-transparent px-[0.15vw] py-[0.25vh]'>
+                    <MdFileUpload
+                      className='flex items-center justify-center bg-transparent'
+                      size={20}
+                    />
+                  </TorusIcon>
+                </span>
+              }
+              onClick={e => {
+                setOpen(true)
+                e.stopPropagation()
+              }}
+            >
+              Upload
+            </TorusButton>
+          </div>:null
+          }
+        </div>
+         {viewType=='modal'?<TorusModal
+          open={open}
+          onClose={e => {
+            setOpen(false)
+            e.stopPropagation()
+          }}>
+          {viewTypeUI()}
+          </TorusModal>:  viewTypeUI() }
 
         {preview && (
           <TorusModal
@@ -440,6 +469,51 @@ const bytestoKb = (units: number) => {
 }
 
 const Viewer = ({ file, url, closeFn }: any) => {
+  const [sheetData, setSheetData] = useState<any[]>([])
+
+  useEffect(() => {
+    if (!file) return
+
+    // Determine file type for Excel or CSV
+    const isExcel =
+      file.type ===
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+      file.type === 'application/vnd.ms-excel' ||
+      (file.name && (file.name.endsWith('.xls') || file.name.endsWith('.xlsx')))
+
+    const isCSV =
+      file.type === 'text/csv' || (file.name && file.name.endsWith('.csv'))
+
+    if (!isExcel && !isCSV) {
+      setSheetData([])
+      return
+    }
+
+    const reader = new FileReader()
+
+    reader.onload = (e) => {
+      const data = e.target?.result
+      if (!data) return
+
+      let workbook
+
+      if (isCSV) {
+        // Parse CSV
+        workbook = XLSX.read(data, { type: 'binary', raw: false })
+      } else {
+        // Parse Excel
+        workbook = XLSX.read(data, { type: 'binary' })
+      }
+
+      const sheetName = workbook.SheetNames[0]
+      const worksheet = workbook.Sheets[sheetName]
+      const jsonSheet = XLSX.utils.sheet_to_json(worksheet, { header: 1 })
+      setSheetData(jsonSheet)
+    }
+
+    reader.readAsBinaryString(file)
+  }, [file])
+
   return (
     <>
       {file && (
@@ -457,6 +531,7 @@ const Viewer = ({ file, url, closeFn }: any) => {
             </span>
           </div>
 
+          {/* Image */}
           {file.type.includes('image') && (
             <div className='scrollbar-none flex h-full w-full items-center justify-center overflow-scroll'>
               <img
@@ -467,6 +542,7 @@ const Viewer = ({ file, url, closeFn }: any) => {
             </div>
           )}
 
+          {/* PDF */}
           {file.type.includes('pdf') && (
             <iframe
               src={url}
@@ -476,29 +552,75 @@ const Viewer = ({ file, url, closeFn }: any) => {
             ></iframe>
           )}
 
-          {(file.type.includes('text') || file.type.includes('json')) && (
-            <div className='flex h-[53vh] w-full items-center justify-center'>
-              <TorusDocViewer
-                url={url}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover'
-                }}
-                viewer='url'
-                googleCheckInterval={500}
-                googleMaxChecks={5}
-                overrideLocalhost='null'
-                googleCheckContentLoaded={true}
-                queryParams='HL=NL'
-                viewerUrl=''
-              />
-            </div>
-          )}
+          {/* Text or JSON */}
+          {(file.type.includes('text') || file.type.includes('json')) &&
+            !(
+              file.type === 'text/csv' || // Don't double render CSV here
+              (file.name && file.name.endsWith('.csv'))
+            ) && (
+              <div className='flex h-[53vh] w-full items-center justify-center'>
+                <TorusDocViewer
+                  url={url}
+                  style={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover'
+                  }}
+                  viewer='url'
+                  googleCheckInterval={500}
+                  googleMaxChecks={5}
+                  overrideLocalhost='null'
+                  googleCheckContentLoaded={true}
+                  queryParams='HL=NL'
+                  viewerUrl=''
+                />
+              </div>
+            )}
 
+          {/* Excel or CSV preview */}
+          {(file.type ===
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+            file.type === 'application/vnd.ms-excel' ||
+            file.type === 'text/csv' ||
+            (file.name &&
+              (file.name.endsWith('.xls') ||
+                file.name.endsWith('.xlsx') ||
+                file.name.endsWith('.csv'))) ) &&
+            sheetData.length > 0 && (
+              <div className='overflow-auto max-h-[53vh] border rounded-md p-2'>
+                <table className='table-auto border-collapse border border-gray-300 w-full text-sm'>
+                  <tbody>
+                    {sheetData.map((row, i) => (
+                      <tr key={i} className={i === 0 ? 'font-bold bg-gray-100' : ''}>
+                        {row.map((cell: any, j: number) => (
+                          <td
+                            key={j}
+                            className='border border-gray-300 px-2 py-1'
+                          >
+                            {cell ?? ''}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+          {/* Unsupported */}
           {!file.type.includes('image') &&
             !file.type.includes('pdf') &&
-            !file.type.includes('text') && (
+            !file.type.includes('text') &&
+            !(
+              file.type ===
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' ||
+              file.type === 'application/vnd.ms-excel' ||
+              file.type === 'text/csv' ||
+              (file.name &&
+                (file.name.endsWith('.xls') ||
+                  file.name.endsWith('.xlsx') ||
+                  file.name.endsWith('.csv')))
+            ) && (
               <div className='flex h-[53vh] w-full items-center justify-center'>
                 <div className='flex flex-col items-center gap-1 p-2'>
                   <BiHide

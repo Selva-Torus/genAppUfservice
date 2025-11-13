@@ -9,7 +9,7 @@ pipeline {
     }
     environment {
         DOCKERHUB_USERNAME = "192.168.2.164:5000"
-        APP_NAME = "tg2-df-v11"
+        APP_NAME = "oprmatrix-df-v1"
         IMAGE_NAME = "${DOCKERHUB_USERNAME}/${APP_NAME}"
         BUILD_NUMBER = "${BUILD_NUMBER}"
         GITHUB_CREDENTIALS = "GIT_HUB_PAT"
@@ -27,7 +27,7 @@ pipeline {
         stage('Code Checkout') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${GITHUB_CREDENTIALS}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/TorusDev2023/TGA_TURBO.git'
+                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/TorusDev2023/Claims5UF.git'
                 }
             }
         }
@@ -36,12 +36,12 @@ pipeline {
             steps {
                 script {
                     def diff = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
-                    if (diff.split('\n').any { it.startsWith('apps/CT003/CG/TG2/v11/Nest-df/') }) {
+                    if (diff.split('\n').any { it.startsWith('apps/CT003/AG001/oprmatrix/v1/Nest-df/') }) {
                         env.NEST_DF_CHANGED = "true"
-                        echo "Changes detected in apps/CT003/CG/TG2/v11/Nest-df"
+                        echo "Changes detected in apps/CT003/AG001/oprmatrix/v1/Nest-df"
                     } else {
                         env.NEST_DF_CHANGED = "false"
-                        echo "No changes in apps/CT003/CG/TG2/v11/Nest-df. Skipping build and deployment stages."
+                        echo "No changes in apps/CT003/AG001/oprmatrix/v1/Nest-df. Skipping build and deployment stages."
                     }
                 }
             }
@@ -55,7 +55,7 @@ pipeline {
                 script {
                     docker.withRegistry("http://${DOCKERHUB_USERNAME}", '') {
                         sh """
-                        docker build -t ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG} -f apps/CT003/CG/TG2/v11/Nest-df/Dockerfile1 apps/CT003/CG/TG2/v11/Nest-df
+                        docker build -t ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG} -f apps/CT003/AG001/oprmatrix/v1/Nest-df/Dockerfile1 apps/CT003/AG001/oprmatrix/v1/Nest-df
                         docker push ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG}
                         """
                     }
@@ -69,7 +69,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CT003/CG/TG2/v11/Nest-df/kubernetes/deploymentservice.yaml"
+                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CT003/AG001/oprmatrix/v1/Nest-df/kubernetes/deploymentservice.yaml"
                 }
             }
         }
@@ -81,7 +81,7 @@ pipeline {
             steps {
                 script {
                     withKubeConfig(credentialsId: 'kubernetes-165', serverUrl: 'https://lb.kubesphere.local:6443') {
-                        sh "kubectl apply -f apps/CT003/CG/TG2/v11/Nest-df/kubernetes/deploymentservice.yaml"
+                        sh "kubectl apply -f apps/CT003/AG001/oprmatrix/v1/Nest-df/kubernetes/deploymentservice.yaml"
                     }
                 }
             }
