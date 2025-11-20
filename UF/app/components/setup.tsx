@@ -11,7 +11,6 @@ import {
   SearchIcon,
   Security
 } from '../components/svgApplication'
-import OrgMatrix from './orgMatrix'
 import {
   findPath,
   handleDelete,
@@ -28,6 +27,7 @@ import { TotalContext, TotalContextProps } from '@/app/globalContext'
 import GeneralSettings from './generalSettings'
 import { useGravityThemeClass } from '../utils/useGravityUITheme'
 import { checkDataAccess } from '../utils/checkDAP'
+import OPRMatrix from './OprMatrix'
 
 type SettingTabs = 'org' | 'st' | 'user' | 'general'
 
@@ -81,6 +81,7 @@ const SetupScreen = ({
   const [focusedPath, setFocusedPath] = useState<string | null>(null)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [psList, setPSList] = useState<Set<string>>(new Set())
+  const [assignedOPRList, setAssignedOPRList] = useState<Array<string>>([])
   const [refetch, setRefetch] = useState(false)
   const { property, setProperty } = useContext(
     TotalContext
@@ -177,7 +178,7 @@ const SetupScreen = ({
         }
         if (response.data.users && Array.isArray(response.data.users)) {
           const result = response.data.users.map((item: any, i: number) => ({
-            user:"",
+            user: '',
             email: item.email,
             profile: item?.profile ?? '',
             firstName: item.firstName,
@@ -212,11 +213,11 @@ const SetupScreen = ({
           svg: <GeneralSettingsIcon fill={`var(--g-color-text-primary)`} />,
           code: 'general'
         },
-        //{
-        //  name: 'Organizational Matrix',
-        //  svg: <Org fill={`var(--g-color-text-primary)`} />,
-        //  code: 'org'
-        //},
+        {
+          name: 'Organizational Matrix',
+          svg: <Org fill={`var(--g-color-text-primary)`} />,
+          code: 'org'
+        },
         {
           name: 'Access Template',
           svg: <Security fill={`var(--g-color-text-primary)`} />,
@@ -337,6 +338,86 @@ const SetupScreen = ({
     return initialProductServiceOptions
   }
 
+  const getAssignedOPRList = async (securityTemplateData: any) => {
+    const assignedOPRList: Set<string> = new Set([])
+    if (
+      typeof securityTemplateData == 'object' &&
+      Array.isArray(securityTemplateData)
+    ) {
+      securityTemplateData.forEach(template => {
+        if (
+          typeof template['orgGrp'] == 'object' &&
+          Array.isArray(template['orgGrp'])
+        ) {
+          template['orgGrp'].forEach(orgGrp => {
+            if (
+              typeof orgGrp['org'] == 'object' &&
+              Array.isArray(orgGrp['org'])
+            ) {
+              orgGrp['org'].forEach(org => {
+                if (
+                  typeof org['psGrp'] == 'object' &&
+                  Array.isArray(org['psGrp'])
+                ) {
+                  org['psGrp'].forEach(psGrp => {
+                    if (
+                      typeof psGrp['ps'] == 'object' &&
+                      Array.isArray(psGrp['ps'])
+                    ) {
+                      psGrp['ps'].forEach(ps => {
+                        if (
+                          typeof ps['roleGrp'] == 'object' &&
+                          Array.isArray(ps['roleGrp'])
+                        ) {
+                          ps['roleGrp'].forEach(roleGrp => {
+                            if (
+                              typeof roleGrp['roles'] == 'object' &&
+                              Array.isArray(roleGrp['roles'])
+                            ) {
+                              roleGrp['roles'].forEach(role => {
+                                if (
+                                  role?.['roleCode'] &&
+                                  typeof role?.['roleCode'] == 'string'
+                                ) {
+                                  const orgGrpId = orgGrp['orgGrpId']
+                                  const orgId = org['orgId']
+                                  const psGrpId = psGrp['psGrpId']
+                                  const psId = ps['psId']
+                                  const roleGrpId = roleGrp['roleGrpId']
+                                  const roleId = role['roleId']
+                                  if (
+                                    orgGrpId &&
+                                    orgId &&
+                                    psGrpId &&
+                                    psId &&
+                                    roleGrpId &&
+                                    roleId
+                                  ) {
+                                    assignedOPRList.add(orgGrpId)
+                                    assignedOPRList.add(orgId)
+                                    assignedOPRList.add(psGrpId)
+                                    assignedOPRList.add(psId)
+                                    assignedOPRList.add(roleGrpId)
+                                    assignedOPRList.add(roleId)
+                                  }
+                                }
+                              })
+                            }
+                          })
+                        }
+                      })
+                    }
+                  })
+                }
+              })
+            }
+          })
+        }
+      })
+    }
+    return Array.from(assignedOPRList)
+  }
+
   const getSecurityTemplate = async () => {
     try {
       if (!userManagementAccess) return
@@ -349,31 +430,9 @@ const SetupScreen = ({
         }
       )
       if (res.status === 200) {
-        const finalProducts: Set<string> = new Set([])
-        if (typeof res.data == 'object' && Array.isArray(res.data)) {
-          res.data.forEach((ele: any) => {
-            if (
-              typeof ele['products/Services'] == 'object' &&
-              Array.isArray(ele['products/Services'])
-            ) {
-              ele['products/Services'].forEach(ele2 => {
-                if (
-                  typeof ele2['ps'] == 'object' &&
-                  Array.isArray(ele2['ps'])
-                ) {
-                  ele2['ps'].forEach(ele3 => {
-                    if (
-                      typeof ele3['psCode'] &&
-                      typeof ele3['psCode'] == 'string'
-                    ) {
-                      finalProducts.add(ele3['psCode'])
-                    }
-                  })
-                }
-              })
-            }
-          })
-          setPSList(finalProducts)
+        const oprList = await getAssignedOPRList(res.data)
+        if (oprList) {
+          setAssignedOPRList(oprList)
         }
         const result: any[] = res.data.map((item: any) => {
           return {
@@ -641,11 +700,11 @@ const SetupScreen = ({
                     className=' flex items-center gap-2'
                     style={{
                       visibility:
-                        selectedMenuItem == 'general' ? 'hidden' : 'unset'
+                        selectedMenuItem == 'general'  ? 'hidden' : 'unset'
                     }}
                   >
                     <button
-                      hidden={selectedMenuItem == 'user' ? true : false}
+                      hidden={selectedMenuItem == 'user' || selectedMenuItem == "org" ? true : false}
                       onClick={handlePlusButtonClick}
                       style={{
                         backgroundColor: brandcolor,
@@ -654,8 +713,7 @@ const SetupScreen = ({
                       }}
                       className={`rounded-md px-2 py-1.5 outline-none`}
                       disabled={
-                        tenantAccess != 'edit' ||
-                        (selectedMenuItem === 'org' && !focusedPath)
+                        tenantAccess != 'edit' 
                       }
                     >
                       <PlusIcon
@@ -761,7 +819,7 @@ const SetupScreen = ({
                       hidden={selectedMenuItem == 'user' ? true : false}
                     >
                       <SaveIcon height='18' width='18' />
-                    </button> 
+                    </button>
                   </div>
                 </div>
               </div>
@@ -772,7 +830,7 @@ const SetupScreen = ({
             ></hr>
             <div className='flex h-[85vh]'>
               <div
-               style={{
+                style={{
                   borderRight: `1px solid var(--g-color-line-generic)`,
                   minWidth: '200px'
                 }}
@@ -791,10 +849,7 @@ const SetupScreen = ({
                   ))}
                 </Menu>
               </div>
-              <div
-                className='flex h-full w-full overflow-hidden px-2 py-3'
-                style={{ overflow: selectedMenuItem == 'org' ? 'auto' : '' }}
-              >
+              <div className='flex h-full w-full overflow-hidden px-2 py-3'>
                 {selectedMenuItem == 'general' ? (
                   <GeneralSettings />
                 ) : selectedMenuItem === 'user' ? (
@@ -804,7 +859,8 @@ const SetupScreen = ({
                   />
                 ) : selectedMenuItem === 'org' ? (
                   <div className='w-full'>
-                    <OrgMatrix tenantAccess={'edit'} />
+                    <OPRMatrix assignedOPRList={assignedOPRList} />
+                    {/* <OrgMatrix tenantAccess={'edit'} /> */}
                   </div>
                 ) : (
                   selectedMenuItem === 'st' && <AccessTemplateTable />

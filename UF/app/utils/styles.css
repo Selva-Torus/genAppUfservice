@@ -9,7 +9,7 @@
   --g-font-family-sans: "Inter", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
   --g-font-family-Roboto:"Roboto" ;
   --g-font-family-Poppins:"Poppins" ;
-  --g-font-family-Dancing+Script:"Dancing+Script" ;
+  /* --g-font-family-Dancing+Script:"Dancing+Script" ; */
   --g-font-family-monospace: "Menlo", "Monaco", "Consolas", "Ubuntu Mono", "Liberation Mono",
    "DejaVu Sans Mono", "Courier New", "Courier", monospace; 
   --g-text-body-font-family:var(--g-font-family-Roboto);
