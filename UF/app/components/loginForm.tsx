@@ -24,7 +24,7 @@ interface LoginProps {
   image?: string
 }
 
-const Login = ({ logo, appName = "TG4CGFA", brandColor = "#ffffff", loginType = "standard", image }: LoginProps) => {
+const Login = ({ logo, appName = "oprmatrix", brandColor = "#adffaf", loginType = "standard", image }: LoginProps) => {
   const { selectedTheme, setSelectedTheme } = useContext(
     TotalContext
   ) as TotalContextProps
@@ -37,7 +37,7 @@ const Login = ({ logo, appName = "TG4CGFA", brandColor = "#ffffff", loginType = 
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
   const toast = useInfoMsg()
   const router = useRouter()
-  const onBoardingKey:string = "Logs Screen"
+  const onBoardingKey:string = "User Screen"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
@@ -54,14 +54,14 @@ const Login = ({ logo, appName = "TG4CGFA", brandColor = "#ffffff", loginType = 
       if (tenant && formData.email && formData.password) {
         setLoading(true)
 
-        setCookie('cfg_theme','light')
-        setSelectedTheme('light')
+        setCookie('cfg_theme','dark')
+        setSelectedTheme('dark')
         
         const api_signinBody: api_signinDto = {
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:TT407:AFGK:CGFA:AFK:TG4CGFA:AFVK:v1:bldc",
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc",
           ufClientType: 'UFW'
         }
         const api_signin = await axios.post(
@@ -91,16 +91,8 @@ const Login = ({ logo, appName = "TG4CGFA", brandColor = "#ffffff", loginType = 
           let screenDetails: any = {
             keys:[
   {
-    "screensName": "test-v1",
-    "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
-  },
-  {
-    "screensName": "save-v1",
-    "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1"
-  },
-  {
-    "screensName": "report-v1",
-    "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1"
+    "screensName": "testroute-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
   }
 ]
           }

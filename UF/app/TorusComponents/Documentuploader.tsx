@@ -67,7 +67,10 @@ const TorusDocumentUploader = ({
   draggable = false,
   id,
   singleSelect = true,
-  viewType="modal"
+  viewType="modal",
+  DbType,
+  enableEncryption,
+  fileNamingPreference="use_system_generated_name"
 }: any) => {
   const [files, setFiles] = React.useState<Drag_file>(value)
   const [open, setOpen] = React.useState(false)
@@ -126,11 +129,30 @@ const TorusDocumentUploader = ({
       })
  
       if (newFiles.length === 0) return prevFiles
-      const filesWithUrls: FilesType[] = newFiles.map(file => ({
-        file,
-        url: URL.createObjectURL(file)
-      }))
- 
+
+      const filesWithUrls: FilesType[] = newFiles.map(file => {
+        const ext = file.name.split('.').pop() || '';
+        const baseName = file.name.replace(`.${ext}`, '');
+        const uniqueName = `${baseName}${fileNamingPreference=="use_system_generated_name"?"_"+Date.now():""}.${ext}`; // name_time format
+
+        const renamedFile = new File([file], uniqueName, { type: file.type });
+        Object.defineProperty(renamedFile, 'DbType', {
+          value: DbType,
+          writable: true,
+          enumerable: true
+        })
+        
+        Object.defineProperty(renamedFile, 'enableEncryption', {
+          value: enableEncryption,
+          writable: true,
+          enumerable: true
+        })
+        return {
+          file: renamedFile,
+          url: URL.createObjectURL(renamedFile)
+        }
+      })
+
       if (singleSelect) {
         if (typeof onChange === 'function') {
           onChange([{ file: filesWithUrls[0].file, url: filesWithUrls[0].url }])

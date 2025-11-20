@@ -12,41 +12,12 @@ import decodeToken from "../components/decodeToken";
 import { Icon, Button,Text } from '@gravity-ui/uikit';
 import { ChevronLeft } from '@gravity-ui/icons';
 import { useRouter } from 'next/navigation';
-import Groupgroup  from "./Groupgroup/Groupgroup";
+import Group  from "./Group/Group";
 
 
-export default function PageTestV1() {
+export default function PageTestrouteV1() {
   const [initialLoad, setInitialLoad] = useState(false);
-  const securityData:any={
-  "User": {
-    "allowedGroups": [
-      "canvas",
-      "group",
-      "mytable"
-    ]
-  },
-  "Manager": {
-    "allowedGroups": [
-      "canvas",
-      "group",
-      "mytable"
-    ]
-  },
-  "Employee": {
-    "allowedGroups": [
-      "canvas",
-      "group",
-      "mytable"
-    ]
-  },
-  "user": {
-    "allowedGroups": [
-      "canvas",
-      "group",
-      "mytable"
-    ]
-  }
-};
+  const securityData:any={};
   let code:any="";
   //const language=useLanguage();
   const routes = useRouter();
@@ -63,12 +34,9 @@ export default function PageTestV1() {
   const {paginationDetails, setpaginationDetails} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
-  const {myuf_v1Props, setmyuf_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const [checkgroup,setCheckgroup,]=useState(false);
-  const [checkmytable,setCheckmytable,]=useState(false);
-  const {groupe162d, setgroupe162d} = useContext(TotalContext) as TotalContextProps;
-  const {mytabled34a7, setmytabled34a7} = useContext(TotalContext) as TotalContextProps;
-  const {dfd_fordfcheck_v1Props, setdfd_fordfcheck_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const {oprmatrixuf_v1Props, setoprmatrixuf_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const [check,setCheck,]=useState(false);
+  const {aaf24, setaaf24} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagPage: boolean = false|| encAppFalg.flag;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encAppFalg.dpd;
@@ -81,7 +49,7 @@ export default function PageTestV1() {
   }
 
   async function securityCheck() {
-    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1",accessProfile:[user],from:"pageTestV1"},{
+    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",accessProfile:[user],from:"pageTestrouteV1"},{
       headers: {
         Authorization: `Bearer ${token}`
       }});
@@ -106,7 +74,7 @@ export default function PageTestV1() {
             params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
             }
           }) 
         }else{
@@ -115,20 +83,20 @@ export default function PageTestV1() {
               Authorization: `Bearer ${token}`
              },
             params: {
-              key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"  
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"  
             }
           })          
         }
         if(introspect?.data?.authenticated === false){
         localStorage.clear();
         deleteAllCookies();
-        window.location.href = '/tt407/cgfa/tg4cgfa/v1';
+        window.location.href = '/ct003/ag001/oprmatrix/v1';
         }
       }catch (err: any) {
         toast("The token is no longer active.", 'danger');
         localStorage.clear();
         deleteAllCookies();
-        window.location.href = '/tt407/cgfa/tg4cgfa/v1';
+        window.location.href = '/ct003/ag001/oprmatrix/v1';
       }
       try {
         let myAccount:any;
@@ -140,7 +108,7 @@ export default function PageTestV1() {
           params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
             }
         }) 
         }else{
@@ -149,7 +117,7 @@ export default function PageTestV1() {
              Authorization: `Bearer ${token}`
            },
             params: {
-              key:"CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
             }
          })          
         }
@@ -180,41 +148,11 @@ export default function PageTestV1() {
   "events": {}
 };
         try{
-        let fordfcheck_v1Body:te_refreshDto={
-          key: "CK:TT407:FNGK:AF:FNK:DF-DFD:CATK:CGFA:AFGK:TG4CGFA:AFK:forDFcheck:AFVK:v1"+":",
-          refreshFlag: "Y",
-          count:parseInt(pagination?.count) || 10,
-          page:parseInt(pagination?.page) || 1
-        }
-        if (encryptionFlagPage) {          
-          fordfcheck_v1Body["dpdKey"] = encryptionDpd;
-          fordfcheck_v1Body["method"] = encryptionMethod;
-        }
-        if(myuf_v1Props.length > 0){
-          let filterData :any[] =[];
-          for(let i=0;i< myuf_v1Props.length;i++){
-            if(myuf_v1Props[i].DFDkey == "CK:TT407:FNGK:AF:FNK:DF-DFD:CATK:CGFA:AFGK:TG4CGFA:AFK:forDFcheck:AFVK:v1"){
-              delete myuf_v1Props[i].DFDkey;
-              filterData.push(myuf_v1Props[i])
-            }           
-          }
-          fordfcheck_v1Body['filterData'] = filterData;
-        }
-        const fordfcheck_v1Data:any=await AxiosService.post("/te/eventEmitter",fordfcheck_v1Body,{
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        })
-          setdfd_fordfcheck_v1Props(fordfcheck_v1Data?.data?.dataset?.data || []);
           if (security == 'AA') {
           allowedGroup.map((nodes:any)=>{
-            if(nodes?.groupName == 'group' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
+            if(nodes?.groupName == '' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
             {
-              setCheckgroup(true)
-            }
-            if(nodes?.groupName == 'mytable' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
-            {
-              setCheckmytable(true)
+              setCheck(true)
             }
           })
           }
@@ -229,10 +167,8 @@ export default function PageTestV1() {
         //Code Execution
         if (code !="" ) {
           let codeStates: any = {}
-          codeStates['group'] = groupe162d;
-          codeStates['setgroup'] = setgroupe162d;
-          codeStates['mytable'] = mytabled34a7;
-          codeStates['setmytable'] = setmytabled34a7;
+          codeStates[''] = aaf24;
+          codeStates['set'] = setaaf24;
           codeExecution(code,codeStates);
         }   
         setInitialLoad(true);        
@@ -254,7 +190,7 @@ export default function PageTestV1() {
   return (
     <>
      <div style={{}}>
-        {checkgroup && initialLoad &&<Groupgroup  
+        {check && initialLoad &&<Group  
           lockedData={lockedData} 
           setLockedData={setLockedData} 
           primaryTableData={primaryTableData}

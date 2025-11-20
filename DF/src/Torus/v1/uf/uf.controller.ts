@@ -57,8 +57,9 @@ import {
 } from 'src/dto';
 import { diskStorage } from 'multer';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { FastifyRequest } from 'fastify';
+import { FastifyReply, FastifyRequest } from 'fastify';
 import { Response } from 'express';
+import { lookup } from 'mime-types';
 
 @ApiTags('TG')
 @Controller('UF')
@@ -91,12 +92,12 @@ export class UfController {
     @ApiBadRequestResponse({ description: 'Invalid Credentials' })
   async getAccessToken(@Body() body: any, @Req() req: any) {
     const token: string = req.headers.authorization?.split(' ')[1];
-    const { psCode , selectedAccessProfile , dap ,dpdKey,method, ufClientType } = body;
+    const { selectedCombination , selectedAccessProfile , dap ,dpdKey,method, ufClientType } = body;
     
     if (!token) {
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED);
     }
-    if (!psCode) {
+    if (!selectedCombination) {
       throw new HttpException(
         'Product/service is required',
         HttpStatus.BAD_REQUEST,
@@ -104,7 +105,7 @@ export class UfController {
     }
     try {
       let result : any = {};
-      result["token"] = await this.appService.getAccessToken(token, psCode , selectedAccessProfile , dap , ufClientType);
+      result["token"] = await this.appService.getAccessToken(token, selectedCombination , selectedAccessProfile , dap , ufClientType);
       if(dpdKey && method){
         result["dpdKey"] = dpdKey
         result["method"] = method
@@ -180,14 +181,15 @@ export class UfController {
       }
 
 
-    let { context,dpdKey,method } = fields
+    let { context,dpdKey,method,enableEncryption } = fields
     const file = {
           ...fileMeta,
           buffer: fileBuffer,
         }
     const result = await this.appService.uploadFile( 
       file,
-      context
+      context,
+      enableEncryption
     );
     let finalresult : any= {file:result}
     if(dpdKey && method){
@@ -208,8 +210,8 @@ export class UfController {
     description: 'Download file from the stored MongoDb GridFSBucket on specified path',
   })
   async getFile(@Body() body: any,@Res() res: Response) {
-    let { context , id } = body
-    const file = await this.appService.getFile(id,context);
+    let { context , id ,enableEncryption } = body
+    const file = await this.appService.getFile(id,context,enableEncryption);
     if (!file) {
       throw new HttpException('File not found', HttpStatus.NOT_FOUND);
     }
@@ -894,7 +896,7 @@ export class UfController {
     if(!token) return 'Authorization token not found';
     // const {keys} = input;
     const{dpdKey,method} = input
-    if (input.key && input.count){
+    if (input.key){
       let result : any = await this.appService.getpagination(
         input.key,
         input.page,
@@ -1005,12 +1007,26 @@ export class UfController {
     const data = body.data;
     return await this.appService.setJson(key, data);
   }
+  @Post('getDFS')
+  async getDFS(@Body() body: any, @Res() res: FastifyReply) {
+    const { id, enableEncryption } = body
+    const decrypted = await this.appService.getDFS(id, enableEncryption)
+    const contentType = lookup(id)
+    res
+      .header('Content-Type', contentType)
+      .header(
+        'Content-Disposition',
+        `inline; filename="${decodeURIComponent(id.split('/').pop() || 'file')}"`,
+      )
+      .send(decrypted)
+  }
+
   @Post('uploadimg')
    async post_upload(@Req() req: FastifyRequest) {
       if (!req.isMultipart()) {
         throw new Error('Request is not multipart');
       }
-      const parts:any = req.parts
+      const parts:any = req.parts();
       const fields:any ={}
       let fileBuffer: Buffer;
       let fileMeta: any;
@@ -1028,7 +1044,7 @@ export class UfController {
           fields[part.fieldname] = part.value;
         }
       }
-     const { bucketFolderame, folderPath , filename ="" } = fields;
+     const { bucketFolderame, folderPath , enableEncryption, filename ="" } = fields;
      const file = {
           ...fileMeta,
           buffer: fileBuffer,
@@ -1037,7 +1053,8 @@ export class UfController {
       file,
       bucketFolderame,
       folderPath,
-      filename
+      filename,
+      enableEncryption
     );
     return { imageUrl };
   }
@@ -1077,11 +1094,5 @@ export class UfController {
     const token: string = req.headers.authorization.split(' ')[1];
     const clientCode: string = process.env.CLIENTCODE;
     return this.appService.getNavbarData(key,clientCode,token)
-  }
-
-  @Get('getFilterParamsSchema')
-  async getFilterParamsSchema(@Query('key') key: string ,  @Req() req: any) {
-     const token: string = req?.headers?.authorization?.split(' ')[1];
-    return this.appService.getFilterParamsSchema(key , token);
   }
 }

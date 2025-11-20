@@ -6,15 +6,17 @@ import { uf_authorizationCheckDto } from '@/app/interfaces/interfaces';
 import { codeExecution } from '@/app/utils/codeExecution';
 import { useRouter } from 'next/navigation';
 import { getRouteScreenDetails } from '@/app/utils/assemblerKeys';
-import {Modal} from '@gravity-ui/uikit';
+import { Magnifier,Xmark } from '@gravity-ui/icons'
+import { Button, Icon, Modal } from '@gravity-ui/uikit'
 import { eventBus } from '@/app/eventBus';
-import Editorreport  from "./Editorreport";
+import ButtonAddd  from "./ButtonAddd";
+import TextInput  from "./TextInput";
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { getCookie } from "@/app/components/cookieMgment";
 import { TotalContext, TotalContextProps } from '@/app/globalContext';
 
 
-const Groupr_group = ({lockedData={},setLockedData,primaryTableData={}, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,dropdownData,setDropdownData,encryptionFlagPageData, nodeData, setNodeData,paginationDetails}:any)=> {
+const Group = ({lockedData={},setLockedData,primaryTableData={}, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,dropdownData,setDropdownData,encryptionFlagPageData, nodeData, setNodeData,paginationDetails,isFormOpen=false}:any)=> {
   const token:string = getCookie('token'); 
   const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
@@ -31,52 +33,7 @@ const Groupr_group = ({lockedData={},setLockedData,primaryTableData={}, setPrima
     "dpd":encryptionDpd,
     "method":encryptionMethod
   };
-  const securityData:any={
-  "User": {
-    "allowedControls": [
-      "report"
-    ],
-    "allowedGroups": [
-      "report",
-      "r_group"
-    ],
-    "blockedControls": [],
-    "readOnlyControls": []
-  },
-  "Manager": {
-    "allowedControls": [
-      "report"
-    ],
-    "allowedGroups": [
-      "report",
-      "r_group"
-    ],
-    "blockedControls": [],
-    "readOnlyControls": []
-  },
-  "Employee": {
-    "allowedControls": [
-      "report"
-    ],
-    "allowedGroups": [
-      "report",
-      "r_group"
-    ],
-    "blockedControls": [],
-    "readOnlyControls": []
-  },
-  "user": {
-    "allowedControls": [
-      "report"
-    ],
-    "allowedGroups": [
-      "report",
-      "r_group"
-    ],
-    "blockedControls": [],
-    "readOnlyControls": []
-  }
-};
+  const securityData:any={};
   const prevRefreshRef = useRef(false);
   const [allowedComponent,setAllowedComponent]=useState<any>("");
   const [allowedControls,setAllowedControls]=useState<any>("");
@@ -88,13 +45,14 @@ const Groupr_group = ({lockedData={},setLockedData,primaryTableData={}, setPrima
   const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
  /////////////
    //another screen
-  const {r_group358e4, setr_group358e4}= useContext(TotalContext) as TotalContextProps;
-  const {r_group358e4Props, setr_group358e4Props}= useContext(TotalContext) as TotalContextProps;
-  const {report1a36d, setreport1a36d}= useContext(TotalContext) as TotalContextProps;
+  const {aaf24, setaaf24}= useContext(TotalContext) as TotalContextProps;
+  const {aaf24Props, setaaf24Props}= useContext(TotalContext) as TotalContextProps;
+  const {addd6f6de, setaddd6f6de}= useContext(TotalContext) as TotalContextProps;
+  const {6653a, set6653a}= useContext(TotalContext) as TotalContextProps;
   //////////////
-  
+  const [open, setOpen] = React.useState(false);
   async function securityCheck() {
-  const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1",componentId:"e3ed576185df4984b4c739bf735358e4",from:"GroupRGroup",accessProfile:accessProfile},{
+  const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",componentId:"02640bc58ee74454a88bcb3c267aaf24",from:"Group",accessProfile:accessProfile},{
     headers: {
       Authorization: `Bearer ${token}`
     }})
@@ -109,14 +67,17 @@ const Groupr_group = ({lockedData={},setLockedData,primaryTableData={}, setPrima
   setAllowedComponent(allowedGroups) 
     
   /////////////
-    if(orchestrationData?.data?.readableControls.includes("report")){
-      setreport1a36d({...report1a36d,isDisabled:true});
+    if(orchestrationData?.data?.readableControls.includes("addd")){
+      setaddd6f6de({...addd6f6de,isDisabled:true});
+    }
+    if(orchestrationData?.data?.readableControls.includes("")){
+      set6653a({...6653a,isDisabled:true});
     }
   //////////////
     if (code != '') {
       let codeStates: any = {};
-      codeStates['r_group']  = r_group358e4,
-      codeStates['setr_group'] = setr_group358e4,
+      codeStates['']  = aaf24,
+      codeStates['set'] = setaaf24,
 
     codeExecution(code,codeStates);
     } 
@@ -128,44 +89,52 @@ const Groupr_group = ({lockedData={},setLockedData,primaryTableData={}, setPrima
   const handleOnChange=()=>{
 
   }
+  const aaf24Ref = useRef<any>(null);
+  const handleClearSearch = () => {
+    aaf24Ref.current?.setSearchParams();
+    aaf24Ref.current?.handleSearch({});
+  };
 
   useEffect(() => {    
     securityCheck()   
     handleOnload()
     if (prevRefreshRef.current) {
-      if(!Array.isArray(r_group358e4) && Object.keys(r_group358e4)?.length>0)
+      if(!Array.isArray(aaf24) && Object.keys(aaf24)?.length>0)
       {
-        setr_group358e4({})
+        setaaf24({})
       }
     }else 
       prevRefreshRef.current= true
-  }, [r_group358e4Props?.refresh])
+  }, [aaf24Props?.refresh])
 
   return (
-    <div style={{
-          gridAutoRows: '4px',
-          columnGap: '0px',
-          rowGap: '0px',
-          display: 'grid',
-          gridTemplateColumns: 'repeat(12, 1fr)',
-          gridTemplateRows: 'repeat(auto-fill, minmax(4px, 1fr))',
-          gridColumn: '1 / 13',
-          gridRow: '1 / 222',
-          height: '100%',
-          overflow: 'auto',
-          backgroundColor:'',
-          backgroundImage:'',
-          backgroundPosition: '',
-          backgroundSize: '',
-          backgroundRepeat: '',
-          backgroundAttachment: '',
-          backgroundClip: '',
-          backgroundBlendMode: ''
-        }}
-        className=" rounded-md " >
-        {allowedControls.includes("report")?<Editorreport   /* 1a36d */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
+    <div 
+      style={{
+        gridAutoRows: '4px',
+        columnGap: '0px',
+        rowGap: '0px',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(12, 1fr)',
+        gridTemplateRows: 'repeat(auto-fill, minmax(4px, 1fr))',
+        gridColumn: '3 / 9',
+        gridRow: '23 / 67',
+        height: '100%',
+        overflow: 'auto',
+        backgroundColor:'',
+        backgroundImage:'',
+        backgroundPosition: '',
+        backgroundSize: '',
+        backgroundRepeat: '',
+        backgroundAttachment: '',
+        backgroundClip: '',
+        backgroundBlendMode: ''
+      }}
+      className=" rounded-md "
+    >
+        {allowedControls.includes("addd")  ?<ButtonAddd lockedData={lockedData} setLockedData={setLockedData} primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData} checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData}/>: <div></div>}          
+        {allowedControls.includes("") ?<TextInput   /* 6653a */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
     </div>             
   )
 }
 
-export default Groupr_group
+export default Group

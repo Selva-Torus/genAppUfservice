@@ -4,32 +4,37 @@
 import React, { useState, useEffect, useMemo, useDeferredValue, useContext } from 'react'
 import { AxiosService } from '@/app/components/axiosService'
 import TableHeader from './logTable/logTable'
-import { getCookie } from '@/app/components/cookieMgment'
+import { deleteAllCookies, getCookie, setCookie } from '@/app/components/cookieMgment'
 import decodeToken from '@/app/components/decodeToken'
 import Artifactdetails from './artifactdetails'
 import { TotalContext, TotalContextProps } from '../globalContext'
 import { dateTime } from '@gravity-ui/date-utils'
+import { useRouter } from 'next/navigation'
 
 const ParentComponent = () => {
+  console.log("🚀 ~ TgService ~ codeGeneration ~ setupData:")
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<'process' | 'torus'>('process')
   const [nodeData, setNodeData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [app, setApp] = useState({
-    code: 'TG4CGFA',
-    name: 'TG4CGFA'
+    code: 'oprmatrix',
+    name: 'oprmatrix'
   })
   const [appGroup, setappGroup] = useState({
-    code: 'CGFA',
-    name: 'CGFA'
+    code: 'AG001',
+    name: 'appgroup'
   })
   const token: string = getCookie('token')
-  const decodedTokenObj: any = decodeToken(token)
-  const [user, setUser] = useState<string[]>([decodedTokenObj?.loginId])
+  const decodedToken: any = decodeToken(token)
+  const [user, setUser] = useState<string[]>([decodedToken?.loginId])
   const { encAppFalg,setEncAppFalg}= useContext(TotalContext) as TotalContextProps
-  const [range , setRange ] = useState({start: dateTime().subtract({days: 4}), end: dateTime()})
+  const [range , setRange ] = useState({start: dateTime().subtract({days: 7}), end: dateTime()})
   const [ fabrics , setFabrics ] = useState<Array<string>>([])
-
+  const [jsonViewerData, setJsonViewerData] = useState({})
+  const router = useRouter()
+  let landingScreen:string = 'User Screen';
+  const encryptionFlagApp: boolean = false;    
   const [jsonData, setJsonData] = useState({
     data: [],
     page: 1,
@@ -48,7 +53,7 @@ const ParentComponent = () => {
   };
   let payload:any = useMemo(() => {
     return {
-      tenant: 'TT407',
+      tenant: 'CT003',
        fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
             suffixes[prefix]
               ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
@@ -84,7 +89,7 @@ const ParentComponent = () => {
       const result = response.data
       if (activeTab === 'torus') {
         if (result && typeof result === 'object' && 'data' in result) {
-          const systemLogResult :any = [];
+          const systemLogResult :any  = [];
           
       for (const item of response.data.data) {
         const { AFK, CATK, AFGK, AFVK, FNK } = item;
@@ -102,10 +107,15 @@ const ParentComponent = () => {
             profile: sessionInfo.profile,
             timeStamp: DateAndTime,
             errorCode: errorDetails.T_ErrorCode,
-            errorDescription: typeof errorDetails.errorDetail === "string" ? errorDetails.errorDetail : "NA",
+            errorDescription: typeof errorDetails.errorDetail === "string" ? errorDetails.errorDetail : "Get More Info",
             errorDetails,
           });
         }
+      }
+      if(systemLogResult.length && systemLogResult[0].errorDetails){
+        setJsonViewerData(systemLogResult[0].errorDetails)
+      }else{
+        setJsonViewerData({})
       }
           setJsonData(prevData => ({
             ...prevData,
@@ -206,6 +216,7 @@ const ParentComponent = () => {
     } catch (error: any) {
       if (error?.code !== 'ERR_CANCELED') {
         setLoading(false)
+        setJsonViewerData({})
         setJsonData(prevData => ({
           ...prevData,
           data: [],
@@ -228,7 +239,7 @@ const ParentComponent = () => {
     return () => {
       controller.abort()
     }
-  }, [jsonData.page, jsonData.limit, search, activeTab , range, fabrics])
+  }, [jsonData.page, jsonData.limit, search, activeTab , range, fabrics , user])
 
   const handlePageChange = (newPage: number, newPageSize: number) => {
     setJsonData(prev => ({
@@ -237,7 +248,54 @@ const ParentComponent = () => {
       limit: newPageSize
     }))
   }
+  const securityCheck = async () => {
+  try {
+    const encryptionDpd: string =
+      'CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1'
+    const encryptionMethod: string = ''
+    let introspect: any
+    if (encryptionFlagApp) {
+      introspect = await AxiosService.get('/UF/introspect', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        params: {
+          dpdKey: encryptionDpd,
+          method: encryptionMethod,
+          key:"Logs Screen"
+        }
+      })
+    } else {
+      introspect = await AxiosService.get('/UF/introspect', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        params: {
+          key:"Logs Screen"
+        }
+      })
+    }
 
+    if (introspect?.data?.authenticated) {
+      if (!decodedToken.selectedAccessProfile) {
+        router.push('/select-context')
+      }
+      if (introspect?.data?.updatedToken) {
+        setCookie('token', introspect?.data.updatedToken)
+      }
+    } else {
+      await deleteAllCookies()
+    }
+  } catch (err: any) {
+    await deleteAllCookies()
+  }
+}
+
+  useEffect(() => {
+    if (token) {
+      securityCheck()
+    }
+  }, [token])
   return (
     <>
       {nodeData ? (
@@ -258,6 +316,8 @@ const ParentComponent = () => {
           setFabrics={setFabrics}
           user={user}
           setUser={setUser}
+          jsonViewerData={jsonViewerData}
+          setJsonViewerData={setJsonViewerData}
         />
       )}
     </>

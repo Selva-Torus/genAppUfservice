@@ -1,17 +1,23 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&amp;display=swap');  
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&amp;display=swap');  
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&amp;display=swap');  
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 /* @charset "UTF-8";. */
 .g-root {
   background: var(--g-color-base-background);
   color: var(--g-color-text-primary);
   --g-font-family-sans: "Inter", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+  --g-font-family-Roboto:"Roboto" ;
+  --g-font-family-Poppins:"Poppins" ;
+  /* --g-font-family-Dancing+Script:"Dancing+Script" ; */
   --g-font-family-monospace: "Menlo", "Monaco", "Consolas", "Ubuntu Mono", "Liberation Mono",
    "DejaVu Sans Mono", "Courier New", "Courier", monospace; 
-  --g-text-body-font-family:var(--g-font-family-sans);
-  --g-text-caption-font-family:var(--g-font-family-sans);
-  --g-text-header-font-family:var(--g-font-family-monospace);
+  --g-text-body-font-family:var(--g-font-family-Roboto);
+  --g-text-caption-font-family:var(--g-font-family-Roboto);
+  --g-text-header-font-family:var(--g-font-family-Roboto);
   --g-text-subheader-font-family: var(--g-font-family-sans);
-  --g-text-display-font-family:var(--g-font-family-sans);
-  --g-text-code-font-family:var(--g-font-family-sans);
+  --g-text-display-font-family:var(--g-font-family-Roboto);
+  --g-text-code-font-family:var(--g-font-family-Roboto);
   --g-text-body-font-weight: 400;
   --g-text-caption-font-weight: 400;
   --g-text-header-font-weight: 600;
@@ -1831,4 +1837,181 @@ body.g-root {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.company-card {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 24px;
+  width: 100%;
+  max-width: 450px; /* Set a max-width for the card */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+  background-color: #ffffff;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Space between header, body, and footer */
+}
+
+/* Header */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start; /* Aligns items to the top */
+}
+
+.header-left {
+  display: flex;
+  gap: 16px; /* Space between logo and text */
+  align-items: center;
+}
+
+.company-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 6px;
+  /* Placeholder style from image */
+  background-color: #0a3d62;
+  object-fit: contain;
+}
+
+.company-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.company-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #222;
+}
+
+.company-industry {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.company-plan {
+  font-size: 0.8rem;
+  font-weight: 500;
+  background-color: #f0f0f0;
+  color: #555;
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Body */
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px; /* Space between info items */
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.info-icon {
+  color: #888;
+}
+
+.revenue-section {
+  margin-top: 8px;
+}
+
+.revenue-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #777;
+  margin-bottom: 4px;
+}
+
+.revenue-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tag {
+  font-size: 0.75rem;
+  font-weight: 500;
+  /* Styles from the image (light blue) */
+  background-color: #e6f7ff;
+  color: #0056b3;
+  padding: 4px 10px;
+  border-radius: 16px;
+  border: 1px solid #b3e0ff;
+}
+
+/* Footer */
+.card-footer {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 16px;
+  margin-top: 8px;
+}
+
+.details-button {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #444;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background-color 0.2s;
+}
+
+.details-button:hover {
+  background-color: #f9f9f9;
+}
+
+
+/* src/App.css */
+.app-container {
+  padding: 30px;
+  background-color: #f4f7f6;
+  min-height: 100%;
+  height: auto;
+  width: 100%;
+  display: block;
+}
+
+h1 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+  color: #333;
+}
+
+.search-bar {
+  width: 100%;
+  max-width: 450px;
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-bottom: 24px;
+}
+
+.company-list-container {
+  display: flex;
+  flex-wrap: wrap; /* Allows cards to wrap to the next line */
+  gap: 24px; /* Space between the cards */
 }

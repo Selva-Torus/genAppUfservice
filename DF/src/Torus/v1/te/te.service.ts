@@ -71,6 +71,9 @@ export class TeService {
 
        let Ndp = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'NDP', client));
 
+       //  Check RollBack enabled
+       await this.teCommonService.checkRollBack(Ndp,client,'check'); 
+       
        let eflg = 0;
        for (let e = 0; e < poNode.length; e++) {
          if (pfdto.nodeId) {
@@ -202,14 +205,23 @@ export class TeService {
                   //Setting Up Node response
                   let nodeObjArr = {
                     nodeName: poNode[i].nodeName,
-                    nodeId: pfdto.nodeId,
-                    nodeType: pfdto.nodeType,
+                    nodeId: poNode[i].nodeId,
+                    nodeType: poNode[i].nodeType,
                     sourceStatus: pfdto.event,
                     //timeStamp: new Date().toString(),
                     currentStatus: 'Failed',
                   };
                   if (await this.redisService.exist(processedKey + pfdto.upId + ':nodeResponse', client)) {
-                    await this.redisService.AppendJsonArr(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr), client);
+                    let getnoderesponse = JSON.parse(await this.redisService.getJsonData(processedKey + pfdto.upId + ':nodeResponse', client));
+                    let getnoderesflg = 0
+                    for(let g=0;g< getnoderesponse.length;g++){
+                      if(getnoderesponse[g].nodeId != poNode[i].nodeId){
+                        getnoderesflg++
+                      }
+                    }
+                    if(getnoderesflg == getnoderesponse.length){                      
+                      await this.redisService.AppendJsonArr(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr), client);
+                    }
                   } else {
                     await this.redisService.setJsonData(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify([nodeObjArr]), client);
                   }
@@ -284,15 +296,24 @@ export class TeService {
 
           let nodeObjArr = {
             nodeName: poNode[i].nodeName,
-            nodeId: pfdto.nodeId,
-            nodeType: pfdto.nodeType,
+            nodeId: poNode[i].nodeId,
+            nodeType: poNode[i].nodeType,
             sourceStatus: event,
             //timeStamp: new Date().toString(),
             currentStatus: 'Failed',
           }
 
           if (await this.redisService.exist(processedKey + pfdto.upId + ':nodeResponse', client)) {
-            await this.redisService.AppendJsonArr(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr), client);
+            let getnoderesponse = JSON.parse(await this.redisService.getJsonData(processedKey + pfdto.upId + ':nodeResponse', client));
+            let getnoderesflg = 0
+            for (let g = 0; g < getnoderesponse.length; g++) {
+              if (getnoderesponse[g].nodeId != poNode[i].nodeId) {
+                getnoderesflg++
+              }
+            }
+            if (getnoderesflg == getnoderesponse.length) {
+              await this.redisService.AppendJsonArr(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr), client);
+            }
           } else {
             await this.redisService.setJsonData(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify([nodeObjArr]), client);
           }
@@ -361,13 +382,22 @@ export class TeService {
             //Setting Up Node response    
             let nodeObjArr = {
               nodeName: poNode[i].nodeName,
-              nodeId: pfdto.nodeId,
-              nodeType: pfdto.nodeType,
+              nodeId: poNode[i].nodeId,
+              nodeType: poNode[i].nodeType,
               sourceStatus: event,
               currentStatus: "Failed"
             }
-            if (await this.redisService.exist(processedKey + pfdto.upId + ':nodeResponse', client)) {               
-              await this.redisService.AppendJsonArr(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr), client)               
+            if (await this.redisService.exist(processedKey + pfdto.upId + ':nodeResponse', client)) {     
+              let getnoderesponse = JSON.parse(await this.redisService.getJsonData(processedKey + pfdto.upId + ':nodeResponse', client));
+              let getnoderesflg = 0
+              for (let g = 0; g < getnoderesponse.length; g++) {
+                if (getnoderesponse[g].nodeId != poNode[i].nodeId) {
+                  getnoderesflg++
+                }
+              }
+              if (getnoderesflg == getnoderesponse.length) {
+                await this.redisService.AppendJsonArr(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr), client)
+              }      
             }
             else {
               await this.redisService.setJsonData(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify([nodeObjArr]), client)
@@ -425,13 +455,22 @@ export class TeService {
             //Setting Up Node response    
             let nodeObjArr = {
               nodeName: poNode[i].nodeName,
-              nodeId: pfdto.nodeId,
-              nodeType: pfdto.nodeType,
+              nodeId: poNode[i].nodeId,
+              nodeType: poNode[i].nodeType,
               sourceStatus: event,
               currentStatus: "Failed"
             }
-            if (await this.redisService.exist(processedKey + pfdto.upId + ':nodeResponse', client)) {              
-              await this.redisService.AppendJsonArr(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr), client)               
+            if (await this.redisService.exist(processedKey + pfdto.upId + ':nodeResponse', client)) {   
+              let getnoderesponse = JSON.parse(await this.redisService.getJsonData(processedKey + pfdto.upId + ':nodeResponse', client));
+              let getnoderesflg = 0
+              for (let g = 0; g < getnoderesponse.length; g++) {
+                if (getnoderesponse[g].nodeId != poNode[i].nodeId) {
+                  getnoderesflg++
+                }
+              }
+              if (getnoderesflg == getnoderesponse.length) {
+                await this.redisService.AppendJsonArr(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr), client)
+              }         
             }
             else {
               await this.redisService.setJsonData(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify([nodeObjArr]), client)
@@ -441,6 +480,7 @@ export class TeService {
               pfdto.data = pfdto.data['data']
               await this.redisService.setJsonData(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', JSON.stringify(pfdto.data), client, 'request')
             }
+           
             if (event === srcStatus) {
               eventResponse = await firstValueFrom(this.poClient.send(
                 ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event,
@@ -459,9 +499,11 @@ export class TeService {
                   await this.redisService.setJsonData(processedKey + pfdto.upId + ':nodeResponse', '"Success"', client, '[' + s + '].currentStatus')
                 }
               }
-
+             
+              
               nodeObjArr = null
               pfdto.event = null
+              pfdto.data = null
               pfdto.nodeId = null
               pfdto.nodeType = null
               pfdto.nodeName = null;
@@ -469,9 +511,13 @@ export class TeService {
               sourceId = null
             } else {
               pfdto.nodeId = null
+              pfdto.data = null
               pfdto.nodeType = null
               pfdto.nodeName = null;
             }
+
+            if(!pfdto.data)
+              pfdto.data = eventResponse?.data
           }
         } else if (poNode[i].nodeType == 'api_outputnode') {
           this.logger.log('API output node started')
@@ -487,24 +533,37 @@ export class TeService {
               srcStatus = poNode[i].events?.sourceStatus
               srcQueue = poNode[i].events.sourceQueue
             }
-
+           // console.log("eventResponse?.data",eventResponse?.data);
+            
             if (!pfdto.data)
-              pfdto.data = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', '.request', client))
+              pfdto.data = eventResponse?.data
+              // pfdto.data = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', '.request', client))
+            
             //Setting Up Node response    
-            var nodeObjArr = {
+            let nodeObjArr = {
               nodeName: poNode[i].nodeName,
-              nodeId: pfdto.nodeId,
-              nodeType: pfdto.nodeType,
+              nodeId: poNode[i].nodeId,
+              nodeType: poNode[i].nodeType,
               sourceStatus: event,
               currentStatus: "Failed"
             }
 
-            if (await this.redisService.exist(processedKey + pfdto.upId + ':nodeResponse', client)) {              
-              await this.redisService.AppendJsonArr(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr), client)               
+            if (await this.redisService.exist(processedKey + pfdto.upId + ':nodeResponse', client)) { 
+              let getnoderesponse = JSON.parse(await this.redisService.getJsonData(processedKey + pfdto.upId + ':nodeResponse', client));
+              let getnoderesflg = 0
+              for (let g = 0; g < getnoderesponse.length; g++) {
+                if (getnoderesponse[g].nodeId != poNode[i].nodeId) {
+                  getnoderesflg++
+                }
+              }
+              if (getnoderesflg == getnoderesponse.length) {
+                await this.redisService.AppendJsonArr(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr), client)
+              }      
             }
             else {
               await this.redisService.setJsonData(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify([nodeObjArr]), client)
             }
+           
             if (event === srcStatus) {
               eventResponse = await firstValueFrom(this.poClient.send(
                 ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event,
@@ -641,20 +700,28 @@ export class TeService {
                     pfdto.data = eventResponse?.data
                   }
                   //Setting Up Node response
-                  let nodeObjArr = [];
-                  nodeObjArr.push({
+                  let nodeObjArr = {
                     nodeName: poNode[i].nodeName,
-                    nodeId: pfdto.nodeId,
-                    nodeType: pfdto.nodeType,
+                    nodeId: poNode[i].nodeId,
+                    nodeType: poNode[i].nodeType,
                     sourceStatus: event,
                     //timeStamp: new Date().toString(),
                     currentStatus: 'Failed',
-                  });
+                  }                  
 
                   if (await this.redisService.exist(processedKey + pfdto.upId + ':nodeResponse', client)) {
-                    await this.redisService.AppendJsonArr(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr[0]), client);
+                    let getnoderesponse = JSON.parse(await this.redisService.getJsonData(processedKey + pfdto.upId + ':nodeResponse', client));
+                    let getnoderesflg = 0
+                    for(let g=0;g<getnoderesponse.length;g++){
+                      if(getnoderesponse[g].nodeId != poNode[i].nodeId){
+                        getnoderesflg++
+                      }
+                    }
+                    if(getnoderesflg == getnoderesponse.length){ 
+                      await this.redisService.AppendJsonArr(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr), client);
+                    }
                   } else {
-                    await this.redisService.setJsonData(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify(nodeObjArr), client);
+                    await this.redisService.setJsonData(processedKey + pfdto.upId + ':nodeResponse', JSON.stringify([nodeObjArr]), client);
                   }
 
                   // Event Emmiting logic
@@ -704,7 +771,8 @@ export class TeService {
                         mergearr = [eventData];
                       }
 
-                    } else {                    
+                    } else {    
+                          
                       eventResponse = await firstValueFrom(this.poClient.send(
                         ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event,
                         new PoEvent(pfdto, event, pfjson, pfo, poJson, Ndp, refflag, page, count)
@@ -725,13 +793,14 @@ export class TeService {
                   let getNodeResponse = JSON.parse(await this.redisService.getJsonData(processedKey + pfdto.upId + ':nodeResponse', client,));
                   if(getNodeResponse.length>0){
                     for (let s = 0; s < getNodeResponse.length; s++) {
-                      if (getNodeResponse[s]?.nodeId == pfdto.nodeId) {
+                      if (getNodeResponse[s]?.nodeId === pfdto.nodeId) {
                         await this.redisService.setJsonData(processedKey + pfdto.upId + ':nodeResponse', '"Success"', client, '[' + s + '].currentStatus');
                       }
                     }
                   }
                   nodeObjArr = null;
                   pfdto.data = null;
+                  //pfdto.data =  eventResponse.data
                   pfdto.event = null;
                   pfdto.nodeId = null;
                   pfdto.nodeType = null;
@@ -763,7 +832,7 @@ export class TeService {
          throw new CustomException(`${event} doesn't matched`, 400);
        }
      } catch (error) {
-       //  console.log('PO ERROR:', error);
+        // console.log('PO ERROR:', error);
        if (pfdto.upId) {
          if (error.statusCode) {
            await this.teCommonService.getTPL(processedKey, pfdto.upId, nodeInfo, 'Failed',
@@ -872,12 +941,12 @@ export class TeService {
   }
 
   // Handler
-  async savehandler(data,key,event,nodeId,nodeName,nodeType,token,upId,sourceId, lockDetails) {
+  async savehandler(data,key,event,nodeId,nodeName,nodeType,token,upId,sourceId, lockDetails,childTable?) {
     try {
       this.logger.log('SaveHandler service started...');
       var formdata;     
       if (data && nodeId && nodeName && nodeType && event) {
-        var formdata = await this.TEcall(token, key, upId, data,nodeId, nodeName, nodeType, event, sourceId, lockDetails);
+        var formdata = await this.TEcall(token, key, upId, data,nodeId, nodeName, nodeType, event, sourceId, lockDetails,childTable);
         return formdata;
       }else{
         throw new CustomException('data/nodeId/nodeName/nodeType/event is not found',404)
@@ -908,7 +977,7 @@ export class TeService {
   }              
   }
 
-  async TEcall(token,key,upId,data,nodeId,nodeName,nodeType,event,sourceId, lockDetails){
+  async TEcall(token,key,upId,data,nodeId,nodeName,nodeType,event,sourceId, lockDetails, childTable?){
     try{
     var pfdto:any = new pfDto()
     var formdata:any
@@ -926,7 +995,8 @@ export class TeService {
         pfdto.nodeId = nodeId         
         pfdto.nodeType = nodeType 
         pfdto.sourceId = sourceId
-        pfdto.lock = lockDetails          
+        pfdto.lock = lockDetails      
+        pfdto.childTable = childTable     
         formdata =  await this.EventEmitter(pfdto)              
       return formdata
   }catch(err){    

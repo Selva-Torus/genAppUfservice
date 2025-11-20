@@ -29,3 +29,24 @@
     display: flex;
     scale: 0.8;
 } 
+
+.g-tabs_direction_horizontal .g-tabs__item_active,
+.g-tabs_direction_horizontal .g-tabs__item_active:hover,
+.g-tabs_direction_horizontal .g-tabs__item_active:focus-visible {
+  border-color: var(--g-color-line-brand);
+  background-color: var(--g-color-base-brandcolor) ;
+}
+
+.g-tabs_direction_horizontal .g-tabs__item {
+  color: var(--g-color-text-secondary);
+  transition: all 0.25s ease;
+  border-radius: 9999px;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  height: var(--g-tabs-item-height, var(--_--item-height));
+  border-block-end: var(--g-tabs-item-border-width, var(--_--item-border-width))
+    solid transparent;
+  padding-block-start: var(--_--item-border-width);
+}

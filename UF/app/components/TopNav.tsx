@@ -122,7 +122,7 @@ const TopNav = ({
   async function logout() {
     localStorage.clear()
     deleteAllCookies()
-    window.location.href = '/tt407/cgfa/tg4cgfa/v1'
+    window.location.href = '/ct003/ag001/oprmatrix/v1'
   }
   const hasMatchingName = (obj: any, input: string): boolean => {
     if (typeof obj !== 'object' || obj === null) return false
@@ -180,7 +180,7 @@ const TopNav = ({
         ) : (
           <Logo />
         )}
-        <h3 className='text-center font-bold '>{appName}</h3>
+        <h3 className='text-center text-nowrap font-bold '>{appName}</h3>
       </div>
       {listMenuItems && (
         <>

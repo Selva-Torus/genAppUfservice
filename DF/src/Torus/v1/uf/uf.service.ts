@@ -22,8 +22,8 @@ const jsonata = require('jsonata');
 import * as fs from 'fs';
 import { table } from 'console';
 import axios, { AxiosRequestConfig } from 'axios';
+import * as FormData from 'form-data'; // Use this
 import { Readable } from 'stream';
-import * as FormData from 'form-data';
 import { v4 as uuidv4 } from 'uuid';
 import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet } from 'src/fusionAuth.api';
 // import { RuleService } from 'src/ruleService';
@@ -36,7 +36,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 const auth_secret =
-  'HpZnm7V6YeshFDVbwACyOtx6oa6QSbraZoNyU9fwtGYUL1Rnc6PN5QUosu9BcqVBo5L6QeSs';
+  process.env.AUTH_SECRET;
 const tenant = process.env.TENANT;
 const ag = process.env.APPGROUPCODE;
 const app = process.env.APPCODE;
@@ -47,7 +47,10 @@ const fusionAuthApplicationId = process.env.FUSIONAUTH_APPLICATIONID;
 const fusionAuthAppClientSecret = process.env.FUSIONAUTH_APPCLIENTSECRET;
 const fusionAuthBaseUrl = process.env.FUSIONAUTH_BASEURL;
 const fusionAuthApiKey = process.env.FUSIONAUTH_APIKEY;
-const defaultAuth =  process.env.DEFAULT_AUTHENTICATION
+const defaultAuth =  process.env.DEFAULT_AUTHENTICATION;
+const accessTokenExpiryTime = process.env.AUTH_ACCESSTOKEN_EXPIRY_TIME;
+const refreshTokenExpiryTime = process.env.AUTH_REFRESHTOKEN_EXPIRY_TIME;
+const fusionauthRefreshTokenExpiryTimeinMinutes = process.env.FUSIONAUTH_REFRESHTOKEN_EXPIRY_TIME_IN_MINUTES
 
 @Injectable()
 export class UfService {
@@ -111,19 +114,19 @@ export class UfService {
     }
   }
 
-  async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number },context: string): Promise<any> {
+  async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number },context: string, enableEncryption: string): Promise<any> {
     try {
-      const res = await this.commonService.uploadFile(file, context);
+      const res = await this.commonService.uploadFile(file, context, enableEncryption);
       return res;
     } catch (error) {
       throw new BadGatewayException(error);
     }
   }
 
-  async getFile(id: string, context: string) {
+  async getFile(id: string, context: string,enableEncryption: Boolean) {
     try {
       const file = await this.commonService.findFileById(id);
-      const res = await this.commonService.getFile(id, context);
+      const res = await this.commonService.getFile(id, context,enableEncryption);
       return { res, file };
     } catch (error) {
       throw new BadGatewayException(error);
@@ -313,7 +316,7 @@ export class UfService {
     }
   }
 
-   async getpagination(
+  async getpagination(
     key: any,
     page,
     count,
@@ -353,8 +356,12 @@ export class UfService {
         let finalData = [];
         var dataArr = [];
         var searcharr = [];
-        var start = (page - 1) * count;
-        var end = start + count;
+        let start,end;
+        if(count){
+          start = (page - 1) * count;
+          end = start + count;
+        }
+
         if (searchObj && Object.keys(searchObj).length > 0) {
           var searchkey = Object.keys(searchObj);
           var searchval = Object.values(searchObj);
@@ -393,7 +400,7 @@ export class UfService {
                 break;
               } else if (result?.result?.output === true) {
                 // if (tokenDecode?.dap == 'f') {
-                  finalData.push(data[j]);
+                finalData.push(data[j]);
                 // } else if (
                 //   tokenDecode.orgGrpCode == data[j]['trs_org_grp_code'] &&
                 //   tokenDecode.orgCode == data[j]['trs_org_code'] &&
@@ -416,7 +423,7 @@ export class UfService {
                 for (var q = 0; q < searchkey.length; q++) {
                   if (finalData[x][searchkey[q]] == searchval[q]) {
                     // if (tokenDecode?.dap == 'f') {
-                      s++;
+                    s++;
                     // } else if (
                     //   tokenDecode.orgGrpCode ==
                     //     finalData[x]['trs_org_grp_code'] &&
@@ -461,7 +468,7 @@ export class UfService {
             for (var q = 0; q < searchkey.length; q++) {
               if (data[x][searchkey[q]] == searchval[q]) {
                 // if (tokenDecode?.dap == 'f') {
-                  s++;
+                s++;
                 // } else if (
                 //   tokenDecode.orgGrpCode == data[x]['trs_org_grp_code'] &&
                 //   tokenDecode.orgCode == data[x]['trs_org_code'] &&
@@ -486,7 +493,7 @@ export class UfService {
         if (data?.length > 0) {
           for (let i = 0; i < data.length; i++) {
             // if (tokenDecode?.dap == 'f') {
-              dataArr.push(data[i]);
+            dataArr.push(data[i]);
             // } else if (
             //   tokenDecode.orgGrpCode == data[i]['trs_org_grp_code'] &&
             //   tokenDecode.orgCode == data[i]['trs_org_code'] &&
@@ -519,10 +526,18 @@ export class UfService {
 
   async filterpagination(start, end, searcharr) {
     try {
+      console.log(1,end,2, searcharr)
       var filArray = [];
-      for (var i = start; i < end; i++) {
-        if (searcharr[i] != null) filArray.push(searcharr[i]);
+      if(end){
+        for (let i = start; i < end; i++) {
+          if (searcharr[i] != null) filArray.push(searcharr[i]);
+        }
+      }else{       
+        for (let i = 0; i < searcharr.length; i++) {
+          if (searcharr[i] != null) filArray.push(searcharr[i]);
+        }
       }
+
       return { records: filArray, totalRecords: searcharr.length };
     } catch (error) {
       throw new BadGatewayException(error);
@@ -857,6 +872,15 @@ export class UfService {
           /*---------security end-------------*/
           for (let i = 0; i < mappedData.length; i++) {
             if (componentId === mappedData[i].nodeId) {
+              for (let j = 0;j < mappedData[i].objElements.length;j++) {
+                if(mappedData[i].objElements[j].mapper.length > 0){
+                let mapperDetails:any ={};
+                mapperDetails["elementname"] = mappedData[i].objElements[j].elementName;
+                mapperDetails["sourcekey"] = mappedData[i].objElements[j].mapper[0].sourceKey[0];
+                mapperDetails["targetkey"] = mappedData[i].objElements[j].mapper[0].targetKey;
+                  mappedData[i]?.mapper.push(mapperDetails);
+                }
+              }
               object = {
                 action: mappedData[i]?.action,
                 code: mappedData[i]?.code,
@@ -1094,6 +1118,7 @@ export class UfService {
       throw new BadGatewayException(error);
     }
   }
+
   async getMapperDetails(
     key: string,
     componentId: string,
@@ -1285,6 +1310,7 @@ export class UfService {
       throw new BadGatewayException(error);
     }
   }
+
   async eventFunction(eventProperty: any) {
     try {
       let eventsDetails: any = [];
@@ -1341,6 +1367,7 @@ export class UfService {
       throw new BadGatewayException(error);
     }
   }
+
   async codefilter(
     key: string,
     groupId?: any,
@@ -1615,8 +1642,14 @@ export class UfService {
                         }
                       }
                     }
-                    // return ff
-                    return filterItems;
+                    if('childTables' in formData)
+                    {
+                      formData.childTables.map((eachTable:any)=>{
+                        filterItems[eachTable]=formData[eachTable]
+                      })
+                      return filterItems;
+                    }else
+                      return filterItems;
                   }
                 }
               }
@@ -2123,6 +2156,7 @@ export class UfService {
       );
     }
   }
+
   /* async zenrule(rule: any, data: any) {
             try {
               var goruleEngine: RuleService = new RuleService();
@@ -2953,19 +2987,16 @@ export class UfService {
           tokens,
         );
       }
-      const sessionListCacheKey =
-        payload.type == 'c'
-          ? `CK:TGA:FNGK:SETUP:FNK:SF:CATK:CLIENT:AFGK:${payload.client}:AFK:PROFILE:AFVK:v1:session`
-          : `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${payload.client}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
+      const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
       const sessionListCache = await this.redisService.getJsonData(
         sessionListCacheKey,
         process.env.CLIENTCODE,
       );
+      const sessionList = sessionListCache && JSON.parse(sessionListCache) ? JSON.parse(sessionListCache) : [];
       if (
-        !sessionListCache ||
-        !JSON.parse(sessionListCache) ||
-        !Array.isArray(JSON.parse(sessionListCache)) ||
-        !JSON.parse(sessionListCache).length
+        !sessionList ||
+        !Array.isArray(sessionList) ||
+        !sessionList.length
       ) {
         await this.commonService.errorLog(
           'Technical',
@@ -2977,7 +3008,7 @@ export class UfService {
           tokens,
         );
       }
-      const sessionList = JSON.parse(sessionListCache);
+
       const updatedSessionList = await this.checkSession(sessionList);
       if (updatedSessionList?.find((item: any) => item?.sid == payload.sid)) {
         await this.redisService.setJsonData(
@@ -3010,13 +3041,12 @@ export class UfService {
 
   async getAccessToken(
     token: string,
-    ps: string,
+    selectedCombination: any,
     selectedAccessProfile: string,
     dap: string | undefined,
     ufClientType: string
   ) {
     try {
-      const parts = ps.split('-');
       const accessProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`;
       const accessProfileCache = await this.redisService.getJsonData(
         accessProfileCacheKey,
@@ -3032,7 +3062,16 @@ export class UfService {
         filteredAccessprofile,
       ]);
       const accessObj = {
-        ...filteredCombination[0]?.combinations?.find((c) => c?.psCode == ps),
+        ...filteredCombination[0]?.combinations?.find((c) => {
+          return (
+            c?.orgGrpCode === selectedCombination?.orgGrpCode &&
+            c?.orgCode === selectedCombination?.orgCode &&
+            c?.psGrpCode === selectedCombination?.psGrpCode &&
+            c?.psCode === selectedCombination?.psCode &&
+            c?.roleGrpCode === selectedCombination?.roleGrpCode &&
+            c?.roleCode === selectedCombination?.roleCode
+          );
+        }),
         selectedAccessProfile: filteredCombination[0]?.accessProfile,
         dap: filteredCombination[0]?.dap,
       };
@@ -3044,7 +3083,7 @@ export class UfService {
         {
           type,
           client,
-          loginId,       
+          loginId,
           isAppAdmin,
           ag,
           app,
@@ -3056,7 +3095,7 @@ export class UfService {
         },
         {
           secret: auth_secret,
-          expiresIn: '24h',
+          expiresIn: accessTokenExpiryTime as any,
         },
       );
 
@@ -3067,14 +3106,15 @@ export class UfService {
       let updatedSessionList = [];
       if (sessionListResponse) {
         const sessionList = JSON.parse(sessionListResponse);
-       updatedSessionList = await this.checkSession(sessionList);
+        updatedSessionList = await this.checkSession(sessionList);
         const previousActiveSession = updatedSessionList.find(
           (session: any) => session?.sid === sid,
         );
-        updatedSessionList.filter((s: any) => s?.sid !== sid).push({
-          ...previousActiveSession,
+       updatedSessionList = updatedSessionList.filter((s: any) => s?.sid !== sid).concat({
+            ...previousActiveSession,
           accessToken : updatedToken,
-        });
+          updatedOn : new Date().toISOString(),
+          });
       }
       await this.redisService.setJsonData(
         sessionListCacheKey,
@@ -3088,6 +3128,18 @@ export class UfService {
       );
       return updatedToken;
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH006',
+        error,
+        'getAccessToken',
+        token,
+        {
+          artifact: 'getAccessToken',
+        },
+      );
       throw new BadGatewayException(error);
     }
   }
@@ -3103,17 +3155,17 @@ export class UfService {
           orgGrp.org?.forEach((org: any) => {
             const { orgCode, orgName } = org;
 
-            org.roleGrp?.forEach((roleGrp: any) => {
-              const { roleGrpCode, roleGrpName } = roleGrp;
+            org.psGrp?.forEach((psGrp: any) => {
+              const { psGrpCode, psGrpName } = psGrp;
 
-              roleGrp.roles?.forEach((role: any) => {
-                const { roleCode, roleName } = role;
+              psGrp.ps?.forEach((ps: any) => {
+                const { psCode, psName } = ps;
 
-                role.psGrp?.forEach((psGrp: any) => {
-                  const { psGrpCode, psGrpName } = psGrp;
+                ps.roleGrp?.forEach((roleGrp: any) => {
+                  const { roleGrpCode, roleGrpName } = roleGrp;
 
-                  psGrp.ps?.forEach((ps: any) => {
-                    const { psCode, psName } = ps;
+                  roleGrp.roles?.forEach((role: any) => {
+                    const { roleCode, roleName } = role;
 
                     combinations.push({
                       orgGrpCode,
@@ -3166,6 +3218,18 @@ export class UfService {
         throw new NotFoundException('Access Template not found');
       }
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH007',
+        error,
+        'select-context',
+        token,
+        {
+          artifact: 'select-context',
+        },
+      );
       throw new BadGatewayException(error);
     }
   }
@@ -3200,68 +3264,81 @@ export class UfService {
     }
   }
 
+  toMinutes(value: any): number {
+    const regex = /^(\d+(?:\.\d+)?)(?:\s*([a-zA-Z]+))?$/;
+    const match = value.trim().match(regex);
+
+    if (!match) throw new Error(`Invalid time format: ${value}`);
+
+    const num = parseFloat(match[1]);
+    const unit = (match[2] || 'm').toLowerCase();
+
+    const unitMap: Record<string, number> = {
+      y: 525600,
+      year: 525600,
+      years: 525600,
+      yr: 525600,
+      yrs: 525600,
+      w: 10080,
+      week: 10080,
+      weeks: 10080,
+      d: 1440,
+      day: 1440,
+      days: 1440,
+      h: 60,
+      hr: 60,
+      hrs: 60,
+      hour: 60,
+      hours: 60,
+      m: 1,
+      min: 1,
+      mins: 1,
+      minute: 1,
+      minutes: 1,
+      s: 1 / 60,
+      sec: 1 / 60,
+      secs: 1 / 60,
+      second: 1 / 60,
+      seconds: 1 / 60,
+      ms: 1 / 60000,
+      msec: 1 / 60000,
+      msecs: 1 / 60000,
+      millisecond: 1 / 60000,
+      milliseconds: 1 / 60000,
+    };
+
+    const minutes = unitMap[unit];
+    if (minutes === undefined) throw new Error(`Unknown unit: ${unit}`);
+
+    return num * minutes;
+  }
+
   async checkSession(sessionList: any[]) {
     try {
+      const timeNow = Math.ceil(new Date().getTime() / 1000);
       const updatedSessionList = new Map();
       for (let index = 0; index < sessionList.length; index++) {
-        const token = sessionList[index]?.refreshToken;
+        const session = sessionList[index];
 
         // if there is no refresh token it will be removed from the session list
-        if (!token) {
+        if (!session['refreshToken'] || !session['createdOn']) {
           continue;
         }
-        // verifying the refresh token is valid or not if it a fusionauth refresh token
-        if (
-          process.env.DEFAULT_AUTHENTICATION == 'fusionauth' &&
-          sessionList[index]?.refreshTokenId && fusionAuthBaseUrl && fusionAuthAppClientSecret && fusionAuthApplicationId
-        ) {
-          const accessToken = sessionList[index]?.accessToken;
-          let accessTokenPayload = await this.jwt.decode(accessToken);
-          if (
-            !accessTokenPayload ||
-            !accessTokenPayload.sid ||
-            !accessTokenPayload.client
-          ) {
-            continue;
-          }
-          const value = await this.fusionAuthVerifyRefreshToken(token);
-          if (value) {
-            updatedSessionList.set(token, {
-              ...sessionList[index],
-              refreshToken: value?.refresh_token,
-              refreshTokenId: value?.refresh_token_id,
-            });
-          } else {
-            continue;
-          }
-        }
-        // if the refresh token is not a fusionauth token it will be verified with jwt refresh secret
-        else {
-          let payload;
-          try {
-            payload = await this.jwt.verifyAsync(token, {
-              secret: auth_secret,
-            });
-          } catch (error) {
-            // updatedSessionList.delete(token);
-            continue;
-          }
-          if (!payload || !payload.exp) {
-            // updatedSessionList.delete(token);
-            continue;
-          } else {
-            const timeNow = Math.ceil(new Date().getTime() / 1000);
-            const timegap = payload.exp - timeNow;
-
-            if (timegap > 0) {
-              updatedSessionList.set(token, sessionList[index]);
-            }
-          }
+        const sessionLastUpdatedTime =
+          new Date(session['updatedOn'] || session['createdOn']).getTime() /
+          1000;
+        const timegap = timeNow - sessionLastUpdatedTime;
+        const timegapInMinutes = Math.ceil(timegap / 60);
+        const expiryTImeInMinutes = session['refreshTokenId']
+          ? parseInt(fusionauthRefreshTokenExpiryTimeinMinutes)
+          : this.toMinutes(refreshTokenExpiryTime);
+        if (timegapInMinutes <= expiryTImeInMinutes) {
+          updatedSessionList.set(session['refreshToken'], session);
         }
       }
       return Array.from(updatedSessionList.values());
     } catch (error) {
-      await this.throwCustomException(error);
+      return []
     }
   }
 
@@ -3269,7 +3346,6 @@ export class UfService {
     if (authorization) {
       try {
         const payload: any = this.jwt.decode(token);
-        let sessionId:string = payload?._sessionId;
         if (!payload) {
           await this.commonService.errorLog(
             'Technical',
@@ -3281,12 +3357,8 @@ export class UfService {
             token,
           );
         } else {
-          let userCachekey;
-          if (payload.type === 'c') {
-            userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:CLIENT:AFGK:${payload.client}:AFK:PROFILE:AFVK:v1:users`;
-          } else {
-            userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${payload.client}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
-          }
+     
+          const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
           const responseFromRedis = await this.redisService.getJsonData(
             userCachekey,
             process.env.CLIENTCODE,
@@ -3296,7 +3368,7 @@ export class UfService {
             (user) => user.loginId === payload.loginId,
           );
           delete reqiredUser.password;
-          return { ...reqiredUser, client: payload.client };
+          return { ...reqiredUser, client: tenant };
         }
       } catch (error) {
         await this.commonService.errorLog(
@@ -3349,8 +3421,7 @@ export class UfService {
         );
       }
       const payload = await this.jwt.decode(token);
-      let sid: string = payload.sid;
-      if (!payload || !payload.client || !payload.type) {
+      if (!payload) {
         await this.commonService.errorLog(
           'Technical',
           'AK',
@@ -3361,25 +3432,31 @@ export class UfService {
           tokens,
         );
       }
-      const sessionListCacheKey =
-        payload.type == 'c'
-          ? `CK:TGA:FNGK:SETUP:FNK:SF:CATK:CLIENT:AFGK:${payload.client}:AFK:PROFILE:AFVK:v1:session`
-          : `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${payload.client}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
+      const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
       const sessionListCache = await this.redisService.getJsonData(
         sessionListCacheKey,
         process.env.CLIENTCODE,
       );
+      const sessionList = sessionListCache && JSON.parse(sessionListCache) ? JSON.parse(sessionListCache) : [];
+
       if (
-        !sessionListCache ||
-        !JSON.parse(sessionListCache) ||
-        !Array.isArray(JSON.parse(sessionListCache)) ||
-        !JSON.parse(sessionListCache).length
+        !sessionList ||
+        !Array.isArray(sessionList) ||
+        !sessionList.length
       ) {
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG075',
+          'Invalid access token',
+          key,
+          tokens,
+        );
         throw new UnauthorizedException('Invalid access token');
       }
-      const sessionList = JSON.parse(sessionListCache);
       const updatedSessionList = await this.checkSession(sessionList);
-      const currentSession = updatedSessionList.find(
+      let currentSession = updatedSessionList.find(
         (item: any) => item?.sid == payload.sid,
       );
       if (!currentSession) {
@@ -3388,12 +3465,77 @@ export class UfService {
           JSON.stringify(updatedSessionList),
           process.env.CLIENTCODE,
         );
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG075',
+          'Invalid access token',
+          key,
+          tokens,
+        );
         throw new UnauthorizedException('Invalid access token');
+      }
+      const refreshToken = currentSession['refreshToken'];
+      if (!refreshToken) {
+        await this.commonService.errorLog(
+          'Technical',
+          'AK',
+          'Fatal',
+          'TG075',
+          'Session not available',
+          key,
+          tokens,
+        );
+        throw new UnauthorizedException('Session not available');
+      }
+      // if currentSession has refreshTokenId this token is from fusionAuth and we need to verify with fusionauth
+      if(currentSession['refreshTokenId']){
+        const value = await this.fusionAuthVerifyRefreshToken(refreshToken);
+        if (value) {
+          currentSession = {
+            ...currentSession,
+            refreshToken: value?.refresh_token,
+            refreshTokenId: value?.refresh_token_id,
+            updatedOn : new Date().toISOString()
+          }
+        }else{
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG075',
+            'Session not available',
+            key,
+            tokens,
+          );
+          throw new UnauthorizedException('Session not available');
+        }
+      }else{
+        try {
+         await this.jwt.verifyAsync(
+             currentSession['refreshToken'], {
+               secret : auth_secret
+             }
+           )
+        } catch (error) {
+          await this.commonService.errorLog(
+            'Technical',
+            'AK',
+            'Fatal',
+            'TG075',
+            'Session not available',
+            key,
+            tokens,
+          );
+          throw new UnauthorizedException('Session not available');
+        }
       }
       const timeNow = Math.ceil(new Date().getTime() / 1000);
       const timegap = payload.exp - timeNow;
-      if (timegap < 600) {
-        const updatedToken = await this.jwt.signAsync(
+      let updatedToken = undefined;
+      if (timegap < 300) {
+        updatedToken = await this.jwt.signAsync(
           {
             client: payload.client,
             loginId: payload.loginId,
@@ -3401,29 +3543,34 @@ export class UfService {
             isAppAdmin: payload.isAppAdmin,
             ag,
             app,
-            sid,
+            sid : payload.sid,
           },
           {
             secret: auth_secret,
-            expiresIn: '24h',
+            expiresIn: accessTokenExpiryTime as any,
           },
         );
-        await this.redisService.setJsonData(
-          sessionListCacheKey,
-          JSON.stringify(
-            updatedSessionList
-              .filter((s: any) => s.sid !== payload.sid)
-              .concat({
-                ...currentSession,
-                token: updatedToken,
-              }),
-          ),
-          process.env.CLIENTCODE,
-        );
-        return { authenticated: true, updatedToken };
+        currentSession = {
+          ...currentSession,
+          accessToken: updatedToken,
+          updatedOn : new Date().toISOString()
+        }
       } else {
-        return { authenticated: true };
+        currentSession = {
+          ...currentSession,
+          updatedOn : new Date().toISOString()
+        }
       }
+      await this.redisService.setJsonData(
+        sessionListCacheKey,
+        JSON.stringify(
+          updatedSessionList
+            .filter((s: any) => s.sid !== payload.sid)
+            .concat(currentSession),
+        ),
+        process.env.CLIENTCODE,
+      );
+      return { authenticated: true, updatedToken };
     } catch (error) {
       await this.commonService.errorLog(
         'Technical',
@@ -3507,13 +3654,13 @@ export class UfService {
             return false;
           else 
             throw new NotFoundException('User not found');
-        } 
+        }
         appUser = JSON.parse(
-          await this.redisService.getJsonData(
-            appUserKey,
-            process.env.CLIENTCODE,
-          ), 
-        ) || []; // app user are null
+            await this.redisService.getJsonData(
+              appUserKey,
+              process.env.CLIENTCODE,
+            ),
+          ) || []; // app user are null
         let loggedInUser = appUser.find(
           (user: any) => loginUser?.userUniqueId === user?.userUniqueId,
         );
@@ -3573,7 +3720,7 @@ export class UfService {
           },
           {
             secret: auth_secret,
-            expiresIn: '24h',
+            expiresIn: accessTokenExpiryTime as any,
           },
         );
         let refreshToken: string;
@@ -3585,7 +3732,7 @@ export class UfService {
         } else {
           refreshToken = await this.jwt.signAsync(
             { loginId: loggedInUser.loginId, client: tenant, type: 't' },
-            { secret: auth_secret, expiresIn: '7d' },
+            { secret: auth_secret, expiresIn: refreshTokenExpiryTime as any },
           );
         }
 
@@ -3600,6 +3747,7 @@ export class UfService {
               sid,
               refreshToken,
               refreshTokenId,
+              createdOn : new Date().toISOString()
             },
             sessionListCacheKey,
           );
@@ -3629,6 +3777,7 @@ export class UfService {
               sid,
               refreshToken,
               refreshTokenId,
+              createdOn : new Date().toISOString()
             },
             sessionListCacheKey,
           );
@@ -3682,7 +3831,7 @@ export class UfService {
                 },
                 {
                   secret: auth_secret,
-                  expiresIn: '24h',
+                  expiresIn: accessTokenExpiryTime as any,
                 },
               );
             }
@@ -3695,6 +3844,7 @@ export class UfService {
             sid,
             refreshToken,
             refreshTokenId,
+            createdOn : new Date().toISOString()
           },
           sessionListCacheKey,
         );
@@ -3714,9 +3864,35 @@ export class UfService {
         {
           return false
         }
+        await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH002',
+        'Invalid Credentials',
+        'LoginScreen',
+        '',
+        {
+          artifact: 'LoginScreen',
+          users: username,
+        },
+      );
         throw new NotFoundException(`Invalid Credentials`);
       }
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH002',
+        error,
+        'LoginScreen',
+        '',
+        {
+          artifact: 'LoginScreen',
+          users: username,
+        },
+      );
       await this.throwCustomException(error);
     }
   }
@@ -3763,6 +3939,19 @@ export class UfService {
       );
       return torusSignIn;
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH001',
+        error,
+        'LoginScreen',
+        '',
+        {
+          artifact: 'LoginScreen',
+          users: username,
+        },
+      );
       await this.throwCustomException(error);
     }
   }
@@ -3819,6 +4008,7 @@ export class UfService {
       HttpStatus.INTERNAL_SERVER_ERROR,
     );
   }
+
   hashPassword(password: string): string {
     const SALT_LENGTH = 16;
     const KEY_LENGTH = 64;
@@ -3826,6 +4016,7 @@ export class UfService {
     const hash = scryptSync(password, salt, KEY_LENGTH).toString('hex');
     return `${salt}:${hash}`;
   }
+
   // static screen's apis
   async getTenantUser(tenantCode: string, client: string) {
     try {
@@ -3836,29 +4027,31 @@ export class UfService {
       throw new UnauthorizedException('Invalid tenant key');
     }
   }
-    async getAppUserList(
-      tenant: string,
-      ag: string,
-      app: string,
-      client: string,
-    ) {
-      try {
-        if (!tenant || !ag || !app || !client) {
-          return [];
-        }
-        const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
-        const responseFromRedis = JSON.parse(
-          await this.redisService.getJsonData(userCachekey, client),
-        );
-        return responseFromRedis || [];
-      } catch (error) {
-        throw new UnauthorizedException('Please check credentials');
+
+  async getAppUserList(
+    tenant: string,
+    ag: string,
+    app: string,
+    client: string,
+  ) {
+    try {
+      if (!tenant || !ag || !app || !client) {
+        return [];
       }
+      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+      const responseFromRedis = JSON.parse(
+        await this.redisService.getJsonData(userCachekey, client),
+      );
+      return responseFromRedis || [];
+    } catch (error) {
+      throw new UnauthorizedException('Please check credentials');
     }
+  }
+
   async getTenantAppUser(tenant, client, ag, app){
     try {
       let setAssignUsers = []
-     
+
       const tenantUser: any[] = await this.getTenantUser(tenant, client);
       const tenantAppUser: any[] = await this.getAppUserList(tenant, ag, app, client);
       tenantAppUser.filter((appUser: any) =>
@@ -3866,16 +4059,17 @@ export class UfService {
           (tenantUser: any) => {
             if(appUser.userUniqueId === tenantUser.userUniqueId){
               setAssignUsers.push({...appUser,...tenantUser})
-            }
+          }
           }
         ),
       );
       // return {data:setAssignUsers}
        return setAssignUsers
     }catch (error) {
-         throw new UnauthorizedException('Please check credentials');
-      }
+      throw new UnauthorizedException('Please check credentials');
     }
+  }
+
   async getAppSecurityData() {
     try {
       if (!tenant)
@@ -3907,6 +4101,19 @@ export class UfService {
       securityResponse['users'] = await this.getTenantAppUser(tenant, process.env.CLIENTCODE, ag, app);
       return securityResponse;
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH008',
+        error,
+        'UserScreen',
+        '',
+        {
+          artifact: 'UserScreen',
+          user: "anonymous user",
+        },
+      );
       await this.throwCustomException(error);
     }
   }
@@ -3948,6 +4155,19 @@ export class UfService {
       }
       return securityTemplateData;
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH009',
+        error,
+        'UserScreen',
+        '',
+        {
+          artifact: 'UserScreen',
+          users: 'anonymous user',
+        },
+      );
       await this.throwCustomException(error);
     }
   }
@@ -3979,11 +4199,24 @@ export class UfService {
       }
       return accessProfileWithProductAndService;
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH010',
+        error,
+        'UserScreen',
+        '',
+        {
+          artifact: 'UserScreen',
+          users: 'anonymous user',
+        },
+      );
       await this.throwCustomException(error);
     }
   }
 
-   async postAppUserList(data: any) {
+  async postAppUserList(data: any) {
     try {
       if (!tenant || !data || !ag || !app || !process.env.CLIENTCODE) {
         throw new BadRequestException('Invalid credentials');
@@ -4139,6 +4372,19 @@ export class UfService {
         }
       }
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH011',
+        error,
+        'UserScreen',
+        '',
+        {
+          artifact: 'UserScreen',
+          users: 'anonymous user',
+        },
+      );
       await this.throwCustomException(error);
     }
   }
@@ -4151,7 +4397,151 @@ export class UfService {
         process.env.CLIENTCODE,
       );
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH012',
+        error,
+        key,
+        '',
+        {
+          artifact: 'UserScreen',
+          users: 'anonymous user',
+        },
+      );
       await this.throwCustomException(error);
+    }
+  }
+
+  async appUserAddition(data: any,isFusionAuth:boolean=false) {
+    try {
+      if (!tenant || !ag || !app || !data) {
+        throw new BadRequestException('Invalid input parameters');
+      }
+      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+      const clientProfileResourceKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`;
+
+      const userResponse = await this.redisService.getJsonData(
+        userCachekey,
+        process.env.CLIENTCODE,
+      );
+
+      const userList: any[] = userResponse ? JSON.parse(userResponse) : [];
+
+      const clientProfile = JSON.parse(
+        await this.redisService.getJsonData(
+          clientProfileResourceKey,
+          process.env.CLIENTCODE,
+        ),
+      );
+
+      const { email, firstName, lastName, password, loginId } = data;
+      const resForClientUserAddition = await this.redisService.getJsonData(
+        `CK:TRL:FNGK:AFR:FNK:PORTAL:CATK:EMAILTEMPLATE:AFGK:TORUS:AFK:CLIENTUSERADDITION:AFVK:v1:TPI`,
+        process.env.CLIENTCODE,
+      );
+
+      const clientUserAddition = JSON.parse(resForClientUserAddition);
+
+      const updatedSubject = (clientUserAddition.subject as string).replaceAll(
+        '${clientProfile.clientName}',
+        `${clientProfile.Name}`,
+      );
+      const updateclientUserAdditionHtml = (clientUserAddition.html as string)
+        .replaceAll('${clientProfile.clientName}', `${clientProfile.Name}`)
+        .replace('${firstName}', `${firstName}`)
+        .replace('${lastName}', `${lastName}`)
+        .replace('${clientCode}', `${tenant}`)
+        .replace('${username}', `${loginId}`)
+        .replace('${password}', `${password}`);
+
+      const mailOptions = {
+        from: 'support@torus.tech',
+        to: email,
+        subject: updatedSubject,
+        // text: updateclientUserAddition,
+        html: updateclientUserAdditionHtml,
+      };
+
+      transporter.sendMail(mailOptions, async (error, info) => {
+        if (error) {
+          throw new ForbiddenException('There is an issue with sending otp');
+        } else {
+          console.log('Email sent: ' + info.response);
+          // return `Email sent`;
+        }
+      });
+
+      userList.push({
+        ...data,
+        isRestricted: true,
+      });
+      await this.redisService.setJsonData(
+        userCachekey,
+        JSON.stringify(userList),
+        process.env.CLIENTCODE,
+      );
+      const newUserList = structuredClone(userList);
+
+      let result = [];
+
+      for (const user of newUserList) {
+        delete user.password;
+        result.push(user);
+      }
+
+      return result;
+    } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH013',
+        error,
+        'UserScreen',
+        '',
+        {
+          artifact: 'UserScreen',
+          users: 'anonymous user',
+        },
+      );
+      console.log(error, 'error');
+      await this.throwCustomException(error);
+    }
+  }
+  
+  async getDFS(fileUrl: string, enableEncryption: boolean): Promise<Buffer> {
+    try {
+      const url = fileUrl.replace(
+        process.env.FTP_OUTPUT_HOST,
+         process.env.SEAWEED_OUTPUT_HOST+'/buckets'
+      );
+
+      const response = await axios.get(url, {
+        responseType: 'arraybuffer',
+        auth: {
+          username: process.env.SEAWEED_USERNAME,
+          password: process.env.SEAWEED_PASSWORD,
+        },
+        validateStatus: (status) => status < 500,
+      });
+
+      if (response.status !== 200) {
+        throw new Error(`Failed to fetch file: ${response.status}`);
+      }
+
+      const ciphertext = Buffer.from(response.data);
+
+      // Decrypt if needed
+      const fileBuffer = enableEncryption
+        ? await this.commonService.aes256ctrDecrypt(ciphertext)
+        : ciphertext;
+
+      return fileBuffer;
+    } catch (error) {
+      console.error('Error fetching file from DFS:', error);
+      throw error;
     }
   }
 
@@ -4160,42 +4550,66 @@ export class UfService {
     bucketFoldername?: string,
     folderPath?: string,
     filename?: string,
+    enableEncryption?: string
   ): Promise<string> {
     try {
-      const fileName = filename || file.originalname;
-      const bucket = bucketFoldername || ''; // e.g., 'torus'
-      const subFolder = folderPath || ''; // e.g., 'images'
+      const fileName = filename || file.filename || file.originalname;
+      const bucket = bucketFoldername || ''; // e.g. 'torus'
+      const subFolder = folderPath || ''; // e.g. 'images'
 
       const actualBuffer = Buffer.isBuffer(file.buffer)
         ? file.buffer
         : Buffer.from((file.buffer as any)?.data || []);
 
-      const form = new FormData();
-      form.append('file', Readable.from(actualBuffer), fileName);
+      const shouldEncrypt = enableEncryption === 'true';
 
-      const res = await axios.post(
-        `${process.env.FTP_OUTPUT_HOST}/buckets/${bucket}/${subFolder}/${fileName}`,
-        form,
-        {
-          headers: {
-            Accept: 'application/json',
-            ...form.getHeaders(),
-          },
-          auth: {
-            username: `${process.env.SEAWEED_USERNAME}`,
-            password: `${process.env.SEAWEED_PASSWORD}`,
-          },
-          validateStatus: (status) => status < 500,
+      const encryptedBuffer = shouldEncrypt
+        ? await this.commonService.aes256ctrEncrypt(actualBuffer)
+        : actualBuffer;
+
+      const form = new FormData();
+      form.append('file', Readable.from(encryptedBuffer), {
+        filename: fileName,
+        contentType: file.mimetype || 'application/octet-stream',
+      });
+
+      const uploadUrl = `${process.env.SEAWEED_OUTPUT_HOST?.replace(
+        /\/$/,
+        ''
+      )}/buckets/${bucket}/${subFolder}/${fileName}`;
+      const res = await axios.post(uploadUrl, form, {
+        headers: {
+          Accept: 'application/json',
+          ...form.getHeaders(),
         },
-      );
-      if (res.status == 201) {
-        return `${process.env.SEAWEED_OUTPUT_HOST}/${bucket}/${subFolder}/${fileName}`;
+        auth: {
+          username: `${process.env.SEAWEED_USERNAME}`,
+          password: `${process.env.SEAWEED_PASSWORD}`,
+        },
+        validateStatus: (status) => status < 500,
+      });
+
+      if (res.status === 201) {
+        return `${process.env.FTP_OUTPUT_HOST}/${bucket}/${subFolder}/${fileName}`;
       } else {
         throw new ConflictException(
-          res.data || 'Error Occured while uploading file',
+          res.data || 'Error occurred while uploading file'
         );
       }
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH014',
+        error,
+        'UserScreen',
+        '',
+        {
+          artifact: 'UserScreen',
+          users: 'anonymous user',
+        },
+      );
       await this.throwCustomException(error);
     }
   }
@@ -4221,6 +4635,7 @@ export class UfService {
       throw new NotFoundException('data not found');
     }
   }
+
   async getResetPasswordOtp(email: string) {
     try {
       if (!email) throw new BadRequestException('email is required');
@@ -4295,6 +4710,19 @@ export class UfService {
       });
       return 'Email sent to the registered email address';
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH003',
+        error,
+        'ForgotPasswordScreen',
+        '',
+        {
+          artifact: 'ForgotPasswordScreen',
+          users: email.split("@")[0],
+        },
+      );
       await this.throwCustomException(error);
     }
   }
@@ -4322,111 +4750,138 @@ export class UfService {
       );
       return true;
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH004',
+        error,
+        'ForgotPasswordScreen',
+        '',
+        {
+          artifact: 'ForgotPasswordScreen',
+          users: email.split("@")[0],
+        },
+      );
       await this.throwCustomException(error);
     }
   }
 
-async resetPassword(email: string, password: string) {
-  try {
-    if (!email || !password) {
+  async resetPassword(email: string, password: string) {
+    try {
+      if (!email || !password) {
       throw new BadRequestException('Please provide valid email and password');
-    }
-
-    const tenantUserKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
-    const tenantUserResponse = await this.redisService.getJsonData(
-      tenantUserKey,
-      process.env.CLIENTCODE,
-    );
-    if (!tenantUserResponse) {
-      throw new NotFoundException('No data found');
-    }
-
-    const tenantList: any[] = JSON.parse(tenantUserResponse);
-    const index = tenantList.findIndex(
-      (user) => user.email.toLowerCase() === email.toLowerCase(),
-    );
-    if (index === -1) {
-      throw new NotFoundException('User not found');
-    }
-    const tenantUser = tenantList[index];
-
-    // --- FusionAuth flow ---
-    if (process.env.DEFAULT_AUTHENTICATION === 'fusionauth') {
-      const fusionAuthTenantId = process.env.FUSIONAUTH_TENANTID;
-      const uniqueId = tenantUser.userUniqueId;
-
-      if (!fusionAuthTenantId || !uniqueId) {
-        throw new NotFoundException(
-          `Missing FusionAuth tenantId or userUniqueId`,
-        );
       }
 
-      const value = await this.handleFusionResetPassWord(
-        fusionAuthTenantId,
-        password,
-        uniqueId,
+      const tenantUserKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
+      const tenantUserResponse = await this.redisService.getJsonData(
+        tenantUserKey,
+        process.env.CLIENTCODE,
       );
-      console.log("value", value)
-      if (value.status !== 200) {
-        throw new UnauthorizedException(
-          value?.error ?? 'FusionAuth password update failed',
-        );
+      if (!tenantUserResponse) {
+        throw new NotFoundException('No data found');
       }
-    }
 
-    // --- Update Redis only after FusionAuth success (or if not fusionauth) ---
-    tenantUser.password = this.hashPassword(password);
-    tenantList.splice(index, 1, tenantUser);
-    await this.redisService.setJsonData(
-      tenantUserKey,
-      JSON.stringify(tenantList),
-      process.env.CLIENTCODE,
-    );
+      const tenantList: any[] = JSON.parse(tenantUserResponse);
+      const index = tenantList.findIndex(
+        (user) => user.email.toLowerCase() === email.toLowerCase(),
+      );
+      if (index === -1) {
+        throw new NotFoundException('User not found');
+      }
+      const tenantUser = tenantList[index];
 
-    return 'Password updated successfully';
-  } catch (error) {
-    await this.throwCustomException(error);
-  }
-  }
-   async handleFusionResetPassWord(
-      fusionAuthTenantId: string,
-      password: string,
-      uniqueId: string,
-    ) {
-      try {
-        const url = `${process.env.FUSIONAUTH_BASEURL}/api/user/${uniqueId}`;
-        const res = await fetch(url, {
-          method: 'PATCH',
-          headers: {
-            Authorization: process.env.FUSIONAUTH_APIKEY, // ✅ FIXED
-            'Content-Type': 'application/json',
-            'X-FusionAuth-TenantId': fusionAuthTenantId,
-          },
-          body: JSON.stringify({
-            user: {
-              password: password,
-            },
-          }),
-        });
-        if (!res.ok) {
-          const error = await res.text();
-          throw new UnauthorizedException(
-            `FusionAuth password update failed: ${error}`,
+      // --- FusionAuth flow ---
+      if (process.env.DEFAULT_AUTHENTICATION === 'fusionauth') {
+        const fusionAuthTenantId = process.env.FUSIONAUTH_TENANTID;
+        const uniqueId = tenantUser.userUniqueId;
+
+        if (!fusionAuthTenantId || !uniqueId) {
+          throw new NotFoundException(
+            `Missing FusionAuth tenantId or userUniqueId`,
           );
         }
 
-        const data = await res.json();
-        return {
-          status: res.status,
-          data: data,
-        };
-      } catch (error) {
-        return {
-          error: error,
-          status: 500,
-        };
+        const value = await this.handleFusionResetPassWord(
+          fusionAuthTenantId,
+          password,
+          uniqueId,
+        );
+      console.log("value", value)
+        if (value.status !== 200) {
+          throw new UnauthorizedException(
+            value?.error ?? 'FusionAuth password update failed',
+          );
+        }
       }
-   }
+
+      // --- Update Redis only after FusionAuth success (or if not fusionauth) ---
+      tenantUser.password = this.hashPassword(password);
+      tenantList.splice(index, 1, tenantUser);
+      await this.redisService.setJsonData(
+        tenantUserKey,
+        JSON.stringify(tenantList),
+        process.env.CLIENTCODE,
+      );
+
+      return 'Password updated successfully';
+    } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH005',
+        error,
+        'ForgotPasswordScreen',
+        '',
+        {
+          artifact: 'ForgotPasswordScreen',
+          users: email.split("@")[0],
+        },
+      );
+      await this.throwCustomException(error);
+    }
+  }
+  
+  async handleFusionResetPassWord(
+    fusionAuthTenantId: string,
+    password: string,
+    uniqueId: string,
+  ) {
+    try {
+      const url = `${process.env.FUSIONAUTH_BASEURL}/api/user/${uniqueId}`;
+      const res = await fetch(url, {
+        method: 'PATCH',
+        headers: {
+          Authorization: process.env.FUSIONAUTH_APIKEY, // ✅ FIXED
+          'Content-Type': 'application/json',
+          'X-FusionAuth-TenantId': fusionAuthTenantId,
+        },
+        body: JSON.stringify({
+          user: {
+            password: password,
+          },
+        }),
+      });
+      if (!res.ok) {
+        const error = await res.text();
+        throw new UnauthorizedException(
+          `FusionAuth password update failed: ${error}`,
+        );
+      }
+
+      const data = await res.json();
+      return {
+        status: res.status,
+        data: data,
+      };
+    } catch (error) {
+      return {
+        error: error,
+        status: 500,
+      };
+    }
+  }
 
   async sendMailOTP(email: string) {
     try {
@@ -6446,7 +6901,7 @@ async resetPassword(email: string, password: string) {
             .replaceAll('${email}', oauthUser?.email)
             .replaceAll(
               '${appUrl}',
-              process.env.BE_URL.replace('/api-int', ''),
+              process.env.BE_URL.substring(0, process.env.BE_URL.lastIndexOf("/"))
             ),
         };
       } else {
@@ -6463,7 +6918,7 @@ async resetPassword(email: string, password: string) {
             .replaceAll('${email}', oauthUser?.email)
             .replaceAll(
               '${appUrl}',
-              process.env.BE_URL.replace('/api-int', ''),
+              process.env.BE_URL.substring(0, process.env.BE_URL.lastIndexOf("/")),
             ),
         };
       }
@@ -6490,8 +6945,8 @@ async resetPassword(email: string, password: string) {
         if(user?.provider =='fusionauth')
         {
           const fusionauthUser:any  = await FusionAuthUserGet(user?.providerAccountId)
-          user['email'] = fusionauthUser.user.email;
-        }
+        user['email'] = fusionauthUser.user.email;
+      }
 
       const isExistingUser = await this.signIntoTorus(
         user?.email,
@@ -6546,9 +7001,23 @@ async resetPassword(email: string, password: string) {
         );
       }
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH015',
+        error,
+        'LoginScreen',
+        '',
+        {
+          artifact: 'LoginScreen',
+          users: user,
+        },
+      );
       await this.throwCustomException(error);
     }
   }
+  
   async AppSecurityTemplateData(
     data: any[],
   ) {
@@ -6659,6 +7128,19 @@ async resetPassword(email: string, password: string) {
         );
       }
     } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH016',
+        error,
+        'UserScreen',
+        '',
+        {
+          artifact: 'UserScreen',
+          users: 'anonymous user',
+        },
+      );
       await this.throwCustomException(error);
     }
   }
@@ -6743,7 +7225,7 @@ async resetPassword(email: string, password: string) {
 
   async getAccessProfileForArtifact(key:string, clientCode: string, token: string)
 {
-  try {
+    try {
     const UO: any = await this.commonService.readAPI(
       key ,
       clientCode,
@@ -6754,14 +7236,14 @@ async resetPassword(email: string, password: string) {
     templateArray.map((profile:any)=>{
       if(profile?.security?.artifact?.SIFlag?.selectedValue=='AA'||profile?.security?.artifact?.SIFlag?.selectedValue=='RA' )
       {
-      allowedAccessProfile.push(profile?.accessProfile);
-      }
+          allowedAccessProfile.push(profile?.accessProfile);
+        }
     })
     return allowedAccessProfile
-  } catch (error) {
+    } catch (error) {
     return []
+    }
   }
- }
 
   async navbarDataPreparation(data: any, clientCode: string, token: string) {
     const result = [];
@@ -6839,6 +7321,7 @@ async resetPassword(email: string, password: string) {
 
     return result;
   }
+
   async getNavbarData(key: string, clientCode: string, token: string) {
     let webAssemblerData: any = await this.commonService.readAPI(
       key,process.env.CLIENTCODE,token
@@ -6852,6 +7335,7 @@ async resetPassword(email: string, password: string) {
     );
     return navbarData;
   }
+  
   async postTenantUser(userDetail: any) {
     let tenantUserKey: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
     const appUserKey: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
@@ -6917,89 +7401,4 @@ async resetPassword(email: string, password: string) {
       };;
     }
   }
-
-  getByPath(obj:  Record<string, any>, path: string | string[]) {
-  const keys = Array.isArray(path) ? path : path.split(".");
-  return keys.reduce((acc: any, key) => (acc == null ? undefined : acc[key]), obj);
-}
-
-  async getFilterParamsSchema(flowKey: string, token: string) {
-    try {
-      if (!flowKey || !token) {
-        throw new BadRequestException('key or token not found');
-      }
-
-      const UO = await this.commonService.readAPI(
-        `${flowKey}:UO`,
-        process.env.CLIENTCODE,
-        token,
-      );
-
-      const nodes = UO?.nodes;
-      if (!Array.isArray(nodes)) {
-        throw new NotFoundException('nodes not found');
-      }
-
-      const sourceNode = nodes.find((n) => n?.type === 'customSourceItems');
-      const dfo = sourceNode?.data?.dfo;
-
-      if (!dfo || typeof dfo !== 'object' || !Object.keys(dfo).length) {
-        throw new NotFoundException('dfo not found');
-      }
-
-      const result: any[] = [];
-
-      for (const dfoKey of Object.keys(dfo)) {
-        const nodeList = dfo[dfoKey];
-        if (!Array.isArray(nodeList)) continue;
-
-        for (const node of nodeList) {
-          const reports = node?.reportData;
-          if (!Array.isArray(reports)) continue;
-
-          for (const report of reports) {
-            const { type, ...rest } = this.getByPath(
-              node?.schema,
-              report?.referencePath,
-            );
-            let children = undefined;
-
-            if (
-              type === 'object' &&
-              rest?.properties &&
-              typeof rest.properties === 'object'
-            ) {
-              children = Object.entries(rest.properties).map(
-                ([propKey, propSchema]: any) => {
-                  return {
-                    displayName: '', // you don't have displayName for children in example
-                    referanceName: propKey,
-                    referencePath: `${report.referencePath}.properties.${propKey}`,
-                    type: propSchema?.type,
-                    key: dfoKey,
-                    nodeId: report?.nodeId,
-                  };
-                },
-              );
-            }
-
-            result.push({
-              displayName: report?.displayName,
-              referanceName: report?.referanceName,
-              referencePath: report?.referencePath,
-              nodeId: report?.nodeId,
-              key: dfoKey,
-              type,
-              ...(type === 'object' && children?.length ? { children } : {}),
-            });
-          }
-        }
-      }
-      return result;
-    } catch (error) {
-      await this.throwCustomException(error);
-    }
-  }
-
-
 }

@@ -1,5 +1,5 @@
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:TT407:AFGK:CGFA:AFK:TG4CGFA:AFVK:v1:bldc",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc",
   "ufKey": "Logs Screen",
   "screenName": "logs",
   "navbarData": [
@@ -28,49 +28,12 @@
       "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
     },
     {
-      "menuGroupLabel": "test",
+      "menuGroupLabel": "testroute",
       "screenDetails": [
         {
-          "name": "test",
-          "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1",
-          "allowedAccessProfile": [
-            "User",
-            "Manager",
-            "Employee",
-            "user"
-          ],
-          "static": false
-        }
-      ],
-      "items": []
-    },
-    {
-      "menuGroupLabel": "save",
-      "screenDetails": [
-        {
-          "name": "save",
-          "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1",
-          "allowedAccessProfile": [
-            "User",
-            "Manager"
-          ],
-          "static": false
-        }
-      ],
-      "items": []
-    },
-    {
-      "menuGroupLabel": "Report",
-      "screenDetails": [
-        {
-          "name": "report",
-          "key": "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1",
-          "allowedAccessProfile": [
-            "User",
-            "Manager",
-            "Employee",
-            "user"
-          ],
+          "name": "testroute",
+          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+          "allowedAccessProfile": [],
           "static": false
         }
       ],
@@ -79,93 +42,86 @@
   ],
   "setupData": {
     "appInfo": {
-      "name": "TG4CGFA",
-      "code": "TG4CGFA",
-      "logType": "mongodb",
+      "name": "oprmatrix",
+      "code": "oprmatrix",
+      "logType": "dfs",
       "encryption": {
         "type": ""
       },
-      "applicationUniqueId": "16d22141-e230-402c-ac8f-239a362fc09d",
-      "deploymentArtifactKey": "CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:torusDev:AFVK:v1",
-      "lastBuildVersion": "v4",
-      "lastBuildOn": "2025-10-17T07:49:15.809Z",
-      "accessUrl": "https://tgadev.gsstvl.com/tt407/cgfa/tg4cgfa/v4",
-      "appGrpName": "CGFA",
-      "appGrpCode": "CGFA",
-      "fusionAuthAppClientSecret": "BrATNorQH7qS5y9IzsRtS-CdKFoJhzjBIbF6J4MvVYA"
+      "applicationUniqueId": "5e2933ae-b085-4cf7-91fa-ec64f2bf6b97",
+      "deploymentArtifactKey": "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1",
+      "appGrpName": "appgroup",
+      "appGrpCode": "AG001",
+      "fusionAuthAppClientSecret": "tFZPbDTDhHCtOwy8K95ai3IF_U8-SP11XfMgC6gnL7k"
     },
-    "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:TT407:AFK:PROFILE:AFVK:v1:appearance",
+    "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CT003:AFK:PROFILE:AFVK:v1:appearance",
     "selectedPresetKey": "default",
-    "group-bg-color": "#ffffff",
-    "fontSize": "Medium",
+    "name": "default",
+    "language": "English",
+    "fontSize": "Small",
     "direction": "LTR",
-    "brandColor": "#ffffff",
-    "selectionColor": "#E95B86",
-    "hoverColor": "#E95B86",
-    "borderRadius": "s",
+    "brandColor": "#adffaf",
+    "selectionColor": "#dbdbe1",
+    "hoverColor": "#eff1f5",
+    "borderRadius": "xl",
+    "navigationStyles": "horizontal",
+    "theme": "dark",
     "topbarColor": "#ffffff",
     "menubarColor": "#ffffff",
-    "sidebarStyle": "",
-    "navigationStyles": "vertical",
-    "theme": "light",
     "layoutMode": "fluid",
+    "sidebarStyle": "",
     "mobileAppearance": {
-      "language": "English",
-      "direction": "LTR",
-      "theme": "light",
       "brandColors": {
-        "primary": "#4b39ef",
-        "secondary": "#39d2c0",
-        "tertiary": "#ee8b60"
+        "primary": "#0736C4"
       },
-      "accentColors": {
-        "accentOne": "#4c4b39ef",
-        "accentTwo": "#4d39d2c0"
-      },
+      "theme": "light",
+      "fontFamily": "Roboto",
       "utilityColors": {
         "lightMode": {
-          "primaryText": "#14181b",
-          "secondaryText": "#57636c",
-          "primaryBackground": "#f1f4f8",
-          "secondaryBackground": "#ffffff"
+          "primaryText": "#0736C4",
+          "primaryBackground": "#FF5722",
+          "secondaryBackground": "#FFC723",
+          "linearGradient": true
         },
         "darkMode": {
-          "primaryText": "#ffffff",
-          "secondaryText": "#95a1ac",
-          "primaryBackground": "#1d2428",
-          "secondaryBackground": "#14181b"
+          "primaryText": "#00BFFF",
+          "primaryBackground": "#0736C4",
+          "secondaryBackground": "#00BFFF",
+          "linearGradient": true
         }
       },
-      "fontSize": {
-        "displayLarge": "64",
-        "displayMedium": "44",
-        "displaySmall": "36",
-        "headlineLarge": "32",
-        "headlineMedium": "28",
-        "headlineSmall": "24",
-        "titleLarge": "20",
-        "titleMedium": "18",
-        "titleSmall": "16",
-        "labelLarge": "16",
-        "labelMedium": "14",
-        "labelSmall": "12",
-        "bodyLarge": "16",
-        "bodyMedium": "14",
-        "bodySmall": "12"
-      },
-      "fontFamily": "Roboto",
       "navigationStyle": "Bottom Navigation",
-      "drawerStyle": ""
+      "accentColors": {
+        "accentOne": "#f0fdff"
+      },
+      "language": "English",
+      "fontSize": {
+        "displayLarge": 48
+      }
     },
-    "page-bg-color": "#ffffff",
-    "language": "English",
-    "name": "default"
+    "fontFamily": [
+      {
+        "label": "Roboto",
+        "fontUrl": "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
+      },
+      {
+        "label": "Poppins",
+        "fontUrl": "https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+      },
+      {
+        "label": "Dancing+Script",
+        "fontUrl": "https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&display=swap"
+      }
+    ],
+    "text-body-font": "Roboto",
+    "text-header-font": "Roboto",
+    "text-display-font": "Roboto",
+    "group-bg-color": "#f5fff5",
+    "page-bg-color": "#ffffff"
   },
-  "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TT407:AFGK:CGFA:AFK:TG4CGFA:AFVK:v1:appearance",
+  "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:appearance",
   "allKeys": [
-    "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1",
-    "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1",
-    "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1"
+    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
   ],
   "loginDetails": {
     "firstName": "Peer",
@@ -180,56 +136,28 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-10-22T06:10:34.078Z",
-    "profile": "https://varnishdev.gsstvl.com/files/torus/9.1/CT003/resources/images/Peer@786/pexels-pixabay-33109.jpg",
-    "quickLinks": [
-      {
-        "label": "Company Profile",
-        "key": "PersonalcompanyProfile",
-        "routes": "/control-center/company-profile"
-      },
-      {
-        "label": "Build Application",
-        "key": "build",
-        "routes": "/"
-      },
-      {
-        "label": "My Account",
-        "key": "PersonalmyAccount",
-        "routes": "/control-center/account-profile"
-      },
-      {
-        "label": "Tenant",
-        "key": "tenant",
-        "routes": "/control-center/tenant"
-      }
-    ],
+    "lastActive": "2025-11-19T10:52:18.443Z",
+    "profile": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT003/resources/images/Peer@786/pexels-pixabay-33109.jpg",
+    "quickLinks": [],
     "client": "CT003",
     "edit": "",
     "noOfProductsService": 0,
     "userUniqueId": "6828417e-5fe0-43bb-8c55-c465ee6581a0"
   },
   "webOnBoarding": {
-    "landingScreen": "Logs Screen"
+    "landingScreen": "User Screen",
+    "loginType": "standard"
   },
   "allKeyswithScreenNames": [
     {
-      "screensName": "test-v1",
-      "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
-    },
-    {
-      "screensName": "save-v1",
-      "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1"
-    },
-    {
-      "screensName": "report-v1",
-      "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1"
+      "screensName": "testroute-v1",
+      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
     }
   ],
-  "deploymentArtifactKey": "CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:forFA:AFVK:v1",
-  "appGroupDesc": "CGFA",
-  "logType": "mongodb",
-  "appDesc": "TG4CGFA",
+  "deploymentArtifactKey": "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1",
+  "appGroupDesc": "appgroup",
+  "logType": "dfs",
+  "appDesc": "oprmatrix",
   "isOld": true,
   "clientCode": "CT003"
 } */
@@ -243,8 +171,8 @@ import "@gravity-ui/uikit/styles/fonts.css";
 import GlobalContext from './globalContext'
 import ToasterClientProvider from "./components/toastClientProvider"
 export const metadata: Metadata = {
-  title: 'TG4CGFA' ,
-  description: 'TG4CGFA Generated by Torus'
+  title: 'oprmatrix' ,
+  description: 'oprmatrix Generated by Torus'
 }
 
 export default function RootLayout({

@@ -4,20 +4,12 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value
   const path = request.nextUrl.pathname
   const isAuthRoute = ["/" , "/forgot-password"].includes(path);
-   let screenName:string = 'Logs Screen';
+   let screenName:string = 'User Screen';
     let screenDetails: any = {
         keys:[
   {
-    "screensName": "test-v1",
-    "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1"
-  },
-  {
-    "screensName": "save-v1",
-    "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1"
-  },
-  {
-    "screensName": "report-v1",
-    "ufKey": "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1"
+    "screensName": "testroute-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
   }
 ]
     }

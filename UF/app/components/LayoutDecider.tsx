@@ -36,7 +36,7 @@ const LayoutDecider = ({
     TotalContext
   ) as TotalContextProps
   const encryptionFlagApp: boolean = false;    
-  const encryptionDpd: string = "CK:TT407:FNGK:AF:FNK:CDF-DPD:CATK:CGFA:AFGK:TG4CGFA:AFK:forFA:AFVK:v1";
+  const encryptionDpd: string = "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1";
   const encryptionMethod: string = "";
   const brandColor = property?.brandColor || '#1F2D3D'
   const hoverColor = property?.hoverColor || '#1F2D3D'
@@ -44,11 +44,11 @@ const LayoutDecider = ({
   const sidebarColor = property?.menubarColor || '#1F2D3D'
  // const topbarColor = property?.topbarColor || ''
   const logo = ""
-  const appName = "TG4CGFA"
+  const appName = "oprmatrix"
   const toast = useInfoMsg()
   const [loading, setLoading] = useState(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
-  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:TT407:AFGK:CGFA:AFK:TG4CGFA:AFVK:v1:bldc"
+  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc"
   const [rawNavData, setRawNavData] = useState<MenuItem[] | null>(null);
   /*const navData: MenuItem[] = [
   {
@@ -76,49 +76,12 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
-    "menuGroupLabel": "test",
+    "menuGroupLabel": "testroute",
     "screenDetails": [
       {
-        "name": "test",
-        "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:myUF:AFVK:v1",
-        "allowedAccessProfile": [
-          "User",
-          "Manager",
-          "Employee",
-          "user"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "save",
-    "screenDetails": [
-      {
-        "name": "save",
-        "key": "CK:TT407:FNGK:AF:FNK:UF-UFW:CATK:CGFA:AFGK:TG4CGFA:AFK:Testasample:AFVK:v1",
-        "allowedAccessProfile": [
-          "User",
-          "Manager"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "Report",
-    "screenDetails": [
-      {
-        "name": "report",
-        "key": "CK:TT407:FNGK:AF:FNK:UF-UFR:CATK:CGFA:AFGK:TG4CGFA:AFK:reportcheck:AFVK:v1",
-        "allowedAccessProfile": [
-          "User",
-          "Manager",
-          "Employee",
-          "user"
-        ],
+        "name": "testroute",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "allowedAccessProfile": [],
         "static": false
       }
     ],
