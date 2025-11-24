@@ -4189,8 +4189,12 @@ export class UfService {
         const accessProfileData: any[] = JSON.parse(responseFromRedis);
         accessProfileData.forEach((accessProfileObj) => {
           var noOfProdService = 0;
-          accessProfileObj['products/Services'].forEach((productGrp: any) => {
-            noOfProdService += productGrp['ps'].length;
+           accessProfileObj['orgGrp']?.forEach((orgGrp: any) => {
+            orgGrp['org']?.forEach((org: any) => {
+              org['psGrp']?.forEach((psGrp: any) => {
+                noOfProdService += psGrp['ps'].length;
+              });
+            })
           });
           accessProfileWithProductAndService[accessProfileObj?.accessProfile] =
             noOfProdService;

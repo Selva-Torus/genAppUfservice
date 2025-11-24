@@ -413,7 +413,7 @@ export const CameraIcon = ({ fill = 'black' }) => {
   )
 }
 
-export const EditIcon = ({ width = '17', height = '18' }) => {
+export const EditIcon = ({ width = '17', height = '18' , fill='white' }) => {
   return (
     <svg
       width={width}
@@ -433,7 +433,7 @@ export const EditIcon = ({ width = '17', height = '18' }) => {
       </g>
       <defs>
         <clipPath id='clip0_1095_6279'>
-          <rect width='20' height='20' fill='white' />
+          <rect width='20' height='20' fill={fill} />
         </clipPath>
       </defs>
     </svg>

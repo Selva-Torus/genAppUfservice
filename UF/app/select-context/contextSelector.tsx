@@ -31,16 +31,16 @@ const ContextSelector = () => {
   const [selectedCombination, setSelectedCombination] = useState({})
   const [time, setTime] = useState('')
     let landingScreen:string = 'User Screen';
-       let screenDetails: any = {
+  let screenDetails: any = {
            keys:[
-  {
+      {
     "screensName": "testroute-v1",
     "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+      }
+    ]
   }
-]
-        }
-        screenDetails = screenDetails.keys
-        
+  screenDetails = screenDetails.keys
+
   if (landingScreen === 'User Screen') {
     landingScreen = 'user'
   }
@@ -49,14 +49,14 @@ const ContextSelector = () => {
   }
    else{
                     screenDetails.forEach((screen: any)   => {
-                        if (landingScreen === screen.ufKey) {
-                            landingScreen = screen.screensName
-                        }  
+      if (landingScreen === screen.ufKey) {
+        landingScreen = screen.screensName
+      }
                     });
                     landingScreen =landingScreen.split('-')[0]+'_'+landingScreen.split('-').at(-1)
-                }
+  }
 
-                  useEffect(() => {
+  useEffect(() => {
     const updateTime = () => {
       const now = new Date()
       const options: Intl.DateTimeFormatOptions = {
@@ -286,8 +286,8 @@ const ContextSelector = () => {
                     onClick={() => handleCardClick(item)}
                   >
                     <div className='flex w-full items-center justify-between'>
-                      <h1 className='text-[15px] font-semibold text-black'>
-                        {item.orgGrpName}
+                      <h1 className='text-[15px] font-semibold text-black truncate text-nowrap' title={item?.orgGrpName}>
+                        {item?.orgGrpName}
                       </h1>
                       <span className='pr-[10px] outline-none'>
                         <StarIcon
@@ -296,20 +296,20 @@ const ContextSelector = () => {
                         />
                       </span>
                     </div>
-                    <h1 className='w-[80%] truncate rounded-md bg-[#F7F8F8] px-[2px] py-[5px] text-[0.72vw] font-medium text-black/50'>
-                      {item.orgName}
+                    <h1 className='w-[80%] truncate rounded-md bg-[#F7F8F8] px-[2px] py-[5px] text-[0.72vw] font-medium text-black/50' title={item?.orgName}>
+                      {item?.orgName}
                     </h1>
-                    <h1 className='text-[15px] font-semibold text-black'>
-                      {item.roleGrpName}
+                    <h1 className='text-[15px] font-semibold text-black truncate text-nowrap' title={item?.psGrpName}>
+                      {item?.psGrpName}
                     </h1>
-                    <h1 className='w-[80%] truncate rounded-md bg-[#F7F8F8] px-[2px] py-[5px] text-[0.72vw] font-medium text-black/50'>
-                      {item.roleName}
+                    <h1 className='w-[80%] truncate rounded-md bg-[#F7F8F8] px-[2px] py-[5px] text-[0.72vw] font-medium text-black/50' title={item?.psName}>
+                      {item?.psName}
                     </h1>
-                    <h1 className='text-[15px] font-semibold text-black'>
-                      {item.psGrpName}
+                    <h1 className='text-[15px] font-semibold text-black truncate text-nowrap' title={item?.roleGrpName}>
+                      {item?.roleGrpName}
                     </h1>
-                    <h1 className='w-[80%] truncate rounded-md bg-[#F7F8F8] px-[2px] py-[5px] text-[0.72vw] font-medium text-black/50'>
-                      {item.psName}
+                    <h1 className='w-[80%] truncate rounded-md bg-[#F7F8F8] px-[2px] py-[5px] text-[0.72vw] font-medium text-black/50' title={item?.roleName}>
+                      {item?.roleName}
                     </h1>
                   </button>
                 ))

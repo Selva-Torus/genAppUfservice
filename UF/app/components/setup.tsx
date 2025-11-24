@@ -55,6 +55,14 @@ export interface SetupScreenContextType {
   getPsOptions: (roles: any) => void
   searchTerm: string
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>
+  indexOfTemplateToBeUpdated: number | null
+  setIndexOfTemplateToBeUpdated: React.Dispatch<
+    React.SetStateAction<number | null>
+  >
+  templateToBeUpdated: Record<string, any> | null
+  setTemplateToBeUpdated: React.Dispatch<
+    React.SetStateAction<Record<string, any> | null>
+  >
 }
 
 export const SetupScreenContext =
@@ -107,6 +115,13 @@ const SetupScreen = ({
     () => checkDataAccess(getCookie('token')),
     []
   )
+  const [indexOfTemplateToBeUpdated, setIndexOfTemplateToBeUpdated] = useState<
+    number | null
+  >(null)
+  const [templateToBeUpdated, setTemplateToBeUpdated] = useState<Record<
+    string,
+    any
+  > | null>(null)
 
   const onUpdateSecurityData = (updatedData: any[]) => {
     setSecurityData(updatedData)
@@ -540,7 +555,14 @@ const SetupScreen = ({
   const handleSaveButtonClick = async () => {
     switch (selectedMenuItem) {
       case 'st':
-        await handleSecurityDataSave()
+        if (indexOfTemplateToBeUpdated != null) {
+          const updatedSecurityData = [...securityData]
+          updatedSecurityData[indexOfTemplateToBeUpdated] = templateToBeUpdated
+          setSecurityData(updatedSecurityData)
+          await handleSecurityDataSave(false, updatedSecurityData)
+        } else {
+          await handleSecurityDataSave()
+        }
         break
       case 'user':
         await handleUserDataSave()
@@ -658,7 +680,11 @@ const SetupScreen = ({
             getRoleOptions,
             getPsOptions,
             searchTerm,
-            setSearchTerm
+            setSearchTerm,
+            indexOfTemplateToBeUpdated,
+            setIndexOfTemplateToBeUpdated,
+            templateToBeUpdated,
+            setTemplateToBeUpdated
           }}
         >
           <div
@@ -700,11 +726,15 @@ const SetupScreen = ({
                     className=' flex items-center gap-2'
                     style={{
                       visibility:
-                        selectedMenuItem == 'general'  ? 'hidden' : 'unset'
+                        selectedMenuItem == 'general' ? 'hidden' : 'unset'
                     }}
                   >
                     <button
-                      hidden={selectedMenuItem == 'user' || selectedMenuItem == "org" ? true : false}
+                      hidden={
+                        selectedMenuItem == 'user' || selectedMenuItem == 'org' || (selectedMenuItem == "st" && templateToBeUpdated)
+                          ? true
+                          : false
+                      }
                       onClick={handlePlusButtonClick}
                       style={{
                         backgroundColor: brandcolor,
@@ -712,9 +742,7 @@ const SetupScreen = ({
                           selectedMenuItem === 'org' && !focusedPath ? 0.5 : 1
                       }}
                       className={`rounded-md px-2 py-1.5 outline-none`}
-                      disabled={
-                        tenantAccess != 'edit' 
-                      }
+                      disabled={tenantAccess != 'edit'}
                     >
                       <PlusIcon
                         fill={isLightColor(brandcolor)}
@@ -724,7 +752,9 @@ const SetupScreen = ({
                     </button>
 
                     <button
-                      hidden={selectedMenuItem == 'user' ? true : false}
+                      hidden={selectedMenuItem == 'user' || selectedMenuItem == 'org' || (selectedMenuItem == "st" && templateToBeUpdated)
+                          ? true
+                          : false}
                       className={`${
                         selectedMenuItem === 'org' ? 'hidden' : ''
                       } outline-none ${
