@@ -1,12 +1,19 @@
 import React, { useState } from 'react'
 import JsonView from 'react18-json-view'
-import { ArrowLeft, Copy, CopyCheckXmark, ChevronDown } from '@gravity-ui/icons'
 import 'react18-json-view/src/style.css'
 import { twMerge } from 'tailwind-merge'
-import { Button, Loader, Text } from '@gravity-ui/uikit'
 import { AxiosService } from '../components/axiosService'
+import { TbCopy } from "react-icons/tb";
+import { TbCopyCheckFilled } from "react-icons/tb";
+import { GoArrowLeft } from "react-icons/go";
+import { FiChevronDown } from "react-icons/fi";
+import Spin from '@/components/Spin'
+import { Text } from '@/components/Text'
+import { Button } from '@/components/Button'
+import { Tabs } from '@/components/Tabs'
+import { useTheme } from '@/hooks/useTheme'
+import { useGlobal } from '@/context/GlobalContext'
 
-const fontSize = 1
 interface Nodedataprops {
   nodeData: {
     id: string
@@ -38,6 +45,11 @@ const RenderNodesInfo = ({
   const [subFlowNodes, setSubFlowNodes] = useState<any[]>([])
   const [isExpanded, setIsExpanded] = useState<string | null>(null)
   const [isLoading, setLoading] = useState(false)
+  const { borderColor } = useTheme()
+  const { branding } = useGlobal()
+  const { selectionColor } = branding
+
+
 
   const handleSubFlowNodes = async (node: any) => {
     if (isExpanded === node.subFlowInfo?.subFlowUpId) {
@@ -92,10 +104,9 @@ const RenderNodesInfo = ({
             <div className='flex flex-col items-start rounded-md'>
               <Text
                 variant='body-1'
-                style={{
-                  color:
-                    JSON.stringify(selectedNode) === JSON.stringify(item) ? 'var(--brand-color)' : ''
-                }}
+                color={
+                  JSON.stringify(selectedNode) === JSON.stringify(item) ? "brand" : "primary"
+                }
                 className='px-2 py-1'
               >
                 {item.name}
@@ -104,7 +115,7 @@ const RenderNodesInfo = ({
                 <div
                   className='flex w-fit items-center gap-1 rounded-full p-2'
                   style={{
-                    backgroundColor: 'var(--selection-color)',
+                    backgroundColor: selectionColor,
                   }}
                 >
                   UID: {item?.subFlowInfo?.subFlowUpId}
@@ -118,9 +129,9 @@ const RenderNodesInfo = ({
                     }}
                   >
                     {copied && copied === item?.subFlowInfo?.subFlowUpId ? (
-                      <CopyCheckXmark className='text-green-500' />
+                      <TbCopyCheckFilled className='text-green-500' />
                     ) : (
-                      <Copy />
+                      <TbCopy />
                     )}
                   </Button>
                 </div>
@@ -135,23 +146,22 @@ const RenderNodesInfo = ({
                     : 'rotate-0'
                 )}
               >
-                <ChevronDown />
+                <FiChevronDown />
               </div>
             )}
           </div>
           <div>
             {isExpanded &&
-            item?.subFlowInfo?.subFlowUpId &&
-            isExpanded == item?.subFlowInfo?.subFlowUpId &&
-            isLoading ? (
-              <Loader className='flex w-full justify-center' />
+              item?.subFlowInfo?.subFlowUpId &&
+              isExpanded == item?.subFlowInfo?.subFlowUpId &&
+              isLoading ? (
+              <Spin className='flex w-full justify-center' spinning color='success' style='dots' />
             ) : (
               isExpanded &&
               item?.subFlowInfo?.subFlowUpId &&
               isExpanded == item?.subFlowInfo?.subFlowUpId && (
                 <div
-                  className='border-b pl-0.5'
-                  style={{ borderColor: 'var(--g-color-line-generic)' }}
+                  className={twMerge('border-b pl-0.5', borderColor)}
                 >
                   <RenderNodesInfo
                     nodes={subFlowNodes}
@@ -175,6 +185,9 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
   const [activeTab, setActiveTab] = useState<string>('')
   const [selectedNode, setSelectedNode] = useState<any>(nodeData?.node?.[0])
   const { artifact, version, processId, status, time } = nodeData
+  const { borderColor } = useTheme()
+  const { branding } = useGlobal()
+  const { brandColor, selectionColor } = branding
 
   const handleNodeClick = (node: any) => {
     if (JSON.stringify(node) !== JSON.stringify(selectedNode)) {
@@ -251,13 +264,13 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
       } else {
         return status.toLowerCase() === 'success'
           ? {
-              endTime: formatDate(time[time.length - 1]),
-              processingTime: 'Process completed successfully'
-            }
+            endTime: formatDate(time[time.length - 1]),
+            processingTime: 'Process completed successfully'
+          }
           : {
-              endTime: 'process not finished',
-              processingTime: 'Process not finished'
-            }
+            endTime: 'process not finished',
+            processingTime: 'Process not finished'
+          }
       }
     } else {
       throw new Error("Invalid data: 'time' must be an array of strings.")
@@ -270,63 +283,60 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
         className='col-span-12 flex h-full w-full gap-2 overflow-hidden'
       >
         <div
-          className='flex h-full min-w-[200px] flex-col rounded-lg border px-2'
-          style={{ borderColor: 'var(--g-color-line-generic)' }}
+          className={twMerge('flex h-full min-w-[200px] flex-col rounded-lg border px-2', borderColor)}
         >
           <div
-            className='flex flex-col border-b py-2'
-            style={{ borderColor: 'var(--g-color-line-generic)' }}
+            className={twMerge('flex flex-col border-b py-2', borderColor)}
           >
             <div
               onClick={() => setNodeData(null)}
               className='flex items-center justify-between px-3 py-2'
             >
               <div className='flex gap-2'>
-              <ArrowLeft
-                className='cursor-pointer'
-                role='button'
-                onClick={() => setNodeData(null)}
-              />
-              <Text variant='subheader-1'
-                title={artifact.toUpperCase()}
-              >
-                {artifact.toUpperCase()}
-              </Text>
+                <GoArrowLeft
+                  className='cursor-pointer'
+                  role='button'
+                  onClick={() => setNodeData(null)}
+                />
+                <Text variant='subheader-1'
+                  needTooltip
+                  tooltipProps={{ title: artifact.toUpperCase(), placement: "right-end" }}
+                >
+                  {artifact.toUpperCase()}
+                </Text>
               </div>
               <Text variant='body-1'
-                style={{
-                  backgroundColor: 'var(--brand-color)'
-                }}
+                color='brand'
                 className='rounded-xl px-3'
               >
                 {version}
               </Text>
             </div>
             {processId && (
-                      <div
-                        className='flex w-fit rounded-full p-2'
-                        style={{
-                          backgroundColor: 'var(--selection-color)'
-                        }}
-                      >
-                        <Text variant='body-1'>UID: {processId}</Text>
-                        <Button
-                          view='flat'
-                          size='xs'
-                          className='border-none'
-                          onClick={e => {
-                            e.stopPropagation()
-                            handleCopyToClipboard(processId)
-                          }}
-                        >
-                          {copied && copied === processId ? (
-                            <CopyCheckXmark className='text-green-500' />
-                          ) : (
-                            <Copy />
-                          )}
-                        </Button>
-                      </div>
-                    )}
+              <div
+                className='flex w-fit rounded-full p-2'
+                style={{
+                  backgroundColor: selectionColor
+                }}
+              >
+                <Text variant='body-1'>UID: {processId}</Text>
+                <Button
+                  view='flat'
+                  size='xs'
+                  className='border-none'
+                  onClick={e => {
+                    e.stopPropagation()
+                    handleCopyToClipboard(processId)
+                  }}
+                >
+                  {copied && copied === processId ? (
+                    <TbCopyCheckFilled className='text-green-500' />
+                  ) : (
+                    <TbCopy />
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
           {/* seperate */}
           <RenderNodesInfo
@@ -339,14 +349,13 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
         </div>
 
         <div
-          className='flex h-full w-full overflow-x-auto flex-col rounded-lg border'
-          style={{ borderColor: 'var(--g-color-line-generic)' }}
+          className={twMerge('flex h-full w-full overflow-x-auto flex-col rounded-lg border', borderColor)}
         >
           <div className='flex h-full w-full rounded-lg'>
             <div className='flex h-full w-[70%] min-w-[400px]  flex-col gap-3 p-2'>
               <div
                 style={{
-                  backgroundColor: 'var(--selection-color)'
+                  backgroundColor: selectionColor
                 }}
                 className='flex w-full gap-2 rounded-lg p-3'
               >
@@ -377,7 +386,7 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                   <div className='relative flex flex-col items-center '>
                     <div
                       style={{
-                        backgroundColor: 'var(--brand-color)'
+                        backgroundColor: brandColor
                       }}
                       className='absolute h-full w-px'
                     ></div>
@@ -385,7 +394,7 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                       <div className='flex items-center '>
                         <div
                           style={{
-                            backgroundColor: 'var(--brand-color)'
+                            backgroundColor: brandColor
                           }}
                           className='h-2 w-2 rounded-full'
                         ></div>
@@ -394,7 +403,7 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                       <div className='flex items-center '>
                         <div
                           style={{
-                            backgroundColor: 'var(--brand-color)'
+                            backgroundColor: brandColor
                           }}
                           className='h-2 w-2 rounded-full'
                         ></div>
@@ -417,9 +426,9 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                   <div className='flex gap-3 text-center'>
                     <Text
                       variant='body-1'
-                      style={{
-                        ...determineStatusColorClass(selectedNode?.status),
-                      }}
+                      color={
+                        status.toLowerCase() == 'success' ? "brand" : "danger-heavy"
+                      }
                       className={`rounded-full px-2`}
                     >
                       {selectedNode ? selectedNode.status : status}
@@ -430,54 +439,31 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
             </div>
 
             <hr
-              className='h-[95%] w-[0.5px] self-center border'
-              style={{ borderColor: 'var(--g-color-line-generic)' }}
+              className={twMerge('h-[95%] w-[0.5px] self-center border', borderColor)}
             />
 
             <div className={`flex h-full w-1/2 min-w-[400px] p-3 text-center`}>
               <div className='w-full'>
-                <div
-                  className='flex w-full items-center gap-2 rounded-md border p-0.5'
-                  style={{ borderColor: 'var(--g-color-line-generic)' }}
-                >
-                  <Text
-                    variant='subheader-1'
-                    onClick={() => {
-                      setActiveTab('request')
-                    }}
-                    className={twMerge(
-                      `w-1/3 cursor-pointer rounded-md py-2`,
-                      activeTab === 'request' && 'bg-[var(--selection-color)]'
-                    )}
-                  >
-                    Request
-                  </Text>
-                  <Text
-                    variant='subheader-1'
-                    onClick={() => {
-                      setActiveTab('response')
-                    }}
-                    className={twMerge(
-                      `w-1/3 cursor-pointer rounded-md py-2`,
-                      activeTab === 'response' && 'bg-[var(--selection-color)]'
-                    )}
-                  >
-                    Response
-                  </Text>
-                  <Text
-                    variant='subheader-1'
-                    onClick={() => {
-                      setActiveTab('exception')
-                    }}
-                    className={twMerge(
-                      `w-1/3 cursor-pointer rounded-md py-2`,
-                      activeTab === 'exception' && 'bg-[var(--selection-color)]'
-                    )}
-                  >
-                    Exception
-                  </Text>
-                </div>
-
+                <Tabs
+                  direction='horizontal'
+                  items={[
+                    {
+                      id: 'request',
+                      title: 'Request'
+                    },
+                    {
+                      id: 'response',
+                      title: 'Response'
+                    },
+                    {
+                      id: 'exception',
+                      title: 'Exception'
+                    },
+                  ]}
+                  onChange={setActiveTab}
+                  size='m'
+                  className='w-full'
+                />
                 <div
                   className={`h-[95.5%] overflow-auto pl-2 pt-3`}
                 >

@@ -11,8 +11,11 @@ import { LuBuilding2 } from 'react-icons/lu'
 import { BiPackage } from 'react-icons/bi'
 import { RiUserShared2Fill } from 'react-icons/ri'
 import { SetupScreenContext, SetupScreenContextType } from '../setup'
-import { TotalContext, TotalContextProps } from '@/app/globalContext'
-import { Button, Modal } from '@gravity-ui/uikit'
+import { Text } from '@/components/Text'
+import { useGlobal } from '@/context/GlobalContext'
+import { useTheme } from '@/hooks/useTheme'
+import { Button } from '@/components/Button'
+import { Modal } from '@/components/Modal'
 
 interface OprMatrixContextType {
   isSearchOpen: string
@@ -37,6 +40,7 @@ interface ColumnHeaderProps {
   searchTerm: string
   setSearchTerm: (term: string) => void
   setIsSearchOpen: (key: string) => void
+  borderColor: string
   brandColor: string
   showAddButton?: boolean
   isAddDisabled?: boolean
@@ -50,6 +54,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
   searchTerm,
   setSearchTerm,
   setIsSearchOpen,
+  borderColor,
   brandColor,
   showAddButton = true,
   isAddDisabled = false,
@@ -57,10 +62,13 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
 }) => {
   const [open, setOpen] = useState(false)
   return (
-    <div className='flex w-full items-center justify-between rounded border border-[var(--g-color-line-generic)] px-[.5vw] py-[1vh]'>
-      <h1 style={{ fontSize: `0.8vw` }} className='font-semibold'>
+    <div
+      style={{ borderColor: borderColor }}
+      className='flex w-full items-center justify-between rounded border px-[.5vw] py-[1vh]'
+    >
+      <Text variant='body-1' className='font-semibold'>
         {title}
-      </h1>
+      </Text>
       <div>
         {isSearchOpen === searchKey ? (
           <div className='flex w-[8vw] gap-[.5vw]'>
@@ -84,7 +92,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
                 <Button
                   onClick={() => setOpen(true)}
                   disabled={isAddDisabled}
-                  className='flex items-center '
+                  className='flex items-center'
                 >
                   <PlusIcon
                     height='.8vw'
@@ -93,7 +101,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
                   />
                 </Button>
 
-                <Modal open={open}>
+                <Modal showCloseButton={false} className='w-[27vw] lg:w-[19vw]' onClose={() => setOpen(false)} open={open}>
                   <AddGroupLevelModal
                     close={() => setOpen(false)}
                     {...addContentProps}
@@ -117,8 +125,6 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
 
 // ============= MAIN COMPONENT =============
 const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
-  const { property } = useContext(TotalContext) as TotalContextProps
-  let brandColor: string = property?.brandColor ?? '#0736c4'
   const [isSearchOpen, setIsSearchOpen] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [collapsedItems, setCollapsedItems] = useState<Record<string, boolean>>(
@@ -132,6 +138,9 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
     SetupScreenContext
   ) as SetupScreenContextType
   const toast = useInfoMsg()
+  const { branding } = useGlobal()
+  const { borderColor } = useTheme()
+  const { brandColor } = branding
 
   // ============= UTILITY FUNCTIONS =============
   const assignOriginalIndex = (data: any): any => {
@@ -837,7 +846,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
       }}
     >
       <div className='flex h-full w-full flex-col gap-[2vh]'>
-        <div className='bg-torus-bg-card flex h-[20vh] w-full items-center justify-center rounded-lg'>
+        <div className='flex h-[20vh] w-full items-center justify-center rounded-lg'>
           {blocks.map((block, idx) => (
             <div key={idx} className='flex items-center gap-[2VW]'>
               {/* Circle */}
@@ -853,24 +862,25 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
 
                 {/* Texts */}
                 <div className='flex w-full flex-col items-center'>
-                  <span
-                    style={{ fontSize: `0.6vw` }}
-                    className='text-torus-accent-color w-full truncate text-nowrap text-center'
+                  <Text
+                    variant='body-1'
+                    className={`w-full truncate text-nowrap text-center`}
                   >
                     {block?.group}
-                  </span>
-                  <h3
-                    style={{ fontSize: `0.8vw` }}
-                    className='text-torus-text w-full truncate text-nowrap text-center font-semibold'
+                  </Text>
+                  <Text
+                    variant='body-2'
+                    className='w-full truncate text-nowrap text-center font-semibold'
                   >
                     {block?.title}
-                  </h3>
-                  <p
-                    style={{ fontSize: `0.6vw` }}
-                    className='text-torus-text-opacity-35 w-full truncate text-nowrap text-center'
+                  </Text>
+                  <Text
+                    variant='body-1'
+                    className='w-full truncate text-nowrap text-center'
+                    color='secondary'
                   >
                     {block.subtitle}
-                  </p>
+                  </Text>
                 </div>
               </div>
 
@@ -883,7 +893,10 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
         </div>
         <div className='flex w-full items-center gap-[2vw]'>
           {/* ============= ORGANIZATION COLUMN ============= */}
-          <div className='h-[66vh] w-1/3 rounded-lg border border-[var(--g-color-line-generic)]'>
+          <div
+            style={{ borderColor: borderColor }}
+            className='h-[66vh] w-1/3 rounded-lg border'
+          >
             <ColumnHeader
               title='Organization'
               searchKey='org'
@@ -891,6 +904,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               setIsSearchOpen={setIsSearchOpen}
+              borderColor={borderColor}
               brandColor={brandColor}
               addContentProps={{
                 path: `${orgData.length}`,
@@ -1022,7 +1036,10 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
           </div>
 
           {/* ============= PRODUCTS/SERVICES COLUMN ============= */}
-          <div className='flex-flex-col h-[66vh] w-1/3 rounded-lg border border-[var(--g-color-line-generic)]'>
+          <div
+            style={{ borderColor: borderColor }}
+            className='flex-flex-col h-[66vh] w-1/3 rounded-lg border'
+          >
             <ColumnHeader
               title='Products/Services'
               searchKey='product'
@@ -1030,6 +1047,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               setIsSearchOpen={setIsSearchOpen}
+              borderColor={borderColor}
               brandColor={brandColor}
               isAddDisabled={!Object.entries(selectedOrg).length}
               addContentProps={{
@@ -1179,7 +1197,10 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
           </div>
 
           {/* ============= ROLES COLUMN ============= */}
-          <div className='flex-flex-col h-[66vh] w-1/3 rounded-lg border border-[var(--g-color-line-generic)]'>
+          <div
+            style={{ borderColor: borderColor }}
+            className='flex-flex-col h-[66vh] w-1/3 rounded-lg border'
+          >
             <ColumnHeader
               title='Roles'
               searchKey='role'
@@ -1187,6 +1208,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               setIsSearchOpen={setIsSearchOpen}
+              borderColor={borderColor}
               brandColor={brandColor}
               isAddDisabled={!Object.entries(selectedPs).length}
               addContentProps={{

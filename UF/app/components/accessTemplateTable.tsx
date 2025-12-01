@@ -1,11 +1,12 @@
-import React, { useContext, useMemo, useState } from 'react'
+import React, { useMemo, useState } from 'react'
 import { SetupScreenContext, SetupScreenContextType } from './setup'
-import { TotalContext, TotalContextProps } from '@/app/globalContext'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
-import { Pagination } from '@gravity-ui/uikit'
-import { useGravityThemeClass } from '../utils/useGravityUITheme'
 import { EditIcon } from './svgApplication'
 import OrgMatrixTreeComponent from './AccessTemplateTable/OrgMatrixTreeComponent'
+import { Text } from '@/components/Text'
+import { useTheme } from '@/hooks/useTheme'
+import { useGlobal } from '@/context/GlobalContext'
+import { Pagination } from '@/components/Pagination'
 
 const AccessTemplateTable = ({}) => {
   const toast = useInfoMsg()
@@ -19,13 +20,11 @@ const AccessTemplateTable = ({}) => {
     setTemplateToBeUpdated,
     setIndexOfTemplateToBeUpdated
   } = React.useContext(SetupScreenContext) as SetupScreenContextType
-  const { property, setProperty } = useContext(
-    TotalContext
-  ) as TotalContextProps
-  let brandcolor: string = property?.brandColor ?? '#0736c4'
   const [currentPage, setCurrentPage] = useState(1)
   const accessTemplatePerPage = 10
-  const themeClass = useGravityThemeClass()
+  const { branding } = useGlobal()
+  const { borderColor } = useTheme()
+  const { brandColor } = branding
 
   const filteredData = Object.entries(securityData)
     .filter(([key, value]) => {
@@ -113,22 +112,22 @@ const AccessTemplateTable = ({}) => {
   }
 
   return (
-    <div className={`g-root h-full w-full ${themeClass}`}>
-      <h2 className='mb-4 text-xl font-bold'>Access Template</h2>
+    <div className={`g-root h-full w-full`}>
+      <Text variant='body-2' className='mb-4 text-xl font-bold'>Access Template</Text>
       <div className='h-[73vh] w-full overflow-x-auto'>
         <table className='min-w-full rounded text-left'>
           <thead>
             <tr
               className='rounded border'
               style={{
-                borderColor: 'var(--g-color-line-generic)'
+                borderColor: borderColor
               }}
             >
               <th className='px-1 py-4'>
                 <input
                   type='checkbox'
                   className='cursor-pointer'
-                  style={{ accentColor: brandcolor ?? 'unset' }}
+                  style={{ accentColor: brandColor ?? 'unset' }}
                   checked={selectedRows.has('all')}
                   onChange={() => {
                     selectedRows.has('all')
@@ -154,7 +153,7 @@ const AccessTemplateTable = ({}) => {
                   <input
                     type='checkbox'
                     className='cursor-pointer'
-                    style={{ accentColor: brandcolor ?? 'unset' }}
+                    style={{ accentColor: brandColor ?? 'unset' }}
                     checked={
                       selectedRows.has(template.accessProfile) ||
                       selectedRows.has('all')
@@ -220,7 +219,7 @@ const AccessTemplateTable = ({}) => {
         page={currentPage}
         pageSize={accessTemplatePerPage}
         total={securityData.length}
-        onUpdate={setCurrentPage}
+        onUpdate={(data) => setCurrentPage(data.page)}
       />
     </div>
   )

@@ -1,39 +1,22 @@
 'use client'
-import {
-  Button,
-  Modal,
-  Pagination,
-  Table,
-  TableProps,
-  Tabs,
-  Text,
-  User,
-  withTableActions,
-  withTableSorting
-} from '@gravity-ui/uikit'
 import React, { SetStateAction, useMemo, useRef, useState } from 'react'
 import JsonView from 'react18-json-view'
 import 'react18-json-view/src/style.css'
-import { useGravityThemeClass } from '@/app/utils/useGravityUITheme'
 import { DateTime } from '@gravity-ui/date-utils'
 import { FilterIcon } from '@/app/components/svgApplication'
 import LogsFilterationModal from './LogsFilterationModal'
-import { CopyCheckXmark, Copy } from '@gravity-ui/icons'
-
-interface selectionId {
-  id: string
-  CK: string
-  FNGK: string
-  FNK: string
-  CATK: string
-  AFGK: string
-  AFK: string
-  AFVK: string
-  USER: string
-  DATE: string
-  AFSK?: { [key: string]: { processInfo: { status: string } }[] }
-}
-
+import { Table } from '@/components/Table'
+import { Pagination } from '@/components/Pagination'
+import { Text } from '@/components/Text'
+import { Button } from '@/components/Button'
+import { Tabs } from '@/components/Tabs'
+import { Modal } from '@/components/Modal'
+import { TbCopy } from "react-icons/tb";
+import { TbCopyCheckFilled } from "react-icons/tb";
+import { twMerge } from 'tailwind-merge'
+import { useTheme } from '@/hooks/useTheme'
+import { useGlobal } from '@/context/GlobalContext'
+import { Spin } from '@/components/Spin'
 interface TableHeaderProps {
   loading: boolean
   jsonData: {
@@ -49,25 +32,17 @@ interface TableHeaderProps {
   activeTab: string
   setActiveTab: React.Dispatch<SetStateAction<'process' | 'torus'>>
   setNodeData: React.Dispatch<SetStateAction<any>>
-  range: {
-    start: DateTime
-    end: DateTime
-  }
+  range: any
   setRange: React.Dispatch<
-    React.SetStateAction<{
-      start: DateTime
-      end: DateTime
-    }>
+    React.SetStateAction<any>
   >
   fabrics: Array<string>
   setFabrics: React.Dispatch<React.SetStateAction<Array<string>>>
   user: Array<string>
   setUser: React.Dispatch<React.SetStateAction<Array<string>>>
-   jsonViewerData: any
-   setJsonViewerData: React.Dispatch<React.SetStateAction<any>>
+  jsonViewerData: any
+  setJsonViewerData: React.Dispatch<React.SetStateAction<any>>
 }
-
-const MyTable = withTableSorting(withTableActions<TableProps<any>>(Table))
 
 const TableHeader: React.FC<TableHeaderProps> = ({
   loading,
@@ -106,93 +81,15 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     'Error Description'
   ]
   const [copied, setCopied] = useState<string | null>(null)
-  const [selectionId, setSelectionId] = useState<selectionId | null>(null)
-  const themeClass = useGravityThemeClass()
   const handleUpdate = (newPage: number, newPageSize: number) => {
     onPageChange(newPage, newPageSize)
   }
   const [open, setOpen] = useState(false)
   const buttonElement = useRef<HTMLButtonElement>(null)
-  const nodeFiner = (data: any) => {
-    const returnedData = Object.values(data).flat()
-    const node: any[] = []
+  const { isDark ,bgColor , borderColor , textColor } = useTheme()
+  const { branding } = useGlobal()
+  const { selectionColor } = branding
 
-    returnedData.forEach((i: any) => {
-      const dateandTime = i['DateAndTime']
-      const nodeName = i['processInfo']?.nodeName
-      const nodeType = i['processInfo']?.nodeType
-
-      if (nodeName && nodeType) {
-        node.push({
-          dateandTime,
-          nodeName,
-          nodeType
-        })
-      }
-    })
-
-    return node
-  }
-
-  const sessionFinder = (
-    data: any,
-    options: 'session' | 'dateandtime' | 'errorcode' | 'description'
-  ) => {
-    if (data) {
-      const returnedData = Object.values(data).flat()
-      let dates: Set<string> = new Set()
-      let errorCodes: Set<string> = new Set()
-      let sessions: Set<string> = new Set()
-      let details: string[] = []
-
-      returnedData.forEach((i: any) => {
-        const dateandTime = i['DateAndTime']
-        const errorCode = i['errorDetails']?.errorCode
-        const errorDetail = i['errorDetails']?.errorDetail
-        const sessionsMain = i['sessionInfo']
-
-        if (dateandTime && typeof dateandTime === 'string') {
-          dates.add(dateandTime)
-        }
-
-        if (errorCode) {
-          errorCodes.add(errorCode)
-        }
-
-        if (typeof errorDetail === 'string') {
-          details.push(errorDetail)
-        }
-
-        if (sessionsMain) {
-          try {
-            const sessionString = JSON.stringify(sessionsMain)
-            sessions.add(sessionString)
-          } catch (error) {
-            console.error('Error stringifying session:', error)
-          }
-        }
-      })
-
-      if (options === 'dateandtime') return Array.from(dates)
-      if (options === 'errorcode') return Array.from(errorCodes)
-      if (options === 'description') return Array.from(details)
-      if (options === 'session') {
-        return Array.from(sessions)
-          .map(session => {
-            try {
-              return JSON.parse(session)
-            } catch (error) {
-              console.error('Error parsing session JSON:', error)
-              return null
-            }
-          })
-          .filter(Boolean)
-      }
-
-      return []
-    }
-    return []
-  }
   function formatTableDate(dateString: string) {
     const date = new Date(dateString)
     const options = {
@@ -278,9 +175,9 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         </Text>
         {processId && (
           <div
-            className='flex w-fit rounded-full p-2'
+            className={twMerge('flex w-fit rounded-full p-2')}
             style={{
-              backgroundColor: 'var(--selection-color)'
+              backgroundColor : selectionColor
             }}
           >
             <Text variant='body-2'>UID: {processId}</Text>
@@ -288,15 +185,15 @@ const TableHeader: React.FC<TableHeaderProps> = ({
               view='flat'
               size='xs'
               className='border-none'
-              onClick={e => {
+              onClick={(e) => {
                 e.stopPropagation()
                 handleCopyToClipboard(processId)
               }}
             >
               {copied && copied === processId ? (
-                <CopyCheckXmark className='text-green-500' />
+                <TbCopyCheckFilled className='text-green-500' />
               ) : (
-                <Copy />
+                <TbCopy />
               )}
             </Button>
           </div>
@@ -376,10 +273,11 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     'Session Info': (
       <>
         {item?.user ? (
-          <User
-            avatar={{ text: item.user, theme: 'brand' }}
-            name={item.user}
-            description={
+          <div>
+            <Text variant='body-2' className=''>
+              {item?.user}
+            </Text>
+            {
               item.accessProfile && Array.isArray(item.accessProfile) ? (
                 item.accessProfile.map((profile: string, i: number) => (
                   <Text key={i} color='secondary' variant='caption-2'>
@@ -390,8 +288,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 <></>
               )
             }
-            size='l'
-          />
+          </div>
         ) : (
           <div className='text-center'>N/A</div>
         )}
@@ -415,24 +312,27 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     id: index + 1
   }))
 
+  const capitalize = (val: string) => {
+    return val.charAt(0).toUpperCase() + val.slice(1);
+  };
+
+  function camelCaseToParagraphCase(str: string) {
+    // Step 1: Insert spaces before capital letters
+    let result = str.replace(/([A-Z])/g, " $1");
+
+    result = result
+      .split(" ")
+      .map((word) => capitalize(word))
+      .join(" ");
+
+    return result;
+  }
+
   const processColumn = useMemo(() => {
     const items = headerProcessRowsItem.map((item: string, index: number) => {
       return {
         id: item,
-        name: () => {
-          return (
-            <HeaderElementContainer
-              header={item}
-              rounded={
-                index === 0
-                  ? 'rounded-l-md'
-                  : index === headerProcessRowsItem.length - 1
-                  ? 'rounded-r-md'
-                  : ''
-              }
-            />
-          )
-        }
+        name: camelCaseToParagraphCase(item)
       }
     })
     return items
@@ -442,27 +342,13 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     const items = headerTorusRowsItem.map((item: string, index: number) => {
       return {
         id: item,
-        name: () => {
-          return (
-            <HeaderElementContainer
-              header={item}
-              rounded={
-                index === 0
-                  ? 'rounded-l-md'
-                  : index === headerProcessRowsItem.length - 1
-                  ? 'rounded-r-md'
-                  : ''
-              }
-            />
-          )
-        }
+        name: camelCaseToParagraphCase(item)
       }
     })
     return items
   }, [jsonData, searchTerm])
 
   const handleRowClick = (row: any) => {
-    setSelectionId(row)
     const value = jsonData.data.find((item, index) => index + 1 == row.id)
     if (value?.errorDetails) {
       setJsonViewerData(value.errorDetails)
@@ -470,21 +356,20 @@ const TableHeader: React.FC<TableHeaderProps> = ({
       setJsonViewerData([])
     }
   }
-    
+
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab === 'process' ? 'process' : 'torus')
-    setSelectionId(null)
   }
 
   return (
-    <div className={`g-root grid h-full grid-cols-12 ${themeClass}`}>
+    <div className={`g-root grid h-full grid-cols-12`}>
       <div className='col-span-12'>
         <div className='flex flex-col rounded-md'>
           <div className='flex w-full items-center justify-between'>
             <div className=' ml-3.5 flex items-center justify-start gap-1.5 '>
               <LogsHub
-                fill={themeClass.includes('dark') ? '#fff' : '#000'}
+                fill={isDark ? '#fff' : '#000'}
                 width='24'
                 height='24'
               />
@@ -496,21 +381,16 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 placeholder='Search...'
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value.trim())}
-                className='w-[50%] rounded-md border px-2 shadow-md outline-none focus:border xl:py-1 2xl:py-2'
-                style={{
-                  backgroundColor: 'var(--g-color-base-background)',
-                  color: 'var(--g-color-text-primary)',
-                  borderColor: 'var(--g-color-line-generic)'
-                }}
+                className={twMerge('w-[50%] rounded-md border px-2 shadow-md outline-none focus:border xl:py-1 2xl:py-2' , borderColor , textColor , bgColor)}
               />
 
               <div>
                 <Button ref={buttonElement} onClick={() => setOpen(!open)}>
                   <span className='flex items-center gap-2'>
-                    Filter <FilterIcon fill='var(--g-color-text-primary)' />
+                    Filter <FilterIcon fill={isDark ? '#fff' : '#000'} />
                   </span>
                 </Button>
-                <Modal open={open}>
+                <Modal className='w-[50vw] lg:w-[30vw]' open={open} onClose={() => setOpen(!open)} showCloseButton={false}>
                   <LogsFilterationModal
                     setOpen={setOpen}
                     range={range}
@@ -530,34 +410,30 @@ const TableHeader: React.FC<TableHeaderProps> = ({
           </div>
           <div className='flex w-full '>
             <div
-              className={` transition-all delay-0 duration-300 ease-out xl:h-[68vh] 2xl:h-[80vh] ${
-                activeTab === 'torus' ? 'block w-1/2 md:w-3/4' : 'w-[100%]'
-              }  `}
+              className={` transition-all delay-0 duration-300 ease-out overflow-auto xl:h-[66vh] 2xl:h-[78vh] ${activeTab === 'torus' ? 'block w-1/2 md:w-3/4' : 'w-[100%]'
+                }  `}
             >
-              <MyTable
-                className='h-[100%] w-full'
+              <Table
                 columns={activeTab === 'torus' ? torusColumn : processColumn}
-                data={
-                  activeTab === 'torus'
-                    ? loading
-                      ? []
-                      : torusRow
-                    : loading
+                data={activeTab === 'torus'
+                  ? loading
                     ? []
-                    : (processRow as any)
-                }
-                width='auto'
+                    : torusRow
+                  : loading
+                    ? []
+                    : (processRow as any)}
+                onRowClick={e => handleRowClick(e)}
+                // width='auto'
                 wordWrap={false}
                 edgePadding={true}
-                verticalAlign='middle'
-                onRowClick={e => handleRowClick(e)}
-                emptyMessage={loading ? 'Loading...' : 'No data found'}
+              // verticalAlign='middle'
+              emptyMessage={loading ? <Spin spinning style='dots' /> : 'No data found'}
               />
+
             </div>
             <div
-              className={`${
-                activeTab === 'torus' ? 'block w-1/2 md:w-1/4 ' : 'hidden'
-              } h-[100%] `}
+              className={`${activeTab === 'torus' ? 'block w-1/2 md:w-1/4 ' : 'hidden'
+                } h-[100%] `}
             >
               <div className='flex w-full items-center justify-center'>
                 <JsonViewer tabdata={jsonViewerData} />
@@ -566,15 +442,14 @@ const TableHeader: React.FC<TableHeaderProps> = ({
           </div>
         </div>
         <Pagination
-          className='mt-4 flex w-full select-none items-center justify-center'
-          page={jsonData.page}
-          pageSize={jsonData.limit}
+          className='flex w-full select-none items-center justify-center'
+          page={jsonData?.page}
+          pageSize={jsonData?.limit}
           pageSizeOptions={[3, 5, 10, 20, 50, 100]}
-          total={jsonData.totalDocuments}
+          total={jsonData?.totalDocuments}
           onUpdate={handleUpdate}
           showInput={false}
           size='m'
-          showPages={true}
           compact={false}
         />
       </div>
@@ -601,32 +476,10 @@ const HeaderElementContainer = ({
 }) => {
   return (
     <div
-      className={`h-full w-full px-1 py-1 text-center ${
-        rounded ? rounded : 'rounded-none'
-      } `}
+      className={`h-full w-full px-1 py-1 text-center ${rounded ? rounded : 'rounded-none'
+        } `}
     >
       <Text variant='subheader-1'>{header.toLocaleUpperCase()}</Text>
-    </div>
-  )
-}
-
-const ArtifactNameContainer = ({
-  artifactName,
-  app,
-  appGroup
-}: {
-  artifactName: string
-  app: string
-  appGroup: string
-}) => {
-  return (
-    <div>
-      <RowElementContainer item={artifactName} />
-      <div className='flex items-center justify-start gap-1'>
-        <RowElementContainer item={app} />
-        <RowElementContainer item={'>'} />
-        <RowElementContainer item={appGroup} />
-      </div>
     </div>
   )
 }
@@ -639,26 +492,24 @@ const LogSwitcher = ({
   setActiveTab: (item: string) => void
 }) => {
   return (
-    <Tabs className={'pr-2'} activeTab={activeTab}>
-      <Tabs.Item
-        id='process'
-        title={'Process Log'}
-        onClick={item => {
-          setActiveTab('process')
-        }}
-      />
-      <Tabs.Item
-        id='torus'
-        title={'System Log'}
-        onClick={item => {
-          setActiveTab('torus')
-        }}
-      />
-    </Tabs>
+    <div>
+      <Tabs className={''} items={[
+        {
+          id: "process",
+          title: "Process Log",
+        },
+        {
+          id: "torus",
+          title: "System Log",
+        }
+
+      ]} onChange={setActiveTab} size='m' direction='horizontal'>
+      </Tabs>
+    </div>
   )
 }
 
-const JsonViewer = ({ tabdata }: any) => {  
+const JsonViewer = ({ tabdata }: any) => {
 
   return (
     <div

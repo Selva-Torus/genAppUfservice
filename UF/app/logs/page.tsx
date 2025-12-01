@@ -29,7 +29,7 @@ const ParentComponent = () => {
   const decodedToken: any = decodeToken(token)
   const [user, setUser] = useState<string[]>([decodedToken?.loginId])
   const { encAppFalg,setEncAppFalg}= useContext(TotalContext) as TotalContextProps
-  const [range , setRange ] = useState({start: dateTime().subtract({days: 7}), end: dateTime()})
+  const [range , setRange ] = useState<any>(null)
   const [ fabrics , setFabrics ] = useState<Array<string>>([])
   const [jsonViewerData, setJsonViewerData] = useState({})
   const router = useRouter()
@@ -51,7 +51,32 @@ const ParentComponent = () => {
     AIF: ['AIFD'],
     CDF: ['DPD', 'IFD']
   };
+  const getDate = (date: any) =>{
+    if(!date) return ""
+    const { year, month, day } = date
+    return `${year}-${month}-${day}`
+  }
   let payload:any = useMemo(() => {
+  // return {
+  //     "tenant": "CT299",
+  //     "fabric": [],
+  //     "appgroup": {
+  //         "code": "PH001",
+  //         "name": "VPH"
+  //     },
+  //     "app": {
+  //         "code": "VPH001",
+  //         "name": "Veracious Payment Hub"
+  //     },
+  //     "user": [
+  //         "perumal"
+  //     ],
+  //     "FromDate": "2025-11-19",
+  //     "ToDate": "2025-11-26",
+  //     "page": 1,
+  //     "limit": 10,
+  //     "searchParam": ""
+  // }
     return {
       tenant: 'CT003',
        fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
@@ -62,8 +87,8 @@ const ParentComponent = () => {
       appgroup: appGroup,
       app: app,
       user: user,
-      FromDate: range.start.format('YYYY-MM-DD'),
-      ToDate: range.end.format('YYYY-MM-DD'),
+      FromDate: range && range?.start ? getDate(range.start) : '',
+      ToDate: range && range?.end ? getDate(range.end) : '',
       page: jsonData.page,
       limit: jsonData.limit,
       searchParam: search

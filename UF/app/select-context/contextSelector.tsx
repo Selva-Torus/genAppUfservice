@@ -1,6 +1,5 @@
 'use client'
 import React, { useCallback,useContext, useEffect, useMemo, useState } from 'react'
-import { Select, Spin } from '@gravity-ui/uikit'
 import { SearchIcon } from '../components/svgApplication'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import axios from 'axios'
@@ -9,51 +8,54 @@ import { ArrowBackward, ArrowForward, StarIcon } from '../utils/svgApplications'
 import { useRouter } from 'next/navigation'
 import decodeToken from '../components/decodeToken'
 import { capitalize } from 'lodash'
-import { TotalContext, TotalContextProps } from '../globalContext'
 import { isLightColor } from '../components/utils'
+import { Text } from '@/components/Text'
+import { Select } from '@/components/Select'
+import Spin from '@/components/Spin'
+import { useGlobal } from '@/context/GlobalContext'
+import { twMerge } from 'tailwind-merge'
+import { useTheme } from '@/hooks/useTheme'
+import { Dropdown } from '@/components/Dropdown'
 
 const ContextSelector = () => {
-  const [selectedAccessProfile, setSelectedAccessProfile] = useState<string[]>(
-    []
-  )
-  const { property } = useContext(TotalContext) as TotalContextProps
-  let brandColor: string = property?.brandColor ?? '#0736c4'
+  const [selectedAccessProfile, setSelectedAccessProfile] = useState<string[]>([])
   const token: string = getCookie('token')
   const tp_ps: any = getCookie('tp_ps')
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.loginId
-  const toast = useInfoMsg()
+  const toast = useInfoMsg();
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
   const [searchTerm, setSearchTerm] = useState<string>('')
   const [accessProfiles, setAccessProfiles] = useState<any[]>([])
   const router = useRouter();
   const [loading, setLoading] = useState(false)
+  const {borderColor, isDark} = useTheme()
+  const { branding } = useGlobal()
+  const { brandColor } = branding
   const [selectedCombination, setSelectedCombination] = useState({})
   const [time, setTime] = useState('')
-    let landingScreen:string = 'User Screen';
+  let landingScreen:string = 'User Screen';
   let screenDetails: any = {
            keys:[
-      {
+  {
     "screensName": "testroute-v1",
     "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-      }
-    ]
+  }
+]
   }
   screenDetails = screenDetails.keys
 
   if (landingScreen === 'User Screen') {
     landingScreen = 'user'
-  }
-  else if (landingScreen === 'Logs Screen') {
+  }else if (landingScreen === 'Logs Screen') {
     landingScreen = 'logs'
-  }
-   else{
-                    screenDetails.forEach((screen: any)   => {
+  }else{
+    screenDetails.forEach((screen: any)   => {
       if (landingScreen === screen.ufKey) {
         landingScreen = screen.screensName
       }
-                    });
-                    landingScreen =landingScreen.split('-')[0]+'_'+landingScreen.split('-').at(-1)
+    });
+    landingScreen =landingScreen.split('-')[0]+'_'+landingScreen.split('-').at(-1)
   }
 
   useEffect(() => {
@@ -204,21 +206,25 @@ const ContextSelector = () => {
   )
 
   return (
-    <div className='h-[100vh] w-full bg-[#F7F7F7]'>
+    <div className='h-[100vh] w-full'>
       <div className='flex h-[100%] flex-col items-center justify-center gap-[15px]'>
-        <h1 className='text-[1.5vw] font-bold'>Welcome {capitalize(user)}</h1>
-        <div className='flex items-center gap-[5px] text-[0.83vw] text-black/50'>
-          <span>{dateString}</span>
+        <Text variant='display-2'>Welcome {capitalize(user)}</Text>
+        <div className='flex items-center gap-[5px] text-[0.83vw]'>
+          <Text variant='body-1'>{dateString}</Text>
           <hr className='h-[25px] border' />
-          <span>{time}</span>
+          <Text variant='body-1'>{time}</Text>
         </div>
-        <h5 className='text-[0.83vw] font-medium text-black'>
+        <Text variant='body-1' className=' font-medium'>
           Select from the profiles to proceed
-        </h5>
+        </Text>
         <div className='flex w-full justify-center gap-[.5vw]'>
-          <div className='relative h-[37px] items-center'>
+             <div className='relative h-[42px] items-center'>
             <span className='absolute inset-y-0 left-0 flex p-[10px]'>
-              <SearchIcon fill={'#000000'} height='15px' width='15px' />
+              <SearchIcon
+                fill={isDark ? 'white' : 'black'}
+                height='17px'
+                width='17px'
+              />
             </span>
             <input
               autoFocus
@@ -228,38 +234,40 @@ const ContextSelector = () => {
               onFocus={e => (e.target.style.borderColor = brandColor)}
               onBlur={e => (e.target.style.borderColor = '#00000026')}
               disabled={!selectedAccessProfile[0]}
-              style={{
-                backgroundColor: '#FFFFFF',
-                color: '#000000',
-                fontSize: `0.72vw`,
-                borderColor: '#00000026'
-              }}
-              className={`h-[37px] w-[20vw] rounded-md border pl-[30px] font-medium focus:outline-none`}
+              className={`h-[42px] w-[20vw] rounded-md border pl-[30px] font-medium focus:outline-none`}
             />
           </div>
           <div className='w-[10vw]'>
-            <Select
-              value={selectedAccessProfile}
-              onUpdate={data => {
-                setSelectedAccessProfile(data)
+           {/* <Select
+              options={accessProfiles.map(item => ({
+                value: item.accessProfile,
+                label: item.accessProfile
+              }))}
+              value={selectedAccessProfile[0]}
+              onChange={value => {
+                setSelectedAccessProfile([value] as string[])
                 setSelectedCombination({})
               }}
-              width={'max'}
-              size='l'
+              size='s'
               placeholder='Select Access Profile'
-              className='w-full'
-            >
-              {accessProfiles.map((item, index) => (
-                <Select.Option key={index} value={item.accessProfile}>
-                  {item.accessProfile}
-                </Select.Option>
-              ))}
-            </Select>
+            />*/}
+            <Dropdown
+              value={selectedAccessProfile[0]}
+              staticProps={accessProfiles.map(item => item.accessProfile)}
+              className=''
+              onChange={val => {
+                setSelectedAccessProfile([val] as string[])
+                setSelectedCombination({})
+              }}
+            />
           </div>
         </div>
 
         <div
-          className={`flex w-full h-[300px] overflow-y-auto items-center justify-center gap-[10px] ${accessProfiles.map((item: any) => (item.combinations.length > 5 ? 'flex flex-wrap' : ''))}`}
+          className={`flex h-[300px] w-full items-center justify-center gap-[10px] overflow-y-auto ${accessProfiles.map(
+            (item: any) =>
+              item.combinations.length > 5 ? 'flex flex-wrap' : ''
+          )}`}
         >
           {accessProfiles.map(
             profile =>
@@ -282,13 +290,21 @@ const ContextSelector = () => {
                         ? `2px solid ${brandColor}`
                         : ''
                     }}
-                    className={`flex h-[215px] w-[240px] flex-col gap-[10px] rounded-md bg-white pl-[10px] pt-[10px] text-start text-white outline-none`}
+                    className={twMerge(`flex h-[240px] w-[260px] flex-col gap-[10px] rounded-md pl-[10px] pt-[10px] text-start outline-none border`, borderColor)}
                     onClick={() => handleCardClick(item)}
                   >
                     <div className='flex w-full items-center justify-between'>
-                      <h1 className='text-[15px] font-semibold text-black truncate text-nowrap' title={item?.orgGrpName}>
+                      <Text
+                        variant='body-2'
+                        className='truncate text-nowrap text-[15px] font-semibold'
+                        needTooltip={true}
+                        tooltipProps={{
+                          title: item?.orgGrpName,
+                          placement: 'top-start'
+                        }}
+                      >
                         {item?.orgGrpName}
-                      </h1>
+                      </Text>
                       <span className='pr-[10px] outline-none'>
                         <StarIcon
                           fill={isSelectedCombination(item) ? '#F9D544' : ''}
@@ -296,21 +312,52 @@ const ContextSelector = () => {
                         />
                       </span>
                     </div>
-                    <h1 className='w-[80%] truncate rounded-md bg-[#F7F8F8] px-[2px] py-[5px] text-[0.72vw] font-medium text-black/50' title={item?.orgName}>
+                    <Text
+                      variant='body-1'
+                      className={twMerge('w-[80%] truncate rounded-md px-[2px] py-[2px] text-[0.72vw] font-medium border-2', borderColor)}
+                      needTooltip={true}
+                      tooltipProps={{
+                        title: item?.orgName,
+                        placement: 'top-start'
+                      }}
+                    >
                       {item?.orgName}
-                    </h1>
-                    <h1 className='text-[15px] font-semibold text-black truncate text-nowrap' title={item?.psGrpName}>
+                    </Text>
+                    <Text
+                      variant='body-2'
+                      className='truncate text-nowrap text-[15px] font-semibold'
+                      needTooltip={true}
+                      tooltipProps={{
+                        title: item?.psGrpName,
+                        placement: 'top-start'
+                      }}
+                    >
                       {item?.psGrpName}
-                    </h1>
-                    <h1 className='w-[80%] truncate rounded-md bg-[#F7F8F8] px-[2px] py-[5px] text-[0.72vw] font-medium text-black/50' title={item?.psName}>
+                    </Text>
+                    <Text
+                      variant='body-1'
+                      className={twMerge('w-[80%] truncate rounded-md px-[2px] py-[2px] text-[0.72vw] font-medium border-2', borderColor)}
+                      needTooltip={true}
+                      tooltipProps={{ title:item?.psName, placement:'top-start' }}
+                    >
                       {item?.psName}
-                    </h1>
-                    <h1 className='text-[15px] font-semibold text-black truncate text-nowrap' title={item?.roleGrpName}>
+                    </Text>
+                    <Text
+                      variant='body-2'
+                      className='truncate text-nowrap text-[15px] font-semibold'
+                      needTooltip={true}
+                      tooltipProps={{ title:item?.roleGrpName, placement:'top-start' }}
+                    >
                       {item?.roleGrpName}
-                    </h1>
-                    <h1 className='w-[80%] truncate rounded-md bg-[#F7F8F8] px-[2px] py-[5px] text-[0.72vw] font-medium text-black/50' title={item?.roleName}>
+                    </Text>
+                    <Text
+                      variant='body-1'
+                      className={twMerge('w-[80%] truncate rounded-md px-[2px] py-[2px] text-[0.72vw] font-medium border-2', borderColor)}
+                      needTooltip={true}
+                      tooltipProps={{ title:item?.roleName, placement:'top-start' }}
+                    >
                       {item?.roleName}
-                    </h1>
+                    </Text>
                   </button>
                 ))
           )}
@@ -328,7 +375,7 @@ const ContextSelector = () => {
           >
             {loading ? (
               <span className='flex w-full items-center justify-center'>
-                <Spin size='s' />
+                <Spin className='flex w-full justify-center' spinning color='success' style='dots' />
               </span>
             ) : (
               <span className='flex w-[200px] items-center justify-between rounded-md outline-none'>
@@ -342,7 +389,7 @@ const ContextSelector = () => {
               onClick={() => router.push(landingScreen)}
               className='flex items-center gap-[10px] outline-none'
             >
-              <ArrowBackward /> Back to Dashboard
+              <ArrowBackward fill={isDark ? "white" : "black"} /> Back to Dashboard
             </button>
           )}
         </div>

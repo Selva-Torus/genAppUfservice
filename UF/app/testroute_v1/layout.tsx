@@ -2,12 +2,12 @@
 import type { Metadata } from 'next'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css';
-import LogoutPage from "../components/logout";
-import { ThemeProvider } from "@gravity-ui/uikit";
-import { Grid } from "@gravity-ui/page-constructor";
-import ThemeS from '../components/ThemeS'
 import { LanguageProvider } from '../components/languageContext';
 import LayoutDecider from '../components/LayoutDecider';
+import { GlobalProvider } from '@/context/GlobalContext';
+import { EventBusProvider } from '@/context/EventBusContext';
+import { ThemeWrapper } from '@/components/ThemeWrapper';
+import { GetSetupKey } from '../utils/setUpKey';
 
 export const metadata: Metadata = {
   title: 'oprmatrix',
@@ -20,20 +20,26 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <LanguageProvider>
-      <ThemeS>
+  <GlobalProvider>
+    <EventBusProvider>
+      <ThemeWrapper>
+      <LanguageProvider>
+        <GetSetupKey>
         <div className=''>
           <LayoutDecider 
             mode='fluid' 
-            navigationStyles='horizontal' 
+            navigationStyles='vertical' 
             >
-           <div>
+            <div>
               <main>{children}</main>    
             </div>      
               <ToastContainer />
             </LayoutDecider>
           </div>
-      </ThemeS>
-    </LanguageProvider>
+        </GetSetupKey>
+      </LanguageProvider>
+      </ThemeWrapper>
+    </EventBusProvider>
+  </GlobalProvider>
   )
 }

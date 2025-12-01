@@ -1,9 +1,9 @@
-import React, { ChangeEvent, useContext, useState } from 'react'
+import React, { useState } from 'react'
 import { Multiply } from '../svgApplication'
-import { isLightColor } from '../utils'
 import { useInfoMsg } from '../infoMsgHandler'
-import { Button, Label } from '@gravity-ui/uikit'
-import { TotalContext, TotalContextProps } from '@/app/globalContext'
+import { Text } from '@/components/Text'
+import { Button } from '@/components/Button'
+import { Label } from '@/components/Label'
 
 const AddGroupLevelModal = ({
   close,
@@ -43,10 +43,8 @@ const AddGroupLevelModal = ({
         }
   )
   const toast = useInfoMsg()
-  const { property } = useContext(TotalContext) as TotalContextProps
-  let brandColor: string = property?.brandColor ?? '#0736c4'
 
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e: any) => {
     let { name, value } = e.target
     setInputValue(prev => {
       if (name == 'code') {
@@ -66,40 +64,65 @@ const AddGroupLevelModal = ({
   }
 
   return (
-    <div className='flex h-fit w-[20vw] flex-col px-[.7vw] py-[1vh]'>
+    <div className='flex h-fit flex-col '>
       <div className='flex w-full items-center justify-between py-[.5vh]'>
-        <h1 style={{ fontSize: `0.8vw` }} className=''>
-          {modalTitle}
-        </h1>
+        <Text variant='body-3'>{modalTitle}</Text>
         <Button className={'flex items-center outline-none'} onClick={close}>
           <Multiply height='.7vw' width='.7vw' />
         </Button>
       </div>
-      <p style={{ fontSize: `0.6vw` }} className='text-torus-text-opacity-50'>
+      <Text
+        variant='caption-1'
+        color='secondary'
+        className='text-torus-text-opacity-50'
+      >
         {modalSubText}
-      </p>
+      </Text>
 
       <div
         style={{ fontSize: `0.8vw` }}
         className='flex flex-col gap-[1vh] py-[1vh]'
       >
-        <Label className='font-semibold'>Name</Label>
+        <Label theme='clear' size='s' className='font-semibold'>
+          Name
+        </Label>
+        {/* <TextInput
+          size='s'
+          type='text'
+          placeholder={`Enter ${resourceField} name`}
+          key='name'
+          nodeId='name'
+          onChange={handleInputChange}
+          value={inputValue.name}
+        /> */}
         <input
           id='name'
           name='name'
           type='text'
           placeholder={`Enter ${resourceField} name`}
-          className={`border-[var(--g-color-line-generic)] bg-[var(--g-color-base-background)] w-[18.5vw] rounded-lg border px-[.5vw] py-[.4vh] text-[var(--g-color-text-primary)] outline-none`}
+          className={`rounded-lg border border-[var(--g-color-line-generic)] bg-[var(--g-color-base-background)] px-[.5vw] py-[.4vh] text-[var(--g-color-text-primary)] outline-none`}
           onChange={handleInputChange}
           value={inputValue.name}
         />
-        <Label className='font-semibold'>Code</Label>
+        <Label theme='clear' size='s' className='font-semibold'>
+          Code
+        </Label>
+        {/* <TextInput
+          nodeId='code'
+          size='s'
+          type='text'
+          placeholder={`Enter ${resourceField} code`}
+          key='=code'
+          onChange={handleInputChange}
+          readOnly={resource?.code ? true : false}
+          value={inputValue.code?.replace(`${parentCode}`, '')}
+        /> */}
         <input
           id='code'
           name='code'
           type='text'
           placeholder={`Enter ${resourceField} code`}
-          className={`border-[var(--g-color-line-generic)] bg-[var(--g-color-base-background)] w-[18.5vw] rounded-lg border px-[.5vw] py-[.4vh] text-[var(--g-color-text-primary)] outline-none`}
+          className={`rounded-lg border border-[var(--g-color-line-generic)] bg-[var(--g-color-base-background)] px-[.5vw] py-[.4vh] text-[var(--g-color-text-primary)] outline-none`}
           onChange={handleInputChange}
           readOnly={resource?.code ? true : false}
           value={inputValue.code?.replace(`${parentCode}`, '')}
@@ -108,20 +131,15 @@ const AddGroupLevelModal = ({
       <div className='flex w-full justify-end gap-[.5vw] py-[1vh]'>
         <Button
           onClick={close}
-          style={{ fontSize: `0.8vw` }}
-          className={
-            'bg-torus-bg border-[var(--g-color-line-generic)] rounded-lg border px-[.5vw] py-[.5vh] outline-none'
-          }
+          view='raised'
+          size='m'
+          className={'rounded-lg border px-[.5vw] py-[.5vh] outline-none'}
         >
           Cancel
         </Button>
         <Button
           onClick={handleAdd}
-          style={{
-            backgroundColor: brandColor,
-            color: isLightColor(brandColor),
-            fontSize: `0.8vw`
-          }}
+          size='m'
           className={'rounded-lg px-[.5vw] py-[.5vh] outline-none'}
         >
           {resource?.code ? 'Update' : 'Create'}

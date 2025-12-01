@@ -2,26 +2,33 @@
 
 
 "use client"
-import { RealTheme } from '@gravity-ui/uikit'
-import React from 'react'
-import { getCookie } from './components/cookieMgment'
+import React from 'react';
+import { getCookie } from './components/cookieMgment';
 export interface TotalContextProps {
-  aaf24: any 
-  setaaf24: React.Dispatch<React.SetStateAction<any>>
-  aaf24Props: any 
-  setaaf24Props: React.Dispatch<React.SetStateAction<any>>
+  groupaaf24: any 
+  setgroupaaf24: React.Dispatch<React.SetStateAction<any>>
+  groupaaf24Props: any 
+  setgroupaaf24Props: React.Dispatch<React.SetStateAction<any>>
+  group7bc2c: any 
+  setgroup7bc2c: React.Dispatch<React.SetStateAction<any>>
+  group7bc2cProps: any 
+  setgroup7bc2cProps: React.Dispatch<React.SetStateAction<any>>
   addd6f6de: any,
   setaddd6f6de:React.Dispatch<React.SetStateAction<any>>
   addd6f6deProps: any 
   setaddd6f6deProps: React.Dispatch<React.SetStateAction<any>>
-//   6653a: any,
-//   set6653a:React.Dispatch<React.SetStateAction<any>>
-//   6653aProps: any 
-//   set6653aProps: React.Dispatch<React.SetStateAction<any>>
+  wefdwfds735d5: any,
+  setwefdwfds735d5:React.Dispatch<React.SetStateAction<any>>
+  wefdwfds735d5Props: any 
+  setwefdwfds735d5Props: React.Dispatch<React.SetStateAction<any>>
+  csdcsdcsd4b217: any,
+  setcsdcsdcsd4b217:React.Dispatch<React.SetStateAction<any>>
+  csdcsdcsd4b217Props: any 
+  setcsdcsdcsd4b217Props: React.Dispatch<React.SetStateAction<any>>
 
-// ////// screen states 
-//   oprmatrixuf_v1Props: any 
-//   setoprmatrixuf_v1Props: React.Dispatch<React.SetStateAction<any>>
+////// screen states 
+  oprmatrixuf_v1Props: any 
+  setoprmatrixuf_v1Props: React.Dispatch<React.SetStateAction<any>>
 
 ///////// dfd
 
@@ -58,17 +65,26 @@ export interface TotalContextProps {
   userDetails:any,
   setUserDetails:React.Dispatch<React.SetStateAction<any>>
   encAppFalg:any,
-  setEncAppFalg:React.Dispatch<React.SetStateAction<any>>,
-  selectedTheme: RealTheme,
-  setSelectedTheme: React.Dispatch<React.SetStateAction<RealTheme>>
+  setEncAppFalg:React.Dispatch<React.SetStateAction<any>>
 }
 
 export const TotalContext = React.createContext<TotalContextProps | {}>({})
 
 const GlobalContext = ({children} : {children: React.ReactNode}) => {
       //////////
-        const [aaf24, setaaf24 ] = React.useState<any>({}) 
-    const [aaf24Props, setaaf24Props ] = React.useState<any>({
+        const [groupaaf24, setgroupaaf24 ] = React.useState<any>({}) 
+    const [groupaaf24Props, setgroupaaf24Props ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
+        const [group7bc2c, setgroup7bc2c ] = React.useState<any>({}) 
+    const [group7bc2cProps, setgroup7bc2cProps ] = React.useState<any>({
       validation:false,
       required:false,
       refetch:false,
@@ -85,17 +101,26 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refetch:false,
     refresh:false,
     }) 
-  //  const [6653a,set6653a] = React.useState<any>({
-  //   isDisabled: false,
-  //   presetValues: '',
-  //   isHidden: false,
-  //   refetch:false,
-  //   refresh:false,
-  //   }) 
+   const [wefdwfds735d5,setwefdwfds735d5] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [csdcsdcsd4b217,setcsdcsdcsd4b217] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
     ///////////
     const [refresh, setRefresh] = React.useState<any>({       buttonAddd6f6de:false,
-       textinput6653a:false,
-       groupaaf24:false,
+       textinputwefdwfds735d5:false,
+       documentuploadercsdcsdcsd4b217:false,
+       groupgroupaaf24:false,
+       groupgroup7bc2c:false,
       })
 
   ////// screen states 
@@ -121,7 +146,6 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     const [userDetails , setUserDetails] = React.useState<any>({})
     const [encAppFalg , setEncAppFalg] = React.useState<any>({})
     const theme = getCookie('cfg_theme')
-    const [selectedTheme , setSelectedTheme] = React.useState<RealTheme>(theme || "")
     
     
   return (
@@ -129,14 +153,20 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       value={
       {
       //
-        aaf24, 
-        setaaf24,
-        aaf24Props, 
-        setaaf24Props,
+        groupaaf24, 
+        setgroupaaf24,
+        groupaaf24Props, 
+        setgroupaaf24Props,
+        group7bc2c, 
+        setgroup7bc2c,
+        group7bc2cProps, 
+        setgroup7bc2cProps,
         addd6f6de,
         setaddd6f6de, 
-        // 6653a,
-        // set6653a, 
+        wefdwfds735d5,
+        setwefdwfds735d5, 
+        csdcsdcsd4b217,
+        setcsdcsdcsd4b217, 
         ////// screen states 
           oprmatrixuf_v1Props,
           setoprmatrixuf_v1Props,
@@ -172,9 +202,7 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         userDetails,
         setUserDetails,
         encAppFalg,
-        setEncAppFalg,
-        selectedTheme, 
-        setSelectedTheme
+        setEncAppFalg
         }}
       >
       {children}

@@ -19,13 +19,140 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-11-19T10:52:18.443Z",
+    "lastActive": "2025-12-01T10:35:54.953Z",
     "profile": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT003/resources/images/Peer@786/pexels-pixabay-33109.jpg",
     "quickLinks": [],
     "client": "CT003",
     "edit": "",
     "noOfProductsService": 0,
-    "userUniqueId": "6828417e-5fe0-43bb-8c55-c465ee6581a0"
+    "userUniqueId": "6828417e-5fe0-43bb-8c55-c465ee6581a0",
+    "touring": {
+      "isneedTouring": true,
+      "touringData": {
+        "/": {
+          "stepIndex": 5,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "/logic-center": {
+          "stepIndex": 3,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "Security": {
+          "stepIndex": 1,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "artifactselector": {
+          "stepIndex": 1,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "build": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/torus": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/company-profile": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/logs_hub": {
+          "stepIndex": 1,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/tenant": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "logs": {
+          "stepIndex": 1,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": [
+            0
+          ]
+        },
+        "/control-center/account-profile": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/appearance": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/user-roles": {
+          "stepIndex": 1,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "/control-center/storage-configuration": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/user-management": {
+          "stepIndex": 2,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "/tenant-settings": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/notifications": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/resource-library": {
+          "stepIndex": 1,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "notification": {
+          "stepIndex": 0,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "detailNotification": {
+          "stepIndex": 1,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        }
+      }
+    }
   }
 } */
 import { NestFactory } from '@nestjs/core';

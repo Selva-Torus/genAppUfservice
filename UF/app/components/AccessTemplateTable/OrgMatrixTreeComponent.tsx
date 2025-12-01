@@ -1,11 +1,14 @@
 import React, { memo, useContext, useMemo, useState } from 'react'
 import { DownArrow, SearchIcon, Security } from '../svgApplication'
-import { isLightColor, hexWithOpacity } from '../utils'
 import { SetupScreenContext, SetupScreenContextType } from '../setup'
 import { capitalize } from 'lodash'
-import { Button, Select, Text } from '@gravity-ui/uikit'
-import { TotalContext, TotalContextProps } from '@/app/globalContext'
 import SecurityTemplateSelection from './SecurityTemplateSelection'
+import { useTheme } from '@/hooks/useTheme'
+import { useGlobal } from '@/context/GlobalContext'
+import { Text } from '@/components/Text'
+import { Select } from '@/components/Select'
+import { Button } from '@/components/Button'
+import { TextInput } from '@/components/TextInput'
 
 const OrgMatrixTreeComponent = () => {
   const [searchTerm, setSearchTerm] = useState('')
@@ -14,11 +17,10 @@ const OrgMatrixTreeComponent = () => {
     templateToBeUpdated,
     setTemplateToBeUpdated
   } = useContext(SetupScreenContext) as SetupScreenContextType
-
-  const { property } = useContext(TotalContext) as TotalContextProps
-  let brandcolor: string = property?.brandColor ?? '#0736c4'
-
   const fontSize = 1
+  const { branding } = useGlobal()
+  const { borderColor, isDark } = useTheme()
+  const { brandColor } = branding
 
   const SecurityTree = memo(({ organizationData }: any) => {
     return (
@@ -116,18 +118,18 @@ const OrgMatrixTreeComponent = () => {
     return (
       <div className='flex w-full flex-1 flex-col gap-[0.83vh] '>
         <div
-          className='border-[var(--g-color-line-generic)] bg-torus-bg-card group flex h-[5vh] w-full cursor-pointer items-center justify-between gap-[0.30vw] rounded-[.4vw] border px-[0.78vw]'
+          className='bg-torus-bg-card group flex h-[5vh] w-full cursor-pointer items-center justify-between gap-[0.30vw] rounded-[.4vw] border border-[var(--g-color-line-generic)] px-[0.78vw]'
           onClick={() => keys && keys.length > 0 && setShow(!show)}
         >
           <div className='text-torus-text flex items-center justify-start gap-[0.30vw]'>
             {keys && keys.length > 0 ? (
               <span
-                className={`w-[0.52vw] opacity-35 transition-transform ease-in ${
+                className={`w-[0.52vw] transition-transform ease-in ${
                   show ? '' : 'rotate-[-90deg]'
                 }`}
               >
                 <DownArrow
-                  fill={'var(--g-color-text-primary)'}
+                  fill={isDark ? 'white' : 'black'}
                   width='0.5vw'
                   height='0.5vw'
                 />
@@ -137,28 +139,23 @@ const OrgMatrixTreeComponent = () => {
                 type='checkbox'
                 className='h-[.8vw] w-[1.2vw] rounded-lg'
                 checked
-                style={{ accentColor: brandcolor }}
+                style={{ accentColor: brandColor }}
                 onChange={handleChange}
               />
             )}
             {name}
           </div>
-          <div
-            className='inline-block rounded-full
-    border px-[0.3vw]
-    py-[0.5vh]
-    text-xs font-medium
-    opacity-0 shadow-md
-    transition-opacity
-    duration-200 group-hover:opacity-100'
-            style={{
-              color: isLightColor(brandcolor),
-              backgroundColor: hexWithOpacity(brandcolor, 0.2),
-              borderColor: brandcolor
-            }}
+          <Text
+            color='positive-heavy'
+            className='inline-block rounded-full border px-[0.3vw] py-[0.5vh] text-xs font-medium opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100'
+            // style={{
+            //   color: isLightColor(brandColor),
+            //   backgroundColor: hexWithOpacity(brandColor, 0.2),
+            //   borderColor: brandColor
+            // }}
           >
             {keyName}
-          </div>
+          </Text>
         </div>
 
         <div
@@ -190,13 +187,30 @@ const OrgMatrixTreeComponent = () => {
     <div className='flex h-full w-full flex-col gap-[1vh]'>
       <div className='flex flex-col'>
         <div className='flex w-full items-center justify-between'>
-          <div className='text-torus-text-opacity-50 flex items-center gap-[.8vw]'>
-            <Text variant='body-1' color='secondary' className='flex items-center gap-2'>
-              <Security fill='var(--g-color-text-secondary)' />{' '}
-              {'Access Template'}
+          <div className='flex items-center gap-[.8vw]'>
+            <Text
+              variant='body-3'
+              color='secondary'
+              className='flex items-center gap-2 text-nowrap'
+            >
+              <Security fill={isDark ? 'white' : 'black'} /> {'Access Template'}
             </Text>
-            <Text variant='body-1' color='secondary'>{'>'}</Text>
-            <input
+            <Text variant='header-2' color='primary'>
+              {'>'}
+            </Text>
+            <div className='w-[10vw]'>
+              <TextInput
+                size='s'
+                type='text'
+                onChange={handleInputChange}
+                value={templateToBeUpdated?.accessProfile}
+                readOnly={templateToBeUpdated?.['no.ofusers'] !== 0}
+                view='clear'
+              />
+            </div>
+          </div>
+
+          {/* <input
               className={'text-torus-text bg-torus-bg outline-none'}
               type='text'
               defaultValue={templateToBeUpdated?.accessProfile}
@@ -206,10 +220,31 @@ const OrgMatrixTreeComponent = () => {
                 backgroundColor: 'var(--g-color-base-background)',
                 color: 'var(--g-color-text-primary)'
               }}
-            />
-          </div>
+            /> */}
           <div>
             <Select
+              options={accessPrivilegeData.map(item => ({
+                value: item,
+                label: item
+              }))}
+              value={
+                templateToBeUpdated?.dap === 'f'
+                  ? 'Full'
+                  : templateToBeUpdated?.dap === 'l'
+                  ? 'Limited'
+                  : 'Select DAP'
+              }
+              onChange={e =>
+                setTemplateToBeUpdated((prev: any) => ({
+                  ...prev,
+                  dap: e == 'Full' ? 'f' : 'l'
+                }))
+              }
+              size='s'
+              placeholder='Select DAP'
+              className='w-[200px]'
+            ></Select>
+            {/* <Select
               value={[
                 templateToBeUpdated?.dap === 'f'
                   ? 'Full'
@@ -233,12 +268,10 @@ const OrgMatrixTreeComponent = () => {
                   {item}
                 </Select.Option>
               ))}
-            </Select>
+            </Select> */}
           </div>
         </div>
-        <div
-          className='flex items-center gap-2'
-        >
+        <div className='flex items-center gap-2'>
           <Button
             onClick={() => {
               setTemplateToBeUpdated(null)
@@ -251,24 +284,23 @@ const OrgMatrixTreeComponent = () => {
         </div>
       </div>
 
-      <hr className='border-[var(--g-color-line-generic)] w-full border' />
+      <hr style={{ borderColor: borderColor }} className='w-full border' />
 
       <div className='flex h-full w-full gap-4'>
         <div className='flex h-full flex-col gap-3'>
           <span className='flex flex-col'>
             <Text variant='header-1'>Organization Matrix</Text>
-            <Text variant='body-1' color='secondary'
-            >
+            <Text variant='body-1' color='secondary'>
               Interact with the tree to modify
             </Text>
           </span>
           <div
             style={{ fontSize: `${fontSize * 0.72}vw` }}
-            className='border-[var(--g-color-line-generic)] bg-torus-bg-card flex w-[25vw] items-center gap-[.5vw] rounded-lg border px-[1vw] py-[1vh]'
+            className='bg-torus-bg-card flex w-[25vw] items-center gap-[.5vw] rounded-lg border border-[var(--g-color-line-generic)] px-[1vw] py-[1vh]'
           >
             <span>
               <SearchIcon
-                fill={'var(--g-color-text-primary)'}
+                fill={isDark ? 'white' : 'black'}
                 height='0.83vw'
                 width='0.83vw'
               />
@@ -290,7 +322,7 @@ const OrgMatrixTreeComponent = () => {
           </div>
         </div>
 
-        <hr className='border-[var(--g-color-line-generic)] h-full border' />
+        <hr style={{ borderColor: borderColor }} className='h-full border' />
 
         <div className='w-full'>
           <SecurityTemplateSelection />

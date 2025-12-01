@@ -1,9 +1,3 @@
-'use client'
-import {
-  Avatar,
-  DropdownMenu,
-  Tooltip,
-} from '@gravity-ui/uikit'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { useCallback, useMemo } from 'react'
 import { deleteAllCookies, getCookie } from '@/app/components/cookieMgment'
@@ -12,7 +6,10 @@ import { MenuItem, MenuStructure } from '../interfaces/interfaces'
 import Image from 'next/image'
 import { isLightColor } from './utils'
 import { FileGallery } from '../utils/svgApplications'
-import { useGravityThemeClass } from '../utils/useGravityUITheme'
+import { Tooltip } from '@/components/Tooltip'
+import { DropdownMenu } from '@/components/DropdownMenu'
+import { Avatar } from '@/components/Avatar'
+import { useTheme } from '@/hooks/useTheme'
 
 const SideNav = ({
   navData,
@@ -47,7 +44,7 @@ const SideNav = ({
   const user = decodedTokenObj?.loginId
   const selectedAccessProfile = decodedTokenObj?.selectedAccessProfile
   const pathname = usePathname()
-  const themeClass = useGravityThemeClass()
+  const { isDark } = useTheme()
 
   const getNestedMenu = (menu: MenuItem): any => {
     const nestedMenu = []
@@ -83,10 +80,9 @@ const SideNav = ({
             alt='icon'
             src={screen.icon}
             style={{
-              filter:
-                themeClass.includes('dark')
-                  ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
-                  : 'unset'
+              filter: isDark
+                ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
+                : 'unset'
             }}
           />
         ) : (
@@ -94,7 +90,7 @@ const SideNav = ({
             <FileGallery
               height='20'
               width='20'
-              fill={themeClass.includes('dark') ? '#ffffff' : '#000000'}
+              fill={isDark ? '#ffffff' : '#000000'}
             />
           </span>
         )
@@ -123,7 +119,7 @@ const SideNav = ({
               alt='icon'
               src={item.icon}
               style={{
-                filter: themeClass.includes('dark')
+                filter: isDark
                   ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
                   : 'unset'
               }}
@@ -132,7 +128,7 @@ const SideNav = ({
             <FileGallery
               height='20'
               width='20'
-              fill={themeClass.includes('dark') ? '#ffffff' : '#000000'}
+              fill={isDark ? '#ffffff' : '#000000'}
             />
           )
         })
@@ -145,7 +141,9 @@ const SideNav = ({
     if (sidebarStyle == 'compact') {
       return 'flex flex-col gap-[0.25vh] cursor-pointer items-center'
     }
-    return `flex ${sidebarStyle === 'condensed' ? 'flex-col' : 'flex-row'} gap-[0.95vh] cursor-pointer items-center`
+    return `flex ${
+      sidebarStyle === 'condensed' ? 'flex-col' : 'flex-row'
+    } gap-[0.95vh] cursor-pointer items-center`
   }
 
   async function logout() {
@@ -201,12 +199,12 @@ const SideNav = ({
   )
 
   const menuPlacement = useMemo(() => {
-    if (fullView) return 'flex-start'
+    if (fullView) return ''
     return 'center'
   }, [fullView])
   return (
     <div
-      className={`g-root flex h-full flex-col items-center justify-between px-2 py-2 ${themeClass}`}
+      className={`g-root flex h-full flex-col items-center justify-between px-2 py-2`}
     >
       <div
         className='scrollbar-none flex max-h-[80vh] w-full flex-col gap-[0.25vh] overflow-x-hidden overflow-y-scroll pt-2 '
@@ -220,18 +218,21 @@ const SideNav = ({
               return (
                 <Tooltip
                   key={index}
-                  openDelay={0}
-                  content={menu.menuGroupLabel}
-                  placement={'right'}
-                  disabled={fullView}
-                  style={{
-                    backgroundColor: `${brandColor}`,
-                    color: isLightColor(brandColor)
-                  }}
+                  title={menu.menuGroupLabel}
+                  placement='right-start'
+                  disable={fullView}
+                  // style={{
+                  //   backgroundColor: `${brandColor}`,
+                  //   color: isLightColor(brandColor)
+                  // }}
                 >
                   <button
                     key={index}
-                    className={` flex cursor-pointer items-center justify-center gap-2 px-1 py-1 transition delay-150 duration-300 ease-in-out ${sidebarStyle === 'compact' || sidebarStyle === 'hoverView' ? 'w-[80%]' : 'w-[98%]'} rounded-md `}
+                    className={` flex cursor-pointer items-center justify-center gap-2 px-1 py-1 transition delay-150 duration-300 ease-in-out ${
+                      sidebarStyle === 'compact' || sidebarStyle === 'hoverView'
+                        ? 'w-[80%]'
+                        : 'w-[98%]'
+                    } rounded-md `}
                     style={
                       getDropDownStyles(
                         menu.menuGroup,
@@ -261,7 +262,7 @@ const SideNav = ({
                                           menu.menuGroup,
                                           true
                                         ) == 'boolean' ||
-                                        themeClass.includes('dark')
+                                        isDark
                                           ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
                                           : 'unset'
                                     }}
@@ -271,11 +272,12 @@ const SideNav = ({
                                     height='20'
                                     width='20'
                                     fill={
-                                    typeof getDropDownStyles(
+                                      typeof getDropDownStyles(
                                         menu.menuGroup,
                                         true
-                                      ) == 'boolean' ? isLightColor(brandColor) :
-                                      themeClass.includes('dark')
+                                      ) == 'boolean'
+                                        ? isLightColor(brandColor)
+                                        : isDark
                                         ? '#fff'
                                         : '#1C274C'
                                     }
@@ -287,7 +289,11 @@ const SideNav = ({
                                   padding: '0px',
                                   width: '80%',
                                   display: 'flex',
-                                  justifyContent: `${sidebarStyle === 'condensed' ? 'center' : 'flex-start'}`,
+                                  justifyContent: `${
+                                    sidebarStyle === 'condensed'
+                                      ? 'center'
+                                      : 'flex-start'
+                                  }`,
                                   alignItems: 'center'
                                 }}
                                 className='flex items-center justify-center whitespace-nowrap bg-transparent pl-2 text-center transition-all delay-0 duration-75 ease-in-out'
@@ -317,7 +323,7 @@ const SideNav = ({
                                         menu.menuGroup,
                                         true
                                       ) == 'boolean' ||
-                                      themeClass.includes('dark')
+                                      isDark
                                         ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
                                         : 'unset'
                                   }}
@@ -327,11 +333,12 @@ const SideNav = ({
                                   height='20'
                                   width='20'
                                   fill={
-                                  typeof getDropDownStyles(
-                                        menu.menuGroup,
-                                        true
-                                      ) == 'boolean' ? isLightColor(brandColor) :
-                                    themeClass.includes('dark')
+                                    typeof getDropDownStyles(
+                                      menu.menuGroup,
+                                      true
+                                    ) == 'boolean'
+                                      ? isLightColor(brandColor)
+                                      : isDark
                                       ? '#fff'
                                       : '#1C274C'
                                   }
@@ -346,11 +353,12 @@ const SideNav = ({
                       popupProps={{
                         style: {
                           backgroundColor: brandColor,
-                          color: `${isLightColor(brandColor)}`
-                        },
-                        placement: `${sidebarStyle !== 'compact' ? 'bottom-end' : 'right-end'}`
+                          color: `${isLightColor(brandColor)}`,
+                          position:'fixed'
+                        }
+                        // placement: `${sidebarStyle !== 'compact' ? 'bottom-end' : 'right-end'}`
                       }}
-                      switcherWrapperClassName='bg-transparent w-[100%] flex items-center justify-center'
+                      // switcherWrapperClassName='bg-transparent w-[100%] flex items-center justify-center'
                     />
                   </button>
                 </Tooltip>
@@ -364,13 +372,13 @@ const SideNav = ({
               return (
                 <Tooltip
                   key={index}
-                  openDelay={0}
-                  content={menu.menuGroupLabel}
-                  placement={'right'}
-                  disabled={fullView}
-                  style={{
-                    backgroundColor: brandColor
-                  }}
+                  // openDelay={0}
+                  title={menu.menuGroupLabel}
+                  placement='right-start'
+                  disable={fullView}
+                  // style={{
+                  //   backgroundColor: brandColor
+                  // }}
                 >
                   <div
                     key={index}
@@ -398,7 +406,8 @@ const SideNav = ({
                         src={menu.screenDetails[0].icon}
                         style={{
                           filter:
-                            routingName == pathname || themeClass.includes('dark')
+                            routingName == pathname ||
+                            isDark
                               ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
                               : 'unset'
                         }}
@@ -408,9 +417,11 @@ const SideNav = ({
                         height='20'
                         width='20'
                         fill={
-                          routingName == pathname 
+                          routingName == pathname
                             ? `${isLightColor(brandColor)}`
-                            : themeClass.includes('dark') ? '#fff' : '#1C274C'
+                            : isDark
+                            ? '#fff'
+                            : '#1C274C'
                         }
                       />
                     )}
@@ -481,9 +492,13 @@ const FullViewAvatar = ({
           >
             <div className='flex w-[40%] items-center justify-start '>
               <Avatar
-                imgUrl={userDetails?.profile}
+                theme='brand'
+                view='filled'
+                imageUrl={userDetails?.profile}
                 size='m'
-                className={`${!fullView ? 'hidden opacity-0' : 'block opacity-100'} transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
+                className={`${
+                  !fullView ? 'hidden opacity-0' : 'block opacity-100'
+                } transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
               />
             </div>
             <div className='flex w-[60%] select-none flex-col items-start justify-start '>
@@ -507,12 +522,12 @@ const FullViewAvatar = ({
             </div>
           </div>
         )}
-        switcherWrapperClassName='w-[100%] flex items-center justify-center'
+        // switcherWrapperClassName='w-[100%] flex items-center justify-center'
         items={[
           {
             text: user,
-            action: () => {},
-            selected: true
+            action: () => {}
+            // selected: true
           },
           {
             text: 'Switch accessProfile',
@@ -532,9 +547,11 @@ const FullViewAvatar = ({
         popupProps={{
           style: {
             backgroundColor: brandColor,
-            color: isLightColor(brandColor)
-          },
-          placement: 'right-end'
+            color: isLightColor(brandColor),
+            top: "-100px",
+            left : "130px"
+          }
+          // placement: 'right-end'
         }}
       />
     </div>
@@ -565,18 +582,22 @@ const PartialViewAvatar = ({
             {...props}
           >
             <Avatar
-              imgUrl={userDetails?.profile}
+              theme='brand'
+              view='filled'
+              imageUrl={userDetails?.profile}
               size='m'
-              className={`${fullView ? 'hidden opacity-0' : 'block opacity-100'} transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
+              className={`${
+                fullView ? 'hidden opacity-0' : 'block opacity-100'
+              } transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
             />
           </div>
         )}
-        switcherWrapperClassName='w-[100%] flex items-center justify-center'
+        // switcherWrapperClassName='w-[100%] flex items-center justify-center'
         items={[
           {
             text: user,
-            action: () => {},
-            selected: true
+            action: () => {}
+            // selected: true
           },
           {
             text: 'Switch accessProfile',
@@ -596,9 +617,11 @@ const PartialViewAvatar = ({
         popupProps={{
           style: {
             backgroundColor: brandColor,
-            color: isLightColor(brandColor)
-          },
-          placement: 'right-end'
+            color: isLightColor(brandColor),
+            top: "-120px",
+            left : "70px"
+          }
+          // placement: 'right-end'
         }}
       />
     </>

@@ -1,11 +1,15 @@
 import { isLightColor } from '../utils'
 import { DeleteIcon, EditIcon, PlusIcon, SixDotsSvg } from '../svgApplication'
-import { useContext, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { BsThreeDotsVertical } from 'react-icons/bs'
 import { twMerge } from 'tailwind-merge'
-import { Button, Modal, Popup } from '@gravity-ui/uikit'
-import { TotalContext, TotalContextProps } from '@/app/globalContext'
 import AddGroupLevelModal from './AddGroupLevelModal'
+import { Button } from '@/components/Button'
+import { useGlobal } from '@/context/GlobalContext'
+import { useTheme } from '@/hooks/useTheme'
+import { Text } from '@/components/Text'
+import { Modal } from '@/components/Modal'
+import Popup from '@/components/Popup'
 
 const RenderChild = ({
   item,
@@ -34,9 +38,10 @@ const RenderChild = ({
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const { property } = useContext(TotalContext) as TotalContextProps
-  let brandColor: string = property?.brandColor ?? '#0736c4'
   const popoverButtonElement = useRef(null)
+  const { branding } = useGlobal()
+  const { isDark } = useTheme()
+  const { brandColor } = branding
 
   const handleDragStartOfOPRNode = (e: React.DragEvent<HTMLDivElement>) => {
     e.dataTransfer.setData('type', resourceField)
@@ -62,39 +67,24 @@ const RenderChild = ({
     >
       <div className='flex items-center gap-[0.5vw]'>
         <span>
-          <SixDotsSvg fill='var(--g-color-text-primary)' />
+          <SixDotsSvg fill={isDark ? 'white' : 'black'} />
         </span>
         <div className='flex flex-col'>
-          <span>{displayName}</span>
-          <span
-            style={{
-              fontSize: `0.6vw`
-            }}
-            className='text-torus-text-opacity-50'
-          >
-            {displayCode.replace(codePrefix, '')}
-          </span>
+          <Text variant='body-2'>{displayName}</Text>
+          <Text color='secondary'>{displayCode.replace(codePrefix, '')}</Text>
         </div>
       </div>
       {!existsInContext && onAddToContext ? (
-        <div>
-          <Button
-            className={'flex items-center gap-[0.5vw] rounded px-[0.2vw]'}
-            style={{
-              fontSize: `0.7vw`,
-              backgroundColor: brandColor,
-              color: isLightColor(brandColor)
-            }}
-            onClick={onAddToContext}
-          >
+        <Button onClick={onAddToContext} view='outlined-success'>
+          <div className='flex items-center gap-2'>
             <PlusIcon
               fill={isLightColor(brandColor)}
               height='.8vw'
               width='.8vw'
             />
             Add
-          </Button>
-        </div>
+          </div>
+        </Button>
       ) : (
         <div className={'opacity-0 transition-opacity group-hover:opacity-100'}>
           <Button
@@ -108,6 +98,8 @@ const RenderChild = ({
             anchorRef={popoverButtonElement}
             open={isPopoverOpen}
             onClose={() => setIsPopoverOpen(false)}
+            className='w-[9vw]'
+            placement='left'
           >
             <div className='flex flex-col gap-[0.58vh] px-[0.46vw] py-[0.58vh]'>
               <div
@@ -153,7 +145,7 @@ const RenderChild = ({
             setIsEditModalOpen(false)
             setIsPopoverOpen(false)
           }}
-          disableOutsideClick
+          showCloseButton={false}
         >
           <AddGroupLevelModal
             close={() => {

@@ -2,13 +2,15 @@ import { FaRegFolderOpen } from 'react-icons/fa'
 import { DeleteIcon, DownArrow, EditIcon, PlusIcon } from '../svgApplication'
 import { BsThreeDotsVertical } from 'react-icons/bs'
 import { useOPRMatrix } from '.'
-import { useContext, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { hexWithOpacity } from '../utils'
 import { twMerge } from 'tailwind-merge'
-import { TotalContext, TotalContextProps } from '@/app/globalContext'
-import { Button, Modal, Popup } from '@gravity-ui/uikit'
 import { useInfoMsg } from '../infoMsgHandler'
 import AddGroupLevelModal from './AddGroupLevelModal'
+import { Modal } from '@/components/Modal'
+import { useGlobal } from '@/context/GlobalContext'
+import { useTheme } from '@/hooks/useTheme'
+import Popup from '@/components/Popup'
 
 // ============= RENDER GROUP (REUSABLE) =============
 const RenderGroup = ({
@@ -38,8 +40,6 @@ const RenderGroup = ({
   contextKey: string
   path: string
 }) => {
-  const { property } = useContext(TotalContext) as TotalContextProps
-  let brandColor: string = property?.brandColor ?? '#0736c4'
   const {
     toggleDropdown,
     collapsedItems,
@@ -53,6 +53,9 @@ const RenderGroup = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const popoverButtonElement = useRef(null)
+  const { branding } = useGlobal()
+  const { isDark } = useTheme()
+  const { brandColor } = branding
 
   const isCurrentContext = useMemo(
     () => isSearchOpen == contextKey && searchTerm,
@@ -109,7 +112,7 @@ const RenderGroup = ({
               isOpen ? 'rotate-[360deg]' : 'rotate-[270deg]'
             }`}
           >
-            <DownArrow fill='var(--g-color-text-primary)' />
+            <DownArrow fill={isDark ? "white" : "black"} />
           </span>
           <FaRegFolderOpen />
           <span>
@@ -130,8 +133,8 @@ const RenderGroup = ({
           )}
         >
           {/* Three Dots Popover */}
-          <Button
-            onClick={e => {
+          <button
+            onClick={(e) => {
               e.stopPropagation()
               setIsPopoverOpen(prev => !prev)
             }}
@@ -139,12 +142,15 @@ const RenderGroup = ({
             className='flex rotate-90 items-center rounded p-[0.3vw] outline-none'
           >
             <BsThreeDotsVertical />
-          </Button>
+          </button>
 
           <Popup
             anchorRef={popoverButtonElement}
             open={isPopoverOpen}
             onClose={handlePopoverClose}
+            disablePortal={true}
+            placement='left'
+            className='w-[11vw]'
           >
             <div className='flex flex-col gap-[0.58vh] px-[0.46vw] py-[0.58vh]'>
               <div
@@ -158,7 +164,7 @@ const RenderGroup = ({
                 <PlusIcon
                   height='.8vw'
                   width='.8vw'
-                  fill='var(--g-color-text-primary)'
+                  fill={isDark ? "white" : "black"}
                 />
                 Add {resourceField}
               </div>
@@ -200,7 +206,7 @@ const RenderGroup = ({
                 setIsAddModalOpen(false)
                 setIsPopoverOpen(false)
               }}
-              disableOutsideClick
+              showCloseButton={false}
             >
               <AddGroupLevelModal
                 close={() => {
@@ -221,7 +227,7 @@ const RenderGroup = ({
                 setIsEditModalOpen(false)
                 setIsPopoverOpen(false)
               }}
-              disableOutsideClick
+              showCloseButton={false}
             >
               <AddGroupLevelModal
                 close={() => {

@@ -1,5 +1,4 @@
 'use client'
-import { Grid } from "@gravity-ui/page-constructor";
 import { useLanguage } from "../components/languageContext";
 import React,{ useContext,useEffect,useState } from "react";
 import { AxiosService } from '@/app/components/axiosService';
@@ -9,15 +8,40 @@ import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { deleteAllCookies,getCookie } from '@/app/components/cookieMgment';
 import { TotalContext, TotalContextProps } from "../globalContext";
 import decodeToken from "../components/decodeToken";
-import { Icon, Button,Text } from '@gravity-ui/uikit';
-import { ChevronLeft } from '@gravity-ui/icons';
+import { Button } from "@/components/Button";
+import { Icon } from "@/components/Icon";
+import { Text } from "@/components/Text";
 import { useRouter } from 'next/navigation';
-import Group  from "./Group/Group";
+import { useTheme } from '@/hooks/useTheme';
+import Groupgroup  from "./Groupgroup/Groupgroup";
 
 
 export default function PageTestrouteV1() {
+  const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const [initialLoad, setInitialLoad] = useState(false);
-  const securityData:any={};
+  const securityData:any={
+  "Template 1": {
+    "allowedGroups": [
+      "canvas",
+      "group",
+      "group"
+    ]
+  },
+  "User": {
+    "allowedGroups": [
+      "canvas",
+      "group",
+      "group"
+    ]
+  },
+  "Template 3": {
+    "allowedGroups": [
+      "canvas",
+      "group",
+      "group"
+    ]
+  }
+};
   let code:any="";
   //const language=useLanguage();
   const routes = useRouter();
@@ -35,8 +59,8 @@ export default function PageTestrouteV1() {
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
   const {oprmatrixuf_v1Props, setoprmatrixuf_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const [check,setCheck,]=useState(false);
-  const {aaf24, setaaf24} = useContext(TotalContext) as TotalContextProps;
+  const [checkgroup,setCheckgroup,]=useState(false);
+  const {groupaaf24, setgroupaaf24} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagPage: boolean = false|| encAppFalg.flag;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encAppFalg.dpd;
@@ -150,9 +174,9 @@ export default function PageTestrouteV1() {
         try{
           if (security == 'AA') {
           allowedGroup.map((nodes:any)=>{
-            if(nodes?.groupName == '' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
+            if(nodes?.groupName == 'group' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
             {
-              setCheck(true)
+              setCheckgroup(true)
             }
           })
           }
@@ -167,8 +191,8 @@ export default function PageTestrouteV1() {
         //Code Execution
         if (code !="" ) {
           let codeStates: any = {}
-          codeStates[''] = aaf24;
-          codeStates['set'] = setaaf24;
+          codeStates['group'] = groupaaf24;
+          codeStates['setgroup'] = setgroupaaf24;
           codeExecution(code,codeStates);
         }   
         setInitialLoad(true);        
@@ -189,8 +213,34 @@ export default function PageTestrouteV1() {
   }, [])
   return (
     <>
-     <div style={{}}>
-        {check && initialLoad &&<Group  
+     <div className={`min-h-screen w-full ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'} `}
+     style={{
+        gridColumn: '',
+        gridRow: '',
+        gridAutoRows: '4px',
+        columnGap: '0px',
+        rowGap: '0px',
+        display: "grid",
+        gridTemplateColumns: 'repeat(12, 1fr)',
+        gridTemplateRows: '',
+        height: '',
+        overflow: '',
+        backgroundColor:'#ffffff',
+        backgroundImage:'',
+        backgroundPosition: '',
+        backgroundSize: '',
+        backgroundRepeat: '',
+        backgroundAttachment: '',
+        backgroundClip: '',
+        backgroundBlendMode: '',
+        color: textStyle,
+        minHeight: '100vh',
+        ...(isHighContrast && {
+          fontWeight: '500',
+          borderWidth: '2px'
+      })
+      }}>
+        {checkgroup && initialLoad &&<Groupgroup  
           lockedData={lockedData} 
           setLockedData={setLockedData} 
           primaryTableData={primaryTableData}

@@ -3,14 +3,22 @@ import {
   Multiply,
   SearchIcon
 } from '@/app/components/svgApplication'
-import { RangeCalendar } from '@gravity-ui/date-components'
+// import { RangeCalendar } from '@gravity-ui/date-components'
 import { dateTime, DateTime } from '@gravity-ui/date-utils'
-import { Avatar, Button, Checkbox, Popup , Loader, Text } from '@gravity-ui/uikit'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Calendar , Person } from '@gravity-ui/icons'
 import { getCookie } from '@/app/components/cookieMgment'
 import { checkDataAccess } from '@/app/utils/checkDAP'
 import { AxiosService } from '@/app/components/axiosService'
+import { CiCalendarDate } from "react-icons/ci";
+import { Button } from '@/components/Button'
+import Popup from '@/components/Popup'
+import Spin from '@/components/Spin'
+import { Text } from '@/components/Text'
+import { Checkbox } from '@/components/Checkbox'
+import { Avatar } from '@/components/Avatar'
+import { useTheme } from '@/hooks/useTheme'
+import { twMerge } from 'tailwind-merge'
+import { RangeCalendar } from '@/components/RangeCalendar'
 
 const LogsFilterationModal = ({
   range,
@@ -23,24 +31,18 @@ const LogsFilterationModal = ({
   activeTab
 }: {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
-  range: {
-    start: DateTime
-    end: DateTime
-  }
+  range: any
   setRange: React.Dispatch<
-    React.SetStateAction<{
-      start: DateTime
-      end: DateTime
-    }>
+    React.SetStateAction<any>
   >
   fabrics: Array<string>
   setFabrics: React.Dispatch<React.SetStateAction<Array<string>>>
   user: Array<string>
   setUser: React.Dispatch<React.SetStateAction<Array<string>>>
-  activeTab:string
+  activeTab: string
 }) => {
   const [isDateRangeOpen, setDateRangeOpen] = useState(false)
-  const [selectedDateRange, setSelectedDateRange] = useState(range)
+  const [selectedDateRange, setSelectedDateRange] = useState<any>(range)
   const [selectedKeys, setSelectedKeys] = useState<string[]>(fabrics)
   const [selectedUsers, setSelectedUsers] = useState<string[]>(user)
   const [searchTerm, setSearchTerm] = useState('')
@@ -49,6 +51,7 @@ const LogsFilterationModal = ({
   const token: string = getCookie('token')
 
   const isAdminUser = useMemo(() => checkDataAccess(token), [token])
+  const { isDark , borderColor , textColor , bgColor} = useTheme()
 
   const calendarTriggerRef = useRef<HTMLDivElement>(null)
 
@@ -97,11 +100,17 @@ const LogsFilterationModal = ({
     getOrgAndUserData()
   }, [])
 
+  const showDate = (date: DateTime) => {
+    if(!date) return ""
+    const { year, month, day } = date
+    return `${day}/${month}/${year}`
+  }
+
   return (
-    <div className='h-fit w-[50vw] lg:w-[30vw]'>
+    <div className='h-fit w-full'>
       <div className='flex w-full items-center justify-between px-[0.7vw] py-[1vh]'>
         <Text variant='subheader-2' className='flex gap-2'>
-          <FilterIcon fill='var(--g-color-text-primary)' /> Filter
+          <FilterIcon fill={isDark ? '#fff' : '#000'} /> Filter
         </Text>
         <Button
           className='flex items-center justify-center'
@@ -111,13 +120,12 @@ const LogsFilterationModal = ({
           <Multiply
             width='12'
             height='12'
-            fill={'var(--g-color-text-primary)'}
+            fill={isDark ? '#fff' : '#000'}
           />
         </Button>
       </div>
       <hr
-        style={{ borderColor: 'var(--g-color-line-generic)' }}
-        className='w-full'
+        className={`w-full ${borderColor}`}
       />
       {/* Date Range Selection */}
       <div className='flex flex-col gap-3 px-2 py-3'>
@@ -130,31 +138,39 @@ const LogsFilterationModal = ({
             e.stopPropagation()
           }}
           ref={calendarTriggerRef}
-          className='flex w-fit cursor-pointer items-center gap-[2vw] rounded border px-[0.5vw] py-[0.5vh]'
-          style={{
-            borderColor: 'var(--g-color-line-generic)'
-          }}
+          className={twMerge('flex w-fit cursor-pointer items-center gap-[2vw] rounded border px-[0.5vw] py-[0.5vh]' , borderColor)}
         >
           <div className='flex flex-col gap-1'>
             <Text variant='body-2' color='secondary'>Select Date </Text>
             <Text variant='body-2' >
-              {selectedDateRange.start.format('DD/MM/YYYY')} -{' '}
-              {selectedDateRange.end.format('DD/MM/YYYY')}
+              {showDate(selectedDateRange?.start)} -{' '}
+              {showDate(selectedDateRange?.end)}
             </Text>
           </div>
           <span className='flex self-end'>
-            <Calendar color='var(--g-color-text-primary)' opacity={0.5} />
+            <CiCalendarDate color={isDark ? '#fff' : '#000'} opacity={0.5} />
           </span>
         </div>
         <Popup
           anchorRef={calendarTriggerRef}
           open={isDateRangeOpen}
-          onOutsideClick={() => setDateRangeOpen(false)}
+          onClose={() => setDateRangeOpen(false)}
+          size='xl'
         >
           <RangeCalendar
             value={selectedDateRange}
-            onUpdate={setSelectedDateRange}
-            maxValue={dateTime()}
+            onChange={(val) => setSelectedDateRange(val)}
+            maxValue={{
+              year: new Date().getFullYear(),
+              month: new Date().getMonth() + 1,
+              day: new Date().getDate()
+            }}
+            minValue={{
+              year: new Date().getFullYear(),
+              month: new Date().getMonth() + 1,
+              day: new Date().getDate()
+            }}
+
           />
         </Popup>
       </div>
@@ -169,10 +185,10 @@ const LogsFilterationModal = ({
             <Checkbox
               key={index}
               content={item.label}
-              value={item.key}
+              value={selectedKeys?.includes(item.key)}
               onChange={e =>
                 setSelectedKeys(prev => {
-                  if (e.target.checked) {
+                  if (e) {
                     return [...prev, item.key]
                   } else {
                     return prev.filter(key => key !== item.key)
@@ -180,6 +196,7 @@ const LogsFilterationModal = ({
                 })
               }
               checked={selectedKeys.includes(item.key)}
+              size='l'
             />
           ))}
         </div>
@@ -191,15 +208,12 @@ const LogsFilterationModal = ({
           {/* Search section */}
           <div
             className={
-              'flex w-full items-center gap-[0.5vw] rounded border px-2'
+              twMerge('flex w-full items-center gap-[0.5vw] rounded border px-2' , borderColor , bgColor , textColor)
             }
-            style={{
-              borderColor: 'var(--g-color-line-generic)'
-            }}
           >
             <span>
               <SearchIcon
-                fill={'var(--g-color-text-primary)'}
+                fill={isDark ? '#fff' : '#000'}
                 height='16'
                 width='16'
               />
@@ -208,11 +222,7 @@ const LogsFilterationModal = ({
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder={'Search'}
-              style={{
-                backgroundColor: 'var(--g-color-base-background)',
-                color: 'var(--g-color-text-primary)',
-              }}
-              className={`h-8 w-full rounded-md border-none font-medium outline-none`}
+              className={twMerge(`h-8 w-full rounded-md border-none font-medium outline-none` , bgColor , textColor)}
             />
           </div>
           {/* user list section */}
@@ -223,7 +233,7 @@ const LogsFilterationModal = ({
             }}
           >
             {loading ? (
-              <Loader className='flex w-full justify-center' />
+              <Spin className='flex w-full justify-center' spinning color='success' style='dots' />
             ) : (
               userList
                 .filter(u =>
@@ -232,48 +242,47 @@ const LogsFilterationModal = ({
                     .includes(searchTerm.toLowerCase())
                 )
                 .map((userObj: any) => (
-                  <Checkbox
-                    key={userObj?.loginId}
-                    content={
-                      <div key={userObj?.loginId} className='flex gap-[0.5vw]'>
-                        <Avatar
-                          imgUrl={userObj?.profile}
-                          size='m'
-                          className={`transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
-                          icon={Person}
-                        />
-                        <div className='flex flex-col gap-1'>
-                          <Text variant='body-2'>
-                            {userObj?.firstName + ' ' + userObj?.lastName}
-                          </Text>
-                          <Text variant='body-1' >{userObj?.loginId}</Text>
-                        </div>
+                  <div key={userObj?.loginId} className='flex gap-2 cursor-pointer'>
+                    <Checkbox
+                      key={userObj?.loginId}
+                      value={userObj?.loginId}
+                      className='flex items-center gap-2 text-[0.72vw]'
+                      onChange={e =>
+                        setSelectedUsers(prev => {
+                          if (e) {
+                            return [...prev, userObj?.loginId]
+                          } else {
+                            return prev.filter(id => id !== userObj?.loginId)
+                          }
+                        })
+                      }
+                      checked={selectedUsers.includes(userObj?.loginId)}
+                      size='l'
+                    />
+                    <div key={userObj?.loginId} className='flex gap-[0.5vw]'>
+                      <Avatar
+                        imageUrl={userObj?.profile as string}
+                        size='m'
+                        className={`transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
+                        theme='normal'
+                        view='filled'
+                        icon='FaRegUser'
+                      />
+                      <div className='flex flex-col gap-1'>
+                        <Text variant='body-2'>
+                          {userObj?.firstName + ' ' + userObj?.lastName}
+                        </Text>
+                        <Text variant='body-1'>{userObj?.loginId}</Text>
                       </div>
-                    }
-                    value={userObj?.loginId}
-                    className='flex items-center gap-2 text-[0.72vw]'
-                    onChange={e =>
-                      setSelectedUsers(prev => {
-                        if (e.target.checked) {
-                          return [...prev, userObj?.loginId]
-                        } else {
-                          return prev.filter(id => id !== userObj?.loginId)
-                        }
-                      })
-                    }
-                    checked={selectedUsers.includes(userObj?.loginId)}
-                    style={{
-                      fontSize: '0.72vw'
-                    }}
-                  />
+                    </div>
+                  </div>
                 ))
             )}
           </div>
         </div>
       )}
       <hr
-        style={{ borderColor: 'var(--g-color-line-generic)' }}
-        className='w-full'
+        className={twMerge('w-full' , borderColor)}
       />
 
       <div className='flex justify-end gap-[1vw] px-2 py-3'>

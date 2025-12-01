@@ -1,10 +1,12 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Multiply, DownArrow, SearchIcon } from '../svgApplication'
 import { hexWithOpacity } from '../utils'
 import { twMerge } from 'tailwind-merge'
 import { SetupScreenContext, SetupScreenContextType } from '../setup'
-import { TotalContext, TotalContextProps } from '@/app/globalContext'
-import { Button } from '@gravity-ui/uikit'
+import { Text } from '@/components/Text'
+import { Button } from '@/components/Button'
+import { useGlobal } from '@/context/GlobalContext'
+import { useTheme } from '@/hooks/useTheme'
 
 interface Role {
   roleCode: string
@@ -68,9 +70,7 @@ export default function SecurityTemplateSelection() {
   const [selectedRoles, setSelectedRoles] = useState(roleIds)
   const [openOrgGrp, setOpenOrgGrp] = useState<string | 'ALL_OPEN'>('ALL_OPEN')
   const [openPsGrp, setOpenPsGrp] = useState<string | 'ALL_OPEN'>('ALL_OPEN')
-  const [openRoleGrp, setOpenRoleGrp] = useState<string | 'ALL_OPEN'>(
-    'ALL_OPEN'
-  )
+  const [openRoleGrp, setOpenRoleGrp] = useState<string | 'ALL_OPEN'>('ALL_OPEN')
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
   const [selectedPsId, setSelectedPsId] = useState<string | null>(null)
   const [isSearchOpen, setIsSearchOpen] = useState<string | null>(null)
@@ -78,10 +78,9 @@ export default function SecurityTemplateSelection() {
   const [psSearchTerm, setPsSearchTerm] = useState('')
   const [roleSearchTerm, setRoleSearchTerm] = useState('')
   const fontSize = 1
-  const { property } = useContext(
-    TotalContext
-  ) as TotalContextProps
-  let brandcolor: string = property?.brandColor ?? '#0736c4'
+  const { branding } = useGlobal()
+  const { borderColor, textColor, bgColor, isDark } = useTheme()
+  const { brandColor } = branding
 
   const handleOrgClick = (org: OrgItem) => {
     setSelectedOrgId(org.orgId)
@@ -212,14 +211,14 @@ export default function SecurityTemplateSelection() {
       {/* ORG SECTION */}
       <div className='border-[var(--g-color-line-generic)] h-[74vh] w-1/3 rounded-xl border shadow-md'>
         <div className='bg-torus-bg-card flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
-          <h2 className='text-lg font-semibold'>Organization</h2>
+          <Text className='text-lg font-semibold'>Organization</Text>
           {isSearchOpen === 'org' ? (
             <div className='flex w-[8vw] gap-[.5vw]'>
               <input
                 value={orgSearchTerm}
                 onChange={e => setOrgSearchTerm(e.target.value)}
                 placeholder='Search...'
-                onFocus={e => (e.target.style.borderColor = brandcolor)}
+                onFocus={e => (e.target.style.borderColor = brandColor)}
                 onBlur={e =>
                   (e.target.style.borderColor = 'var(--torus-text-opacity-15)')
                 }
@@ -235,7 +234,7 @@ export default function SecurityTemplateSelection() {
                 <Multiply
                   height='.7vw'
                   width='.7vw'
-                  fill={'var(--g-color-text-primary)'}
+                  fill={isDark ? "white" : "black"}
                 />
               </Button>
             </div>
@@ -249,11 +248,11 @@ export default function SecurityTemplateSelection() {
                 setRoleSearchTerm('')
               }}
             >
-              <SearchIcon fill={'var(--g-color-text-primary)'} />
+              <SearchIcon fill={isDark ? "white" : "black"} />
             </Button>
           )}
         </div>
-        <hr className='border-[var(--g-color-line-generic)] border' />
+        <hr style={{ borderColor: borderColor }} className='border' />
 
         <div className='flex h-[72vh] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
           {orgGrpData
@@ -264,7 +263,7 @@ export default function SecurityTemplateSelection() {
               <div
                 key={grp.orgGrpId}
                 className='rounded-lg px-[0.5vw] py-[1vh]'
-                style={{ backgroundColor: hexWithOpacity(brandcolor, 0.1) }}
+                style={{ backgroundColor: hexWithOpacity(brandColor, 0.1) }}
               >
                 {/* ORG GROUP HEADER */}
                 <div
@@ -285,18 +284,11 @@ export default function SecurityTemplateSelection() {
                           : 'rotate-[-90deg]'
                       }`}
                     >
-                      <DownArrow fill={'var(--g-color-text-primary)'} />
+                      <DownArrow fill={isDark ? "white" : "black"} />
                     </span>
-                    <span
-                      style={{
-                        fontSize: `${fontSize * 0.75}vw`
-                      }}
-                      className='text-torus-text'
-                    >
-                      {grp.orgGrpName}
-                    </span>
+                    <Text>{grp.orgGrpName}</Text>
                   </div>
-                  <span>{grp.org.length}</span>
+                  <Text>{grp.org.length}</Text>
                 </div>
 
                 {/* ORG LIST */}
@@ -313,22 +305,10 @@ export default function SecurityTemplateSelection() {
                           : '',
                       )}
                     >
-                      <div
-                        style={{
-                          fontSize: `${fontSize * 0.8}vw`
-                        }}
-                        className='text-torus-text'
-                      >
-                        {org.orgName}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: `${fontSize * 0.7}vw`
-                        }}
-                        className='text-torus-text-opacity-50'
-                      >
+                      <Text>{org.orgName}</Text>
+                      <Text color='secondary' >
                         {org.orgCode.split("-").pop()}
-                      </div>
+                      </Text>
                     </div>
                   ))}
               </div>
@@ -339,16 +319,16 @@ export default function SecurityTemplateSelection() {
       {/* PS SECTION */}
       <div className='border-[var(--g-color-line-generic)] h-[74vh] w-1/3 rounded-xl border shadow-md'>
         <div className='bg-torus-bg-card flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
-          <h2 className='text-nowrap text-lg font-semibold'>
+          <Text className='text-nowrap text-lg font-semibold'>
             Products / Services
-          </h2>
+          </Text>
           {isSearchOpen === 'ps' ? (
             <div className='flex w-[8vw] gap-[.5vw]'>
               <input
                 value={psSearchTerm}
                 onChange={e => setPsSearchTerm(e.target.value)}
                 placeholder='Search...'
-                onFocus={e => (e.target.style.borderColor = brandcolor)}
+                onFocus={e => (e.target.style.borderColor = brandColor)}
                 onBlur={e =>
                   (e.target.style.borderColor = 'var(--torus-text-opacity-15)')
                 }
@@ -364,7 +344,7 @@ export default function SecurityTemplateSelection() {
                 <Multiply
                   height='.7vw'
                   width='.7vw'
-                  fill={'var(--g-color-text-primary)'}
+                  fill={isDark ? "white" : "black"}
                 />
               </Button>
             </div>
@@ -378,11 +358,11 @@ export default function SecurityTemplateSelection() {
                 setRoleSearchTerm('')
               }}
             >
-              <SearchIcon fill={'var(--g-color-text-primary)'} />
+              <SearchIcon fill={isDark ? "white" : "black"} />
             </Button>
           )}
         </div>
-        <hr className='border-[var(--g-color-line-generic)] border' />
+        <hr style={{ borderColor: borderColor }} className='border' />
 
         <div className='flex h-[72vh] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
           {orgGrpData.flatMap((grp: OrgGrpItem) =>
@@ -404,7 +384,7 @@ export default function SecurityTemplateSelection() {
                       key={pg.psGrpId}
                       className='rounded-lg px-[0.5vw] py-[1vh]'
                       style={{
-                        backgroundColor: hexWithOpacity(brandcolor, 0.1)
+                        backgroundColor: hexWithOpacity(brandColor, 0.1)
                       }}
                     >
                       {/* PS GROUP HEADER */}
@@ -427,18 +407,11 @@ export default function SecurityTemplateSelection() {
                                 : 'rotate-[-90deg]'
                             }`}
                           >
-                            <DownArrow fill={'var(--g-color-text-primary)'} />
+                            <DownArrow fill={isDark ? "white" : "black"} />
                           </span>
-                          <span
-                            style={{
-                              fontSize: `${fontSize * 0.75}vw`
-                            }}
-                            className='text-torus-text'
-                          >
-                            {pg.psGrpName}
-                          </span>
+                          <Text>{pg.psGrpName}</Text>
                         </div>
-                        <span>{pg.ps.length}</span>
+                        <Text>{pg.ps.length}</Text>
                       </div>
 
                       {/* PS LIST */}
@@ -454,22 +427,10 @@ export default function SecurityTemplateSelection() {
                                 : '',
                             )}
                           >
-                            <div
-                              style={{
-                                fontSize: `${fontSize * 0.8}vw`
-                              }}
-                              className='text-torus-text'
-                            >
-                              {ps.psName}
-                            </div>
-                            <div
-                              style={{
-                                fontSize: `${fontSize * 0.7}vw`
-                              }}
-                              className='text-torus-text-opacity-50'
-                            >
+                            <Text>{ps.psName}</Text>
+                            <Text color='secondary'>
                               {ps.psCode.split("-").pop()}
-                            </div>
+                            </Text>
                           </div>
                         ))}
                     </div>
@@ -482,14 +443,14 @@ export default function SecurityTemplateSelection() {
       {/* ROLES SECTION */}
       <div className='border-[var(--g-color-line-generic)] h-[74vh] w-1/3 rounded-xl border shadow-md'>
         <div className='bg-torus-bg-card flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
-          <h2 className='text-lg font-semibold'>Roles</h2>
+          <Text className='text-lg font-semibold'>Roles</Text>
           {isSearchOpen === 'role' ? (
             <div className='flex w-[8vw] gap-[.5vw]'>
               <input
                 value={roleSearchTerm}
                 onChange={e => setRoleSearchTerm(e.target.value)}
                 placeholder='Search...'
-                onFocus={e => (e.target.style.borderColor = brandcolor)}
+                onFocus={e => (e.target.style.borderColor = brandColor)}
                 onBlur={e =>
                   (e.target.style.borderColor = 'var(--torus-text-opacity-15)')
                 }
@@ -505,7 +466,7 @@ export default function SecurityTemplateSelection() {
                 <Multiply
                   height='.7vw'
                   width='.7vw'
-                  fill={'var(--g-color-text-primary)'}
+                  fill={isDark ? "white" : "black"}
                 />
               </Button>
             </div>
@@ -517,11 +478,11 @@ export default function SecurityTemplateSelection() {
                 setRoleSearchTerm('')
               }}
             >
-              <SearchIcon fill={'var(--g-color-text-primary)'} />
+              <SearchIcon fill={isDark ? "white" : "black"} />
             </Button>
           )}
         </div>
-        <hr className='border-[var(--g-color-line-generic)] border' />
+        <hr style={{ borderColor: borderColor }} className='border' />
 
         <div className='flex h-[72vh] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
           {orgGrpData.flatMap((grp: OrgGrpItem) =>
@@ -551,7 +512,7 @@ export default function SecurityTemplateSelection() {
                             key={rg.roleGrpId}
                             className='rounded-lg px-[0.5vw] py-[1vh]'
                             style={{
-                              backgroundColor: hexWithOpacity(brandcolor, 0.1)
+                              backgroundColor: hexWithOpacity(brandColor, 0.1)
                             }}
                           >
                             {/* ROLE GROUP HEADER */}
@@ -574,18 +535,11 @@ export default function SecurityTemplateSelection() {
                                       : 'rotate-[-90deg]'
                                   }`}
                                 >
-                                  <DownArrow fill={'var(--g-color-text-primary)'} />
+                                  <DownArrow fill={isDark ? "white" : "black"} />
                                 </span>
-                                <span
-                                  style={{
-                                    fontSize: `${fontSize * 0.75}vw`
-                                  }}
-                                  className='text-torus-text'
-                                >
-                                  {rg.roleGrpName}
-                                </span>
+                                <Text>{rg.roleGrpName}</Text>
                               </div>
-                              <span>{rg.roles.length}</span>
+                              <Text>{rg.roles.length}</Text>
                             </div>
 
                             {/* ROLE LIST */}
@@ -597,22 +551,8 @@ export default function SecurityTemplateSelection() {
                                   className=' mt-2 flex cursor-pointer items-center justify-between rounded border border-[var(--g-color-line-generic)] p-2 hover:border-[var(--brand-color)] hover:shadow bg-[var(--g-color-base-background)]'
                                 >
                                   <div>
-                                    <div
-                                      style={{
-                                        fontSize: `${fontSize * 0.8}vw`
-                                      }}
-                                      className='text-torus-text'
-                                    >
-                                      {role.roleName}
-                                    </div>
-                                    <div
-                                      style={{
-                                        fontSize: `${fontSize * 0.7}vw`
-                                      }}
-                                      className='text-torus-text-opacity-50'
-                                    >
-                                      {role.roleCode.split("-").pop()}
-                                    </div>
+                                    <Text>{role.roleName}</Text>
+                                    <Text color='secondary'>{role.roleCode.split("-").pop()}</Text>
                                   </div>
 
                                   <input

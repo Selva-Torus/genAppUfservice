@@ -3039,7 +3039,7 @@ export class UfService {
     }
   }
 
-  async getAccessToken(
+   async getAccessToken(
     token: string,
     selectedCombination: any,
     selectedAccessProfile: string,
@@ -3076,7 +3076,7 @@ export class UfService {
         dap: filteredCombination[0]?.dap,
       };
       const payload = await this.jwt.decode(token);
-      const { type, client, loginId, isAppAdmin, userUniqueId, sid } = payload;
+      const { type, client, loginId, isAppAdmin, userUniqueId, sid, userCode } = payload;
       const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
 
       const updatedToken = await this.jwt.signAsync(
@@ -3089,6 +3089,7 @@ export class UfService {
           app,
           selectedAccessProfile,
           dap,
+          userCode,
           ...accessObj,
           userUniqueId,
           sid,
@@ -3394,7 +3395,7 @@ export class UfService {
     }
   }
 
-  async introspectToken(headers: any, key: string, tokens: string) {
+   async introspectToken(headers: any, key: string, tokens: string) {
     try {
       const { authorization } = headers;
       if (!authorization || typeof authorization !== 'string') {
@@ -3541,6 +3542,7 @@ export class UfService {
             loginId: payload.loginId,
             type: payload.type,
             isAppAdmin: payload.isAppAdmin,
+            userCode: payload?.userCode,
             ag,
             app,
             sid : payload.sid,
@@ -3616,7 +3618,7 @@ export class UfService {
     return currentDate > expiryDate;
   }
 
-  async signIntoTorus(
+    async signIntoTorus(
     username: string,
     password: string,
     ufClientType: string,
@@ -3716,6 +3718,7 @@ export class UfService {
             ag,
             app,
             isAppAdmin: loggedInUser?.isAppAdmin ?? undefined,
+            userCode: loginUser?.userCode ?? undefined,
             sid: sid,
           },
           {
@@ -3826,6 +3829,7 @@ export class UfService {
                   type: 't',
                   ag,
                   app,
+                  userCode: loginUser?.userCode ?? undefined,
                   ...orpAccessObj,
                  sid:sid,
                 },

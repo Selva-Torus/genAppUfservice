@@ -167,14 +167,9 @@ export class RedisService {
     try {     
       if(!streamName && streamName == '' && !key && !strValue) throw 'Invalid Stream Parameter'
       var result = await redis.xadd(streamName, '*', key, strValue);
-      // if(result){     
-       
-        // strValue = {[result]: JSON.parse(strValue)}
-
-        // strValue = Object.assign(JSON.parse(strValue),{EntryId:result})
-        
-        // await this.appendStreamDocument(streamName,key, strValue)
-      // }
+       if(result && key.includes('_ProcessStatus')){     
+        await redis.call('EXPIRE', key, 86400);
+       } 
       return result;
     } catch (error) {
       throw error;

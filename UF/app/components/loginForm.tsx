@@ -8,26 +8,27 @@ import { api_screenRouteDto, api_signinDto } from '../interfaces/interfaces'
 import { useInfoMsg } from '../components/infoMsgHandler'
 import { setCookie } from '../components/cookieMgment'
 import { useRouter } from 'next/navigation'
-import { Button, Icon, Spin, Text } from '@gravity-ui/uikit'
 import { DefaultLoginImage, GitHubIcon, GoogleIcon } from '../utils/svgApplications'
 import { BsEyeFill, BsEyeSlash } from 'react-icons/bs'
 import Link from 'next/link'
 import { TotalContext, TotalContextProps } from '../globalContext'
 import { singleSignOn } from '../utils/serverUtils'
 import decodeToken from './decodeToken'
-import {Shield} from '@gravity-ui/icons';
+import { Text } from '@/components/Text'
+import { Button } from '@/components/Button'
+import { Icon } from '@/components/Icon'
+import Spin from '@/components/Spin'
+import { useGlobal } from '@/context/GlobalContext'
+import { useTheme } from '@/hooks/useTheme'
+import { twMerge } from 'tailwind-merge'
 interface LoginProps {
   logo?: string
   appName?: string
-  brandColor?: string
   loginType?: 'standard' | 'rightAligned' | 'leftAligned'
   image?: string
 }
 
-const Login = ({ logo, appName = "oprmatrix", brandColor = "#adffaf", loginType = "standard", image }: LoginProps) => {
-  const { selectedTheme, setSelectedTheme } = useContext(
-    TotalContext
-  ) as TotalContextProps
+const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image }: LoginProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     password: ''
@@ -37,6 +38,9 @@ const Login = ({ logo, appName = "oprmatrix", brandColor = "#adffaf", loginType 
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
   const toast = useInfoMsg()
   const router = useRouter()
+  const {branding} = useGlobal()
+  const {brandColor} = branding
+  const {bgColor, borderColor, textColor} = useTheme()
   const onBoardingKey:string = "User Screen"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
@@ -55,7 +59,6 @@ const Login = ({ logo, appName = "oprmatrix", brandColor = "#adffaf", loginType 
         setLoading(true)
 
         setCookie('cfg_theme','dark')
-        setSelectedTheme('dark')
         
         const api_signinBody: api_signinDto = {
           client: tenant,
@@ -201,15 +204,15 @@ const Login = ({ logo, appName = "oprmatrix", brandColor = "#adffaf", loginType 
             ) : (
               <Logo />
             )}
-            <Text variant='header-2' color='brand'>
+            <Text variant='header-2' color='positive-heavy'>
               {appName}
             </Text>
-            <Text variant='body-1'>
+            <Text variant='body-3' color='info-heavy'>
               Create an account or log in to explore about our app
             </Text>
           </div>
           <div
-            className={`flex h-fit min-w-[400px] flex-col gap-5 rounded-lg bg-white px-5`}
+            className={twMerge(`flex h-fit min-w-[400px] flex-col gap-5 rounded-lg px-5`, bgColor, borderColor, textColor)}
           >
             <Text variant='header-2' className='py-2'>
               Login
@@ -221,7 +224,7 @@ const Login = ({ logo, appName = "oprmatrix", brandColor = "#adffaf", loginType 
               <input
                 type='text'
                 name='email'
-                className='rounded-full bg-[#F4F5FA] p-3 outline-none'
+                className='rounded-full p-3 outline-none'
                 placeholder='Enter your email'
                 onChange={handleInputChange}
                 onKeyDown={e => {
@@ -238,7 +241,7 @@ const Login = ({ logo, appName = "oprmatrix", brandColor = "#adffaf", loginType 
               <input
                 type={showPassword ? 'text' : 'password'}
                 name='password'
-                className='rounded-full bg-[#F4F5FA] p-3 outline-none'
+                className='rounded-full p-3 outline-none'
                 placeholder='Enter your password'
                 onChange={handleInputChange}
                 onKeyDown={e => {
@@ -259,32 +262,31 @@ const Login = ({ logo, appName = "oprmatrix", brandColor = "#adffaf", loginType 
                 )}
               </button>
             </div>
-            <Link href='/forgot-password' className='text-black/50'>
+            <Link href='/forgot-password'>
               Forgot Password
             </Link>
             <Button
               onClick={handleFormSubmit}
               size='xl'              
             >
-              {loading ? <Spin size='s' style={{marginTop : "10px"}}/> : 'Login'}
-            </Button>
+              {loading ? <Spin className='flex w-full justify-center' spinning color='success' style='dots' /> : 'Login'}
+            </Button> 
 
             {process.env.NEXT_PUBLIC_NEXT_AUTH_NEEDED === 'true' && (
               <div className='flex w-full'>
                 <Button
                   onClick={() => singleSignOn('fusionauth')}
-                  width='max'
                   size='l'
                   view='raised'
                 >
-                <Icon data={Shield} />
+                <Icon data="FaShieldAlt" />
                   ViaFusionAuth
                 </Button>
               </div>
             )}
 
             <div className='flex justify-center'>
-              <Text>
+              <Text className='flex gap-1 text-nowrap items-center'>
                 Don&apos;t have an account?{' '}
                 <a
                 href="https://outlook.office.com/mail/deeplink/compose?to=support@torus.tech"
@@ -305,4 +307,4 @@ const Login = ({ logo, appName = "oprmatrix", brandColor = "#adffaf", loginType 
   )
 }
 
-export default Login
+export default LoginForm

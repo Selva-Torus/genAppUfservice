@@ -33,7 +33,11 @@
         {
           "name": "testroute",
           "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-          "allowedAccessProfile": [],
+          "allowedAccessProfile": [
+            "Template 1",
+            "User",
+            "Template 3"
+          ],
           "static": false
         }
       ],
@@ -55,16 +59,16 @@
       "fusionAuthAppClientSecret": "tFZPbDTDhHCtOwy8K95ai3IF_U8-SP11XfMgC6gnL7k"
     },
     "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CT003:AFK:PROFILE:AFVK:v1:appearance",
-    "selectedPresetKey": "default",
-    "name": "default",
-    "language": "English",
-    "fontSize": "Small",
+    "selectedPresetKey": "1753097390330",
+    "name": "Oprmatrix",
+    "language": "Arabic",
+    "fontSize": "Large",
     "direction": "LTR",
-    "brandColor": "#adffaf",
-    "selectionColor": "#dbdbe1",
-    "hoverColor": "#eff1f5",
+    "brandColor": "#2AE38F",
+    "selectionColor": "#EC407A",
+    "hoverColor": "#FF5722",
     "borderRadius": "xl",
-    "navigationStyles": "horizontal",
+    "navigationStyles": "vertical",
     "theme": "dark",
     "topbarColor": "#ffffff",
     "menubarColor": "#ffffff",
@@ -109,13 +113,13 @@
         "fontUrl": "https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
       },
       {
-        "label": "Dancing+Script",
-        "fontUrl": "https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&display=swap"
+        "label": "RobotoFlex",
+        "fontUrl": "https://fonts.googleapis.com/css2?family=Playwrite+US+Trad+Guides&display=swap"
       }
     ],
-    "text-body-font": "Roboto",
-    "text-header-font": "Roboto",
-    "text-display-font": "Roboto",
+    "text-body-font": "RobotoFlex",
+    "text-header-font": "RobotoFlex",
+    "text-display-font": "RobotoFlex",
     "group-bg-color": "#f5fff5",
     "page-bg-color": "#ffffff"
   },
@@ -136,13 +140,140 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-11-19T10:52:18.443Z",
+    "lastActive": "2025-12-01T10:35:54.953Z",
     "profile": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT003/resources/images/Peer@786/pexels-pixabay-33109.jpg",
     "quickLinks": [],
     "client": "CT003",
     "edit": "",
     "noOfProductsService": 0,
-    "userUniqueId": "6828417e-5fe0-43bb-8c55-c465ee6581a0"
+    "userUniqueId": "6828417e-5fe0-43bb-8c55-c465ee6581a0",
+    "touring": {
+      "isneedTouring": true,
+      "touringData": {
+        "/": {
+          "stepIndex": 5,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "/logic-center": {
+          "stepIndex": 3,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "Security": {
+          "stepIndex": 1,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "artifactselector": {
+          "stepIndex": 1,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "build": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/torus": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/company-profile": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/logs_hub": {
+          "stepIndex": 1,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/tenant": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "logs": {
+          "stepIndex": 1,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": [
+            0
+          ]
+        },
+        "/control-center/account-profile": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/appearance": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/user-roles": {
+          "stepIndex": 1,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "/control-center/storage-configuration": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/user-management": {
+          "stepIndex": 2,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "/tenant-settings": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/notifications": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/resource-library": {
+          "stepIndex": 1,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "notification": {
+          "stepIndex": 0,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        },
+        "detailNotification": {
+          "stepIndex": 1,
+          "isSkipped": false,
+          "completed": true,
+          "notVisited": []
+        }
+      }
+    }
   },
   "webOnBoarding": {
     "landingScreen": "User Screen",
@@ -161,17 +292,17 @@
   "isOld": true,
   "clientCode": "CT003"
 } */
-import './globals.css'
-import type { Metadata } from 'next'
-import { ToastContainer } from 'react-toastify'
-import 'react-toastify/ReactToastify.min.css'
-import { GetSetupKey } from './utils/setUpKey'
-import "./utils/styles.css"
-import "@gravity-ui/uikit/styles/fonts.css";
-import GlobalContext from './globalContext'
-import ToasterClientProvider from "./components/toastClientProvider"
+import './globals.css';
+import type { Metadata } from 'next';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/ReactToastify.min.css';
+import { GetSetupKey } from './utils/setUpKey';
+import GlobalContext from './globalContext';
+import { GlobalProvider } from '@/context/GlobalContext';
+import { EventBusProvider } from '@/context/EventBusContext';
+import { ThemeWrapper } from '@/components/ThemeWrapper';
 export const metadata: Metadata = {
-  title: 'oprmatrix' ,
+  title: 'oprmatrix',
   description: 'oprmatrix Generated by Torus'
 }
 
@@ -184,9 +315,13 @@ export default function RootLayout({
     <html lang='en'>
       <body>
         <GlobalContext>
-          <ToasterClientProvider>
-            <GetSetupKey>{children}</GetSetupKey>
-          </ToasterClientProvider>
+          <GlobalProvider>
+            <EventBusProvider>
+              <ThemeWrapper>
+                  <GetSetupKey>{children}</GetSetupKey>
+              </ThemeWrapper>
+            </EventBusProvider>
+          </GlobalProvider>
         </GlobalContext>
       </body>
     </html>
