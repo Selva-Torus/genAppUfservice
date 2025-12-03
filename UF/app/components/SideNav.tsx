@@ -10,6 +10,7 @@ import { Tooltip } from '@/components/Tooltip'
 import { DropdownMenu } from '@/components/DropdownMenu'
 import { Avatar } from '@/components/Avatar'
 import { useTheme } from '@/hooks/useTheme'
+import { twMerge } from 'tailwind-merge'
 
 const SideNav = ({
   navData,
@@ -207,7 +208,7 @@ const SideNav = ({
       className={`g-root flex h-full flex-col items-center justify-between px-2 py-2`}
     >
       <div
-        className='scrollbar-none flex max-h-[80vh] w-full flex-col gap-[0.25vh] overflow-x-hidden overflow-y-scroll pt-2 '
+        className='scrollbar-none flex max-h-[80vh] w-full flex-col gap-2 overflow-x-hidden overflow-y-scroll pt-2 '
         onMouseEnter={() => sidebarStyle == 'hoverView' && setFullView(true)}
         onMouseLeave={() => sidebarStyle == 'hoverView' && setFullView(false)}
         style={{ alignItems: menuPlacement }}
@@ -220,19 +221,15 @@ const SideNav = ({
                   key={index}
                   title={menu.menuGroupLabel}
                   placement='right-start'
-                  disable={fullView}
-                  // style={{
-                  //   backgroundColor: `${brandColor}`,
-                  //   color: isLightColor(brandColor)
-                  // }}
+                  // disable={fullView}
                 >
                   <button
                     key={index}
-                    className={` flex cursor-pointer items-center justify-center gap-2 px-1 py-1 transition delay-150 duration-300 ease-in-out ${
+                    className={twMerge(` flex cursor-pointer items-center gap-2 px-3 py-1 transition delay-150 duration-300 ease-in-out ${
                       sidebarStyle === 'compact' || sidebarStyle === 'hoverView'
-                        ? 'w-[80%]'
+                        ? 'w-full'
                         : 'w-[98%]'
-                    } rounded-md `}
+                    } rounded-md ` , sidebarStyle == "default" ? "justify-start p-0" : "justify-center")}
                     style={
                       getDropDownStyles(
                         menu.menuGroup,
@@ -299,7 +296,7 @@ const SideNav = ({
                                 className='flex items-center justify-center whitespace-nowrap bg-transparent pl-2 text-center transition-all delay-0 duration-75 ease-in-out'
                               >
                                 <p
-                                  className='max-w-[100px] truncate font-medium leading-[2vh]'
+                                  className={twMerge('w-[100px] truncate font-medium leading-[2vh]' , fullView && sidebarStyle !== "condensed" ? "text-start" : "text-center")}
                                   style={{
                                     transition: 'all 0.2s ease-in-out'
                                   }}
@@ -375,14 +372,14 @@ const SideNav = ({
                   // openDelay={0}
                   title={menu.menuGroupLabel}
                   placement='right-start'
-                  disable={fullView}
+                  // disable={fullView}
                   // style={{
                   //   backgroundColor: brandColor
                   // }}
                 >
                   <div
                     key={index}
-                    className={`${getMenuClassName()} rounded bg-transparent p-[0.8vw]`}
+                    className={twMerge(`${getMenuClassName()} rounded bg-transparent px-0.5 py-2` , fullView ? "" : "px-3 py-2")}
                     onClick={() => router.push(routingName)}
                     style={{
                       backgroundColor:
@@ -426,7 +423,7 @@ const SideNav = ({
                       />
                     )}
                     {fullView && (
-                      <button key={index}>{menu.menuGroupLabel}</button>
+                      <button className='w-[100px] truncate' key={index}>{menu.menuGroupLabel}</button>
                     )}
                   </div>
                 </Tooltip>

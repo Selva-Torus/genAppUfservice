@@ -9,6 +9,8 @@ import { Text } from '@/components/Text'
 import { Select } from '@/components/Select'
 import { Button } from '@/components/Button'
 import { TextInput } from '@/components/TextInput'
+import { twMerge } from 'tailwind-merge'
+import i18n from '../i18n'
 
 const OrgMatrixTreeComponent = () => {
   const [searchTerm, setSearchTerm] = useState('')
@@ -19,8 +21,9 @@ const OrgMatrixTreeComponent = () => {
   } = useContext(SetupScreenContext) as SetupScreenContextType
   const fontSize = 1
   const { branding } = useGlobal()
-  const { borderColor, isDark } = useTheme()
+  const { borderColor, isDark, bgColor } = useTheme()
   const { brandColor } = branding
+  const keyset = i18n.keyset('language')
 
   const SecurityTree = memo(({ organizationData }: any) => {
     return (
@@ -118,15 +121,14 @@ const OrgMatrixTreeComponent = () => {
     return (
       <div className='flex w-full flex-1 flex-col gap-[0.83vh] '>
         <div
-          className='bg-torus-bg-card group flex h-[5vh] w-full cursor-pointer items-center justify-between gap-[0.30vw] rounded-[.4vw] border border-[var(--g-color-line-generic)] px-[0.78vw]'
+          className={twMerge('bg-torus-bg-card group flex h-[5vh] w-full cursor-pointer items-center justify-between gap-2 rounded-[.4vw] border px-[0.78vw]', borderColor)}
           onClick={() => keys && keys.length > 0 && setShow(!show)}
         >
-          <div className='text-torus-text flex items-center justify-start gap-[0.30vw]'>
+          <div className='text-torus-text flex items-center justify-start gap-2 truncate' title={name}>
             {keys && keys.length > 0 ? (
               <span
-                className={`w-[0.52vw] transition-transform ease-in ${
-                  show ? '' : 'rotate-[-90deg]'
-                }`}
+                className={`w-[0.52vw] transition-transform ease-in ${show ? '' : 'rotate-[-90deg]'
+                  }`}
               >
                 <DownArrow
                   fill={isDark ? 'white' : 'black'}
@@ -147,12 +149,7 @@ const OrgMatrixTreeComponent = () => {
           </div>
           <Text
             color='positive-heavy'
-            className='inline-block rounded-full border px-[0.3vw] py-[0.5vh] text-xs font-medium opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100'
-            // style={{
-            //   color: isLightColor(brandColor),
-            //   backgroundColor: hexWithOpacity(brandColor, 0.2),
-            //   borderColor: brandColor
-            // }}
+            className='inline-block rounded-full border px-[0.3vw] py-[0.5vh] text-xs font-medium opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100 text-nowrap'
           >
             {keyName}
           </Text>
@@ -193,7 +190,7 @@ const OrgMatrixTreeComponent = () => {
               color='secondary'
               className='flex items-center gap-2 text-nowrap'
             >
-              <Security fill={isDark ? 'white' : 'black'} /> {'Access Template'}
+              <Security fill={isDark ? 'white' : 'black'} /> {keyset('Access Template')}
             </Text>
             <Text variant='header-2' color='primary'>
               {'>'}
@@ -210,17 +207,6 @@ const OrgMatrixTreeComponent = () => {
             </div>
           </div>
 
-          {/* <input
-              className={'text-torus-text bg-torus-bg outline-none'}
-              type='text'
-              defaultValue={templateToBeUpdated?.accessProfile}
-              onChange={handleInputChange}
-              readOnly={templateToBeUpdated?.['no.ofusers'] !== 0}
-              style={{
-                backgroundColor: 'var(--g-color-base-background)',
-                color: 'var(--g-color-text-primary)'
-              }}
-            /> */}
           <div>
             <Select
               options={accessPrivilegeData.map(item => ({
@@ -231,8 +217,8 @@ const OrgMatrixTreeComponent = () => {
                 templateToBeUpdated?.dap === 'f'
                   ? 'Full'
                   : templateToBeUpdated?.dap === 'l'
-                  ? 'Limited'
-                  : 'Select DAP'
+                    ? 'Limited'
+                    : 'Select DAP'
               }
               onChange={e =>
                 setTemplateToBeUpdated((prev: any) => ({
@@ -244,31 +230,6 @@ const OrgMatrixTreeComponent = () => {
               placeholder='Select DAP'
               className='w-[200px]'
             ></Select>
-            {/* <Select
-              value={[
-                templateToBeUpdated?.dap === 'f'
-                  ? 'Full'
-                  : templateToBeUpdated?.dap === 'l'
-                  ? 'Limited'
-                  : 'Select DAP'
-              ]}
-              onUpdate={e =>
-                setTemplateToBeUpdated((prev: any) => ({
-                  ...prev,
-                  dap: e[0] == 'Full' ? 'f' : 'l'
-                }))
-              }
-              width={'max'}
-              size='l'
-              placeholder='Select DAP'
-              className='w-full'
-            >
-              {accessPrivilegeData.map((item, index) => (
-                <Select.Option key={index} value={item}>
-                  {item}
-                </Select.Option>
-              ))}
-            </Select> */}
           </div>
         </div>
         <div className='flex items-center gap-2'>
@@ -284,19 +245,19 @@ const OrgMatrixTreeComponent = () => {
         </div>
       </div>
 
-      <hr style={{ borderColor: borderColor }} className='w-full border' />
+      <hr className={twMerge('w-full border', borderColor)} />
 
-      <div className='flex h-full w-full gap-4'>
-        <div className='flex h-full flex-col gap-3'>
+      <div className='flex h-full w-full gap-4 '>
+        <div className='flex h-full flex-col gap-3 w-1/3'>
           <span className='flex flex-col'>
-            <Text variant='header-1'>Organization Matrix</Text>
+            <Text variant='header-1'>{keyset('Organization Matrix')}</Text>
             <Text variant='body-1' color='secondary'>
-              Interact with the tree to modify
+              {keyset('Interact with the tree to modify')}
             </Text>
           </span>
           <div
             style={{ fontSize: `${fontSize * 0.72}vw` }}
-            className='bg-torus-bg-card flex w-[25vw] items-center gap-[.5vw] rounded-lg border border-[var(--g-color-line-generic)] px-[1vw] py-[1vh]'
+            className={twMerge('flex w-full items-center gap-[.5vw] rounded-lg border px-[1vw] py-[1vh]', borderColor)}
           >
             <span>
               <SearchIcon
@@ -308,23 +269,19 @@ const OrgMatrixTreeComponent = () => {
             <input
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              placeholder={'Search'}
-              className={`bg-torus-bg-card text-torus-text w-full outline-none`}
-              style={{
-                backgroundColor: 'var(--g-color-base-background)',
-                color: 'var(--g-color-text-primary)'
-              }}
+              placeholder={keyset('Search')}
+              className={twMerge(`w-full outline-none`, bgColor)}
             />
           </div>
 
-          <div className='h-[62vh] overflow-y-auto scrollbar-hide'>
+          <div className='max-h-[55vh] xl:max-h-[58vh] overflow-y-auto scrollbar-hide'>
             <SecurityTree organizationData={templateToBeUpdated?.orgGrp} />
           </div>
         </div>
 
-        <hr style={{ borderColor: borderColor }} className='h-full border' />
+        <hr className={twMerge('h-full border', borderColor)} />
 
-        <div className='w-full'>
+        <div className='w-full overflow-x-auto'>
           <SecurityTemplateSelection />
         </div>
       </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import {
   DarkHCTheme,
   DarkTheme,
@@ -12,8 +12,13 @@ import { useGlobal } from '@/context/GlobalContext'
 import { useTheme } from '@/hooks/useTheme'
 import { Select } from '@/components/Select'
 import { Text } from '@/components/Text'
+import i18n from './i18n'
+import { twMerge } from 'tailwind-merge'
 
-const GeneralSettings = () => {
+const GeneralSettings = ({ currentLang , setCurrentLang} : {
+  currentLang: string
+  setCurrentLang: React.Dispatch<React.SetStateAction<string>>
+}) => {
   const [languageOptions, setLanguageOptions] = useState([])
   const [selectedLanguage, setSelectedLanguage] = useState([
     getCookie('cfg_lang')
@@ -22,6 +27,10 @@ const GeneralSettings = () => {
   const { branding } = useGlobal()
   const { borderColor, theme, setTheme } = useTheme()
   const { brandColor } = branding
+  // const [currentLang, setCurrentLang] = useState(getCookie('cfg_lang')) // 'en'
+  const keyset = useMemo(() => {
+   return i18n.keyset('language')
+  }, [currentLang]) // i18n.keyset('language')
 
   const themeOptions = [
     {
@@ -66,6 +75,9 @@ const GeneralSettings = () => {
     setSelectedLanguage(value)
     setCookie('cfg_lang', value)
     const languageJson = await getLanguagesJson(value, token)
+    i18n.registerKeysets(value, languageJson);
+    i18n.setLang(value);
+    setCurrentLang(value) // Add this to trigger re-render
   }
 
   const handleThemeChange = (value: any) => {
@@ -77,21 +89,21 @@ const GeneralSettings = () => {
     <div className={`g-root h-full w-full overflow-auto`}>
       <div className='flex w-full items-center justify-between'>
         <div className='flex flex-col gap-2'>
-          <Text variant='header-1'>General</Text>
+          <Text variant='header-1'>{keyset('General')}</Text>
           <Text variant='body-2' color='secondary'>
             {' '}
-            Manage appearance, language, and basic preferences.
+            {keyset('Manage appearance, language, and basic preferences.')}
           </Text>
         </div>
       </div>
       {/* Divider Line */}
-      <hr className='my-2 w-full border' style={{ borderColor: borderColor }} />
+      <hr className={twMerge('my-2 w-full border' , borderColor)}/>
       {/* Theme Selection */}
-      <div className='flex flex-col gap-[2.49vh]'>
-        <div className='flex flex-col gap-[0.62vh]'>
-          <Text variant='subheader-2'>{'Interface Theme'}</Text>
+      <div className='flex flex-col gap-4'>
+        <div className='flex flex-col gap-2'>
+          <Text variant='subheader-2'>{keyset('Interface Theme')}</Text>
           <Text variant='body-2' color='secondary'>
-            {'Select the Theme of the application'}.
+            {keyset('Select the Theme of the application.')}
           </Text>
         </div>
         <div className='flex flex-wrap gap-2'>
@@ -129,20 +141,20 @@ const GeneralSettings = () => {
                 </div>
               </div>
               <Text variant='body-1' color='secondary'>
-                {val.label}
+                {keyset(val.label)}
               </Text>
             </div>
           ))}
         </div>
       </div>
       {/* Divider Line */}
-      <hr className='my-2 w-full border' style={{ borderColor: borderColor }} />
+      <hr className={twMerge('my-2 w-full border' , borderColor)}/>
       {/* Language Selection */}
       <div className='flex flex-wrap items-center'>
-        <div className='flex w-1/2 flex-col lg:w-1/3'>
-          <Text variant='subheader-2'>{'Language'}</Text>
+        <div className='flex flex-col w-1/3'>
+          <Text variant='subheader-2'>{keyset('Language')}</Text>
           <Text variant='body-2' color='secondary' className='text-nowrap'>
-            {'Select the language of the application'}.
+            {keyset('Select the language of the application.')}
           </Text>
         </div>
         <div className='w-[200px]'>
@@ -154,19 +166,12 @@ const GeneralSettings = () => {
               value: item.value,
               label: item.content
             }))}
-            placeholder='Select Language'
+            placeholder={keyset('Select Language')}
           />
-          {/* <Select
-            value={selectedLanguage}
-            onUpdate={handleLanguageChange}
-            options={languageOptions}
-            width={'max'}
-            placeholder='Select Language'
-          /> */}
         </div>
       </div>
       {/* Divider Line */}
-      <hr className='my-2 w-full border' style={{ borderColor: borderColor }} />
+      <hr className={twMerge('my-2 w-full border' , borderColor)}/>
     </div>
   )
 }

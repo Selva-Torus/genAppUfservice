@@ -115,11 +115,9 @@ const RenderGroup = ({
             <DownArrow fill={isDark ? "white" : "black"} />
           </span>
           <FaRegFolderOpen />
-          <span>
+          <span className='text-xs'>
             {displayName} -{' '}
             <span
-              style={{ fontSize: '0.6vw' }}
-              className='text-torus-text-opacity-50'
             >
               {displayCode.replace(codePrefix, '')}
             </span>
@@ -157,6 +155,7 @@ const RenderGroup = ({
                 className='hover:bg-torus-bg-hover flex cursor-pointer items-center gap-[0.5vw] rounded p-[0.29vw] leading-[2.22vh] outline-none'
                 onClick={e => {
                   e.stopPropagation()
+                  setIsPopoverOpen(false)
                   setIsAddModalOpen(true)
                 }}
                 style={{ fontSize: '0.7vw' }}
@@ -173,6 +172,7 @@ const RenderGroup = ({
                 className='hover:bg-torus-bg-hover flex cursor-pointer items-center gap-[0.5vw] rounded p-[0.29vw] leading-[2.22vh] outline-none'
                 onClick={e => {
                   e.stopPropagation()
+                  setIsPopoverOpen(false)
                   setIsEditModalOpen(true)
                 }}
                 style={{ fontSize: '0.7vw' }}

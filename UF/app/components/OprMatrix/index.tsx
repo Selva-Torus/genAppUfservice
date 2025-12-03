@@ -16,6 +16,8 @@ import { useGlobal } from '@/context/GlobalContext'
 import { useTheme } from '@/hooks/useTheme'
 import { Button } from '@/components/Button'
 import { Modal } from '@/components/Modal'
+import { twMerge } from 'tailwind-merge'
+import i18n from '../i18n'
 
 interface OprMatrixContextType {
   isSearchOpen: string
@@ -63,8 +65,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
   const [open, setOpen] = useState(false)
   return (
     <div
-      style={{ borderColor: borderColor }}
-      className='flex w-full items-center justify-between rounded border px-[.5vw] py-[1vh]'
+      className={twMerge('flex w-full items-center justify-between rounded border px-[.5vw] py-[1vh]' , borderColor)}
     >
       <Text variant='body-1' className='font-semibold'>
         {title}
@@ -141,6 +142,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
   const { branding } = useGlobal()
   const { borderColor } = useTheme()
   const { brandColor } = branding
+  const keyset = i18n.keyset('language')
 
   // ============= UTILITY FUNCTIONS =============
   const assignOriginalIndex = (data: any): any => {
@@ -894,11 +896,10 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
         <div className='flex w-full items-center gap-[2vw]'>
           {/* ============= ORGANIZATION COLUMN ============= */}
           <div
-            style={{ borderColor: borderColor }}
-            className='h-[66vh] w-1/3 rounded-lg border'
+            className={twMerge('h-[66vh] w-1/3 rounded-lg border' , borderColor)}
           >
             <ColumnHeader
-              title='Organization'
+              title={keyset('Organization')}
               searchKey='org'
               isSearchOpen={isSearchOpen}
               searchTerm={searchTerm}
@@ -910,10 +911,10 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                 path: `${orgData.length}`,
                 addFunction: addContent,
                 parentCode: '',
-                modalTitle: 'Add Organization Group',
+                modalTitle: keyset('Add Organization Group'),
                 modalSubText:
-                  'Create a new organization group to organize your organizations.',
-                resourceField: 'organization group'
+                  keyset('Create a new organization group to organize your organizations.'),
+                resourceField: keyset('organization group')
               }}
             />
 
@@ -944,17 +945,17 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                         path: `${orgGrp?.originalIndex}.org`,
                         addFunction: addContent,
                         parentCode: `${orgGrp.orgGrpCode}-`,
-                        modalTitle: 'Add Organization',
+                        modalTitle: keyset('Add Organization'),
                         modalSubText:
-                          'Create a new organization in this group.',
+                          keyset('Create a new organization in this group.'),
                         resourceField: 'organization'
                       }}
                       editContentProps={{
                         path: `${orgGrp?.originalIndex}`,
                         addFunction: editContent,
                         parentCode: ``,
-                        modalTitle: 'Edit Organization group',
-                        modalSubText: 'Update a organization group.',
+                        modalTitle: keyset('Edit Organization group'),
+                        modalSubText: keyset('Update a organization group.'),
                         resourceField: 'organization group',
                         resource: {
                           code: orgGrp.orgGrpCode,
@@ -1017,8 +1018,8 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                             path: `${orgGrp?.originalIndex}.org.${org?.originalIndex}`,
                             addFunction: editContent,
                             parentCode: `${orgGrp.orgGrpCode}-`,
-                            modalTitle: 'Edit Organization',
-                            modalSubText: 'Update a organization.',
+                            modalTitle: keyset('Edit Organization'),
+                            modalSubText: keyset('Update a organization.'),
                             resourceField: 'organization',
                             resource: {
                               code: org.orgCode,
@@ -1037,11 +1038,10 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
 
           {/* ============= PRODUCTS/SERVICES COLUMN ============= */}
           <div
-            style={{ borderColor: borderColor }}
-            className='flex-flex-col h-[66vh] w-1/3 rounded-lg border'
+            className={twMerge('flex-flex-col h-[66vh] w-1/3 rounded-lg border' , borderColor)}
           >
             <ColumnHeader
-              title='Products/Services'
+              title={keyset('Products/Services')}
               searchKey='product'
               isSearchOpen={isSearchOpen}
               searchTerm={searchTerm}
@@ -1054,9 +1054,9 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                 path: `${selectedOrg?.path}`,
                 addFunction: addContent,
                 parentCode: `${selectedOrg?.orgCode}-`,
-                modalTitle: 'Add Product Group',
+                modalTitle: keyset('Add Product Group'),
                 modalSubText:
-                  'Create a new product group to organize your products.',
+                  keyset('Create a new product group to organize your products.'),
                 resourceField: 'product group'
               }}
             />
@@ -1102,16 +1102,16 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                       path: `${selectedOrg.path}.${psg?.originalIndex}.ps`,
                       addFunction: addContent,
                       parentCode: `${psg.psGrpCode}-`,
-                      modalTitle: 'Add Product',
-                      modalSubText: 'Create a new product in this group.',
+                      modalTitle: keyset('Add Product'),
+                      modalSubText: keyset('Create a new product in this group.'),
                       resourceField: 'product'
                     }}
                     editContentProps={{
                       path: `${selectedOrg.path}.${psg?.originalIndex}`,
                       addFunction: editContent,
                       parentCode: `${selectedOrg.orgCode}-`,
-                      modalTitle: 'Edit Product group',
-                      modalSubText: 'Update a product group.',
+                      modalTitle: keyset('Edit Product group'),
+                      modalSubText: keyset('Update a product group.'),
                       resourceField: 'product group',
                       resource: {
                         code: psg.psGrpCode,
@@ -1177,8 +1177,8 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                               path: `${selectedOrg.path}.${psg?.originalIndex}.ps.${ps?.originalIndex}`,
                               addFunction: editContent,
                               parentCode: `${psg.psGrpCode}-`,
-                              modalTitle: 'Edit Product',
-                              modalSubText: 'Update a product.',
+                              modalTitle: keyset('Edit Product'),
+                              modalSubText: keyset('Update a product.'),
                               resourceField: 'product',
                               resource: {
                                 code: ps.psCode,
@@ -1198,11 +1198,10 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
 
           {/* ============= ROLES COLUMN ============= */}
           <div
-            style={{ borderColor: borderColor }}
-            className='flex-flex-col h-[66vh] w-1/3 rounded-lg border'
+            className={twMerge('flex-flex-col h-[66vh] w-1/3 rounded-lg border' , borderColor)}
           >
             <ColumnHeader
-              title='Roles'
+              title={keyset('Roles')}
               searchKey='role'
               isSearchOpen={isSearchOpen}
               searchTerm={searchTerm}
@@ -1215,8 +1214,8 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                 path: `${selectedPs.path}`,
                 addFunction: addContent,
                 parentCode: `${selectedPs.psCode}-`,
-                modalTitle: 'Add Role Group',
-                modalSubText: 'Create a new role group to organize your roles.',
+                modalTitle: keyset('Add Role Group'),
+                modalSubText: keyset('Create a new role group to organize your roles.'),
                 resourceField: 'role group'
               }}
             />
@@ -1248,8 +1247,8 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                       path: `${selectedPs.path}.${roleGrp?.originalIndex}.roles`,
                       addFunction: addContent,
                       parentCode: `${roleGrp?.roleGrpCode}-`,
-                      modalTitle: 'Add Role',
-                      modalSubText: 'Create a new role in this group.',
+                      modalTitle: keyset('Add Role'),
+                      modalSubText: keyset('Create a new role in this group.'),
                       resourceField: 'role'
                     }}
                     onDelete={
@@ -1273,8 +1272,8 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                       path: `${selectedPs.path}.${roleGrp?.originalIndex}`,
                       addFunction: editContent,
                       parentCode: `${selectedPs.psCode}-`,
-                      modalTitle: 'Edit Role group',
-                      modalSubText: 'Update a role group.',
+                      modalTitle: keyset('Edit Role group'),
+                      modalSubText: keyset('Update a role group.'),
                       resourceField: 'role group',
                       resource: {
                         code: roleGrp.roleGrpCode,
@@ -1334,8 +1333,8 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                             path: `${selectedPs.path}.${roleGrp?.originalIndex}.roles.${role?.originalIndex}`,
                             addFunction: editContent,
                             parentCode: `${roleGrp.roleGrpCode}-`,
-                            modalTitle: 'Edit Role',
-                            modalSubText: 'Update a role.',
+                            modalTitle: keyset('Edit Role'),
+                            modalSubText: keyset('Update a role.'),
                             resourceField: 'role',
                             resource: {
                               code: role.roleCode,

@@ -40,7 +40,7 @@ const RenderChild = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const popoverButtonElement = useRef(null)
   const { branding } = useGlobal()
-  const { isDark } = useTheme()
+  const { isDark ,  borderColor } = useTheme()
   const { brandColor } = branding
 
   const handleDragStartOfOPRNode = (e: React.DragEvent<HTMLDivElement>) => {
@@ -60,7 +60,7 @@ const RenderChild = ({
       className={twMerge(
         'group group flex w-full items-center justify-between rounded-lg border bg-[var(--g-color-base-background)] px-[.5vw] py-[1vh] font-semibold hover:border-[var(--brand-color)] hover:shadow',
         !existsInContext ? 'pr-[0.8vw]' : '',
-        isSelected ? 'bg-unset border-[var(--brand-color)]' : ''
+        isSelected ? 'bg-unset border-[var(--brand-color)]' : borderColor
       )}
       onClick={() => existsInContext && onClick()}
       key={displayCode}
@@ -110,7 +110,7 @@ const RenderChild = ({
                   setTimeout(() => setIsEditModalOpen(true), 100) // Then open modal with small delay
                 }}
                 style={{
-                  fontSize: `0.7}vw`
+                  fontSize: `0.7vw`
                 }}
               >
                 <EditIcon height='.8vw' width='.8vw' />
@@ -125,7 +125,7 @@ const RenderChild = ({
                     onDelete()
                   }}
                   style={{
-                    fontSize: `0.7}vw`
+                    fontSize: `0.7vw`
                   }}
                 >
                   <DeleteIcon fill='#EF4444' height='.8vw' width='.8vw' />

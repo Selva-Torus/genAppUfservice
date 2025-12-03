@@ -8,7 +8,6 @@ import { deleteAllCookies, getCookie, setCookie } from '@/app/components/cookieM
 import decodeToken from '@/app/components/decodeToken'
 import Artifactdetails from './artifactdetails'
 import { TotalContext, TotalContextProps } from '../globalContext'
-import { dateTime } from '@gravity-ui/date-utils'
 import { useRouter } from 'next/navigation'
 
 const ParentComponent = () => {
@@ -57,26 +56,6 @@ const ParentComponent = () => {
     return `${year}-${month}-${day}`
   }
   let payload:any = useMemo(() => {
-  // return {
-  //     "tenant": "CT299",
-  //     "fabric": [],
-  //     "appgroup": {
-  //         "code": "PH001",
-  //         "name": "VPH"
-  //     },
-  //     "app": {
-  //         "code": "VPH001",
-  //         "name": "Veracious Payment Hub"
-  //     },
-  //     "user": [
-  //         "perumal"
-  //     ],
-  //     "FromDate": "2025-11-19",
-  //     "ToDate": "2025-11-26",
-  //     "page": 1,
-  //     "limit": 10,
-  //     "searchParam": ""
-  // }
     return {
       tenant: 'CT003',
        fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>

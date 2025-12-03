@@ -10,10 +10,10 @@ import { deleteAllCookies, getCookie } from './cookieMgment'
 import { useInfoMsg } from './infoMsgHandler'
 import { MenuItem } from '../interfaces/interfaces'
 import decodeToken from './decodeToken'
-import { useGravityThemeClass } from '../utils/useGravityUITheme'
 import axios from 'axios'
 import { useGlobal } from '@/context/GlobalContext'
 import { useTheme } from '@/hooks/useTheme'
+import { twMerge } from 'tailwind-merge'
 const LayoutDecider = ({
   mode = 'detached',
   navigationStyles = 'vertical',
@@ -48,10 +48,10 @@ const LayoutDecider = ({
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
   const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc"
   const [rawNavData, setRawNavData] = useState<MenuItem[] | null>(null);
-  /*const navData: MenuItem[] = [
+  const navData: MenuItem[] = [
   {
     "menuGroup": "admin",
-    "menuGroupLabel": "Admin",
+    "menuGroupLabel": "Admin Dashboard",
     "screenDetails": [
       {
         "name": "logs",
@@ -74,7 +74,7 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
-    "menuGroupLabel": "testroute",
+    "menuGroupLabel": "testroute sdsdsd sdsdsd fh",
     "screenDetails": [
       {
         "name": "testroute",
@@ -89,11 +89,10 @@ const LayoutDecider = ({
     ],
     "items": []
   }
-]*/
+]
   const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.selectedAccessProfile
-  const themeClass = useGravityThemeClass()
   const getSideNavClassName = useMemo(() => {
     if (
       navigationStyles === 'horizontal' ||
@@ -364,9 +363,9 @@ const LayoutDecider = ({
   }
   return (
     <div className={`flex h-screen w-screen flex-col`}>
-      <div className={`g-root flex-shrink-0 ${themeClass}`}>
+      <div className={`g-root flex-shrink-0`}>
         <TopNav
-          navData={updatedNavData}
+          navData={navData}
           listMenuItems={listMenuItems()}
           mode={mode}
           selectionColor={selectionColor}
@@ -379,13 +378,10 @@ const LayoutDecider = ({
       </div>
       <div className='flex h-[95%] flex-1'>
         <div
-          className={`cursor-pointer transition-all duration-700 ease-in-out ${getSideNavClassName}`}
-          style={{
-            borderColor: borderColor
-          }}
+          className={twMerge(`cursor-pointer transition-all duration-700 ease-in-out ${getSideNavClassName}` , borderColor)}
         >
           <SideNav
-            navData={updatedNavData}
+            navData={navData}
             mode={mode}
             sidebarStyle={sidebarStyle}
             fullView={fullView}
@@ -397,10 +393,7 @@ const LayoutDecider = ({
           />
         </div>
         <div
-          className={`flex-1 overflow-auto ${childrenClassName} pageStyle border`}
-          style={{
-            borderColor: borderColor
-          }}
+          className={twMerge(`flex-1 overflow-auto ${childrenClassName} pageStyle border` , borderColor)}
         >
           {children}
         </div>

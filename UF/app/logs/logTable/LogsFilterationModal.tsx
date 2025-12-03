@@ -3,8 +3,6 @@ import {
   Multiply,
   SearchIcon
 } from '@/app/components/svgApplication'
-// import { RangeCalendar } from '@gravity-ui/date-components'
-import { dateTime, DateTime } from '@gravity-ui/date-utils'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { getCookie } from '@/app/components/cookieMgment'
 import { checkDataAccess } from '@/app/utils/checkDAP'
@@ -100,7 +98,7 @@ const LogsFilterationModal = ({
     getOrgAndUserData()
   }, [])
 
-  const showDate = (date: DateTime) => {
+  const showDate = (date: any) => {
     if(!date) return ""
     const { year, month, day } = date
     return `${day}/${month}/${year}`

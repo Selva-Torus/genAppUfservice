@@ -2,7 +2,6 @@
 import React, { SetStateAction, useMemo, useRef, useState } from 'react'
 import JsonView from 'react18-json-view'
 import 'react18-json-view/src/style.css'
-import { DateTime } from '@gravity-ui/date-utils'
 import { FilterIcon } from '@/app/components/svgApplication'
 import LogsFilterationModal from './LogsFilterationModal'
 import { Table } from '@/components/Table'
@@ -17,6 +16,7 @@ import { twMerge } from 'tailwind-merge'
 import { useTheme } from '@/hooks/useTheme'
 import { useGlobal } from '@/context/GlobalContext'
 import { Spin } from '@/components/Spin'
+import i18n from '@/app/components/i18n'
 interface TableHeaderProps {
   loading: boolean
   jsonData: {
@@ -86,9 +86,10 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   }
   const [open, setOpen] = useState(false)
   const buttonElement = useRef<HTMLButtonElement>(null)
-  const { isDark ,bgColor , borderColor , textColor } = useTheme()
+  const { isDark, bgColor, borderColor, textColor } = useTheme()
   const { branding } = useGlobal()
   const { selectionColor } = branding
+  const keyset = i18n.keyset('language')
 
   function formatTableDate(dateString: string) {
     const date = new Date(dateString)
@@ -177,7 +178,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
           <div
             className={twMerge('flex w-fit rounded-full p-2')}
             style={{
-              backgroundColor : selectionColor
+              backgroundColor: selectionColor
             }}
           >
             <Text variant='body-2'>UID: {processId}</Text>
@@ -332,7 +333,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     const items = headerProcessRowsItem.map((item: string, index: number) => {
       return {
         id: item,
-        name: camelCaseToParagraphCase(item)
+        name: keyset(camelCaseToParagraphCase(item))
       }
     })
     return items
@@ -342,7 +343,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     const items = headerTorusRowsItem.map((item: string, index: number) => {
       return {
         id: item,
-        name: camelCaseToParagraphCase(item)
+        name: keyset(camelCaseToParagraphCase(item))
       }
     })
     return items
@@ -381,7 +382,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 placeholder='Search...'
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value.trim())}
-                className={twMerge('w-[50%] rounded-md border px-2 shadow-md outline-none focus:border xl:py-1 2xl:py-2' , borderColor , textColor , bgColor)}
+                className={twMerge('w-[50%] rounded-md border px-2 shadow-md outline-none focus:border xl:py-1 2xl:py-2', borderColor, textColor, bgColor)}
               />
 
               <div>
@@ -426,8 +427,8 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 // width='auto'
                 wordWrap={false}
                 edgePadding={true}
-              // verticalAlign='middle'
-              emptyMessage={loading ? <Spin spinning style='dots' /> : 'No data found'}
+                // verticalAlign='middle'
+                emptyMessage={loading ? <Spin spinning style='dots' /> : 'No data found'}
               />
 
             </div>
@@ -447,10 +448,10 @@ const TableHeader: React.FC<TableHeaderProps> = ({
           pageSize={jsonData?.limit}
           pageSizeOptions={[3, 5, 10, 20, 50, 100]}
           total={jsonData?.totalDocuments}
-          onUpdate={handleUpdate}
-          showInput={false}
+          onUpdate={(data) => handleUpdate(data.page, data.pageSize)}
+          // showInput={false}
           size='m'
-          compact={false}
+        // compact={false}
         />
       </div>
     </div>
@@ -474,12 +475,13 @@ const HeaderElementContainer = ({
   header: string
   rounded: string
 }) => {
+  const keyset = i18n.keyset('language')
   return (
     <div
       className={`h-full w-full px-1 py-1 text-center ${rounded ? rounded : 'rounded-none'
         } `}
     >
-      <Text variant='subheader-1'>{header.toLocaleUpperCase()}</Text>
+      <Text variant='subheader-1'>{keyset(header.toLocaleUpperCase())}</Text>
     </div>
   )
 }
@@ -491,16 +493,17 @@ const LogSwitcher = ({
   activeTab: string
   setActiveTab: (item: string) => void
 }) => {
+  const keyset = i18n.keyset('language')
   return (
     <div>
       <Tabs className={''} items={[
         {
           id: "process",
-          title: "Process Log",
+          title: keyset("Process Log"),
         },
         {
           id: "torus",
-          title: "System Log",
+          title: keyset("System Log"),
         }
 
       ]} onChange={setActiveTab} size='m' direction='horizontal'>
@@ -510,14 +513,14 @@ const LogSwitcher = ({
 }
 
 const JsonViewer = ({ tabdata }: any) => {
-
+  const keyset = i18n.keyset('language')
   return (
     <div
       className={`mt-2
       h-full w-full items-center rounded-lg`}
     >
       <Text variant='subheader-2' className='p-2'>
-        Error Details
+        {keyset('Error Details')}
       </Text>
       <div className={`ml-2 h-[92%] w-[100%]`}>
         {tabdata ? (
@@ -529,7 +532,7 @@ const JsonViewer = ({ tabdata }: any) => {
           />
         ) : (
           <Text variant='body-2' className='p-2 text-center'>
-            No Data available
+            {keyset('No Data available')}
           </Text>
         )}
       </div>

@@ -12,6 +12,7 @@ import { Icon } from '@/components/Icon'
 import { Table } from '@/components/Table'
 import { twMerge } from 'tailwind-merge'
 import { useTheme } from '@/hooks/useTheme'
+import i18n from './i18n'
 
 export interface UserData {
   users: string
@@ -46,6 +47,7 @@ const UserTable: React.FC<{
   ) as SetupScreenContextType
   const userDataPerPage = 11
   const { bgColor, borderColor, textColor, isDark } = useTheme()
+  const keyset = i18n.keyset('language')
 
   const formatDate = (dateString: string | Date): string => {
     const date = new Date(dateString)
@@ -188,31 +190,31 @@ const UserTable: React.FC<{
   const columns = [
     {
       id: 'users',
-      name: 'User'
+      name: keyset('User')
     },
     {
       id: 'accessProfile',
-      name: 'Access Profile'
+      name: keyset('Access Profile')
     },
     {
       id: 'noOfProductsService',
-      name: 'No. of Products/service'
+      name: keyset('No. of Products/service')
     },
     {
       id: 'accessExpires',
-      name: 'Access Expires'
+      name: keyset('Access Expires')
     },
     {
       id: 'lastActive',
-      name: 'Last Active',
+      name: keyset('Last Active')
     },
     {
       id: 'dateAdded',
-      name: 'Date Added',
+      name: keyset('Date Added')
     },
     {
       id: 'edit',
-      name: 'action',
+      name: keyset('action')
     }
   ]
 
@@ -362,7 +364,7 @@ const UserTable: React.FC<{
             />
           </Modal>
       </div>
-      <Text variant='header-1'>{'User Management'}</Text>
+      <Text variant='header-1'>{keyset('User Management')}</Text>
       <CustomTable
         className='mt-5 h-[73vh]'
         data={rowOfCurrentGrps}

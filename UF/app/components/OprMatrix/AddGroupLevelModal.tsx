@@ -74,7 +74,6 @@ const AddGroupLevelModal = ({
       <Text
         variant='caption-1'
         color='secondary'
-        className='text-torus-text-opacity-50'
       >
         {modalSubText}
       </Text>

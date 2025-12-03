@@ -21,6 +21,7 @@ import Spin from '@/components/Spin'
 import { useGlobal } from '@/context/GlobalContext'
 import { useTheme } from '@/hooks/useTheme'
 import { twMerge } from 'tailwind-merge'
+import i18n from './i18n'
 interface LoginProps {
   logo?: string
   appName?: string
@@ -38,15 +39,16 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
   const toast = useInfoMsg()
   const router = useRouter()
-  const {branding} = useGlobal()
-  const {brandColor} = branding
-  const {bgColor, borderColor, textColor} = useTheme()
-  const onBoardingKey:string = "User Screen"
+  const { branding } = useGlobal()
+  const { brandColor } = branding
+  const { bgColor, borderColor, textColor } = useTheme()
+  const onBoardingKey: string = "User Screen"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
     logo: logo ? true : false
   })
+  const keyset: any = i18n.keyset("language");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -58,8 +60,8 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
       if (tenant && formData.email && formData.password) {
         setLoading(true)
 
-        setCookie('cfg_theme','dark')
-        
+        setCookie('cfg_theme', 'dark')
+
         const api_signinBody: api_signinDto = {
           client: tenant,
           username: formData.email,
@@ -92,12 +94,12 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
           setCookie('tenant', tenant)
           document.cookie = `language=${'en'}`
           let screenDetails: any = {
-            keys:[
-  {
-    "screensName": "testroute-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-  }
-]
+            keys: [
+              {
+                "screensName": "testroute-v1",
+                "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+              }
+            ]
           }
           const ORM: any = decodeToken(api_signin.data.token)
           sessionStorage.setItem(
@@ -175,7 +177,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
               }
             />
           ) : (
-            <DefaultLoginImage />
+            <DefaultLoginImage brandColor={brandColor}/>
           )}
         </div>
       )}
@@ -184,9 +186,8 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
         style={{
           background: `linear-gradient(to bottom, ${brandColor}, #ffffff)`
         }}
-        className={`flex justify-center p-5 h-full overflow-y-auto ${
-          loginType !== 'standard' ? 'w-full md:w-1/2' : 'w-full'
-        }`}
+        className={`flex justify-center p-5 h-full overflow-y-auto ${loginType !== 'standard' ? 'w-full md:w-1/2' : 'w-full'
+          }`}
       >
         <div className='flex h-full flex-col items-center justify-center gap-[5.24vh]'>
           <div className='flex flex-col items-center gap-[1.24vh]'>
@@ -208,7 +209,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
               {appName}
             </Text>
             <Text variant='body-3' color='info-heavy'>
-              Create an account or log in to explore about our app
+              {keyset("Create an account or log in to explore about our app")}
             </Text>
           </div>
           <div
@@ -267,10 +268,10 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
             </Link>
             <Button
               onClick={handleFormSubmit}
-              size='xl'              
+              size='xl'
             >
               {loading ? <Spin className='flex w-full justify-center' spinning color='success' style='dots' /> : 'Login'}
-            </Button> 
+            </Button>
 
             {process.env.NEXT_PUBLIC_NEXT_AUTH_NEEDED === 'true' && (
               <div className='flex w-full'>
@@ -279,7 +280,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
                   size='l'
                   view='raised'
                 >
-                <Icon data="FaShieldAlt" />
+                  <Icon data="FaShieldAlt" />
                   ViaFusionAuth
                 </Button>
               </div>
@@ -289,14 +290,14 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
               <Text className='flex gap-1 text-nowrap items-center'>
                 Don&apos;t have an account?{' '}
                 <a
-                href="https://outlook.office.com/mail/deeplink/compose?to=support@torus.tech"
-                target="_blank"
-                rel="noopener noreferrer"
+                  href="https://outlook.office.com/mail/deeplink/compose?to=support@torus.tech"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                <Text color='brand'
-                >
-                  Contact Admin
-                </Text>
+                  <Text color='brand'
+                  >
+                    Contact Admin
+                  </Text>
                 </a>
               </Text>
             </div>

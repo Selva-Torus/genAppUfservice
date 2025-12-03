@@ -7,6 +7,7 @@ import { Text } from '@/components/Text'
 import { Button } from '@/components/Button'
 import { useGlobal } from '@/context/GlobalContext'
 import { useTheme } from '@/hooks/useTheme'
+import i18n from '../i18n'
 
 interface Role {
   roleCode: string
@@ -81,6 +82,7 @@ export default function SecurityTemplateSelection() {
   const { branding } = useGlobal()
   const { borderColor, textColor, bgColor, isDark } = useTheme()
   const { brandColor } = branding
+  const keyset = i18n.keyset('language')
 
   const handleOrgClick = (org: OrgItem) => {
     setSelectedOrgId(org.orgId)
@@ -207,22 +209,18 @@ export default function SecurityTemplateSelection() {
   }, [roleIds])
 
   return (
-    <div className='flex w-full gap-[1vw]'>
+    <div className='flex w-full gap-[1vw] min-w-[650px]'>
       {/* ORG SECTION */}
-      <div className='border-[var(--g-color-line-generic)] h-[74vh] w-1/3 rounded-xl border shadow-md'>
-        <div className='bg-torus-bg-card flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
-          <Text className='text-lg font-semibold'>Organization</Text>
+      <div className={twMerge('h-[70vh] lg:h-[72vh] w-1/3 rounded-xl border shadow-md min-w-[200px]' , borderColor)}>
+        <div className='flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
+          <Text className='text-nowrap text-lg font-semibold w-4/5 truncate'><span title={keyset('Organization')}>{keyset('Organization')}</span></Text>
           {isSearchOpen === 'org' ? (
             <div className='flex w-[8vw] gap-[.5vw]'>
               <input
                 value={orgSearchTerm}
                 onChange={e => setOrgSearchTerm(e.target.value)}
-                placeholder='Search...'
-                onFocus={e => (e.target.style.borderColor = brandColor)}
-                onBlur={e =>
-                  (e.target.style.borderColor = 'var(--torus-text-opacity-15)')
-                }
-                className={`bg-[var(--g-color-base-background)] text-[var(--g-color-text-primary)] border-[var(--g-color-line-generic)] w-full rounded-xl border px-[.5vw] py-[.2vh] text-sm outline-none`}
+                placeholder={keyset('Search')}
+                className={twMerge(`w-full rounded-xl border px-[.5vw] py-[.2vh] text-sm outline-none` , borderColor)}
               />
               <Button
                 onClick={() => {
@@ -252,9 +250,9 @@ export default function SecurityTemplateSelection() {
             </Button>
           )}
         </div>
-        <hr style={{ borderColor: borderColor }} className='border' />
+        <hr className={twMerge('border' , borderColor)} />
 
-        <div className='flex h-[72vh] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
+        <div className='flex h-[70vh] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
           {orgGrpData
             .filter((grp: OrgGrpItem) =>
               grp.orgGrpName.toLowerCase().includes(orgSearchTerm.toLowerCase())
@@ -298,7 +296,7 @@ export default function SecurityTemplateSelection() {
                       key={org.orgId}
                       onClick={() => handleOrgClick(org)}
                       className={twMerge(
-                        `hover:border-[var(--brand-color)] hover:shadow mt-2 cursor-pointer rounded border-[var(--g-color-line-generic)] border p-2 bg-[var(--g-color-base-background)]`,
+                        `hover:border-[var(--brand-color)] hover:shadow mt-2 cursor-pointer rounded ${borderColor} border p-2 bg-[var(--g-color-base-background)]`,
 
                         selectedOrgId === org.orgId
                           ? 'bg-unset border-[var(--brand-color)]'
@@ -317,22 +315,19 @@ export default function SecurityTemplateSelection() {
       </div>
 
       {/* PS SECTION */}
-      <div className='border-[var(--g-color-line-generic)] h-[74vh] w-1/3 rounded-xl border shadow-md'>
-        <div className='bg-torus-bg-card flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
-          <Text className='text-nowrap text-lg font-semibold'>
-            Products / Services
+      <div className={twMerge('h-[70vh] lg:h-[72vh] w-1/3 rounded-xl border shadow-md min-w-[200px]' , borderColor)}>
+        <div className='flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
+          <Text className='text-nowrap text-lg font-semibold w-4/5 truncate'><span title={keyset('Products/Services')}>
+            {keyset('Products/Services')}
+            </span>
           </Text>
           {isSearchOpen === 'ps' ? (
             <div className='flex w-[8vw] gap-[.5vw]'>
               <input
                 value={psSearchTerm}
                 onChange={e => setPsSearchTerm(e.target.value)}
-                placeholder='Search...'
-                onFocus={e => (e.target.style.borderColor = brandColor)}
-                onBlur={e =>
-                  (e.target.style.borderColor = 'var(--torus-text-opacity-15)')
-                }
-                className={`bg-[var(--g-color-base-background)] text-[var(--g-color-text-primary)] border-[var(--g-color-line-generic)] w-full rounded-xl border px-[.5vw] py-[.2vh] text-sm focus:outline-none`}
+                placeholder={keyset('Search')}
+               className={twMerge(`w-full rounded-xl border px-[.5vw] py-[.2vh] text-sm outline-none` , borderColor)}
               />
               <Button
                  className='flex items-center'
@@ -362,9 +357,9 @@ export default function SecurityTemplateSelection() {
             </Button>
           )}
         </div>
-        <hr style={{ borderColor: borderColor }} className='border' />
+        <hr className={twMerge('border' , borderColor)} />
 
-        <div className='flex h-[72vh] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
+        <div className='flex h-[70vh] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
           {orgGrpData.flatMap((grp: OrgGrpItem) =>
             grp.org
               .filter(
@@ -421,7 +416,7 @@ export default function SecurityTemplateSelection() {
                             key={ps.psId}
                             onClick={() => handlePsClick(ps.psId)}
                             className={twMerge(
-                              `hover:border-[var(--brand-color)] hover:shadow mt-2 cursor-pointer rounded border border-[var(--g-color-line-generic)] p-2 bg-[var(--g-color-base-background)]`,
+                              `hover:border-[var(--brand-color)] hover:shadow mt-2 cursor-pointer rounded border ${borderColor} p-2 bg-[var(--g-color-base-background)]`,
                               selectedPsId === ps.psId
                                 ? 'bg-unset border-[var(--brand-color)]'
                                 : '',
@@ -441,20 +436,16 @@ export default function SecurityTemplateSelection() {
       </div>
 
       {/* ROLES SECTION */}
-      <div className='border-[var(--g-color-line-generic)] h-[74vh] w-1/3 rounded-xl border shadow-md'>
-        <div className='bg-torus-bg-card flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
-          <Text className='text-lg font-semibold'>Roles</Text>
+      <div className={twMerge('h-[70vh] lg:h-[72vh] w-1/3 rounded-xl border shadow-md min-w-[200px]' , borderColor)}>
+        <div className='flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
+          <Text className='text-nowrap text-lg font-semibold w-4/5 truncate'><span title={keyset('Roles')}>{keyset('Roles')}</span></Text>
           {isSearchOpen === 'role' ? (
             <div className='flex w-[8vw] gap-[.5vw]'>
               <input
                 value={roleSearchTerm}
                 onChange={e => setRoleSearchTerm(e.target.value)}
-                placeholder='Search...'
-                onFocus={e => (e.target.style.borderColor = brandColor)}
-                onBlur={e =>
-                  (e.target.style.borderColor = 'var(--torus-text-opacity-15)')
-                }
-                className={`bg-[var(--g-color-base-background)] text-[var(--g-color-text-primary)] border-[var(--g-color-line-generic)] w-full rounded-xl border px-[.5vw] py-[.2vh] text-sm focus:outline-none`}
+                placeholder={twMerge('Search')}
+                className={twMerge(`w-full rounded-xl border px-[.5vw] py-[.2vh] text-sm outline-none` , borderColor)}
               />
               <Button
                  className='flex items-center'
@@ -482,9 +473,9 @@ export default function SecurityTemplateSelection() {
             </Button>
           )}
         </div>
-        <hr style={{ borderColor: borderColor }} className='border' />
+        <hr className={twMerge('border' , borderColor)} />
 
-        <div className='flex h-[72vh] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
+        <div className='flex h-[70vh] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
           {orgGrpData.flatMap((grp: OrgGrpItem) =>
             grp.org
               .filter(
@@ -548,7 +539,7 @@ export default function SecurityTemplateSelection() {
                               rg.roles.map(role => (
                                 <label
                                   key={role.roleId}
-                                  className=' mt-2 flex cursor-pointer items-center justify-between rounded border border-[var(--g-color-line-generic)] p-2 hover:border-[var(--brand-color)] hover:shadow bg-[var(--g-color-base-background)]'
+                                  className={`mt-2 flex cursor-pointer items-center justify-between rounded border ${borderColor} p-2 hover:border-[var(--brand-color)] hover:shadow bg-[var(--g-color-base-background)]`}
                                 >
                                   <div>
                                     <Text>{role.roleName}</Text>
