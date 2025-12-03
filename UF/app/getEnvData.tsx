@@ -1,5 +1,5 @@
 let data:any ={
-  "oprmatrixtestdpd": {
+  "TPPTESTDPD": {
     "encryptionType": {
       "name": "encryptionType",
       "_type": "select",

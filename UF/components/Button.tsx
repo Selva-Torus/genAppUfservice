@@ -45,7 +45,7 @@ interface ButtonProps {
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   nodeId,
   view = "action",
-  size = "s",
+  size = "m",
   icon,
   disabled = false,
   pin = "circle-circle",

@@ -36,6 +36,7 @@ export interface PaginationProps {
    * Custom className
    */
   className?: string;
+  showPageSize?:boolean
 }
 
 export const Pagination: React.FC<PaginationProps> = ({
@@ -47,6 +48,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   size = 'm',
   alignment = 'end',
   className = "",
+  showPageSize=false
 }) => {
   // Calculate total pages
   const pageCount = Math.ceil(total / pageSize);
@@ -161,6 +163,7 @@ export const Pagination: React.FC<PaginationProps> = ({
       {/* Pagination Controls */}
       <div className="flex items-center gap-2">
         {/* Page Size Selector */}
+        {showPageSize&&(
         <div className="flex items-center gap-2 mr-4">
           <span className={`text-gray-600 dark:text-gray-400 ${currentSize?.text}`}>Show:</span>
           <select
@@ -182,6 +185,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             ))}
           </select>
         </div>
+        )}
 
         {/* First Page */}
         {/* {pageCount > 5 && (
@@ -200,7 +204,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           // className={buttonBaseClass}
           onClick={() => handlePageChange(page - 1)}
           disabled={page <= 1}
-          view='outlined-success'
+          view='outlined'
           pin='brick-brick'
           aria-label="Previous page"
         >
@@ -223,7 +227,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           return (
             <Button
               key={pageNum}
-              view='outlined-success'
+              view='outlined'
               pin='brick-brick'
               // className={pageNum === page ? activeButtonClass : buttonBaseClass}
               onClick={() => handlePageChange(pageNum)}
@@ -238,7 +242,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         {/* Next Page */}
         <Button
           // className={buttonBaseClass}
-          view='outlined-success'
+          view='outlined'
           pin='brick-brick'
           onClick={() => handlePageChange(page + 1)}
           disabled={page >= pageCount}

@@ -29,7 +29,7 @@ interface LoginProps {
   image?: string
 }
 
-const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image }: LoginProps) => {
+const LoginForm = ({ logo, appName = "VOFApp", loginType = "standard", image }: LoginProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     password: ''
@@ -42,7 +42,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
   const { branding } = useGlobal()
   const { brandColor } = branding
   const { bgColor, borderColor, textColor } = useTheme()
-  const onBoardingKey: string = "User Screen"
+  const onBoardingKey : string = "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
@@ -60,13 +60,13 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
       if (tenant && formData.email && formData.password) {
         setLoading(true)
 
-        setCookie('cfg_theme', 'dark')
-
+        setCookie('cfg_theme','light')
+        
         const api_signinBody: api_signinDto = {
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc",
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT242:AFGK:TPPTEST001:AFK:TPPTEST002:AFVK:v2:bldc",
           ufClientType: 'UFW'
         }
         const api_signin = await axios.post(
@@ -94,12 +94,12 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
           setCookie('tenant', tenant)
           document.cookie = `language=${'en'}`
           let screenDetails: any = {
-            keys: [
-              {
-                "screensName": "testroute-v1",
-                "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-              }
-            ]
+            keys:[
+  {
+    "screensName": "accounts-v1",
+    "ufKey": "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1"
+  }
+]
           }
           const ORM: any = decodeToken(api_signin.data.token)
           sessionStorage.setItem(
@@ -177,7 +177,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
               }
             />
           ) : (
-            <DefaultLoginImage brandColor={brandColor}/>
+            <DefaultLoginImage brandColor={brandColor} />
           )}
         </div>
       )}
@@ -187,7 +187,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
           background: `linear-gradient(to bottom, ${brandColor}, #ffffff)`
         }}
         className={`flex justify-center p-5 h-full overflow-y-auto ${loginType !== 'standard' ? 'w-full md:w-1/2' : 'w-full'
-          }`}
+        }`}
       >
         <div className='flex h-full flex-col items-center justify-center gap-[5.24vh]'>
           <div className='flex flex-col items-center gap-[1.24vh]'>
@@ -268,10 +268,10 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
             </Link>
             <Button
               onClick={handleFormSubmit}
-              size='xl'
+              size='xl'              
             >
               {loading ? <Spin className='flex w-full justify-center' spinning color='success' style='dots' /> : 'Login'}
-            </Button>
+            </Button> 
 
             {process.env.NEXT_PUBLIC_NEXT_AUTH_NEEDED === 'true' && (
               <div className='flex w-full'>
@@ -280,7 +280,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
                   size='l'
                   view='raised'
                 >
-                  <Icon data="FaShieldAlt" />
+                <Icon data="FaShieldAlt" />
                   ViaFusionAuth
                 </Button>
               </div>

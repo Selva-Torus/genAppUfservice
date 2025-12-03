@@ -39,19 +39,19 @@ const LayoutDecider = ({
   const {borderColor} = useTheme()
   const { brandColor, hoverColor, selectionColor } = branding;
   const encryptionFlagApp: boolean = false;    
-  const encryptionDpd: string = "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1";
+  const encryptionDpd: string = "CK:CT242:FNGK:AF:FNK:CDF-DPD:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:TPPTESTDPD:AFVK:v2";
   const encryptionMethod: string = "";
   const logo = ""
-  const appName = "oprmatrix"
+  const appName = "VOFApp"
   const toast = useInfoMsg()
   const [loading, setLoading] = useState(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
-  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc"
+  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT242:AFGK:TPPTEST001:AFK:TPPTEST002:AFVK:v2:bldc"
   const [rawNavData, setRawNavData] = useState<MenuItem[] | null>(null);
   const navData: MenuItem[] = [
   {
     "menuGroup": "admin",
-    "menuGroupLabel": "Admin Dashboard",
+    "menuGroupLabel": "Admin",
     "screenDetails": [
       {
         "name": "logs",
@@ -74,15 +74,15 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
-    "menuGroupLabel": "testroute sdsdsd sdsdsd fh",
+    "menuGroup": "tpp_v2",
+    "menuGroupLabel": "TPP_V2",
     "screenDetails": [
       {
-        "name": "testroute",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "name": "accounts",
+        "label": "Accounts",
+        "key": "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1",
         "allowedAccessProfile": [
-          "Template 1",
-          "User",
-          "Template 3"
+          "Template 1"
         ],
         "static": false
       }
@@ -362,15 +362,13 @@ const LayoutDecider = ({
     return (<div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><span>Loading...</span></div>);
   }
   return (
-    <div className={`flex h-screen w-screen flex-col`}>
+    <div className={`flex h-screen w-screen flex-col overflow-auto`}>
       <div className={`g-root flex-shrink-0`}>
         <TopNav
           navData={navData}
           listMenuItems={listMenuItems()}
           mode={mode}
-          selectionColor={selectionColor}
           brandColor={brandColor}
-          hoverColor={hoverColor}
           appName={appName}
           logo={logo}
           userDetails={userDetails}

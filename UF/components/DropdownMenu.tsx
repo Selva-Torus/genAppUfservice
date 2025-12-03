@@ -205,10 +205,12 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
       backgroundColor: isDark ? "#1f2937" : "#ffffff",
       color: isDark ? "#ffffff" : "#000000",
       borderColor: isDark ? "#4B5563" : "#D1D5DB",
-      ...popupProps.style,
     };
 
-    return baseStyles;
+    return {
+      ...baseStyles,
+      ...popupProps.style,
+    };
   };
 
   const getPopupClasses = () => {
@@ -285,8 +287,8 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
           onMouseEnter={(e) => {
             if (!item.disabled) {
               e.currentTarget.style.backgroundColor = useBrandColor
-                ? branding.brandColor
-                : branding.hoverColor;
+                ? branding.hoverColor
+                : branding.brandColor;
               if (useBrandColor) {
                 e.currentTarget.style.color = getContrastColor(branding.brandColor);
               }
@@ -294,8 +296,9 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
           }}
           onMouseLeave={(e) => {
             if (!item.disabled) {
-              e.currentTarget.style.backgroundColor = isDark ? "#1f2937" : "#ffffff";
-              e.currentTarget.style.color = isDark ? "#ffffff" : "#000000";
+              const popupStyles = getPopupStyles();
+              e.currentTarget.style.backgroundColor = (popupStyles.backgroundColor as string) || (isDark ? "#1f2937" : "#ffffff");
+              e.currentTarget.style.color = (popupStyles.color as string) || (isDark ? "#ffffff" : "#000000");
             }
           }}
         >

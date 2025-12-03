@@ -1,45 +1,74 @@
 'use client'
-import React, { useCallback,useContext, useEffect, useMemo, useState } from 'react'
-import { SearchIcon } from '../components/svgApplication'
+import React, { useContext, useEffect, useMemo, useState } from 'react'
+import {
+  DownArrow,
+  OrgIcon,
+  ProductIcon,
+  PSIcon,
+  RoleIcon,
+  SearchIcon
+} from '../components/svgApplication'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import axios from 'axios'
 import { getCookie, setCookie } from '../components/cookieMgment'
-import { ArrowBackward, ArrowForward, StarIcon } from '../utils/svgApplications'
 import { useRouter } from 'next/navigation'
 import decodeToken from '../components/decodeToken'
-import { capitalize } from 'lodash'
 import { isLightColor } from '../components/utils'
 import { Text } from '@/components/Text'
-import { Select } from '@/components/Select'
-import Spin from '@/components/Spin'
 import { useGlobal } from '@/context/GlobalContext'
 import { twMerge } from 'tailwind-merge'
 import { useTheme } from '@/hooks/useTheme'
 import { Dropdown } from '@/components/Dropdown'
+import { Button } from '@/components/Button'
+import { Card } from '@/components/Card'
+import Spin from '@/components/Spin'
+import { AxiosService } from '../components/axiosService'
+import { TotalContext, TotalContextProps } from '../globalContext'
+import TopNav from '../components/TopNav'
 
 const ContextSelector = () => {
   const [selectedAccessProfile, setSelectedAccessProfile] = useState<string[]>([])
+  const { userDetails, setUserDetails } = useContext(
+    TotalContext
+  ) as TotalContextProps
   const token: string = getCookie('token')
   const tp_ps: any = getCookie('tp_ps')
-  const decodedTokenObj: any = decodeToken(token)
-  const user = decodedTokenObj?.loginId
   const toast = useInfoMsg();
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
-  const [searchTerm, setSearchTerm] = useState<string>('')
+  const appName = 'VOFApp'
   const [accessProfiles, setAccessProfiles] = useState<any[]>([])
   const router = useRouter();
   const [loading, setLoading] = useState(false)
-  const {borderColor, isDark} = useTheme()
   const { branding } = useGlobal()
   const { brandColor } = branding
-  const [selectedCombination, setSelectedCombination] = useState({})
+  const [selectedCombination, setSelectedCombination] = useState<
+    Record<string, string>
+  >({})
+  const [activeTab, setActiveTab] = useState<'org' | 'ps' | 'role'>('org')
+  const [searchQuery, setSearchQuery] = useState('')
+  const { isDark, bgColor, textColor, borderColor, hoverBgColor, textStyle } =
+    useTheme()
+  const [selectedOrg, setSelectedOrg] = useState<{
+    code: string
+    grpCode: string
+  } | null>(null)
+  const [selectedPs, setSelectedPs] = useState<{
+    code: string
+    grpCode: string
+  } | null>(null)
+  const [expandedOrgGroups, setExpandedOrgGroups] = useState<Set<string>>(
+    new Set()
+  )
+  const [expandedRoleGroups, setExpandedRoleGroups] = useState<Set<string>>(
+    new Set()
+  )
   const [time, setTime] = useState('')
-  let landingScreen:string = 'User Screen';
+  let landingScreen:string = 'CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1';
   let screenDetails: any = {
            keys:[
   {
-    "screensName": "testroute-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    "screensName": "accounts-v1",
+    "ufKey": "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1"
   }
 ]
   }
@@ -47,15 +76,16 @@ const ContextSelector = () => {
 
   if (landingScreen === 'User Screen') {
     landingScreen = 'user'
-  }else if (landingScreen === 'Logs Screen') {
+  } else if (landingScreen === 'Logs Screen') {
     landingScreen = 'logs'
-  }else{
-    screenDetails.forEach((screen: any)   => {
+  } else {
+    screenDetails.forEach((screen: any) => {
       if (landingScreen === screen.ufKey) {
         landingScreen = screen.screensName
       }
-    });
-    landingScreen =landingScreen.split('-')[0]+'_'+landingScreen.split('-').at(-1)
+    })
+    landingScreen =
+      landingScreen.split('-')[0] + '_' + landingScreen.split('-').at(-1)
   }
 
   useEffect(() => {
@@ -92,13 +122,48 @@ const ContextSelector = () => {
 
   useEffect(() => {
     orpsData()
+    userDetailsData()
   }, [])
+
+  const userDetailsData = async () => {
+    try {
+      let myAccount = await AxiosService.get('/UF/myAccount-for-client', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        params: {
+          key: 'Logs Screen'
+        }
+      })
+      setUserDetails(myAccount?.data)
+    } catch (error) {
+      console.error(error)
+    }
+  }
 
   useEffect(() => {
     if (tp_ps) {
-      setSelectedCombination(JSON.parse(atob(tp_ps))?.selectedCombination ?? {})
+      const selectedCombinationData = JSON.parse(atob(tp_ps))
+        ?.selectedCombination
+      setSelectedCombination(selectedCombinationData ?? {})
       setSelectedAccessProfile(
         JSON.parse(atob(tp_ps))?.selectedAccessProfile ?? []
+      )
+      setSelectedOrg(
+        selectedCombinationData
+          ? {
+              code: selectedCombinationData.orgCode,
+              grpCode: selectedCombinationData.orgGrpCode
+            }
+          : null
+      )
+      setSelectedPs(
+        selectedCombinationData
+          ? {
+              code: selectedCombinationData.psCode,
+              grpCode: selectedCombinationData.psGrpCode
+            }
+          : null
       )
     }
   }, [tp_ps])
@@ -183,215 +248,665 @@ const ContextSelector = () => {
     }
   }
 
-  const isSelectedCombination = useCallback(
-    (item: any) => {
-      const { orgGrpCode, orgCode, psGrpCode, psCode, roleGrpCode, roleCode } =
-        item
-      if (
-        JSON.stringify(selectedCombination) ==
-        JSON.stringify({
-          orgGrpCode,
-          orgCode,
-          psGrpCode,
-          psCode,
-          roleGrpCode,
-          roleCode
+  // Flatten all combinations from all access profiles
+  const allCombinations = useMemo(() => {
+    return accessProfiles
+      .filter(item => item.accessProfile === selectedAccessProfile[0])
+      .flatMap(profile => profile.combinations || [])
+  }, [
+    accessProfiles.filter(
+      item => item.accessProfile === selectedAccessProfile[0]
+    )
+  ])
+
+  // Extract unique organizations grouped by orgGrpCode
+  const organizationTree = useMemo(() => {
+    const orgMap = new Map<
+      string,
+      { grpName: string; orgs: Array<{ code: string; name: string }> }
+    >()
+
+    allCombinations.forEach(combo => {
+      if (!orgMap.has(combo.orgGrpCode)) {
+        orgMap.set(combo.orgGrpCode, {
+          grpName: combo.orgGrpName,
+          orgs: []
         })
-      ) {
-        return true
       }
-      return false
-    },
-    [selectedCombination]
-  )
+      const group = orgMap.get(combo.orgGrpCode)!
+      if (!group.orgs.find(o => o.code === combo.orgCode)) {
+        group.orgs.push({
+          code: combo.orgCode,
+          name: combo.orgName
+        })
+      }
+    })
+
+    return Array.from(orgMap.entries()).map(([grpCode, data]) => ({
+      grpCode,
+      grpName: data.grpName,
+      orgs: data.orgs
+    }))
+  }, [allCombinations])
+
+  // Get products/services filtered by selected organization
+  const productServices = useMemo(() => {
+    if (!selectedOrg) return []
+
+    const psMap = new Map<
+      string,
+      { grpName: string; items: Array<{ code: string; name: string }> }
+    >()
+
+    allCombinations
+      .filter(
+        combo =>
+          combo.orgCode === selectedOrg.code &&
+          combo.orgGrpCode === selectedOrg.grpCode
+      )
+      .forEach(combo => {
+        if (!psMap.has(combo.psGrpCode)) {
+          psMap.set(combo.psGrpCode, {
+            grpName: combo.psGrpName,
+            items: []
+          })
+        }
+        const group = psMap.get(combo.psGrpCode)!
+        if (!group.items.find(p => p.code === combo.psCode)) {
+          group.items.push({
+            code: combo.psCode,
+            name: combo.psName
+          })
+        }
+      })
+
+    return Array.from(psMap.entries()).map(([grpCode, data]) => ({
+      grpCode,
+      grpName: data.grpName,
+      items: data.items
+    }))
+  }, [allCombinations, selectedOrg])
+
+  // Get roles filtered by selected organization and product/service
+  const roleTree = useMemo(() => {
+    if (!selectedOrg || !selectedPs) return []
+
+    const roleMap = new Map<
+      string,
+      { grpName: string; roles: Array<{ code: string; name: string }> }
+    >()
+
+    allCombinations
+      .filter(
+        combo =>
+          combo.orgCode === selectedOrg.code &&
+          combo.orgGrpCode === selectedOrg.grpCode &&
+          combo.psCode === selectedPs.code &&
+          combo.psGrpCode === selectedPs.grpCode
+      )
+      .forEach(combo => {
+        if (!roleMap.has(combo.roleGrpCode)) {
+          roleMap.set(combo.roleGrpCode, {
+            grpName: combo.roleGrpName,
+            roles: []
+          })
+        }
+        const group = roleMap.get(combo.roleGrpCode)!
+        if (!group.roles.find(r => r.code === combo.roleCode)) {
+          group.roles.push({
+            code: combo.roleCode,
+            name: combo.roleName
+          })
+        }
+      })
+
+    return Array.from(roleMap.entries()).map(([grpCode, data]) => ({
+      grpCode,
+      grpName: data.grpName,
+      roles: data.roles
+    }))
+  }, [allCombinations, selectedOrg, selectedPs])
+
+  // Filter data based on search query
+  const filteredOrgTree = useMemo(() => {
+    if (!searchQuery) return organizationTree
+    const query = searchQuery.toLowerCase()
+    return organizationTree
+      .map(group => ({
+        ...group,
+        orgs: group.orgs.filter(
+          org =>
+            org.name.toLowerCase().includes(query) ||
+            group.grpName.toLowerCase().includes(query)
+        )
+      }))
+      .filter(group => group.orgs.length > 0)
+  }, [organizationTree, searchQuery])
+
+  const filteredProductServices = useMemo(() => {
+    if (!searchQuery) return productServices
+    const query = searchQuery.toLowerCase()
+    return productServices
+      .map(group => ({
+        ...group,
+        items: group.items.filter(
+          item =>
+            item.name.toLowerCase().includes(query) ||
+            group.grpName.toLowerCase().includes(query)
+        )
+      }))
+      .filter(group => group.items.length > 0)
+  }, [productServices, searchQuery])
+
+  const filteredRoleTree = useMemo(() => {
+    if (!searchQuery) return roleTree
+    const query = searchQuery.toLowerCase()
+    return roleTree
+      .map(group => ({
+        ...group,
+        roles: group.roles.filter(
+          role =>
+            role.name.toLowerCase().includes(query) ||
+            group.grpName.toLowerCase().includes(query)
+        )
+      }))
+      .filter(group => group.roles.length > 0)
+  }, [roleTree, searchQuery])
+
+  const toggleOrgGroup = (grpCode: string) => {
+    setExpandedOrgGroups(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(grpCode)) {
+        newSet.delete(grpCode)
+      } else {
+        newSet.add(grpCode)
+      }
+      return newSet
+    })
+  }
+
+  const toggleRoleGroup = (grpCode: string) => {
+    setExpandedRoleGroups(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(grpCode)) {
+        newSet.delete(grpCode)
+      } else {
+        newSet.add(grpCode)
+      }
+      return newSet
+    })
+  }
+
+  const handleOrgSelect = (orgCode: string, grpCode: string) => {
+    setActiveTab('ps')
+    setSelectedOrg({ code: orgCode, grpCode })
+    setSelectedPs(null)
+    setSelectedCombination({})
+  }
+
+  const handlePsSelect = (psCode: string, grpCode: string) => {
+    setActiveTab('role')
+    setSelectedPs({ code: psCode, grpCode })
+    setSelectedCombination({})
+  }
+
+  const handleRoleSelect = (roleCode: string, grpCode: string, combo: any) => {
+    handleCardClick(combo)
+  }
+
+  const isSelected = (item: any) => {
+    return (
+      selectedCombination?.orgCode === item.orgCode &&
+      selectedCombination?.psCode === item.psCode &&
+      selectedCombination?.roleCode === item.roleCode
+    )
+  }
 
   return (
-    <div className='h-[100vh] w-full'>
-      <div className='flex h-[100%] flex-col items-center justify-center gap-[15px]'>
-        <Text variant='display-2'>Welcome {capitalize(user)}</Text>
-        <div className='flex items-center gap-[5px] text-[0.83vw]'>
-          <Text variant='body-1'>{dateString}</Text>
-          <hr className='h-[25px] border' />
-          <Text variant='body-1'>{time}</Text>
-        </div>
-        <Text variant='body-1' className=' font-medium'>
-          Select from the profiles to proceed
-        </Text>
-        <div className='flex w-full justify-center gap-[.5vw]'>
-             <div className='relative h-[42px] items-center'>
-            <span className='absolute inset-y-0 left-0 flex p-[10px]'>
-              <SearchIcon
-                fill={isDark ? 'white' : 'black'}
-                height='17px'
-                width='17px'
-              />
-            </span>
-            <input
-              autoFocus
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              placeholder='Search'
-              onFocus={e => (e.target.style.borderColor = brandColor)}
-              onBlur={e => (e.target.style.borderColor = '#00000026')}
-              disabled={!selectedAccessProfile[0]}
-              className={`h-[42px] w-[20vw] rounded-md border pl-[30px] font-medium focus:outline-none`}
-            />
-          </div>
-          <div className='w-[10vw]'>
-           {/* <Select
-              options={accessProfiles.map(item => ({
-                value: item.accessProfile,
-                label: item.accessProfile
-              }))}
-              value={selectedAccessProfile[0]}
-              onChange={value => {
-                setSelectedAccessProfile([value] as string[])
-                setSelectedCombination({})
-              }}
-              size='s'
-              placeholder='Select Access Profile'
-            />*/}
-            <Dropdown
-              value={selectedAccessProfile[0]}
-              staticProps={accessProfiles.map(item => item.accessProfile)}
-              className=''
-              onChange={val => {
-                setSelectedAccessProfile([val] as string[])
-                setSelectedCombination({})
-              }}
-            />
-          </div>
-        </div>
+    <div className='h-full w-full'>
+      <TopNav
+        appName={appName}
+        navData={[]}
+        userDetails={userDetails}
+        brandColor={brandColor}
+        mode='closed'
+      />
 
-        <div
-          className={`flex h-[300px] w-full items-center justify-center gap-[10px] overflow-y-auto ${accessProfiles.map(
-            (item: any) =>
-              item.combinations.length > 5 ? 'flex flex-wrap' : ''
-          )}`}
-        >
-          {accessProfiles.map(
-            profile =>
-              profile.accessProfile === selectedAccessProfile[0] &&
-              profile.combinations
-                .filter((item: any) =>
-                  Object.entries(item).some(
-                    ([key, value]) =>
-                      key.toLowerCase().includes('name') &&
-                      (value as string)
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase())
-                  )
-                )
-                .map((item: any, index: number) => (
+      <hr className={twMerge('w-full border', borderColor)} />
+
+      <div className='h-[90vh] px-5 py-2.5'>
+        <div className='rounded-md border-2 px-5 py-2 h-full'>
+          <div className='flex w-full items-center justify-between'>
+            <div className='flex flex-col items-start'>
+              <Text variant='display-1'>Profile Selector</Text>
+              <Text variant='body-2' color='secondary'>
+                Select from the tree to proceed
+              </Text>
+            </div>
+            <div className='flex gap-2 py-2'>
+              <div className='w-[10vw]'>
+                <Dropdown
+                  value={selectedAccessProfile[0]}
+                  staticProps={accessProfiles.map(item => item.accessProfile)}
+                  className=''
+                  onChange={val => {
+                    setSelectedAccessProfile([val] as string[])
+                    setSelectedCombination({})
+                  }}
+                />
+              </div>
+              <Button
+                className='flex items-center gap-7 rounded-md'
+                icon={loading ? '' : 'MdArrowForward'}
+                onClick={handleNavigationClick}
+                disabled={
+                  activeTab !== 'role' ||
+                  Object.keys(selectedCombination).length === 0
+                }
+              >
+                {loading ? (
+                  <Spin
+                    className='flex w-full justify-center'
+                    spinning
+                    color='success'
+                    style='dots'
+                  />
+                ) : (
+                  'Next'
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Main Content Area */}
+          <div className=''>
+            {selectedAccessProfile.length > 0 ? (
+              <div className='flex w-full flex-col gap-5 py-2'>
+                {/* Tabs */}
+                <div className='flex w-full'>
                   <button
-                    key={index}
+                    onClick={() => setActiveTab('org')}
+                    className={twMerge(
+                      `flex w-1/3 items-center gap-2 text-nowrap rounded-none border px-6 py-3 font-medium`
+                    )}
+                    onMouseEnter={e =>
+                      (e.currentTarget.style.backgroundColor =
+                        branding.hoverColor)
+                    }
+                    onMouseLeave={e =>
+                      (e.currentTarget.style.backgroundColor =
+                        activeTab === 'org' ? brandColor : 'gray')
+                    }
                     style={{
-                      border: isSelectedCombination(item)
-                        ? `2px solid ${brandColor}`
-                        : ''
+                      backgroundColor:
+                        activeTab === 'org' ? brandColor : 'gray',
+                      color:
+                        activeTab === 'org' ? isLightColor(brandColor) : 'white'
                     }}
-                    className={twMerge(`flex h-[240px] w-[260px] flex-col gap-[10px] rounded-md pl-[10px] pt-[10px] text-start outline-none border`, borderColor)}
-                    onClick={() => handleCardClick(item)}
                   >
-                    <div className='flex w-full items-center justify-between'>
-                      <Text
-                        variant='body-2'
-                        className='truncate text-nowrap text-[15px] font-semibold'
-                        needTooltip={true}
-                        tooltipProps={{
-                          title: item?.orgGrpName,
-                          placement: 'top-start'
-                        }}
-                      >
-                        {item?.orgGrpName}
-                      </Text>
-                      <span className='pr-[10px] outline-none'>
-                        <StarIcon
-                          fill={isSelectedCombination(item) ? '#F9D544' : ''}
-                          stroke={isSelectedCombination(item) ? '' : '#B6BAC3'}
-                        />
-                      </span>
-                    </div>
-                    <Text
-                      variant='body-1'
-                      className={twMerge('w-[80%] truncate rounded-md px-[2px] py-[2px] text-[0.72vw] font-medium border-2', borderColor)}
-                      needTooltip={true}
-                      tooltipProps={{
-                        title: item?.orgName,
-                        placement: 'top-start'
-                      }}
+                    <OrgIcon stroke={isLightColor(brandColor)} /> Organizations
+                    <span
+                      className={twMerge('flex w-full justify-end text-white')}
                     >
-                      {item?.orgName}
-                    </Text>
-                    <Text
-                      variant='body-2'
-                      className='truncate text-nowrap text-[15px] font-semibold'
-                      needTooltip={true}
-                      tooltipProps={{
-                        title: item?.psGrpName,
-                        placement: 'top-start'
-                      }}
-                    >
-                      {item?.psGrpName}
-                    </Text>
-                    <Text
-                      variant='body-1'
-                      className={twMerge('w-[80%] truncate rounded-md px-[2px] py-[2px] text-[0.72vw] font-medium border-2', borderColor)}
-                      needTooltip={true}
-                      tooltipProps={{ title:item?.psName, placement:'top-start' }}
-                    >
-                      {item?.psName}
-                    </Text>
-                    <Text
-                      variant='body-2'
-                      className='truncate text-nowrap text-[15px] font-semibold'
-                      needTooltip={true}
-                      tooltipProps={{ title:item?.roleGrpName, placement:'top-start' }}
-                    >
-                      {item?.roleGrpName}
-                    </Text>
-                    <Text
-                      variant='body-1'
-                      className={twMerge('w-[80%] truncate rounded-md px-[2px] py-[2px] text-[0.72vw] font-medium border-2', borderColor)}
-                      needTooltip={true}
-                      tooltipProps={{ title:item?.roleName, placement:'top-start' }}
-                    >
-                      {item?.roleName}
-                    </Text>
+                      {
+                        organizationTree
+                          .find(g => g.grpCode === selectedOrg?.grpCode)
+                          ?.orgs.find(o => o.code === selectedOrg?.code)?.name
+                      }
+                    </span>
                   </button>
-                ))
-          )}
-        </div>
+                  <button
+                    onClick={() => setActiveTab('ps')}
+                    className={twMerge(
+                      `flex w-1/3 items-center gap-2 text-nowrap rounded-none border px-6 py-3 font-medium`
+                    )}
+                    onMouseEnter={e =>
+                      (e.currentTarget.style.backgroundColor =
+                        branding.hoverColor)
+                    }
+                    onMouseLeave={e =>
+                      (e.currentTarget.style.backgroundColor =
+                        activeTab === 'ps' ? brandColor : 'gray')
+                    }
+                    style={{
+                      backgroundColor: activeTab === 'ps' ? brandColor : 'gray',
+                      color:
+                        activeTab === 'ps' ? isLightColor(brandColor) : 'white'
+                    }}
+                  >
+                    <PSIcon stroke={isLightColor(brandColor)} /> Products /
+                    Services
+                    <span
+                      className={twMerge('flex w-full justify-end text-white')}
+                    >
+                      {
+                        productServices
+                          .find(g => g.grpCode === selectedPs?.grpCode)
+                          ?.items.find(p => p.code === selectedPs?.code)?.name
+                      }
+                    </span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('role')}
+                    className={twMerge(
+                      `flex w-1/3 items-center gap-2 text-nowrap rounded-none border px-6 py-3 font-medium`
+                    )}
+                    onMouseEnter={e =>
+                      (e.currentTarget.style.backgroundColor =
+                        branding.hoverColor)
+                    }
+                    onMouseLeave={e =>
+                      (e.currentTarget.style.backgroundColor =
+                        activeTab === 'role' ? brandColor : 'gray')
+                    }
+                    style={{
+                      backgroundColor:
+                        activeTab === 'role' ? brandColor : 'gray',
+                      color:
+                        activeTab === 'role'
+                          ? isLightColor(brandColor)
+                          : 'white'
+                    }}
+                  >
+                    <RoleIcon stroke={isLightColor(brandColor)} /> Roles
+                    <span
+                      className={twMerge('flex w-full justify-end text-white')}
+                    >
+                      {
+                        allCombinations.find(
+                          c => c.roleCode === selectedCombination.roleCode
+                        )?.roleName
+                      }
+                    </span>
+                  </button>
+                </div>
 
-        <div className='flex h-[80px] flex-col items-center justify-center gap-[15px]'>
-          <button
-            onClick={handleNavigationClick}
-            style={{
-              backgroundColor: brandColor,
-              color: isLightColor(brandColor)
-            }}
-            className='flex w-[200px] items-center justify-between rounded-md px-[10px] py-[10px] text-white outline-none'
-            disabled={!Object.keys(selectedCombination).length}
-          >
-            {loading ? (
-              <span className='flex w-full items-center justify-center'>
-                <Spin className='flex w-full justify-center' spinning color='success' style='dots' />
-              </span>
+                {/* Search Bar */}
+                <div className='flex w-full justify-center'>
+                  <div
+                    className={twMerge(
+                      'flex w-[32.5vw] items-center gap-[.5vw] rounded-lg border px-[1vw] py-[1vh]',
+                      borderColor
+                    )}
+                  >
+                    <span>
+                      <SearchIcon
+                        fill={isDark ? 'white' : 'black'}
+                        height='0.83vw'
+                        width='0.83vw'
+                      />
+                    </span>
+                    <input
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder={'Search'}
+                      className={twMerge(
+                        `w-full outline-none`,
+                        bgColor,
+                        textColor
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Content Area */}
+                <div
+                  className={`flex h-[400px] 3xl:h-[570px] w-full overflow-y-auto ${
+                    activeTab === 'ps' && filteredProductServices.length !== 0
+                      ? ''
+                      : 'justify-center'
+                  }`}
+                >
+                  {/* Organizations Tab */}
+                  {activeTab === 'org' && (
+                    <div className='space-y-2'>
+                      {filteredOrgTree.length === 0 ? (
+                        <p className={twMerge('py-8 text-center', textColor)}>
+                          No organizations found
+                        </p>
+                      ) : (
+                        filteredOrgTree.map(group => (
+                          <div
+                            className='flex flex-col gap-2'
+                            key={group.grpCode}
+                          >
+                            {/* Organization Group */}
+                            <button
+                              onClick={() => toggleOrgGroup(group.grpCode)}
+                              className={twMerge(
+                                'flex w-[32vw] items-center gap-2 rounded-md border px-4 py-2 transition-colors',
+                                hoverBgColor,
+                                borderColor
+                              )}
+                            >
+                              <span
+                                className={`${
+                                  expandedOrgGroups.has(group.grpCode)
+                                    ? 'rotate-180'
+                                    : ''
+                                }`}
+                              >
+                                <DownArrow fill={isDark ? 'white' : 'black'} />
+                              </span>
+                              <span
+                                className={twMerge('font-semibold', textColor)}
+                              >
+                                {group.grpName}
+                              </span>
+                            </button>
+
+                            {/* Organizations in Group */}
+                            {!expandedOrgGroups.has(group.grpCode) && (
+                              <div
+                                className={twMerge(
+                                  'ml-6 border-l-2',
+                                  borderColor
+                                )}
+                              >
+                                <div className='ml-4 space-y-2'>
+                                  {group.orgs.map(org => (
+                                    <button
+                                      key={org.code}
+                                      onClick={() =>
+                                        handleOrgSelect(org.code, group.grpCode)
+                                      }
+                                      className={twMerge(
+                                        `flex w-full items-center gap-2 rounded-md border px-4 py-2 transition-colors`,
+                                        borderColor,
+                                        hoverBgColor
+                                      )}
+                                      style={
+                                        selectedOrg?.code === org.code
+                                          ? {
+                                              backgroundColor: brandColor,
+                                              color: isLightColor(brandColor)
+                                            }
+                                          : {}
+                                      }
+                                    >
+                                      <span>{org.name}</span>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {/* Products/Services Tab */}
+                  {activeTab === 'ps' && (
+                    <div>
+                      {!selectedOrg ? (
+                        <p className={twMerge('py-8 text-center', textColor)}>
+                          Please select an organization first
+                        </p>
+                      ) : filteredProductServices.length === 0 ? (
+                        <p className={twMerge('py-8 text-center', textColor)}>
+                          No products/services found
+                        </p>
+                      ) : (
+                        <div className='space-y-6'>
+                          {filteredProductServices.map(group => (
+                            <div key={group.grpCode}>
+                              <h3
+                                className={twMerge(
+                                  'mb-3 px-2 font-semibold',
+                                  textColor
+                                )}
+                              >
+                                {group.grpName}
+                              </h3>
+                              <div className='grid grid-cols-1 gap-3.5 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 3xl:grid-cols-8'>
+                                {group.items.map(item => (
+                                  <Card
+                                    key={item.code}
+                                    onClick={() =>
+                                      handlePsSelect(item.code, group.grpCode)
+                                    }
+                                    className={twMerge(
+                                      `w-48 rounded-lg border-2 text-left transition-all`,
+                                      borderColor
+                                    )}
+                                    style={
+                                      selectedPs?.code === item.code
+                                        ? {
+                                            backgroundColor: `${brandColor}20`
+                                          }
+                                        : {}
+                                    }
+                                  >
+                                    <div className='flex flex-col items-start gap-3'>
+                                      <ProductIcon
+                                        stroke={isDark ? 'white' : 'black'}
+                                      />
+                                      <span
+                                        title={item.name}
+                                        className={twMerge(
+                                          'w-40 truncate text-nowrap font-medium',
+                                          textColor
+                                        )}
+                                      >
+                                        {item.name}
+                                      </span>
+                                    </div>
+                                  </Card>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Roles Tab */}
+                  {activeTab === 'role' && (
+                    <div className='space-y-2'>
+                      {!selectedPs ? (
+                        <p className={twMerge('py-8 text-center', textColor)}>
+                          Please select a product/service first
+                        </p>
+                      ) : filteredRoleTree.length === 0 ? (
+                        <p className={twMerge('py-8 text-center', textColor)}>
+                          No roles found
+                        </p>
+                      ) : (
+                        filteredRoleTree.map(group => (
+                          <div
+                            className='flex flex-col gap-2'
+                            key={group.grpCode}
+                          >
+                            {/* Role Group */}
+                            <button
+                              onClick={() => toggleRoleGroup(group.grpCode)}
+                              className={twMerge(
+                                'flex w-[32vw] items-center gap-2 rounded-md border px-4 py-2 transition-colors',
+                                hoverBgColor,
+                                borderColor
+                              )}
+                            >
+                              <span
+                                className={`${
+                                  expandedRoleGroups.has(group.grpCode)
+                                    ? 'rotate-180'
+                                    : ''
+                                }`}
+                              >
+                                <DownArrow fill={isDark ? 'white' : 'black'} />
+                              </span>
+                              <span
+                                className={twMerge('font-semibold', textColor)}
+                              >
+                                {group.grpName}
+                              </span>
+                            </button>
+
+                            {/* Roles in Group */}
+                            {!expandedRoleGroups.has(group.grpCode) && (
+                              <div
+                                className={twMerge(
+                                  'ml-6 border-l-2',
+                                  borderColor
+                                )}
+                              >
+                                <div className='ml-4 space-y-2'>
+                                  {group.roles.map(role => {
+                                    const combo = allCombinations.find(
+                                      c =>
+                                        c.orgCode === selectedOrg?.code &&
+                                        c.psCode === selectedPs?.code &&
+                                        c.roleCode === role.code
+                                    )
+                                    return (
+                                      <button
+                                        key={role.code}
+                                        onClick={() =>
+                                          handleRoleSelect(
+                                            role.code,
+                                            group.grpCode,
+                                            combo
+                                          )
+                                        }
+                                        className={twMerge(
+                                          `flex w-full items-center gap-2 rounded-md border px-4 py-2 transition-colors`,
+                                          borderColor,
+                                          hoverBgColor,
+                                          textColor
+                                        )}
+                                        style={
+                                          isSelected(combo)
+                                            ? {
+                                                backgroundColor: brandColor,
+                                                color: isLightColor(brandColor)
+                                              }
+                                            : {}
+                                        }
+                                      >
+                                        <span>{role.name}</span>
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
             ) : (
-              <span className='flex w-[200px] items-center justify-between rounded-md outline-none'>
-                Let&apos;s Go
-                <ArrowForward fill={isLightColor(brandColor)} />
-              </span>
+              <div className='flex h-[60vh] items-center justify-center'>
+                <Text variant='body-1' color='secondary'>
+                  Please select an access profile to continue
+                </Text>
+              </div>
             )}
-          </button>
-          {tp_ps && (
-            <button
-              onClick={() => router.push(landingScreen)}
-              className='flex items-center gap-[10px] outline-none'
-            >
-              <ArrowBackward fill={isDark ? "white" : "black"} /> Back to Dashboard
-            </button>
-          )}
+          </div>
         </div>
       </div>
     </div>

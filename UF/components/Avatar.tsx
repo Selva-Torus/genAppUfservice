@@ -32,7 +32,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   imageUrl,
   icon,
   text,
-  size,
+  size="l",
   view,
   theme: avatarTheme,
   shape = "circle",

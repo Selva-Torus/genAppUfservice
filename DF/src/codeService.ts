@@ -80,7 +80,7 @@ function buildLiteralAST(value: any, seen = new Set()): t.Expression {
             if(Array.isArray(customres) && customres.length > 0){
               arr[declaredVars[a]] = customres
             }else if(Object.keys(customres).length > 0){
-              arr[declaredVars[a]] = [customres]
+              arr[declaredVars[a]] = customres
             }          
          }
         }
@@ -114,14 +114,7 @@ function buildLiteralAST(value: any, seen = new Set()): t.Expression {
   //  `);
 
       const output =  eval(updatedFunctionString);
-    
-   if(data && fabric == 'DF-DFD' ){  
-      Object.assign(data, output)   
-      return data
-    }else{
       return output
-    }
-  
    }
 
  

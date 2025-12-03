@@ -15,9 +15,7 @@ const TopNav = ({
   navData,
   listMenuItems = true,
   mode,
-  selectionColor = '#fff',
   brandColor = '#fff',
-  hoverColor = '#fff',
   // topbarColor = '#fff',
   appName,
   logo,
@@ -26,9 +24,7 @@ const TopNav = ({
   navData: MenuStructure
   listMenuItems?: boolean
   mode: string
-  selectionColor: string
   brandColor: string
-  hoverColor: string
   //  topbarColor: string
   appName: string
   logo?: string
@@ -116,7 +112,7 @@ const TopNav = ({
   async function logout() {
     localStorage.clear()
     deleteAllCookies()
-    window.location.href = '/ct003/ag001/oprmatrix/v1'
+    window.location.href = '/ct242/tpptest001/tpptest002/v2'
   }
   const hasMatchingName = (obj: any, input: string): boolean => {
     if (typeof obj !== 'object' || obj === null) return false
@@ -135,25 +131,7 @@ const TopNav = ({
     return false
   }
 
-  const getDropDownStyles = useCallback(
-    (menuGroup: any) => {
-      const menuGrp = navData.find(item => item.menuGroup === menuGroup)
-      const currentScreen = pathname.split('/').pop()?.split('_')[0] || ''
-      const selectedRoute = hasMatchingName(menuGrp, currentScreen)
-      if (selectedRoute) {
-        return {
-          backgroundColor: brandColor,
-          color: isLightColor(brandColor)
-        }
-      }
-
-      return {
-        backgroundColor: 'transparent',
-        color: 'unset'
-      }
-    },
-    [hoverColor, brandColor]
-  )
+  
 
   return (
     <div
@@ -179,10 +157,7 @@ const TopNav = ({
       {listMenuItems && (
         <>
           <div className='flex w-full justify-center gap-1'>
-            <div
-              className='flex max-w-[62%] items-center gap-2'
-              ref={menuRef}
-            >
+            <div className='flex max-w-[62%] items-center gap-2' ref={menuRef}>
               {navData &&
                 visibleItems.map((menu, index) => {
                   if (menu.menuGroup) {
@@ -200,12 +175,6 @@ const TopNav = ({
                           )}
                           key={index}
                           items={getNestedMenu(menu)}
-                          popupProps={{
-                            style: {
-                              backgroundColor: brandColor,
-                              color: `${isLightColor(brandColor)}`
-                            }
-                          }}
                         />
                       </div>
                     )
@@ -268,12 +237,6 @@ const TopNav = ({
                       }
                     }
                   })}
-                  popupProps={{
-                    style: {
-                      backgroundColor: brandColor,
-                      color: `${isLightColor(brandColor)}`
-                    }
-                  }}
                 />
               )}
             </div>
@@ -303,14 +266,19 @@ const TopNav = ({
                   text: user,
                   action: () => {}
                 },
-                {
-                  text: 'Switch accessProfile',
-                  action: () => {
-                    if (tp_ps) {
-                      router.push('/select-context')
-                    }
-                  }
-                },
+                ...(pathname !== '/select-context'
+                  ? [
+                      {
+                        text: 'Switch accessProfile',
+                        action: () => {
+                          if (tp_ps) {
+                            router.push('/select-context')
+                          }
+                        }
+                      }
+                    ]
+                  : []),
+
                 {
                   text: 'Log out',
                   action: () => {
@@ -320,8 +288,6 @@ const TopNav = ({
               ]}
               popupProps={{
                 style: {
-                  backgroundColor: brandColor,
-                  color: `${isLightColor(brandColor)}`,
                   right: '10px'
                 }
               }}

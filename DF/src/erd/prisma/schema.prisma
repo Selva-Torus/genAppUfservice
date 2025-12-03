@@ -1,0 +1,480 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+provider = "prisma-client-js"
+}
+model tof_lfi {
+  id  String @id @default(auto()) @map("_id") @db.ObjectId 
+  lfi    TOF_LFI_Bank_Insu? 
+
+  trs_creator_email    String?       
+  trs_created_date    DateTime     @default(now())  
+  trs_created_by    String?       
+  trs_modified_date    DateTime     @updatedAt  
+  trs_modified_by    String?       
+  trs_status    String?       
+  trs_next_status    String?  
+  trs_process_id    String?
+  trs_access_profile    String?
+  trs_org_grp_code    String?
+  trs_org_code    String?
+  trs_role_grp_code    String?
+  trs_role_code    String?
+  trs_ps_grp_code    String?
+  trs_ps_code     String?
+ 
+
+  @@map("ct242_tpptest002.tof_lfi")
+  
+}
+model tof_tpp {
+  id  String @id @default(auto()) @map("_id") @db.ObjectId 
+  tpp    TOF_TPP_TPP? 
+
+  trs_creator_email    String?       
+  trs_created_date    DateTime     @default(now())  
+  trs_created_by    String?       
+  trs_modified_date    DateTime     @updatedAt  
+  trs_modified_by    String?       
+  trs_status    String?       
+  trs_next_status    String?  
+  trs_process_id    String?
+  trs_access_profile    String?
+  trs_org_grp_code    String?
+  trs_org_code    String?
+  trs_role_grp_code    String?
+  trs_role_code    String?
+  trs_ps_grp_code    String?
+  trs_ps_code     String?
+ 
+
+  @@map("ct242_tpptest002.tof_tpp")
+  
+}
+model tof_consents {
+  id  String @id @default(auto()) @map("_id") @db.ObjectId 
+  lfi    TOF_CONSENTS_LFI? 
+
+  trs_creator_email    String?       
+  trs_created_date    DateTime     @default(now())  
+  trs_created_by    String?       
+  trs_modified_date    DateTime     @updatedAt  
+  trs_modified_by    String?       
+  trs_status    String?       
+  trs_next_status    String?  
+  trs_process_id    String?
+  trs_access_profile    String?
+  trs_org_grp_code    String?
+  trs_org_code    String?
+  trs_role_grp_code    String?
+  trs_role_code    String?
+  trs_ps_grp_code    String?
+  trs_ps_code     String?
+ 
+
+  @@map("ct242_tpptest002.tof_consents")
+  
+}
+model tof_consent_request {
+  id  String @id @default(auto()) @map("_id") @db.ObjectId 
+  type    String        
+  consent    TOF_REQUEST_CONSENT? 
+  subscription    TOF_SUBSCRIPTION? 
+
+  trs_creator_email    String?       
+  trs_created_date    DateTime     @default(now())  
+  trs_created_by    String?       
+  trs_modified_date    DateTime     @updatedAt  
+  trs_modified_by    String?       
+  trs_status    String?       
+  trs_next_status    String?  
+  trs_process_id    String?
+  trs_access_profile    String?
+  trs_org_grp_code    String?
+  trs_org_code    String?
+  trs_role_grp_code    String?
+  trs_role_code    String?
+  trs_ps_grp_code    String?
+  trs_ps_code     String?
+ 
+
+  @@map("ct242_tpptest002.tof_consent_request")
+  
+}
+model tof_consent_response {
+  id  String @id @default(auto()) @map("_id") @db.ObjectId 
+  data    TOF_RESPONSE_DATA 
+
+  trs_creator_email    String?       
+  trs_created_date    DateTime     @default(now())  
+  trs_created_by    String?       
+  trs_modified_date    DateTime     @updatedAt  
+  trs_modified_by    String?       
+  trs_status    String?       
+  trs_next_status    String?  
+  trs_process_id    String?
+  trs_access_profile    String?
+  trs_org_grp_code    String?
+  trs_org_code    String?
+  trs_role_grp_code    String?
+  trs_role_code    String?
+  trs_ps_grp_code    String?
+  trs_ps_code     String?
+ 
+
+  @@map("ct242_tpptest002.tof_consent_response")
+  
+}
+type TOF_REQRESSUB_Webhook{
+  url    String      
+  isactive    Boolean      
+  }
+type TOF_REQRESSUB_CONSENTBODY{
+  webhook    TOF_REQRESSUB_Webhook      
+  }
+type TOF_SUB_Webhook{
+  url    String      
+  isactive    Boolean      
+  sample    String?      
+  }
+type TOF_SUBSCRIPTION_CONSENTBODY{
+  webhook    TOF_SUB_Webhook      
+  }
+type TOF_RESPONSE_CTBODY_OPENFINANCEBILLING{
+  islargecorporate    Boolean?      
+  usertype  usertype_tof_response_ctbody_openfinancebilling?    
+  purpose  purpose_tof_response_ctbody_openfinancebilling?    
+  }
+type TOF_CTBODY_ONBEHALFOF{
+  tradingname    String      
+  legalname    String?      
+  identifiertype  identifiertype_tof_ctbody_onbehalfof?    
+  identifier    String?      
+  }
+type TOF_LFI_Banks{
+  bank_code    String?      
+  bank_name    String?      
+  access_url    String?      
+  status    String?      
+  }
+type TOF_LFI_Insurance{
+  insurance_code    String?      
+  insurance_name    String?      
+  access_url    String?      
+  status    String?      
+  notes    String?      
+  }
+type TOF_LFI_Bank_Insu{
+  banks    TOF_LFI_Banks[]      
+  insurance    TOF_LFI_Insurance[]      
+  }
+type TOF_TPP_TPP{
+  tpp_code    String?      
+  tpp_name    String?      
+  server_url    String?      
+  status    String?      
+  apps    TOF_APPS[]      
+  }
+type TOF_APPS{
+  app_code    String?      
+  app_name    String?      
+  app_url    String?      
+  app_version    String?      
+  status    String?      
+  }
+type TOF_CONSENTS_LFI{
+  lfi_code    String?      
+  lfi_name    String?      
+  onbehalfof    TOF_CONSENTS_ONBELFOF[]      
+  }
+type TOF_CONSENTS_ONBELFOF{
+  tradingname    String?      
+  legalname    String?      
+  identifiertype    String?      
+  identifier    String?      
+  consentkey    TOF_CONSENTS_consentKey[]      
+  }
+type TOF_CONSENTS_consentKey{
+  baseconsentid    String?      
+  resourceconsentid    String?      
+  consentgroup    String?      
+  consenttype  consenttype_tof_consents_consentkey[]    
+  permissions  permissions_tof_consents_consentkey[]    
+  tpp_code    String?      
+  tpp_name    String?      
+  app_code    String?      
+  app_name    String?      
+  }
+type TOF_REQUEST_CONSENT{
+  baseconsentid    String?      
+  expirationdatetime    DateTime      
+  transactionfromdatetime    DateTime?      
+  transactiontodatetime    DateTime?      
+  accounttype  accounttype_tof_request_consent[]    
+  accountsubtype  accountsubtype_tof_request_consent[]    
+  onbehalfof    TOF_REQUEST_ONBEHALFOF      
+  consentid    String      
+  permissions  permissions_tof_request_consent[]    
+  openfinancebilling    TOF_OPENFINANCE_BILLING      
+  }
+type TOF_REQUEST_ONBEHALFOF{
+  tradingname    String?      
+  legalname    String?      
+  identifiertype  identifiertype_tof_request_onbehalfof?    
+  identifier    String?      
+  }
+type TOF_OPENFINANCE_BILLING{
+  usertype  usertype_tof_openfinance_billing    
+  purpose  purpose_tof_openfinance_billing    
+  }
+type TOF_SUBSCRIPTION{
+  webhook    TOF_Webhook      
+  }
+type TOF_Webhook{
+  url    String      
+  isactive    Boolean?      
+  }
+type TOF_RESPONSE_DATA{
+  ids    String      
+  parid    String?      
+  rartype    String?      
+  standardversion    String?      
+  consentgroupid    String?      
+  requesturl    String?      
+  consenttype    String      
+  status  status_tof_response_data[]    
+  request    TOF_RESPONSE_REQUEST      
+  consentbody    TOF_CONSENTBODY      
+  interactionid    String?      
+  tpp    TOF_TPP      
+  updatedat    Int?      
+  }
+type TOF_RESPONSE_REQUEST{
+  type  type_tof_response_request?    
+  consent    TOF_RESPONSE_CONSENT      
+  subscription    TOF_REQRESSUB_CONSENTBODY      
+  }
+type TOF_CONSENTBODY{
+  data    TOF_CTBODY_DATA      
+  meta    TOF_CONBODY_MultipleAuth      
+  subscription    TOF_SUBSCRIPTION_CONSENTBODY      
+  }
+type TOF_RESPONSE_CONSENT{
+  baseconsentid    String?      
+  expirationdatetime    String      
+  transactionfromdatetime    String?      
+  transactiontodatetime    String?      
+  accounttype  accounttype_tof_response_consent[]    
+  accountsubtype  accountsubtype_tof_response_consent[]    
+  onbehalfof    TOF_RESPONSE_ONBEHALFOF      
+  consentid    String      
+  permissions  permissions_tof_response_consent[]    
+  openfinancebilling    TOF_RESPONSE_OPENFINANCEBILLING      
+  }
+type TOF_RESPONSE_ONBEHALFOF{
+  tradingname    String?      
+  legalname    String?      
+  identifiertype  identifiertype_tof_response_onbehalfof?    
+  identifier    String?      
+  }
+type TOF_RESPONSE_OPENFINANCEBILLING{
+  usertype  usertype_tof_response_openfinancebilling    
+  purpose  purpose_tof_response_openfinancebilling    
+  }
+type TOF_CTBODY_DATA{
+  baseconsentid    String      
+  expirationdatetime    String?      
+  transactionfromdatetime    String?      
+  transactiontodatetime    String?      
+  accounttype  accounttype_tof_ctbody_data[]    
+  accountsubtype  accountsubtype_tof_ctbody_data[]    
+  onbehalfof    TOF_CTBODY_ONBEHALFOF      
+  status  status_tof_ctbody_data[]    
+  revokedby  revokedby_tof_ctbody_data[]    
+  creationdatetime    String?      
+  consentid    String?      
+  permissions  permissions_tof_ctbody_data[]    
+  openfinancebilling    TOF_RESPONSE_CTBODY_OPENFINANCEBILLING      
+  }
+type TOF_TPP{
+  clientid    String?      
+  tppid    String?      
+  tppname    String?      
+  softwarestatementid    Int?      
+  directoryrecord    String?      
+  decodedssa    TOF_DECODEDSSA      
+  orgid    String?      
+  }
+type TOF_DECODEDSSA{
+  redirect_uris    String      
+  client_name    String?      
+  client_uri    String?      
+  logo_uri    String?      
+  jwks_uri    String?      
+  client_id    String?      
+  roles    String?      
+  sector_identifier_uri    String?      
+  application_type    String?      
+  organisation_id    String?      
+  }
+type TOF_CONBODY_MultipleAuth{
+  multipleauthorizers    TOF_MULTIAUTH      
+  }
+type TOF_MULTIAUTH{
+  totalrequired    Int?      
+  authorizations    TOF_MULTIAUTH_TOTALREQ      
+  }
+type TOF_MULTIAUTH_TOTALREQ{
+  authorizerid    String?      
+  authorizertype    String?      
+  authorizationdate    DateTime?      
+  authorizationstatus  authorizationstatus_tof_multiauth_totalreq[]    
+  }
+
+
+enum usertype_tof_response_ctbody_openfinancebilling{
+    Retail
+    SME
+    Corporate
+}
+enum purpose_tof_response_ctbody_openfinancebilling{
+    AccountAggregation
+    RiskAssessment
+    TaxFiling
+    Onboarding
+    Verification
+    QuoteComparison
+    BudgetingAnalysis
+    FinancialAdvice
+    AuditReconciliation
+}
+enum identifiertype_tof_ctbody_onbehalfof{
+    Other
+}
+enum consenttype_tof_consents_consentkey{
+    account_access_consent
+    service_initiation_consent
+    insurance_consent
+}
+enum permissions_tof_consents_consentkey{
+    ReadAccountsBasic
+    ReadAccountsDetails
+    ReadParty
+    ReadBalances
+}
+enum accounttype_tof_request_consent{
+    Retail
+    SME
+    Corporate
+}
+enum accountsubtype_tof_request_consent{
+    CurrentAccount
+    SavingsAccount
+}
+enum permissions_tof_request_consent{
+    ReadAccountsDetails
+    ReadAccountsBasic
+    ReadParty
+    ReadBalances
+}
+enum identifiertype_tof_request_onbehalfof{
+    Other
+}
+enum usertype_tof_openfinance_billing{
+    Retail
+    SME
+    Corporate
+}
+enum purpose_tof_openfinance_billing{
+    AccountAggregation
+    RiskAssessment
+    TaxFiling
+    Onboarding
+    Verification
+    QuoteComparison
+    BudgetingAnalysis
+    FinancialAdvice
+    AuditReconciliation
+}
+enum status_tof_response_data{
+    Authorized
+    Rejected
+    Revoked
+    Expired
+    Consumed
+    Suspended
+}
+enum type_tof_response_request{
+    account_access_consent
+}
+enum accounttype_tof_response_consent{
+    Retail
+    SME
+    Corporate
+}
+enum accountsubtype_tof_response_consent{
+    CurrentAccount
+}
+enum permissions_tof_response_consent{
+    ReadAccountsBasic
+    ReadAccountsDetail
+    ReadBalances
+    ReadBeneficiariesBasic
+    ReadParty
+}
+enum identifiertype_tof_response_onbehalfof{
+    Other
+}
+enum usertype_tof_response_openfinancebilling{
+    Retail
+    SME
+    Corporate
+}
+enum purpose_tof_response_openfinancebilling{
+    AccountAggregation
+    RiskAssessment
+    Onboarding
+    Verification
+    QuoteComparison
+    BudgetingAnalysis
+    FinancialAdvice
+    AuditReconciliation
+}
+enum accounttype_tof_ctbody_data{
+    Retail
+    SME
+    Corporate
+}
+enum accountsubtype_tof_ctbody_data{
+    Savings
+    CurrentAccount
+}
+enum status_tof_ctbody_data{
+    Authorized
+    Rejected
+    Revoked
+    Expired
+    Consumed
+    Suspended
+}
+enum revokedby_tof_ctbody_data{
+    LFI
+    TPP
+    LFIInitiatedByUser
+    TPPInitiatedByUser
+}
+enum permissions_tof_ctbody_data{
+    ReadAccountsBasic
+    ReadAccountsDetail
+    ReadBalances
+    ReadBeneficiariesBasic
+    ReadParty
+}
+enum authorizationstatus_tof_multiauth_totalreq{
+    Pending
+    Approved
+    Rejected
+}

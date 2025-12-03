@@ -9,6 +9,7 @@ import { BiSort } from "react-icons/bi";
 interface RenderRowActionsProps {
   item: any;
   index: number;
+  nodeName:string
 }
 
 interface TableProps {
@@ -358,7 +359,9 @@ export const Table: React.FC<TableProps> = ({
                   </div>
                 </th>
               )}
-              {visibleColumns.map((column) => (
+              {visibleColumns.map((column) =>{
+                if(column?.type=="__ActionDetails__"&& tableActions != true){
+                return (
                 <th
                   key={column.id}
                   onClick={() => handleSort(column.id)}
@@ -380,7 +383,35 @@ export const Table: React.FC<TableProps> = ({
                     )}
                   </div>
                 </th>
-              ))}
+              )
+                }
+              if(column?.type!="__ActionDetails__"){
+                return (
+                <th
+                  key={column.id}
+                  onClick={() => handleSort(column.id)}
+                  className={`
+                    px-4 py-3
+                    text-left
+                    ${getFontSizeClass(branding.fontSize)}
+                    font-semibold
+                    ${tableSorting ? "cursor-pointer hover:bg-opacity-80" : ""}
+                    ${isDark ? "text-gray-200" : "text-gray-700"}
+                  `}
+                >
+                  <div className="flex items-center gap-2">
+                    {column.name}
+                    {tableSorting && sortColumn === column.id && (
+                      <BiSort
+                        size={14}
+                      />
+                    )}
+                  </div>
+                </th>
+              )
+                }
+              } )}
+              {(visibleColumns.find((cols:any)=>(cols?.type=='__ActionDetails__')) && tableActions==true)&&(<td>Action</td>)}
               {/* Column Visibility Control */}
               {tableSettings && 
               <th className="">
@@ -458,18 +489,18 @@ export const Table: React.FC<TableProps> = ({
                   )}
                   {visibleColumns.map((column) =>
                   { 
-                    if(column.type== '__ActionDetails__' && renderRowActions)
+                    if(column.type== '__ActionDetails__'&& tableActions!=true && renderRowActions)
                     {
                       return(
                         <td
                           key={column.id}
                           >
-                          {renderRowActions({ item: row, index })}
+                          {renderRowActions({ item: row, index,nodeName:`${column?.controlType+column?.id}`})}
                           </td>
                           )
-                        }else {
+                        }
+                        else if(column.type!= '__ActionDetails__') {
                           return(
-                          
                           <td
                             key={column.id}
                             className={`
@@ -485,6 +516,12 @@ export const Table: React.FC<TableProps> = ({
                           )
                         }
                   })}
+                  {
+                    (visibleColumns.find((cols:any)=>(cols?.type=='__ActionDetails__'))&&tableActions==true && renderRowActions)&&
+                    (
+                      <td>{renderRowActions({ item: row, index,nodeName:`${"ss"}`})}</td>
+                    )
+                  }
                 </tr>
               );
             }))}

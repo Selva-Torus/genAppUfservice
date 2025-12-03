@@ -22,7 +22,7 @@ export class EncryptInterceptor implements NestInterceptor {
         data.dpdKey,
         data.method,
         JSON.stringify(data),
-        'ct003_ag001_oprmatrix_v1',
+        'ct242_tpptest001_tpptest002_v2',
       );
 
       let authTag: any = '';

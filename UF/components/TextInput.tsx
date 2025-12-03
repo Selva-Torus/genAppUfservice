@@ -8,6 +8,7 @@ import { Icon } from "./Icon";
 import { ComponentSize, TextInputType, TextInputView, TextAreaPin, HeaderPosition, TooltipProps as TooltipPropsType, ComponentEvents } from "@/types/global";
 import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 import { GravityIcon } from "@/types/icons";
+import { RiCloseCircleLine } from "react-icons/ri";
 
 interface TextInputProps {
   nodeId?: string;
@@ -80,9 +81,15 @@ export const TextInput: React.FC<TextInputProps> = ({
   const [isDisabled, setIsDisabled] = useState(disabled);
   const [isVisible, setIsVisible] = useState(true);
 
-  const handleChange = (newValue: string) => {
+  // Sync internal value with prop value
+  useEffect(() => {
+    setInternalValue(value);
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
     setInternalValue(newValue);
-    // onChange?.(newValue);
+    onChange?.(e);
 
     // Emit rise events when onChange occurs
     const onChangeEvent = events?.find(e => e.name === "onChange");
@@ -93,6 +100,17 @@ export const TextInput: React.FC<TextInputProps> = ({
           data: { value: newValue },
         });
       });
+    }
+  };
+
+  const handleClear = () => {
+    setInternalValue("");
+    if (onChange) {
+      const syntheticEvent = {
+        target: { value: "", name },
+        currentTarget: { value: "", name }
+      } as React.ChangeEvent<HTMLInputElement>;
+      onChange(syntheticEvent);
     }
   };
 
@@ -232,8 +250,8 @@ export const TextInput: React.FC<TextInputProps> = ({
         <input
           type={type}
           name={name}
-          value={value}
-          onChange={onChange}
+          value={internalValue}
+          onChange={handleChange}
           placeholder={placeholder}
           disabled={isDisabled}
           readOnly={readOnly}
@@ -285,10 +303,11 @@ export const TextInput: React.FC<TextInputProps> = ({
           <div className={`absolute ${direction === "RTL" ? "left-3" : "right-3"} flex items-center gap-2`}>
             {hasClear && internalValue && (
               <button
-                onClick={() => handleChange("")}
+                onClick={handleClear}
+                type="button"
                 className={`${isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-700"} transition-colors`}
               >
-                <Icon data="close" size={16} />
+                <RiCloseCircleLine size={16} />
               </button>
             )}
             {endContent && (

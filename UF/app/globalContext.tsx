@@ -5,32 +5,94 @@
 import React from 'react';
 import { getCookie } from './components/cookieMgment';
 export interface TotalContextProps {
-  groupaaf24: any 
-  setgroupaaf24: React.Dispatch<React.SetStateAction<any>>
-  groupaaf24Props: any 
-  setgroupaaf24Props: React.Dispatch<React.SetStateAction<any>>
-  group7bc2c: any 
-  setgroup7bc2c: React.Dispatch<React.SetStateAction<any>>
-  group7bc2cProps: any 
-  setgroup7bc2cProps: React.Dispatch<React.SetStateAction<any>>
-  addd6f6de: any,
-  setaddd6f6de:React.Dispatch<React.SetStateAction<any>>
-  addd6f6deProps: any 
-  setaddd6f6deProps: React.Dispatch<React.SetStateAction<any>>
-  wefdwfds735d5: any,
-  setwefdwfds735d5:React.Dispatch<React.SetStateAction<any>>
-  wefdwfds735d5Props: any 
-  setwefdwfds735d5Props: React.Dispatch<React.SetStateAction<any>>
-  csdcsdcsd4b217: any,
-  setcsdcsdcsd4b217:React.Dispatch<React.SetStateAction<any>>
-  csdcsdcsd4b217Props: any 
-  setcsdcsdcsd4b217Props: React.Dispatch<React.SetStateAction<any>>
+  get_accounts1a859: any 
+  setget_accounts1a859: React.Dispatch<React.SetStateAction<any>>
+  get_accounts1a859Props: any 
+  setget_accounts1a859Props: React.Dispatch<React.SetStateAction<any>>
+  type16590: any,
+  settype16590:React.Dispatch<React.SetStateAction<any>>
+  type16590Props: any 
+  settype16590Props: React.Dispatch<React.SetStateAction<any>>
+  baseconsentid56ba8: any,
+  setbaseconsentid56ba8:React.Dispatch<React.SetStateAction<any>>
+  baseconsentid56ba8Props: any 
+  setbaseconsentid56ba8Props: React.Dispatch<React.SetStateAction<any>>
+  expirationdatetime2cbfb: any,
+  setexpirationdatetime2cbfb:React.Dispatch<React.SetStateAction<any>>
+  expirationdatetime2cbfbProps: any 
+  setexpirationdatetime2cbfbProps: React.Dispatch<React.SetStateAction<any>>
+  transactionfromdatetimeaa64f: any,
+  settransactionfromdatetimeaa64f:React.Dispatch<React.SetStateAction<any>>
+  transactionfromdatetimeaa64fProps: any 
+  settransactionfromdatetimeaa64fProps: React.Dispatch<React.SetStateAction<any>>
+  transactiontodatetime00c33: any,
+  settransactiontodatetime00c33:React.Dispatch<React.SetStateAction<any>>
+  transactiontodatetime00c33Props: any 
+  settransactiontodatetime00c33Props: React.Dispatch<React.SetStateAction<any>>
+  accountidb7d92: any,
+  setaccountidb7d92:React.Dispatch<React.SetStateAction<any>>
+  accountidb7d92Props: any 
+  setaccountidb7d92Props: React.Dispatch<React.SetStateAction<any>>
+  accounttypefc49d: any,
+  setaccounttypefc49d:React.Dispatch<React.SetStateAction<any>>
+  accounttypefc49dProps: any 
+  setaccounttypefc49dProps: React.Dispatch<React.SetStateAction<any>>
+  accountsubtypeb9399: any,
+  setaccountsubtypeb9399:React.Dispatch<React.SetStateAction<any>>
+  accountsubtypeb9399Props: any 
+  setaccountsubtypeb9399Props: React.Dispatch<React.SetStateAction<any>>
+  tradingname22dd3: any,
+  settradingname22dd3:React.Dispatch<React.SetStateAction<any>>
+  tradingname22dd3Props: any 
+  settradingname22dd3Props: React.Dispatch<React.SetStateAction<any>>
+  legalnamebccff: any,
+  setlegalnamebccff:React.Dispatch<React.SetStateAction<any>>
+  legalnamebccffProps: any 
+  setlegalnamebccffProps: React.Dispatch<React.SetStateAction<any>>
+  identifiertype37db2: any,
+  setidentifiertype37db2:React.Dispatch<React.SetStateAction<any>>
+  identifiertype37db2Props: any 
+  setidentifiertype37db2Props: React.Dispatch<React.SetStateAction<any>>
+  identifiera6abf: any,
+  setidentifiera6abf:React.Dispatch<React.SetStateAction<any>>
+  identifiera6abfProps: any 
+  setidentifiera6abfProps: React.Dispatch<React.SetStateAction<any>>
+  consentida3e0f: any,
+  setconsentida3e0f:React.Dispatch<React.SetStateAction<any>>
+  consentida3e0fProps: any 
+  setconsentida3e0fProps: React.Dispatch<React.SetStateAction<any>>
+  apiname543a3: any,
+  setapiname543a3:React.Dispatch<React.SetStateAction<any>>
+  apiname543a3Props: any 
+  setapiname543a3Props: React.Dispatch<React.SetStateAction<any>>
+  permissionsf74a7: any,
+  setpermissionsf74a7:React.Dispatch<React.SetStateAction<any>>
+  permissionsf74a7Props: any 
+  setpermissionsf74a7Props: React.Dispatch<React.SetStateAction<any>>
+  usertype218a1: any,
+  setusertype218a1:React.Dispatch<React.SetStateAction<any>>
+  usertype218a1Props: any 
+  setusertype218a1Props: React.Dispatch<React.SetStateAction<any>>
+  purpose3c50a: any,
+  setpurpose3c50a:React.Dispatch<React.SetStateAction<any>>
+  purpose3c50aProps: any 
+  setpurpose3c50aProps: React.Dispatch<React.SetStateAction<any>>
+  urle0b3a: any,
+  seturle0b3a:React.Dispatch<React.SetStateAction<any>>
+  urle0b3aProps: any 
+  seturle0b3aProps: React.Dispatch<React.SetStateAction<any>>
+  call_get_accounts51bce: any,
+  setcall_get_accounts51bce:React.Dispatch<React.SetStateAction<any>>
+  call_get_accounts51bceProps: any 
+  setcall_get_accounts51bceProps: React.Dispatch<React.SetStateAction<any>>
 
 ////// screen states 
-  oprmatrixuf_v1Props: any 
-  setoprmatrixuf_v1Props: React.Dispatch<React.SetStateAction<any>>
+  vob_get_accounts_consents_v1Props: any 
+  setvob_get_accounts_consents_v1Props: React.Dispatch<React.SetStateAction<any>>
 
 ///////// dfd
+  dfd_codedescription_v1Props: any 
+  setdfd_codedescription_v1Props: React.Dispatch<React.SetStateAction<any>>
 
   refetch: any,
   setRefetch: React.Dispatch<React.SetStateAction<any>>
@@ -72,8 +134,8 @@ export const TotalContext = React.createContext<TotalContextProps | {}>({})
 
 const GlobalContext = ({children} : {children: React.ReactNode}) => {
       //////////
-        const [groupaaf24, setgroupaaf24 ] = React.useState<any>({}) 
-    const [groupaaf24Props, setgroupaaf24Props ] = React.useState<any>({
+        const [get_accounts1a859, setget_accounts1a859 ] = React.useState<any>({}) 
+    const [get_accounts1a859Props, setget_accounts1a859Props ] = React.useState<any>({
       validation:false,
       required:false,
       refetch:false,
@@ -83,32 +145,133 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       isHidden: false,
       selectedIds:[]
       }) 
-        const [group7bc2c, setgroup7bc2c ] = React.useState<any>({}) 
-    const [group7bc2cProps, setgroup7bc2cProps ] = React.useState<any>({
-      validation:false,
-      required:false,
-      refetch:false,
-      refresh:false,
-      isDisabled: false,
-      presetValues: '',
-      isHidden: false,
-      selectedIds:[]
-      }) 
-   const [addd6f6de,setaddd6f6de] = React.useState<any>({
+   const [type16590,settype16590] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [wefdwfds735d5,setwefdwfds735d5] = React.useState<any>({
+   const [baseconsentid56ba8,setbaseconsentid56ba8] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [csdcsdcsd4b217,setcsdcsdcsd4b217] = React.useState<any>({
+   const [expirationdatetime2cbfb,setexpirationdatetime2cbfb] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [transactionfromdatetimeaa64f,settransactionfromdatetimeaa64f] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [transactiontodatetime00c33,settransactiontodatetime00c33] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [accountidb7d92,setaccountidb7d92] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [accounttypefc49d,setaccounttypefc49d] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [accountsubtypeb9399,setaccountsubtypeb9399] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [tradingname22dd3,settradingname22dd3] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [legalnamebccff,setlegalnamebccff] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [identifiertype37db2,setidentifiertype37db2] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [identifiera6abf,setidentifiera6abf] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [consentida3e0f,setconsentida3e0f] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [apiname543a3,setapiname543a3] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [permissionsf74a7,setpermissionsf74a7] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [usertype218a1,setusertype218a1] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [purpose3c50a,setpurpose3c50a] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [urle0b3a,seturle0b3a] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [call_get_accounts51bce,setcall_get_accounts51bce] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
@@ -116,17 +279,33 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refresh:false,
     }) 
     ///////////
-    const [refresh, setRefresh] = React.useState<any>({       buttonAddd6f6de:false,
-       textinputwefdwfds735d5:false,
-       documentuploadercsdcsdcsd4b217:false,
-       groupgroupaaf24:false,
-       groupgroup7bc2c:false,
+    const [refresh, setRefresh] = React.useState<any>({       dropdowntype16590:false,
+       textinputBaseConsentId56ba8:false,
+       datepickerExpirationDateTime2cbfb:false,
+       datepickerTransactionFromDateTimeaa64f:false,
+       datepickerTransactionToDateTime00c33:false,
+       textinputAccountIdb7d92:false,
+       dropdownaccounttypefc49d:false,
+       dropdownaccountsubtypeb9399:false,
+       textinputTradingName22dd3:false,
+       textinputLegalNamebccff:false,
+       dropdownIdentifierType37db2:false,
+       textinputIdentifiera6abf:false,
+       textinputConsentIda3e0f:false,
+       dropdownapiname543a3:false,
+       dropdownpermissionsf74a7:false,
+       dropdownUserType218a1:false,
+       dropdownPurpose3c50a:false,
+       textinputUrle0b3a:false,
+       buttonCall_Get_Accounts51bce:false,
+       groupGet_Accounts1a859:false,
       })
 
   ////// screen states 
-   const [oprmatrixuf_v1Props,setoprmatrixuf_v1Props] = React.useState<any>([])
+   const [vob_get_accounts_consents_v1Props,setvob_get_accounts_consents_v1Props] = React.useState<any>([])
 
 ///////// dfd
+  const [dfd_codedescription_v1Props,setdfd_codedescription_v1Props] = React.useState<any>([])
     const [searchParam , setSearchParam] = React.useState<string>("")
     const [disableParam , setDisableParam] = React.useState<any>({})
     const [globalState , setGlobalState] = React.useState<any>({})
@@ -153,26 +332,56 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       value={
       {
       //
-        groupaaf24, 
-        setgroupaaf24,
-        groupaaf24Props, 
-        setgroupaaf24Props,
-        group7bc2c, 
-        setgroup7bc2c,
-        group7bc2cProps, 
-        setgroup7bc2cProps,
-        addd6f6de,
-        setaddd6f6de, 
-        wefdwfds735d5,
-        setwefdwfds735d5, 
-        csdcsdcsd4b217,
-        setcsdcsdcsd4b217, 
+        get_accounts1a859, 
+        setget_accounts1a859,
+        get_accounts1a859Props, 
+        setget_accounts1a859Props,
+        type16590,
+        settype16590, 
+        baseconsentid56ba8,
+        setbaseconsentid56ba8, 
+        expirationdatetime2cbfb,
+        setexpirationdatetime2cbfb, 
+        transactionfromdatetimeaa64f,
+        settransactionfromdatetimeaa64f, 
+        transactiontodatetime00c33,
+        settransactiontodatetime00c33, 
+        accountidb7d92,
+        setaccountidb7d92, 
+        accounttypefc49d,
+        setaccounttypefc49d, 
+        accountsubtypeb9399,
+        setaccountsubtypeb9399, 
+        tradingname22dd3,
+        settradingname22dd3, 
+        legalnamebccff,
+        setlegalnamebccff, 
+        identifiertype37db2,
+        setidentifiertype37db2, 
+        identifiera6abf,
+        setidentifiera6abf, 
+        consentida3e0f,
+        setconsentida3e0f, 
+        apiname543a3,
+        setapiname543a3, 
+        permissionsf74a7,
+        setpermissionsf74a7, 
+        usertype218a1,
+        setusertype218a1, 
+        purpose3c50a,
+        setpurpose3c50a, 
+        urle0b3a,
+        seturle0b3a, 
+        call_get_accounts51bce,
+        setcall_get_accounts51bce, 
         ////// screen states 
-          oprmatrixuf_v1Props,
-          setoprmatrixuf_v1Props,
+          vob_get_accounts_consents_v1Props,
+          setvob_get_accounts_consents_v1Props,
         //////////
 
         ///////// dfd
+        dfd_codedescription_v1Props,
+        setdfd_codedescription_v1Props,
         refetch,
         setRefetch,
         searchParam,

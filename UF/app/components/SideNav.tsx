@@ -151,7 +151,7 @@ const SideNav = ({
     localStorage.clear()
     sessionStorage.clear()
     deleteAllCookies()
-    window.location.href = '/ct003/ag001/oprmatrix/v1'
+    window.location.href = '/ct242/tpptest001/tpptest002/v2'
   }
 
   const hasMatchingName = (obj: any, input: string): boolean => {
@@ -349,8 +349,6 @@ const SideNav = ({
                       items={getNestedMenu(menu)}
                       popupProps={{
                         style: {
-                          backgroundColor: brandColor,
-                          color: `${isLightColor(brandColor)}`,
                           position:'fixed'
                         }
                         // placement: `${sidebarStyle !== 'compact' ? 'bottom-end' : 'right-end'}`
@@ -543,8 +541,8 @@ const FullViewAvatar = ({
         ]}
         popupProps={{
           style: {
-            backgroundColor: brandColor,
-            color: isLightColor(brandColor),
+           // backgroundColor: brandColor,
+           // color: isLightColor(brandColor),
             top: "-100px",
             left : "130px"
           }
@@ -613,8 +611,8 @@ const PartialViewAvatar = ({
         ]}
         popupProps={{
           style: {
-            backgroundColor: brandColor,
-            color: isLightColor(brandColor),
+            //backgroundColor: brandColor,
+            //color: isLightColor(brandColor),
             top: "-120px",
             left : "70px"
           }

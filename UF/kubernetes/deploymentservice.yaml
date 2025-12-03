@@ -1,10 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: ct003-oprmatrix-uf-generator
-  namespace: ct003-oprmatrix-uf-v1
+  name: ct242-tpptest002-uf-generator
+  namespace: ct242-tpptest002-uf-v2
   labels:
-    app: ct003-oprmatrix-uf-generator
+    app: ct242-tpptest002-uf-generator
 spec:
   replicas: 1
   strategy:
@@ -17,15 +17,15 @@ spec:
       - setWeight: 100  # 100% Canary (Stable)
   selector:
     matchLabels:
-      app: ct003-oprmatrix-uf-generator
+      app: ct242-tpptest002-uf-generator
   template:
     metadata:
       labels:
-        app: ct003-oprmatrix-uf-generator
+        app: ct242-tpptest002-uf-generator
     spec:
       containers:
-      - name: ct003-oprmatrix-uf-generator-frontend-container
-        image: 192.168.2.164:5000/ct003-oprmatrix-uf-v1:docker_tag
+      - name: ct242-tpptest002-uf-generator-frontend-container
+        image: 192.168.2.164:5000/ct242-tpptest002-uf-v2:docker_tag
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -35,13 +35,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ct003-oprmatrix-uf-generator
-  namespace: ct003-oprmatrix-uf-v1
+  name: ct242-tpptest002-uf-generator
+  namespace: ct242-tpptest002-uf-v2
   labels:
-    app: ct003-oprmatrix-uf-generator
+    app: ct242-tpptest002-uf-generator
 spec:
   selector:
-    app: ct003-oprmatrix-uf-generator
+    app: ct242-tpptest002-uf-generator
   ports:
     - name: http
       protocol: TCP
