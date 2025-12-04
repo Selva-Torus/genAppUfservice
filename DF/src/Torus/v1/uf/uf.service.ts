@@ -3193,6 +3193,7 @@ export class UfService {
           accessProfile: profile.accessProfile,
           dap: profile?.dap ? profile?.dap : undefined,
           combinations,
+          orgGrp : profile.orgGrp
         };
       });
     } catch (error) {
