@@ -365,7 +365,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
 
   return (
     <div className={`g-root grid h-full grid-cols-12`}>
-      <div className='col-span-12'>
+      <div className='col-span-12 overflow-hidden'>
         <div className='flex flex-col rounded-md'>
           <div className='flex w-full items-center justify-between'>
             <div className=' ml-3.5 flex items-center justify-start gap-1.5 '>

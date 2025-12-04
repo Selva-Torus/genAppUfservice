@@ -27,13 +27,28 @@ const ParentComponent = () => {
   const token: string = getCookie('token')
   const decodedToken: any = decodeToken(token)
   const [user, setUser] = useState<string[]>([decodedToken?.loginId])
-  const { encAppFalg,setEncAppFalg}= useContext(TotalContext) as TotalContextProps
-  const [range , setRange ] = useState<any>(null)
-  const [ fabrics , setFabrics ] = useState<Array<string>>([])
+  const { encAppFalg, setEncAppFalg } = useContext(TotalContext) as TotalContextProps
+  const today = new Date();
+  // 7 days back
+  const past = new Date();
+  past.setDate(today.getDate() - 7);
+  const [range, setRange] = useState<any>({
+    start: {
+      year: past.getFullYear(),
+      month: past.getMonth()+1,
+      day: past.getDate()
+    },
+    end: {
+      year: today.getFullYear(),
+      month: today.getMonth()+1,
+      day: today.getDate()
+    }
+  });
+  const [fabrics, setFabrics] = useState<Array<string>>([])
   const [jsonViewerData, setJsonViewerData] = useState({})
   const router = useRouter()
-  let landingScreen:string = 'CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1';
-  const encryptionFlagApp: boolean = false;    
+  let landingScreen: string = 'CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1';
+  const encryptionFlagApp: boolean = false;
   const [jsonData, setJsonData] = useState({
     data: [],
     page: 1,
@@ -58,11 +73,11 @@ const ParentComponent = () => {
   let payload:any = useMemo(() => {
     return {
       tenant: 'CT242',
-       fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
-            suffixes[prefix]
-              ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
-              : []
-          ) : [],
+      fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
+        suffixes[prefix]
+          ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
+          : []
+      ) : [],
       appgroup: appGroup,
       app: app,
       user: user,
@@ -94,33 +109,33 @@ const ParentComponent = () => {
       if (activeTab === 'torus') {
         if (result && typeof result === 'object' && 'data' in result) {
           const systemLogResult :any  = [];
-          
-      for (const item of response.data.data) {
-        const { AFK, CATK, AFGK, AFVK, FNK } = item;
 
-        for (const log of item.AFSK.logInfo) {
-          const { sessionInfo, errorDetails, DateAndTime } = log;
+          for (const item of response.data.data) {
+            const { AFK, CATK, AFGK, AFVK, FNK } = item;
 
-          systemLogResult.push({
-            artifact: AFK,
-            grpDetails: `${CATK} > ${AFGK}`,
-            version: AFVK,
-            fabric: FNK,
-            user: sessionInfo.user,
-            accessProfile: sessionInfo.accessProfile,
-            profile: sessionInfo.profile,
-            timeStamp: DateAndTime,
-            errorCode: errorDetails.T_ErrorCode,
-            errorDescription: typeof errorDetails.errorDetail === "string" ? errorDetails.errorDetail : "Get More Info",
-            errorDetails,
-          });
-        }
-      }
+            for (const log of item.AFSK.logInfo) {
+              const { sessionInfo, errorDetails, DateAndTime } = log;
+
+              systemLogResult.push({
+                artifact: AFK,
+                grpDetails: `${CATK} > ${AFGK}`,
+                version: AFVK,
+                fabric: FNK,
+                user: sessionInfo.user,
+                accessProfile: sessionInfo.accessProfile,
+                profile: sessionInfo.profile,
+                timeStamp: DateAndTime,
+                errorCode: errorDetails.T_ErrorCode,
+                errorDescription: typeof errorDetails.errorDetail === "string" ? errorDetails.errorDetail : "Get More Info",
+                errorDetails,
+              });
+            }
+          }
       if(systemLogResult.length && systemLogResult[0].errorDetails){
-        setJsonViewerData(systemLogResult[0].errorDetails)
+            setJsonViewerData(systemLogResult[0].errorDetails)
       }else{
-        setJsonViewerData({})
-      }
+            setJsonViewerData({})
+          }
           setJsonData(prevData => ({
             ...prevData,
             data: systemLogResult,
@@ -253,47 +268,47 @@ const ParentComponent = () => {
     }))
   }
   const securityCheck = async () => {
-  try {
-    const encryptionDpd: string =
-      'CK:CT242:FNGK:AF:FNK:CDF-DPD:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:TPPTESTDPD:AFVK:v2'
-    const encryptionMethod: string = ''
-    let introspect: any
-    if (encryptionFlagApp) {
-      introspect = await AxiosService.get('/UF/introspect', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        params: {
-          dpdKey: encryptionDpd,
-          method: encryptionMethod,
+    try {
+      const encryptionDpd: string =
+        'CK:CT242:FNGK:AF:FNK:CDF-DPD:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:TPPTESTDPD:AFVK:v2'
+      const encryptionMethod: string = ''
+      let introspect: any
+      if (encryptionFlagApp) {
+        introspect = await AxiosService.get('/UF/introspect', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
+            dpdKey: encryptionDpd,
+            method: encryptionMethod,
           key:"Logs Screen"
-        }
-      })
-    } else {
-      introspect = await AxiosService.get('/UF/introspect', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        params: {
+          }
+        })
+      } else {
+        introspect = await AxiosService.get('/UF/introspect', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
           key:"Logs Screen"
-        }
-      })
-    }
+          }
+        })
+      }
 
-    if (introspect?.data?.authenticated) {
-      if (!decodedToken.selectedAccessProfile) {
-        router.push('/select-context')
+      if (introspect?.data?.authenticated) {
+        if (!decodedToken.selectedAccessProfile) {
+          router.push('/select-context')
+        }
+        if (introspect?.data?.updatedToken) {
+          setCookie('token', introspect?.data.updatedToken)
+        }
+      } else {
+        await deleteAllCookies()
       }
-      if (introspect?.data?.updatedToken) {
-        setCookie('token', introspect?.data.updatedToken)
-      }
-    } else {
+    } catch (err: any) {
       await deleteAllCookies()
     }
-  } catch (err: any) {
-    await deleteAllCookies()
   }
-}
 
   useEffect(() => {
     if (token) {

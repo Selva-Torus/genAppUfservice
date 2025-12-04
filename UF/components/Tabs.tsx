@@ -98,6 +98,7 @@ export const Tabs: React.FC<TabsProps> = ({
                 font-medium
                 whitespace-nowrap
                 transition-all
+                w-1/${items.length}
                 ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
                 ${isActive
                   ? "text-white shadow-sm"

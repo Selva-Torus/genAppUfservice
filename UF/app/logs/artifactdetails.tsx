@@ -278,216 +278,215 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
   }
 
   return (
-    <div className='grid h-full grid-cols-12'>
+    <div
+      className='flex h-full w-full gap-2 overflow-hidden'
+    >
       <div
-        className='col-span-12 flex h-full w-full gap-2 overflow-hidden'
+        className={twMerge('flex h-full min-w-[200px] flex-col rounded-lg border px-2 w-1/3 lg:w-1/4', borderColor)}
       >
         <div
-          className={twMerge('flex h-full min-w-[200px] flex-col rounded-lg border px-2', borderColor)}
+          className={twMerge('flex flex-col border-b py-2 w-full', borderColor)}
         >
           <div
-            className={twMerge('flex flex-col border-b py-2', borderColor)}
+            onClick={() => setNodeData(null)}
+            className='flex items-center justify-between px-3 py-2 w-full'
           >
-            <div
-              onClick={() => setNodeData(null)}
-              className='flex items-center justify-between px-3 py-2'
-            >
-              <div className='flex gap-2'>
+            <div className='flex gap-2 w-2/3'>
+              <span>
                 <GoArrowLeft
-                  className='cursor-pointer'
+                  className='cursor-pointer '
                   role='button'
                   onClick={() => setNodeData(null)}
                 />
-                <Text variant='subheader-1'
-                  needTooltip
-                  tooltipProps={{ title: artifact.toUpperCase(), placement: "right-end" }}
-                >
-                  {artifact.toUpperCase()}
-                </Text>
-              </div>
-              <Text variant='body-1'
-                color='brand'
-                className='rounded-xl px-3'
+              </span>
+              <Text variant='subheader-1'
+                className='w-full truncate'
               >
-                {version}
+                <span title={artifact.toUpperCase()}>{artifact.toUpperCase()}</span>
               </Text>
             </div>
-            {processId && (
-              <div
-                className='flex w-fit rounded-full p-2'
-                style={{
-                  backgroundColor: selectionColor
-                }}
-              >
-                <Text variant='body-1'>UID: {processId}</Text>
-                <Button
-                  view='flat'
-                  size='xs'
-                  className='border-none'
-                  onClick={e => {
-                    e.stopPropagation()
-                    handleCopyToClipboard(processId)
-                  }}
-                >
-                  {copied && copied === processId ? (
-                    <TbCopyCheckFilled className='text-green-500' />
-                  ) : (
-                    <TbCopy />
-                  )}
-                </Button>
-              </div>
-            )}
+            <Text variant='body-1'
+              color='brand'
+              className='rounded-xl px-3'
+            >
+              {version}
+            </Text>
           </div>
-          {/* seperate */}
-          <RenderNodesInfo
-            nodes={nodeData.node}
-            selectedNode={selectedNode}
-            handleNodeClick={handleNodeClick}
-            copied={copied}
-            handleCopyToClipboard={handleCopyToClipboard}
-          />
-        </div>
-
-        <div
-          className={twMerge('flex h-full w-full overflow-x-auto flex-col rounded-lg border', borderColor)}
-        >
-          <div className='flex h-full w-full rounded-lg'>
-            <div className='flex h-full w-[70%] min-w-[400px]  flex-col gap-3 p-2'>
-              <div
-                style={{
-                  backgroundColor: selectionColor
+          {processId && (
+            <div
+              className='flex w-fit rounded-full p-2'
+              style={{
+                backgroundColor: selectionColor
+              }}
+            >
+              <Text variant='body-1'>UID: {processId}</Text>
+              <Button
+                view='flat'
+                size='xs'
+                className='border-none'
+                onClick={e => {
+                  e.stopPropagation()
+                  handleCopyToClipboard(processId)
                 }}
-                className='flex w-full gap-2 rounded-lg p-3'
               >
-                <div className='flex gap-3'>
-                  <div className='mt-3 flex flex-col gap-3'>
-                    <div className='flex flex-col gap-2'>
-                      <Text variant='body-1' className='text-nowrap text-end'
-                      >
-                        Process started at
-                      </Text>
-                      <Text variant='body-1' color='secondary' className='text-nowrap'
-                      >
-                        {formatDate(selectedNode?.time)}
-                      </Text>
-                    </div>
-                    <div className='flex flex-col gap-2 py-2'>
-                      <Text variant='body-1' className='text-nowrap text-end'
-                      >
-                        Finished at
-                      </Text>
-                      <Text variant='body-1' color='secondary' className='text-nowrap'
-                      >
-                        {handleGetFinishingTime(selectedNode?.time).endTime}
-                      </Text>
-                    </div>
-                  </div>
+                {copied && copied === processId ? (
+                  <TbCopyCheckFilled className='text-green-500' />
+                ) : (
+                  <TbCopy />
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+        {/* seperate */}
+        <RenderNodesInfo
+          nodes={nodeData.node}
+          selectedNode={selectedNode}
+          handleNodeClick={handleNodeClick}
+          copied={copied}
+          handleCopyToClipboard={handleCopyToClipboard}
+        />
+      </div>
 
-                  <div className='relative flex flex-col items-center '>
-                    <div
-                      style={{
-                        backgroundColor: brandColor
-                      }}
-                      className='absolute h-full w-px'
-                    ></div>
-                    <div className='flex flex-col'>
-                      <div className='flex items-center '>
-                        <div
-                          style={{
-                            backgroundColor: brandColor
-                          }}
-                          className='h-2 w-2 rounded-full'
-                        ></div>
-                        <div className='h-20'></div>
-                      </div>
-                      <div className='flex items-center '>
-                        <div
-                          style={{
-                            backgroundColor: brandColor
-                          }}
-                          className='h-2 w-2 rounded-full'
-                        ></div>
-                        <div className='h-16'></div>
-                      </div>
-                    </div>
+      <div
+        className={twMerge('flex h-full w-full overflow-x-auto flex-col rounded-lg border', borderColor)}
+      >
+        <div className='flex h-full w-full rounded-lg'>
+          <div className='flex h-full w-[70%] min-w-[400px]  flex-col gap-3 p-2'>
+            <div
+              style={{
+                backgroundColor: selectionColor
+              }}
+              className='flex w-full gap-2 rounded-lg p-3'
+            >
+              <div className='flex gap-3'>
+                <div className='mt-3 flex flex-col gap-3'>
+                  <div className='flex flex-col gap-2'>
+                    <Text variant='body-1' className='text-nowrap text-end'
+                    >
+                      Process started at
+                    </Text>
+                    <Text variant='body-1' color='secondary' className='text-nowrap'
+                    >
+                      {formatDate(selectedNode?.time)}
+                    </Text>
+                  </div>
+                  <div className='flex flex-col gap-2 py-2'>
+                    <Text variant='body-1' className='text-nowrap text-end'
+                    >
+                      Finished at
+                    </Text>
+                    <Text variant='body-1' color='secondary' className='text-nowrap'
+                    >
+                      {handleGetFinishingTime(selectedNode?.time).endTime}
+                    </Text>
                   </div>
                 </div>
 
-                <div className='flex w-full justify-between '>
-                  <div>
-                    <Text variant='body-2' className='text-nowrap'
-                    >
-                      {
-                        handleGetFinishingTime(selectedNode?.time)
-                          .processingTime
-                      }
-                    </Text>
+                <div className='relative flex flex-col items-center '>
+                  <div
+                    style={{
+                      backgroundColor: brandColor
+                    }}
+                    className='absolute h-full w-px'
+                  ></div>
+                  <div className='flex flex-col'>
+                    <div className='flex items-center '>
+                      <div
+                        style={{
+                          backgroundColor: brandColor
+                        }}
+                        className='h-2 w-2 rounded-full'
+                      ></div>
+                      <div className='h-20'></div>
+                    </div>
+                    <div className='flex items-center '>
+                      <div
+                        style={{
+                          backgroundColor: brandColor
+                        }}
+                        className='h-2 w-2 rounded-full'
+                      ></div>
+                      <div className='h-16'></div>
+                    </div>
                   </div>
-                  <div className='flex gap-3 text-center'>
-                    <Text
-                      variant='body-1'
-                      color={
-                        status.toLowerCase() == 'success' ? "brand" : "danger-heavy"
-                      }
-                      className={`rounded-full px-2`}
-                    >
-                      {selectedNode ? selectedNode.status : status}
-                    </Text>
-                  </div>
+                </div>
+              </div>
+
+              <div className='flex w-full justify-between '>
+                <div>
+                  <Text variant='body-2' className='text-nowrap'
+                  >
+                    {
+                      handleGetFinishingTime(selectedNode?.time)
+                        .processingTime
+                    }
+                  </Text>
+                </div>
+                <div className='flex gap-3 text-center'>
+                  <Text
+                    variant='body-1'
+                    color={
+                      status.toLowerCase() == 'success' ? "brand" : "danger-heavy"
+                    }
+                    className={`rounded-full px-2`}
+                  >
+                    {selectedNode ? selectedNode.status : status}
+                  </Text>
                 </div>
               </div>
             </div>
+          </div>
 
-            <hr
-              className={twMerge('h-[95%] w-[0.5px] self-center border', borderColor)}
-            />
+          <hr
+            className={twMerge('h-[95%] w-[0.5px] self-center border', borderColor)}
+          />
 
-            <div className={`flex h-full w-1/2 min-w-[400px] p-3 text-center`}>
-              <div className='w-full'>
-                <Tabs
-                  direction='horizontal'
-                  items={[
-                    {
-                      id: 'request',
-                      title: 'Request'
-                    },
-                    {
-                      id: 'response',
-                      title: 'Response'
-                    },
-                    {
-                      id: 'exception',
-                      title: 'Exception'
-                    },
-                  ]}
-                  onChange={setActiveTab}
-                  size='m'
-                  className='w-full'
-                />
-                <div
-                  className={`h-[95.5%] overflow-auto pl-2 pt-3`}
-                >
-                  {['request', 'response', 'exception'].map(tabId => (
-                    <div
-                      style={{
-                        display: activeTab === tabId ? 'block' : 'none'
-                      }}
-                      key={tabId}
-                    >
-                      <JsonView
-                        src={
-                          selectedNode?.[tabId] ?? {
-                            data: `no ${tabId} data available`
-                          }
+          <div className={`flex h-full w-1/2 min-w-[400px] p-3 text-center`}>
+            <div className='w-full'>
+              <Tabs
+                direction='horizontal'
+                items={[
+                  {
+                    id: 'request',
+                    title: 'Request'
+                  },
+                  {
+                    id: 'response',
+                    title: 'Response'
+                  },
+                  {
+                    id: 'exception',
+                    title: 'Exception'
+                  },
+                ]}
+                onChange={setActiveTab}
+                size='m'
+                className='w-full'
+              />
+              <div
+                className={`h-[95.5%] overflow-auto pl-2 pt-3`}
+              >
+                {['request', 'response', 'exception'].map(tabId => (
+                  <div
+                    style={{
+                      display: activeTab === tabId ? 'block' : 'none'
+                    }}
+                    key={tabId}
+                  >
+                    <JsonView
+                      src={
+                        selectedNode?.[tabId] ?? {
+                          data: `no ${tabId} data available`
                         }
-                        theme='atom'
-                        enableClipboard={false}
-                        style={{ fill: '#1A2024' }}
-                        className='g-text g-text_variant_code-2'
-                      />
-                    </div>
-                  ))}
-                </div>
+                      }
+                      theme='atom'
+                      enableClipboard={false}
+                      style={{ fill: '#1A2024' }}
+                      className='g-text g-text_variant_code-2'
+                    />
+                  </div>
+                ))}
               </div>
             </div>
           </div>
