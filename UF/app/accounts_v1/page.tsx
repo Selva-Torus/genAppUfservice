@@ -13,6 +13,7 @@ import { Icon } from "@/components/Icon";
 import { Text } from "@/components/Text";
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
+import Groupais_group  from "./Groupais_group/Groupais_group";
 import GroupGet_Accounts  from "./GroupGet_Accounts/GroupGet_Accounts";
 
 
@@ -23,6 +24,7 @@ export default function PageAccountsV1() {
   "Template 1": {
     "allowedGroups": [
       "canvas",
+      "ais_group",
       "get_accounts"
     ]
   }
@@ -44,7 +46,9 @@ export default function PageAccountsV1() {
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
   const {vob_get_accounts_consents_v1Props, setvob_get_accounts_consents_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const [checkais_group,setCheckais_group,]=useState(false);
   const [checkget_accounts,setCheckget_accounts,]=useState(false);
+  const {ais_groupbe189, setais_groupbe189} = useContext(TotalContext) as TotalContextProps;
   const {get_accounts1a859, setget_accounts1a859} = useContext(TotalContext) as TotalContextProps;
   const {dfd_codedescription_v1Props, setdfd_codedescription_v1Props} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagPage: boolean = false|| encAppFalg.flag;
@@ -186,6 +190,10 @@ export default function PageAccountsV1() {
           setdfd_codedescription_v1Props(codedescription_v1Data?.data?.dataset?.data || []);
           if (security == 'AA') {
           allowedGroup.map((nodes:any)=>{
+            if(nodes?.groupName == 'ais_group' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
+            {
+              setCheckais_group(true)
+            }
             if(nodes?.groupName == 'Get_Accounts' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
             {
               setCheckget_accounts(true)
@@ -203,6 +211,8 @@ export default function PageAccountsV1() {
         //Code Execution
         if (code !="" ) {
           let codeStates: any = {}
+          codeStates['ais_group'] = ais_groupbe189;
+          codeStates['setais_group'] = setais_groupbe189;
           codeStates['get_accounts'] = get_accounts1a859;
           codeStates['setget_accounts'] = setget_accounts1a859;
           codeExecution(code,codeStates);
@@ -252,6 +262,20 @@ export default function PageAccountsV1() {
           borderWidth: '2px'
       })
       }}>
+        {checkais_group && initialLoad &&<Groupais_group  
+          lockedData={lockedData} 
+          setLockedData={setLockedData} 
+          primaryTableData={primaryTableData}
+          setPrimaryTableData={setPrimaryTableData}
+          checkToAdd={checkToAdd} 
+          setCheckToAdd={setCheckToAdd}  
+          refetch={refetch}
+          setRefetch={setRefetch}
+          dropdownData={dropdownData} 
+          setDropdownData={setDropdownData}
+          encryptionFlagPageData={encryptionFlagPageData}
+          paginationDetails={paginationDetails}        />}
+        
         {checkget_accounts && initialLoad &&<GroupGet_Accounts  
           lockedData={lockedData} 
           setLockedData={setLockedData} 

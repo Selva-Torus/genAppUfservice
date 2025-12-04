@@ -15,7 +15,7 @@ export class AppService implements OnModuleInit{
 
   async onModuleInit() {
     console.log('Application started, calling API...');
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoibWFyaSIsImNsaWVudCI6IkNUMjQyIiwidHlwZSI6ImMiLCJsb2dUeXBlIjoibW9uZ29kYiIsInNpZCI6IjBiZTJiOTliLWI0NzctNGVhOS1iODUxLTEwYjMxMTA0OWU3MCIsImlhdCI6MTc2NDc1MTk0MSwiZXhwIjoxNzY0NzUzMTQxfQ.teWdcrRj3OlZmLHaqKHf5b2WMNfRekZKqHfH47MlXjQ';
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoibWFyaSIsImNsaWVudCI6IkNUMjQyIiwidHlwZSI6ImMiLCJsb2dUeXBlIjoibW9uZ29kYiIsInNpZCI6ImZiNTE1ZGZlLTMzMmMtNDk5Mi1iMzZkLTYzMWIyN2FiNWE4OSIsImlhdCI6MTc2NDgzMDk3MCwiZXhwIjoxNzY0ODMyMTcwfQ.idQeYRXDX29aio6KvQPqO8QRu4CgVe_APOWcPKzm_BQ';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
     if(Object.keys(preParedData).includes('erdWithData'))
       {

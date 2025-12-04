@@ -5,10 +5,18 @@
 import React from 'react';
 import { getCookie } from './components/cookieMgment';
 export interface TotalContextProps {
+  ais_groupbe189: any 
+  setais_groupbe189: React.Dispatch<React.SetStateAction<any>>
+  ais_groupbe189Props: any 
+  setais_groupbe189Props: React.Dispatch<React.SetStateAction<any>>
   get_accounts1a859: any 
   setget_accounts1a859: React.Dispatch<React.SetStateAction<any>>
   get_accounts1a859Props: any 
   setget_accounts1a859Props: React.Dispatch<React.SetStateAction<any>>
+  ais_label68093: any,
+  setais_label68093:React.Dispatch<React.SetStateAction<any>>
+  ais_label68093Props: any 
+  setais_label68093Props: React.Dispatch<React.SetStateAction<any>>
   type16590: any,
   settype16590:React.Dispatch<React.SetStateAction<any>>
   type16590Props: any 
@@ -134,6 +142,17 @@ export const TotalContext = React.createContext<TotalContextProps | {}>({})
 
 const GlobalContext = ({children} : {children: React.ReactNode}) => {
       //////////
+        const [ais_groupbe189, setais_groupbe189 ] = React.useState<any>({}) 
+    const [ais_groupbe189Props, setais_groupbe189Props ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
         const [get_accounts1a859, setget_accounts1a859 ] = React.useState<any>({}) 
     const [get_accounts1a859Props, setget_accounts1a859Props ] = React.useState<any>({
       validation:false,
@@ -145,6 +164,13 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       isHidden: false,
       selectedIds:[]
       }) 
+   const [ais_label68093,setais_label68093] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
    const [type16590,settype16590] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
@@ -279,7 +305,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refresh:false,
     }) 
     ///////////
-    const [refresh, setRefresh] = React.useState<any>({       dropdowntype16590:false,
+    const [refresh, setRefresh] = React.useState<any>({       labelais_label68093:false,
+       dropdowntype16590:false,
        textinputBaseConsentId56ba8:false,
        datepickerExpirationDateTime2cbfb:false,
        datepickerTransactionFromDateTimeaa64f:false,
@@ -298,6 +325,7 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
        dropdownPurpose3c50a:false,
        textinputUrle0b3a:false,
        buttonCall_Get_Accounts51bce:false,
+       groupais_groupbe189:false,
        groupGet_Accounts1a859:false,
       })
 
@@ -332,10 +360,16 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       value={
       {
       //
+        ais_groupbe189, 
+        setais_groupbe189,
+        ais_groupbe189Props, 
+        setais_groupbe189Props,
         get_accounts1a859, 
         setget_accounts1a859,
         get_accounts1a859Props, 
         setget_accounts1a859Props,
+        ais_label68093,
+        setais_label68093, 
         type16590,
         settype16590, 
         baseconsentid56ba8,

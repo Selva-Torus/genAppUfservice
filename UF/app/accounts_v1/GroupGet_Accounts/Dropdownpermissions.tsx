@@ -44,6 +44,8 @@ const Dropdownpermissions = ({lockedData,setLockedData,checkToAdd,setCheckToAdd,
   const [allCode,setAllCode]=useState<any>("");
  /////////////
    //another screen
+  const {ais_groupbe189, setais_groupbe189}= useContext(TotalContext) as TotalContextProps;
+  const {ais_groupbe189Props, setais_groupbe189Props}= useContext(TotalContext) as TotalContextProps;
   const {get_accounts1a859, setget_accounts1a859}= useContext(TotalContext) as TotalContextProps;
   const {get_accounts1a859Props, setget_accounts1a859Props}= useContext(TotalContext) as TotalContextProps;
   const {type16590, settype16590}= useContext(TotalContext) as TotalContextProps;
@@ -228,6 +230,12 @@ if(!dropdownData.APINAME && Array.isArray(dropdownData.APINAME)){
     if (customecode != '') {
       let codeStates: any = {}
       
+        codeStates['ais_group'] = ais_groupbe189,
+        codeStates['setais_group'] = setais_groupbe189,
+        codeStates['selected']  = selected,
+        codeStates['ais_groupbe189'] = ais_groupbe189Props,
+        codeStates['setais_groupbe189'] = setais_groupbe189Props,
+        codeStates['selected']  = selected,
         codeStates['get_accounts'] = get_accounts1a859,
         codeStates['setget_accounts'] = setget_accounts1a859,
         codeStates['selected']  = selected,

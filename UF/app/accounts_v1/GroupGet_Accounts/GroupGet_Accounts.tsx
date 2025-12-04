@@ -101,6 +101,7 @@ setget_accounts((prev) => ({
     ],
     "allowedGroups": [
       "canvas",
+      "ais_group",
       "get_accounts"
     ],
     "blockedControls": [],
@@ -118,6 +119,8 @@ setget_accounts((prev) => ({
   const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
  /////////////
    //another screen
+  const {ais_groupbe189, setais_groupbe189}= useContext(TotalContext) as TotalContextProps;
+  const {ais_groupbe189Props, setais_groupbe189Props}= useContext(TotalContext) as TotalContextProps;
   const {get_accounts1a859, setget_accounts1a859}= useContext(TotalContext) as TotalContextProps;
   const {get_accounts1a859Props, setget_accounts1a859Props}= useContext(TotalContext) as TotalContextProps;
   const {type16590, settype16590}= useContext(TotalContext) as TotalContextProps;
@@ -217,6 +220,8 @@ setget_accounts((prev) => ({
   //////////////
     if (code != '') {
       let codeStates: any = {};
+      codeStates['ais_group']  = ais_groupbe189,
+      codeStates['setais_group'] = setais_groupbe189,
       codeStates['get_accounts']  = get_accounts1a859,
       codeStates['setget_accounts'] = setget_accounts1a859,
 
@@ -252,7 +257,7 @@ setget_accounts((prev) => ({
     <div 
       style={{          
         gridColumn: '2 / 12',
-        gridRow: '23 / 244',
+        gridRow: '24 / 245',
         gridAutoRows: '4px',
         columnGap: '5px',
         //rowGap: '',
