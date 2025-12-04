@@ -13,19 +13,32 @@ import { Icon } from "@/components/Icon";
 import { Text } from "@/components/Text";
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
-import Groupais_group  from "./Groupais_group/Groupais_group";
-import GroupGet_Accounts  from "./GroupGet_Accounts/GroupGet_Accounts";
+import Groupgroup  from "./Groupgroup/Groupgroup";
 
 
-export default function PageAccountsV1() {
+export default function PageTestrouteV1() {
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const [initialLoad, setInitialLoad] = useState(false);
   const securityData:any={
   "Template 1": {
     "allowedGroups": [
       "canvas",
-      "ais_group",
-      "get_accounts"
+      "group",
+      "group"
+    ]
+  },
+  "User": {
+    "allowedGroups": [
+      "canvas",
+      "group",
+      "group"
+    ]
+  },
+  "Template 3": {
+    "allowedGroups": [
+      "canvas",
+      "group",
+      "group"
     ]
   }
 };
@@ -45,12 +58,9 @@ export default function PageAccountsV1() {
   const {paginationDetails, setpaginationDetails} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
-  const {vob_get_accounts_consents_v1Props, setvob_get_accounts_consents_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const [checkais_group,setCheckais_group,]=useState(false);
-  const [checkget_accounts,setCheckget_accounts,]=useState(false);
-  const {ais_groupbe189, setais_groupbe189} = useContext(TotalContext) as TotalContextProps;
-  const {get_accounts1a859, setget_accounts1a859} = useContext(TotalContext) as TotalContextProps;
-  const {dfd_codedescription_v1Props, setdfd_codedescription_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const {oprmatrixuf_v1Props, setoprmatrixuf_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const [checkgroup,setCheckgroup,]=useState(false);
+  const {groupaaf24, setgroupaaf24} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagPage: boolean = false|| encAppFalg.flag;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encAppFalg.dpd;
@@ -63,7 +73,7 @@ export default function PageAccountsV1() {
   }
 
   async function securityCheck() {
-    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1",accessProfile:[user],from:"pageAccountsV1"},{
+    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",accessProfile:[user],from:"pageTestrouteV1"},{
       headers: {
         Authorization: `Bearer ${token}`
       }});
@@ -88,7 +98,7 @@ export default function PageAccountsV1() {
             params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1"
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
             }
           }) 
         }else{
@@ -97,20 +107,20 @@ export default function PageAccountsV1() {
               Authorization: `Bearer ${token}`
              },
             params: {
-              key:"CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1"  
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"  
             }
           })          
         }
         if(introspect?.data?.authenticated === false){
         localStorage.clear();
         deleteAllCookies();
-        window.location.href = '/ct242/tpptest001/tpptest002/v2';
+        window.location.href = '/ct003/ag001/oprmatrix/v1';
         }
       }catch (err: any) {
         toast("The token is no longer active.", 'danger');
         localStorage.clear();
         deleteAllCookies();
-        window.location.href = '/ct242/tpptest001/tpptest002/v2';
+        window.location.href = '/ct003/ag001/oprmatrix/v1';
       }
       try {
         let myAccount:any;
@@ -122,7 +132,7 @@ export default function PageAccountsV1() {
           params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1"
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
             }
         }) 
         }else{
@@ -131,7 +141,7 @@ export default function PageAccountsV1() {
              Authorization: `Bearer ${token}`
            },
             params: {
-              key:"CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1"
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
             }
          })          
         }
@@ -162,41 +172,11 @@ export default function PageAccountsV1() {
   "events": {}
 };
         try{
-        let codedescription_v1Body:te_refreshDto={
-          key: "CK:CT242:FNGK:AF:FNK:DF-DFD:CATK:TOB001:AFGK:TOB002:AFK:CodeDescription:AFVK:v1"+":",
-          refreshFlag: "Y",
-          count:parseInt(pagination?.count) || 10,
-          page:parseInt(pagination?.page) || 1
-        }
-        if (encryptionFlagPage) {          
-          codedescription_v1Body["dpdKey"] = encryptionDpd;
-          codedescription_v1Body["method"] = encryptionMethod;
-        }
-        if(vob_get_accounts_consents_v1Props.length > 0){
-          let filterData :any[] =[];
-          for(let i=0;i< vob_get_accounts_consents_v1Props.length;i++){
-            if(vob_get_accounts_consents_v1Props[i].DFDkey == "CK:CT242:FNGK:AF:FNK:DF-DFD:CATK:TOB001:AFGK:TOB002:AFK:CodeDescription:AFVK:v1"){
-              delete vob_get_accounts_consents_v1Props[i].DFDkey;
-              filterData.push(vob_get_accounts_consents_v1Props[i])
-            }           
-          }
-          codedescription_v1Body['filterData'] = filterData;
-        }
-        const codedescription_v1Data:any=await AxiosService.post("/te/eventEmitter",codedescription_v1Body,{
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        })
-          setdfd_codedescription_v1Props(codedescription_v1Data?.data?.dataset?.data || []);
           if (security == 'AA') {
           allowedGroup.map((nodes:any)=>{
-            if(nodes?.groupName == 'ais_group' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
+            if(nodes?.groupName == 'group' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
             {
-              setCheckais_group(true)
-            }
-            if(nodes?.groupName == 'Get_Accounts' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
-            {
-              setCheckget_accounts(true)
+              setCheckgroup(true)
             }
           })
           }
@@ -211,10 +191,8 @@ export default function PageAccountsV1() {
         //Code Execution
         if (code !="" ) {
           let codeStates: any = {}
-          codeStates['ais_group'] = ais_groupbe189;
-          codeStates['setais_group'] = setais_groupbe189;
-          codeStates['get_accounts'] = get_accounts1a859;
-          codeStates['setget_accounts'] = setget_accounts1a859;
+          codeStates['group'] = groupaaf24;
+          codeStates['setgroup'] = setgroupaaf24;
           codeExecution(code,codeStates);
         }   
         setInitialLoad(true);        
@@ -240,14 +218,14 @@ export default function PageAccountsV1() {
         gridColumn: '',
         gridRow: '',
         gridAutoRows: '4px',
-        columnGap: '',
-        rowGap: '',
+        columnGap: '0px',
+        rowGap: '0px',
         display: "grid",
         gridTemplateColumns: 'repeat(12, 1fr)',
         gridTemplateRows: '',
         height: '',
         overflow: '',
-        backgroundColor:'#add8e6',
+        backgroundColor:'#ffffff',
         backgroundImage:'',
         backgroundPosition: '',
         backgroundSize: '',
@@ -262,21 +240,7 @@ export default function PageAccountsV1() {
           borderWidth: '2px'
       })
       }}>
-        {checkais_group && initialLoad &&<Groupais_group  
-          lockedData={lockedData} 
-          setLockedData={setLockedData} 
-          primaryTableData={primaryTableData}
-          setPrimaryTableData={setPrimaryTableData}
-          checkToAdd={checkToAdd} 
-          setCheckToAdd={setCheckToAdd}  
-          refetch={refetch}
-          setRefetch={setRefetch}
-          dropdownData={dropdownData} 
-          setDropdownData={setDropdownData}
-          encryptionFlagPageData={encryptionFlagPageData}
-          paginationDetails={paginationDetails}        />}
-        
-        {checkget_accounts && initialLoad &&<GroupGet_Accounts  
+        {checkgroup && initialLoad &&<Groupgroup  
           lockedData={lockedData} 
           setLockedData={setLockedData} 
           primaryTableData={primaryTableData}

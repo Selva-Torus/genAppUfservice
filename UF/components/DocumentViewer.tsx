@@ -4,12 +4,13 @@ import { CSSProperties } from "react";
 import { DocumentViewer } from "react-documents";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
+import { Text } from "./Text";
 
 export declare type viewerType = 'google' | 'office' | 'mammoth' | 'pdf' | 'url';
 
 interface DocViewerProps {
     loaded?: () => void;
-    url: string;
+    url?: string;
     queryParams?: string;
     viewerUrl?: string;
     googleCheckInterval?: number;
@@ -48,19 +49,28 @@ const DocViewer: React.FC<DocViewerProps> = ({
 }) => {
     const documentViewerElement = (
         <div className="w-full h-full">
-            <DocumentViewer
-                url={url}
-                viewer={viewer}
-                queryParams={queryParams}
-                googleCheckInterval={googleCheckInterval}
-                googleMaxChecks={googleMaxChecks}
-                overrideLocalhost={overrideLocalhost}
-                googleCheckContentLoaded={googleCheckContentLoaded}
-                className={className}
-                viewerUrl=""
-                style={style}
-                {...{ height, width, enableEncryption } as any}
-            />
+        {!url?(
+        <div className="items-center justify-center text-center bg-gray-50 rounded-xl border border-red-500 shadow-sm p-2">
+            <Text variant="body-1" className="text-lg font-semibold text-gray-700">No Document Found</Text>
+            <p className="text-sm text-gray-500">
+                The attachment or document you are looking for is unavailable or not uploaded yet.
+            </p>
+        </div>)
+            :
+        (<DocumentViewer
+            url={url}
+            viewer={viewer}
+            queryParams={queryParams}
+            googleCheckInterval={googleCheckInterval}
+            googleMaxChecks={googleMaxChecks}
+            overrideLocalhost={overrideLocalhost}
+            googleCheckContentLoaded={googleCheckContentLoaded}
+            className={className}
+            viewerUrl=""
+            style={style}
+            {...{ height, width, enableEncryption } as any}
+        />)
+        }
         </div>
     );
 

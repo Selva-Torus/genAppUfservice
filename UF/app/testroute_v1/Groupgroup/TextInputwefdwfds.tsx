@@ -22,7 +22,7 @@ import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys'
 import * as v from 'valibot';
 
 
-const TextInputIdentifier = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}:any) => {  
+const TextInputwefdwfds = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}:any) => {  
   const token: string = getCookie('token');
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
   const {validateRefetch , setValidateRefetch} = useContext(TotalContext) as TotalContextProps;
@@ -64,7 +64,7 @@ const TextInputIdentifier = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryp
   const keyset:any=i18n.keyset("language"); 
   const [allCode,setAllCode]=useState<any>("");
   let schemaArray :any =[];  
-  const [dynamicStateandType,setDynamicStateandType]=useState<any>({name:'identifier',type:"text"})
+  const [dynamicStateandType,setDynamicStateandType]=useState<any>({name:'wefdwfds',type:"text"})
   const routes = useRouter()
   const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState(false);
   const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
@@ -75,29 +75,13 @@ const TextInputIdentifier = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryp
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData?.method;
   /////////////
    //another screen
-  const {ais_groupbe189, setais_groupbe189}= useContext(TotalContext) as TotalContextProps;
-  const {ais_groupbe189Props, setais_groupbe189Props}= useContext(TotalContext) as TotalContextProps;
-  const {get_accounts1a859, setget_accounts1a859}= useContext(TotalContext) as TotalContextProps;
-  const {get_accounts1a859Props, setget_accounts1a859Props}= useContext(TotalContext) as TotalContextProps;
-  const {type16590, settype16590}= useContext(TotalContext) as TotalContextProps;
-  const {baseconsentid56ba8, setbaseconsentid56ba8}= useContext(TotalContext) as TotalContextProps;
-  const {expirationdatetime2cbfb, setexpirationdatetime2cbfb}= useContext(TotalContext) as TotalContextProps;
-  const {transactionfromdatetimeaa64f, settransactionfromdatetimeaa64f}= useContext(TotalContext) as TotalContextProps;
-  const {transactiontodatetime00c33, settransactiontodatetime00c33}= useContext(TotalContext) as TotalContextProps;
-  const {accountidb7d92, setaccountidb7d92}= useContext(TotalContext) as TotalContextProps;
-  const {accounttypefc49d, setaccounttypefc49d}= useContext(TotalContext) as TotalContextProps;
-  const {accountsubtypeb9399, setaccountsubtypeb9399}= useContext(TotalContext) as TotalContextProps;
-  const {tradingname22dd3, settradingname22dd3}= useContext(TotalContext) as TotalContextProps;
-  const {legalnamebccff, setlegalnamebccff}= useContext(TotalContext) as TotalContextProps;
-  const {identifiertype37db2, setidentifiertype37db2}= useContext(TotalContext) as TotalContextProps;
-  const {identifiera6abf, setidentifiera6abf}= useContext(TotalContext) as TotalContextProps;
-  const {consentida3e0f, setconsentida3e0f}= useContext(TotalContext) as TotalContextProps;
-  const {apiname543a3, setapiname543a3}= useContext(TotalContext) as TotalContextProps;
-  const {permissionsf74a7, setpermissionsf74a7}= useContext(TotalContext) as TotalContextProps;
-  const {usertype218a1, setusertype218a1}= useContext(TotalContext) as TotalContextProps;
-  const {purpose3c50a, setpurpose3c50a}= useContext(TotalContext) as TotalContextProps;
-  const {urle0b3a, seturle0b3a}= useContext(TotalContext) as TotalContextProps;
-  const {call_get_accounts51bce, setcall_get_accounts51bce}= useContext(TotalContext) as TotalContextProps;
+  const {groupaaf24, setgroupaaf24}= useContext(TotalContext) as TotalContextProps;
+  const {groupaaf24Props, setgroupaaf24Props}= useContext(TotalContext) as TotalContextProps;
+  const {addd6f6de, setaddd6f6de}= useContext(TotalContext) as TotalContextProps;
+  const {wefdwfds735d5, setwefdwfds735d5}= useContext(TotalContext) as TotalContextProps;
+  const {group7bc2c, setgroup7bc2c}= useContext(TotalContext) as TotalContextProps;
+  const {group7bc2cProps, setgroup7bc2cProps}= useContext(TotalContext) as TotalContextProps;
+  const {csdcsdcsd4b217, setcsdcsdcsd4b217}= useContext(TotalContext) as TotalContextProps;
   //////////////
   
 
@@ -110,22 +94,22 @@ const TextInputIdentifier = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryp
   schemaArray = [] ;
   const handleChange = async(e: any) => {
     setError('')
-    setValidate((pre:any)=>({...pre,identifier:undefined}))
+    setValidate((pre:any)=>({...pre,wefdwfds:undefined}))
     if(dynamicStateandType.type=="number"){
-    setget_accounts1a859((prev: any) => ({ ...prev, identifier: +e.target.value }))
+    setgroupaaf24((prev: any) => ({ ...prev, wefdwfds: +e.target.value }))
     }
     else{
-    setget_accounts1a859((prev: any) => ({ ...prev, identifier: e.target.value }))
+    setgroupaaf24((prev: any) => ({ ...prev, wefdwfds: e.target.value }))
     }
   }
   const handleBlur=async () => {
     let code:any=allCode
      if (code != '') {
       let codeStates: any = {}
-      codeStates['ais_group']  = ais_groupbe189,
-      codeStates['setais_group'] = setais_groupbe189,
-      codeStates['get_accounts']  = get_accounts1a859,
-      codeStates['setget_accounts'] = setget_accounts1a859,
+      codeStates['group']  = groupaaf24,
+      codeStates['setgroup'] = setgroupaaf24,
+      codeStates['group']  = group7bc2c,
+      codeStates['setgroup'] = setgroup7bc2c,
     codeExecution(code,codeStates)
     }
   }
@@ -134,11 +118,11 @@ const TextInputIdentifier = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryp
       const orchestrationData: any = await AxiosService.post(
         '/UF/Orchestration',
         {
-          key: "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1",
-          componentId: "e63637758360439db9014a076931a859",
-          controlId: "78896526c2f047b1ad2bea385e1a6abf",
+          key: "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+          componentId: "02640bc58ee74454a88bcb3c267aaf24",
+          controlId: "796716b9522e4c0badd65e7f091735d5",
           isTable: false,
-          from:"TextInputidentifier",
+          from:"TextInputwefdwfds",
           accessProfile:accessProfile
         },
         {
@@ -154,10 +138,10 @@ const TextInputIdentifier = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryp
       setAllCode(orchestrationData?.data?.code)
       
       if(orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties){
-        let type:any={name:'identifier',type:'text'}
+        let type:any={name:'wefdwfds',type:'text'}
         type={
-          name:'identifier',
-          type: orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties.identifier.type == 'string' ? 'text' : orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties.identifier.type =='integer' ? 'number' : orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties.identifier.type
+          name:'wefdwfds',
+          type: orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties.wefdwfds.type == 'string' ? 'text' : orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties.wefdwfds.type =='integer' ? 'number' : orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties.wefdwfds.type
         }
         setDynamicStateandType(type)
        
@@ -167,7 +151,7 @@ const TextInputIdentifier = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryp
         return
       }else{
       //  if(Object.keys(orchestrationData?.data?.dstData).length>0) 
-       // setget_accounts1a859((pre:any)=>({...pre,identifier:orchestrationData?.data?.dstData}))
+       // setgroupaaf24((pre:any)=>({...pre,wefdwfds:orchestrationData?.data?.dstData}))
       }
     }
     catch(err)
@@ -181,36 +165,32 @@ const TextInputIdentifier = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryp
       handleBlur()
   },[validateRefetch.value])
 
-  if (identifiera6abf?.isHidden) {
+  if (wefdwfds735d5?.isHidden) {
     return <></>
   }
   return (   
     <div 
-className="flex flex-col "      style={{gridColumn: `7 / 13`,gridRow: `106 / 126`, gap:``, height: `100%`, overflow: 'auto'}} >
-        <div>
-          <Text className="pb-2">{keyset("Identifier")}
-          {isRequredData && <span style={{ color: 'red' }}>*</span>}
-          </Text>
-        </div>
+      style={{gridColumn: `5 / 8`,gridRow: `5 / 22`, gap:``, height: `100%`, overflow: 'auto'}} >
+        {isRequredData && <span style={{ color: 'red' }}>*</span>}
       <TextInput
         require={isRequredData}
         className=""
-        label={keyset("Identifier")}
+        label={keyset("dcdscsd")}
         onChange= {handleChange}
         onBlur={handleBlur}
         type={dynamicStateandType.type}
-        value={get_accounts1a859?.identifier||""}
-         disabled= {identifiera6abf?.isDisabled ? true : false}
+        value={groupaaf24?.wefdwfds||""}
+         disabled= {wefdwfds735d5?.isDisabled ? true : false}
         pin='brick-brick'     
         placeholder='type here....'      
-        readOnly= {identifiera6abf?.isDisabled ? true : false}
+        readOnly= {wefdwfds735d5?.isDisabled ? true : false}
         size='m'      
         view='normal'
-        validationState={validate?.identifier ? "invalid" : undefined}
+        validationState={validate?.wefdwfds ? "invalid" : undefined}
         errorMessage={error}
       />
     </div> 
   )
 }
 
-export default TextInputIdentifier
+export default TextInputwefdwfds

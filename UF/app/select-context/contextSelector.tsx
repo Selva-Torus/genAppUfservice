@@ -35,7 +35,7 @@ const ContextSelector = () => {
   const tp_ps: any = getCookie('tp_ps')
   const toast = useInfoMsg();
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
-  const appName = 'VOFApp'
+  const appName = 'oprmatrix'
   const [accessProfiles, setAccessProfiles] = useState<any[]>([])
   const router = useRouter();
   const [loading, setLoading] = useState(false)
@@ -63,12 +63,12 @@ const ContextSelector = () => {
     new Set()
   )
   const [time, setTime] = useState('')
-  let landingScreen:string = 'CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1';
+  let landingScreen:string = 'User Screen';
   let screenDetails: any = {
            keys:[
   {
-    "screensName": "accounts-v1",
-    "ufKey": "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1"
+    "screensName": "testroute-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
   }
 ]
   }

@@ -112,7 +112,7 @@ const TopNav = ({
   async function logout() {
     localStorage.clear()
     deleteAllCookies()
-    window.location.href = '/ct242/tpptest001/tpptest002/v2'
+    window.location.href = '/ct003/ag001/oprmatrix/v1'
   }
   const hasMatchingName = (obj: any, input: string): boolean => {
     if (typeof obj !== 'object' || obj === null) return false

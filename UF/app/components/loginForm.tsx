@@ -29,7 +29,7 @@ interface LoginProps {
   image?: string
 }
 
-const LoginForm = ({ logo, appName = "VOFApp", loginType = "standard", image }: LoginProps) => {
+const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image }: LoginProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     password: ''
@@ -42,7 +42,7 @@ const LoginForm = ({ logo, appName = "VOFApp", loginType = "standard", image }: 
   const { branding } = useGlobal()
   const { brandColor } = branding
   const { bgColor, borderColor, textColor } = useTheme()
-  const onBoardingKey : string = "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1"
+  const onBoardingKey : string = "User Screen"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
@@ -60,13 +60,13 @@ const LoginForm = ({ logo, appName = "VOFApp", loginType = "standard", image }: 
       if (tenant && formData.email && formData.password) {
         setLoading(true)
 
-        setCookie('cfg_theme','light')
+        setCookie('cfg_theme','dark')
         
         const api_signinBody: api_signinDto = {
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT242:AFGK:TPPTEST001:AFK:TPPTEST002:AFVK:v2:bldc",
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc",
           ufClientType: 'UFW'
         }
         const api_signin = await axios.post(
@@ -96,8 +96,8 @@ const LoginForm = ({ logo, appName = "VOFApp", loginType = "standard", image }: 
           let screenDetails: any = {
             keys:[
   {
-    "screensName": "accounts-v1",
-    "ufKey": "CK:CT242:FNGK:AF:FNK:UF-UFW:CATK:TPPTEST001:AFGK:TPPTEST002:AFK:VOB_Get_Accounts_Consents:AFVK:v1"
+    "screensName": "testroute-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
   }
 ]
           }

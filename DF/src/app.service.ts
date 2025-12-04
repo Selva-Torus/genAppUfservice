@@ -5,7 +5,7 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import axios from 'axios';
 import * as fs from 'fs';
-import { UfService } from './Torus/v2/uf/uf.service';
+import { UfService } from './Torus/v1/uf/uf.service';
 
 @Injectable()
 export class AppService implements OnModuleInit{
@@ -15,35 +15,8 @@ export class AppService implements OnModuleInit{
 
   async onModuleInit() {
     console.log('Application started, calling API...');
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoibWFyaSIsImNsaWVudCI6IkNUMjQyIiwidHlwZSI6ImMiLCJsb2dUeXBlIjoibW9uZ29kYiIsInNpZCI6ImZiNTE1ZGZlLTMzMmMtNDk5Mi1iMzZkLTYzMWIyN2FiNWE4OSIsImlhdCI6MTc2NDgzMDk3MCwiZXhwIjoxNzY0ODMyMTcwfQ.idQeYRXDX29aio6KvQPqO8QRu4CgVe_APOWcPKzm_BQ';
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiUGVlckA3ODYiLCJjbGllbnQiOiJDVDAwMyIsInR5cGUiOiJjIiwibG9nVHlwZSI6ImRmcyIsInNpZCI6IjY2OTU4OGE4LTQ3MjktNDIxNi1iNzM4LTE0Y2NmN2FlZjAxYSIsImlhdCI6MTc2NDgzMjAwNiwiZXhwIjoxNzY0ODMzMjA2fQ.e-wkGB0Qzyp6IMqbZI-vzm_qoDP70TRvmJbaO4xOaoQ';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
-    if(Object.keys(preParedData).includes('erdWithData'))
-      {
-      let endPointData : any = {};
-      let erdDatas: any = {};
-      endPointData.data = preParedData?.erdWithData||{}
-      endPointData.type =  "json";
-      let res =  await this.ufservice.getEndPoints(endPointData);
-      //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData,{
-      //  headers: {
-      //    Authorization: `Bearer ${token}`, 
-      //  }
-      //});
-      erdDatas.endpoint = res;
-      erdDatas.tenant =  "CT242";
-      erdDatas.domain = "TPPTEST";
-      erdDatas.collection = "VOFApp";
-      erdDatas.data = preParedData?.erdWithData||{}
-      erdDatas.fabric = 'API-APIPD';
-      erdDatas.loginId = "mari";    
-      erdDatas.erdFlag = true;  
-      await this.ufservice.createApiCollection(erdDatas,this.clientcode);
-      //await axios.post(this.apiUrl+'/createApiCollection', erdDatas,{
-      //  headers: {
-      //    Authorization: `Bearer ${token}`, 
-      //  }
-      //});
-      }
     if(Object.keys(preParedData).includes('torusApis'))
     {
       let torusData: any = {};
@@ -52,12 +25,12 @@ export class AppService implements OnModuleInit{
       //endPointData.type =  "json";
       //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData);
       //torusData.endpoint = res.data;
-      torusData.tenant =  "CT242";
-      torusData.domain = "TPPTEST"; 
-      torusData.collection = "VOFApp";
+      torusData.tenant =  "CT003";
+      torusData.domain = "appgroup"; 
+      torusData.collection = "oprmatrix";
       torusData.fabric = 'API-APIPD-TORUS';
       torusData.data = preParedData?.torusApis||{}
-      torusData.loginId = "mari";    
+      torusData.loginId = "Peer@786";    
       //await axios.post(this.apiUrl, torusData);
     }
   }
