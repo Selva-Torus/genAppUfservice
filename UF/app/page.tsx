@@ -92,7 +92,7 @@ export default function HomePage() {
 
   return (
     <>
-      <LoginForm logo=""   loginType="standard"   image=""/>
+      <LoginForm logo=""   loginType="standard"   image="torus/9.1/CT003/resources/images/Group.png"/>
     </>
   )
 }

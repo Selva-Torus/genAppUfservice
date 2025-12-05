@@ -365,7 +365,7 @@ const LayoutDecider = ({
     <div className={`flex h-screen w-screen flex-col overflow-auto`}>
       <div className={`g-root flex-shrink-0`}>
         <TopNav
-          navData={navData}
+          navData={updatedNavData}
           listMenuItems={listMenuItems()}
           mode={mode}
           brandColor={brandColor}
@@ -379,7 +379,7 @@ const LayoutDecider = ({
           className={twMerge(`cursor-pointer transition-all duration-700 ease-in-out ${getSideNavClassName}` , borderColor)}
         >
           <SideNav
-            navData={navData}
+            navData={updatedNavData}
             mode={mode}
             sidebarStyle={sidebarStyle}
             fullView={fullView}

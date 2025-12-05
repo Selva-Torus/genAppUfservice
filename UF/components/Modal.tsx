@@ -8,7 +8,7 @@ import { Button } from "./Button";
 import { ComponentSize, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 
-type ModalSize = "s" | "m" | "l" | "xl";
+type ModalSize = "s" | "m" | "l" | "xl" | "2xl" | "4xl";
 
 interface ModalProps {
   open: boolean;
@@ -30,7 +30,7 @@ interface ModalProps {
 export const Modal: React.FC<ModalProps> = ({
   open,
   onClose,
-  size = "xl",
+  size = "2xl",
   title,
   showCloseButton = true,
   closeOnOverlayClick = true,
@@ -84,7 +84,11 @@ export const Modal: React.FC<ModalProps> = ({
       case "l":
         return `max-w-2xl ${fontSize === "text-sm" ? "text-base" : fontSize === "text-base" ? "text-lg" : "text-xl"}`;
       case "xl":
-        return `max-w-4xl ${fontSize === "text-sm" ? "text-lg" : fontSize === "text-base" ? "text-xl" : "text-2xl"}`;
+        return `max-w-6xl ${fontSize === "text-sm" ? "text-lg" : fontSize === "text-base" ? "text-xl" : "text-2xl"}`;
+      case "2xl":
+        return `max-w-7xl ${fontSize === "text-sm" ? "text-xl" : fontSize === "text-base" ? "text-2xl" : "text-3xl"}`;
+      case "4xl":
+        return `max-w-full ${fontSize === "text-sm" ? "text-2xl" : fontSize === "text-base" ? "text-3xl" : "text-4xl"}`;
       default:
         return `max-w-lg ${fontSize}`;
     }

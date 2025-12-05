@@ -213,7 +213,7 @@ export default function PageTestrouteV1() {
   }, [])
   return (
     <>
-     <div className={`min-h-screen w-full ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'} `}
+     <div className={` w-full ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'} `}
      style={{
         gridColumn: '',
         gridRow: '',
@@ -234,7 +234,7 @@ export default function PageTestrouteV1() {
         backgroundClip: '',
         backgroundBlendMode: '',
         color: textStyle,
-        minHeight: '100vh',
+       // minHeight: '100vh',
         ...(isHighContrast && {
           fontWeight: '500',
           borderWidth: '2px'

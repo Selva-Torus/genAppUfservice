@@ -527,6 +527,7 @@ export const Table: React.FC<TableProps> = ({
                               ${isDark ? "text-gray-300" : "text-gray-700"}
                               ${isHyperLink ? "text-blue-500 underline" : ""}
                               ${wordWrap ? "break-words" : "whitespace-nowrap"}
+                              ${column?.className}
                             `}
                           >
                             {row[column.id]}

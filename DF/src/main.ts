@@ -19,8 +19,8 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-12-04T07:06:46.446Z",
-    "profile": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT003/resources/images/Peer@786/pexels-pixabay-33109.jpg",
+    "lastActive": "2025-12-05T08:37:55.715Z",
+    "profile": "torus/9.1/CT003/resources/images/Peer@786/scott-graham-5fNmWej4tAA-unsplash.jpg",
     "quickLinks": [],
     "client": "CT003",
     "edit": "",

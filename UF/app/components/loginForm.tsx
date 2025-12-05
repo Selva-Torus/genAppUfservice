@@ -177,7 +177,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
               }
             />
           ) : (
-            <DefaultLoginImage brandColor={brandColor} />
+            <DefaultLoginImage className='w-[80%] h-[80%]' brandColor={brandColor} />
           )}
         </div>
       )}
@@ -189,8 +189,8 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
         className={`flex justify-center p-5 h-full overflow-y-auto ${loginType !== 'standard' ? 'w-full md:w-1/2' : 'w-full'
         }`}
       >
-        <div className='flex h-full flex-col items-center justify-center gap-[5.24vh]'>
-          <div className='flex flex-col items-center gap-[1.24vh]'>
+        <div className='flex h-full flex-col justify-center gap-[4vh]'>
+          <div className='flex items-center gap-[1.24vh]'>
             {imageandLogoValid.logo ? (
               <img
                 className='h-[16px] w-[20px]'
@@ -208,12 +208,10 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
             <Text variant='header-2' color='positive-heavy'>
               {appName}
             </Text>
-            <Text variant='body-3' color='info-heavy'>
-              {keyset("Create an account or log in to explore about our app")}
-            </Text>
+           
           </div>
           <div
-            className={twMerge(`flex h-fit min-w-[400px] flex-col gap-5 rounded-lg px-5`, bgColor, borderColor, textColor)}
+            className={twMerge(`flex h-fit min-w-[400px] scale-90 flex-col gap-5 rounded-lg px-5`, bgColor, borderColor, textColor)}
           >
             <Text variant='header-2' className='py-2'>
               Login
@@ -286,7 +284,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
               </div>
             )}
 
-            <div className='flex justify-center'>
+            <div className='flex justify-center pb-2'>
               <Text className='flex gap-1 text-nowrap items-center'>
                 Don&apos;t have an account?{' '}
                 <a

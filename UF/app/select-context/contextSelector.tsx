@@ -23,19 +23,17 @@ import { RiUserShared2Fill } from 'react-icons/ri'
 import { set } from 'lodash'
 
 const ContextSelector = () => {
-  const [selectedAccessProfile, setSelectedAccessProfile] = useState<string[]>(
-    []
-  )
+  const [selectedAccessProfile, setSelectedAccessProfile] = useState<string[]>([])
   const { userDetails, setUserDetails } = useContext(
     TotalContext
   ) as TotalContextProps
   const token: string = getCookie('token')
   const tp_ps: any = getCookie('tp_ps')
-  const toast = useInfoMsg()
+  const toast = useInfoMsg();
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
   const appName = 'oprmatrix'
   const [accessProfiles, setAccessProfiles] = useState<any[]>([])
-  const router = useRouter()
+  const router = useRouter();
   const [loading, setLoading] = useState(false)
   const { branding } = useGlobal()
   const { brandColor } = branding
@@ -46,17 +44,15 @@ const ContextSelector = () => {
   const [selectedOrg, setSelectedOrg] = useState<Record<string, string>>({})
   const [selectedPs, setSelectedPs] = useState<Record<string, string>>({})
   const [selectedRole, setSelectedRole] = useState<Record<string, string>>({})
-
   const [orgGrpData, setOrgGrpData] = useState<any>([])
-  let landingScreen: string = 'User Screen'
+  let landingScreen:string = 'User Screen';
   let screenDetails: any = {
-    keys: [
-      {
-        screensName: 'testroute-v1',
-        ufKey:
-          'CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1'
-      }
-    ]
+           keys:[
+  {
+    "screensName": "testroute-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+  }
+]
   }
   screenDetails = screenDetails.keys
 
