@@ -13,10 +13,10 @@
   --g-font-family-sans: "Inter", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
   --g-font-family-Roboto:"Roboto" ;
   --g-font-family-Poppins:"Poppins" ;
-  --g-font-family-RobotoFlex:"RobotoFlex" ;
-  --font-body:var(--g-font-family-RobotoFlex);
-  --font-header:var(--g-font-family-RobotoFlex);  
-  --font-display:var(--g-font-family-RobotoFlex);}
+  --g-font-family-Inter:"Inter" , sans-serif ;
+  --font-body:var(--g-font-family-Inter);
+  --font-header:var(--g-font-family-Inter);  
+  --font-display:var(--g-font-family-Inter);}
 
 
 /* .pc-Grid .container-fluid, .pc-Grid .container {
