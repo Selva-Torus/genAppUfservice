@@ -253,7 +253,7 @@ const LoginForm = ({
                   type='text'
                   name='email'
                   className={twMerge(
-                    'rounded-lg border p-1.5 outline-none 2xl:p-3',
+                    'rounded-lg border p-1.5 text-sm 2xl:text-base outline-none 2xl:p-3',
                     borderColor
                   )}
                   placeholder='Your Email/Username'
@@ -270,7 +270,7 @@ const LoginForm = ({
                   type={showPassword ? 'text' : 'password'}
                   name='password'
                   className={twMerge(
-                    'rounded-lg border p-1.5 outline-none 2xl:p-3',
+                    'rounded-lg border text-sm 2xl:text-base p-1.5 outline-none 2xl:p-3',
                     borderColor
                   )}
                   placeholder='Password'
@@ -294,7 +294,7 @@ const LoginForm = ({
                 </button>
               </div>
               <Link href='/forgot-password' className='self-end'>
-                <Text color='brand'>Forgot Password</Text>
+                <Text color='brand' className='text-sm 2xl:text-base'>Forgot Password</Text>
               </Link>
               <Button
                 onClick={handleFormSubmit}
@@ -327,14 +327,14 @@ const LoginForm = ({
               )}
 
               <div className='flex justify-center pb-2'>
-                <Text className='flex items-center gap-1 text-nowrap'>
+                <Text className='flex items-center gap-1 text-nowrap text-sm 2xl:text-base'>
                   Don&apos;t have an account?{' '}
                   <a
                     href='https://outlook.office.com/mail/deeplink/compose?to=support@torus.tech'
                     target='_blank'
                     rel='noopener noreferrer'
                   >
-                    <Text color='brand'>Contact Admin</Text>
+                    <Text color='brand' className='text-sm 2xl:text-base'>Contact Admin</Text>
                   </a>
                 </Text>
               </div>
