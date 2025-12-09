@@ -1,3 +1,4 @@
+
 'use client'
 import React, { useState } from 'react'
 import axios from 'axios'
@@ -29,12 +30,7 @@ interface LoginProps {
   image?: string
 }
 
-const LoginForm = ({
-  logo,
-  appName = 'oprmatrix',
-  loginType = 'standard',
-  image
-}: LoginProps) => {
+const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image }: LoginProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     password: ''
@@ -47,7 +43,7 @@ const LoginForm = ({
   const { branding } = useGlobal()
   const { brandColor } = branding
   const { bgColor, borderColor, textColor } = useTheme()
-  const onBoardingKey: string = 'User Screen'
+  const onBoardingKey : string = "User Screen"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
@@ -65,13 +61,13 @@ const LoginForm = ({
       if (tenant && formData.email && formData.password) {
         setLoading(true)
 
-        setCookie('cfg_theme', 'dark')
+        setCookie('cfg_theme','light')
 
         const api_signinBody: api_signinDto = {
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: 'CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc',
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc",
           ufClientType: 'UFW'
         }
         const api_signin = await axios.post(
@@ -99,13 +95,12 @@ const LoginForm = ({
           setCookie('tenant', tenant)
           document.cookie = `language=${'en'}`
           let screenDetails: any = {
-            keys: [
-              {
-                screensName: 'testroute-v1',
-                ufKey:
-                  'CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1'
-              }
-            ]
+            keys:[
+  {
+    "screensName": "testroute-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+  }
+]
           }
           const ORM: any = decodeToken(api_signin.data.token)
           sessionStorage.setItem(
@@ -227,7 +222,7 @@ const LoginForm = ({
                 <></>
               )}
               <Text variant='display-3'>
-                <div className='text-3xl font-bold lg:text-4xl 2xl:text-5xl'>{appName}</div>
+                <div className='text-2xl font-bold'>{appName}</div>
               </Text>
             </div>
             <div
@@ -240,7 +235,7 @@ const LoginForm = ({
             >
               <div className='flex flex-col items-center'>
                 <Text variant='header-2' className='py-2'>
-                  <div className='text-2xl font-bold 2xl:text-3xl'>
+                  <div className='text-xl font-bold'>
                     Log in to your account
                   </div>
                 </Text>
@@ -270,7 +265,7 @@ const LoginForm = ({
                   type={showPassword ? 'text' : 'password'}
                   name='password'
                   className={twMerge(
-                    'rounded-lg border text-sm 2xl:text-base p-1.5 outline-none 2xl:p-3',
+                    'rounded-lg border p-1.5 text-sm 2xl:text-base outline-none 2xl:p-3',
                     borderColor
                   )}
                   placeholder='Password'
@@ -294,7 +289,7 @@ const LoginForm = ({
                 </button>
               </div>
               <Link href='/forgot-password' className='self-end'>
-                <Text color='brand' className='text-sm 2xl:text-base'>Forgot Password</Text>
+                <Text color='brand' className="text-sm 2xl:text-base">Forgot Password</Text>
               </Link>
               <Button
                 onClick={handleFormSubmit}
@@ -320,7 +315,7 @@ const LoginForm = ({
                     size='l'
                     view='raised'
                   >
-                    <Icon data='FaShieldAlt' />
+                <Icon data="FaShieldAlt" />
                     ViaFusionAuth
                   </Button>
                 </div>
@@ -334,7 +329,7 @@ const LoginForm = ({
                     target='_blank'
                     rel='noopener noreferrer'
                   >
-                    <Text color='brand' className='text-sm 2xl:text-base'>Contact Admin</Text>
+                    <Text color='brand' className="text-sm 2xl:text-base">Contact Admin</Text>
                   </a>
                 </Text>
               </div>

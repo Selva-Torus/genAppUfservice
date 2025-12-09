@@ -92,7 +92,7 @@ export default function HomePage() {
 
   return (
     <>
-      <LoginForm logo="https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT003/resources/images/finone-logo.svg"   loginType="standard"   image="torus/9.1/CT003/resources/images/Login%20-%20%20FinOne.png"/>
+      <LoginForm logo=""   loginType="standard"   image="torus/9.1/CT003/resources/images/Group.png"/>
     </>
   )
 }

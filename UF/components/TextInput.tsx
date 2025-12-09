@@ -229,7 +229,7 @@ export const TextInput: React.FC<TextInputProps> = ({
     <div className="w-full">
       {label && topContent && (
         <label
-          className={`block mb-2 ${getFontSizeClass(branding.fontSize)} font-medium ${
+          className={`block mb-2 [font-size:var(--font-size)] font-medium ${
             isDark ? "text-gray-200" : "text-gray-900"
           }`}
           style={{ fontFamily: 'var(--font-body)' }}
@@ -260,6 +260,7 @@ export const TextInput: React.FC<TextInputProps> = ({
           className={`
             w-full
             ${getSizeClasses()}
+            [font-size:var(--font-size)]
             ${getPinClasses()}
             ${view === "normal" ? "border-2" : view === "clear" ? "border-2 border-transparent" : "border-0 border-b-2"}
             ${(startContent || leftContent) ? (direction === "RTL" ? "pr-10" : "pl-10") : ""}
@@ -280,7 +281,7 @@ export const TextInput: React.FC<TextInputProps> = ({
           }}
           onFocus={(e) => {
             if (!errorMessage && !validationState) {
-              e.currentTarget.style.borderColor = branding.brandColor;
+              e.currentTarget.style.borderColor = "var(--brand-color)";
               if (view === "clear") {
                 e.currentTarget.style.boxShadow = "none";
               }
@@ -333,9 +334,9 @@ export const TextInput: React.FC<TextInputProps> = ({
   );
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
+    if (!headerText) return <div className={className}>{element}</div>;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-1 ${
+    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-1 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 
@@ -349,21 +350,21 @@ export const TextInput: React.FC<TextInputProps> = ({
     switch (headerPosition) {
       case "top":
         return (
-          <div className="flex flex-col w-full">
+          <div className={`flex flex-col w-full ${className}`}>
             <div className={headerClasses}>{headerContent}</div>
             {element}
           </div>
         );
       case "bottom":
         return (
-          <div className="flex flex-col w-full">
+          <div className={`flex flex-col w-full ${className}`}>
             {element}
             <div className={`${headerClasses} mt-1 mb-0`}>{headerContent}</div>
           </div>
         );
       case "left":
         return (
-          <div className="flex items-center w-full">
+          <div className={`flex items-center w-full ${className}`}>
             <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "ml-4" : "mr-4"} whitespace-nowrap`}>
               {headerContent}
             </div>
@@ -372,7 +373,7 @@ export const TextInput: React.FC<TextInputProps> = ({
         );
       case "right":
         return (
-          <div className="flex items-center w-full">
+          <div className={`flex items-center w-full ${className}`}>
             <div className="flex-1">{element}</div>
             <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "mr-4" : "ml-4"} whitespace-nowrap`}>
               {headerContent}

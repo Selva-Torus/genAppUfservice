@@ -290,9 +290,9 @@ const ContextSelector = () => {
         >
           <div className='h-1\5 flex w-full items-center justify-between'>
             <div className='flex flex-col items-start'>
-              <Text variant='display-1' className='text-nowrap'>Profile Selector</Text>
-              <Text variant='body-2' color='secondary'>
-                Select Acccess Profile
+             {/* <Text variant='display-1' className='text-nowrap'>Profile Selector</Text> */}
+              <Text variant='body-2' className='text-nowrap' color='secondary'>
+                Select Access Profile
               </Text>
               <div className='w-[10vw]'>
                 <Dropdown
@@ -381,7 +381,7 @@ const ContextSelector = () => {
                     style='dots'
                   />
                 ) : (
-                  'Next'
+                  'OK'
                 )}
               </Button>
             </div>

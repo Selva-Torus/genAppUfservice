@@ -255,7 +255,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
             transition-colors
           `}
           style={{
-            borderColor: validationState === "none" && isOpen ? branding.brandColor : undefined,
+            borderColor: validationState === "none" && isOpen ? "var(--brand-color)" : undefined,
           }}
         >
           <span className="w-4/5 truncate">
@@ -308,11 +308,11 @@ export const Dropdown: React.FC<DropdownProps> = ({
                   transition-colors
                   ${isSelected
                     ? `text-white`
-                    : isDark ? "text-gray-200 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
+                    : isDark ? "text-gray-200 hover:[background-color:var(--hover-color)]" : "text-gray-700 hover:[background-color:var(--hover-color)]"
                   }
                 `}
                 style={{
-                  backgroundColor: isSelected ? branding.brandColor : undefined,
+                  backgroundColor: isSelected ? "var(--brand-color)" : undefined,
                 }}
               >
                 <span>{option}</span>

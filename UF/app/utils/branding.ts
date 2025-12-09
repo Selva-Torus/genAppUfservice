@@ -35,6 +35,8 @@ export const getBrandingStyles = (branding: Branding) => {
     "--brand-color": branding.brandColor,
     "--selection-color": branding.selectionColor,
     "--hover-color": branding.hoverColor,
+    "--border-radius": getBorderRadiusClass(branding.borderRadius),
+    "--font-size": getFontSizeClass(branding.fontSize),
   } as React.CSSProperties;
 };
 
@@ -62,3 +64,4 @@ export const darkenColor = (color: string, amount: number = 0.1): string => {
   const b = Math.max(0, parseInt(hex.substring(4, 6), 16) - amount * 255);
   return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 };
+ 

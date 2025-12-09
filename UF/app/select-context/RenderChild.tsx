@@ -35,7 +35,7 @@ const RenderChild = ({
       <div className='flex items-center gap-[0.5vw]'>
         <div className='flex flex-col'>
           <Text variant='body-2'>{displayName}</Text>
-          <Text color='secondary'>{displayCode.replace(codePrefix, '')}</Text>
+          <Text variant='body-short' color='secondary'>{displayCode.replace(codePrefix, '')}</Text>
         </div>
       </div>
     </div>

@@ -69,7 +69,7 @@
     "hoverColor": "#FF5722",
     "borderRadius": "xl",
     "navigationStyles": "vertical",
-    "theme": "dark",
+    "theme": "light",
     "topbarColor": "#ffffff",
     "menubarColor": "#ffffff",
     "layoutMode": "fluid",
@@ -117,7 +117,7 @@
         "fontUrl": "https://fonts.googleapis.com/css2?family=Playwrite+US+Trad+Guides&display=swap"
       }
     ],
-    "text-body-font": "RobotoFlex",
+    "text-body-font": "Poppins",
     "text-header-font": "RobotoFlex",
     "text-display-font": "RobotoFlex",
     "group-bg-color": "#f5fff5",
@@ -140,7 +140,7 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-12-05T08:37:55.715Z",
+    "lastActive": "2025-12-09T06:47:02.731Z",
     "profile": "torus/9.1/CT003/resources/images/Peer@786/scott-graham-5fNmWej4tAA-unsplash.jpg",
     "quickLinks": [],
     "client": "CT003",

@@ -84,12 +84,12 @@ export const Slider: React.FC<SliderProps> = ({
     if (validationState === "invalid") {
       return "#EF4444";
     }
-    return branding.brandColor;
+    return "var(--brand-color)";
   };
 
   const sliderElement = (
     <div
-      className={`w-full relative ${direction === "RTL" ? "rtl" : ""} ${className}`}
+      className={`w-full relative ${direction === "RTL" ? "rtl" : ""}`}
       onMouseEnter={() => {
         if (!disabled && tooltipDisplay === "auto") {
           setShowTooltip(true);
@@ -246,7 +246,7 @@ export const Slider: React.FC<SliderProps> = ({
                     className={`w-0.5 h-2 mx-auto ${isDark ? "bg-gray-600" : "bg-gray-400"}`}
                   />
                   <span
-                    className={`text-xs mt-1 block ${isDark ? "text-gray-400" : "text-gray-600"} ${
+                    className={`[font-size:var(--font-size)] mt-1 block ${isDark ? "text-gray-400" : "text-gray-600"} ${
                       isFirst ? "text-left" : isLast ? "text-right" : "text-center"
                     }`}
                     style={{
@@ -273,30 +273,30 @@ export const Slider: React.FC<SliderProps> = ({
   );
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
+    if (!headerText) return <div className={className}>{element}</div>;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
+    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 
     switch (headerPosition) {
       case "top":
         return (
-          <div className="flex flex-col w-full">
+          <div className={`flex flex-col w-full ${className}`}>
             <div className={headerClasses}>{headerText}</div>
             {element}
           </div>
         );
       case "bottom":
         return (
-          <div className="flex flex-col w-full">
+          <div className={`flex flex-col w-full ${className}`}>
             {element}
             <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
           </div>
         );
       case "left":
         return (
-          <div className="flex items-center gap-4 w-full">
+          <div className={`flex items-center gap-4 w-full ${className}`}>
             <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
               {headerText}
             </div>
@@ -305,7 +305,7 @@ export const Slider: React.FC<SliderProps> = ({
         );
       case "right":
         return (
-          <div className="flex items-center gap-4 w-full">
+          <div className={`flex items-center gap-4 w-full ${className}`}>
             <div className="flex-1">{element}</div>
             <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
               {headerText}

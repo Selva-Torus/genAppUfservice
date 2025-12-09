@@ -47,7 +47,7 @@ export const Tabs: React.FC<TabsProps> = ({
 }) => {
   const { theme, branding } = useGlobal();
   const [activeTab, setActiveTab] = useState(defaultActiveId || items[0]?.id || "");
-
+  
   const handleTabClick = (id: string) => {
       onChange(id);
       setActiveTab(id);
@@ -73,7 +73,7 @@ export const Tabs: React.FC<TabsProps> = ({
   const activeContent = items.find(item => item.id === activeTab)?.content;
 
   const tabsElement = (
-    <div className={`w-full ${direction === "vertical" ? "flex gap-4" : ""} ${className}`}>
+    <div className={`w-full ${direction === "vertical" ? "flex gap-4" : ""}`}>
       <div
         className={`
           flex
@@ -93,7 +93,8 @@ export const Tabs: React.FC<TabsProps> = ({
               disabled={disabled}
               className={`
                 ${getSizeClasses()}
-                ${getBorderRadiusClass(branding.borderRadius)}
+                [border-radius:var(--border-radius)]
+                [font-size:var(--font-size)]
                 flex items-center gap-2
                 font-medium
                 whitespace-nowrap
@@ -106,7 +107,7 @@ export const Tabs: React.FC<TabsProps> = ({
                 }
               `}
               style={{
-                backgroundColor: isActive ? branding.brandColor : "transparent",
+                backgroundColor: isActive ? "var(--brand-color)" : "transparent",
               }}
             >
               {item.icon && <Icon data={item.icon} size={size === "xl" ? 20 : size === "l" ? 18 : 16} />}
@@ -125,30 +126,30 @@ export const Tabs: React.FC<TabsProps> = ({
   );
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
+    if (!headerText) return <div className={className}>{element}</div>;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
+    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 
     switch (headerPosition) {
       case "top":
         return (
-          <div className="flex flex-col w-full">
+          <div className={`flex flex-col w-full ${className}`}>
             <div className={headerClasses}>{headerText}</div>
             {element}
           </div>
         );
       case "bottom":
         return (
-          <div className="flex flex-col w-full">
+          <div className={`flex flex-col w-full ${className}`}>
             {element}
             <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
           </div>
         );
       case "left":
         return (
-          <div className="flex items-start gap-4 w-full">
+          <div className={`flex items-start gap-4 w-full ${className}`}>
             <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
               {headerText}
             </div>
@@ -157,7 +158,7 @@ export const Tabs: React.FC<TabsProps> = ({
         );
       case "right":
         return (
-          <div className="flex items-start gap-4 w-full">
+          <div className={`flex items-start gap-4 w-full ${className}`}>
             <div className="flex-1">{element}</div>
             <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
               {headerText}

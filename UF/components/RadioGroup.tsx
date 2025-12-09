@@ -58,6 +58,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
         <Radio
           key={item.value}
           checked={selectedValue === item.value}
+          className={className}
           size={radioSize}
           disabled={disabled}
           content={item.content}
@@ -72,28 +73,28 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
+    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 
     switch (headerPosition) {
       case "top":
         return (
-          <div className="flex flex-col">
+          <div className={`flex flex-col ${className}`}>
             <div className={headerClasses}>{headerText}</div>
             {element}
           </div>
         );
       case "bottom":
         return (
-          <div className="flex flex-col">
+          <div className={`flex flex-col ${className}`}>
             {element}
             <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
           </div>
         );
       case "left":
         return (
-          <div className="flex items-start gap-4">
+          <div className={`flex items-start gap-4 ${className}`}>
             <div className={`${headerClasses} mb-0 whitespace-nowrap pt-1`}>
               {headerText}
             </div>
@@ -102,7 +103,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
         );
       case "right":
         return (
-          <div className="flex items-start gap-4">
+          <div className={`flex items-start gap-4 ${className}`}>
             {element}
             <div className={`${headerClasses} mb-0 whitespace-nowrap pt-1`}>
               {headerText}

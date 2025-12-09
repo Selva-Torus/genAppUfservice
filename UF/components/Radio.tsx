@@ -68,7 +68,7 @@ export const Radio: React.FC<RadioProps> = ({
     
     if (checked) {
       return {
-        borderColor: branding.selectionColor,
+        borderColor: "var(--selection-color)",
         borderWidth: size === "s" ? "4px" : size === "m" ? "5px" : size === "l" ? "6px" : "7px",
       };
     }
@@ -90,7 +90,7 @@ export const Radio: React.FC<RadioProps> = ({
 
   const radioElement = (
     <label
-      className={`inline-flex items-center ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"} ${className}`}
+      className={`inline-flex items-center ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}`}
       onClick={handleClick}
     >
       <input
@@ -109,7 +109,7 @@ export const Radio: React.FC<RadioProps> = ({
         className={`${getSizeClasses()} rounded-full border transition-all`}
         onMouseEnter={(e) => {
           if (!disabled && !checked) {
-            e.currentTarget.style.borderColor = branding.hoverColor;
+            e.currentTarget.style.borderColor = 'var(--hover-color)';
           }
         }}
         onMouseLeave={(e) => {
@@ -121,7 +121,7 @@ export const Radio: React.FC<RadioProps> = ({
       />
       {content && (
         <span
-          className={`${direction === "RTL" ? "mr-2" : "ml-2"} ${getFontSizeClass(branding.fontSize)} ${
+          className={`${direction === "RTL" ? "mr-2" : "ml-2"} [font-size:var(--font-size)] ${
             theme === "dark" || theme === "dark-hc" ? "text-gray-200" : "text-gray-900"
           }`}
         >
@@ -132,30 +132,30 @@ export const Radio: React.FC<RadioProps> = ({
   );
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
+    if (!headerText) return <div className={className}>{element}</div>;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-1 ${
+    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-1 ${
       theme === "dark" || theme === "dark-hc" ? "text-gray-300" : "text-gray-700"
     }`;
 
     switch (headerPosition) {
       case "top":
         return (
-          <div className="flex flex-col">
+          <div className={`flex flex-col ${className}`}>
             <div className={headerClasses}>{headerText}</div>
             {element}
           </div>
         );
       case "bottom":
         return (
-          <div className="flex flex-col">
+          <div className={`flex flex-col ${className}`}>
             {element}
             <div className={`${headerClasses} mt-1 mb-0`}>{headerText}</div>
           </div>
         );
       case "left":
         return (
-          <div className="flex items-center">
+          <div className={`flex items-center ${className}`}>
             <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "ml-2" : "mr-2"}`}>
               {headerText}
             </div>
@@ -164,7 +164,7 @@ export const Radio: React.FC<RadioProps> = ({
         );
       case "right":
         return (
-          <div className="flex items-center">
+          <div className={`flex items-center ${className}`}>
             {element}
             <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "mr-2" : "ml-2"}`}>
               {headerText}

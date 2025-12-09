@@ -41,7 +41,7 @@ interface TableProps {
   wordWrap?: boolean;
 }
 
-export const Table: React.FC<TableProps> = ({
+export const Table_v2: React.FC<TableProps> = ({
   tablename,
   primarykey,
   parenttableprimarykey,

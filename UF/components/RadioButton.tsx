@@ -71,9 +71,9 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   const isDark = theme === "dark" || theme === "dark-hc";
 
   const radioButtonElement = (
-    <div className={`inline-flex ${getBorderRadiusClass(branding.borderRadius)} overflow-hidden ${
+    <div className={`inline-flex [border-radius:var(--border-radius)] overflow-hidden ${
       isDark ? "bg-gray-800" : "bg-gray-100"
-    } p-1 ${direction === "RTL" ? "flex-row-reverse" : ""} ${className}`}>
+    } p-1 ${direction === "RTL" ? "flex-row-reverse" : ""}`}>
       {items.map((item) => {
         const isSelected = selectedValue === item.value;
         return (
@@ -85,7 +85,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
             disabled={disabled}
             className={`
               ${getSizeClasses()}
-              ${getBorderRadiusClass(branding.borderRadius)}
+              [border-radius:var(--border-radius)]
               font-medium
               transition-all
               ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
@@ -95,7 +95,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
               }
             `}
             style={{
-              backgroundColor: isSelected ? branding.brandColor : "transparent",
+              backgroundColor: isSelected ? "var(--brand-color)" : "transparent",
             }}
           >
             {item.content}
@@ -106,30 +106,30 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   );
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
+    if (!headerText) return <div className={className}>{element}</div>;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
+    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 
     switch (headerPosition) {
       case "top":
         return (
-          <div className="inline-flex flex-col">
+          <div className={`inline-flex flex-col ${className}`}>
             <div className={headerClasses}>{headerText}</div>
             {element}
           </div>
         );
       case "bottom":
         return (
-          <div className="inline-flex flex-col">
+          <div className={`inline-flex flex-col ${className}`}>
             {element}
             <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
           </div>
         );
       case "left":
         return (
-          <div className="inline-flex items-center gap-4">
+          <div className={`inline-flex items-center gap-4 ${className}`}>
             <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
               {headerText}
             </div>
@@ -138,7 +138,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
         );
       case "right":
         return (
-          <div className="inline-flex items-center gap-4">
+          <div className={`inline-flex items-center gap-4 ${className}`}>
             {element}
             <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
               {headerText}

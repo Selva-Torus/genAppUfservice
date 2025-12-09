@@ -1,6 +1,5 @@
 # Stage 1: Build Stage
-FROM 192.168.2.164:5000/node:20-alpine AS builder
-
+FROM docker.io/library/node:20-alpine AS builder
 # Set the working directory in the container
 WORKDIR /app
 
@@ -18,7 +17,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Production Stage
-FROM 192.168.2.164:5000/node:20-alpine AS production
+FROM docker.io/library/node:20-alpine AS production
 
 WORKDIR /app
 

@@ -112,7 +112,7 @@ export const List: React.FC<ListProps> = ({
                 }
               `}
               style={{
-                backgroundColor: isSelected ? branding.brandColor : undefined,
+                backgroundColor: isSelected ? "var(--brand-color)" : undefined,
               }}
             >
               {item}

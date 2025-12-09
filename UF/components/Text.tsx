@@ -87,7 +87,7 @@ interface TextProps {
 export const Text: React.FC<TextProps> = ({
   variant,
   wordBreak,
-  color = "primary",
+  color = "",
   static: isStatic = false,
   iconDisplay,
   icon,
@@ -102,6 +102,9 @@ export const Text: React.FC<TextProps> = ({
   const { theme, branding } = useGlobal();
 
   const getVariantClasses = () => {
+    if (!variant) {
+      return "[font-size:var(--font-size)]"; 
+    }
     switch (variant) {
       case "display-4":
         return "text-6xl font-bold";
@@ -149,7 +152,7 @@ export const Text: React.FC<TextProps> = ({
 
   const getColorStyle = () => {
     const isDark = theme === "dark" || theme === "dark-hc";
-
+    
     const colorMap: Record<TextColor, string> = {
       primary: isDark ? "#F9FAFB" : "#111827",
       complementary: isDark ? "#E5E7EB" : "#374151",
@@ -167,7 +170,7 @@ export const Text: React.FC<TextProps> = ({
       "utility-heavy": isDark ? "#8B5CF6" : "#6D28D9",
       misc: isDark ? "#9CA3AF" : "#6B7280",
       "misc-heavy": isDark ? "#6B7280" : "#374151",
-      brand: branding.brandColor,
+      brand: "var(--brand-color)",
       link: "#3B82F6",
       "link-hover": "#2563EB",
       "link-visited": "#7C3AED",
@@ -184,8 +187,8 @@ export const Text: React.FC<TextProps> = ({
       "inverted-secondary": isDark ? "#6B7280" : "#D1D5DB",
       "inverted-hint": "#9CA3AF",
     };
-
-    return colorMap[color] || colorMap.primary;
+    
+    return colorMap[color as TextColor] || "";
   };
 
   const displayContent = content || children;

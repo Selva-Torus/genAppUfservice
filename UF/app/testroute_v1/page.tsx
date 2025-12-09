@@ -13,6 +13,7 @@ import { Icon } from "@/components/Icon";
 import { Text } from "@/components/Text";
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
+import clsx from "clsx";
 import Groupgroup  from "./Groupgroup/Groupgroup";
 
 
@@ -213,7 +214,10 @@ export default function PageTestrouteV1() {
   }, [])
   return (
     <>
-     <div className={` w-full ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'} `}
+     <div className={clsx("",
+        "w-full",
+        isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'
+      )}
      style={{
         gridColumn: '',
         gridRow: '',

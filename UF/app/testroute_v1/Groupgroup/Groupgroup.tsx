@@ -11,6 +11,7 @@ import { Text } from '@/components/Text';
 import { Icon } from '@/components/Icon';
 import { Modal } from '@/components/Modal';
 import { eventBus } from '@/app/eventBus';
+import clsx from "clsx";
 import ButtonAddd  from "./ButtonAddd";
 import TextInputwefdwfds  from "./TextInputwefdwfds";
 import Documentuploadercsdcsdcsd  from "./Documentuploadercsdcsdcsd";
@@ -173,13 +174,13 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
       style={{          
         gridColumn: '4 / 10',
         gridRow: '25 / 157',
+        height: '100%',
         gridAutoRows: '4px',
         columnGap: '0px',
         //rowGap: '0px',
         display: 'grid',
         gridTemplateColumns: 'repeat(12, 1fr)',
         gridTemplateRows: 'repeat(auto-fill, minmax(4px, 1fr))',
-        height: '100%',
         overflow: 'auto',
         backgroundColor:'',
         backgroundImage:'',
@@ -190,7 +191,10 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
         backgroundClip: '',
         backgroundBlendMode: ''
       }}
-      className={` rounded-md shadow-md ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+      className={clsx("",
+        "rounded-md shadow-md",
+        isDark ? "bg-gray-800 text-white" : "bg-white text-black"
+      )}
     >
         {allowedComponent.includes("group")  &&<Groupgroup  
           lockedData={lockedData} 

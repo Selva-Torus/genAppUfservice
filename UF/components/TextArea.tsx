@@ -28,7 +28,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
   disabled = false,
   minRows,
   maxRows,
-  pin = "round-round",
+  pin = "",
   placeholder,
   readOnly = false,
   size,
@@ -60,6 +60,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
   };
 
   const getPinClasses = () => {
+    if (!pin) return "";
     const baseRadius = getBorderRadiusClass(branding.borderRadius);
     
     if (pin === "clear-clear") {
@@ -82,14 +83,14 @@ export const TextArea: React.FC<TextAreaProps> = ({
   const isDark = theme === "dark" || theme === "dark-hc";
 
   const textAreaElement = (
-    <div className={`w-full ${className}`}>
+    <div className={`w-full `}>
       <textarea
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
         readOnly={readOnly}
-      
+
         rows={minRows}
         style={{
           maxHeight: `${maxRows * 1.5}em`,
@@ -99,6 +100,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
           w-full
           ${getSizeClasses()}
           ${getPinClasses()}
+          ${className}
           border-2
           ${disabled ? "opacity-50 cursor-not-allowed" : ""}
           ${isDark ? "bg-gray-800 text-white border-gray-600" : "bg-white text-gray-900 border-gray-300"}
@@ -106,8 +108,8 @@ export const TextArea: React.FC<TextAreaProps> = ({
           focus:outline-none focus:ring-2 focus:ring-opacity-50
         `}
         onFocus={(e) => {
-          e.currentTarget.style.borderColor = branding.brandColor;
-          e.currentTarget.style.boxShadow = `0 0 0 2px ${branding.brandColor}20`;
+          e.currentTarget.style.borderColor = "var(--brand-color)";
+          e.currentTarget.style.boxShadow = `0 0 0 2px var(--brand-color) 20`;
         }}
         onBlur={onBlur}
       />
@@ -115,31 +117,31 @@ export const TextArea: React.FC<TextAreaProps> = ({
   );
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
+    if (!headerText) return <div className={className} >{element}</div>;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-1 ${
+    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-1 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 
     switch (headerPosition) {
       case "top":
         return (
-          <div className="flex flex-col w-full">
+          <div className={`flex flex-col w-full ${className}`}>
             <div className={headerClasses}>{headerText}</div>
             {element}
           </div>
         );
       case "bottom":
         return (
-          <div className="flex flex-col w-full">
+          <div className={`flex flex-col w-full ${className}`}>
             {element}
-            <div className={`${headerClasses} mt-1 mb-0`}>{headerText}</div>
+            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
           </div>
         );
       case "left":
         return (
-          <div className="flex items-start w-full">
-            <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "ml-4" : "mr-4"} whitespace-nowrap pt-2`}>
+          <div className={`flex items-start gap-4 w-full ${className}`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
               {headerText}
             </div>
             <div className="flex-1">{element}</div>
@@ -147,9 +149,9 @@ export const TextArea: React.FC<TextAreaProps> = ({
         );
       case "right":
         return (
-          <div className="flex items-start w-full">
+          <div className={`flex items-start gap-4 w-full ${className}`}>
             <div className="flex-1">{element}</div>
-            <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "mr-4" : "ml-4"} whitespace-nowrap pt-2`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
               {headerText}
             </div>
           </div>
