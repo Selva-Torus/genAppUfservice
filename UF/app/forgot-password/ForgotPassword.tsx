@@ -9,6 +9,7 @@ import { useInfoMsg } from '../components/infoMsgHandler'
 import { Text } from '@/components/Text'
 import { useTheme } from '@/hooks/useTheme'
 import { useGlobal } from '@/context/GlobalContext'
+import { getCdnImage } from '../utils/getAssets'
 
 interface Props {
   logo: string
@@ -54,7 +55,7 @@ const ForgotPassword = ({
             className='h-[50px] w-[50px] object-cover'
             width={100}
             height={100}
-            src={logo}
+            src={getCdnImage(logo)}
             alt='logo'
           />
         ) : (

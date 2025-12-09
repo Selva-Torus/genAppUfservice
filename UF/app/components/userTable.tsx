@@ -13,6 +13,7 @@ import { Table } from '@/components/Table'
 import { twMerge } from 'tailwind-merge'
 import { useTheme } from '@/hooks/useTheme'
 import i18n from './i18n'
+import { getCdnImage } from '../utils/getAssets'
 
 export interface UserData {
   users: string
@@ -234,7 +235,7 @@ const UserTable: React.FC<{
                 className='rounded-full border'
               >
                 <img
-                  src={item.profile}
+                  src={getCdnImage(item.profile)}
                   alt='Profile'
                   style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                   onError={e => {
@@ -347,7 +348,7 @@ const UserTable: React.FC<{
     <div className={`g-root h-[80vh] w-full`}>
       <div>
          <Modal
-            className='w-[1000px] lg:min-w-[900px]'
+            className='w-[800px] lg:min-w-[800px]'
             onClose={() => setEditUserModalOpen(false)}
             open={editUserModalOpen}
             closeOnOverlayClick

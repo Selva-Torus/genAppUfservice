@@ -10,6 +10,7 @@ import { Button } from '@/components/Button'
 import { Avatar } from '@/components/Avatar'
 import { BsThreeDotsVertical } from 'react-icons/bs'
 import { DropdownMenu } from '@/components/DropdownMenu'
+import { getCdnImage } from '../utils/getAssets'
 
 const TopNav = ({
   navData,
@@ -146,7 +147,7 @@ const TopNav = ({
             className='h-[16px] w-[20px]'
             width={100}
             height={100}
-            src={logo}
+            src={getCdnImage(logo)}
             alt='logo'
           />
         ) : (
@@ -255,7 +256,7 @@ const TopNav = ({
                     size='s'
                     theme='brand'
                     view='filled'
-                    imageUrl={userDetails?.profile}
+                    imageUrl={getCdnImage(userDetails?.profile)}
                     icon='FaRegUser'
                   />
                   <Text className='pr-2'>{user}</Text>

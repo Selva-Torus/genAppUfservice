@@ -12,6 +12,7 @@ import { TextInput } from '@/components/TextInput'
 import { DatePicker } from '@/components/DatePicker'
 import { Switch } from '@/components/Switch'
 import i18n from './i18n'
+import { getCdnImage } from '../utils/getAssets'
 
 const UserCreationModal = ({
   setModalOpen,
@@ -351,7 +352,7 @@ const UserCreationModal = ({
                                 src={
                                   selectedFile
                                     ? URL.createObjectURL(selectedFile)
-                                    : newUser.profile
+                                    : getCdnImage(newUser?.profile)
                                 }
                                 alt='preview'
                                 className='h-32 w-32 rounded-full object-cover'
@@ -374,7 +375,8 @@ const UserCreationModal = ({
                           type='text'
                           placeholder={keyset(label)}
                           readOnly={readOnly}
-                          size='s'
+                          className='w-full rounded text-base h-10'
+                          size='xs'
                           onChange={handleInputChange}
                           value={
                             readOnly && name == 'domain'
@@ -384,6 +386,7 @@ const UserCreationModal = ({
                                 : newUser[name]
                           }
                           view='normal'
+                          pin='clear-clear'
                         />
                         // <input
                         //   type={name == 'accessExpires' ? 'date' : 'text'}
@@ -418,6 +421,7 @@ const UserCreationModal = ({
                           onChange={(e) => setNewUser((prev: any) => ({ ...prev, accessExpires: e }))}
                           value={newUser.accessExpires ?? ""}
                           validationState={new Date().toISOString().split('T')[0] as any}
+                          className='h-10'
                         />
                       )}
                       {type == 'dropdown' && (
@@ -434,7 +438,7 @@ const UserCreationModal = ({
                             }}
                             placeholder={keyset('Select Access Profile')}
                             multiple
-                            size='m'
+                            size='s'
                             className='w-full'
                             options={accessprofileOptions}
                             customRenderSelectedLabels={newUser?.accessProfile?.length > 1 ? "Multiple Template" : undefined}

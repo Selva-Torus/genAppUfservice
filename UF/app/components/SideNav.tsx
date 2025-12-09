@@ -11,6 +11,7 @@ import { DropdownMenu } from '@/components/DropdownMenu'
 import { Avatar } from '@/components/Avatar'
 import { useTheme } from '@/hooks/useTheme'
 import { twMerge } from 'tailwind-merge'
+import { getCdnImage } from '../utils/getAssets'
 
 const SideNav = ({
   navData,
@@ -79,7 +80,7 @@ const SideNav = ({
             width={100}
             height={100}
             alt='icon'
-            src={screen.icon}
+            src={getCdnImage(screen.icon)}
             style={{
               filter: isDark
                 ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
@@ -118,7 +119,7 @@ const SideNav = ({
               width={100}
               height={100}
               alt='icon'
-              src={item.icon}
+              src={getCdnImage(item.icon)}
               style={{
                 filter: isDark
                   ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
@@ -252,7 +253,7 @@ const SideNav = ({
                                     width={100}
                                     height={100}
                                     alt='icon'
-                                    src={menu.icon}
+                                    src={getCdnImage(menu.icon)}
                                     style={{
                                       filter:
                                         typeof getDropDownStyles(
@@ -313,7 +314,7 @@ const SideNav = ({
                                   width={100}
                                   height={100}
                                   alt='icon'
-                                  src={menu.icon}
+                                  src={getCdnImage(menu.icon)}
                                   style={{
                                     filter:
                                       typeof getDropDownStyles(
@@ -398,7 +399,7 @@ const SideNav = ({
                         width={100}
                         height={100}
                         alt='icon'
-                        src={menu.screenDetails[0].icon}
+                        src={getCdnImage(menu.screenDetails[0].icon)}
                         style={{
                           filter:
                             routingName == pathname ||
@@ -489,7 +490,7 @@ const FullViewAvatar = ({
               <Avatar
                 theme='brand'
                 view='filled'
-                imageUrl={userDetails?.profile}
+                imageUrl={getCdnImage(userDetails?.profile)}
                 size='m'
                 className={`${
                   !fullView ? 'hidden opacity-0' : 'block opacity-100'
@@ -579,7 +580,7 @@ const PartialViewAvatar = ({
             <Avatar
               theme='brand'
               view='filled'
-              imageUrl={userDetails?.profile}
+              imageUrl={getCdnImage(userDetails?.profile)}
               size='m'
               className={`${
                 fullView ? 'hidden opacity-0' : 'block opacity-100'
