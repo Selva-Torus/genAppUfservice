@@ -242,7 +242,6 @@ const LogsFilterationModal = ({
                 .map((userObj: any) => (
                   <div key={userObj?.loginId} className='flex gap-2 cursor-pointer'>
                     <Checkbox
-                      key={userObj?.loginId}
                       value={userObj?.loginId}
                       className='flex items-center gap-2 text-[0.72vw]'
                       onChange={e =>

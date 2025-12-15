@@ -1,5 +1,5 @@
 'use client'
-import React, { useContext, useEffect, useMemo, useState } from 'react'
+import React, { useContext, useEffect, useMemo, useState, useTransition } from 'react'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import axios from 'axios'
 import { getCookie, setCookie } from '../components/cookieMgment'
@@ -20,20 +20,22 @@ import { LuBuilding2 } from 'react-icons/lu'
 import { hexWithOpacity, isLightColor } from '../components/utils'
 import { BiPackage } from 'react-icons/bi'
 import { RiUserShared2Fill } from 'react-icons/ri'
-import { set } from 'lodash'
+import clsx from 'clsx'
 
 const ContextSelector = () => {
-  const [selectedAccessProfile, setSelectedAccessProfile] = useState<string[]>([])
+  const [selectedAccessProfile, setSelectedAccessProfile] = useState<string[]>(
+    []
+  )
   const { userDetails, setUserDetails } = useContext(
     TotalContext
   ) as TotalContextProps
   const token: string = getCookie('token')
   const tp_ps: any = getCookie('tp_ps')
-  const toast = useInfoMsg();
+  const toast = useInfoMsg()
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
   const appName = 'oprmatrix'
   const [accessProfiles, setAccessProfiles] = useState<any[]>([])
-  const router = useRouter();
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const { branding } = useGlobal()
   const { brandColor } = branding
@@ -45,14 +47,16 @@ const ContextSelector = () => {
   const [selectedPs, setSelectedPs] = useState<Record<string, string>>({})
   const [selectedRole, setSelectedRole] = useState<Record<string, string>>({})
   const [orgGrpData, setOrgGrpData] = useState<any>([])
-  let landingScreen:string = 'User Screen';
+  const [isPending, startTransition] = useTransition();
+  let landingScreen: string = 'User Screen'
   let screenDetails: any = {
-           keys:[
-  {
-    "screensName": "testroute-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-  }
-]
+    keys: [
+      {
+        screensName: 'testroute-v1',
+        ufKey:
+          'CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1'
+      }
+    ]
   }
   screenDetails = screenDetails.keys
 
@@ -151,8 +155,8 @@ const ContextSelector = () => {
       orgGrpCode: selectedOrg?.orgGrpCode,
       orgCode: selectedOrg?.orgCode,
       orgPath: selectedOrg?.path,
-      orgGrpName : selectedOrg?.orgGrpName,
-      orgName : selectedOrg?.orgName,
+      orgGrpName: selectedOrg?.orgGrpName,
+      orgName: selectedOrg?.orgName,
       roleGrpCode: selectedRole?.roleGrpCode,
       roleCode: selectedRole?.roleCode,
       psGrpCode: selectedPs?.psGrpCode,
@@ -201,8 +205,10 @@ const ContextSelector = () => {
             psCode: ORM.psCode
           })
         )
+         startTransition(() => {
+            router.push(landingScreen);
+          });
         // here we have to set the default authentication route
-        router.push(landingScreen)
         setLoading(false)
       }
     } catch (error) {
@@ -213,61 +219,24 @@ const ContextSelector = () => {
   const blocks = useMemo(() => {
     const data = [
       {
-        icon: (
-          <LuBuilding2
-            className='h-[0.7vw] w-[0.7vw]'
-            style={{
-              color: isLightColor(brandColor)
-            }}
-          />
-        ),
+        icon: LuBuilding2,
         group: selectedOrg.orgGrpName,
         title: selectedOrg.orgName,
         subtitle: selectedOrg.orgCode
       },
       {
-        icon: (
-          <BiPackage
-            className='h-[0.7vw] w-[0.7vw]'
-            style={{
-              color: isLightColor(brandColor)
-            }}
-          />
-        ),
+        icon: BiPackage,
         group: selectedPs.psGrpName,
         title: selectedPs.psName,
         subtitle: selectedPs.psCode
       },
       {
-        icon: (
-          <RiUserShared2Fill
-            className='h-[0.7vw] w-[0.7vw]'
-            style={{
-              color: isLightColor(brandColor)
-            }}
-          />
-        ),
+        icon: RiUserShared2Fill,
         group: selectedRole.roleGrpName,
-        title: `${selectedRole.roleCount} Role(s)`,
-        subtitle: 'Assigned'
+        title: selectedRole?.roleCount ? `${selectedRole.roleCount} Role` : ''
       }
     ]
-    if (
-      Object.keys(selectedOrg).length &&
-      Object.keys(selectedPs).length &&
-      Object.keys(selectedRole).length
-    ) {
-      return data
-    } else if (
-      Object.keys(selectedOrg).length &&
-      Object.keys(selectedPs).length
-    ) {
-      return data.slice(0, 2)
-    } else if (Object.keys(selectedOrg).length) {
-      return data.slice(0, 1)
-    } else {
-      return []
-    }
+    return data
   }, [selectedOrg, selectedPs, selectedRole])
 
   return (
@@ -290,7 +259,7 @@ const ContextSelector = () => {
         >
           <div className='h-1\5 flex w-full items-center justify-between'>
             <div className='flex flex-col items-start'>
-             {/* <Text variant='display-1' className='text-nowrap'>Profile Selector</Text> */}
+              {/* <Text variant='display-1' className='text-nowrap'>Profile Selector</Text> */}
               <Text variant='body-2' className='text-nowrap' color='secondary'>
                 Select Access Profile
               </Text>
@@ -323,16 +292,28 @@ const ContextSelector = () => {
             </div>
             <div className='flex h-[20vh] w-full items-center justify-center rounded-lg'>
               {blocks.map((block, idx) => (
-                <div key={idx} className='flex items-center gap-[2VW]'>
+                <div key={idx} className='flex items-center '>
                   {/* Circle */}
                   <div className='flex w-[8vw] flex-col items-center gap-[0.5vh]'>
                     <div
                       style={{
                         backgroundColor: hexWithOpacity(brandColor, 0.8)
                       }}
-                      className={`flex h-[2.5vw] w-[2.5vw] items-center justify-center rounded-full shadow-sm`}
+                      className={clsx(
+                        `flex h-[2.5vw] w-[2.5vw] items-center justify-center rounded-full shadow-sm transition-all duration-300 ease-in-out`,
+                        {
+                          'h-[4vw] w-[4vw]': !block?.group || !block?.title
+                        }
+                      )}
                     >
-                      {block.icon}
+                      <block.icon
+                        className={clsx('h-[0.7vw] w-[0.7vw] transition-all duration-300 ease-in-out', {
+                          'h-[1.1vw] w-[1.1vw]': !block?.group || !block?.title
+                        })}
+                        style={{
+                          color: isLightColor(brandColor)
+                        }}
+                      />
                     </div>
 
                     {/* Texts */}
@@ -368,12 +349,13 @@ const ContextSelector = () => {
             </div>
             <div className='flex gap-2 py-2'>
               <Button
-                className='flex items-center gap-7 rounded-md'
-                icon={loading ? '' : 'MdArrowForward'}
+                className='flex items-center h-8 rounded-md disabled:opacity-50'
+                icon={'MdArrowForward'}
                 onClick={handleNavigationClick}
-                disabled={Object.keys(selectedRole).length === 0}
+                disabled={Object.keys(selectedRole).length === 0 || loading || isPending}
+                size='s'
               >
-                {loading ? (
+                {loading || isPending ? (
                   <Spin
                     className='flex w-full justify-center'
                     spinning

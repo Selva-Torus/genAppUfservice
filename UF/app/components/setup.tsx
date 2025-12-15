@@ -277,6 +277,8 @@ const SetupScreen = ({
     setSelectedMenuItem(itemCode)
     setSelectedItems({})
     setSelectedRows(new Set())
+    setTemplateToBeUpdated(null)
+    setIndexOfTemplateToBeUpdated(null)
     resetStates(itemCode)
   }
 

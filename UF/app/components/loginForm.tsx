@@ -1,4 +1,3 @@
-
 'use client'
 import React, { useState } from 'react'
 import axios from 'axios'
@@ -6,14 +5,13 @@ import { api_signinDto } from '../interfaces/interfaces'
 import { useInfoMsg } from '../components/infoMsgHandler'
 import { setCookie } from '../components/cookieMgment'
 import { useRouter } from 'next/navigation'
-import { DefaultLoginImage } from '../utils/svgApplications'
+import { DefaultLoginImage, FusionAuth } from '../utils/svgApplications'
 import { BsEyeFill, BsEyeSlash } from 'react-icons/bs'
 import Link from 'next/link'
 import { singleSignOn } from '../utils/serverUtils'
 import decodeToken from './decodeToken'
 import { Text } from '@/components/Text'
 import { Button } from '@/components/Button'
-import { Icon } from '@/components/Icon'
 import Spin from '@/components/Spin'
 import { useGlobal } from '@/context/GlobalContext'
 import { useTheme } from '@/hooks/useTheme'
@@ -96,11 +94,11 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
           document.cookie = `language=${'en'}`
           let screenDetails: any = {
             keys:[
-  {
+              {
     "screensName": "testroute-v1",
     "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-  }
-]
+              }
+            ]
           }
           const ORM: any = decodeToken(api_signin.data.token)
           sessionStorage.setItem(
@@ -160,7 +158,6 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
   }
 
   const bgImage = loginType === 'standard' && image ? getCdnImage(image) : undefined
-  // const bgImage = `https://cdndfsdev.toruslowcode.com/buckets/torus/9.1/CT003/resources/images/Login%20-%20%20FinOne.png`
 
   return (
     <div
@@ -289,12 +286,12 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
                 </button>
               </div>
               <Link href='/forgot-password' className='self-end'>
-                <Text color='brand' className="text-sm 2xl:text-base">Forgot Password</Text>
+                <Text color='brand' className="text-sm 2xl:text-base" variant='body-2'>Forgot Password</Text>
               </Link>
               <Button
                 onClick={handleFormSubmit}
-                size='l'
-                className='h-10 rounded-lg 2xl:h-12'
+                size='m'
+                className='h-10 rounded-lg 2xl:h-12 w-full'
               >
                 {loading ? (
                   <Spin
@@ -308,28 +305,31 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
                 )}
               </Button>
 
-              {process.env.NEXT_PUBLIC_NEXT_AUTH_NEEDED === 'true' && (
-                <div className='flex w-full'>
+               {process.env.NEXT_PUBLIC_NEXT_AUTH_NEEDED === 'true' && ( 
+                <div className='flex w-full justify-center'>
                   <Button
                     onClick={() => singleSignOn('fusionauth')}
-                    size='l'
-                    view='raised'
+                    size='s'
+                    view='outlined'
+                    className='rounded-lg h-8'
                   >
-                <Icon data="FaShieldAlt" />
-                    ViaFusionAuth
+                    <span className='flex gap-2'>
+                      <FusionAuth fill={brandColor} />
+                      FusionAuth
+                    </span>
                   </Button>
                 </div>
-              )}
+              )} 
 
               <div className='flex justify-center pb-2'>
-                <Text className='flex items-center gap-1 text-nowrap text-sm 2xl:text-base'>
+                <Text className='flex items-center gap-1 text-nowrap text-sm 2xl:text-base' variant='body-2'>
                   Don&apos;t have an account?{' '}
                   <a
                     href='https://outlook.office.com/mail/deeplink/compose?to=support@torus.tech'
                     target='_blank'
                     rel='noopener noreferrer'
                   >
-                    <Text color='brand' className="text-sm 2xl:text-base">Contact Admin</Text>
+                    <Text color='brand' className="text-sm 2xl:text-base" variant='body-2'>Contact Admin</Text>
                   </a>
                 </Text>
               </div>

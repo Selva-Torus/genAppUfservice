@@ -18,6 +18,7 @@ import { Button } from '@/components/Button'
 import { Modal } from '@/components/Modal'
 import { twMerge } from 'tailwind-merge'
 import i18n from '../i18n'
+import clsx from 'clsx'
 
 interface OprMatrixContextType {
   isSearchOpen: string
@@ -102,7 +103,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
                   />
                 </Button>
 
-                <Modal showCloseButton={false} className='w-[27vw] lg:w-[19vw]' onClose={() => setOpen(false)} open={open}>
+                <Modal showCloseButton={false} className='w-md' onClose={() => setOpen(false)} open={open}>
                   <AddGroupLevelModal
                     close={() => setOpen(false)}
                     {...addContentProps}
@@ -777,64 +778,27 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
     setRefetchGroups(prev => !prev)
   }
 
-  const blocks = useMemo(() => {
+const blocks = useMemo(() => {
     const data = [
       {
-        icon: (
-          <LuBuilding2
-            className='h-[0.7vw] w-[0.7vw]'
-            style={{
-              color: isLightColor(brandColor)
-            }}
-          />
-        ),
+        icon: LuBuilding2,
         group: selectedOrg.orgGrpName,
         title: selectedOrg.orgName,
         subtitle: selectedOrg.orgCode
       },
       {
-        icon: (
-          <BiPackage
-            className='h-[0.7vw] w-[0.7vw]'
-            style={{
-              color: isLightColor(brandColor)
-            }}
-          />
-        ),
+        icon: BiPackage,
         group: selectedPs.psGrpName,
         title: selectedPs.psName,
         subtitle: selectedPs.psCode
       },
       {
-        icon: (
-          <RiUserShared2Fill
-            className='h-[0.7vw] w-[0.7vw]'
-            style={{
-              color: isLightColor(brandColor)
-            }}
-          />
-        ),
+        icon: RiUserShared2Fill,
         group: selectedRole.roleGrpName,
-        title: `${selectedRole.roleCount} Role(s)`,
-        subtitle: 'Assigned'
+        title: selectedRole?.roleCount ? `${selectedRole.roleCount} Role` : ''
       }
     ]
-    if (
-      Object.keys(selectedOrg).length &&
-      Object.keys(selectedPs).length &&
-      Object.keys(selectedRole).length
-    ) {
-      return data
-    } else if (
-      Object.keys(selectedOrg).length &&
-      Object.keys(selectedPs).length
-    ) {
-      return data.slice(0, 2)
-    } else if (Object.keys(selectedOrg).length) {
-      return data.slice(0, 1)
-    } else {
-      return []
-    }
+    return data
   }, [selectedOrg, selectedPs, selectedRole])
 
   return (
@@ -849,49 +813,61 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
     >
       <div className='flex h-full w-full flex-col gap-[2vh]'>
         <div className='flex h-[20vh] w-full items-center justify-center rounded-lg'>
-          {blocks.map((block, idx) => (
-            <div key={idx} className='flex items-center gap-[2VW]'>
-              {/* Circle */}
-              <div className='flex w-[8vw] flex-col items-center gap-[0.5vh]'>
-                <div
-                  style={{
-                    backgroundColor: hexWithOpacity(brandColor, 0.8)
-                  }}
-                  className={`flex h-[2.5vw] w-[2.5vw] items-center justify-center rounded-full shadow-sm`}
-                >
-                  {block.icon}
-                </div>
-
-                {/* Texts */}
-                <div className='flex w-full flex-col items-center'>
-                  <Text
-                    variant='body-1'
-                    className={`w-full truncate text-nowrap text-center`}
-                  >
-                    {block?.group}
-                  </Text>
-                  <Text
-                    variant='body-2'
-                    className='w-full truncate text-nowrap text-center font-semibold'
-                  >
-                    {block?.title}
-                  </Text>
-                  <Text
-                    variant='body-1'
-                    className='w-full truncate text-nowrap text-center'
-                    color='secondary'
-                  >
-                    {block.subtitle}
-                  </Text>
-                </div>
-              </div>
-
-              {/* Arrow */}
-              {idx < blocks.length - 1 && (
-                <div className='mx-4 text-lg text-gray-400'>→</div>
-              )}
-            </div>
-          ))}
+        {blocks.map((block, idx) => (
+                       <div key={idx} className='flex items-center '>
+                         {/* Circle */}
+                         <div className='flex w-[8vw] flex-col items-center gap-[0.5vh]'>
+                           <div
+                             style={{
+                               backgroundColor: hexWithOpacity(brandColor, 0.8)
+                             }}
+                             className={clsx(
+                               `flex h-[2.5vw] w-[2.5vw] items-center justify-center rounded-full shadow-sm transition-all duration-300 ease-in-out`,
+                               {
+                                 'h-[4vw] w-[4vw]': !block?.group || !block?.title
+                               }
+                             )}
+                           >
+                             <block.icon
+                               className={clsx('h-[0.7vw] w-[0.7vw] transition-all duration-300 ease-in-out', {
+                                 'h-[1.1vw] w-[1.1vw]': !block?.group || !block?.title
+                               })}
+                               style={{
+                                 color: isLightColor(brandColor)
+                               }}
+                             />
+                           </div>
+       
+                           {/* Texts */}
+                           <div className='flex w-full flex-col items-center'>
+                             <Text
+                               variant='body-1'
+                               className={`w-full truncate text-nowrap text-center`}
+                             >
+                               {block?.group}
+                             </Text>
+                             <Text
+                               variant='body-2'
+                               className='w-full truncate text-nowrap text-center font-semibold'
+                             >
+                               {block?.title}
+                             </Text>
+                             <Text
+                               variant='body-1'
+                               className='w-full truncate text-nowrap text-center'
+                               color='secondary'
+                             >
+                               {block.subtitle}
+                             </Text>
+                           </div>
+                         </div>
+       
+                         {/* Arrow */}
+                         {idx < blocks.length - 1 && (
+                           <div className='mx-4 text-lg text-gray-400'>→</div>
+                         )}
+                       </div>
+                     ))}
         </div>
         <div className='flex w-full items-center gap-[2vw]'>
           {/* ============= ORGANIZATION COLUMN ============= */}

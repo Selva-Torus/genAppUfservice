@@ -146,6 +146,7 @@ const RenderChild = ({
             setIsPopoverOpen(false)
           }}
           showCloseButton={false}
+          className='w-md'
         >
           <AddGroupLevelModal
             close={() => {

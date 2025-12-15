@@ -164,6 +164,7 @@ const UserCreationModal = ({
 
   const handleAddUser = async (filename: string) => {
     let user = { ...newUser }
+    let userProfileImg = newUser?.profile;
     if (selectedFile) {
       const data = new FormData()
       data.append('file', selectedFile)
@@ -187,6 +188,7 @@ const UserCreationModal = ({
       )
       if (res.status === 201) {
         const responseData = res.data.imageUrl
+        userProfileImg = responseData
         user = { ...user, profile: responseData }
       }
     }
@@ -230,6 +232,7 @@ const UserCreationModal = ({
           let editeduser: any = newUser
           delete editeduser?.password
           delete editeduser?.edit
+          editeduser.profile = userProfileImg
           const userResult = data.map((item: any) =>
             item.loginId === newUser.loginId ? { ...item, ...user } : item
           )
@@ -238,7 +241,7 @@ const UserCreationModal = ({
           const res = await AxiosService.post(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/postAppUserList`,
             {
-              data: editeduser
+              data: editeduser 
             },
             {
               headers: {

@@ -4,6 +4,8 @@ import { useInfoMsg } from '../infoMsgHandler'
 import { Text } from '@/components/Text'
 import { Button } from '@/components/Button'
 import { Label } from '@/components/Label'
+import { twMerge } from 'tailwind-merge'
+import { useTheme } from '@/hooks/useTheme'
 
 const AddGroupLevelModal = ({
   close,
@@ -43,6 +45,7 @@ const AddGroupLevelModal = ({
         }
   )
   const toast = useInfoMsg()
+  const { borderColor , bgColor , isDark , textColor } = useTheme()
 
   const handleInputChange = (e: any) => {
     let { name, value } = e.target
@@ -79,8 +82,7 @@ const AddGroupLevelModal = ({
       </Text>
 
       <div
-        style={{ fontSize: `0.8vw` }}
-        className='flex flex-col gap-[1vh] py-[1vh]'
+        className='flex flex-col gap-[1vh] py-[1vh] text-base'
       >
         <Label theme='clear' size='s' className='font-semibold'>
           Name
@@ -99,7 +101,7 @@ const AddGroupLevelModal = ({
           name='name'
           type='text'
           placeholder={`Enter ${resourceField} name`}
-          className={`rounded-lg border border-[var(--g-color-line-generic)] bg-[var(--g-color-base-background)] px-[.5vw] py-[.4vh] text-[var(--g-color-text-primary)] outline-none`}
+          className={twMerge(`rounded-lg border px-[.5vw] py-[.4vh] outline-none` , borderColor , bgColor , textColor)}
           onChange={handleInputChange}
           value={inputValue.name}
         />
@@ -121,7 +123,7 @@ const AddGroupLevelModal = ({
           name='code'
           type='text'
           placeholder={`Enter ${resourceField} code`}
-          className={`rounded-lg border border-[var(--g-color-line-generic)] bg-[var(--g-color-base-background)] px-[.5vw] py-[.4vh] text-[var(--g-color-text-primary)] outline-none`}
+          className={twMerge(`rounded-lg border px-[.5vw] py-[.4vh] outline-none` , borderColor , bgColor , textColor)}
           onChange={handleInputChange}
           readOnly={resource?.code ? true : false}
           value={inputValue.code?.replace(`${parentCode}`, '')}

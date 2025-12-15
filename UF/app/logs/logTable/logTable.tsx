@@ -361,6 +361,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab === 'process' ? 'process' : 'torus')
+    setFabrics([])
   }
 
   return (

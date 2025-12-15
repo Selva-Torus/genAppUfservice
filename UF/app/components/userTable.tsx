@@ -296,7 +296,7 @@ const UserTable: React.FC<{
               <form onSubmit={e => e.preventDefault()}>
                 <input
                   className={twMerge(
-                    'cursor-pointer rounded border px-2 py-1',
+                    'cursor-pointer rounded border px-2 py-1 outline-none',
                     bgColor,
                     borderColor,
                     textColor
@@ -304,6 +304,7 @@ const UserTable: React.FC<{
                   type='date'
                   defaultValue={item.accessExpires}
                   min={new Date().toISOString().split('T')[0]}
+                  readOnly
                   onChange={e =>
                     handledatachange(item, 'accessExpires', e.target.value)
                   }

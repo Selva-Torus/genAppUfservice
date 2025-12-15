@@ -207,6 +207,7 @@ const RenderGroup = ({
                 setIsPopoverOpen(false)
               }}
               showCloseButton={false}
+              className='w-md'
             >
               <AddGroupLevelModal
                 close={() => {
@@ -228,6 +229,7 @@ const RenderGroup = ({
                 setIsPopoverOpen(false)
               }}
               showCloseButton={false}
+              className='w-md'
             >
               <AddGroupLevelModal
                 close={() => {
