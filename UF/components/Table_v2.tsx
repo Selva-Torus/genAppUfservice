@@ -39,6 +39,7 @@ interface TableProps {
   settings?: any;
   updateSettings?: (settings: any) => void;
   wordWrap?: boolean;
+  loading?: boolean;
 }
 
 export const Table_v2: React.FC<TableProps> = ({
@@ -68,6 +69,7 @@ export const Table_v2: React.FC<TableProps> = ({
   settings,
   updateSettings,
   wordWrap = false,
+  loading = false,
 }) => {
   const { theme, branding } = useGlobal();
   const [internalSelectedIds123, setInternalSelectedIds] = useState<string[]>([]);
@@ -77,10 +79,10 @@ export const Table_v2: React.FC<TableProps> = ({
   const [showColumnModal, setShowColumnModal] = useState(false);
 
   // Normalize columns to handle both string[] and object[] formats
-  const normalizedColumns = columns.map((col: any) =>
+  let normalizedColumns = columns.map((col: any) =>
     typeof col === 'string' ? { id: col, name: col } : col
   );
-
+  normalizedColumns = normalizedColumns.filter((ele)=>(ele?.hide!=true))
   const [visibleColumns, setVisibleColumns] = useState<any[]>([]);
 
   // Update visible columns when columns prop changes - default to all columns selected
@@ -453,9 +455,25 @@ export const Table_v2: React.FC<TableProps> = ({
             </tr>
           </thead>
           <tbody>
-              {displayData.length === 0 ? (
+              {(loading && displayData.length !== 0) ? (
                 <tr>
-                  <td 
+                  <td
+                    colSpan={visibleColumns.length + (tableSelection ? 1 : 0) + (tableSettings ? 1 : 0)}
+                    className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
+                  >
+                    <div className="flex flex-col items-center justify-center space-y-3 min-h-[200px]">
+                      <div className="animate-spin flex items-center justify-center">
+                        <Icon data="FaSpinner" size={32} />
+                      </div>
+                      <span className={`${getFontSizeClass(branding.fontSize)} font-medium`}>
+                        Loading...
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              ) : displayData.length === 0 ? (
+                <tr>
+                  <td
                     colSpan={visibleColumns.length + (tableSelection ? 1 : 0) + (tableSettings ? 1 : 0)}
                     className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                   >

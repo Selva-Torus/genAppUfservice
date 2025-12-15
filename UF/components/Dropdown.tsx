@@ -5,7 +5,6 @@ import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 
 interface DropdownProps {
   static?: boolean;
@@ -55,7 +54,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   errorMessage,
 }) => {
   const isMultiple = multiselect || multiple;
-  const { theme, direction, branding } = useGlobal();
+  const { theme, direction } = useGlobal();
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [filterText, setFilterText] = useState("");
@@ -205,8 +204,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
               w-full
               px-4 py-2
               ${hasClear && selectedValues.length > 0 ? "pr-16" : "pr-10"}
-              ${getBorderRadiusClass(branding.borderRadius)}
-              ${getFontSizeClass(branding.fontSize)}
               border-2
               ${getBorderColor()}
               ${isDark ? "bg-gray-800 text-white placeholder-gray-400" : "bg-white text-gray-900 placeholder-gray-500"}
@@ -215,14 +212,17 @@ export const Dropdown: React.FC<DropdownProps> = ({
               focus:outline-none
             `}
             style={{
-              borderColor: validationState === "none" && isOpen ? branding.brandColor : undefined,
+              fontSize: "var(--font-size)",
+              borderRadius: "var(--border-radius)",
+              borderColor: validationState === "none" && isOpen ? "var(--brand-color)" : undefined,
             }}
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
             {hasClear && selectedValues.length > 0 && !disabled && (
               <button
                 onClick={handleClear}
-                className={`p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors ${getBorderRadiusClass(branding.borderRadius)}`}
+                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                style={{ borderRadius: "var(--border-radius)" }}
                 type="button"
               >
                 <Icon data="FaTimes" size={14} />
@@ -245,8 +245,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
           className={`
             w-full
             px-4 py-2
-            ${getBorderRadiusClass(branding.borderRadius)}
-            ${getFontSizeClass(branding.fontSize)}
             border-2
             ${getBorderColor()}
             flex items-center justify-between
@@ -255,6 +253,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
             transition-colors
           `}
           style={{
+            fontSize: "var(--font-size)",
+            borderRadius: "var(--border-radius)",
             borderColor: validationState === "none" && isOpen ? "var(--brand-color)" : undefined,
           }}
         >
@@ -269,7 +269,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
             {hasClear && selectedValues.length > 0 && !disabled && (
               <div
                 onClick={handleClear}
-                className={`p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors ${getBorderRadiusClass(branding.borderRadius)}`}
+                className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
+                style={{ borderRadius: "var(--border-radius)" }}
               >
                 <Icon data="FaTimes" size={14} />
               </div>
@@ -285,7 +286,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
             absolute
             w-full
             mt-1
-            ${getBorderRadiusClass(branding.borderRadius)}
             border-2
             ${isDark ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}
             shadow-lg
@@ -293,6 +293,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
             overflow-auto
             z-50
           `}
+          style={{ borderRadius: "var(--border-radius)" }}
         >
           {filteredOptions.map((option, index) => {
             const isSelected = selectedValues.includes(option);
@@ -303,7 +304,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 className={`
                   px-4 py-2
                   cursor-pointer
-                  ${getFontSizeClass(branding.fontSize)}
                   flex items-center justify-between
                   transition-colors
                   ${isSelected
@@ -312,6 +312,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
                   }
                 `}
                 style={{
+                  fontSize: "var(--font-size)",
                   backgroundColor: isSelected ? "var(--brand-color)" : undefined,
                 }}
               >
@@ -330,7 +331,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
       <>
         {element}
         {validationState === "invalid" && errorMessage && (
-          <div className={`mt-1 ${getFontSizeClass(branding.fontSize)} text-red-500`}>
+          <div className="mt-1 text-red-500" style={{ fontSize: "var(--font-size)" }}>
             {errorMessage}
           </div>
         )}
@@ -339,15 +340,17 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
     if (!headerText) return elementWithError;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
+    const headerClasses = `font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
+
+    const headerStyle = { fontSize: "var(--font-size)" };
 
     switch (headerPosition) {
       case "top":
         return (
           <div className="flex flex-col w-full">
-            <div className={headerClasses}>{headerText}</div>
+            <div className={headerClasses} style={headerStyle}>{headerText}</div>
             {elementWithError}
           </div>
         );
@@ -355,13 +358,13 @@ export const Dropdown: React.FC<DropdownProps> = ({
         return (
           <div className="flex flex-col w-full">
             {elementWithError}
-            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
+            <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
           </div>
         );
       case "left":
         return (
           <div className="flex items-start gap-4 w-full">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
             <div className="flex-1">{elementWithError}</div>
@@ -371,7 +374,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
         return (
           <div className="flex items-start gap-4 w-full">
             <div className="flex-1">{elementWithError}</div>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
           </div>
@@ -379,7 +382,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
     }
   };
 
-  const finalElement = renderWithHeader(dropdownElement);
+   const finalElement = (<div className={className}>{renderWithHeader(dropdownElement)}</div>);
 
   if (needTooltip && tooltipProps) {
     return (

@@ -224,15 +224,17 @@ export const Pagination: React.FC<PaginationProps> = ({
             );
           }
 
+          const isActive = pageNum === page;
+
           return (
             <Button
               key={pageNum}
-              view='outlined'
+              view={isActive ? 'action' : 'outlined'}
               pin='brick-brick'
               size={size}
               onClick={() => handlePageChange(pageNum)}
               aria-label={`Page ${pageNum}`}
-              aria-current={pageNum === page ? "page" : undefined}
+              aria-current={isActive ? "page" : undefined}
             >
               {pageNum}
             </Button>

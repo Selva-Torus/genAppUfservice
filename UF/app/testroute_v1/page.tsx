@@ -1,8 +1,8 @@
 'use client'
 import { useLanguage } from "../components/languageContext";
-import React,{ useContext,useEffect,useState } from "react";
+import React,{ useContext,useEffect,useState,useRef } from "react";
 import { AxiosService } from '@/app/components/axiosService';
-import { uf_authorizationCheckDto,te_refreshDto,te_dfDto } from '@/app/interfaces/interfaces';
+import { uf_authorizationCheckDto,te_refreshDto,te_dfDto,api_paginationDto } from '@/app/interfaces/interfaces';
 import { codeExecution } from "../utils/codeExecution";
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { deleteAllCookies,getCookie } from '@/app/components/cookieMgment';
@@ -72,6 +72,10 @@ export default function PageTestrouteV1() {
     "dpd":encryptionDpd,
     "method":encryptionMethod
   }
+  const [paginationData,setPaginationData]=useState<any>({count:10,page:1})
+    const prevRefreshRef = useRef({
+    });
+
 
   async function securityCheck() {
     const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",accessProfile:[user],from:"pageTestrouteV1"},{
@@ -229,7 +233,7 @@ export default function PageTestrouteV1() {
         gridTemplateRows: '',
         height: '',
         overflow: '',
-        backgroundColor:'#ffffff',
+        backgroundColor:bgStyle,
         backgroundImage:'',
         backgroundPosition: '',
         backgroundSize: '',

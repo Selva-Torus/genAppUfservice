@@ -330,13 +330,19 @@ export class UfService {
         throw 'Selected Access Profile not found';
 
       if(!tokenDecode?.loginId) throw 'loginId not found'
-
-      var dsObject = JSON.parse(
-        await this.redisService.getJsonData(
-          key + tokenDecode.loginId+'_DS_Object',
-          process.env.CLIENTCODE,
-        ),
-      );
+      let dsObject,data
+      // let f =0
+      // dsObject = JSON.parse(
+       // await this.redisService.getJsonData(
+         // key + tokenDecode.loginId+'_DS_Object',
+         // process.env.CLIENTCODE,
+       // ),
+     // );
+      //if (!dsObject) {
+      // f=1
+        dsObject = await this.redisService.getAllRecordshash(key + tokenDecode.loginId+'_DS_Object')
+     // }      
+       
       if (!dsObject) {
         await this.commonService.errorLog(
           'Technical',
@@ -348,8 +354,10 @@ export class UfService {
           token,
         );
       }
-
-      var data = dsObject?.data;
+    //if(f == 1)
+       data = dsObject
+     // else
+     // data = dsObject?.data
       if (data && tokenDecode) {
         if (!page) page = 1;
         let rule: any;
@@ -387,7 +395,7 @@ export class UfService {
               token,
             );
           }
-          for (var s = 0; s < json.length; s++) {
+          for (let s = 0; s < json.length; s++) {
             if (json[s].nodeId == filter.nodeId) {
               rule = json[s].rule;
             }
@@ -637,6 +645,7 @@ export class UfService {
           };
           return object;
         } else if (key && componentId && !controlId) {
+          let controllerRule:any = {}
           /*---------security start-------------*/
           if (key === securityData.afk) {
             for (let i = 0; i < templateArray.length; i++) {
@@ -880,6 +889,15 @@ export class UfService {
                 mapperDetails["targetkey"] = mappedData[i].objElements[j].mapper[0].targetKey;
                   mappedData[i]?.mapper.push(mapperDetails);
                 }
+                if(componentId==mappedData[i].objElements[j]?.parentId)
+                {
+                  let tempRule:any=mappedData[i].objElements[j]?.rule
+                  if((("nodes" in tempRule)&&("edges" in tempRule))){
+
+                    controllerRule={...controllerRule,[mappedData[i].objElements[j]?.elementName]:tempRule}
+                  }
+
+                }
               }
               object = {
                 action: mappedData[i]?.action,
@@ -887,8 +905,11 @@ export class UfService {
                 rule: mappedData[i]?.rule,
                 events: mappedData[i]?.events,
                 mapper: mappedData[i]?.mapper,
+                GoRuleData:controllerRule
               };
+
             }
+       
           }
           let mappperNodeId:any=""
           /*---------get dfKey start-------------*/
@@ -4522,10 +4543,7 @@ export class UfService {
   
   async getDFS(fileUrl: string, enableEncryption: boolean): Promise<Buffer> {
     try {
-      const url = fileUrl.replace(
-        process.env.FTP_OUTPUT_HOST,
-         process.env.SEAWEED_OUTPUT_HOST+'/buckets'
-      );
+      const url = `${process.env.FTP_OUTPUT_HOST}/${fileUrl}`;
 
       const response = await axios.get(url, {
         responseType: 'arraybuffer',
@@ -4599,7 +4617,7 @@ export class UfService {
       });
 
       if (res.status === 201) {
-        return `${process.env.FTP_OUTPUT_HOST}/${bucket}/${subFolder}/${fileName}`;
+        return `${bucket}/${subFolder}/${fileName}`;
       } else {
         throw new ConflictException(
           res.data || 'Error occurred while uploading file'
@@ -4935,222 +4953,86 @@ export class UfService {
 
   async getEndPoints(input) {
     try {
-      let specData = input.data;
-      let contentType;
-
-      if (input.type == 'utf') {
-        contentType = 'application/json; charset=utf-8';
-      } else if (input.type == 'json') {
-        contentType = 'application/json';
-      } else if (input.type == 'jwt') {
-        contentType = 'application/jwt';
-      } else if (input.type == 'xml') {
-        contentType = 'application/xml';
-      } else if (input.type == 'url') {
-        contentType = 'application/x-www-form-urlencoded';
-      } else if (input.type == 'form') {
-        contentType = 'multipart/form-data';
-      } else if (input.type == 'text') {
-        contentType = 'text/plain';
-      } else if (input.type == 'html') {
-        contentType = 'text/html';
-      } else if (input.type == 'css') {
-        contentType = 'text/css';
-      } else if (input.type == 'pdf') {
-        contentType = 'application/pdf';
-      } else if (input.type == 'any') {
-        contentType = '*/*';
-      } else {
-        throw 'Please provide content type';
-      }
-
+      const specData = input.data;
       if (!specData) throw 'Please provide data';
-      let paths = specData?.paths;
-      let FinalResult = [];
-      if (paths && Object.keys(paths).length > 0) {
-        let endPointArr = Object.keys(paths);
-        if (endPointArr?.length > 0) {
-          for (let i = 0; i < endPointArr.length; i++) {
-            if (Array.isArray(paths[endPointArr[i]])) {
-              throw 'Please provide valid json';
-            }
 
-            var methodArr = Object.keys(paths[endPointArr[i]]);
-            if (methodArr?.length > 0) {
-              for (let j = 0; j < methodArr.length; j++) {
-                let ResContent, responseRef;
-                let endpointData =
-                  specData?.paths[endPointArr[i]][methodArr[j]];
-                //Setting Response
+      const typeMap = {
+        utf: 'application/json; charset=utf-8',
+        json: 'application/json',
+        jwt: 'application/jwt',
+        xml: 'application/xml',
+        url: 'application/x-www-form-urlencoded',
+        form: 'multipart/form-data',
+        text: 'text/plain',
+        html: 'text/html',
+        css: 'text/css',
+        pdf: 'application/pdf',
+        any: '*/*',
+      };
 
-                let allContentTypes;
+      const contentType =
+        typeMap[input.type] ||
+        (() => {
+          throw 'Please provide content type';
+        })();
 
-                if (methodArr[j] == 'get') {
-                  ResContent = endpointData?.responses?.[200]?.content;
-                  if (ResContent) {
-                    allContentTypes = Object.keys(
-                      endpointData?.responses?.[200]?.content,
-                    );
-                  } else if (endpointData?.responses?.[200]?.$ref) {
-                    responseRef = endpointData?.responses?.[200]?.$ref;
-                    let responseParameter = endpointData?.responses?.[200]?.$ref
-                      .split('/')
-                      .pop();
-                    let pathParameter =
-                      endpointData?.responses?.[200]?.$ref.split('/')[
-                        (responseRef?.split('/')).length - 2
-                      ];
-
-                    if (
-                      specData?.components?.[pathParameter]?.[responseParameter]
-                        ?.content
-                    )
-                      allContentTypes = Object.keys(
-                        specData?.components?.[pathParameter]?.[
-                          responseParameter
-                        ]?.content,
-                      );
-                  } else if (endpointData?.requestBody?.content) {
-                    allContentTypes = Object.keys(
-                      endpointData?.requestBody?.content,
-                    );
-                  } else if (endpointData?.requestBody?.[200]?.$ref) {
-                    let responseParameter = endpointData?.responses?.[200]?.$ref
-                      .split('/')
-                      .pop();
-                    let pathParameter =
-                      endpointData?.responses?.[200]?.$ref.split('/')[
-                        (responseRef?.split('/')).length - 2
-                      ];
-
-                    if (
-                      specData?.components?.[pathParameter]?.[responseParameter]
-                        ?.content
-                    )
-                      allContentTypes = Object.keys(
-                        specData?.components?.[pathParameter]?.[
-                          responseParameter
-                        ]?.content,
-                      );
-                  }
-                } else if (methodArr[j] == 'post') {
-                  if (endpointData?.responses?.[201]?.content) {
-                    ResContent = endpointData?.responses?.[201]?.content;
-                  } else if (endpointData?.responses?.[200]?.content) {
-                    ResContent = endpointData?.responses?.[200]?.content;
-                  }
-
-                  if (endpointData?.requestBody?.content) {
-                    allContentTypes = Object.keys(
-                      endpointData?.requestBody?.content,
-                    );
-                  } else if (endpointData?.requestBody?.[200]?.$ref) {
-                    let responseParameter = endpointData?.responses?.[200]?.$ref
-                      .split('/')
-                      .pop();
-                    let pathParameter =
-                      endpointData?.responses?.[200]?.$ref.split('/')[
-                        (responseRef?.split('/')).length - 2
-                      ];
-
-                    if (
-                      specData?.components?.[pathParameter]?.[responseParameter]
-                        ?.content
-                    )
-                      allContentTypes = Object.keys(
-                        specData?.components?.[pathParameter]?.[
-                          responseParameter
-                        ]?.content,
-                      );
-                  } else if (ResContent) {
-                    allContentTypes = Object.keys(ResContent);
-                  } else if (endpointData?.responses?.[201]?.$ref) {
-                    responseRef = endpointData?.responses?.[201]?.$ref;
-                    let responseParameter = endpointData?.responses?.[201]?.$ref
-                      .split('/')
-                      .pop();
-                    let pathParameter =
-                      endpointData?.responses?.[201]?.$ref.split('/')[
-                        (responseRef?.split('/')).length - 2
-                      ];
-
-                    if (
-                      specData?.components?.[pathParameter]?.[responseParameter]
-                        ?.content
-                    )
-                      allContentTypes = Object.keys(
-                        specData?.components?.[pathParameter]?.[
-                          responseParameter
-                        ]?.content,
-                      );
-                  }
-                } else if (methodArr[j] == 'patch') {
-                  ResContent = endpointData?.responses?.[204]?.content;
-                  if (endpointData?.requestBody?.content) {
-                    allContentTypes = Object.keys(
-                      endpointData?.requestBody?.content,
-                    );
-                  } else if (endpointData?.requestBody?.[200]?.$ref) {
-                    let responseParameter = endpointData?.responses?.[200]?.$ref
-                      .split('/')
-                      .pop();
-                    let pathParameter =
-                      endpointData?.responses?.[200]?.$ref.split('/')[
-                        (responseRef?.split('/')).length - 2
-                      ];
-                    if (
-                      specData?.components?.[pathParameter]?.[responseParameter]
-                        ?.content
-                    )
-                      allContentTypes = Object.keys(
-                        specData?.components?.[pathParameter]?.[
-                          responseParameter
-                        ]?.content,
-                      );
-                  } else if (ResContent) {
-                    responseRef = ResContent?.[contentType]?.schema?.$ref;
-                  } else if (endpointData?.responses?.[204]?.$ref) {
-                    responseRef = endpointData?.responses?.[204]?.$ref;
-                    let responseParameter = endpointData?.responses?.[204]?.$ref
-                      .split('/')
-                      .pop();
-                    let pathParameter =
-                      endpointData?.responses?.[204]?.$ref.split('/')[
-                        (responseRef?.split('/')).length - 2
-                      ];
-
-                    if (
-                      specData?.components?.[pathParameter]?.[responseParameter]
-                        ?.content
-                    )
-                      allContentTypes = Object.keys(
-                        specData?.components?.[pathParameter]?.[
-                          responseParameter
-                        ]?.content,
-                      );
-                  }
-                }
-
-                if (allContentTypes && allContentTypes.includes(contentType)) {
-                  FinalResult.push({
-                    endPoint: endPointArr[i],
-                    method: methodArr[j],
-                    contentType,
-                  });
-                }
-              }
-            } else {
-              throw 'Methods not found';
-            }
-          }
-        }
-        if (FinalResult.length > 0) {
-          return FinalResult;
-        } else {
-          throw 'Type Mismatched';
-        }
-      } else {
+      const paths = specData?.paths;
+      if (!paths || Object.keys(paths).length === 0)
         throw 'Endpoints not found';
+
+      let finalResult = [];
+      const getContentTypes = (endpointData, statusCode) => {
+        const response = endpointData?.responses?.[statusCode]?.content;
+        if (response) return Object.keys(response);
+
+        const request = endpointData?.requestBody?.content;
+        if (request) return Object.keys(request);
+
+        const ref = endpointData?.responses?.[statusCode]?.$ref;
+        if (ref || endpointData?.requestBody?.[statusCode]?.$ref) {
+          const refParts = ref.split('/');
+          const responseParameter = refParts.pop();
+          const pathParameter = refParts[refParts.length - 2];
+          const componentContent =
+            specData?.components?.[pathParameter]?.[responseParameter]?.content;
+          if (componentContent) return Object.keys(componentContent);
+        }
+
+        return [];
+      };
+
+      const processEndpoint = (endPoint, method, endpointData) => {
+        let allContentTypes;
+        if (method === 'get') {
+          allContentTypes = getContentTypes(endpointData, 200);
+        } else {
+          allContentTypes = [
+            ...getContentTypes(endpointData, 200),
+            ...getContentTypes(endpointData, 201),
+            ...getContentTypes(endpointData, 204),
+          ];
+        }
+
+        if (allContentTypes.includes(contentType)) {
+          finalResult.push({ endPoint, method, contentType });
+        } else if (method == 'delete') {
+          finalResult.push({ endPoint, method, contentType: null });
+        }
+      };
+
+      Object.keys(paths).forEach((endPoint) => {
+        const methods = Object.keys(paths[endPoint]);
+        methods.forEach((method) => {
+          const endpointData = paths[endPoint][method];
+          if (Array.isArray(endpointData)) throw 'Please provide valid json';
+          processEndpoint(endPoint, method, endpointData);
+        });
+      });
+
+      if (finalResult.length > 0) {
+        return finalResult;
+      } else {
+        throw 'Type Mismatched';
       }
     } catch (error) {
       await this.throwCustomException(error);
@@ -5191,7 +5073,6 @@ export class UfService {
         throw 'Server URL not found';
       }
 
-      let uniqueNodeid = uuidv4().replace(/-/g, '');
       if (
         data?.paths &&
         typeof data?.paths === 'object' &&
@@ -5200,6 +5081,7 @@ export class UfService {
         if (endPointCategory && endPointCategory.length > 0) {
           let typeCheck = 0;
           for (let i = 0; i < endPointCategory.length; i++) {
+            let uniqueNodeid = uuidv4().replace(/-/g, '');
             let endPoint = endPointCategory[i].endPoint;
             let methodName = endPointCategory[i].method;
             var contentType = endPointCategory[i].contentType;
@@ -5601,6 +5483,27 @@ export class UfService {
               }),
               collectionName,
             );
+
+            // if (
+            //   methodName.toLowerCase() == 'post' ||
+            //   methodName.toLowerCase() == 'patch' ||
+            //   methodName.toLowerCase() == 'delete'
+            // ) {
+            //   let dfdKey = `CK:${tenant}:FNGK:AF:FNK:DF-DFD:CATK:${domain}:AFGK:${collection}:AFK:${afkName}:AFVK:v${newVersion}`;
+
+            //   if (
+            //     !(await this.redisService.exist(
+            //       dfdKey + ':NDP',
+            //       collectionName,
+            //     ))
+            //   ) {
+            //     await this.redisService.setJsonData(
+            //       dfdKey + ':NDP',
+            //       JSON.stringify({}),
+            //       collectionName,
+            //     );
+            //   }
+            // }
 
             if (
               ndp == 'Value Stored' &&

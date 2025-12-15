@@ -43,7 +43,7 @@ function objectToQueryString(obj: any) {
 }
  
 
-const ButtonAddd = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}: { lockedData:any,setLockedData:any,checkToAdd:any,setCheckToAdd:any,refetch:any,setRefetch:any,primaryTableData:any,setPrimaryTableData:any,encryptionFlagCompData:any,}) => {
+const Buttondfdsfds = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}: { lockedData:any,setLockedData:any,checkToAdd:any,setCheckToAdd:any,refetch:any,setRefetch:any,primaryTableData:any,setPrimaryTableData:any,encryptionFlagCompData:any,}) => {
   const token:string = getCookie('token');
   const decodedTokenObj:any = decodeToken(token);
   const createdBy:string =decodedTokenObj.users;
@@ -109,9 +109,9 @@ const ButtonAddd = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
         {
           key: "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
           componentId: "02640bc58ee74454a88bcb3c267aaf24",
-          controlId: "098c667f381240c389d8820ab246f6de",
+          controlId: "a1874719127d4f17afe54ce45d4b8f34",
           isTable: false,
-          from:"ButtonAdd",
+          from:"Button",
           accessProfile:accessProfile
         },
         {
@@ -132,11 +132,11 @@ const ButtonAddd = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   useEffect(()=>{
     handleMapper();
     eventBus.on("triggerButton", (id:any) => {
-      if (id === "addd6f6de") {
+      if (id === "dfdsfdsb8f34") {
         handleClick();
       }
     });
-  },[addd6f6de?.refresh])
+  },[dfdsfdsb8f34?.refresh])
 
   function SourceIdFilter(eventProperty:any,matchingSequence?:string){
     let ans=[]
@@ -194,28 +194,28 @@ const ButtonAddd = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   }
 
 
- if (addd6f6de?.isHidden) {
+ if (dfdsfdsb8f34?.isHidden) {
     return <></>
   }
  
   return (
     <div 
-      style={{gridColumn: `1 / 5`,gridRow: `5 / 22`, gap:``, height: `100%`, overflow: 'auto'}} >
+      style={{gridColumn: `1 / 3`,gridRow: `31 / 41`, gap:``, height: `100%`, overflow: 'auto'}} >
         <Button 
           ref={buttonRef}
           className=""
           onClick={handleClick}
-          view='outlined-success'
-          size='m'           
-          disabled= {addd6f6de?.isDisabled ? true : false}
-          pin='round-round'
+          view='action'
+          size='s'           
+          disabled= {dfdsfdsb8f34?.isDisabled ? true : false}
+          pin='circle-circle'
         >
-              {keyset("Add")}
+              {keyset("")}
         </Button>
       </div>
     
   )
 }
 
-export default ButtonAddd
+export default Buttondfdsfds
 

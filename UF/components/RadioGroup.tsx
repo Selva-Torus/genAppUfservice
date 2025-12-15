@@ -73,7 +73,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-2 ${
+    const headerClasses = ` font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 

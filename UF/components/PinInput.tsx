@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { ComponentSize, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 
 interface PinInputProps {
   length: number;
@@ -37,7 +36,7 @@ export const PinInput: React.FC<PinInputProps> = ({
   onBlur,
   className = "",
 }) => {
-  const { theme, direction, branding } = useGlobal();
+  const { theme, direction } = useGlobal();
 
   // Initialize state from value prop or empty array
   const getInitialValues = () => {
@@ -87,20 +86,36 @@ export const PinInput: React.FC<PinInputProps> = ({
   };
 
   const getSizeClasses = () => {
-    const fontSize = getFontSizeClass(branding.fontSize);
     switch (size) {
       case "xs":
-        return `w-8 h-8 ${fontSize === "text-xl" ? "text-sm" : fontSize === "text-lg" ? "text-xs" : "text-xs"}`;
+        return "w-8 h-8";
       case "s":
-        return `w-10 h-10 ${fontSize === "text-xl" ? "text-base" : fontSize === "text-lg" ? "text-sm" : "text-xs"}`;
+        return "w-10 h-10";
       case "m":
-        return `w-12 h-12 ${fontSize}`;
+        return "w-12 h-12";
       case "l":
-        return `w-14 h-14 ${fontSize === "text-sm" ? "text-base" : fontSize === "text-base" ? "text-lg" : "text-xl"}`;
+        return "w-14 h-14";
       case "xl":
-        return `w-16 h-16 ${fontSize === "text-sm" ? "text-lg" : fontSize === "text-base" ? "text-xl" : "text-2xl"}`;
+        return "w-16 h-16";
       default:
-        return `w-12 h-12 ${fontSize}`;
+        return "w-12 h-12";
+    }
+  };
+
+  const getFontSizeForSize = () => {
+    switch (size) {
+      case "xs":
+        return "var(--font-size-small)";
+      case "s":
+        return "var(--font-size-small)";
+      case "m":
+        return "var(--font-size)";
+      case "l":
+        return "var(--font-size-large)";
+      case "xl":
+        return "var(--font-size-xlarge)";
+      default:
+        return "var(--font-size)";
     }
   };
 
@@ -123,7 +138,6 @@ export const PinInput: React.FC<PinInputProps> = ({
           disabled={disabled}
           className={`
             ${getSizeClasses()}
-            ${getBorderRadiusClass(branding.borderRadius)}
             border-2
             text-center
             font-semibold
@@ -132,9 +146,13 @@ export const PinInput: React.FC<PinInputProps> = ({
             transition-colors
             focus:outline-none
           `}
+          style={{
+            fontSize: getFontSizeForSize(),
+            borderRadius: "var(--border-radius)",
+          }}
           onFocus={(e) => {
-            e.currentTarget.style.borderColor = branding.brandColor;
-            e.currentTarget.style.boxShadow = `0 0 0 2px ${branding.brandColor}20`;
+            e.currentTarget.style.borderColor = "var(--brand-color)";
+            e.currentTarget.style.boxShadow = "0 0 0 2px var(--brand-color-transparent)";
           }}
           onBlur={(e) => {
             e.currentTarget.style.borderColor = isDark ? "#4B5563" : "#D1D5DB";
@@ -150,15 +168,17 @@ export const PinInput: React.FC<PinInputProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
+    const headerClasses = `font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
+
+    const headerStyle = { fontSize: "var(--font-size)" };
 
     switch (headerPosition) {
       case "top":
         return (
           <div className="flex flex-col">
-            <div className={headerClasses}>{headerText}</div>
+            <div className={headerClasses} style={headerStyle}>{headerText}</div>
             {element}
           </div>
         );
@@ -166,13 +186,13 @@ export const PinInput: React.FC<PinInputProps> = ({
         return (
           <div className="flex flex-col">
             {element}
-            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
+            <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
           </div>
         );
       case "left":
         return (
           <div className="flex items-center gap-4">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
             {element}
@@ -182,7 +202,7 @@ export const PinInput: React.FC<PinInputProps> = ({
         return (
           <div className="flex items-center gap-4">
             {element}
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
           </div>
@@ -190,7 +210,7 @@ export const PinInput: React.FC<PinInputProps> = ({
     }
   };
 
-  const finalElement = renderWithHeader(pinInputElement);
+  const finalElement = (<div className={className}>{renderWithHeader(pinInputElement)}</div>);
 
   if (needTooltip && tooltipProps) {
     return (

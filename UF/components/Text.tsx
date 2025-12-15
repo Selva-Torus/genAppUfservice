@@ -103,7 +103,17 @@ export const Text: React.FC<TextProps> = ({
 
   const getVariantClasses = () => {
     if (!variant) {
-      return "[font-size:var(--font-size)]"; 
+      if(branding?.fontSize=="Large")
+      {
+        return "text-xl font-semibold";
+      }else if(branding?.fontSize=="Medium")
+      {
+        return "text-lg";
+      }else if(branding?.fontSize=="Small")
+      {
+        return "text-sm";
+      }
+      return "[font-size:var(--font-size)]";
     }
     switch (variant) {
       case "display-4":

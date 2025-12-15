@@ -48,7 +48,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   headerPosition = "top",
   className = "",
 }) => {
-  const { theme, branding } = useGlobal();
+  const { theme } = useGlobal();
 
   const getSizeClasses = () => {
     switch (size) {
@@ -75,7 +75,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     }
 
     if (avatarTheme === "brand") {
-      return branding.brandColor;
+      return 'var(--brand-color)';
     }
 
     const isDark = theme === "dark" || theme === "dark-hc";
@@ -87,7 +87,7 @@ export const Avatar: React.FC<AvatarProps> = ({
 
     // For outlined view with brand theme, use brand color for text/icon
     if (view === "outlined" && avatarTheme === "brand") {
-      return branding.brandColor;
+      return 'var(--brand-color)';
     }
 
     if (avatarTheme === "brand") {
@@ -102,14 +102,14 @@ export const Avatar: React.FC<AvatarProps> = ({
     if (view === "outlined") {
       return {
         borderWidth: "2px",
-        borderColor: borderColor || (avatarTheme === "brand" ? branding.brandColor : theme === "dark" || theme === "dark-hc" ? "#6B7280" : "#D1D5DB"),
+        borderColor: borderColor || (avatarTheme === "brand" ? 'var(--brand-color)' : theme === "dark" || theme === "dark-hc" ? "#6B7280" : "#D1D5DB"),
       };
     }
     
     if (withImageBorder && imageUrl) {
       return {
         borderWidth: "2px",
-        borderColor: borderColor || branding.brandColor,
+        borderColor: borderColor || 'var(--brand-color)',
       };
     }
     
@@ -193,7 +193,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     }
   };
 
-  const finalElement = renderWithHeader(avatarElement);
+  const finalElement = (<div className={className}>{renderWithHeader(avatarElement)}</div>);
 
   if (needTooltip && tooltipProps) {
     return (

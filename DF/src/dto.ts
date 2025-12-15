@@ -122,7 +122,8 @@ export class readAPIDTO {
       public count?:number,
       public filterData?:object,
       public lock?:Object,
-      public childTable?:any
+      public childTable?:any,
+      public logicCenter?:boolean
       ) {}
     }
  
@@ -146,6 +147,7 @@ export class readAPIDTO {
       filterData?:object
       lock?:Object
       childTable?:any
+      logicCenter?:boolean
     }
   
     export class pageDto { 

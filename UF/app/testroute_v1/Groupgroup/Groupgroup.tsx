@@ -14,6 +14,7 @@ import { eventBus } from '@/app/eventBus';
 import clsx from "clsx";
 import ButtonAddd  from "./ButtonAddd";
 import TextInputwefdwfds  from "./TextInputwefdwfds";
+import Buttondfdsfds  from "./Buttondfdsfds";
 import Documentuploadercsdcsdcsd  from "./Documentuploadercsdcsdcsd";
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { getCookie } from "@/app/components/cookieMgment";
@@ -46,6 +47,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
     "allowedControls": [
       "addd",
       "wefdwfds",
+      "dfdsfds",
       "csdcsdcsd"
     ],
     "allowedGroups": [
@@ -60,6 +62,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
     "allowedControls": [
       "addd",
       "wefdwfds",
+      "dfdsfds",
       "csdcsdcsd"
     ],
     "allowedGroups": [
@@ -74,6 +77,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
     "allowedControls": [
       "addd",
       "wefdwfds",
+      "dfdsfds",
       "csdcsdcsd"
     ],
     "allowedGroups": [
@@ -102,6 +106,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
   const {wefdwfds735d5, setwefdwfds735d5}= useContext(TotalContext) as TotalContextProps;
   const {group7bc2c, setgroup7bc2c}= useContext(TotalContext) as TotalContextProps;
   const {group7bc2cProps, setgroup7bc2cProps}= useContext(TotalContext) as TotalContextProps;
+  const {dfdsfdsb8f34, setdfdsfdsb8f34}= useContext(TotalContext) as TotalContextProps;
   const {csdcsdcsd4b217, setcsdcsdcsd4b217}= useContext(TotalContext) as TotalContextProps;
   //////////////
   const [open, setOpen] = React.useState(false);
@@ -129,6 +134,9 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
     }
     if(orchestrationData?.data?.readableControls.includes("group")){
       setgroup7bc2c({...group7bc2c,isDisabled:true});
+    }
+    if(orchestrationData?.data?.readableControls.includes("dfdsfds")){
+      setdfdsfdsb8f34({...dfdsfdsb8f34,isDisabled:true});
     }
     if(orchestrationData?.data?.readableControls.includes("csdcsdcsd")){
       setcsdcsdcsd4b217({...csdcsdcsd4b217,isDisabled:true});
@@ -211,6 +219,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
           paginationDetails={paginationDetails}        />}
         {allowedControls.includes("addd")  ?<ButtonAddd lockedData={lockedData} setLockedData={setLockedData} primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData} checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData}/>: <div></div>}          
         {allowedControls.includes("wefdwfds") ?<TextInputwefdwfds   /* 735d5 */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
+        {allowedControls.includes("dfdsfds")  ?<Buttondfdsfds lockedData={lockedData} setLockedData={setLockedData} primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData} checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData}/>: <div></div>}          
         {allowedControls.includes("csdcsdcsd") ?<Documentuploadercsdcsdcsd   /* 4b217 */checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
     </div>
  )

@@ -121,7 +121,7 @@ export const Radio: React.FC<RadioProps> = ({
       />
       {content && (
         <span
-          className={`${direction === "RTL" ? "mr-2" : "ml-2"} [font-size:var(--font-size)] ${
+          className={`${direction === "RTL" ? "mr-2" : "ml-2"} ${
             theme === "dark" || theme === "dark-hc" ? "text-gray-200" : "text-gray-900"
           }`}
         >
@@ -134,7 +134,7 @@ export const Radio: React.FC<RadioProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return <div className={className}>{element}</div>;
 
-    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-1 ${
+    const headerClasses = ` font-semibold mb-1 ${
       theme === "dark" || theme === "dark-hc" ? "text-gray-300" : "text-gray-700"
     }`;
 

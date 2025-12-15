@@ -80,7 +80,7 @@ export const Switch: React.FC<SwitchProps> = ({
       </div>
       {content && (
         <span
-          className={`${direction === "RTL" ? "mr-3" : "ml-3"} [font-size:var(--font-size)] ${
+          className={`${direction === "RTL" ? "mr-3" : "ml-3"}  ${
             theme === "dark" || theme === "dark-hc" ? "text-gray-200" : "text-gray-900"
           } ${disabled ? "opacity-50" : ""}`}
         >
@@ -93,7 +93,7 @@ export const Switch: React.FC<SwitchProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return <div className={className}>{element}</div>;
 
-    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-1 ${
+    const headerClasses = ` font-semibold mb-1 ${
       theme === "dark" || theme === "dark-hc" ? "text-gray-300" : "text-gray-700"
     }`;
 

@@ -21,6 +21,10 @@ export interface TotalContextProps {
   setwefdwfds735d5:React.Dispatch<React.SetStateAction<any>>
   wefdwfds735d5Props: any 
   setwefdwfds735d5Props: React.Dispatch<React.SetStateAction<any>>
+  dfdsfdsb8f34: any,
+  setdfdsfdsb8f34:React.Dispatch<React.SetStateAction<any>>
+  dfdsfdsb8f34Props: any 
+  setdfdsfdsb8f34Props: React.Dispatch<React.SetStateAction<any>>
   csdcsdcsd4b217: any,
   setcsdcsdcsd4b217:React.Dispatch<React.SetStateAction<any>>
   csdcsdcsd4b217Props: any 
@@ -108,6 +112,13 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refetch:false,
     refresh:false,
     }) 
+   const [dfdsfdsb8f34,setdfdsfdsb8f34] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
    const [csdcsdcsd4b217,setcsdcsdcsd4b217] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
@@ -118,6 +129,7 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     ///////////
     const [refresh, setRefresh] = React.useState<any>({       buttonAddd6f6de:false,
        textinputwefdwfds735d5:false,
+       buttondfdsfdsb8f34:false,
        documentuploadercsdcsdcsd4b217:false,
        groupgroupaaf24:false,
        groupgroup7bc2c:false,
@@ -165,6 +177,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         setaddd6f6de, 
         wefdwfds735d5,
         setwefdwfds735d5, 
+        dfdsfdsb8f34,
+        setdfdsfdsb8f34, 
         csdcsdcsd4b217,
         setcsdcsdcsd4b217, 
         ////// screen states 

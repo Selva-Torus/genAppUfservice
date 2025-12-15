@@ -8,7 +8,6 @@ import {
   HeaderPosition,
   TooltipProps as TooltipPropsType,
 } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass, applyBrandColor } from "@/app/utils/branding";
 
 interface CheckboxProps {
   checked?: boolean;
@@ -41,7 +40,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   className = "",
   value,
 }) => {
-  const { theme, direction, branding } = useGlobal();
+  const { theme, direction } = useGlobal();
 
   const getSizeClasses = () => {
     switch (size) {
@@ -55,21 +54,21 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   const getCheckboxStyles = (): React.CSSProperties => {
     const styles: React.CSSProperties = {};
     const isDark = theme === "dark" || theme === "dark-hc";
-    
+
     if (disabled) {
       styles.backgroundColor = isDark ? "#374151" : "#E5E7EB";
       styles.borderColor = isDark ? "#4B5563" : "#D1D5DB";
       styles.color = isDark ? "#6B7280" : "#9CA3AF";
     } else if (checked) {
-      styles.backgroundColor = branding.selectionColor;
-      styles.borderColor = branding.selectionColor;
+      styles.backgroundColor = "var(--selection-color)";
+      styles.borderColor = "var(--selection-color)";
       styles.color = "white";
     } else {
       styles.backgroundColor = isDark ? "#1F2937" : "white";
       styles.borderColor = isDark ? "#4B5563" : "#D1D5DB";
       styles.color = "transparent";
     }
-    
+
     return styles;
   };
 
@@ -78,9 +77,6 @@ export const Checkbox: React.FC<CheckboxProps> = ({
     return isDark ? "text-gray-200" : "text-gray-900";
   };
 
-  const getCheckboxBorderRadius = () => {
-    return getBorderRadiusClass(branding.borderRadius);
-  };
 
   const checkboxElement = (
     <label
@@ -98,15 +94,17 @@ export const Checkbox: React.FC<CheckboxProps> = ({
           className="sr-only"
         />
         <div
-          style={getCheckboxStyles()}
+          style={{
+            ...getCheckboxStyles(),
+            borderRadius: "var(--border-radius)",
+          }}
           className={`
             ${getSizeClasses()}
-            ${getCheckboxBorderRadius()}
             border-2 transition-all flex items-center justify-center
           `}
           onMouseEnter={(e) => {
             if (!disabled && !checked) {
-              e.currentTarget.style.borderColor = branding.hoverColor;
+              e.currentTarget.style.borderColor = "var(--hover-color)";
             }
           }}
           onMouseLeave={(e) => {
@@ -135,7 +133,8 @@ export const Checkbox: React.FC<CheckboxProps> = ({
       </div>
       {content && (
         <span
-          className={`${direction === "RTL" ? "mr-2" : "ml-2"} ${getFontSizeClass(branding.fontSize)} ${getLabelThemeClasses()}`}
+          className={`${direction === "RTL" ? "mr-2" : "ml-2"} ${getLabelThemeClasses()}`}
+          style={{ fontSize: "var(--font-size)" }}
         >
           {content}
         </span>
@@ -146,17 +145,13 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   const renderWithTitle = (element: React.ReactNode) => {
     if (!title) return element;
 
-    const titleSize = branding.fontSize === "Small" ? "text-base" : 
-                      branding.fontSize === "Medium" ? "text-lg" :
-                      branding.fontSize === "Large" ? "text-xl" : "text-2xl";
-    
-    const titleClasses = `font-semibold mb-2 ${titleSize} ${
+    const titleClasses = `font-semibold mb-2 ${
       theme === "dark" || theme === "dark-hc" ? "text-gray-200" : "text-gray-800"
     }`;
 
     return (
       <div className="flex flex-col">
-        <div className={titleClasses}>{title}</div>
+        <div className={titleClasses} style={{ fontSize: "var(--font-size-large)" }}>{title}</div>
         {element}
       </div>
     );
@@ -165,15 +160,17 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-1 ${
+    const headerClasses = `font-semibold mb-1 ${
       theme === "dark" || theme === "dark-hc" ? "text-gray-300" : "text-gray-700"
     }`;
+
+    const headerStyle = { fontSize: "var(--font-size)" };
 
     switch (headerPosition) {
       case "top":
         return (
           <div className="flex flex-col">
-            <div className={headerClasses}>{headerText}</div>
+            <div className={headerClasses} style={headerStyle}>{headerText}</div>
             {element}
           </div>
         );
@@ -181,13 +178,13 @@ export const Checkbox: React.FC<CheckboxProps> = ({
         return (
           <div className="flex flex-col">
             {element}
-            <div className={`${headerClasses} mt-1 mb-0`}>{headerText}</div>
+            <div className={`${headerClasses} mt-1 mb-0`} style={headerStyle}>{headerText}</div>
           </div>
         );
       case "left":
         return (
           <div className="flex items-center">
-            <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "ml-2" : "mr-2"}`}>
+            <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "ml-2" : "mr-2"}`} style={headerStyle}>
               {headerText}
             </div>
             {element}
@@ -197,7 +194,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
         return (
           <div className="flex items-center">
             {element}
-            <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "mr-2" : "ml-2"}`}>
+            <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "mr-2" : "ml-2"}`} style={headerStyle}>
               {headerText}
             </div>
           </div>
@@ -206,8 +203,8 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   };
 
   const withTitle = renderWithTitle(checkboxElement);
-  const finalElement = renderWithHeader(withTitle);
-
+  const finalElement = (<div className={className}>{renderWithHeader(withTitle)}</div>);
+  
   if (needTooltip && tooltipProps) {
     return (
       <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>

@@ -8,8 +8,8 @@ import { connectToMongo, connectToRedis, getDb, getRedis } from './mongoClient';
 let db: Db;
 let redis
 
-  connectToMongo().then(() => { 
-    db = getDb();
+  connectToMongo().then(async () => { 
+    db = await getDb();
     console.log('Database initialized'); 
   }).catch((error) => {
     console.error('Error connecting to MongoDB:', error);
@@ -25,6 +25,7 @@ let redis
 
 @Injectable()
 export class RedisService {
+  private readonly BATCH_SIZE = 10000 
   //Retrieves JSON data from Redis
    /**
    * Retrieves JSON data from Redis.
@@ -540,6 +541,59 @@ export class RedisService {
     } catch (error) {
       throw error;
     }
+  }
+
+
+   async sethash(records,key){
+    try {
+      const totalBatches = Math.ceil(records.length / this.BATCH_SIZE);
+      let storedCount = 0;
+
+      for (let batchNum = 0; batchNum < totalBatches; batchNum++) {
+        const start = batchNum * this.BATCH_SIZE;
+        const end = Math.min(start + this.BATCH_SIZE, records.length);
+        const batch = records.slice(start, end);
+
+        const pipeline = redis.pipeline();
+
+        batch.forEach((record, index) => {
+          const globalIndex = start + index;
+          pipeline.hset(
+            key+':'+batchNum,
+            globalIndex.toString(),
+            JSON.stringify(record)
+          );
+        });
+        await pipeline.exec();
+      }
+
+      await redis.set( key+':total', records.length);
+      await redis.set(key+':batches', totalBatches);
+    } catch (error) {
+      throw error
+    }
+  }
+
+
+    async getAllRecordshash(key): Promise<any[]> {
+   //const total = parseInt(await redis.get('records:total') || '0');
+    const totalBatches = parseInt(await redis.get('records:batches') || '0'); 
+    // if (total === 0) {
+    //   return [];
+    // }    
+    const allRecords: any[] = [];    
+    for (let batchNum = 0; batchNum < totalBatches; batchNum++) {
+      const batchData: Record<string, string> = await redis.hgetall(
+       key+':'+batchNum
+      );      
+      const batchRecords = Object.values(batchData).map(value => 
+        JSON.parse(value)
+      );      
+      allRecords.push(...batchRecords);
+      console.log(`Loaded batch ${batchNum + 1}/${totalBatches}`);
+    }
+    
+    return allRecords;
   }
 
  

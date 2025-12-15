@@ -229,7 +229,7 @@ export const TextInput: React.FC<TextInputProps> = ({
     <div className="w-full">
       {label && topContent && (
         <label
-          className={`block mb-2 [font-size:var(--font-size)] font-medium ${
+          className={`block mb-2  font-medium ${
             isDark ? "text-gray-200" : "text-gray-900"
           }`}
           style={{ fontFamily: 'var(--font-body)' }}
@@ -260,7 +260,6 @@ export const TextInput: React.FC<TextInputProps> = ({
           className={`
             w-full
             ${getSizeClasses()}
-            [font-size:var(--font-size)]
             ${getPinClasses()}
             ${view === "normal" ? "border-2" : view === "clear" ? "border-2 border-transparent" : "border-0 border-b-2"}
             ${(startContent || leftContent) ? (direction === "RTL" ? "pr-10" : "pl-10") : ""}
@@ -336,7 +335,7 @@ export const TextInput: React.FC<TextInputProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return <div className={className}>{element}</div>;
 
-    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-1 ${
+    const headerClasses = ` font-semibold mb-1 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 

@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 
 interface ListProps {
   sortable: boolean;
@@ -35,7 +34,7 @@ export const List: React.FC<ListProps> = ({
   onItemClick=() => {},
   className = "",
 }) => {
-  const { theme, branding } = useGlobal();
+  const { theme } = useGlobal();
   const [items, setItems] = useState(initialItems);
   const [selectedIndex, setSelectedIndex] = useState(selecteditemindex);
   const [searchQuery, setSearchQuery] = useState("");
@@ -58,19 +57,21 @@ export const List: React.FC<ListProps> = ({
       onChange={(e) => setSearchQuery(e.target.value)}
       placeholder="Search..."
       className={`
-        ${getFontSizeClass(branding.fontSize)}
         px-4 py-2
         w-full
         border-2
-        ${getBorderRadiusClass(branding.borderRadius)}
         ${isDark ? "bg-gray-800 text-white border-gray-600" : "bg-white text-gray-900 border-gray-300"}
         transition-colors
         focus:outline-none
         mb-2
       `}
+      style={{
+        fontSize: "var(--font-size)",
+        borderRadius: "var(--border-radius)",
+      }}
       onFocus={(e) => {
-        e.currentTarget.style.borderColor = branding.brandColor;
-        e.currentTarget.style.boxShadow = `0 0 0 2px ${branding.brandColor}20`;
+        e.currentTarget.style.borderColor = "var(--brand-color)";
+        e.currentTarget.style.boxShadow = "0 0 0 2px var(--brand-color-transparent)";
       }}
       onBlur={(e) => {
         e.currentTarget.style.borderColor = isDark ? "#4B5563" : "#D1D5DB";
@@ -84,14 +85,16 @@ export const List: React.FC<ListProps> = ({
       {searchInput}
       <ul
         className={`
-          ${getBorderRadiusClass(branding.borderRadius)}
           overflow-auto
           ${isDark ? "bg-gray-800" : "bg-white"}
           border-2
           ${isDark ? "border-gray-600" : "border-gray-300"}
           ${className}
         `}
-        style={{ maxHeight: itemsHeight ? `${itemsHeight}px` : "auto" }}
+        style={{
+          maxHeight: itemsHeight ? `${itemsHeight}px` : "auto",
+          borderRadius: "var(--border-radius)",
+        }}
       >
         {filteredItems.map((item, index) => {
           const isSelected = selectedIndex === index;
@@ -100,7 +103,6 @@ export const List: React.FC<ListProps> = ({
               key={index}
               onClick={() => handleItemClick(index, item)}
               className={`
-                ${getFontSizeClass(branding.fontSize)}
                 px-4 py-2
                 border-b
                 ${isDark ? "border-gray-700" : "border-gray-200"}
@@ -108,10 +110,11 @@ export const List: React.FC<ListProps> = ({
                 transition-colors
                 ${isSelected
                   ? `text-white`
-                  : isDark ? "text-gray-200 hover:bg-gray-700" : "text-gray-700 hover:bg-gray-100"
+                  : isDark ? "text-gray-200 hover:[background-color:var(--hover-color)]" : "text-gray-700 hover:[background-color:var(--hover-color)]"
                 }
               `}
               style={{
+                fontSize: "var(--font-size)",
                 backgroundColor: isSelected ? "var(--brand-color)" : undefined,
               }}
             >
@@ -126,15 +129,17 @@ export const List: React.FC<ListProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
+    const headerClasses = `font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
+
+    const headerStyle = { fontSize: "var(--font-size)" };
 
     switch (headerPosition) {
       case "top":
         return (
           <div className="flex flex-col w-full">
-            <div className={headerClasses}>{headerText}</div>
+            <div className={headerClasses} style={headerStyle}>{headerText}</div>
             {element}
           </div>
         );
@@ -142,13 +147,13 @@ export const List: React.FC<ListProps> = ({
         return (
           <div className="flex flex-col w-full">
             {element}
-            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
+            <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
           </div>
         );
       case "left":
         return (
           <div className="flex items-start gap-4 w-full">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
             <div className="flex-1">{element}</div>
@@ -158,7 +163,7 @@ export const List: React.FC<ListProps> = ({
         return (
           <div className="flex items-start gap-4 w-full">
             <div className="flex-1">{element}</div>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
           </div>
@@ -166,7 +171,7 @@ export const List: React.FC<ListProps> = ({
     }
   };
 
-  const finalElement = renderWithHeader(listElement);
+  const finalElement = (<div className={className}>{renderWithHeader(listElement)}</div>);
 
   if (needTooltip && tooltipProps) {
     return (

@@ -778,7 +778,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
     setRefetchGroups(prev => !prev)
   }
 
-const blocks = useMemo(() => {
+  const blocks = useMemo(() => {
     const data = [
       {
         icon: LuBuilding2,
@@ -813,7 +813,7 @@ const blocks = useMemo(() => {
     >
       <div className='flex h-full w-full flex-col gap-[2vh]'>
         <div className='flex h-[20vh] w-full items-center justify-center rounded-lg'>
-        {blocks.map((block, idx) => (
+          {blocks.map((block, idx) => (
                        <div key={idx} className='flex items-center '>
                          {/* Circle */}
                          <div className='flex w-[8vw] flex-col items-center gap-[0.5vh]'>

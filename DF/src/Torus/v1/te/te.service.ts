@@ -61,7 +61,15 @@ export class TeService {
        if (!tokenDecode || !tokenDecode.loginId)
          throw new CustomException('Invalid token', 401);
        let artifact = await this.teCommonService.splitcommonkey(pfdto.key, 'AFK');
-      
+      let afi = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'AFI', client));
+      let logicCenter
+       if (afi && afi.hasOwnProperty('logicCenter')) {
+       if(currentFabric == 'DF-DFD')
+       logicCenter = afi?.logicCenter
+      }else{
+        logicCenter = true
+      }
+      //if(logicCenter || currentFabric == 'PF-PFD')
        node = await this.securityService.getSecurityTemplate(pfdto.key + d_Po, pfdto.token);
        pfjson = JSON.parse(await this.redisService.getJsonData(pfdto.key + d_Pfs, client));
        poJson = JSON.parse(await this.redisService.getJsonData(pfdto.key + d_Po, client));
@@ -69,6 +77,9 @@ export class TeService {
        dstkey = processedKey.replace('DF-DFD', 'DF-DST');
        refflag = pfdto.refreshFlag ? pfdto.refreshFlag : 'N';
        let poNode = poJson?.mappedData?.artifact?.node;
+       if(!logicCenter && pfjson.length>3 && currentFabric == 'DF-DFD')
+        throw new CustomException('Nodes length exceed',403)
+
        if (!poNode || poNode.length == 0)
          throw new CustomException('Nodes not found', 404);
 
@@ -601,11 +612,11 @@ export class TeService {
           }
         } else {
           this.logger.log(`${poNode[i].nodeType} started`);
-          if (pfdto.upId) {           
+          if (pfdto.upId) { 
+            //if(logicCenter || currentFabric == 'PF-PFD')          
             let nodedetails = await this.securityService.getNodeSecurityTemplate(node, poNode[i].nodeName);                
-            if (nodedetails?.status == '200') {              
-            if (poNode[i].nodeId == pfdto.nodeId) {                
-              
+            if (nodedetails?.status == '200' ) {              
+            if (poNode[i].nodeId == pfdto.nodeId) { 
                 if (poNode[i].nodeType != 'endnode') {
                   if (Array.isArray(poNode[i].events)) {
                   if (!event) event = pfdto.event            
@@ -658,8 +669,20 @@ export class TeService {
                                 } else {
                                   obj['data'] = eventResponse;
                                 }
-                                 this.redisService.setJsonData(dstkey + tokenDecode.loginId + '_DS_Object', JSON.stringify(obj), client);
-                                return { status: 'Success', statusCode: 201, processKey: dstkey, upId: pfdto.upId, message: 'Success', event: FinalEvent, dataset: obj };
+                                 if(logicCenter){
+                                  let keys = await this.redisService.getKeys(dstkey+ tokenDecode.loginId + '_DS_Object',client)
+                                if(keys.length>0){                                 
+                                  for(let a=0;a< keys.length;a++){                                 
+                                    await this.redisService.deleteKey(keys[a],client)
+                                  }                                  
+                                }
+                                 this.redisService.sethash(obj['data'],dstkey+ tokenDecode.loginId + '_DS_Object') 
+                                }
+                                
+                                if(obj['data'] == 'logicCenter' && !logicCenter) 
+                                  return { status: 'Success', statusCode: 201, processKey: dstkey, upId: pfdto.upId, message: 'Success', event: FinalEvent}; 
+                                else                                                     
+                                  return { status: 'Success', statusCode: 201, processKey: dstkey, upId: pfdto.upId, message: 'Success', event: FinalEvent, dataset: obj };
                               }
                             }
                           } else {
@@ -734,8 +757,7 @@ export class TeService {
                       if (poNode[i - 1].nodeName == poNode[1].nodeName) {
                         await this.redisService.setJsonData(processedKey + pfdto.upId + ':NPV:' + poNode[1].nodeName + '.PRO', JSON.stringify(mergearr[m]), client, 'customResponse');
                       }                      
-                      pfdto.data = { data: mergearr[m] };
-
+                      pfdto.data = { data: mergearr[m] };                      
                       eventResponse = await firstValueFrom(this.poClient.send(
                         artifact + '_' + poNode[i].nodeId + '_' + event,
                         new PoEvent(pfdto, event, pfjson, pfo, poJson, Ndp, refflag, page, count)
@@ -758,12 +780,13 @@ export class TeService {
                     }
                     await this.teCommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', pfdto.token, currentFabric, event);
                   } else {  
-                    if (currentFabric == 'DF-DFD') {                      
+                    if (currentFabric == 'DF-DFD') {   
+                       pfdto['logicCenter'] = logicCenter                   
                       eventResponse = await firstValueFrom(this.poClient.send(
                         artifact + '_' + poNode[i].nodeId + '_' + event,
                         new PoEvent(pfdto, event, pfjson, pfo, poJson, Ndp, refflag, page, count)
                       ))
-                      if (!eventResponse.status && eventResponse.status != 200) {
+                      if (!eventResponse.status && eventResponse.status != 200 && logicCenter) {
                         throw eventResponse;
                       }
                       console.log(`${eventResponse.targetStatus} Event emitted successfully by ${poNode[i].nodeName}`);                       
@@ -774,8 +797,7 @@ export class TeService {
                         mergearr = [eventData];
                       }
 
-                    } else {    
-                          
+                    } else {
                       eventResponse = await firstValueFrom(this.poClient.send(
                         ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event,
                         new PoEvent(pfdto, event, pfjson, pfo, poJson, Ndp, refflag, page, count)
@@ -785,7 +807,7 @@ export class TeService {
                         prevres[poNode[i].nodeId] = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', '.response', client))
                         await this.redisService.setJsonData(processedKey + pfdto.upId + ':previousResponse', JSON.stringify(prevres), client);
                       }
-                      if (!eventResponse.status && eventResponse.status != 200) {
+                      if (!eventResponse.status && eventResponse.status != 200 ) {
                         throw eventResponse;
                       }
                       console.log(`${eventResponse.targetStatus} Event emitted successfully by ${poNode[i].nodeName}`);

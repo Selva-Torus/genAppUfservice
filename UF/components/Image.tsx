@@ -4,7 +4,6 @@ import React from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 
 interface ImageProps {
   url: string;
@@ -29,7 +28,7 @@ export const Image: React.FC<ImageProps> = ({
   height = "auto",
   className = "",
 }) => {
-  const { theme, branding } = useGlobal();
+  const { theme } = useGlobal();
 
   const isDark = theme === "dark" || theme === "dark-hc";
 
@@ -37,23 +36,29 @@ export const Image: React.FC<ImageProps> = ({
     <img
       src={url}
       alt={alt}
-      className={`${getBorderRadiusClass(branding.borderRadius)} ${className}`}
-      style={{ width, height }}
+      className={className}
+      style={{
+        width,
+        height,
+        borderRadius: "var(--border-radius)"
+      }}
     />
   );
 
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
+    const headerClasses = `font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
+
+    const headerStyle = { fontSize: "var(--font-size)" };
 
     switch (headerPosition) {
       case "top":
         return (
           <div className="flex flex-col">
-            <div className={headerClasses}>{headerText}</div>
+            <div className={headerClasses} style={headerStyle}>{headerText}</div>
             {element}
           </div>
         );
@@ -61,13 +66,13 @@ export const Image: React.FC<ImageProps> = ({
         return (
           <div className="flex flex-col">
             {element}
-            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
+            <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
           </div>
         );
       case "left":
         return (
           <div className="flex items-center gap-4">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
             {element}
@@ -77,7 +82,7 @@ export const Image: React.FC<ImageProps> = ({
         return (
           <div className="flex items-center gap-4">
             {element}
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
           </div>
@@ -85,7 +90,7 @@ export const Image: React.FC<ImageProps> = ({
     }
   };
 
-  const finalElement = renderWithHeader(imageElement);
+  const finalElement = (<div className={className}>{renderWithHeader(imageElement)}</div>);
 
   if (needTooltip && tooltipProps) {
     return (

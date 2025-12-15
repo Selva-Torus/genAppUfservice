@@ -6,8 +6,8 @@ import axios from 'axios';
 import { connectToMongo, getDb } from './mongoClient';
 
 let db: Db;
-  connectToMongo().then(() => { 
-    db = getDb();
+  connectToMongo().then(async () => { 
+    db = await getDb();
     console.log('Database initialized'); 
   }).catch((error) => {
     console.error('Error connecting to MongoDB:', error);

@@ -6,7 +6,6 @@ import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { GravityIcon } from "@/types/icons";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 
 type LabelSize = "xs" | "s" | "m";
 type LabelTheme = "normal" | "info" | "danger" | "warning" | "success" | "utility" | "unknown" | "clear";
@@ -42,7 +41,7 @@ export const Label: React.FC<LabelProps> = ({
   onClick,
   className = "",
 }) => {
-  const { theme, branding } = useGlobal();
+  const { theme } = useGlobal();
 
   const handleCopy = () => {
     if (copy && children) {
@@ -90,39 +89,42 @@ export const Label: React.FC<LabelProps> = ({
   const isDark = theme === "dark" || theme === "dark-hc";
 
   const labelElement = (
-    <span
-      onClick={disabled ? undefined : (copy ? handleCopy : onClick)}
-      className={`
-        ${getSizeClasses()}
-        ${getBorderRadiusClass(branding.borderRadius)}
-        inline-flex items-center gap-1
-        font-medium
-        ${disabled ? "opacity-50 cursor-not-allowed" : (interactive || copy || onClick) ? "cursor-pointer hover:opacity-80" : ""}
-        transition-all
-        ${className}
-      `}
-      style={{
-        backgroundColor: colors.bg,
-        color: colors.text,
-      }}
-    >
-      {icon && <Icon data={icon} size={size === "xs" ? 12 : size === "s" ? 14 : 16} />}
-      {children}
-    </span>
-  );
+  <span
+    onClick={disabled ? undefined : (copy ? handleCopy : onClick)}
+    className={`
+      ${getSizeClasses()}
+      inline-flex items-center gap-1
+      font-medium
+      ${disabled ? "opacity-50 cursor-not-allowed" : (interactive || copy || onClick) ? "cursor-pointer hover:opacity-80" : ""}
+      transition-all
+    `}
+    style={{
+      backgroundColor: colors.bg,
+      color: colors.text,
+      borderRadius: "var(--border-radius)",
+      fontSize: "var(--font-size)",   
+    }}
+  >
+    {icon && <Icon data={icon} size={size === "xs" ? 12 : size === "s" ? 14 : 16} />}
+    {children}
+  </span>
+);
+
 
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-1 ${
+    const headerClasses = `font-semibold mb-1 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
+
+    const headerStyle = { fontSize: "var(--font-size)" };
 
     switch (headerPosition) {
       case "top":
         return (
           <div className="flex flex-col">
-            <div className={headerClasses}>{headerText}</div>
+            <div className={headerClasses} style={headerStyle}>{headerText}</div>
             {element}
           </div>
         );
@@ -130,13 +132,13 @@ export const Label: React.FC<LabelProps> = ({
         return (
           <div className="flex flex-col">
             {element}
-            <div className={`${headerClasses} mt-1 mb-0`}>{headerText}</div>
+            <div className={`${headerClasses} mt-1 mb-0`} style={headerStyle}>{headerText}</div>
           </div>
         );
       case "left":
         return (
           <div className="flex items-center gap-2">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
             {element}
@@ -146,7 +148,7 @@ export const Label: React.FC<LabelProps> = ({
         return (
           <div className="flex items-center gap-2">
             {element}
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
           </div>
@@ -154,7 +156,7 @@ export const Label: React.FC<LabelProps> = ({
     }
   };
 
-  const finalElement = renderWithHeader(labelElement);
+  const finalElement = (<div className={className}>{renderWithHeader(labelElement)}</div>);
 
   if (needTooltip && tooltipProps) {
     return (

@@ -1,3 +1,4 @@
+
 'use client'
 import React, { useState } from 'react'
 import axios from 'axios'
@@ -94,11 +95,11 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
           document.cookie = `language=${'en'}`
           let screenDetails: any = {
             keys:[
-              {
+  {
     "screensName": "testroute-v1",
     "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-              }
-            ]
+  }
+]
           }
           const ORM: any = decodeToken(api_signin.data.token)
           sessionStorage.setItem(
@@ -158,6 +159,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
   }
 
   const bgImage = loginType === 'standard' && image ? getCdnImage(image) : undefined
+  // const bgImage = `https://cdndfsdev.toruslowcode.com/buckets/torus/9.1/CT003/resources/images/Login%20-%20%20FinOne.png`
 
   return (
     <div
@@ -305,7 +307,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
                 )}
               </Button>
 
-               {process.env.NEXT_PUBLIC_NEXT_AUTH_NEEDED === 'true' && ( 
+              {process.env.NEXT_PUBLIC_NEXT_AUTH_NEEDED === 'true' && (
                 <div className='flex w-full justify-center'>
                   <Button
                     onClick={() => singleSignOn('fusionauth')}
@@ -319,7 +321,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
                     </span>
                   </Button>
                 </div>
-              )} 
+              )}
 
               <div className='flex justify-center pb-2'>
                 <Text className='flex items-center gap-1 text-nowrap text-sm 2xl:text-base' variant='body-2'>

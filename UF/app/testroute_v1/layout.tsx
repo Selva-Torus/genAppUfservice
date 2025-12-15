@@ -27,8 +27,8 @@ export default function RootLayout({
         <GetSetupKey>
         <div className=''>
           <LayoutDecider 
-            mode='fluid' 
-            navigationStyles='vertical' 
+            mode='closed' 
+            navigationStyles='horizontal' 
             >
             <div>
               <main>{children}</main>    

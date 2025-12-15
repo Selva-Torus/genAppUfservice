@@ -2,7 +2,7 @@
   "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc",
   "deploymentArtifactKey": "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1",
   "appGroupDesc": "appgroup",
-  "logType": "dfs",
+  "logType": "mongodb",
   "appDesc": "oprmatrix",
   "isOld": true,
   "clientCode": "CT003",
@@ -19,7 +19,7 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-12-09T06:47:02.731Z",
+    "lastActive": "2025-12-15T11:01:08.440Z",
     "profile": "torus/9.1/CT003/resources/images/Peer@786/scott-graham-5fNmWej4tAA-unsplash.jpg",
     "quickLinks": [],
     "client": "CT003",

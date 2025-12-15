@@ -1174,569 +1174,185 @@ export class CommonService{
     }
 
 
-  async prcLog(streamName): Promise<any> {
+
+      async getMongoProcessLogs(input, type): Promise<any> {
       try {
-        var structuredData = await this.structuredPrcLogs(streamName)
-      if(streamName.endsWith('-TPL')){
-          if(structuredData?.length >0){
-          for(let i = 0; i < structuredData.length; i++){  
-            let upid = Object.keys(structuredData[i].AFSK)[0]
-            let path = `${streamName}/${structuredData[i].USER}/${structuredData[i].DATE}/${structuredData[i].CK}/${structuredData[i].FNGK}/${structuredData[i].FNK}/${structuredData[i].CATK}/${structuredData[i].AFGK}/${structuredData[i].AFK}/${structuredData[i].AFVK}`        
-           await this.seaWeeduploadFile(JSON.stringify(structuredData), 'PrcLog', path, (upid))
-          }
+        this.logger.log('get MongoProcess started');
+
+        const {
+          tenant, user, FromDate, ToDate,
+          fabric, appgroup, app,
+          searchParam, page = 1, limit = 10
+        } = input;
+
+        if(!tenant) throw 'Invalid Payload'   
        
-        } 
-      }
-        else if(streamName.endsWith('-TSL')){
-           if (structuredData && structuredData.length > 0) {
-        for (let i = 0; i < structuredData.length; i++) {
-          const { USER, DATE: date, CK, FNGK, FNK, CATK, AFGK, AFK, AFVK, AFSK }: any = structuredData[i];
-          
-          if (AFK == 'GENERALERRORS') {
-            if (USER && date && AFK) {
-             let upid = Object.keys(structuredData[i].AFSK)[0]
-            let path = `${streamName}/${structuredData[i].USER}/${structuredData[i].DATE}/${structuredData[i].CK}/${structuredData[i].FNGK}/${structuredData[i].FNK}/${structuredData[i].CATK}/${structuredData[i].AFGK}/${structuredData[i].AFK}/${structuredData[i].AFVK}`   
-             await this.seaWeeduploadFile(JSON.stringify(structuredData[i]), 'ExpLog', path, (upid))
-          }
-          }
-          else if (AFK == 'Logs Screen') {
-            let upid = Object.keys(structuredData[i].AFSK)[0]
-            let path = `${streamName}/${structuredData[i].USER}/${structuredData[i].DATE}/${structuredData[i].CK}/${structuredData[i].FNGK}/${structuredData[i].FNK}/${structuredData[i].CATK}/${structuredData[i].AFGK}/${structuredData[i].AFK}/${structuredData[i].AFVK}`   
-             await this.seaWeeduploadFile(JSON.stringify(structuredData[i]), 'ExpLog', path, (upid))
+        let fileName = `${tenant}-${app?.code || ''}`;
+     
+        const filter: any = {
+          'CK': tenant,
+        };
+
+        if (user?.length >0 ) {
+          filter['USER'] = { $in: user };
+        }
+
+        if (fabric?.length >0 ) {
+          filter['FNK'] = { $in: fabric };
+        }
+
+        if (appgroup?.code) {
+          filter['CATK'] = appgroup.code;
+        }
+
+        if (app?.code) {
+          filter['AFGK'] = app.code;
+        }
+
+        if (FromDate || ToDate) {
+          filter['DATE'] = {
+            ...(FromDate && { $gte: FromDate }),
+            ...(ToDate && { $lte: ToDate }),
+          };
+        }
+
+        if (searchParam) {
+          const regex = { $regex: searchParam, $options: 'i' };
+          filter['$or'] = [
+            { 'CK': regex },
+            { 'FNGK': regex },
+            { 'FNK': regex },
+            { 'CATK': regex },
+            { 'AFGK': regex },
+            { 'AFK': regex },
+            { 'AFVK': regex },
+            { 'USER': regex },
+            { 'DATE': regex },
+            { 'UPID': regex },
+          ];
+        }
+
+        // console.log('filter', filter);
+        //console.log('fileName', fileName);
         
-          }
-          else if (AFK == 'TORUS') {
-            if (date && AFK) {
-           let upid = Object.keys(structuredData[i].AFSK)[0]
-            let path = `${streamName}/${structuredData[i].USER}/${structuredData[i].DATE}/${structuredData[i].CK}/${structuredData[i].FNGK}/${structuredData[i].FNK}/${structuredData[i].CATK}/${structuredData[i].AFGK}/${structuredData[i].AFK}/${structuredData[i].AFVK}`   
-             await this.seaWeeduploadFile(JSON.stringify(structuredData[i]), 'ExpLog', path, (upid))              
-          
-              }
-          }
-          else {
-            if (USER && date && CK && FNGK && FNK && CATK && AFGK && AFK && AFVK) {
-           let upid = Object.keys(structuredData[i].AFSK)[0]
-            let path = `${streamName}/${structuredData[i].USER}/${structuredData[i].DATE}/${structuredData[i].CK}/${structuredData[i].FNGK}/${structuredData[i].FNK}/${structuredData[i].CATK}/${structuredData[i].AFGK}/${structuredData[i].AFK}`   
-             await this.seaWeeduploadFile(JSON.stringify(structuredData[i]), 'ExpLog', path, structuredData[i].AFVK)
-            }
-          }
+        
+        const allCollections:any = await this.redisService.listCollections(fileName);
+       
+        if(!allCollections || !(Array.isArray(allCollections)) || allCollections?.length == 0) throw `Data not found in ${fileName}-${type}`
+
+        const targetCollections = allCollections.filter(name => name.endsWith(type));
+
+      
+        const documentPromises = targetCollections.map(name =>
+          this.mongoService.findDocument(name, filter, { _id: 0})//value: 1 
+        );
+        
+        const allDocs = (await Promise.all(documentPromises)).flat();
+             
+        const totalDocuments = allDocs.length;
+        if (totalDocuments === 0) throw `Data not found in ${fileName}`;
+
+        const paginatedData = allDocs.slice((page - 1) * limit, page * limit)//.map(d => d.value);
+
+        this.logger.log('get MongoProcess completed');
+
+        return {
+          data: paginatedData,
+          page,
+          limit,
+          totalPages: Math.ceil(totalDocuments / limit),
+          totalDocuments,
+        };
+
+      } catch (error) {
+        console.error('ERROR', error);
+        const message = error?.message || error;
+        throw new BadRequestException(message);
+      }
+    }
+ 
+    async getSubFlowLog(SubFlowKey,subFlowUpId){
+      try {
+        if(!SubFlowKey || !subFlowUpId) throw 'Invalid Payload'
+
+        let tenant = await this.splitcommonkey(SubFlowKey,'CK')
+        let fabric = await this.splitcommonkey(SubFlowKey,'FNK')
+        let appgroupcode = await this.splitcommonkey(SubFlowKey,'CATK')
+        let appcode = await this.splitcommonkey(SubFlowKey,'AFGK')
+      
+        let subFlowResult:any = await this.getMongoProcessLogs({
+          tenant,
+          fabric:[fabric],
+          appgroup:{
+            code:appgroupcode
+          },
+          app:{
+            code:appcode
+          },
+          page: 1,
+          limit: 10,
+          searchParam: subFlowUpId
+        },'TPL')
+
+        if(subFlowResult?.data && Array.isArray(subFlowResult?.data) && subFlowResult?.data.length > 0){         
+          return Object.values(subFlowResult.data[0]['AFSK']).flat()
+        }else{
+          return []
         }
+
+      } catch (error) {
+        //console.log('ERROR', error);        
+        throw error
+      }
+    }
+    
+    @Cron(process.env.MY_CRON)
+    async prcLog(): Promise<any> { //Default Mongo
+      try {       
+        //this.logger.log('ProcessLog start Listening')
+       
+        let tplstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TPL'
+       let tslstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TSL'
+       if (await this.redisService.exist(tplstreamName, process.env.CLIENTCODE)){
+         await this.structuredPrcLogs(tplstreamName) 
+       } 
+        if (await this.redisService.exist(tslstreamName, process.env.CLIENTCODE)){
+         await this.structuredPrcLogs(tslstreamName) 
+       } 
         return 'success'
-      }  
-        }
-  
       } catch (error) {
         throw error;
       }
     }
 
-  async seaWeeduploadFile(
-  data: any,
-  bucketName: string,
-  folderPath: string,
-  filename: string
-  
-) {
-  try {
-    
-    const fileUrl = `${this.ftpOutputPath}/${bucketName}/${folderPath}/${filename.endsWith('.json') ? filename : `${filename}.json`}`;
-    // Helper to check if JSON
-    const isJSONString = (str: string): boolean => {
-      try {
-        JSON.parse(str);
-        return true;
-      } catch {
-        return false;
-      }
-    };
-
-    // Format incoming data
-    const newJsonData = typeof data === 'string' && isJSONString(data)
-      ? JSON.parse(data)
-      : data;
-
-    let combinedData: any[] = [];
-
-    // Try to fetch existing file
-        try {
-          const existing = await axios.get(fileUrl, {
-        auth: {
-        username: process.env.SEAWEED_USERNAME,
-        password: process.env.SEAWEED_PASSWORD
-      }
-    });
-      const existingJson = existing.data;
-      if(existingJson){
-      if (Array.isArray(existingJson)) {
-        combinedData = existingJson;
-      } else {
-        combinedData = [existingJson];
-      }
-      }
-      
-    } catch (e) {
-      console.warn('No existing file found. Creating new one.');
-    }
-
-    // Append new data
-    if (Array.isArray(newJsonData)) {
-      for(let d=0; d< newJsonData.length; d++){
-        combinedData.push(newJsonData[d]);
-      }
-      
-    } else {
-       combinedData.push(newJsonData)
-    }
-
-    // if (Array.isArray(newJsonData)) {
-    //   combinedData = newJsonData;
-    // } else {
-    //   combinedData = [newJsonData];
-    // }
-
-    // Convert to buffer
-    const buffer = Buffer.from(JSON.stringify(combinedData, null, 2), 'utf-8');
-
-    // Upload
-    const form = new FormData();
-    form.append('file', Readable.from(buffer), {
-      filename: filename.endsWith('.json') ? filename : `${filename}.json`,
-      contentType: 'application/json',
-    });
-
-  const response = await axios.post(fileUrl, form, {
-      headers: {
-        ...form.getHeaders(),
-      },
-       auth: {
-    username: process.env.SEAWEED_USERNAME,
-    password: process.env.SEAWEED_PASSWORD
-  },
-      maxContentLength: Infinity,
-      maxBodyLength: Infinity,
-    });
-
-    return {
-      status: response.status,
-      fileName: filename
-    };
-  } catch (error) {
-    console.error('Upload error:', error?.response?.data || error.message);
-    throw error;
-  }
-    }
-
-    async getseaWeedProcessLogs(input,type): Promise<any> {
-      try {        
-        this.logger.log('Seaweed started');
-
-        let {tenant, user, FromDate, ToDate, fabric, appgroup, app, searchParam, page, limit } = input;
-        if(!tenant) throw 'Invalid Payload'      
-         const getDateRange = (start, end) => {
-          const dateArray = [];
-          if (start && end) {
-            var currentDate = new Date(start);
-            var endDate = new Date(end);
-          } else if (start) {
-            var currentDate = new Date(start);
-            var endDate = new Date();
-          } else if (end) {
-            var currentDate = new Date();
-            var endDate = new Date(end);
+    async structuredPrcLogs(streamName) { //Default Mongo
+      try {         
+        if (await this.redisService.exist(streamName, process.env.CLIENTCODE)) {
+          let grpInfo = await this.redisService.getInfoGrp(streamName)
+          if (grpInfo.length == 0) {
+            await this.redisService.createConsumerGroup(streamName, 'ProcessLog')
+          } else if (!grpInfo[0].includes('ProcessLog')) {
+            await this.redisService.createConsumerGroup(streamName, 'ProcessLog')
           }
-     
-          while (currentDate <= endDate) {
-            dateArray.push(currentDate.toISOString().split('T')[0]);
-            currentDate.setDate(currentDate.getDate() + 1);
-          }
-          return dateArray;
-        };
-  
-        if (FromDate && ToDate) {
-          var dateRange = getDateRange(FromDate, ToDate);
-        } else if (FromDate) {
-          var dateRange = getDateRange(FromDate, '');
-        } else if (ToDate) {
-          var dateRange = getDateRange('', ToDate);
-        }else{
-          var dateRange = []
-        }
-     
-        if(app && app.code){
-  
-         var fileName = `${tenant}-${app.code}${type}`   
-        }
 
-       
-        page = page ? page : 1
-        limit = limit ? limit : 10
-        const start = (page - 1) * limit;
-        const end = start + limit;
-     let subFolder = `${fileName}/${user}`
-
-
-        let data = await this.listFiles('PrcLog',subFolder)
-   
-       var finalarr = []
-       var tenarr = []
-
-       if (dateRange?.length > 0) { 
-           var filtereddata = await this.getlogFormat(data, dateRange)
-          }else{
-            filtereddata = data
-          }
-  
-        if (user?.length>0) {
-          var usearr = await this.getlogFormat(filtereddata, user)
-         
-        }else{
-          usearr = filtereddata
-        }
-     
-     
-        if (tenant) {
-          for (var i = 0; i < usearr.length; i++) {
-            if (usearr[i].includes(tenant)) {
-              tenarr.push(usearr[i])
-             
-            }
-          }
-        }
-    
-        if (fabric && fabric.length > 0) {
-          var fabarr = await this.getlogFormat(tenarr, fabric)
-         
-        } else {
-          fabarr = tenarr
-        }
-     
-     
-        if (appgroup && appgroup.code) {
-          var appgrparr = await this.getlogFormat(fabarr, [appgroup.code])      
-         
-        } else {
-          appgrparr = fabarr
-        }
-     
-        if (app && app.code) {
-          var apparr = await this.getlogFormat(appgrparr, [app.code])
-         
-        } else {
-          apparr = appgrparr
-        }
-    
-        var arr = apparr.flat()
-    
-        for (var m = 0; m < arr.length; m++) {
- 
-          var getdata =  await this.downloadAndParseFile(arr[m]) 
-  
-          finalarr.push(getdata)
-         }
-        if(finalarr.length == 0){
-          throw 'Given User data is empty'
-        }
-        if (searchParam) {
-          finalarr = finalarr.filter(item =>
-            item.CK.includes(searchParam) ||
-            item.FNGK.includes(searchParam) ||
-            item.FNK.includes(searchParam) ||
-            item.CATK.includes(searchParam) ||
-            item.AFGK.includes(searchParam) ||
-            item.AFK.includes(searchParam) ||
-            item.AFVK.includes(searchParam) ||
-            item.USER.includes(searchParam) ||
-            item.DATE.includes(searchParam)
-          );
-        }
-     
-        if(!page){
-          page = 1
-        }
-        if(!limit){
-          limit = 10
-        }
-     
-        if(Array.isArray(finalarr) && finalarr?.length >0){    
-          if (page && limit) {
-            var finalArr = [];
-            for (var i = start; i < end; i++) {
-              if (finalarr[i]) 
-                finalArr.push(finalarr[i]);
-            }
-          }         
-          const totalDocuments = finalarr.length;
-          const totalPages = Math.ceil(totalDocuments / limit);       
-          this.logger.log('get MongoProcess completed');   
-          return {
-            data: finalArr.flat(),
-             page,
-             limit,
-             totalPages,
-             totalDocuments,
-          };
-        }else{
-          throw `Data not found in ${fileName}`
-        } 
+          let streamData: any = await this.redisService.readConsumerGroup(streamName, 'ProcessLog', 'TPL');
+          //console.log(streamData);
           
-        // return ciphertext
-       
-      } catch (error) {
-        //console.log('ERROR', error);
-        if(error.message) error = error.message    
-        throw new BadRequestException(error)
-      }
-    }
-   
-    streamToString = async (readableStream: stream.Readable): Promise<string> => {
-      const chunks: Uint8Array[] = [];
-      for await (const chunk of readableStream) {
-        chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-      }
-      return Buffer.concat(chunks).toString('utf-8');
-    };
-
-  async downloadAndParseFile(fileName: string): Promise<any> {
-    try {
-      const streamUrl = `${this.ftpOutputPath}${fileName}`;
-      const response = await axios.get(streamUrl, { responseType: 'stream',  auth: {
-    username: process.env.SEAWEED_USERNAME,
-    password: process.env.SEAWEED_PASSWORD
-  } });
-      const fileContent = await this.streamToString(response.data);
-      const jsonData = JSON.parse(fileContent);
-      return jsonData;
-    } catch (error) {
-      console.error('Download error:', error?.response?.status, error?.response?.data || error.message);
-      throw new Error('Failed to download and parse file');
-    }
-  }
-
-  async listFiles(bucketName: string, prefixPath: string): Promise<string[]> {
-      const basePath = `/${bucketName}/${prefixPath}`;
-      const allFiles: string[] = [];
-      const traverse = async (path: string) => {
-        try {
-         const res = await axios.get(`${this.ftpOutputPath}${path}?recursive=true&pretty=y`,{
-          headers: {
-          Accept: 'application/json',
-        }, auth: {
-            username: process.env.SEAWEED_USERNAME,
-            password: process.env.SEAWEED_PASSWORD
-          }
-        });
-          const entries = res.data.Entries || [];
-
-          for (const entry of entries) {
-            const fullPath = entry.FullPath;
-            const name = fullPath.split('/').pop(); // derive name manually
-
-            const isDirectory = entry.FileSize === 0 && !entry.Mime;
-
-            if (isDirectory) {
-              await traverse(fullPath); // go deeper
-            } else {
-              allFiles.push(fullPath); // file found
+          if (streamData != 'No Data available to read' && streamData.length > 0) {
+            var msgid = []
+            var strmarr = []
+            for (let s = 0; s < streamData.length; s++) {
+              msgid.push(streamData[s].msgid)
+              strmarr.push(streamData[s].data)
             }
           }
-
-        } catch (err) {
-          console.error(`Failed to traverse ${path}:`, err?.response?.data || err.message);
-        }
-      };
-
-      await traverse(basePath);
-      return allFiles;
-    }
-
-   
-
-  async getseaWeedExpLogs(input,type): Promise<any> {
-      try {        
-        this.logger.log('Seaweed started');
-
-        let {tenant, user, FromDate, ToDate, fabric, appgroup, app, searchParam, page, limit } = input;
-        if(!tenant) throw 'Invalid Payload'      
-         const getDateRange = (start, end) => {
-          const dateArray = [];
-          if (start && end) {
-            var currentDate = new Date(start);
-            var endDate = new Date(end);
-          } else if (start) {
-            var currentDate = new Date(start);
-            var endDate = new Date();
-          } else if (end) {
-            var currentDate = new Date();
-            var endDate = new Date(end);
-          }
-     
-          while (currentDate <= endDate) {
-            dateArray.push(currentDate.toISOString().split('T')[0]);
-            currentDate.setDate(currentDate.getDate() + 1);
-          }
-          return dateArray;
-        };
-  
-        if (FromDate && ToDate) {
-          var dateRange = getDateRange(FromDate, ToDate);
-        } else if (FromDate) {
-          var dateRange = getDateRange(FromDate, '');
-        } else if (ToDate) {
-          var dateRange = getDateRange('', ToDate);
-        }else{
-          var dateRange = []
-        }
-     
-        if(app && app.code){
-  
-         var fileName = `${tenant}-${app.code}${type}`   
-        }
-
-       
-        page = page ? page : 1
-        limit = limit ? limit : 10
-        const start = (page - 1) * limit;
-        const end = start + limit;
-       let subFolder = `${fileName}/${user}`
-
-
-        let data = await this.listFiles('ExpLog',subFolder)
-   
-       var finalarr = []
-       var tenarr = []
-
-       if (dateRange?.length > 0) { 
-           var filtereddata = await this.getlogFormat(data, dateRange)
-          }else{
-            filtereddata = data
-          }
-  
-        if (user?.length>0) {
-          var usearr = await this.getlogFormat(filtereddata, user)
-         
-        }else{
-          usearr = filtereddata
-        }
-     
-     
-        if (tenant) {
-          for (var i = 0; i < usearr.length; i++) {
-            if (usearr[i].includes(tenant)) {
-              tenarr.push(usearr[i])
-             
-            }
-          }
-        }
-    
-        if (fabric && fabric.length > 0) {
-          var fabarr = await this.getlogFormat(tenarr, fabric)
-         
-        } else {
-          fabarr = tenarr
-        }
-     
-     
-        if (appgroup && appgroup.code) {
-          var appgrparr = await this.getlogFormat(fabarr, [appgroup.code])      
-         
-        } else {
-          appgrparr = fabarr
-        }
-     
-        if (app && app.code) {
-          var apparr = await this.getlogFormat(appgrparr, [app.code])
-         
-        } else {
-          apparr = appgrparr
-        }
-    
-        var arr = apparr.flat()
-    
-        for (var m = 0; m < arr.length; m++) {
- 
-          var getdata =  await this.downloadAndParseFile(arr[m]) 
-  
-          finalarr.push(getdata)
-         }
-        if(finalarr.length == 0){
-          throw 'Given User data is empty'
-        }
-        if (searchParam) {
-          finalarr = finalarr.filter(item =>
-            item.CK.includes(searchParam) ||
-            item.FNGK.includes(searchParam) ||
-            item.FNK.includes(searchParam) ||
-            item.CATK.includes(searchParam) ||
-            item.AFGK.includes(searchParam) ||
-            item.AFK.includes(searchParam) ||
-            item.AFVK.includes(searchParam) ||
-            item.USER.includes(searchParam) ||
-            item.DATE.includes(searchParam)
-          );
-        }
-     
-        if(!page){
-          page = 1
-        }
-        if(!limit){
-          limit = 10
-        }
-     
-        if(Array.isArray(finalarr) && finalarr?.length >0){    
-          if (page && limit) {
-            var finalArr = [];
-            for (var i = start; i < end; i++) {
-              if (finalarr[i]) 
-                finalArr.push(finalarr[i]);
-            }
-          }         
-          const totalDocuments = finalarr.length;
-          const totalPages = Math.ceil(totalDocuments / limit);       
-          this.logger.log('get seaweed completed');   
-          return {
-           data: finalArr.flat(),
-             page,
-             limit,
-             totalPages,
-             totalDocuments,
-          };
-        }else{
-          throw `Data not found in ${fileName}`
-        } 
-       
-      } catch (error) {
-        //console.log('ERROR', error);
-        if(error.message) error = error.message       
-        throw new BadRequestException(error)
-      }
-    }
-
-    async structuredPrcLogs(streamName) {
-      try {
-                   
-        var msgid = []
-        var strmarr = []
-        const result = [];       
-
-        //if(!await this.redisService.exist(streamName)) throw `Stream ${streamName} does not exist`
-        var messages = await this.redisService.getStreamRange(streamName)
-       
-        if (messages?.length > 0) {
-          messages.forEach(([msgId, value]) => {
-            msgid.push(msgId)
-            strmarr.push(value)
-          });
-        }
-        //else{
-          //throw `Stream ${streamName} does not exist`
-        //}
-  
-        if (msgid?.length > 0) {
+          if (msgid?.length > 0) {
           var AfskValue = "logInfo"
+          let resultFlg = 0
           for (var s = 0; s < msgid.length; s++) {
-  
+            let streamKey = strmarr[s][0]
             if(streamName.endsWith('-TPL')){              
-              var upidsplit = strmarr[s][0].split(':');
+              var upidsplit = streamKey.split(':');
               if (upidsplit.length > 14) {
                 var upid = upidsplit[upidsplit.length - 1]
                 AfskValue = upid
@@ -1752,24 +1368,53 @@ export class CommonService{
             var user
             if (afskvalue?.sessionInfo && Object.keys(afskvalue.sessionInfo).length > 0) {
               user = afskvalue.sessionInfo.user
-            } else {
-              user = 'user'
-            }
+            } 
+            // else {
+            //   user = 'user'
+            // }
 
-            let CK = await this.splitcommonkey(strmarr[s][0], 'CK')
-            let FNGK = await this.splitcommonkey(strmarr[s][0], 'FNGK')
-            let FNK = await this.splitcommonkey(strmarr[s][0], 'FNK')
-            let CATK = await this.splitcommonkey(strmarr[s][0], 'CATK')
-            let AFGK = await this.splitcommonkey(strmarr[s][0], 'AFGK')
-            let AFK = await this.splitcommonkey(strmarr[s][0], 'AFK')
-            let AFVK = await this.splitcommonkey(strmarr[s][0], 'AFVK')             
-  
-            let existingEntry = result.find(
-              (item) => item.CK === CK && item.FNGK === FNGK && item.FNK === FNK && item.CATK === CATK && item.AFGK === AFGK && item.AFK === AFK && item.AFVK === AFVK && item.USER === user && item.DATE === entryId  && Object.keys(item.AFSK).includes(upid)
-            );
-  
-            if (!existingEntry) {
-              existingEntry = {
+            let CK = await this.splitcommonkey(streamKey, 'CK')
+            let FNGK = await this.splitcommonkey(streamKey, 'FNGK')
+            let FNK = await this.splitcommonkey(streamKey, 'FNK')
+            let CATK = await this.splitcommonkey(streamKey, 'CATK')
+            let AFGK = await this.splitcommonkey(streamKey, 'AFGK')
+            let AFK = await this.splitcommonkey(streamKey, 'AFK')
+            let AFVK = await this.splitcommonkey(streamKey, 'AFVK')
+            
+            let isDocExist:any
+            if(AfskValue ==  "logInfo"){
+              let filter = {}               
+              filter['CK'] = CK
+              filter['FNGK'] = FNGK
+              filter['FNK'] = FNK
+              filter['CATK'] = CATK
+              filter['AFGK'] = AFGK
+              filter['AFK'] = AFK
+              filter['AFVK'] = AFVK
+              filter['DATE'] = entryId
+              if(user){
+                filter['USER'] = user
+              }
+              isDocExist = await this.mongoService.existsDocument(streamName,'',filter)
+            }else{
+              isDocExist = await this.mongoService.existsDocument(streamName,'',{UPID:AfskValue})              
+            }
+            
+             if(isDocExist && Object.keys(isDocExist).length > 0 && isDocExist._id){
+              let appendRes:any = await this.mongoService.appendFileInToDocument(streamName,isDocExist._id,'AFSK.'+AfskValue,afskvalue);
+                        
+              resultFlg++ 
+              if(appendRes.modifiedCount){
+                await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])   
+                await this.redisService.deleteWithEntryId(streamName,msgid[s])    
+                let isStreamExist = await this.redisService.getStreamRange(streamName)
+                if(!isStreamExist || isStreamExist.length == 0){
+                  await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
+                }                        
+              }
+            }else{
+              await db.collection(streamName).createIndex({ "CK": 1, "FNGK": 1, "FNK": 1, "CATK": 1, "AFGK": 1, "AFK": 1, "AFVK": 1, "DATE": 1, "USER": 1 });
+              let insertRes:any = await this.mongoService.insertDocument(streamName,'',{
                 CK,
                 FNGK,
                 FNK,
@@ -1777,59 +1422,46 @@ export class CommonService{
                 AFGK,
                 AFK,
                 AFVK,
+                UPID:AfskValue,
                 DATE: entryId,
                 USER: user,
-                AFSK: {},
-                METADATA: {
-                  CK,
-                  FNGK,
-                  FNK,
-                  CATK,
-                  AFGK,
-                  AFK,
-                  AFVK,
-                  DATE: entryId,
-                  USER: user,
-                  AFSK: AfskValue,
-                },
-              };
-              result.push(existingEntry);
-            }
-  
-            if (!existingEntry.AFSK[AfskValue]) {
-              existingEntry.AFSK[AfskValue] = [];
-            }
-            existingEntry.AFSK[AfskValue].push(afskvalue);
+                AFSK: 
+                  {[AfskValue]:[afskvalue]}
+                
+              })
+             
+              resultFlg++ 
+              if(insertRes.insertedId) {
+                await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])    
+                await this.redisService.deleteWithEntryId(streamName,msgid[s])   
+                let isStreamExist = await this.redisService.getStreamRange(streamName)
+                if(!isStreamExist || isStreamExist.length == 0){
+                  await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
+                }                  
+              }     
+            }          
           }
-        }
-       
-        return result;
+         
+          if(resultFlg == msgid.length){           
+            return 'Success'
+          }
+          }  
+
+        } 
+      
+      } catch (error) {
+        this.logger.log('error',error)
+      }
+    } 
+
+    async deleteLog(input){
+      try {
+        return await this.mongoService.deleteFileFromGridFs('LOGS',input.filename)
       } catch (error) {
         throw error
       }
     }
 
-    async getlogFormat(array1, array2) {
-
-      let len
-      if (array1.length > array2.length) {
-        len = array1.length
-      } else if (array2.length > array1.length) {
-        len = array2.length
-      } else {
-        len = array1.length
-      }
    
-      const filteredArr = []
-      for (let i = 0; i < len; i++) {
-        for (let item of array1) {
-          if (item.includes(array2[i])) {
-            filteredArr.push(item)
-          }
-        }
-      }
-      return filteredArr
-    }
-
     
 }

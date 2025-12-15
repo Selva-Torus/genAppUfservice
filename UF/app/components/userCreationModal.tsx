@@ -241,7 +241,7 @@ const UserCreationModal = ({
           const res = await AxiosService.post(
             `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/postAppUserList`,
             {
-              data: editeduser 
+              data: editeduser
             },
             {
               headers: {

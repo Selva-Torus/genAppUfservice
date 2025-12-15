@@ -119,7 +119,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return <div className={className} >{element}</div>;
 
-    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-1 ${
+    const headerClasses = ` font-semibold mb-1 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 

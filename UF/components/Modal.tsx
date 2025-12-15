@@ -74,26 +74,6 @@ export const Modal: React.FC<ModalProps> = ({
 
   if (!open) return null;
 
-  const getSizeClasses = () => {
-    const fontSize = getFontSizeClass(branding.fontSize);
-    switch (size) {
-      case "s":
-        return `max-w-md ${fontSize}`;
-      case "m":
-        return `max-w-lg ${fontSize}`;
-      case "l":
-        return `max-w-2xl ${fontSize === "text-sm" ? "text-base" : fontSize === "text-base" ? "text-lg" : "text-xl"}`;
-      case "xl":
-        return `max-w-6xl ${fontSize === "text-sm" ? "text-lg" : fontSize === "text-base" ? "text-xl" : "text-2xl"}`;
-      case "2xl":
-        return `max-w-7xl ${fontSize === "text-sm" ? "text-xl" : fontSize === "text-base" ? "text-2xl" : "text-3xl"}`;
-      case "4xl":
-        return `max-w-full ${fontSize === "text-sm" ? "text-2xl" : fontSize === "text-base" ? "text-3xl" : "text-4xl"}`;
-      default:
-        return `max-w-lg ${fontSize}`;
-    }
-  };
-
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (closeOnOverlayClick && e.target === e.currentTarget) {
       onClose();
@@ -112,15 +92,13 @@ export const Modal: React.FC<ModalProps> = ({
     >
       <div
         className={`
-          ${getSizeClasses()}
+          ${className}
           ${getBorderRadiusClass(branding.borderRadius)}
           animate-scaleIn
-          w-full
           flex flex-col
           ${isHighContrast ? 'border-2' : 'border'}
           transition-all duration-300 ease-in-out
           hover:shadow-2xl
-          ${className}
         `}
         style={{
           backgroundColor: isDark ? "#1F2937" : "#FFFFFF",

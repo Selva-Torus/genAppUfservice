@@ -108,7 +108,7 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return <div className={className}>{element}</div>;
 
-    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-2 ${
+    const headerClasses = ` font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 

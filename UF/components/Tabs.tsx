@@ -94,7 +94,7 @@ export const Tabs: React.FC<TabsProps> = ({
               className={`
                 ${getSizeClasses()}
                 [border-radius:var(--border-radius)]
-                [font-size:var(--font-size)]
+                
                 flex items-center gap-2
                 font-medium
                 whitespace-nowrap
@@ -128,7 +128,7 @@ export const Tabs: React.FC<TabsProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return <div className={className}>{element}</div>;
 
-    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-2 ${
+    const headerClasses = ` font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 

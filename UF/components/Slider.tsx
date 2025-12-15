@@ -246,7 +246,7 @@ export const Slider: React.FC<SliderProps> = ({
                     className={`w-0.5 h-2 mx-auto ${isDark ? "bg-gray-600" : "bg-gray-400"}`}
                   />
                   <span
-                    className={`[font-size:var(--font-size)] mt-1 block ${isDark ? "text-gray-400" : "text-gray-600"} ${
+                    className={` mt-1 block ${isDark ? "text-gray-400" : "text-gray-600"} ${
                       isFirst ? "text-left" : isLast ? "text-right" : "text-center"
                     }`}
                     style={{
@@ -275,7 +275,7 @@ export const Slider: React.FC<SliderProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return <div className={className}>{element}</div>;
 
-    const headerClasses = `[font-size:var(--font-size)] font-semibold mb-2 ${
+    const headerClasses = `font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 
