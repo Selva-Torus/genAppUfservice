@@ -49,11 +49,11 @@ const ContextSelector = () => {
   let landingScreen:string = 'User Screen';
   let screenDetails: any = {
            keys:[
-  {
+      {
     "screensName": "testroute-v1",
     "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-  }
-]
+      }
+    ]
   }
   screenDetails = screenDetails.keys
 
@@ -113,11 +113,20 @@ const ContextSelector = () => {
       setSelectedOrg(
         selectedCombinationData
           ? {
-              orgCode: selectedCombinationData.orgCode,
-              orgGrpCode: selectedCombinationData.orgGrpCode,
-              orgGrpName: selectedCombinationData.orgGrpName,
-              orgName: selectedCombinationData.orgName,
-              path: selectedCombinationData?.orgPath
+              orgCode: selectedCombinationData?.subOrgCode
+                ? selectedCombinationData.subOrgCode
+                : selectedCombinationData.orgCode,
+              orgGrpCode: selectedCombinationData?.subOrgGrpCode
+                ? selectedCombinationData.subOrgGrpCode
+                : selectedCombinationData.orgGrpCode,
+              orgGrpName: selectedCombinationData?.subOrgGrpName
+                ? selectedCombinationData.subOrgGrpName
+                : selectedCombinationData.orgGrpName,
+              orgName: selectedCombinationData?.subOrgName
+                ? selectedCombinationData.subOrgName
+                : selectedCombinationData.orgName,
+              path: selectedCombinationData?.orgPath,
+              id : selectedCombinationData?.id
             }
           : {}
       )
@@ -148,17 +157,44 @@ const ContextSelector = () => {
       toast('Please select all the fields', 'warning')
       return
     }
+    
+    const orgGrpName = selectedOrg?.mainOrgGrpName
+      ? selectedOrg?.mainOrgGrpName
+      : selectedOrg?.orgGrpName
+    const orgGrpCode = selectedOrg?.mainOrgGrpCode
+      ? selectedOrg?.mainOrgGrpCode
+      : selectedOrg?.orgGrpCode
+    const orgName = selectedOrg?.mainOrgName
+      ? selectedOrg?.mainOrgName
+      : selectedOrg?.orgName
+    const orgCode = selectedOrg?.mainOrgCode
+      ? selectedOrg?.mainOrgCode
+      : selectedOrg?.orgCode
+    const subOrgGrpName = selectedOrg?.mainOrgGrpName
+      ? selectedOrg?.orgGrpName
+      : ''
+    const subOrgGrpCode = selectedOrg?.mainOrgGrpCode
+      ? selectedOrg?.orgGrpCode
+      : ''
+    const subOrgName = selectedOrg?.mainOrgName ? selectedOrg?.orgName : ''
+    const subOrgCode = selectedOrg?.mainOrgCode ? selectedOrg?.orgCode : ''
+
     const selectedCombo = {
-      orgGrpCode: selectedOrg?.orgGrpCode,
-      orgCode: selectedOrg?.orgCode,
+      orgGrpCode,
+      orgCode,
       orgPath: selectedOrg?.path,
-      orgGrpName : selectedOrg?.orgGrpName,
-      orgName : selectedOrg?.orgName,
+      orgGrpName,
+      orgName,
       roleGrpCode: selectedRole?.roleGrpCode,
       roleCode: selectedRole?.roleCode,
       psGrpCode: selectedPs?.psGrpCode,
       psCode: selectedPs?.psCode,
-      psPath: selectedPs?.path
+      psPath: selectedPs?.path,
+      subOrgGrpCode,
+      subOrgGrpName,
+      subOrgCode,
+      subOrgName,
+      id : selectedOrg?.id
     }
     setLoading(true)
     try {
@@ -256,7 +292,7 @@ const ContextSelector = () => {
         >
           <div className='h-1\5 flex w-full items-center justify-between'>
             <div className='flex flex-col items-start'>
-             {/* <Text variant='display-1' className='text-nowrap'>Profile Selector</Text> */}
+              {/* <Text variant='display-1' className='text-nowrap'>Profile Selector</Text> */}
               <Text variant='body-2' className='text-nowrap' color='secondary'>
                 Select Access Profile
               </Text>

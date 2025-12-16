@@ -3090,7 +3090,9 @@ export class UfService {
             c?.psGrpCode === selectedCombination?.psGrpCode &&
             c?.psCode === selectedCombination?.psCode &&
             c?.roleGrpCode === selectedCombination?.roleGrpCode &&
-            c?.roleCode === selectedCombination?.roleCode
+            c?.roleCode === selectedCombination?.roleCode &&
+            c?.subOrgGrpCode === selectedCombination?.subOrgGrpCode &&
+            c?.subOrgCode === selectedCombination?.subOrgCode
           );
         }),
         selectedAccessProfile: filteredCombination[0]?.accessProfile,
@@ -3166,42 +3168,102 @@ export class UfService {
     }
   }
 
-  transformToCombinations(data: any[]) {
-    try {
-      return data.map((profile) => {
-        const combinations: any[] = [];
+transformToCombinations(data: any[]) {
+  try {
+    return data.map((profile) => {
+      const combinations: any[] = [];
 
-        profile.orgGrp?.forEach((orgGrp: any) => {
-          const { orgGrpCode, orgGrpName } = orgGrp;
+      profile.orgGrp?.forEach((orgGrp: any) => {
+        const { orgGrpCode, orgGrpName } = orgGrp;
 
-          orgGrp.org?.forEach((org: any) => {
-            const { orgCode, orgName } = org;
+        orgGrp.org?.forEach((org: any) => {
+          const { orgCode, orgName } = org;
 
-            org.psGrp?.forEach((psGrp: any) => {
-              const { psGrpCode, psGrpName } = psGrp;
+          /* ------------------------------
+             1️⃣ ORG-LEVEL COMBINATIONS
+             org → psGrp → ps → roleGrp → role
+          --------------------------------*/
+          org.psGrp?.forEach((psGrp: any) => {
+            const { psGrpCode, psGrpName } = psGrp;
 
-              psGrp.ps?.forEach((ps: any) => {
-                const { psCode, psName } = ps;
+            psGrp.ps?.forEach((ps: any) => {
+              const { psCode, psName } = ps;
 
-                ps.roleGrp?.forEach((roleGrp: any) => {
-                  const { roleGrpCode, roleGrpName } = roleGrp;
+              ps.roleGrp?.forEach((roleGrp: any) => {
+                const { roleGrpCode, roleGrpName } = roleGrp;
 
-                  roleGrp.roles?.forEach((role: any) => {
-                    const { roleCode, roleName } = role;
+                roleGrp.roles?.forEach((role: any) => {
+                  const { roleCode, roleName } = role;
 
-                    combinations.push({
-                      orgGrpCode,
-                      orgGrpName,
-                      orgCode,
-                      orgName,
-                      roleGrpCode,
-                      roleGrpName,
-                      roleCode,
-                      roleName,
-                      psGrpCode,
-                      psGrpName,
-                      psCode,
-                      psName,
+                  combinations.push({
+                    orgGrpCode,
+                    orgGrpName,
+                    orgCode,
+                    orgName,
+
+                    subOrgGrpCode: '',
+                    subOrgGrpName: '',
+                    subOrgCode: '',
+                    subOrgName: '',
+
+                    psGrpCode,
+                    psGrpName,
+                    psCode,
+                    psName,
+
+                    roleGrpCode,
+                    roleGrpName,
+                    roleCode,
+                    roleName,
+                  });
+                });
+              });
+            });
+          });
+
+          /* ------------------------------
+             2️⃣ SUB-ORG-LEVEL COMBINATIONS
+             org → subOrgGrp → subOrg → psGrp → ps → roleGrp → role
+          --------------------------------*/
+          org.subOrgGrp?.forEach((subOrgGrp: any) => {
+            const { subOrgGrpCode, subOrgGrpName } = subOrgGrp;
+
+            subOrgGrp.subOrg?.forEach((subOrg: any) => {
+              const { subOrgCode, subOrgName } = subOrg;
+
+              subOrg.psGrp?.forEach((psGrp: any) => {
+                const { psGrpCode, psGrpName } = psGrp;
+
+                psGrp.ps?.forEach((ps: any) => {
+                  const { psCode, psName } = ps;
+
+                  ps.roleGrp?.forEach((roleGrp: any) => {
+                    const { roleGrpCode, roleGrpName } = roleGrp;
+
+                    roleGrp.roles?.forEach((role: any) => {
+                      const { roleCode, roleName } = role;
+
+                      combinations.push({
+                        orgGrpCode,
+                        orgGrpName,
+                        orgCode,
+                        orgName,
+
+                        subOrgGrpCode,
+                        subOrgGrpName,
+                        subOrgCode,
+                        subOrgName,
+
+                        psGrpCode,
+                        psGrpName,
+                        psCode,
+                        psName,
+
+                        roleGrpCode,
+                        roleGrpName,
+                        roleCode,
+                        roleName,
+                      });
                     });
                   });
                 });
@@ -3209,18 +3271,19 @@ export class UfService {
             });
           });
         });
-
-        return {
-          accessProfile: profile.accessProfile,
-          dap: profile?.dap ? profile?.dap : undefined,
-          combinations,
-          orgGrp : profile.orgGrp
-        };
       });
-    } catch (error) {
-      throw new BadGatewayException(error);
-    }
+
+      return {
+        accessProfile: profile.accessProfile,
+        dap: profile?.dap ?? undefined,
+        combinations,
+        orgGrp: profile.orgGrp,
+      };
+    });
+  } catch (error) {
+    throw new BadGatewayException(error);
   }
+}
 
   async getAccessTemplate(token: string) {
     try {

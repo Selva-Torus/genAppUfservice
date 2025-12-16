@@ -1,6 +1,8 @@
 import { twMerge } from 'tailwind-merge'
 import { useTheme } from '@/hooks/useTheme'
 import { Text } from '@/components/Text'
+import { ReactNode } from 'react'
+import { hexWithOpacity } from '../components/utils'
 
 const RenderChild = ({
   displayName,
@@ -9,6 +11,7 @@ const RenderChild = ({
   isSelected,
   onClick,
   existsInContext = true,
+  children
 }: {
   displayName: string
   displayCode: string
@@ -16,8 +19,9 @@ const RenderChild = ({
   isSelected: boolean
   onClick: () => void
   existsInContext: boolean
+  children?: ReactNode
 }) => {
-  const { borderColor } = useTheme()
+  const { borderColor, bgColor, branding } = useTheme()
 
   return (
     <div
@@ -25,18 +29,38 @@ const RenderChild = ({
         fontSize: `0.7vw`
       }}
       className={twMerge(
-        'group group flex w-full items-center justify-between rounded-lg border bg-[var(--g-color-base-background)] px-[.5vw] py-[1vh] font-semibold hover:border-[var(--brand-color)] hover:shadow',
-        !existsInContext ? 'pr-[0.8vw]' : '',
-        isSelected ? 'bg-unset border-[var(--brand-color)]' : borderColor
+        'flex w-full items-center justify-between  rounded-lg px-[.5vw] py-[1vh] font-semibold',
+        children
+          ? 'rounded-lg border bg-[var(--g-color-base-background)]  hover:border-[var(--brand-color)] hover:shadow'
+          : 'cursor-pointer',
+        bgColor
       )}
-      onClick={() => existsInContext && onClick()}
       key={displayCode}
     >
-      <div className='flex items-center gap-[0.5vw]'>
-        <div className='flex flex-col'>
-          <Text variant='body-2'>{displayName}</Text>
-          <Text variant='body-short' color='secondary'>{displayCode.replace(codePrefix, '')}</Text>
+      <div className={'flex w-full flex-col'}>
+        <div
+          className={twMerge(
+            'flex items-center gap-[0.5vw] rounded-lg border bg-[var(--g-color-base-background)] px-[.5vw] py-[1vh]',
+            isSelected
+              ? 'bg-unset border-[var(--brand-color)]'
+              : `${borderColor} ${bgColor}`
+          )}
+          style={{
+            backgroundColor: isSelected
+              ? hexWithOpacity(branding.brandColor, 0.1)
+              : 'unset'
+          }}
+          onClick={() => existsInContext && onClick()}
+        >
+          <div className='flex flex-col'>
+            <Text variant='body-2'>{displayName}</Text>
+            <Text variant='body-short' color='secondary'>
+              {displayCode.replace(codePrefix, '')}
+            </Text>
+          </div>
         </div>
+        {/* Render children (nested subOrgGrp) */}
+        {children && <div className='w-full'>{children}</div>}
       </div>
     </div>
   )
