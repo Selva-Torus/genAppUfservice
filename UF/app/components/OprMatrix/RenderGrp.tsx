@@ -112,15 +112,11 @@ const RenderGroup = ({
               isOpen ? 'rotate-[360deg]' : 'rotate-[270deg]'
             }`}
           >
-            <DownArrow fill={isDark ? "white" : "black"} />
+            <DownArrow fill={isDark ? 'white' : 'black'} />
           </span>
           <FaRegFolderOpen />
           <span className='text-xs'>
-            {displayName} -{' '}
-            <span
-            >
-              {displayCode.replace(codePrefix, '')}
-            </span>
+            {displayName} - <span>{displayCode.replace(codePrefix, '')}</span>
           </span>
         </div>
 
@@ -131,16 +127,18 @@ const RenderGroup = ({
           )}
         >
           {/* Three Dots Popover */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setIsPopoverOpen(prev => !prev)
-            }}
-            ref={popoverButtonElement}
-            className='flex rotate-90 items-center rounded p-[0.3vw] outline-none'
-          >
-            <BsThreeDotsVertical />
-          </button>
+          {contextKey !== 'org' && (
+            <button
+              onClick={e => {
+                e.stopPropagation()
+                setIsPopoverOpen(prev => !prev)
+              }}
+              ref={popoverButtonElement}
+              className='flex rotate-90 items-center rounded p-[0.3vw] outline-none'
+            >
+              <BsThreeDotsVertical />
+            </button>
+          )}
 
           <Popup
             anchorRef={popoverButtonElement}
@@ -163,7 +161,7 @@ const RenderGroup = ({
                 <PlusIcon
                   height='.8vw'
                   width='.8vw'
-                  fill={isDark ? "white" : "black"}
+                  fill={isDark ? 'white' : 'black'}
                 />
                 Add {resourceField}
               </div>
@@ -207,7 +205,7 @@ const RenderGroup = ({
                 setIsPopoverOpen(false)
               }}
               showCloseButton={false}
-              className='w-md'
+              className='w-[400px]'
             >
               <AddGroupLevelModal
                 close={() => {
@@ -220,26 +218,26 @@ const RenderGroup = ({
           </div>
 
           {/* Edit Modal */}
-           <div onClick={e => e.stopPropagation()}>
-          {editContentProps && (
-            <Modal
-              open={isEditModalOpen}
-              onClose={() => {
-                setIsEditModalOpen(false)
-                setIsPopoverOpen(false)
-              }}
-              showCloseButton={false}
-              className='w-md'
-            >
-              <AddGroupLevelModal
-                close={() => {
+          <div onClick={e => e.stopPropagation()}>
+            {editContentProps && (
+              <Modal
+                open={isEditModalOpen}
+                onClose={() => {
                   setIsEditModalOpen(false)
                   setIsPopoverOpen(false)
                 }}
-                {...editContentProps}
-              />
-            </Modal>
-          )}
+                showCloseButton={false}
+                className='w-[400px]'
+              >
+                <AddGroupLevelModal
+                  close={() => {
+                    setIsEditModalOpen(false)
+                    setIsPopoverOpen(false)
+                  }}
+                  {...editContentProps}
+                />
+              </Modal>
+            )}
           </div>
         </div>
       </div>

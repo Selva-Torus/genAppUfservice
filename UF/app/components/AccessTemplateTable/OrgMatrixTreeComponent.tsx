@@ -1,5 +1,5 @@
 import React, { memo, useContext, useMemo, useState } from 'react'
-import { DownArrow, SearchIcon, Security } from '../svgApplication'
+import { DownArrow, EditIcon, SearchIcon, Security } from '../svgApplication'
 import { SetupScreenContext, SetupScreenContextType } from '../setup'
 import { capitalize } from 'lodash'
 import SecurityTemplateSelection from './SecurityTemplateSelection'
@@ -11,19 +11,30 @@ import { Button } from '@/components/Button'
 import { TextInput } from '@/components/TextInput'
 import { twMerge } from 'tailwind-merge'
 import i18n from '../i18n'
+import clsx from 'clsx'
+import { ArrowBackward } from '@/app/utils/svgApplications'
 
-const OrgMatrixTreeComponent = () => {
+const OrgMatrixTreeComponent = ({
+  isView = false,
+  setIsView
+}: {
+  isView: boolean
+  setIsView: React.Dispatch<React.SetStateAction<boolean>>
+}) => {
   const [searchTerm, setSearchTerm] = useState('')
   const {
+    indexOfTemplateToBeUpdated,
     setIndexOfTemplateToBeUpdated,
     templateToBeUpdated,
-    setTemplateToBeUpdated
+    setTemplateToBeUpdated,
+    securityData
   } = useContext(SetupScreenContext) as SetupScreenContextType
   const fontSize = 1
   const { branding } = useGlobal()
   const { borderColor, isDark, bgColor } = useTheme()
   const { brandColor } = branding
   const keyset = i18n.keyset('language')
+  const [isEdit, setIsEdit] = useState(false)
 
   const SecurityTree = memo(({ organizationData }: any) => {
     return (
@@ -76,33 +87,83 @@ const OrgMatrixTreeComponent = () => {
       // Deep clone to avoid mutating original
       const newTemplate = JSON.parse(JSON.stringify(templateToBeUpdated))
 
+      // Helper function to process psGrp recursively
+      function processPsGrp(psGrp: any) {
+        psGrp.ps = psGrp.ps
+          .map((ps: any) => {
+            ps.roleGrp = ps.roleGrp
+              .map((roleGrp: any) => {
+                // Remove matching role
+                roleGrp.roles = roleGrp.roles.filter(
+                  (role: any) => role.roleId !== roleIdToRemove
+                )
+                return roleGrp.roles.length > 0 ? roleGrp : null
+              })
+              .filter(Boolean) // remove empty roleGrp
+            return ps.roleGrp.length > 0 ? ps : null
+          })
+          .filter(Boolean) // remove empty ps
+        return psGrp.ps.length > 0 ? psGrp : null
+      }
+
+      // Helper function to process subOrg recursively
+      function processSubOrg(subOrg: any): any {
+        // Process psGrp in subOrg
+        if (subOrg.psGrp && Array.isArray(subOrg.psGrp)) {
+          subOrg.psGrp = subOrg.psGrp
+            .map((psGrp: any) => processPsGrp(psGrp))
+            .filter(Boolean) // remove empty psGrp
+        }
+
+        // Process nested subOrgGrp recursively
+        if (subOrg.subOrgGrp && Array.isArray(subOrg.subOrgGrp)) {
+          subOrg.subOrgGrp = subOrg.subOrgGrp
+            .map((subOrgGrp: any) => processSubOrgGrp(subOrgGrp))
+            .filter(Boolean) // remove empty subOrgGrp
+        }
+
+        // Keep subOrg if it has psGrp or subOrgGrp
+        return (subOrg.psGrp && subOrg.psGrp.length > 0) ||
+          (subOrg.subOrgGrp && subOrg.subOrgGrp.length > 0)
+          ? subOrg
+          : null
+      }
+
+      // Helper function to process subOrgGrp recursively
+      function processSubOrgGrp(subOrgGrp: any): any {
+        if (subOrgGrp.subOrg && Array.isArray(subOrgGrp.subOrg)) {
+          subOrgGrp.subOrg = subOrgGrp.subOrg
+            .map((subOrg: any) => processSubOrg(subOrg))
+            .filter(Boolean) // remove empty subOrg
+        }
+
+        return subOrgGrp.subOrg && subOrgGrp.subOrg.length > 0
+          ? subOrgGrp
+          : null
+      }
+
+      // Main processing
       newTemplate.orgGrp = newTemplate.orgGrp
         .map((orgGrp: any) => {
           orgGrp.org = orgGrp.org
             .map((org: any) => {
+              // Process direct psGrp
               org.psGrp = org.psGrp
-                .map((psGrp: any) => {
-                  psGrp.ps = psGrp.ps
-                    .map((ps: any) => {
-                      ps.roleGrp = ps.roleGrp
-                        .map((roleGrp: any) => {
-                          // Remove matching role
-                          roleGrp.roles = roleGrp.roles.filter(
-                            (role: any) => role.roleId !== roleIdToRemove
-                          )
-                          return roleGrp.roles.length > 0 ? roleGrp : null
-                        })
-                        .filter(Boolean) // remove empty roleGrp
-
-                      return ps.roleGrp.length > 0 ? ps : null
-                    })
-                    .filter(Boolean) // remove empty ps
-
-                  return psGrp.ps.length > 0 ? psGrp : null
-                })
+                .map((psGrp: any) => processPsGrp(psGrp))
                 .filter(Boolean) // remove empty psGrp
 
-              return org.psGrp.length > 0 ? org : null
+              // Process subOrgGrp
+              if (org.subOrgGrp && Array.isArray(org.subOrgGrp)) {
+                org.subOrgGrp = org.subOrgGrp
+                  .map((subOrgGrp: any) => processSubOrgGrp(subOrgGrp))
+                  .filter(Boolean) // remove empty subOrgGrp
+              }
+
+              // Keep org if it has psGrp or subOrgGrp
+              return (org.psGrp && org.psGrp.length > 0) ||
+                (org.subOrgGrp && org.subOrgGrp.length > 0)
+                ? org
+                : null
             })
             .filter(Boolean) // remove empty org
 
@@ -121,14 +182,21 @@ const OrgMatrixTreeComponent = () => {
     return (
       <div className='flex w-full flex-1 flex-col gap-[0.83vh] '>
         <div
-          className={twMerge('bg-torus-bg-card group flex h-[5vh] w-full cursor-pointer items-center justify-between gap-2 rounded-[.4vw] border px-[0.78vw]', borderColor)}
+          className={twMerge(
+            'bg-torus-bg-card group flex h-[5vh] w-full cursor-pointer items-center justify-between gap-2 rounded-[.4vw] border px-[0.78vw]',
+            borderColor
+          )}
           onClick={() => keys && keys.length > 0 && setShow(!show)}
         >
-          <div className='text-torus-text flex items-center justify-start gap-2 truncate' title={name}>
+          <div
+            className='text-torus-text flex items-center justify-start gap-2 truncate'
+            title={name}
+          >
             {keys && keys.length > 0 ? (
               <span
-                className={`w-[0.52vw] transition-transform ease-in ${show ? '' : 'rotate-[-90deg]'
-                  }`}
+                className={`w-[0.52vw] transition-transform ease-in ${
+                  show ? '' : 'rotate-[-90deg]'
+                }`}
               >
                 <DownArrow
                   fill={isDark ? 'white' : 'black'}
@@ -143,13 +211,14 @@ const OrgMatrixTreeComponent = () => {
                 checked
                 style={{ accentColor: brandColor }}
                 onChange={handleChange}
+                disabled={isView}
               />
             )}
             {name}
           </div>
           <Text
             color='positive-heavy'
-            className='inline-block rounded-full border px-[0.3vw] py-[0.5vh] text-xs font-medium opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100 text-nowrap'
+            className='inline-block text-nowrap rounded-full border px-[0.3vw] py-[0.5vh] text-xs font-medium opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100'
           >
             {keyName}
           </Text>
@@ -177,6 +246,7 @@ const OrgMatrixTreeComponent = () => {
       ...prev,
       accessProfile: e.target.value
     }))
+    setIsEdit(false)
   }
   const accessPrivilegeData = ['Full', 'Limited']
 
@@ -190,21 +260,13 @@ const OrgMatrixTreeComponent = () => {
               color='secondary'
               className='flex items-center gap-2 text-nowrap'
             >
-              <Security fill={isDark ? 'white' : 'black'} /> {keyset('Access Template')}
+              <Security fill={isDark ? 'white' : 'black'} />{' '}
+              {keyset('Access Template')}
             </Text>
             <Text variant='header-2' color='primary'>
               {'>'}
             </Text>
-            <div className='w-[10vw]'>
-              <TextInput
-                size='s'
-                type='text'
-                onChange={handleInputChange}
-                value={templateToBeUpdated?.accessProfile}
-                readOnly={templateToBeUpdated?.['no.ofusers'] !== 0}
-                view='clear'
-              />
-            </div>
+            <Text variant='body-3'>{templateToBeUpdated?.accessProfile}</Text>
           </div>
 
           <div>
@@ -217,8 +279,8 @@ const OrgMatrixTreeComponent = () => {
                 templateToBeUpdated?.dap === 'f'
                   ? 'Full'
                   : templateToBeUpdated?.dap === 'l'
-                    ? 'Limited'
-                    : 'Select DAP'
+                  ? 'Limited'
+                  : 'Select DAP'
               }
               onChange={e =>
                 setTemplateToBeUpdated((prev: any) => ({
@@ -229,26 +291,56 @@ const OrgMatrixTreeComponent = () => {
               size='s'
               placeholder='Select DAP'
               className='w-[200px]'
+              disabled={isView}
             ></Select>
           </div>
         </div>
         <div className='flex items-center gap-2'>
-          <Button
+          <button
             onClick={() => {
               setTemplateToBeUpdated(null)
               setIndexOfTemplateToBeUpdated(null)
+              setIsView(false)
             }}
           >
-            ←
-          </Button>
-          <Text variant='header-2'>{templateToBeUpdated?.accessProfile}</Text>
+            <ArrowBackward fill={isDark ? 'white' : 'black'} />
+          </button>
+          <div className='flex w-full gap-2'>
+            {!isEdit ? (
+              <Text variant='header-1'>{templateToBeUpdated?.accessProfile}</Text>
+            ) : (
+              <input
+                type='text'
+                defaultValue={templateToBeUpdated?.accessProfile}
+                title={templateToBeUpdated?.accessProfile}
+                readOnly={templateToBeUpdated?.['no.ofusers'] !== 0}
+                className={twMerge('w-full truncate border-none text-xl outline-none py-0.5', bgColor)}
+                disabled={!isEdit}
+                onBlur={handleInputChange}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    handleInputChange(e as any)
+                  }
+                }}
+              />
+            )}
+            {!isEdit && (
+              <button
+                disabled={isView}
+                className='outline-none'
+                onClick={() => setIsEdit(true)}
+              >
+                <EditIcon height='.8vw' width='.8vw' />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       <hr className={twMerge('w-full border', borderColor)} />
 
       <div className='flex h-full w-full gap-4 '>
-        <div className='flex h-full flex-col gap-3 w-1/3'>
+        <div className='flex h-full w-1/3 flex-col gap-3'>
           <span className='flex flex-col'>
             <Text variant='header-1'>{keyset('Organization Matrix')}</Text>
             <Text variant='body-1' color='secondary'>
@@ -257,7 +349,10 @@ const OrgMatrixTreeComponent = () => {
           </span>
           <div
             style={{ fontSize: `${fontSize * 0.72}vw` }}
-            className={twMerge('flex w-full items-center gap-[.5vw] rounded-lg border px-[1vw] py-[1vh]', borderColor)}
+            className={twMerge(
+              'flex w-full items-center gap-[.5vw] rounded-lg border px-[1vw] py-[1vh]',
+              borderColor
+            )}
           >
             <span>
               <SearchIcon
@@ -274,7 +369,7 @@ const OrgMatrixTreeComponent = () => {
             />
           </div>
 
-          <div className='max-h-[55vh] xl:max-h-[58vh] overflow-y-auto scrollbar-hide'>
+          <div className='max-h-[55vh] overflow-y-auto scrollbar-hide xl:max-h-[58vh]'>
             <SecurityTree organizationData={templateToBeUpdated?.orgGrp} />
           </div>
         </div>
@@ -282,7 +377,7 @@ const OrgMatrixTreeComponent = () => {
         <hr className={twMerge('h-full border', borderColor)} />
 
         <div className='w-full overflow-x-auto'>
-          <SecurityTemplateSelection />
+          <SecurityTemplateSelection isView={isView} />
         </div>
       </div>
     </div>

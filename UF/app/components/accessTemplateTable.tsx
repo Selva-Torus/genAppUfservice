@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react'
 import { SetupScreenContext, SetupScreenContextType } from './setup'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
-import { EditIcon } from './svgApplication'
+import { EditIcon, Preview } from './svgApplication'
 import OrgMatrixTreeComponent from './AccessTemplateTable/OrgMatrixTreeComponent'
 import { Text } from '@/components/Text'
 import { useTheme } from '@/hooks/useTheme'
@@ -11,7 +11,13 @@ import i18n from './i18n'
 import { twMerge } from 'tailwind-merge'
 import { Button } from '@/components/Button'
 
-const AccessTemplateTable = ({ }) => {
+const AccessTemplateTable = ({
+  isView = false,
+  setIsView
+}: {
+  isView: boolean
+  setIsView: React.Dispatch<React.SetStateAction<boolean>>
+}) => {
   const toast = useInfoMsg()
   const {
     securityData,
@@ -26,7 +32,7 @@ const AccessTemplateTable = ({ }) => {
   const [currentPage, setCurrentPage] = useState(1)
   const accessTemplatePerPage = 10
   const { branding } = useGlobal()
-  const { borderColor , isDark , hoverBgColor } = useTheme()
+  const { borderColor, isDark, hoverBgColor } = useTheme()
   const { brandColor } = branding
   const keyset = i18n.keyset('language')
 
@@ -94,17 +100,23 @@ const AccessTemplateTable = ({ }) => {
   }
 
   if (templateToBeUpdated) {
-    return <OrgMatrixTreeComponent />
+    return <OrgMatrixTreeComponent isView={isView} setIsView={setIsView} />
   }
 
   return (
     <div className={`g-root h-full w-full`}>
-      <Text variant='body-2' className='mb-4 text-xl font-bold'>{keyset('Access Template')}</Text>
+      <Text variant='body-2' className='mb-4 text-xl font-bold'>
+        {keyset('Access Template')}
+      </Text>
       <div className='h-[73vh] w-full overflow-x-auto'>
         <table className='min-w-full rounded text-left'>
-          <thead className={twMerge('rounded-full',isDark ?"bg-gray-700" : "bg-gray-100")}>
-            <tr
-            >
+          <thead
+            className={twMerge(
+              'rounded-full',
+              isDark ? 'bg-gray-700' : 'bg-gray-100'
+            )}
+          >
+            <tr>
               <th className='px-1 py-4'>
                 <input
                   type='checkbox'
@@ -121,16 +133,20 @@ const AccessTemplateTable = ({ }) => {
                   )}
                 />
               </th>
-              <th className='w-[250px] px-4 py-4'>{keyset('Access Template')}</th>
-              <th className='w-[200px] px-4 py-4'>{keyset('Data Access Privilege')}</th>
+              <th className='w-[250px] px-4 py-4'>
+                {keyset('Access Template')}
+              </th>
+              <th className='w-[200px] px-4 py-4'>
+                {keyset('Data Access Privilege')}
+              </th>
               <th className='w-[220px] px-2 py-4'>{keyset('No.ofusers')}</th>
               <th className='w-[220px] px-4 py-4'>{keyset('Created On')}</th>
-              <th className='w-[250px] lg:w-[600px] px-4 py-4'></th>
+              <th className='w-[250px] px-4 py-4 lg:w-[600px]'></th>
             </tr>
           </thead>
           <tbody>
             {currentGroups.map((template: any, index: number) => (
-              <tr key={index} className={twMerge('' , hoverBgColor)}>
+              <tr key={index} className={twMerge('', hoverBgColor)}>
                 <td className='w-8 px-1 py-1'>
                   <input
                     type='checkbox'
@@ -146,51 +162,73 @@ const AccessTemplateTable = ({ }) => {
                 </td>
                 <td className='w-[250px] px-1  py-1'>
                   <div
-                    className={twMerge(`ml-3 w-[12.29vw] cursor-default truncate rounded border p-3` , borderColor)}
+                    className={twMerge(
+                      `ml-3 w-[12.29vw] cursor-default truncate rounded border p-3`,
+                      borderColor
+                    )}
                   >
                     {template?.accessProfile}
                   </div>
                 </td>
                 <td className='w-[200px] px-1 py-1'>
                   <div
-                    className={twMerge(`ml-3 w-[12.29vw] cursor-default truncate rounded border p-3` , borderColor)}
+                    className={twMerge(
+                      `ml-3 w-[12.29vw] cursor-default truncate rounded border p-3`,
+                      borderColor
+                    )}
                   >
                     {template.dap === 'f'
                       ? 'Full'
                       : template.dap === 'l'
-                        ? 'Limited'
-                        : 'Select DAP'}
+                      ? 'Limited'
+                      : 'Select DAP'}
                   </div>
                 </td>
                 <td className='px-1 py-1 text-center'>
                   {template['no.ofusers']}
                 </td>
                 <td className='w-[220px] px-1 py-1'>{template.createdOn}</td>
-                <td className='flex w-[250px] xl:w-[600px] items-center justify-end px-1 py-1'>
-                  <Button
-                    onClick={() => {
-                      if (template?.['no.ofusers'] !== 0) {
-                        toast(
-                          "This Template is Assigned to the User, So it can't be edited.",
-                          'warning'
-                        )
-                        return
-                      }
-                      setTemplateToBeUpdated(template)
-                      setIndexOfTemplateToBeUpdated(
-                        securityData.indexOf(template)
-                      )
-                    }}
-                  >
-                    <span className='flex items-center gap-1'>
-                    <EditIcon
-                      fill={isDark ? "white" : "black"}
-                      height='0.8vw'
-                      width='0.8vw'
-                    />
-                    {keyset('edit')}
-                    </span>
-                  </Button>
+                <td className='flex w-[250px] items-center justify-end px-1 py-1 xl:w-[600px]'>
+                  <div className='flex gap-2'>
+                    <Button
+                      onClick={() => {
+                        setTemplateToBeUpdated(template)
+                        setIndexOfTemplateToBeUpdated(template.originalIndex)
+                        setIsView(true)
+                      }}
+                    >
+                      <span className='flex items-center gap-1'>
+                        <Preview
+                          height='30px'
+                          width='30px'
+                          fill={isDark ? 'white' : 'black'}
+                        />
+                        {keyset('view')}
+                      </span>
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        if (template?.['no.ofusers'] !== 0) {
+                          toast(
+                            "This Template is Assigned to the User, So it can't be edited.",
+                            'warning'
+                          )
+                          return
+                        }
+                        setTemplateToBeUpdated(template)
+                        setIndexOfTemplateToBeUpdated(template.originalIndex)
+                      }}
+                    >
+                      <span className='flex items-center gap-1'>
+                        <EditIcon
+                          fill={isDark ? 'white' : 'black'}
+                          height='0.8vw'
+                          width='0.8vw'
+                        />
+                        {keyset('edit')}
+                      </span>
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}
@@ -202,7 +240,7 @@ const AccessTemplateTable = ({ }) => {
         page={currentPage}
         pageSize={accessTemplatePerPage}
         total={securityData.length}
-        onUpdate={(data) => setCurrentPage(data.page)}
+        onUpdate={data => setCurrentPage(data.page)}
       />
     </div>
   )

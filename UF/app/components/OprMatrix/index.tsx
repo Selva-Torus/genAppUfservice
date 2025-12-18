@@ -7,6 +7,7 @@ import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import { v4 as uuidv4 } from 'uuid'
 import RenderGroup from './RenderGrp'
 import RenderChild from './RenderChild'
+import RenderSubOrg from './SubOrg'
 import { LuBuilding2 } from 'react-icons/lu'
 import { BiPackage } from 'react-icons/bi'
 import { RiUserShared2Fill } from 'react-icons/ri'
@@ -66,7 +67,10 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
   const [open, setOpen] = useState(false)
   return (
     <div
-      className={twMerge('flex w-full items-center justify-between rounded border px-[.5vw] py-[1vh]' , borderColor)}
+      className={twMerge(
+        'flex w-full items-center justify-between rounded border px-[.5vw] py-[1vh]',
+        borderColor
+      )}
     >
       <Text variant='body-1' className='font-semibold'>
         {title}
@@ -91,19 +95,25 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
           <div className='flex gap-[.5vw]'>
             {showAddButton && addContentProps && (
               <>
-                <Button
-                  onClick={() => setOpen(true)}
-                  disabled={isAddDisabled}
-                  className='flex items-center'
+                {title !== 'Organization' && (
+                  <Button
+                    onClick={() => setOpen(true)}
+                    disabled={isAddDisabled}
+                    className='flex items-center'
+                  >
+                    <PlusIcon
+                      height='.8vw'
+                      width='.8vw'
+                      fill={isLightColor(brandColor)}
+                    />
+                  </Button>
+                )}
+                <Modal
+                  showCloseButton={false}
+                  className='w-[400px]'
+                  onClose={() => setOpen(false)}
+                  open={open}
                 >
-                  <PlusIcon
-                    height='.8vw'
-                    width='.8vw'
-                    fill={isLightColor(brandColor)}
-                  />
-                </Button>
-
-                <Modal showCloseButton={false} className='w-md' onClose={() => setOpen(false)} open={open}>
                   <AddGroupLevelModal
                     close={() => setOpen(false)}
                     {...addContentProps}
@@ -214,18 +224,22 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
     )
   }
 
-  // ============= SELECTION HANDLERS =============
+  // ============= SELECTION HANDLERS WITH AUTO-CASCADE =============
   const handleOrgClick = (obj: Record<string, string>) => {
     handleResetSearchFilters()
     setSelectedOrg(obj)
+
+    // Auto-select first PS group and PS
     const requiredPsGroup = getResource(`${obj['path']}.0`, {})
     if (requiredPsGroup && typeof requiredPsGroup?.['ps']?.[0] == 'object') {
+      const firstPs = requiredPsGroup?.['ps'][0]
       handlePsClick({
         psGrpName: requiredPsGroup.psGrpName,
         psGrpCode: requiredPsGroup.psGrpCode,
-        psName: requiredPsGroup?.['ps'][0]['psName'],
-        psCode: requiredPsGroup?.['ps'][0]['psCode'],
-        path: `${obj['path']}.0.ps.0.roleGrp`
+        psName: firstPs.psName,
+        psCode: firstPs.psCode,
+        path: `${obj['path']}.0.ps.0.roleGrp`,
+        id: firstPs.psId
       })
     } else {
       setSelectedPs({})
@@ -236,15 +250,19 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
   const handlePsClick = (obj: Record<string, string>) => {
     handleResetSearchFilters()
     setSelectedPs(obj)
+
+    // Auto-select first role group and role
     const requiredRoleGrp = getResource(`${obj['path']}.0`, {})
     if (requiredRoleGrp && typeof requiredRoleGrp?.['roles']?.[0] == 'object') {
+      const firstRole = requiredRoleGrp?.['roles'][0]
       handleRoleClick({
         roleGrpName: requiredRoleGrp.roleGrpName,
         roleGrpCode: requiredRoleGrp.roleGrpCode,
-        roleName: requiredRoleGrp?.['roles'][0]['roleName'],
-        roleCode: requiredRoleGrp?.['roles'][0]['roleCode'],
+        roleName: firstRole.roleName,
+        roleCode: firstRole.roleCode,
         roleCount: requiredRoleGrp?.['roles']?.length ?? 0,
-        path: `${obj['path']}.0.roles.0`
+        path: `${obj['path']}.0.roles.0`,
+        id: firstRole.roleId
       })
     } else {
       setSelectedRole({})
@@ -272,11 +290,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
   }, [selectedPs, refetchGroups])
 
   // ============= ADD CONTENT =============
-  const addContent = (
-    path: string,
-    value: { code: string; name: string },
-    parentCode: string
-  ) => {
+  const addContent = (path: string, value: { code: string; name: string }) => {
     const depthOfPath = path.split('.').length
     if (!value.code || !value.name) {
       toast('Please fill all the Data', 'warning')
@@ -288,14 +302,11 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
 
     switch (depthOfPath) {
       case 1:
-        valueToBeAdded['orgGrpCode'] = `${parentCode}${value.code}`
+        valueToBeAdded['orgGrpCode'] = `${value.code}`
         valueToBeAdded['orgGrpName'] = value.name
         valueToBeAdded['orgGrpId'] = uuidv4()
         valueToBeAdded['org'] = []
-        const isExist = checkCodeExist(
-          copyOfOrgData,
-          `${parentCode}${value.code}`
-        )
+        const isExist = checkCodeExist(copyOfOrgData, `${value.code}`)
         if (isExist) {
           toast('code already exists', 'warning')
           return
@@ -304,35 +315,149 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
           return
         }
       case 2:
-        valueToBeAdded['orgCode'] = `${parentCode}${value.code}`
+        valueToBeAdded['orgCode'] = `${value.code}`
         valueToBeAdded['orgName'] = value.name
         valueToBeAdded['orgId'] = uuidv4()
+        valueToBeAdded['subOrgGrp'] = []
         valueToBeAdded['psGrp'] = []
         break
+      case 3:
+        valueToBeAdded['subOrgGrpCode'] = `${value.code}`
+        valueToBeAdded['subOrgGrpName'] = value.name
+        valueToBeAdded['subOrgGrpId'] = uuidv4()
+        valueToBeAdded['subOrg'] = []
+        break
       case 4:
-        valueToBeAdded['psGrpCode'] = `${parentCode}${value.code}`
-        valueToBeAdded['psGrpName'] = value.name
-        valueToBeAdded['psGrpId'] = uuidv4()
-        valueToBeAdded['ps'] = []
+        // Check if path contains "subOrgGrp" - then it's subOrg, otherwise psGrp
+        if (path.includes('subOrgGrp')) {
+          valueToBeAdded['subOrgCode'] = `${value.code}`
+          valueToBeAdded['subOrgName'] = value.name
+          valueToBeAdded['subOrgId'] = uuidv4()
+          valueToBeAdded['subOrgGrp'] = []
+          valueToBeAdded['psGrp'] = []
+        } else {
+          valueToBeAdded['psGrpCode'] = `${value.code}`
+          valueToBeAdded['psGrpName'] = value.name
+          valueToBeAdded['psGrpId'] = uuidv4()
+          valueToBeAdded['ps'] = []
+        }
+        break
+      case 5:
+        valueToBeAdded['subOrgGrpCode'] = `${value.code}`
+        valueToBeAdded['subOrgGrpName'] = value.name
+        valueToBeAdded['subOrgGrpId'] = uuidv4()
+        valueToBeAdded['subOrg'] = []
         break
       case 6:
-        valueToBeAdded['psCode'] = `${parentCode}${value.code}`
-        valueToBeAdded['psName'] = value.name
-        valueToBeAdded['psId'] = uuidv4()
-        valueToBeAdded['roleGrp'] = []
+        if (path.includes('subOrgGrp') && path.includes('subOrg')) {
+          valueToBeAdded['subOrgCode'] = `${value.code}`
+          valueToBeAdded['subOrgName'] = value.name
+          valueToBeAdded['subOrgId'] = uuidv4()
+          valueToBeAdded['subOrgGrp'] = []
+          valueToBeAdded['psGrp'] = []
+        } else if (path.includes('subOrg') && !path.includes('subOrgGrp.')) {
+          valueToBeAdded['psGrpCode'] = `${value.code}`
+          valueToBeAdded['psGrpName'] = value.name
+          valueToBeAdded['psGrpId'] = uuidv4()
+          valueToBeAdded['ps'] = []
+        } else {
+          valueToBeAdded['psCode'] = `${value.code}`
+          valueToBeAdded['psName'] = value.name
+          valueToBeAdded['psId'] = uuidv4()
+          valueToBeAdded['roleGrp'] = []
+        }
+        break
+      case 7:
+        valueToBeAdded['subOrgGrpCode'] = `${value.code}`
+        valueToBeAdded['subOrgGrpName'] = value.name
+        valueToBeAdded['subOrgGrpId'] = uuidv4()
+        valueToBeAdded['subOrg'] = []
         break
       case 8:
-        valueToBeAdded['roleGrpCode'] = `${parentCode}${value.code}`
-        valueToBeAdded['roleGrpName'] = value.name
-        valueToBeAdded['roleGrpId'] = uuidv4()
-        valueToBeAdded['roles'] = []
+        if (path.includes('subOrg') && path.includes('psGrp')) {
+          valueToBeAdded['psGrpCode'] = `${value.code}`
+          valueToBeAdded['psGrpName'] = value.name
+          valueToBeAdded['psGrpId'] = uuidv4()
+          valueToBeAdded['ps'] = []
+        } else if (path.includes('roleGrp')) {
+          valueToBeAdded['roleGrpCode'] = `${value.code}`
+          valueToBeAdded['roleGrpName'] = value.name
+          valueToBeAdded['roleGrpId'] = uuidv4()
+          valueToBeAdded['roles'] = []
+        } else {
+          valueToBeAdded['subOrgCode'] = `${value.code}`
+          valueToBeAdded['subOrgName'] = value.name
+          valueToBeAdded['subOrgId'] = uuidv4()
+          valueToBeAdded['subOrgGrp'] = []
+          valueToBeAdded['psGrp'] = []
+        }
+        break
+      case 9:
+        valueToBeAdded['subOrgGrpCode'] = `${value.code}`
+        valueToBeAdded['subOrgGrpName'] = value.name
+        valueToBeAdded['subOrgGrpId'] = uuidv4()
+        valueToBeAdded['subOrg'] = []
         break
       case 10:
-        valueToBeAdded['roleCode'] = `${parentCode}${value.code}`
-        valueToBeAdded['roleName'] = value.name
-        valueToBeAdded['roleId'] = uuidv4()
+        if (
+          path.includes('subOrg') &&
+          path.includes('psGrp') &&
+          path.includes('ps.')
+        ) {
+          valueToBeAdded['roleGrpCode'] = `${value.code}`
+          valueToBeAdded['roleGrpName'] = value.name
+          valueToBeAdded['roleGrpId'] = uuidv4()
+          valueToBeAdded['roles'] = []
+        } else if (path.includes('ps.') && !path.includes('subOrg')) {
+          valueToBeAdded['roleCode'] = `${value.code}`
+          valueToBeAdded['roleName'] = value.name
+          valueToBeAdded['roleId'] = uuidv4()
+        } else if (path.includes('psGrp') && path.includes('ps')) {
+          valueToBeAdded['psCode'] = `${value.code}`
+          valueToBeAdded['psName'] = value.name
+          valueToBeAdded['psId'] = uuidv4()
+          valueToBeAdded['roleGrp'] = []
+        } else {
+          valueToBeAdded['subOrgCode'] = `${value.code}`
+          valueToBeAdded['subOrgName'] = value.name
+          valueToBeAdded['subOrgId'] = uuidv4()
+          valueToBeAdded['subOrgGrp'] = []
+          valueToBeAdded['psGrp'] = []
+        }
         break
       default:
+        // For deeper nesting, determine by path content
+        if (path.endsWith('subOrg')) {
+          valueToBeAdded['subOrgCode'] = `${value.code}`
+          valueToBeAdded['subOrgName'] = value.name
+          valueToBeAdded['subOrgId'] = uuidv4()
+          valueToBeAdded['subOrgGrp'] = []
+          valueToBeAdded['psGrp'] = []
+        } else if (path.endsWith('subOrgGrp')) {
+          valueToBeAdded['subOrgGrpCode'] = `${value.code}`
+          valueToBeAdded['subOrgGrpName'] = value.name
+          valueToBeAdded['subOrgGrpId'] = uuidv4()
+          valueToBeAdded['subOrg'] = []
+        } else if (path.endsWith('psGrp')) {
+          valueToBeAdded['psGrpCode'] = `${value.code}`
+          valueToBeAdded['psGrpName'] = value.name
+          valueToBeAdded['psGrpId'] = uuidv4()
+          valueToBeAdded['ps'] = []
+        } else if (path.endsWith('ps')) {
+          valueToBeAdded['psCode'] = `${value.code}`
+          valueToBeAdded['psName'] = value.name
+          valueToBeAdded['psId'] = uuidv4()
+          valueToBeAdded['roleGrp'] = []
+        } else if (path.endsWith('roleGrp')) {
+          valueToBeAdded['roleGrpCode'] = `${value.code}`
+          valueToBeAdded['roleGrpName'] = value.name
+          valueToBeAdded['roleGrpId'] = uuidv4()
+          valueToBeAdded['roles'] = []
+        } else if (path.endsWith('roles')) {
+          valueToBeAdded['roleCode'] = `${value.code}`
+          valueToBeAdded['roleName'] = value.name
+          valueToBeAdded['roleId'] = uuidv4()
+        }
         break
     }
 
@@ -814,65 +939,68 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
       <div className='flex h-full w-full flex-col gap-[2vh]'>
         <div className='flex h-[20vh] w-full items-center justify-center rounded-lg'>
           {blocks.map((block, idx) => (
-                       <div key={idx} className='flex items-center '>
-                         {/* Circle */}
-                         <div className='flex w-[8vw] flex-col items-center gap-[0.5vh]'>
-                           <div
-                             style={{
-                               backgroundColor: hexWithOpacity(brandColor, 0.8)
-                             }}
-                             className={clsx(
-                               `flex h-[2.5vw] w-[2.5vw] items-center justify-center rounded-full shadow-sm transition-all duration-300 ease-in-out`,
-                               {
-                                 'h-[4vw] w-[4vw]': !block?.group || !block?.title
-                               }
-                             )}
-                           >
-                             <block.icon
-                               className={clsx('h-[0.7vw] w-[0.7vw] transition-all duration-300 ease-in-out', {
-                                 'h-[1.1vw] w-[1.1vw]': !block?.group || !block?.title
-                               })}
-                               style={{
-                                 color: isLightColor(brandColor)
-                               }}
-                             />
-                           </div>
-       
-                           {/* Texts */}
-                           <div className='flex w-full flex-col items-center'>
-                             <Text
-                               variant='body-1'
-                               className={`w-full truncate text-nowrap text-center`}
-                             >
-                               {block?.group}
-                             </Text>
-                             <Text
-                               variant='body-2'
-                               className='w-full truncate text-nowrap text-center font-semibold'
-                             >
-                               {block?.title}
-                             </Text>
-                             <Text
-                               variant='body-1'
-                               className='w-full truncate text-nowrap text-center'
-                               color='secondary'
-                             >
-                               {block.subtitle}
-                             </Text>
-                           </div>
-                         </div>
-       
-                         {/* Arrow */}
-                         {idx < blocks.length - 1 && (
-                           <div className='mx-4 text-lg text-gray-400'>→</div>
-                         )}
-                       </div>
-                     ))}
+            <div key={idx} className='flex items-center '>
+              {/* Circle */}
+              <div className='flex w-[8vw] flex-col items-center gap-[0.5vh]'>
+                <div
+                  style={{
+                    backgroundColor: hexWithOpacity(brandColor, 0.8)
+                  }}
+                  className={clsx(
+                    `flex h-[2.5vw] w-[2.5vw] items-center justify-center rounded-full shadow-sm transition-all duration-300 ease-in-out`,
+                    {
+                      'h-[4vw] w-[4vw]': !block?.group || !block?.title
+                    }
+                  )}
+                >
+                  <block.icon
+                    className={clsx(
+                      'h-[0.7vw] w-[0.7vw] transition-all duration-300 ease-in-out',
+                      {
+                        'h-[1.1vw] w-[1.1vw]': !block?.group || !block?.title
+                      }
+                    )}
+                    style={{
+                      color: isLightColor(brandColor)
+                    }}
+                  />
+                </div>
+
+                {/* Texts */}
+                <div className='flex w-full flex-col items-center'>
+                  <Text
+                    variant='body-1'
+                    className={`w-full truncate text-nowrap text-center`}
+                  >
+                    {block?.group}
+                  </Text>
+                  <Text
+                    variant='body-2'
+                    className='w-full truncate text-nowrap text-center font-semibold'
+                  >
+                    {block?.title}
+                  </Text>
+                  <Text
+                    variant='body-1'
+                    className='w-full truncate text-nowrap text-center'
+                    color='secondary'
+                  >
+                    {block.subtitle}
+                  </Text>
+                </div>
+              </div>
+
+              {/* Arrow */}
+              {idx < blocks.length - 1 && (
+                <div className='mx-4 text-lg text-gray-400'>→</div>
+              )}
+            </div>
+          ))}
         </div>
         <div className='flex w-full items-center gap-[2vw]'>
           {/* ============= ORGANIZATION COLUMN ============= */}
           <div
-            className={twMerge('h-[66vh] w-1/3 rounded-lg border' , borderColor)}
+            className={twMerge('h-[66vh] w-1/3 rounded-lg border', borderColor)}
           >
             <ColumnHeader
               title={keyset('Organization')}
@@ -888,8 +1016,9 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                 addFunction: addContent,
                 parentCode: '',
                 modalTitle: keyset('Add Organization Group'),
-                modalSubText:
-                  keyset('Create a new organization group to organize your organizations.'),
+                modalSubText: keyset(
+                  'Create a new organization group to organize your organizations.'
+                ),
                 resourceField: keyset('organization group')
               }}
             />
@@ -922,8 +1051,9 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                         addFunction: addContent,
                         parentCode: `${orgGrp.orgGrpCode}-`,
                         modalTitle: keyset('Add Organization'),
-                        modalSubText:
-                          keyset('Create a new organization in this group.'),
+                        modalSubText: keyset(
+                          'Create a new organization in this group.'
+                        ),
                         resourceField: 'organization'
                       }}
                       editContentProps={{
@@ -962,7 +1092,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                           displayName={org.orgName}
                           displayCode={org.orgCode}
                           codePrefix={`${orgGrp.orgGrpCode}-`}
-                          isSelected={selectedOrg.orgCode === org.orgCode}
+                          isSelected={selectedOrg.id === org.orgId}
                           existsInContext={true}
                           onClick={() =>
                             handleOrgClick({
@@ -970,7 +1100,8 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                               orgGrpName: orgGrp.orgGrpName,
                               orgName: org.orgName,
                               orgCode: org.orgCode,
-                              path: `${orgGrp?.originalIndex}.org.${org?.originalIndex}.psGrp`
+                              path: `${orgGrp?.originalIndex}.org.${org?.originalIndex}.psGrp`,
+                              id: org.orgId
                             })
                           }
                           onDelete={
@@ -990,6 +1121,16 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                                   )
                                 }
                           }
+                          addContentProps={{
+                            path: `${orgGrp?.originalIndex}.org.${org?.originalIndex}.subOrgGrp`,
+                            addFunction: addContent,
+                            parentCode: `${org.orgCode}-`,
+                            modalTitle: keyset('Add Sub Organization Group'),
+                            modalSubText: keyset(
+                              'Create a new sub organization group.'
+                            ),
+                            resourceField: 'sub organization group'
+                          }}
                           editContentProps={{
                             path: `${orgGrp?.originalIndex}.org.${org?.originalIndex}`,
                             addFunction: editContent,
@@ -1004,7 +1145,30 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                           }}
                           resourceField='org'
                           key={org.orgId}
-                        />
+                        >
+                          {/* Render SubOrgGrp */}
+                          {org?.subOrgGrp?.map(
+                            (subOrgGrp: any, subOrgGrpIndex: number) => (
+                              <RenderSubOrg
+                                key={subOrgGrp.subOrgGrpId}
+                                subOrgGrp={subOrgGrp}
+                                subOrgGrpIndex={subOrgGrpIndex}
+                                parentPath={`${orgGrp?.originalIndex}.org.${org?.originalIndex}.subOrgGrp`}
+                                parentCode={org.orgCode}
+                                assignedOPRList={assignedOPRList}
+                                deleteResource={deleteResource}
+                                handleOrgClick={handleOrgClick}
+                                editContent={editContent}
+                                addContent={addContent}
+                                isSearchOpen={isSearchOpen}
+                                searchTerm={searchTerm}
+                                orgGrpCode={orgGrp.orgGrpCode}
+                                orgGrpName={orgGrp.orgGrpName}
+                                selectedOrg={selectedOrg}
+                              />
+                            )
+                          )}
+                        </RenderChild>
                       ))}
                     </RenderGroup>
                   </React.Fragment>
@@ -1014,7 +1178,10 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
 
           {/* ============= PRODUCTS/SERVICES COLUMN ============= */}
           <div
-            className={twMerge('flex-flex-col h-[66vh] w-1/3 rounded-lg border' , borderColor)}
+            className={twMerge(
+              'flex-flex-col h-[66vh] w-1/3 rounded-lg border',
+              borderColor
+            )}
           >
             <ColumnHeader
               title={keyset('Products/Services')}
@@ -1031,8 +1198,9 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                 addFunction: addContent,
                 parentCode: `${selectedOrg?.orgCode}-`,
                 modalTitle: keyset('Add Product Group'),
-                modalSubText:
-                  keyset('Create a new product group to organize your products.'),
+                modalSubText: keyset(
+                  'Create a new product group to organize your products.'
+                ),
                 resourceField: 'product group'
               }}
             />
@@ -1079,7 +1247,9 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                       addFunction: addContent,
                       parentCode: `${psg.psGrpCode}-`,
                       modalTitle: keyset('Add Product'),
-                      modalSubText: keyset('Create a new product in this group.'),
+                      modalSubText: keyset(
+                        'Create a new product in this group.'
+                      ),
                       resourceField: 'product'
                     }}
                     editContentProps={{
@@ -1116,14 +1286,15 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                             displayName={ps.psName}
                             displayCode={ps.psCode}
                             codePrefix={`${psg.psGrpCode}-`}
-                            isSelected={selectedPs.psCode === ps.psCode}
+                            isSelected={selectedPs.id === ps.psId}
                             onClick={() =>
                               handlePsClick({
                                 psGrpCode: psg.psGrpCode,
                                 psGrpName: psg.psGrpName,
                                 psCode: ps.psCode,
                                 psName: ps.psName,
-                                path: `${selectedOrg.path}.${psg?.originalIndex}.ps.${ps?.originalIndex}.roleGrp`
+                                path: `${selectedOrg.path}.${psg?.originalIndex}.ps.${ps?.originalIndex}.roleGrp`,
+                                id: ps.psId
                               })
                             }
                             existsInContext={isExist}
@@ -1174,7 +1345,10 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
 
           {/* ============= ROLES COLUMN ============= */}
           <div
-            className={twMerge('flex-flex-col h-[66vh] w-1/3 rounded-lg border' , borderColor)}
+            className={twMerge(
+              'flex-flex-col h-[66vh] w-1/3 rounded-lg border',
+              borderColor
+            )}
           >
             <ColumnHeader
               title={keyset('Roles')}
@@ -1191,7 +1365,9 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                 addFunction: addContent,
                 parentCode: `${selectedPs.psCode}-`,
                 modalTitle: keyset('Add Role Group'),
-                modalSubText: keyset('Create a new role group to organize your roles.'),
+                modalSubText: keyset(
+                  'Create a new role group to organize your roles.'
+                ),
                 resourceField: 'role group'
               }}
             />
@@ -1270,7 +1446,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                           displayName={role.roleName}
                           displayCode={role.roleCode}
                           codePrefix={`${roleGrp.roleGrpCode}-`}
-                          isSelected={selectedRole.roleCode === role.roleCode}
+                          isSelected={selectedRole.id === role.roleId}
                           onClick={() =>
                             handleRoleClick({
                               roleGrpCode: roleGrp.roleGrpCode,
@@ -1278,7 +1454,8 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                               roleCode: role.roleCode,
                               roleName: role.roleName,
                               roleCount: roleGrp.roles?.length ?? 0,
-                              path: `${selectedPs.path}.${roleGrp?.originalIndex}.roles.${role?.originalIndex}`
+                              path: `${selectedPs.path}.${roleGrp?.originalIndex}.roles.${role?.originalIndex}`,
+                              id: role.roleId
                             })
                           }
                           existsInContext={isExist}

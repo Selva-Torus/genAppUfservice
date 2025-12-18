@@ -22,7 +22,9 @@ const RenderChild = ({
   onAddToContext,
   onDelete,
   resourceField,
-  editContentProps
+  editContentProps,
+  addContentProps,
+  children
 }: {
   item: any
   displayName: string
@@ -35,12 +37,15 @@ const RenderChild = ({
   onDelete: (() => void) | null
   resourceField: string
   editContentProps: any
+  addContentProps?: any
+  children?: React.ReactNode
 }) => {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const popoverButtonElement = useRef(null)
   const { branding } = useGlobal()
-  const { isDark ,  borderColor } = useTheme()
+  const { isDark, borderColor, bgColor } = useTheme()
   const { brandColor } = branding
 
   const handleDragStartOfOPRNode = (e: React.DragEvent<HTMLDivElement>) => {
@@ -51,112 +56,170 @@ const RenderChild = ({
 
   return (
     <div
-      draggable={true}
-      onDragStart={handleDragStartOfOPRNode}
-      onDragOver={e => e.preventDefault()}
-      style={{
-        fontSize: `0.7vw`
-      }}
       className={twMerge(
-        'group group flex w-full items-center justify-between rounded-lg border bg-[var(--g-color-base-background)] px-[.5vw] py-[1vh] font-semibold hover:border-[var(--brand-color)] hover:shadow',
-        !existsInContext ? 'pr-[0.8vw]' : '',
-        isSelected ? 'bg-unset border-[var(--brand-color)]' : borderColor
+        'flex w-full flex-col gap-[1vh] rounded-md p-2',
+        bgColor
       )}
-      onClick={() => existsInContext && onClick()}
-      key={displayCode}
     >
-      <div className='flex items-center gap-[0.5vw]'>
-        <span>
-          <SixDotsSvg fill={isDark ? 'white' : 'black'} />
-        </span>
-        <div className='flex flex-col'>
-          <Text variant='body-2'>{displayName}</Text>
-          <Text color='secondary'>{displayCode.replace(codePrefix, '')}</Text>
-        </div>
-      </div>
-      {!existsInContext && onAddToContext ? (
-        <Button onClick={onAddToContext} view='outlined-success'>
-          <div className='flex items-center gap-2'>
-            <PlusIcon
-              fill={isLightColor(brandColor)}
-              height='.8vw'
-              width='.8vw'
-            />
-            Add
+      <div
+        draggable={
+          resourceField !== 'org' && resourceField !== 'subOrg' && true
+        }
+        onDragStart={handleDragStartOfOPRNode}
+        onDragOver={e => e.preventDefault()}
+        style={{
+          fontSize: `0.7vw`
+        }}
+        className={twMerge(
+          'group group flex w-full items-center justify-between rounded-lg border bg-[var(--g-color-base-background)] px-[.5vw] py-[1vh] font-semibold hover:border-[var(--brand-color)] hover:shadow',
+          !existsInContext ? 'pr-[0.8vw]' : '',
+          isSelected ? 'bg-unset border-[var(--brand-color)]' : borderColor
+        )}
+        onClick={() => existsInContext && onClick()}
+        key={displayCode}
+      >
+        <div className='flex items-center gap-[0.5vw]'>
+          {resourceField !== 'org' && resourceField !== 'subOrg' && (
+            <span>
+              <SixDotsSvg fill={isDark ? 'white' : 'black'} />
+            </span>
+          )}
+          <div className='flex flex-col'>
+            <Text variant='body-2'>{displayName}</Text>
+            <Text color='secondary'>{displayCode.replace(codePrefix, '')}</Text>
           </div>
-        </Button>
-      ) : (
-        <div className={'opacity-0 transition-opacity group-hover:opacity-100'}>
-          <Button
-            onClick={() => setIsPopoverOpen(prev => !prev)}
-            ref={popoverButtonElement}
-            className='flex rotate-90 items-center rounded p-[0.3vw] outline-none'
-          >
-            <BsThreeDotsVertical />
+        </div>
+        {!existsInContext && onAddToContext ? (
+          <Button onClick={onAddToContext} view='outlined-success'>
+            <div className='flex items-center gap-2'>
+              <PlusIcon
+                fill={isLightColor(brandColor)}
+                height='.8vw'
+                width='.8vw'
+              />
+              Add
+            </div>
           </Button>
-          <Popup
-            anchorRef={popoverButtonElement}
-            open={isPopoverOpen}
-            onClose={() => setIsPopoverOpen(false)}
-            className='w-[9vw]'
-            placement='left'
+        ) : (
+          <div
+            className={'opacity-0 transition-opacity group-hover:opacity-100'}
           >
-            <div className='flex flex-col gap-[0.58vh] px-[0.46vw] py-[0.58vh]'>
-              <div
-                className='hover:bg-torus-bg-hover flex cursor-pointer items-center gap-[0.5vw] rounded p-[0.29vw] leading-[2.22vh] outline-none'
-                onClick={e => {
-                  e.stopPropagation()
-                  setIsPopoverOpen(false) // Close popover first
-                  setTimeout(() => setIsEditModalOpen(true), 100) // Then open modal with small delay
-                }}
-                style={{
-                  fontSize: `0.7vw`
-                }}
+            {resourceField !== 'org' && resourceField !== 'subOrg' && (
+              <Button
+                onClick={() => setIsPopoverOpen(prev => !prev)}
+                ref={popoverButtonElement}
+                className='flex rotate-90 items-center rounded p-[0.3vw] outline-none'
               >
-                <EditIcon height='.8vw' width='.8vw' />
-                Edit {resourceField}
-              </div>
-              {onDelete && (
+                <BsThreeDotsVertical />
+              </Button>
+            )}
+            <Popup
+              anchorRef={popoverButtonElement}
+              open={isPopoverOpen}
+              onClose={() => setIsPopoverOpen(false)}
+              className='w-[9vw]'
+              placement='left'
+            >
+              <div className='flex flex-col gap-[0.58vh] px-[0.46vw] py-[0.58vh]'>
+                {addContentProps && (
+                  <div
+                    className='hover:bg-torus-bg-hover flex cursor-pointer items-center gap-[0.5vw] rounded p-[0.29vw] leading-[2.22vh] outline-none'
+                    onClick={e => {
+                      e.stopPropagation()
+                      setIsPopoverOpen(false)
+                      setTimeout(() => setIsAddModalOpen(true), 100)
+                    }}
+                    style={{
+                      fontSize: `0.7vw`
+                    }}
+                  >
+                    <PlusIcon
+                      height='.8vw'
+                      width='.8vw'
+                      fill={isDark ? 'white' : 'black'}
+                    />
+                    Add {addContentProps.resourceField || 'Item'}
+                  </div>
+                )}
                 <div
                   className='hover:bg-torus-bg-hover flex cursor-pointer items-center gap-[0.5vw] rounded p-[0.29vw] leading-[2.22vh] outline-none'
                   onClick={e => {
                     e.stopPropagation()
-                    //   setIsPopoverOpen(false);
-                    onDelete()
+                    setIsPopoverOpen(false)
+                    setTimeout(() => setIsEditModalOpen(true), 100)
                   }}
                   style={{
                     fontSize: `0.7vw`
                   }}
                 >
-                  <DeleteIcon fill='#EF4444' height='.8vw' width='.8vw' />
-                  Delete
+                  <EditIcon height='.8vw' width='.8vw' />
+                  Edit {resourceField}
                 </div>
-              )}
-            </div>
-          </Popup>
-        </div>
-      )}
+                {onDelete && (
+                  <div
+                    className='hover:bg-torus-bg-hover flex cursor-pointer items-center gap-[0.5vw] rounded p-[0.29vw] leading-[2.22vh] outline-none'
+                    onClick={e => {
+                      e.stopPropagation()
+                      onDelete()
+                    }}
+                    style={{
+                      fontSize: `0.7vw`
+                    }}
+                  >
+                    <DeleteIcon fill='#EF4444' height='.8vw' width='.8vw' />
+                    Delete
+                  </div>
+                )}
+              </div>
+            </Popup>
+          </div>
+        )}
 
-      {/* Edit Modal */}
-      {editContentProps && (
-        <Modal
-          open={isEditModalOpen}
-          onClose={() => {
-            setIsEditModalOpen(false)
-            setIsPopoverOpen(false)
-          }}
-          showCloseButton={false}
-          className='w-md'
-        >
-          <AddGroupLevelModal
-            close={() => {
+        {/* Add Modal */}
+        {addContentProps && (
+          <Modal
+            open={isAddModalOpen}
+            onClose={() => {
+              setIsAddModalOpen(false)
+              setIsPopoverOpen(false)
+            }}
+            showCloseButton={false}
+            className='w-[400px]'
+          >
+            <AddGroupLevelModal
+              close={() => {
+                setIsAddModalOpen(false)
+                setIsPopoverOpen(false)
+              }}
+              {...addContentProps}
+            />
+          </Modal>
+        )}
+
+        {/* Edit Modal */}
+        {editContentProps && (
+          <Modal
+            open={isEditModalOpen}
+            onClose={() => {
               setIsEditModalOpen(false)
               setIsPopoverOpen(false)
             }}
-            {...editContentProps}
-          />
-        </Modal>
-      )}
+            showCloseButton={false}
+            className='w-[400px]'
+          >
+            <AddGroupLevelModal
+              close={() => {
+                setIsEditModalOpen(false)
+                setIsPopoverOpen(false)
+              }}
+              {...editContentProps}
+            />
+          </Modal>
+        )}
+      </div>
+
+      {/* Render children (nested subOrgGrp) */}
+      {children && <div>{children}</div>}
     </div>
   )
 }

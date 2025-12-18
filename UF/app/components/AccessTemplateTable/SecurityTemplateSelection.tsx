@@ -8,6 +8,7 @@ import { Button } from '@/components/Button'
 import { useGlobal } from '@/context/GlobalContext'
 import { useTheme } from '@/hooks/useTheme'
 import i18n from '../i18n'
+import clsx from 'clsx'
 
 interface Role {
   roleCode: string
@@ -32,11 +33,25 @@ interface PsGrpItem {
   psGrpId: string
   ps: PsItem[]
 }
+interface SubOrgItem {
+  subOrgCode: string
+  subOrgName: string
+  subOrgId: string
+  psGrp: PsGrpItem[]
+  subOrgGrp?: SubOrgGrpItem[]
+}
+interface SubOrgGrpItem {
+  subOrgGrpCode: string
+  subOrgGrpName: string
+  subOrgGrpId: string
+  subOrg: SubOrgItem[]
+}
 interface OrgItem {
   orgCode: string
   orgName: string
   orgId: string
   psGrp: PsGrpItem[]
+  subOrgGrp?: SubOrgGrpItem[]
 }
 interface OrgGrpItem {
   orgGrpCode: string
@@ -44,34 +59,153 @@ interface OrgGrpItem {
   orgGrpId: string
   org: OrgItem[]
 }
+// Recursive component to render SubOrg structure
+const RenderSubOrg = ({
+  subOrgGrp,
+  selectedOrgId,
+  setSelectedOrgId,
+  setSelectedPsId,
+  setOpenOrgGrp,
+  setOpenPsGrp,
+  setOpenRoleGrp,
+  openOrgGrp,
+  accentColor,
+  fontSize
+}: any) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const { borderColor, textColor, bgColor, isDark } = useTheme()
 
-export default function SecurityTemplateSelection() {
+  return (
+    <div
+      className='mt-2 rounded-md p-2'
+      style={{ backgroundColor: hexWithOpacity(accentColor, 0.05) }}
+    >
+      {/* SubOrg Group Header */}
+      <div
+        className='flex cursor-pointer justify-between rounded p-2'
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <div className='flex items-center gap-[.6vw]'>
+          <DownArrow fill={isDark ? 'white' : 'black'} />
+          <span
+            style={{ fontSize: `${fontSize * 0.7}vw` }}
+            className='text-torus-text-opacity-75'
+          >
+            {subOrgGrp.subOrgGrpName}
+          </span>
+        </div>
+        <span>{subOrgGrp.subOrg?.length || 0}</span>
+      </div>
+
+      {/* SubOrg List */}
+      {isOpen &&
+        subOrgGrp.subOrg?.map((subOrg: SubOrgItem) => (
+          <div key={subOrg.subOrgId}>
+            <div
+              onClick={() => {
+                setSelectedOrgId(subOrg.subOrgId)
+                setSelectedPsId(
+                  subOrg.psGrp.length && subOrg.psGrp[0].ps.length
+                    ? subOrg.psGrp[0].ps[0].psId
+                    : null
+                )
+                setOpenOrgGrp('ALL_OPEN')
+                setOpenPsGrp('ALL_OPEN')
+                setOpenRoleGrp('ALL_OPEN')
+              }}
+              style={{
+                borderColor:
+                  selectedOrgId === subOrg.subOrgId ? accentColor : ''
+              }}
+              className={twMerge(
+                `ml-[1vw] mt-2 w-[300px] cursor-pointer rounded border-2 p-2`,
+                bgColor
+              )}
+            >
+              <div
+                style={{ fontSize: `${fontSize * 0.75}vw` }}
+                className='text-torus-text truncate'
+                title={subOrg.subOrgName}
+              >
+                {subOrg.subOrgName}
+              </div>
+              <div
+                style={{ fontSize: `${fontSize * 0.65}vw` }}
+                className='text-torus-text-opacity-50'
+              >
+                {subOrg.subOrgCode.split('-').pop()}
+              </div>
+            </div>
+
+            {/* Recursively render nested subOrgGrp */}
+            {subOrg.subOrgGrp?.map((nestedSubOrgGrp: SubOrgGrpItem) => (
+              <RenderSubOrg
+                key={nestedSubOrgGrp.subOrgGrpId}
+                subOrgGrp={nestedSubOrgGrp}
+                selectedOrgId={selectedOrgId}
+                setSelectedOrgId={setSelectedOrgId}
+                setSelectedPsId={setSelectedPsId}
+                setOpenOrgGrp={setOpenOrgGrp}
+                setOpenPsGrp={setOpenPsGrp}
+                setOpenRoleGrp={setOpenRoleGrp}
+                openOrgGrp={openOrgGrp}
+                accentColor={accentColor}
+                fontSize={fontSize}
+              />
+            ))}
+          </div>
+        ))}
+    </div>
+  )
+}
+
+export default function SecurityTemplateSelection({
+  isView = false
+}: {
+  isView: boolean
+}) {
   const { orgGrpData, templateToBeUpdated, setTemplateToBeUpdated } =
     React.useContext(SetupScreenContext) as SetupScreenContextType
+
+  // Updated to collect roles from subOrg as well
   const roleIds = useMemo(() => {
     const roleIds: string[] = []
-    templateToBeUpdated?.orgGrp?.forEach(
-      (og: OrgGrpItem) =>
-        og?.org?.forEach(
-          (o: OrgItem) =>
-            o?.psGrp?.forEach(
-              (pg: PsGrpItem) =>
-                pg?.ps?.forEach(
-                  (p: PsItem) =>
-                    p?.roleGrp?.forEach(
-                      (rg: RoleGrp) =>
-                        rg?.roles?.forEach((r: Role) => roleIds.push(r.roleId))
-                    )
-                )
+    const collectRolesFromOrg = (org: OrgItem | SubOrgItem) => {
+      org?.psGrp?.forEach(
+        (pg: PsGrpItem) =>
+          pg?.ps?.forEach(
+            (p: PsItem) =>
+              p?.roleGrp?.forEach(
+                (rg: RoleGrp) =>
+                  rg?.roles?.forEach((r: Role) => roleIds.push(r.roleId))
+              )
+          )
+      )
+
+      // Recursively collect from subOrg
+      if ('subOrgGrp' in org) {
+        org.subOrgGrp?.forEach(
+          (subOrgGrp: SubOrgGrpItem) =>
+            subOrgGrp?.subOrg?.forEach((subOrg: SubOrgItem) =>
+              collectRolesFromOrg(subOrg)
             )
         )
+      }
+    }
+
+    templateToBeUpdated?.orgGrp?.forEach(
+      (og: OrgGrpItem) =>
+        og?.org?.forEach((o: OrgItem) => collectRolesFromOrg(o))
     )
     return roleIds
   }, [templateToBeUpdated])
+
   const [selectedRoles, setSelectedRoles] = useState(roleIds)
   const [openOrgGrp, setOpenOrgGrp] = useState<string | 'ALL_OPEN'>('ALL_OPEN')
   const [openPsGrp, setOpenPsGrp] = useState<string | 'ALL_OPEN'>('ALL_OPEN')
-  const [openRoleGrp, setOpenRoleGrp] = useState<string | 'ALL_OPEN'>('ALL_OPEN')
+  const [openRoleGrp, setOpenRoleGrp] = useState<string | 'ALL_OPEN'>(
+    'ALL_OPEN'
+  )
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
   const [selectedPsId, setSelectedPsId] = useState<string | null>(null)
   const [isSearchOpen, setIsSearchOpen] = useState<string | null>(null)
@@ -84,9 +218,13 @@ export default function SecurityTemplateSelection() {
   const { brandColor } = branding
   const keyset = i18n.keyset('language')
 
-  const handleOrgClick = (org: OrgItem) => {
-    setSelectedOrgId(org.orgId)
-    setSelectedPsId(org?.psGrp?.length && org?.psGrp?.[0]?.ps?.length ? org?.psGrp?.[0].ps?.[0].psId : null)
+  const handleOrgClick = (org: OrgItem | SubOrgItem) => {
+    setSelectedOrgId((org as OrgItem).orgId || (org as SubOrgItem).subOrgId)
+    setSelectedPsId(
+      org.psGrp.length && org.psGrp[0].ps.length
+        ? org.psGrp[0].ps[0].psId
+        : null
+    )
     setOpenOrgGrp('ALL_OPEN')
     setOpenPsGrp('ALL_OPEN')
     setOpenRoleGrp('ALL_OPEN')
@@ -100,38 +238,133 @@ export default function SecurityTemplateSelection() {
 
   function getStructureForSingleRole(roleId: string, data: OrgGrpItem[]) {
     const result: OrgGrpItem[] = []
+
+    const processOrg = (
+      org: OrgItem | SubOrgItem
+    ): OrgItem | SubOrgItem | null => {
+      const newOrg: any = { ...org, psGrp: [] }
+
+      for (const psGrp of org.psGrp) {
+        const newPsGrp: PsGrpItem = { ...psGrp, ps: [] }
+
+        for (const ps of psGrp.ps) {
+          const newPs: PsItem = { ...ps, roleGrp: [] }
+
+          for (const roleGrp of ps.roleGrp) {
+            const roles = roleGrp.roles.filter(r => r.roleId === roleId)
+            if (roles.length > 0) newPs.roleGrp.push({ ...roleGrp, roles })
+          }
+
+          if (newPs.roleGrp.length > 0) newPsGrp.ps.push(newPs)
+        }
+
+        if (newPsGrp.ps.length > 0) newOrg.psGrp.push(newPsGrp)
+      }
+
+      // Process subOrgGrp recursively
+      if ('subOrgGrp' in org && org.subOrgGrp) {
+        newOrg.subOrgGrp = []
+        for (const subOrgGrp of org.subOrgGrp) {
+          const newSubOrgGrp: SubOrgGrpItem = { ...subOrgGrp, subOrg: [] }
+
+          for (const subOrg of subOrgGrp.subOrg) {
+            const processedSubOrg = processOrg(subOrg)
+            if (
+              processedSubOrg &&
+              (processedSubOrg.psGrp.length > 0 ||
+                (processedSubOrg as SubOrgItem).subOrgGrp?.length)
+            ) {
+              newSubOrgGrp.subOrg.push(processedSubOrg as SubOrgItem)
+            }
+          }
+
+          if (newSubOrgGrp.subOrg.length > 0)
+            newOrg.subOrgGrp.push(newSubOrgGrp)
+        }
+      }
+
+      if (newOrg.psGrp.length > 0 || newOrg.subOrgGrp?.length > 0) return newOrg
+      return null
+    }
+
     for (const orgGrp of data) {
       const newOrgGrp: OrgGrpItem = { ...orgGrp, org: [] }
 
       for (const org of orgGrp.org) {
-        const newOrg: OrgItem = { ...org, psGrp: [] }
-
-        for (const psGrp of org.psGrp) {
-          const newPsGrp: PsGrpItem = { ...psGrp, ps: [] }
-
-          for (const ps of psGrp.ps) {
-            const newPs: PsItem = { ...ps, roleGrp: [] }
-
-            for (const roleGrp of ps.roleGrp) {
-              const roles = roleGrp.roles.filter(r => r.roleId === roleId)
-              if (roles.length > 0) newPs.roleGrp.push({ ...roleGrp, roles })
-            }
-
-            if (newPs.roleGrp.length > 0) newPsGrp.ps.push(newPs)
-          }
-
-          if (newPsGrp.ps.length > 0) newOrg.psGrp.push(newPsGrp)
-        }
-
-        if (newOrg.psGrp.length > 0) newOrgGrp.org.push(newOrg)
+        const processedOrg = processOrg(org)
+        if (processedOrg) newOrgGrp.org.push(processedOrg as OrgItem)
       }
 
       if (newOrgGrp.org.length > 0) result.push(newOrgGrp)
     }
+
     return result
   }
 
   function mergeTree(target: OrgGrpItem[], source: OrgGrpItem[]) {
+    const mergeOrgLevel = (tgtOrg: any, srcOrg: any) => {
+      // Merge psGrp
+      for (const srcPsGrp of srcOrg.psGrp) {
+        let tgtPsGrp = tgtOrg.psGrp.find(
+          (t: any) => t.psGrpId === srcPsGrp.psGrpId
+        )
+        if (!tgtPsGrp) {
+          tgtOrg.psGrp.push(JSON.parse(JSON.stringify(srcPsGrp)))
+          continue
+        }
+
+        for (const srcPs of srcPsGrp.ps) {
+          let tgtPs = tgtPsGrp.ps.find((t: any) => t.psId === srcPs.psId)
+          if (!tgtPs) {
+            tgtPsGrp.ps.push(JSON.parse(JSON.stringify(srcPs)))
+            continue
+          }
+
+          for (const srcRoleGrp of srcPs.roleGrp) {
+            let tgtRoleGrp = tgtPs.roleGrp.find(
+              (t: any) => t.roleGrpId === srcRoleGrp.roleGrpId
+            )
+            if (!tgtRoleGrp) {
+              tgtPs.roleGrp.push(JSON.parse(JSON.stringify(srcRoleGrp)))
+              continue
+            }
+
+            for (const role of srcRoleGrp.roles) {
+              if (!tgtRoleGrp.roles.find((r: any) => r.roleId === role.roleId))
+                tgtRoleGrp.roles.push(role)
+            }
+          }
+        }
+      }
+
+      // Merge subOrgGrp
+      if (srcOrg.subOrgGrp) {
+        if (!tgtOrg.subOrgGrp) tgtOrg.subOrgGrp = []
+
+        for (const srcSubOrgGrp of srcOrg.subOrgGrp) {
+          let tgtSubOrgGrp = tgtOrg.subOrgGrp.find(
+            (t: any) => t.subOrgGrpId === srcSubOrgGrp.subOrgGrpId
+          )
+          if (!tgtSubOrgGrp) {
+            tgtOrg.subOrgGrp.push(JSON.parse(JSON.stringify(srcSubOrgGrp)))
+            continue
+          }
+
+          for (const srcSubOrg of srcSubOrgGrp.subOrg) {
+            let tgtSubOrg = tgtSubOrgGrp.subOrg.find(
+              (t: any) => t.subOrgId === srcSubOrg.subOrgId
+            )
+            if (!tgtSubOrg) {
+              tgtSubOrgGrp.subOrg.push(JSON.parse(JSON.stringify(srcSubOrg)))
+              continue
+            }
+
+            mergeOrgLevel(tgtSubOrg, srcSubOrg)
+          }
+        }
+      }
+    }
+
     for (const srcGrp of source) {
       let tgtGrp = target.find(t => t.orgGrpId === srcGrp.orgGrpId)
       if (!tgtGrp) {
@@ -146,36 +379,7 @@ export default function SecurityTemplateSelection() {
           continue
         }
 
-        for (const srcPsGrp of srcOrg.psGrp) {
-          let tgtPsGrp = tgtOrg.psGrp.find(t => t.psGrpId === srcPsGrp.psGrpId)
-          if (!tgtPsGrp) {
-            tgtOrg.psGrp.push(JSON.parse(JSON.stringify(srcPsGrp)))
-            continue
-          }
-
-          for (const srcPs of srcPsGrp.ps) {
-            let tgtPs = tgtPsGrp.ps.find(t => t.psId === srcPs.psId)
-            if (!tgtPs) {
-              tgtPsGrp.ps.push(JSON.parse(JSON.stringify(srcPs)))
-              continue
-            }
-
-            for (const srcRoleGrp of srcPs.roleGrp) {
-              let tgtRoleGrp = tgtPs.roleGrp.find(
-                t => t.roleGrpId === srcRoleGrp.roleGrpId
-              )
-              if (!tgtRoleGrp) {
-                tgtPs.roleGrp.push(JSON.parse(JSON.stringify(srcRoleGrp)))
-                continue
-              }
-
-              for (const role of srcRoleGrp.roles) {
-                if (!tgtRoleGrp.roles.find(r => r.roleId === role.roleId))
-                  tgtRoleGrp.roles.push(role)
-              }
-            }
-          }
-        }
+        mergeOrgLevel(tgtOrg, srcOrg)
       }
     }
   }
@@ -203,24 +407,65 @@ export default function SecurityTemplateSelection() {
     })
   }
 
-  // Add this useEffect to sync selectedRoles with external changes
   useEffect(() => {
     setSelectedRoles(roleIds)
   }, [roleIds])
 
+  // Flatten all orgs including subOrgs for rendering
+
+  const flattenOrgsForDisplay = (orgGrpData: OrgGrpItem[]) => {
+    const result: any[] = []
+
+    const processOrg = (org: OrgItem | SubOrgItem, parentId?: string) => {
+      result.push({ ...org, parentId })
+
+      if ('subOrgGrp' in org && org.subOrgGrp) {
+        org.subOrgGrp.forEach((subOrgGrp: SubOrgGrpItem) => {
+          subOrgGrp.subOrg.forEach((subOrg: SubOrgItem) => {
+            processOrg(
+              subOrg,
+              (org as OrgItem).orgId || (org as SubOrgItem).subOrgId
+            )
+          })
+        })
+      }
+    }
+
+    orgGrpData.forEach((grp: OrgGrpItem) => {
+      grp.org.forEach((org: OrgItem) => processOrg(org))
+    })
+
+    return result
+  }
+
+  const flattenedOrgs = useMemo(
+    () => flattenOrgsForDisplay(orgGrpData),
+    [orgGrpData]
+  )
+
   return (
-    <div className='flex w-full gap-[1vw] min-w-[650px]'>
+    <div className='flex w-full min-w-[650px] gap-[1vw]'>
       {/* ORG SECTION */}
-      <div className={twMerge('h-[70vh] lg:h-[72vh] w-1/3 rounded-xl border shadow-md min-w-[200px]' , borderColor)}>
+      <div
+        className={twMerge(
+          'h-[70vh] w-1/3 min-w-[200px] rounded-xl border shadow-md lg:h-[72vh]',
+          borderColor
+        )}
+      >
         <div className='flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
-          <Text className='text-nowrap text-lg font-semibold w-4/5 truncate'><span title={keyset('Organization')}>{keyset('Organization')}</span></Text>
+          <Text className='w-4/5 truncate text-nowrap text-lg font-semibold'>
+            <span title={keyset('Organization')}>{keyset('Organization')}</span>
+          </Text>
           {isSearchOpen === 'org' ? (
             <div className='flex w-[8vw] gap-[.5vw]'>
               <input
                 value={orgSearchTerm}
                 onChange={e => setOrgSearchTerm(e.target.value)}
                 placeholder={keyset('Search')}
-                className={twMerge(`w-full rounded-xl border px-[.5vw] py-[.2vh] text-sm outline-none` , borderColor)}
+                className={twMerge(
+                  `w-full rounded-xl border px-[.5vw] py-[.2vh] text-sm outline-none`,
+                  borderColor
+                )}
               />
               <Button
                 onClick={() => {
@@ -232,13 +477,13 @@ export default function SecurityTemplateSelection() {
                 <Multiply
                   height='.7vw'
                   width='.7vw'
-                  fill={isDark ? "white" : "black"}
+                  fill={isDark ? 'white' : 'black'}
                 />
               </Button>
             </div>
           ) : (
             <Button
-            className='flex items-center'
+              className='flex items-center'
               onClick={() => {
                 setIsSearchOpen('org')
                 setOrgSearchTerm('')
@@ -246,13 +491,13 @@ export default function SecurityTemplateSelection() {
                 setRoleSearchTerm('')
               }}
             >
-              <SearchIcon fill={isDark ? "white" : "black"} />
+              <SearchIcon fill={isDark ? 'white' : 'black'} />
             </Button>
           )}
         </div>
-        <hr className={twMerge('border' , borderColor)} />
+        <hr className={twMerge('border', borderColor)} />
 
-        <div className='flex h-[70vh] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
+        <div className='flex h-[600px] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
           {orgGrpData
             .filter((grp: OrgGrpItem) =>
               grp.orgGrpName.toLowerCase().includes(orgSearchTerm.toLowerCase())
@@ -282,7 +527,7 @@ export default function SecurityTemplateSelection() {
                           : 'rotate-[-90deg]'
                       }`}
                     >
-                      <DownArrow fill={isDark ? "white" : "black"} />
+                      <DownArrow fill={isDark ? 'white' : 'black'} />
                     </span>
                     <Text>{grp.orgGrpName}</Text>
                   </div>
@@ -293,20 +538,56 @@ export default function SecurityTemplateSelection() {
                 {(openOrgGrp === 'ALL_OPEN' || openOrgGrp === grp.orgGrpId) &&
                   grp.org.map(org => (
                     <div
-                      key={org.orgId}
-                      onClick={() => handleOrgClick(org)}
                       className={twMerge(
-                        `hover:border-[var(--brand-color)] hover:shadow mt-2 cursor-pointer rounded ${borderColor} border p-2 bg-[var(--g-color-base-background)]`,
-
-                        selectedOrgId === org.orgId
-                          ? 'bg-unset border-[var(--brand-color)]'
-                          : '',
+                        'mt-[.8vh] rounded px-2 py-1.5',
+                        bgColor
                       )}
+                      key={org.orgId}
                     >
-                      <Text>{org.orgName}</Text>
-                      <Text color='secondary' >
-                        {org.orgCode.split("-").pop()}
-                      </Text>
+                      <div
+                        onClick={() => handleOrgClick(org)}
+                        style={{
+                          borderColor: selectedOrgId === org.orgId ? brandColor : ''
+                        }}
+                        className={clsx(
+                          `border-torus-border mt-2 w-full cursor-pointer rounded border-2 p-2`,
+                          {
+                            'border-torus-accent-color': selectedOrgId === org.orgId,
+                            'bg-torus-bg': selectedOrgId !== org.orgId
+                          }
+                        )}
+                      >
+                        <div
+                          style={{ fontSize: `${fontSize * 0.8}vw` }}
+                          className='text-torus-text truncate'
+                          title={org.orgName}
+                        >
+                          {org.orgName}
+                        </div>
+                        <div
+                          style={{ fontSize: `${fontSize * 0.7}vw` }}
+                          className='text-torus-text-opacity-50 truncate'
+                        >
+                          {org.orgCode.split('-').pop()}
+                        </div>
+                      </div>
+
+                      {/* Render SubOrg Groups */}
+                      {org.subOrgGrp?.map((subOrgGrp: SubOrgGrpItem) => (
+                        <RenderSubOrg
+                          key={subOrgGrp.subOrgGrpId}
+                          subOrgGrp={subOrgGrp}
+                          selectedOrgId={selectedOrgId}
+                          setSelectedOrgId={setSelectedOrgId}
+                          setSelectedPsId={setSelectedPsId}
+                          setOpenOrgGrp={setOpenOrgGrp}
+                          setOpenPsGrp={setOpenPsGrp}
+                          setOpenRoleGrp={setOpenRoleGrp}
+                          openOrgGrp={openOrgGrp}
+                          accentColor={brandColor}
+                          fontSize={fontSize}
+                        />
+                      ))}
                     </div>
                   ))}
               </div>
@@ -315,10 +596,16 @@ export default function SecurityTemplateSelection() {
       </div>
 
       {/* PS SECTION */}
-      <div className={twMerge('h-[70vh] lg:h-[72vh] w-1/3 rounded-xl border shadow-md min-w-[200px]' , borderColor)}>
+      <div
+        className={twMerge(
+          'h-[70vh] w-1/3 min-w-[200px] rounded-xl border shadow-md lg:h-[72vh]',
+          borderColor
+        )}
+      >
         <div className='flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
-          <Text className='text-nowrap text-lg font-semibold w-4/5 truncate'><span title={keyset('Products/Services')}>
-            {keyset('Products/Services')}
+          <Text className='w-4/5 truncate text-nowrap text-lg font-semibold'>
+            <span title={keyset('Products/Services')}>
+              {keyset('Products/Services')}
             </span>
           </Text>
           {isSearchOpen === 'ps' ? (
@@ -327,10 +614,13 @@ export default function SecurityTemplateSelection() {
                 value={psSearchTerm}
                 onChange={e => setPsSearchTerm(e.target.value)}
                 placeholder={keyset('Search')}
-               className={twMerge(`w-full rounded-xl border px-[.5vw] py-[.2vh] text-sm outline-none` , borderColor)}
+                className={twMerge(
+                  `w-full rounded-xl border px-[.5vw] py-[.2vh] text-sm outline-none`,
+                  borderColor
+                )}
               />
               <Button
-                 className='flex items-center'
+                className='flex items-center'
                 onClick={() => {
                   setIsSearchOpen(null)
                   setPsSearchTerm('')
@@ -339,13 +629,13 @@ export default function SecurityTemplateSelection() {
                 <Multiply
                   height='.7vw'
                   width='.7vw'
-                  fill={isDark ? "white" : "black"}
+                  fill={isDark ? 'white' : 'black'}
                 />
               </Button>
             </div>
           ) : (
             <Button
-               className='flex items-center'
+              className='flex items-center'
               onClick={() => {
                 setIsSearchOpen('ps')
                 setPsSearchTerm('')
@@ -353,102 +643,107 @@ export default function SecurityTemplateSelection() {
                 setRoleSearchTerm('')
               }}
             >
-              <SearchIcon fill={isDark ? "white" : "black"} />
+              <SearchIcon fill={isDark ? 'white' : 'black'} />
             </Button>
           )}
         </div>
-        <hr className={twMerge('border' , borderColor)} />
+        <hr className={twMerge('border', borderColor)} />
 
-        <div className='flex h-[70vh] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
-          {orgGrpData.flatMap((grp: OrgGrpItem) =>
-            grp.org
-              .filter(
-                org =>
-                  // !selectedOrgId ||   //commented to show only selected org
-                  org.orgId === selectedOrgId
-              )
-              .flatMap(org =>
-                org.psGrp
-                  .filter(org =>
-                    org.psGrpName
-                      .toLowerCase()
-                      .includes(psSearchTerm.toLowerCase())
-                  )
-                  .map(pg => (
+        <div className='flex h-[600px] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
+          {flattenedOrgs
+            .filter((org: any) => {
+              const orgId = org.orgId || org.subOrgId
+              return orgId === selectedOrgId
+            })
+            .flatMap((org: any) =>
+              org.psGrp
+                .filter((psGrp: any) =>
+                  psGrp.psGrpName
+                    .toLowerCase()
+                    .includes(psSearchTerm.toLowerCase())
+                )
+                .map((pg: any) => (
+                  <div
+                    key={pg.psGrpId}
+                    className='rounded-lg px-[0.5vw] py-[1vh]'
+                    style={{
+                      backgroundColor: hexWithOpacity(brandColor, 0.1)
+                    }}
+                  >
+                    {/* PS GROUP HEADER */}
                     <div
-                      key={pg.psGrpId}
-                      className='rounded-lg px-[0.5vw] py-[1vh]'
-                      style={{
-                        backgroundColor: hexWithOpacity(brandColor, 0.1)
-                      }}
+                      className='flex cursor-pointer justify-between rounded p-2'
+                      onClick={() =>
+                        setOpenPsGrp(
+                          openPsGrp === pg.psGrpId ? null : (pg.psGrpId as any)
+                        )
+                      }
                     >
-                      {/* PS GROUP HEADER */}
-                      <div
-                        className='flex cursor-pointer justify-between rounded p-2'
-                        onClick={() =>
-                          setOpenPsGrp(
-                            openPsGrp === pg.psGrpId
-                              ? null
-                              : (pg.psGrpId as any)
-                          )
-                        }
-                      >
-                        <div className='flex items-center gap-[.6vw]'>
-                          <span
-                            className={`w-[0.52vw] ${
-                              openPsGrp === 'ALL_OPEN' ||
-                              openPsGrp === pg.psGrpId
-                                ? ''
-                                : 'rotate-[-90deg]'
-                            }`}
-                          >
-                            <DownArrow fill={isDark ? "white" : "black"} />
-                          </span>
-                          <Text>{pg.psGrpName}</Text>
-                        </div>
-                        <Text>{pg.ps.length}</Text>
+                      <div className='flex items-center gap-[.6vw]'>
+                        <span
+                          className={`w-[0.52vw] ${
+                            openPsGrp === 'ALL_OPEN' || openPsGrp === pg.psGrpId
+                              ? ''
+                              : 'rotate-[-90deg]'
+                          }`}
+                        >
+                          <DownArrow fill={isDark ? 'white' : 'black'} />
+                        </span>
+                        <Text>{pg.psGrpName}</Text>
                       </div>
-
-                      {/* PS LIST */}
-                      {(openPsGrp === 'ALL_OPEN' || openPsGrp === pg.psGrpId) &&
-                        pg.ps.map(ps => (
-                          <div
-                            key={ps.psId}
-                            onClick={() => handlePsClick(ps.psId)}
-                            className={twMerge(
-                              `hover:border-[var(--brand-color)] hover:shadow mt-2 cursor-pointer rounded border ${borderColor} p-2 bg-[var(--g-color-base-background)]`,
-                              selectedPsId === ps.psId
-                                ? 'bg-unset border-[var(--brand-color)]'
-                                : '',
-                            )}
-                          >
-                            <Text>{ps.psName}</Text>
-                            <Text color='secondary'>
-                              {ps.psCode.split("-").pop()}
-                            </Text>
-                          </div>
-                        ))}
+                      <Text>{pg.ps.length}</Text>
                     </div>
-                  ))
-              )
-          )}
+
+                    {/* PS LIST */}
+                    {(openPsGrp === 'ALL_OPEN' || openPsGrp === pg.psGrpId) &&
+                      pg.ps.map((ps: any) => (
+                        <div
+                          key={ps.psId}
+                          onClick={() => handlePsClick(ps.psId)}
+                          className={twMerge(
+                            `mt-2 cursor-pointer rounded border hover:border-[var(--brand-color)] hover:shadow ${borderColor} bg-[var(--g-color-base-background)] p-2`,
+                            bgColor,
+                            selectedPsId === ps.psId
+                              ? 'bg-unset border-[var(--brand-color)]'
+                              : ''
+                          )}
+                        >
+                          <Text>{ps.psName}</Text>
+                          <Text color='secondary'>
+                            {ps.psCode.split('-').pop()}
+                          </Text>
+                        </div>
+                      ))}
+                  </div>
+                ))
+            )}
         </div>
       </div>
 
       {/* ROLES SECTION */}
-      <div className={twMerge('h-[70vh] lg:h-[72vh] w-1/3 rounded-xl border shadow-md min-w-[200px]' , borderColor)}>
+      <div
+        className={twMerge(
+          'h-[600px] w-1/3 min-w-[200px] rounded-xl border shadow-md lg:h-[72vh]',
+          borderColor
+        )}
+      >
         <div className='flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
-          <Text className='text-nowrap text-lg font-semibold w-4/5 truncate'><span title={keyset('Roles')}>{keyset('Roles')}</span></Text>
+          <Text className='w-4/5 truncate text-nowrap text-lg font-semibold'>
+            <span title={keyset('Roles')}>{keyset('Roles')}</span>
+          </Text>
           {isSearchOpen === 'role' ? (
             <div className='flex w-[8vw] gap-[.5vw]'>
               <input
                 value={roleSearchTerm}
                 onChange={e => setRoleSearchTerm(e.target.value)}
                 placeholder={twMerge('Search')}
-                className={twMerge(`w-full rounded-xl border px-[.5vw] py-[.2vh] text-sm outline-none` , borderColor)}
+                className={twMerge(
+                  `w-full rounded-xl border px-[.5vw] py-[.2vh] text-sm outline-none`,
+                  borderColor
+                )}
               />
               <Button
-                 className='flex items-center'
+                className='flex items-center'
                 onClick={() => {
                   setIsSearchOpen(null)
                   setRoleSearchTerm('')
@@ -457,110 +752,107 @@ export default function SecurityTemplateSelection() {
                 <Multiply
                   height='.7vw'
                   width='.7vw'
-                  fill={isDark ? "white" : "black"}
+                  fill={isDark ? 'white' : 'black'}
                 />
               </Button>
             </div>
           ) : (
             <Button
-               className='flex items-center'
+              className='flex items-center'
               onClick={() => {
                 setIsSearchOpen('role')
                 setRoleSearchTerm('')
               }}
             >
-              <SearchIcon fill={isDark ? "white" : "black"} />
+              <SearchIcon fill={isDark ? 'white' : 'black'} />
             </Button>
           )}
         </div>
-        <hr className={twMerge('border' , borderColor)} />
+        <hr className={twMerge('border', borderColor)} />
 
-        <div className='flex h-[70vh] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
-          {orgGrpData.flatMap((grp: OrgGrpItem) =>
-            grp.org
-              .filter(
-                org =>
-                  // !selectedOrgId || //commented to show only selected org
-                  org.orgId === selectedOrgId
-              )
-              .flatMap(org =>
-                org.psGrp.flatMap(pg =>
-                  pg.ps
-                    .filter(
-                      ps =>
-                        //  !selectedPsId || //commented to show only selected ps
-                        ps.psId === selectedPsId
-                    )
-                    .flatMap(ps =>
-                      ps.roleGrp
-                        .filter(ps =>
-                          ps.roleGrpName
-                            .toLowerCase()
-                            .includes(roleSearchTerm.toLowerCase())
-                        )
-                        .map(rg => (
-                          <div
-                            key={rg.roleGrpId}
-                            className='rounded-lg px-[0.5vw] py-[1vh]'
-                            style={{
-                              backgroundColor: hexWithOpacity(brandColor, 0.1)
-                            }}
-                          >
-                            {/* ROLE GROUP HEADER */}
-                            <div
-                              className='flex cursor-pointer justify-between rounded p-2'
-                              onClick={() =>
-                                setOpenRoleGrp(
-                                  openRoleGrp === rg.roleGrpId
-                                    ? null
-                                    : (rg.roleGrpId as any)
-                                )
-                              }
-                            >
-                              <div className='flex items-center gap-[.6vw]'>
-                                <span
-                                  className={`w-[0.52vw] ${
-                                    openRoleGrp === 'ALL_OPEN' ||
-                                    openRoleGrp === rg.roleGrpId
-                                      ? ''
-                                      : 'rotate-[-90deg]'
-                                  }`}
-                                >
-                                  <DownArrow fill={isDark ? "white" : "black"} />
-                                </span>
-                                <Text>{rg.roleGrpName}</Text>
-                              </div>
-                              <Text>{rg.roles.length}</Text>
-                            </div>
-
-                            {/* ROLE LIST */}
-                            {(openRoleGrp === 'ALL_OPEN' ||
-                              openRoleGrp === rg.roleGrpId) &&
-                              rg.roles.map(role => (
-                                <label
-                                  key={role.roleId}
-                                  className={`mt-2 flex cursor-pointer items-center justify-between rounded border ${borderColor} p-2 hover:border-[var(--brand-color)] hover:shadow bg-[var(--g-color-base-background)]`}
-                                >
-                                  <div>
-                                    <Text>{role.roleName}</Text>
-                                    <Text color='secondary'>{role.roleCode.split("-").pop()}</Text>
-                                  </div>
-
-                                  <input
-                                    type='checkbox'
-                                    checked={selectedRoles.includes(
-                                      role.roleId
-                                    )}
-                                    onChange={() => toggleRole(role.roleId)}
-                                  />
-                                </label>
-                              ))}
-                          </div>
-                        ))
-                    )
+        <div className='flex h-[600px] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
+          {flattenedOrgs
+            .filter((org: any) => {
+              const orgId = org.orgId || org.subOrgId
+              return orgId === selectedOrgId
+            })
+            .flatMap((org: any) =>
+              org.psGrp
+                .flatMap((pg: any) =>
+                  pg.ps.filter((ps: any) => ps.psId === selectedPsId)
                 )
-              )
-          )}
+                .flatMap((ps: any) =>
+                  ps.roleGrp
+                    .filter((rg: any) =>
+                      rg.roleGrpName
+                        .toLowerCase()
+                        .includes(roleSearchTerm.toLowerCase())
+                    )
+                    .map((rg: any) => (
+                      <div
+                        key={rg.roleGrpId}
+                        className='rounded-lg px-[0.5vw] py-[1vh]'
+                        style={{
+                          backgroundColor: hexWithOpacity(brandColor, 0.1)
+                        }}
+                      >
+                        {/* ROLE GROUP HEADER */}
+                        <div
+                          className='flex cursor-pointer justify-between rounded p-2'
+                          onClick={() =>
+                            setOpenRoleGrp(
+                              openRoleGrp === rg.roleGrpId
+                                ? null
+                                : (rg.roleGrpId as any)
+                            )
+                          }
+                        >
+                          <div className='flex items-center gap-[.6vw]'>
+                            <span
+                              className={`w-[0.52vw] ${
+                                openRoleGrp === 'ALL_OPEN' ||
+                                openRoleGrp === rg.roleGrpId
+                                  ? ''
+                                  : 'rotate-[-90deg]'
+                              }`}
+                            >
+                              <DownArrow fill={isDark ? 'white' : 'black'} />
+                            </span>
+                            <Text>{rg.roleGrpName}</Text>
+                          </div>
+                          <Text>{rg.roles.length}</Text>
+                        </div>
+
+                        {/* ROLE LIST */}
+                        {(openRoleGrp === 'ALL_OPEN' ||
+                          openRoleGrp === rg.roleGrpId) &&
+                          rg.roles.map((role: any) => (
+                            <label
+                              key={role.roleId}
+                              className={twMerge(
+                                `mt-2 flex cursor-pointer items-center justify-between rounded border ${borderColor} bg-[var(--g-color-base-background)] p-2 hover:border-[var(--brand-color)] hover:shadow`,
+                                bgColor
+                              )}
+                            >
+                              <div>
+                                <Text>{role.roleName}</Text>
+                                <Text color='secondary'>
+                                  {role.roleCode.split('-').pop()}
+                                </Text>
+                              </div>
+
+                              <input
+                                type='checkbox'
+                                checked={selectedRoles.includes(role.roleId)}
+                                onChange={() => toggleRole(role.roleId)}
+                                disabled={isView}
+                              />
+                            </label>
+                          ))}
+                      </div>
+                    ))
+                )
+            )}
         </div>
       </div>
     </div>

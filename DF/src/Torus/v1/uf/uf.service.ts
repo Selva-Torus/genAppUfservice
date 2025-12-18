@@ -4166,7 +4166,7 @@ transformToCombinations(data: any[]) {
           'Either AppGroup or Application not available',
         );
       const appCachePrefix = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1`;
-      const cacheKeyArray = ['orgMatrix', 'appearance'];
+      const cacheKeyArray = ['orgMatrix', 'appearance', 'orgMaster'];
       const securityResponse = {};
       for (let index = 0; index < cacheKeyArray.length; index++) {
         const cacheKey = `${appCachePrefix}:${cacheKeyArray[index]}`;
