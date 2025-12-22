@@ -12,6 +12,7 @@ import { Icon } from '@/components/Icon';
 import { Modal } from '@/components/Modal';
 import { eventBus } from '@/app/eventBus';
 import clsx from "clsx";
+import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import ButtonAddd  from "./ButtonAddd";
 import TextInputwefdwfds  from "./TextInputwefdwfds";
 import Buttondfdsfds  from "./Buttondfdsfds";
@@ -28,6 +29,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
+  const handleDfdRefresh = useHandleDfdRefresh();
   let code:any = ``;
   let idx = "";
   let item = "";
@@ -200,7 +202,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
         backgroundBlendMode: ''
       }}
       className={clsx("",
-        "rounded-md shadow-md",
+        "rounded-md",
         isDark ? "bg-gray-800 text-white" : "bg-white text-black"
       )}
     >

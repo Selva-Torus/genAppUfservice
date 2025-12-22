@@ -49,11 +49,37 @@ const ContextSelector = () => {
   let landingScreen:string = 'User Screen';
   let screenDetails: any = {
            keys:[
-      {
+  {
+    "screenName": "testroute",
     "screensName": "testroute-v1",
     "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-      }
-    ]
+  },
+  {
+    "screenName": "menu item 3",
+    "screensName": "menu_item_3-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+  },
+  {
+    "screenName": "menu item 4",
+    "screensName": "menu_item_4-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+  },
+  {
+    "screenName": "menu item 5",
+    "screensName": "menu_item_5-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+  },
+  {
+    "screenName": "menu item 6",
+    "screensName": "menu_item_6-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+  },
+  {
+    "screenName": "menu item 7",
+    "screensName": "menu_item_7-v1",
+    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+  }
+]
   }
   screenDetails = screenDetails.keys
 
@@ -157,7 +183,6 @@ const ContextSelector = () => {
       toast('Please select all the fields', 'warning')
       return
     }
-    
     const orgGrpName = selectedOrg?.mainOrgGrpName
       ? selectedOrg?.mainOrgGrpName
       : selectedOrg?.orgGrpName
@@ -292,7 +317,7 @@ const ContextSelector = () => {
         >
           <div className='h-1\5 flex w-full items-center justify-between'>
             <div className='flex flex-col items-start'>
-              {/* <Text variant='display-1' className='text-nowrap'>Profile Selector</Text> */}
+             {/* <Text variant='display-1' className='text-nowrap'>Profile Selector</Text> */}
               <Text variant='body-2' className='text-nowrap' color='secondary'>
                 Select Access Profile
               </Text>

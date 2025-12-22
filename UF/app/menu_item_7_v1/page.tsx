@@ -17,7 +17,7 @@ import clsx from "clsx";
 import Groupgroup  from "./Groupgroup/Groupgroup";
 
 
-export default function PageTestrouteV1() {
+export default function PageMenuItem7V1() {
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const [initialLoad, setInitialLoad] = useState(false);
   const securityData:any={
@@ -52,7 +52,9 @@ export default function PageTestrouteV1() {
   const [dropdownData, setDropdownData] = useState<any>({});
   const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token);
+  const screenName:string = "menu item 7";
   const user = decodedTokenObj?.selectedAccessProfile;
+  const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {refetch, setRefetch} = useContext(TotalContext) as TotalContextProps;
   const { encAppFalg,setEncAppFalg}= useContext(TotalContext) as TotalContextProps;
   const {lockedData, setLockedData} = useContext(TotalContext) as TotalContextProps;
@@ -76,9 +78,8 @@ export default function PageTestrouteV1() {
     const prevRefreshRef = useRef({
     });
 
-
   async function securityCheck() {
-    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",accessProfile:[user],from:"pageTestrouteV1"},{
+    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",accessProfile:[user],from:"pageMenuItem7V1"},{
       headers: {
         Authorization: `Bearer ${token}`
       }});
@@ -212,9 +213,16 @@ export default function PageTestrouteV1() {
   const handleClick = () => {
     routes.push("/");
   }
+  const handleOnload=()=>{
+  }
 
   useEffect(() => {    
+    setMemoryVariables((prev: any) => ({
+      ...prev,
+      screenName: screenName,    
+    }))
     securityCheck();
+    handleOnload();
   }, [])
   return (
     <>

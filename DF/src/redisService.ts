@@ -577,7 +577,7 @@ export class RedisService {
 
     async getAllRecordshash(key): Promise<any[]> {
    //const total = parseInt(await redis.get('records:total') || '0');
-    const totalBatches = parseInt(await redis.get('records:batches') || '0'); 
+    const totalBatches = parseInt(await redis.get(key+':batches') || '0'); 
     // if (total === 0) {
     //   return [];
     // }    

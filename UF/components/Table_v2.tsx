@@ -365,6 +365,20 @@ export const Table_v2: React.FC<TableProps> = ({
                   </div>
                 </th>
               )}
+                {(visibleColumns.find((cols:any)=>(cols?.type=='__ActionDetails__')) && tableActions==true)&&(<th
+                  className={`
+                    px-4 py-3
+                    text-left
+                    ${getFontSizeClass(branding.fontSize)}
+                    font-semibold
+                    ${tableSorting ? "cursor-pointer hover:bg-opacity-80" : ""}
+                    ${isDark ? "text-gray-200" : "text-gray-700"}
+                  `}
+                >
+                  <div className="flex items-center gap-2">
+                    Actions
+                  </div>
+                </th>)}
               {visibleColumns.map((column) =>{
                 if(column?.type=="__ActionDetails__"&& tableActions != true){
                 return (
@@ -378,16 +392,17 @@ export const Table_v2: React.FC<TableProps> = ({
                     font-semibold
                     ${tableSorting ? "cursor-pointer hover:bg-opacity-80" : ""}
                     ${isDark ? "text-gray-200" : "text-gray-700"}
+                     ${column?.className}
                   `}
                 >
-                  <div className="flex items-center gap-2">
+      
                     {column.name}
                     {tableSorting && sortColumn === column.id && (
                       <BiSort
                         size={14}
                       />
                     )}
-                  </div>
+           
                 </th>
               )
                 }
@@ -418,20 +433,7 @@ export const Table_v2: React.FC<TableProps> = ({
               )
                 }
               } )}
-              {(visibleColumns.find((cols:any)=>(cols?.type=='__ActionDetails__')) && tableActions==true)&&(<th
-                  className={`
-                    px-4 py-3
-                    text-left
-                    ${getFontSizeClass(branding.fontSize)}
-                    font-semibold
-                    ${tableSorting ? "cursor-pointer hover:bg-opacity-80" : ""}
-                    ${isDark ? "text-gray-200" : "text-gray-700"}
-                  `}
-                >
-                  <div className="flex items-center gap-2">
-                    Actions
-                  </div>
-                </th>)}
+
               {/* Column Visibility Control */}
               {tableSettings && 
               <th className="">
@@ -523,6 +525,12 @@ export const Table_v2: React.FC<TableProps> = ({
                       </div>
                     </td>
                   )}
+                                    {
+                    (visibleColumns.find((cols:any)=>(cols?.type=='__ActionDetails__'))&&tableActions==true && renderRowActions)&&
+                    (
+                      <td>{renderRowActions({ item: row, index,nodeName:`${"ss"}`})}</td>
+                    )
+                  }
                   {visibleColumns.map((column) =>
                   { 
                     if(column.type== '__ActionDetails__'&& tableActions!=true && renderRowActions)
@@ -553,12 +561,6 @@ export const Table_v2: React.FC<TableProps> = ({
                           )
                         }
                   })}
-                  {
-                    (visibleColumns.find((cols:any)=>(cols?.type=='__ActionDetails__'))&&tableActions==true && renderRowActions)&&
-                    (
-                      <td>{renderRowActions({ item: row, index,nodeName:`${"ss"}`})}</td>
-                    )
-                  }
                 </tr>
               );
             }))}

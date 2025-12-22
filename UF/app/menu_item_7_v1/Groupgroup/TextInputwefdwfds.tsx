@@ -19,6 +19,7 @@ import { getCookie } from '@/app/components/cookieMgment';
 import { useRouter } from 'next/navigation';
 import { eventBus } from '@/app/eventBus';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
+import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import * as v from 'valibot';
 
 
@@ -30,6 +31,7 @@ const TextInputwefdwfds = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encrypti
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
+  const handleDfdRefresh = useHandleDfdRefresh();
   const actionDetails :any = {
   "action": {
     "lock": {

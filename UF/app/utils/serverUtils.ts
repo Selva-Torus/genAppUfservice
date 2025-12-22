@@ -14,8 +14,8 @@ export const singleSignOn = async (provider: 'google' | 'github' | 'fusionauth')
 }
 
 export const postOauthUser = async (user: any) => {
+  const cookieStore = await cookies()
   try {
-    const cookieStore = await cookies()
 
     const response = await AxiosService.post(
       'UF/oauthSignIn',

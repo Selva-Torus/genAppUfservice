@@ -42,17 +42,17 @@ export const Slider: React.FC<SliderProps> = ({
   tooltipProps,
   headerText,
   headerPosition = "top",
-  value = 50,
+  value = 0,
   onChange,
   onBlur,
   className = "",
 }) => {
   const { theme, branding, direction } = useGlobal();
-  const [sliderValue, setSliderValue] = useState(value || 50);
+  const [sliderValue, setSliderValue] = useState(value);
   const [showTooltip, setShowTooltip] = useState(false);
 
   useEffect(() => {
-    setSliderValue(value || 50);
+    setSliderValue(value);
   }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

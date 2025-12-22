@@ -11,10 +11,11 @@ type LabelSize = "xs" | "s" | "m";
 type LabelTheme = "normal" | "info" | "danger" | "warning" | "success" | "utility" | "unknown" | "clear";
 
 interface LabelProps {
-  size: LabelSize;
-  theme: LabelTheme;
+  size?: LabelSize;
+  theme?: LabelTheme;
   interactive?: boolean;
   copy?: boolean;
+  copyText?: string;
   disabled?: boolean;
   icon?: string;
   needTooltip?: boolean;
@@ -22,7 +23,7 @@ interface LabelProps {
   headerText?: string;
   headerPosition?: HeaderPosition;
   children?: React.ReactNode;
-  onClick?: () => void;
+  onClick?: (e:any) => void;
   className?: string;
 }
 
@@ -31,6 +32,7 @@ export const Label: React.FC<LabelProps> = ({
   theme: labelTheme,
   interactive = false,
   copy = false,
+  copyText,
   disabled = false,
   icon,
   needTooltip = false,
@@ -38,14 +40,17 @@ export const Label: React.FC<LabelProps> = ({
   headerText,
   headerPosition = "top",
   children,
-  onClick,
+  onClick=()=>{},
   className = "",
 }) => {
   const { theme } = useGlobal();
 
   const handleCopy = () => {
-    if (copy && children) {
-      navigator.clipboard.writeText(children.toString());
+    if (copy) {
+      const textToCopy = copyText || (children ? children.toString() : "");
+      if (textToCopy) {
+        navigator.clipboard.writeText(textToCopy);
+      }
     }
   };
 
@@ -90,23 +95,34 @@ export const Label: React.FC<LabelProps> = ({
 
   const labelElement = (
   <span
-    onClick={disabled ? undefined : (copy ? handleCopy : onClick)}
+    onClick={disabled ? undefined : onClick}
     className={`
       ${getSizeClasses()}
       inline-flex items-center gap-1
       font-medium
-      ${disabled ? "opacity-50 cursor-not-allowed" : (interactive || copy || onClick) ? "cursor-pointer hover:opacity-80" : ""}
+      ${disabled ? "opacity-50 cursor-not-allowed" : interactive ? "cursor-pointer hover:opacity-80" : ""}
       transition-all
     `}
     style={{
       backgroundColor: colors.bg,
       color: colors.text,
       borderRadius: "var(--border-radius)",
-      fontSize: "var(--font-size)",   
+      fontSize: "var(--font-size)",
     }}
   >
     {icon && <Icon data={icon} size={size === "xs" ? 12 : size === "s" ? 14 : 16} />}
     {children}
+    {copy && (
+      <Icon
+        data="FaCopy"
+        size={size === "xs" ? 12 : size === "s" ? 14 : 16}
+        onClick={(e:any) => {
+          e.stopPropagation();
+          handleCopy();
+        }}
+        className="cursor-pointer hover:opacity-70"
+      />
+    )}
   </span>
 );
 

@@ -18,6 +18,7 @@ import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { Icon } from '@/components/Icon';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
+import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import { XMLParser } from 'fast-xml-parser'
 
 
@@ -54,6 +55,7 @@ const ButtonAddd = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
+  const handleDfdRefresh = useHandleDfdRefresh();
   let code:any = "";
   const buttonRef = useRef<HTMLButtonElement>(null);
   const savedData=useRef({})

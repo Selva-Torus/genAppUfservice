@@ -88,6 +88,86 @@ const LayoutDecider = ({
       }
     ],
     "items": []
+  },
+  {
+    "menuGroupLabel": "Menu Item 3",
+    "screenDetails": [
+      {
+        "name": "menu item 3",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1",
+          "User",
+          "Template 3"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroupLabel": "Menu Item 4",
+    "screenDetails": [
+      {
+        "name": "menu item 4",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1",
+          "User",
+          "Template 3"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroupLabel": "Menu Item 5",
+    "screenDetails": [
+      {
+        "name": "menu item 5",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1",
+          "User",
+          "Template 3"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroupLabel": "Menu Item 6",
+    "screenDetails": [
+      {
+        "name": "menu item 6",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1",
+          "User",
+          "Template 3"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroupLabel": "Menu Item 7",
+    "screenDetails": [
+      {
+        "name": "menu item 7",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1",
+          "User",
+          "Template 3"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
   }
 ]
   const token:string = getCookie('token'); 

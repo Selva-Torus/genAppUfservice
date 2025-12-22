@@ -5,9 +5,15 @@ import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 
+interface ListItem {
+  title: string;
+  disabled?: boolean;
+  group?: boolean;
+}
+
 interface ListProps {
   sortable: boolean;
-  items: string[];
+  items: string[] | ListItem[];
   itemsHeight?: number;
   selecteditemindex?: number;
   dynamic?: boolean;
@@ -39,15 +45,28 @@ export const List: React.FC<ListProps> = ({
   const [selectedIndex, setSelectedIndex] = useState(selecteditemindex);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleItemClick = (index: number, item: string) => {
-    setSelectedIndex(items.indexOf(item));
+  const isListItem = (item: string | ListItem): item is ListItem => {
+    return typeof item === 'object' && 'title' in item;
+  };
+
+  const getItemTitle = (item: string | ListItem): string => {
+    return isListItem(item) ? item.title : item;
+  };
+
+  const isItemDisabled = (item: string | ListItem): boolean => {
+    return isListItem(item) ? item.disabled === true : false;
+  };
+
+  const handleItemClick = (index: number, item: string | ListItem) => {
+    if (isItemDisabled(item)) return;
+    setSelectedIndex(index);
     onItemClick(item);
   };
 
   const isDark = theme === "dark" || theme === "dark-hc";
 
   const filteredItems = filterable
-    ? items.filter((item) => item.toLowerCase().includes(searchQuery.toLowerCase()))
+    ? items.filter((item) => getItemTitle(item).toLowerCase().includes(searchQuery.toLowerCase()))
     : items;
 
   const searchInput = filterable && (
@@ -98,6 +117,9 @@ export const List: React.FC<ListProps> = ({
       >
         {filteredItems.map((item, index) => {
           const isSelected = selectedIndex === index;
+          const disabled = isItemDisabled(item);
+          const title = getItemTitle(item);
+
           return (
             <li
               key={index}
@@ -106,19 +128,20 @@ export const List: React.FC<ListProps> = ({
                 px-4 py-2
                 border-b
                 ${isDark ? "border-gray-700" : "border-gray-200"}
-                cursor-pointer
+                ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
                 transition-colors
                 ${isSelected
                   ? `text-white`
                   : isDark ? "text-gray-200 hover:[background-color:var(--hover-color)]" : "text-gray-700 hover:[background-color:var(--hover-color)]"
                 }
+                ${disabled ? "!hover:bg-transparent" : ""}
               `}
               style={{
                 fontSize: "var(--font-size)",
                 backgroundColor: isSelected ? "var(--brand-color)" : undefined,
               }}
             >
-              {item}
+              {title}
             </li>
           );
         })}

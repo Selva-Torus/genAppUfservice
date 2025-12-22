@@ -711,14 +711,14 @@ export class CommonService{
     } 
     
     
-     async getRuleCodeMapper(currentNode, inputparam,processedKey,fabric ,SessionInfo ){
+      async getRuleCodeMapper(currentNode, inputparam,processedKey,fabric ,SessionInfo ){
       try {       
         let zenresult
         var ResultObj = {}
         let fieldarr = []
         var rule = currentNode.rule
         var customCode = currentNode.code   
-
+        //console.log("SessionInfo",SessionInfo);        
         if(rule && Object.keys(rule).length > 0){
           var nodes = rule.nodes     
           if(nodes && nodes.length > 0){
@@ -730,40 +730,45 @@ export class CommonService{
                   for(let i=0;i < inputs.length;i++){
                     fieldarr.push(content.inputs[i].field)
                   }
-                }
-                
+                }                
                 if(fieldarr?.length == 0)
                   throw 'Field not found in rule'
               }            
-            }
-
+            }           
             var gparamreq = {}; 
-            for(let i=0;i < fieldarr.length;i++){  
+             let afpVal,data,sarr = []
+            for(let i=0;i < fieldarr.length;i++){ 
               let connectedNodeName = fieldarr[i].split('.')[0]
               let connectedField = fieldarr[i].split('.')[1]
-              let afpVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.response',process.env.CLIENTCODE))
-              connectedField = connectedField.toLowerCase()    
+               if(connectedNodeName == 'session'){
+                if(SessionInfo[connectedField]){
+                  afpVal = SessionInfo                  
+                }
+                data = await this.getNestedValue(afpVal, connectedField)
+              } else {
+                afpVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.response',process.env.CLIENTCODE))
+                connectedField = connectedField.toLowerCase()    
               if(afpVal && Array.isArray(afpVal) && afpVal.length > 1 || typeof afpVal == 'string'){               
                 var codeVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.code',process.env.CLIENTCODE))
                 var ifoVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.ifo',process.env.CLIENTCODE))
                if(codeVal[connectedField]){
-                var data = await this.getNestedValue(codeVal, connectedField) 
+                 data = await this.getNestedValue(codeVal, connectedField) 
               }
               else if(ifoVal[connectedField])
-                 var data = await this.getNestedValue(ifoVal, connectedField) 
+                  data = await this.getNestedValue(ifoVal, connectedField) 
               else
                throw 'Array of records found in Decision Node'
               }else
-                var data = await this.getNestedValue(afpVal, connectedField)   
-                if(data){                
+                 data = await this.getNestedValue(afpVal, connectedField) 
+              }
+                  if(data)               
                   await this.setNestedValue(gparamreq, fieldarr[i], data) 
-                }
+                
                 // else{
                 //   throw `${fieldarr[i]} not found in given request to take decision`                    
                 // }  
               // }
-            }    
-           
+              } 
               var goruleres = await this.ruleEngine.goRule(rule, gparamreq)                  
               if(Object.keys(goruleres.result).length > 0){                   
                 zenresult = goruleres.result.output
@@ -931,7 +936,7 @@ export class CommonService{
       }
     }
 
-    async getTPL(key: any, upId: any,pfjson:any,status:string,stoken:any,fabric:string,sourceStatus?:string,request?:any,response?:any){
+    async getTPL(key: any, upId: any,pfjson:any,status:string, targetQueue:string ,stoken:any,fabric:string,sourceStatus?:string,request?:any,response?:any){
       // this.logger.log("TPL Log Started")     
       var sessionInfo = {} 
       var processInfo = {};
@@ -953,8 +958,11 @@ export class CommonService{
         if(pfjson.nodeType)
           processInfo['nodeType'] = pfjson.nodeType;  
         if(sourceStatus){
-          processInfo['sourceStatus'] = sourceStatus;
-        }          
+          processInfo['event'] = sourceStatus;
+        } 
+        if(targetQueue){
+          processInfo['queue'] = targetQueue;
+        }         
         //processInfo['mode'] = mode;
 
         if(status == 'Success'){
@@ -1382,23 +1390,22 @@ export class CommonService{
             let AFVK = await this.splitcommonkey(streamKey, 'AFVK')
             
             let isDocExist:any
-            if(AfskValue ==  "logInfo"){
-              let filter = {}               
-              filter['CK'] = CK
-              filter['FNGK'] = FNGK
-              filter['FNK'] = FNK
-              filter['CATK'] = CATK
-              filter['AFGK'] = AFGK
-              filter['AFK'] = AFK
-              filter['AFVK'] = AFVK
-              filter['DATE'] = entryId
-              if(user){
-                filter['USER'] = user
-              }
-              isDocExist = await this.mongoService.existsDocument(streamName,'',filter)
-            }else{
-              isDocExist = await this.mongoService.existsDocument(streamName,'',{UPID:AfskValue})              
+            let filter = {}               
+            filter['CK'] = CK
+            filter['FNGK'] = FNGK
+            filter['FNK'] = FNK
+            filter['CATK'] = CATK
+            filter['AFGK'] = AFGK
+            filter['AFK'] = AFK
+            filter['AFVK'] = AFVK
+            filter['DATE'] = entryId
+            if(user){
+              filter['USER'] = user
             }
+            if(AfskValue !=  "logInfo"){
+              filter['UPID'] = AfskValue
+            }
+            isDocExist = await this.mongoService.existsDocument(streamName,'',filter)   
             
              if(isDocExist && Object.keys(isDocExist).length > 0 && isDocExist._id){
               let appendRes:any = await this.mongoService.appendFileInToDocument(streamName,isDocExist._id,'AFSK.'+AfskValue,afskvalue);

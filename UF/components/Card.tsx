@@ -5,7 +5,6 @@ import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 
 type CardSize = "m" | "l";
 type CardTheme = "normal" | "info" | "success" | "warning" | "danger" | "utility" | "brand";
@@ -54,17 +53,16 @@ export const Card: React.FC<CardProps> = ({
   className = "",
   style = {},
 }) => {
-  const { theme, branding } = useGlobal();
+  const { theme } = useGlobal();
 
   const getSizeClasses = () => {
-    const fontSize = getFontSizeClass(branding.fontSize);
     switch (size) {
       case "m":
-        return `p-4 ${fontSize}`;
+        return "p-4";
       case "l":
-        return `p-6 ${fontSize === "text-sm" ? "text-base" : fontSize === "text-base" ? "text-lg" : "text-xl"}`;
+        return "p-6";
       default:
-        return `p-4 ${fontSize}`;
+        return "p-4";
     }
   };
 
@@ -83,9 +81,9 @@ export const Card: React.FC<CardProps> = ({
       case "utility":
         return { bg: isDark ? "#374151" : "#F3F4F6", border: "#6B7280", text: isDark ? "#D1D5DB" : "#374151" };
       case "brand":
-        return { bg: isDark ? branding.brandColor  : branding.brandColor , border: branding.brandColor, text: isDark ? "#F9FAFB" : "#111827" };
+        return { bg: "var(--brand-color)", border: "var(--brand-color)", text: isDark ? "#F9FAFB" : "#111827" };
       default:
-        return { bg: isDark ? "#1F2937" : "#FFFFFF", border: isDark ? "#4B5563" : "#E5E7EB", text: isDark ? "#F9FAFB" : "#111827" };
+        return { bg: isDark ? "#1F2937" : "#FFFFFF", border: isDark ? "#4B5563" : "##E5E7EB", text: isDark ? "#F9FAFB" : "#111827" };
     }
   };
 
@@ -108,7 +106,6 @@ export const Card: React.FC<CardProps> = ({
       onClick={disabled ? undefined : onClick}
       className={`
         ${getSizeClasses()}
-        ${getBorderRadiusClass(branding.borderRadius)}
         ${getAlignmentClass()}
         flex flex-col gap-3
         ${view === "outlined" ? "border-2" : view === "raised" ? "shadow-lg" : view === "filled" ? "border" : ""}
@@ -120,16 +117,18 @@ export const Card: React.FC<CardProps> = ({
       `}
       style={{
         backgroundColor: view === "filled" ? colors.bg : view === "clear" ? "transparent" : isDark ? "#1F2937" : "#FFFFFF",
-        borderColor: selected ? branding.brandColor : view === "outlined" || view === "filled" ? colors.border : "transparent",
+        borderColor: selected ? "var(--selection-color)" : view === "outlined" || view === "filled" ? colors.border : "transparent",
         color: colors.text,
         fontFamily: "var(--font-body)",
-        ...(selected ? { '--tw-ring-color': branding.brandColor } as any : {}),
+        fontSize: size === "l" ? "var(--font-size-large)" : "var(--font-size)",
+        borderRadius: "var(--border-radius)",
+        ...(selected ? { '--tw-ring-color': 'var(--selection-color)' } as any : {}),
         ...style,
       }}
     >
       {/* Title Section */}
       {title && (
-        <div className={`${getFontSizeClass(branding.fontSize)} font-semibold border-b pb-2`} style={{ borderColor: isDark ? "#374151" : "#E5E7EB" }}>
+        <div className="font-semibold border-b pb-2" style={{ borderColor: isDark ? "#374151" : "#E5E7EB", fontSize: "var(--font-size)" }}>
           {title}
         </div>
       )}
@@ -160,15 +159,17 @@ export const Card: React.FC<CardProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
+    const headerClasses = `font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
+
+    const headerStyle = { fontSize: "var(--font-size)" };
 
     switch (headerPosition) {
       case "top":
         return (
           <div className="flex flex-col">
-            <div className={headerClasses}>{headerText}</div>
+            <div className={headerClasses} style={headerStyle}>{headerText}</div>
             {element}
           </div>
         );
@@ -176,13 +177,13 @@ export const Card: React.FC<CardProps> = ({
         return (
           <div className="flex flex-col">
             {element}
-            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
+            <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
           </div>
         );
       case "left":
         return (
           <div className="flex items-start gap-4">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
             {element}
@@ -192,7 +193,7 @@ export const Card: React.FC<CardProps> = ({
         return (
           <div className="flex items-start gap-4">
             {element}
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
           </div>
@@ -200,7 +201,7 @@ export const Card: React.FC<CardProps> = ({
     }
   };
 
-  const finalElement = renderWithHeader(cardElement);
+  const finalElement = (<div className={className}>{renderWithHeader(cardElement)}</div>);
 
   if (needTooltip && tooltipProps) {
     return (

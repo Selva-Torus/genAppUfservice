@@ -2,6 +2,7 @@
   "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc",
   "ufKey": "Logs Screen",
   "screenName": "logs",
+  "screenLabel": "logs",
   "navbarData": [
     {
       "menuGroup": "admin",
@@ -42,6 +43,86 @@
         }
       ],
       "items": []
+    },
+    {
+      "menuGroupLabel": "Menu Item 3",
+      "screenDetails": [
+        {
+          "name": "menu item 3",
+          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+          "allowedAccessProfile": [
+            "Template 1",
+            "User",
+            "Template 3"
+          ],
+          "static": false
+        }
+      ],
+      "items": []
+    },
+    {
+      "menuGroupLabel": "Menu Item 4",
+      "screenDetails": [
+        {
+          "name": "menu item 4",
+          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+          "allowedAccessProfile": [
+            "Template 1",
+            "User",
+            "Template 3"
+          ],
+          "static": false
+        }
+      ],
+      "items": []
+    },
+    {
+      "menuGroupLabel": "Menu Item 5",
+      "screenDetails": [
+        {
+          "name": "menu item 5",
+          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+          "allowedAccessProfile": [
+            "Template 1",
+            "User",
+            "Template 3"
+          ],
+          "static": false
+        }
+      ],
+      "items": []
+    },
+    {
+      "menuGroupLabel": "Menu Item 6",
+      "screenDetails": [
+        {
+          "name": "menu item 6",
+          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+          "allowedAccessProfile": [
+            "Template 1",
+            "User",
+            "Template 3"
+          ],
+          "static": false
+        }
+      ],
+      "items": []
+    },
+    {
+      "menuGroupLabel": "Menu Item 7",
+      "screenDetails": [
+        {
+          "name": "menu item 7",
+          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+          "allowedAccessProfile": [
+            "Template 1",
+            "User",
+            "Template 3"
+          ],
+          "static": false
+        }
+      ],
+      "items": []
     }
   ],
   "setupData": {
@@ -66,7 +147,7 @@
     "direction": "LTR",
     "brandColor": "#2AE38F",
     "selectionColor": "#EC407A",
-    "hoverColor": "#FF5722",
+    "hoverColor": "#FFC723",
     "borderRadius": "xl",
     "navigationStyles": "horizontal",
     "theme": "light",
@@ -125,6 +206,11 @@
   },
   "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:appearance",
   "allKeys": [
+    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
     "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
   ],
   "loginDetails": {
@@ -140,7 +226,7 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-12-15T11:01:08.440Z",
+    "lastActive": "2025-12-22T13:31:10.265Z",
     "profile": "torus/9.1/CT003/resources/images/Peer@786/scott-graham-5fNmWej4tAA-unsplash.jpg",
     "quickLinks": [],
     "client": "CT003",
@@ -282,7 +368,33 @@
   },
   "allKeyswithScreenNames": [
     {
+      "screenName": "testroute",
       "screensName": "testroute-v1",
+      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    },
+    {
+      "screenName": "menu item 3",
+      "screensName": "menu_item_3-v1",
+      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    },
+    {
+      "screenName": "menu item 4",
+      "screensName": "menu_item_4-v1",
+      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    },
+    {
+      "screenName": "menu item 5",
+      "screensName": "menu_item_5-v1",
+      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    },
+    {
+      "screenName": "menu item 6",
+      "screensName": "menu_item_6-v1",
+      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    },
+    {
+      "screenName": "menu item 7",
+      "screensName": "menu_item_7-v1",
       "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
     }
   ],

@@ -17,6 +17,7 @@ interface IconProps {
   headerText?: string;
   headerPosition?: HeaderPosition;
   className?: string;
+  onClick?: (e: React.MouseEvent) => void;
 }
 const getIconComponent = (iconName?: string) => {
   if (!iconName) return null;
@@ -38,7 +39,8 @@ export const Icon: React.FC<IconProps> = ({
   tooltipProps,
   headerText,
   headerPosition = "top",
-  className = ""
+  className = "",
+  onClick
 }) => {
   const { theme } = useGlobal();
   const isDark = theme === "dark" || theme === "dark-hc";
@@ -49,11 +51,13 @@ export const Icon: React.FC<IconProps> = ({
     <IconComponent
       className={className}
       size={size}
+      onClick={onClick}
     />
   ) : (
     <div
       className={className}
       style={{ width: size, height: size, display: 'inline-block' }}
+      onClick={onClick}
     >
       {/* Fallback if icon not found */}
       <svg

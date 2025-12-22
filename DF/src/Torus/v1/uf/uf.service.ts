@@ -3168,7 +3168,7 @@ export class UfService {
     }
   }
 
-transformToCombinations(data: any[]) {
+  transformToCombinations(data: any[]) {
   try {
     return data.map((profile) => {
       const combinations: any[] = [];
@@ -3273,17 +3273,17 @@ transformToCombinations(data: any[]) {
         });
       });
 
-      return {
-        accessProfile: profile.accessProfile,
-        dap: profile?.dap ?? undefined,
-        combinations,
-        orgGrp: profile.orgGrp,
-      };
-    });
-  } catch (error) {
-    throw new BadGatewayException(error);
+        return {
+          accessProfile: profile.accessProfile,
+          dap: profile?.dap ?? undefined,
+          combinations,
+          orgGrp: profile.orgGrp,
+        };
+      });
+    } catch (error) {
+      throw new BadGatewayException(error);
+    }
   }
-}
 
   async getAccessTemplate(token: string) {
     try {

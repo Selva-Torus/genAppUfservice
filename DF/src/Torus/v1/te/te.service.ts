@@ -26,7 +26,7 @@ export class TeService {
   async EventEmitter(pfdto: pfDto, node?) {    
     const page = pfdto.page;
     const count = pfdto.count;
-    let nodeInfo,processedKey,currentFabric;
+    let nodeInfo,processedKey,currentFabric, failureQueue;
      try {
        this.logger.log('Event Emmiter Started....');
        let event, pid, refflag, ufkey, keyname, ufname, node, pfjson, poJson, pfo, hlrId, sourceId, dstkey;
@@ -144,6 +144,7 @@ export class TeService {
 
         let srcQueue;
         let srcStatus;
+        let targetQueue;
         let staticQueue = currentFabric == 'DF-DFD' ? 'TDH' : 'TPH';
 
         if (poNode[i].nodeType == 'startnode') {
@@ -157,7 +158,7 @@ export class TeService {
                if (!srcQueue || srcQueue == ' ') srcQueue = staticQueue;
                srcQueue = client + '_' + srcQueue + '_ProcessStatus'
                await this.redisService.setStreamData(srcQueue, client + 'TASK - ' + pfdto.upId, JSON.stringify({ PID: pfdto.upId, TID: pfdto.nodeId, EVENT: pfdto.event }));
-               await this.teCommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', pfdto.token, 'PF');
+               await this.teCommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', '',pfdto.token, 'PF');
                pfdto.nodeId = null;
                pfdto.nodeType = null;
                pfdto.nodeName = null;
@@ -170,7 +171,7 @@ export class TeService {
                if (!srcQueue || srcQueue == ' ') srcQueue = staticQueue;
                srcQueue = client + '_' + srcQueue + '_ProcessStatus'
                await this.redisService.setStreamData(srcQueue, client + 'TASK - ' + pfdto.upId, JSON.stringify({ PID: pfdto.upId, TID: pfdto.nodeId, EVENT: pfdto.event }));
-               await this.teCommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', pfdto.token, 'PF');
+               await this.teCommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', '',pfdto.token, 'PF');
                pfdto.nodeId = null;
                pfdto.nodeType = null;
                pfdto.nodeName = null;
@@ -624,7 +625,9 @@ export class TeService {
                     ufname = getEventInfo.ufname
                     srcStatus = getEventInfo.srcStatus             
                     srcQueue = getEventInfo.srcQueue
-                    sourceId = getEventInfo.sourceId                      
+                    sourceId = getEventInfo.sourceId
+                    targetQueue = getEventInfo.targetQueue
+                    failureQueue = getEventInfo.failureQueue                      
                   } else {
                     srcStatus = poNode[i].events?.sourceStatus;
                     srcQueue = poNode[i].events.sourceQueue;
@@ -649,7 +652,7 @@ export class TeService {
                           if (routeArray[r].nodeName == 'End') {
                             if (!srcQueue) srcQueue = staticQueue;
                             await this.redisService.setStreamData(srcQueue, 'TASK - ' + pfdto.upId, JSON.stringify({ PID: pfdto.upId, TID: pfdto.nodeId, EVENT: 'ProcessCompleted' }));
-                            await this.teCommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', pfdto.token, currentFabric);
+                            await this.teCommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', '',pfdto.token, currentFabric);
                             if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD') {
                               pfresponse = pfresponse.data && pfresponse.data[pfjson[pfs].nodeName] ? pfresponse.data[pfjson[pfs].nodeName] : pfresponse;
                               this.logger.log('Event Emmiter Completed....');
@@ -778,7 +781,7 @@ export class TeService {
                         }
                       }
                     }
-                    await this.teCommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', pfdto.token, currentFabric, event);
+                    await this.teCommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', targetQueue, pfdto.token, currentFabric, event);
                   } else {  
                     if (currentFabric == 'DF-DFD') {   
                        pfdto['logicCenter'] = logicCenter                   
@@ -860,12 +863,12 @@ export class TeService {
         // console.log('PO ERROR:', error);
        if (pfdto.upId) {
          if (error.statusCode) {
-           await this.teCommonService.getTPL(processedKey, pfdto.upId, nodeInfo, 'Failed',
+           await this.teCommonService.getTPL(processedKey, pfdto.upId, nodeInfo, 'Failed', failureQueue,
              pfdto.token, currentFabric, '', pfdto.data, error);
            throw new CustomException(error?.message, error.statusCode);
          }
          else {
-           await this.teCommonService.getTPL(processedKey, pfdto.upId, nodeInfo, 'Failed',
+           await this.teCommonService.getTPL(processedKey, pfdto.upId, nodeInfo, 'Failed', failureQueue,
              pfdto.token, currentFabric, '', pfdto.data, error);
            throw new CustomException(error.message ? error.message : error.toString(), 500);
          }
