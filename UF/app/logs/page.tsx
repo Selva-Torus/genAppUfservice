@@ -70,31 +70,51 @@ const ParentComponent = () => {
     const { year, month, day } = date
     return `${year}-${month}-${day}`
   }
-  let payload:any = useMemo(() => {
-    return {
-      tenant: 'CT003',
-       fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
-            suffixes[prefix]
-              ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
-              : []
-          ) : [],
-      appgroup: appGroup,
-      app: app,
-      user: user,
-      FromDate: range && range?.start ? getDate(range.start) : '',
-      ToDate: range && range?.end ? getDate(range.end) : '',
-      page: jsonData.page,
-      limit: jsonData.limit,
-      searchParam: search
-    }
-  }, [activeTab, jsonData, search , range , fabrics, user])
+  // let payload:any = useMemo(() => {
+  //   return {
+  //     tenant: 'CT003',
+  //      fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
+  //           suffixes[prefix]
+  //             ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
+  //             : []
+  //         ) : [],
+  //     appgroup: appGroup,
+  //     app: app,
+  //     user: user,
+  //     FromDate: range && range?.start ? getDate(range.start) : '',
+  //     ToDate: range && range?.end ? getDate(range.end) : '',
+  //     page: jsonData.page,
+  //     limit: jsonData.limit,
+  //     searchParam: search
+  //   }
+  // }, [activeTab, jsonData, search , range , fabrics, user])
+  const payload = {
+    "tenant": "CT299",
+    "fabric": [],
+    "appgroup": {
+        "code": "PH001",
+        "name": "VPH"
+    },
+    "app": {
+        "code": "VPH001",
+        "name": "Veracious Payment Hub"
+    },
+    "user": [
+        "perumal"
+    ],
+    "FromDate": "2025-12-12",
+    "ToDate": "2025-12-19",
+    "page": 1,
+    "limit": 10,
+    "searchParam": ""
+}
 
   const fetchData = async (signal: AbortSignal) => {
     try {
-      if (encAppFalg.flag) {
-        payload['dpdKey'] = encAppFalg.dpd;
-        payload['method'] = 'vault';
-      }
+      // if (encAppFalg.flag) {
+      //   payload['dpdKey'] = encAppFalg.dpd;
+      //   payload['method'] = 'vault';
+      // }
       console.log('Fetching data...', payload)
       setLoading(true)
       const response = await AxiosService.post(
@@ -180,6 +200,7 @@ const ParentComponent = () => {
               return {
                 nodeData: {
                   name: processInfo.nodeName,
+                  queue: processInfo?.queue,
                   request: processInfo.request,
                   response: processInfo.response,
                   subFlowInfo : processInfo.subFlowInfo ? processInfo.subFlowInfo : undefined,

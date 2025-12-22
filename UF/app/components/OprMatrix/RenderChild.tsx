@@ -10,6 +10,8 @@ import { useTheme } from '@/hooks/useTheme'
 import { Text } from '@/components/Text'
 import { Modal } from '@/components/Modal'
 import Popup from '@/components/Popup'
+import { useOPRMatrix } from '.'
+import { highlightText } from '../AccessTemplateTable/SearchHelpers'
 
 const RenderChild = ({
   item,
@@ -47,6 +49,7 @@ const RenderChild = ({
   const { branding } = useGlobal()
   const { isDark, borderColor, bgColor } = useTheme()
   const { brandColor } = branding
+  const { isSearchOpen, searchTerm } = useOPRMatrix()
 
   const handleDragStartOfOPRNode = (e: React.DragEvent<HTMLDivElement>) => {
     e.dataTransfer.setData('type', resourceField)
@@ -85,7 +88,12 @@ const RenderChild = ({
             </span>
           )}
           <div className='flex flex-col'>
-            <Text variant='body-2'>{displayName}</Text>
+            <Text variant='body-2'>
+              {' '}
+              {isSearchOpen && searchTerm
+                ? highlightText(displayName, searchTerm, brandColor)
+                : displayName}
+            </Text>
             <Text color='secondary'>{displayCode.replace(codePrefix, '')}</Text>
           </div>
         </div>

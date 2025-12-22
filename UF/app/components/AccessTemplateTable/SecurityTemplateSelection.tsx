@@ -9,6 +9,13 @@ import { useGlobal } from '@/context/GlobalContext'
 import { useTheme } from '@/hooks/useTheme'
 import i18n from '../i18n'
 import clsx from 'clsx'
+import {
+  hasMatchingOrgOrSubOrg,
+  hasMatchingPsGrpOrPs,
+  hasMatchingRoleGrpOrRole,
+  hasMatchingSubOrg,
+  highlightText
+} from './SearchHelpers'
 
 interface Role {
   roleCode: string
@@ -70,10 +77,30 @@ const RenderSubOrg = ({
   setOpenRoleGrp,
   openOrgGrp,
   accentColor,
-  fontSize
+  fontSize,
+  orgSearchTerm
 }: any) => {
   const [isOpen, setIsOpen] = useState(false)
   const { borderColor, textColor, bgColor, isDark } = useTheme()
+
+  // Check if this group or any nested content matches search
+  const matchesSearch = useMemo(() => {
+    return hasMatchingSubOrg(subOrgGrp, orgSearchTerm)
+  }, [subOrgGrp, orgSearchTerm])
+
+  // Auto-expand if search term matches something inside
+  React.useEffect(() => {
+    if (orgSearchTerm && matchesSearch) {
+      setIsOpen(true)
+    } else if (!orgSearchTerm) {
+      setIsOpen(false)
+    }
+  }, [orgSearchTerm, matchesSearch])
+
+  // Don't render if doesn't match search
+  if (!matchesSearch) {
+    return null
+  }
 
   return (
     <div
@@ -82,7 +109,7 @@ const RenderSubOrg = ({
     >
       {/* SubOrg Group Header */}
       <div
-        className='flex cursor-pointer justify-between rounded p-2'
+        className='hover:bg-torus-bg-hover flex cursor-pointer justify-between rounded p-2'
         onClick={() => setIsOpen(!isOpen)}
       >
         <div className='flex items-center gap-[.6vw]'>
@@ -91,70 +118,88 @@ const RenderSubOrg = ({
             style={{ fontSize: `${fontSize * 0.7}vw` }}
             className='text-torus-text-opacity-75'
           >
-            {subOrgGrp.subOrgGrpName}
+            {highlightText(subOrgGrp.subOrgGrpName, orgSearchTerm, accentColor)}
           </span>
         </div>
-        <span>{subOrgGrp.subOrg?.length || 0}</span>
+        <span className='text-torus-text-opacity-50'>
+          {subOrgGrp.subOrg?.length || 0}
+        </span>
       </div>
 
       {/* SubOrg List */}
       {isOpen &&
-        subOrgGrp.subOrg?.map((subOrg: SubOrgItem) => (
-          <div key={subOrg.subOrgId}>
-            <div
-              onClick={() => {
-                setSelectedOrgId(subOrg.subOrgId)
-                setSelectedPsId(
-                  subOrg.psGrp.length && subOrg.psGrp[0].ps.length
-                    ? subOrg.psGrp[0].ps[0].psId
-                    : null
-                )
-                setOpenOrgGrp('ALL_OPEN')
-                setOpenPsGrp('ALL_OPEN')
-                setOpenRoleGrp('ALL_OPEN')
-              }}
-              style={{
-                borderColor:
-                  selectedOrgId === subOrg.subOrgId ? accentColor : ''
-              }}
-              className={twMerge(
-                `ml-[1vw] mt-2 w-[300px] cursor-pointer rounded border-2 p-2`,
-                bgColor
-              )}
-            >
-              <div
-                style={{ fontSize: `${fontSize * 0.75}vw` }}
-                className='text-torus-text truncate'
-                title={subOrg.subOrgName}
-              >
-                {subOrg.subOrgName}
-              </div>
-              <div
-                style={{ fontSize: `${fontSize * 0.65}vw` }}
-                className='text-torus-text-opacity-50'
-              >
-                {subOrg.subOrgCode.split('-').pop()}
-              </div>
-            </div>
+        subOrgGrp.subOrg?.map((subOrg: SubOrgItem) => {
+          // Check if this specific subOrg matches or has matching children
+          const subOrgMatches =
+            !orgSearchTerm ||
+            subOrg.subOrgName
+              .toLowerCase()
+              .includes(orgSearchTerm.toLowerCase()) ||
+            subOrg.subOrgGrp?.some((nested: any) =>
+              hasMatchingSubOrg(nested, orgSearchTerm)
+            )
 
-            {/* Recursively render nested subOrgGrp */}
-            {subOrg.subOrgGrp?.map((nestedSubOrgGrp: SubOrgGrpItem) => (
-              <RenderSubOrg
-                key={nestedSubOrgGrp.subOrgGrpId}
-                subOrgGrp={nestedSubOrgGrp}
-                selectedOrgId={selectedOrgId}
-                setSelectedOrgId={setSelectedOrgId}
-                setSelectedPsId={setSelectedPsId}
-                setOpenOrgGrp={setOpenOrgGrp}
-                setOpenPsGrp={setOpenPsGrp}
-                setOpenRoleGrp={setOpenRoleGrp}
-                openOrgGrp={openOrgGrp}
-                accentColor={accentColor}
-                fontSize={fontSize}
-              />
-            ))}
-          </div>
-        ))}
+          if (!subOrgMatches) return null
+
+          return (
+            <div key={subOrg.subOrgId}>
+              <div
+                onClick={() => {
+                  setSelectedOrgId(subOrg.subOrgId)
+                  setSelectedPsId(
+                    subOrg.psGrp?.length && subOrg.psGrp[0]?.ps?.length
+                      ? subOrg.psGrp[0].ps[0].psId
+                      : null
+                  )
+                  setOpenOrgGrp('ALL_OPEN')
+                  setOpenPsGrp('ALL_OPEN')
+                  setOpenRoleGrp('ALL_OPEN')
+                }}
+                style={{
+                  borderColor:
+                    selectedOrgId === subOrg.subOrgId ? accentColor : ''
+                }}
+                className={twMerge(
+                  `ml-[1vw] mt-2 w-[300px] cursor-pointer rounded border-2 p-2`,
+                  bgColor
+                )}
+              >
+                <div
+                  style={{ fontSize: `${fontSize * 0.75}vw` }}
+                  className='text-torus-text truncate'
+                  title={subOrg.subOrgName}
+                >
+                  {highlightText(subOrg.subOrgName, orgSearchTerm, accentColor)}
+                </div>
+                <div
+                  style={{ fontSize: `${fontSize * 0.65}vw` }}
+                  className='text-torus-text-opacity-50'
+                >
+                  {subOrg.subOrgCode.split('-').pop()}
+                </div>
+              </div>
+
+              {/* Recursively render nested subOrgGrp */}
+              {subOrg.subOrgGrp?.map((nestedSubOrgGrp: any) => (
+                <div key={nestedSubOrgGrp.subOrgGrpId} className='ml-[0.5vw]'>
+                  <RenderSubOrg
+                    subOrgGrp={nestedSubOrgGrp}
+                    selectedOrgId={selectedOrgId}
+                    setSelectedOrgId={setSelectedOrgId}
+                    setSelectedPsId={setSelectedPsId}
+                    setOpenOrgGrp={setOpenOrgGrp}
+                    setOpenPsGrp={setOpenPsGrp}
+                    setOpenRoleGrp={setOpenRoleGrp}
+                    openOrgGrp={openOrgGrp}
+                    accentColor={accentColor}
+                    fontSize={fontSize}
+                    orgSearchTerm={orgSearchTerm}
+                  />
+                </div>
+              ))}
+            </div>
+          )
+        })}
     </div>
   )
 }
@@ -499,9 +544,19 @@ export default function SecurityTemplateSelection({
 
         <div className='flex h-[600px] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
           {orgGrpData
-            .filter((grp: OrgGrpItem) =>
-              grp.orgGrpName.toLowerCase().includes(orgSearchTerm.toLowerCase())
-            )
+            .filter((grp: OrgGrpItem) => {
+              const lowerSearch = orgSearchTerm.toLowerCase()
+
+              // Check if group name matches
+              if (grp.orgGrpName.toLowerCase().includes(lowerSearch)) {
+                return true
+              }
+
+              // Check if any org or subOrg in this group matches
+              return grp.org.some((org: any) =>
+                hasMatchingOrgOrSubOrg(org, orgSearchTerm)
+              )
+            })
             .map((grp: OrgGrpItem) => (
               <div
                 key={grp.orgGrpId}
@@ -536,60 +591,65 @@ export default function SecurityTemplateSelection({
 
                 {/* ORG LIST */}
                 {(openOrgGrp === 'ALL_OPEN' || openOrgGrp === grp.orgGrpId) &&
-                  grp.org.map(org => (
-                    <div
-                      className={twMerge(
-                        'mt-[.8vh] rounded px-2 py-1.5',
-                        bgColor
-                      )}
-                      key={org.orgId}
-                    >
+                  grp.org
+                    .filter(org => hasMatchingOrgOrSubOrg(org, orgSearchTerm))
+                    .map(org => (
                       <div
-                        onClick={() => handleOrgClick(org)}
-                        style={{
-                          borderColor: selectedOrgId === org.orgId ? brandColor : ''
-                        }}
-                        className={clsx(
-                          `border-torus-border mt-2 w-full cursor-pointer rounded border-2 p-2`,
-                          {
-                            'border-torus-accent-color': selectedOrgId === org.orgId,
-                            'bg-torus-bg': selectedOrgId !== org.orgId
-                          }
+                        className={twMerge(
+                          'mt-[.8vh] rounded px-2 py-1.5',
+                          bgColor
                         )}
+                        key={org.orgId}
                       >
                         <div
-                          style={{ fontSize: `${fontSize * 0.8}vw` }}
-                          className='text-torus-text truncate'
-                          title={org.orgName}
+                          onClick={() => handleOrgClick(org)}
+                          style={{
+                            borderColor:
+                              selectedOrgId === org.orgId ? brandColor : ''
+                          }}
+                          className={clsx(
+                            `border-torus-border mt-2 w-full cursor-pointer rounded border-2 p-2`,
+                            {
+                              'border-torus-accent-color':
+                                selectedOrgId === org.orgId,
+                              'bg-torus-bg': selectedOrgId !== org.orgId
+                            }
+                          )}
                         >
-                          {org.orgName}
+                          <div
+                            style={{ fontSize: `${fontSize * 0.8}vw` }}
+                            className='text-torus-text truncate'
+                            title={org.orgName}
+                          >
+                            {org.orgName}
+                          </div>
+                          <div
+                            style={{ fontSize: `${fontSize * 0.7}vw` }}
+                            className='text-torus-text-opacity-50 truncate'
+                          >
+                            {org.orgCode.split('-').pop()}
+                          </div>
                         </div>
-                        <div
-                          style={{ fontSize: `${fontSize * 0.7}vw` }}
-                          className='text-torus-text-opacity-50 truncate'
-                        >
-                          {org.orgCode.split('-').pop()}
-                        </div>
-                      </div>
 
-                      {/* Render SubOrg Groups */}
-                      {org.subOrgGrp?.map((subOrgGrp: SubOrgGrpItem) => (
-                        <RenderSubOrg
-                          key={subOrgGrp.subOrgGrpId}
-                          subOrgGrp={subOrgGrp}
-                          selectedOrgId={selectedOrgId}
-                          setSelectedOrgId={setSelectedOrgId}
-                          setSelectedPsId={setSelectedPsId}
-                          setOpenOrgGrp={setOpenOrgGrp}
-                          setOpenPsGrp={setOpenPsGrp}
-                          setOpenRoleGrp={setOpenRoleGrp}
-                          openOrgGrp={openOrgGrp}
-                          accentColor={brandColor}
-                          fontSize={fontSize}
-                        />
-                      ))}
-                    </div>
-                  ))}
+                        {/* Render SubOrg Groups */}
+                        {org.subOrgGrp?.map((subOrgGrp: SubOrgGrpItem) => (
+                          <RenderSubOrg
+                            key={subOrgGrp.subOrgGrpId}
+                            subOrgGrp={subOrgGrp}
+                            selectedOrgId={selectedOrgId}
+                            setSelectedOrgId={setSelectedOrgId}
+                            setSelectedPsId={setSelectedPsId}
+                            setOpenOrgGrp={setOpenOrgGrp}
+                            setOpenPsGrp={setOpenPsGrp}
+                            setOpenRoleGrp={setOpenRoleGrp}
+                            openOrgGrp={openOrgGrp}
+                            accentColor={brandColor}
+                            fontSize={fontSize}
+                            orgSearchTerm={orgSearchTerm}
+                          />
+                        ))}
+                      </div>
+                    ))}
               </div>
             ))}
         </div>
@@ -647,6 +707,7 @@ export default function SecurityTemplateSelection({
             </Button>
           )}
         </div>
+
         <hr className={twMerge('border', borderColor)} />
 
         <div className='flex h-[600px] flex-col gap-[.8vh] overflow-y-auto px-[.5vw] py-[1.2vh] scrollbar-hide'>
@@ -658,9 +719,7 @@ export default function SecurityTemplateSelection({
             .flatMap((org: any) =>
               org.psGrp
                 .filter((psGrp: any) =>
-                  psGrp.psGrpName
-                    .toLowerCase()
-                    .includes(psSearchTerm.toLowerCase())
+                  hasMatchingPsGrpOrPs(psGrp, psSearchTerm)
                 )
                 .map((pg: any) => (
                   <div
@@ -689,7 +748,13 @@ export default function SecurityTemplateSelection({
                         >
                           <DownArrow fill={isDark ? 'white' : 'black'} />
                         </span>
-                        <Text>{pg.psGrpName}</Text>
+                        <Text>
+                          {highlightText(
+                            pg.psGrpName,
+                            psSearchTerm,
+                            brandColor
+                          )}
+                        </Text>
                       </div>
                       <Text>{pg.ps.length}</Text>
                     </div>
@@ -702,13 +767,12 @@ export default function SecurityTemplateSelection({
                           onClick={() => handlePsClick(ps.psId)}
                           className={twMerge(
                             `mt-2 cursor-pointer rounded border hover:border-[var(--brand-color)] hover:shadow ${borderColor} bg-[var(--g-color-base-background)] p-2`,
-                            bgColor,
-                            selectedPsId === ps.psId
-                              ? 'bg-unset border-[var(--brand-color)]'
-                              : ''
+                            bgColor
                           )}
                         >
-                          <Text>{ps.psName}</Text>
+                          <Text>
+                            {highlightText(ps.psName, psSearchTerm, brandColor)}
+                          </Text>
                           <Text color='secondary'>
                             {ps.psCode.split('-').pop()}
                           </Text>
@@ -784,9 +848,7 @@ export default function SecurityTemplateSelection({
                 .flatMap((ps: any) =>
                   ps.roleGrp
                     .filter((rg: any) =>
-                      rg.roleGrpName
-                        .toLowerCase()
-                        .includes(roleSearchTerm.toLowerCase())
+                      hasMatchingRoleGrpOrRole(rg, roleSearchTerm)
                     )
                     .map((rg: any) => (
                       <div
@@ -818,7 +880,13 @@ export default function SecurityTemplateSelection({
                             >
                               <DownArrow fill={isDark ? 'white' : 'black'} />
                             </span>
-                            <Text>{rg.roleGrpName}</Text>
+                            <Text>
+                              {highlightText(
+                                rg.roleGrpName,
+                                roleSearchTerm,
+                                brandColor
+                              )}
+                            </Text>
                           </div>
                           <Text>{rg.roles.length}</Text>
                         </div>
@@ -835,7 +903,13 @@ export default function SecurityTemplateSelection({
                               )}
                             >
                               <div>
-                                <Text>{role.roleName}</Text>
+                                <Text>
+                                  {highlightText(
+                                    role.roleName,
+                                    roleSearchTerm,
+                                    brandColor
+                                  )}
+                                </Text>
                                 <Text color='secondary'>
                                   {role.roleCode.split('-').pop()}
                                 </Text>

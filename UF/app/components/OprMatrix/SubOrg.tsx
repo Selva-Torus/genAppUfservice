@@ -4,7 +4,7 @@ import {
   DeleteIcon,
   DownArrow,
   EditIcon,
-  PlusIcon,
+  PlusIcon
   // ThreeDots
 } from '../svgApplication'
 import { Button } from '@/components/Button'
@@ -20,6 +20,7 @@ import { twMerge } from 'tailwind-merge'
 import { useTheme } from '@/hooks/useTheme'
 import { useGlobal } from '@/context/GlobalContext'
 import i18n from '../i18n'
+import { hasMatchingSubOrg, highlightText } from '../AccessTemplateTable/SearchHelpers'
 
 interface RenderSubOrgProps {
   subOrgGrp: any
@@ -74,12 +75,29 @@ const RenderSubOrg: React.FC<RenderSubOrgProps> = ({
   const buttonRef = useRef<HTMLButtonElement>(null)
   const keyset = i18n.keyset('language')
 
+  // Add this inside RenderSubOrg component
+  const matchesSearch = React.useMemo(() => {
+    return hasMatchingSubOrg(subOrgGrp, searchTerm)
+  }, [subOrgGrp, searchTerm])
+
+  // Auto-expand on search
+  React.useEffect(() => {
+    if (searchTerm && matchesSearch && isSearchOpen === 'org') {
+      // Don't collapse when searching
+    }
+  }, [searchTerm, matchesSearch, isSearchOpen])
+
+  // Don't render if doesn't match
+  if (isSearchOpen === 'org' && searchTerm && !matchesSearch) {
+    return null
+  }
+
   return (
     <div
       style={{
         backgroundColor: hexWithOpacity(brandColor, 0.05)
       }}
-      className='flex w-full flex-col mt-2 gap-2 rounded-lg px-3 py-3'
+      className='mt-2 flex w-full flex-col gap-2 rounded-lg px-3 py-3'
     >
       {/* Sub Org Group Header */}
       <div
@@ -95,11 +113,13 @@ const RenderSubOrg: React.FC<RenderSubOrgProps> = ({
               isOpen ? 'rotate-[360deg]' : 'rotate-[270deg]'
             }`}
           >
-            <DownArrow fill={isDark ? "white" : "black"} />
+            <DownArrow fill={isDark ? 'white' : 'black'} />
           </span>
           <FaRegFolderOpen className='text-[var(--g-color-text-primary)]' />
           <span className='text-[var(--g-color-text-primary)]'>
-            {subOrgGrp.subOrgGrpName} -{' '}
+             {isSearchOpen === "org" && searchTerm
+              ? highlightText(subOrgGrp.subOrgGrpName, searchTerm, brandColor)
+              : subOrgGrp.subOrgGrpName} -{' '}
             <span className='text-xs text-[var(--g-color-text-secondary)]'>
               {subOrgGrp.subOrgGrpCode.replace(`${parentCode}-`, '')}
             </span>
@@ -228,80 +248,94 @@ const RenderSubOrg: React.FC<RenderSubOrgProps> = ({
       {/* Sub Organizations */}
       {isOpen && (
         <div className='ml-[1vw] flex flex-col gap-[1vh]'>
-          {subOrgGrp.subOrg?.map((subOrg: any, subOrgIndex: number) => (
-            <RenderChild
-              key={subOrg.subOrgId}
-              item={subOrg}
-              displayName={subOrg.subOrgName}
-              displayCode={subOrg.subOrgCode}
-              codePrefix={`${subOrgGrp.subOrgGrpCode}-`}
-              isSelected={selectedOrg.id === subOrg.subOrgId}
-              onClick={() =>
-                handleOrgClick({
-                  orgGrpCode: orgGrpCode,
-                  orgGrpName: orgGrpName,
-                  orgName: subOrg.subOrgName,
-                  orgCode: subOrg.subOrgCode,
-                  path: `${parentPath}.${subOrgGrpIndex}.subOrg.${subOrg.originalIndex}.psGrp`,
-                  id: subOrg.subOrgId
-                })
-              }
-              existsInContext={true}
-              onDelete={
-                isSearchOpen === 'org'
-                  ? null
-                  : () => {
-                      if (assignedOPRList.includes(subOrg.subOrgId)) {
-                        toast(
-                          "Can't delete this sub organization as it assigned to a template",
-                          'warning'
-                        )
-                        return
-                      }
-                      deleteResource(
-                        `${parentPath}.${subOrgGrpIndex}.subOrg`,
-                        subOrg.originalIndex
-                      )
-                    }
-              }
-              editContentProps={{
-                path: `${parentPath}.${subOrgGrpIndex}.subOrg.${subOrg.originalIndex}`,
-                addFunction: editContent,
-                parentCode: `${subOrgGrp.subOrgGrpCode}-`,
-                modalTitle: keyset('Edit Sub Organization'),
-                modalSubText: keyset('Update sub organization.'),
-                resourceField: 'sub organization',
-                resource: {
-                  code: subOrg.subOrgCode,
-                  name: subOrg.subOrgName
-                }
-              }}
-              resourceField='subOrg'
-            >
-              {/* Recursively render nested subOrgGrp */}
-              {subOrg.subOrgGrp?.map(
-                (nestedSubOrgGrp: any, nestedIndex: number) => (
-                  <RenderSubOrg
-                    key={nestedSubOrgGrp.subOrgGrpId}
-                    subOrgGrp={nestedSubOrgGrp}
-                    subOrgGrpIndex={nestedIndex}
-                    parentPath={`${parentPath}.${subOrgGrpIndex}.subOrg.${subOrg.originalIndex}.subOrgGrp`}
-                    parentCode={subOrg.subOrgCode}
-                    assignedOPRList={assignedOPRList}
-                    deleteResource={deleteResource}
-                    handleOrgClick={handleOrgClick}
-                    editContent={editContent}
-                    addContent={addContent}
-                    isSearchOpen={isSearchOpen}
-                    searchTerm={searchTerm}
-                    orgGrpCode={orgGrpCode}
-                    orgGrpName={orgGrpName}
-                    selectedOrg={selectedOrg}
-                  />
+          {subOrgGrp.subOrg
+            ?.filter((subOrg: any) => {
+              if (isSearchOpen !== 'org' || !searchTerm) return true
+
+              // Check if this subOrg matches or has matching children
+              return (
+                subOrg.subOrgName
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase()) ||
+                subOrg.subOrgGrp?.some((nested: any) =>
+                  hasMatchingSubOrg(nested, searchTerm)
                 )
-              )}
-            </RenderChild>
-          ))}
+              )
+            })
+            .map((subOrg: any, subOrgIndex: number) => (
+              <RenderChild
+                key={subOrg.subOrgId}
+                item={subOrg}
+                displayName={subOrg.subOrgName}
+                displayCode={subOrg.subOrgCode}
+                codePrefix={`${subOrgGrp.subOrgGrpCode}-`}
+                isSelected={selectedOrg.id === subOrg.subOrgId}
+                onClick={() =>
+                  handleOrgClick({
+                    orgGrpCode: orgGrpCode,
+                    orgGrpName: orgGrpName,
+                    orgName: subOrg.subOrgName,
+                    orgCode: subOrg.subOrgCode,
+                    path: `${parentPath}.${subOrgGrpIndex}.subOrg.${subOrg.originalIndex}.psGrp`,
+                    id: subOrg.subOrgId
+                  })
+                }
+                existsInContext={true}
+                onDelete={
+                  isSearchOpen === 'org'
+                    ? null
+                    : () => {
+                        if (assignedOPRList.includes(subOrg.subOrgId)) {
+                          toast(
+                            "Can't delete this sub organization as it assigned to a template",
+                            'warning'
+                          )
+                          return
+                        }
+                        deleteResource(
+                          `${parentPath}.${subOrgGrpIndex}.subOrg`,
+                          subOrg.originalIndex
+                        )
+                      }
+                }
+                editContentProps={{
+                  path: `${parentPath}.${subOrgGrpIndex}.subOrg.${subOrg.originalIndex}`,
+                  addFunction: editContent,
+                  parentCode: `${subOrgGrp.subOrgGrpCode}-`,
+                  modalTitle: keyset('Edit Sub Organization'),
+                  modalSubText: keyset('Update sub organization.'),
+                  resourceField: 'sub organization',
+                  resource: {
+                    code: subOrg.subOrgCode,
+                    name: subOrg.subOrgName
+                  }
+                }}
+                resourceField='subOrg'
+              >
+                {/* Recursively render nested subOrgGrp */}
+                {subOrg.subOrgGrp?.map(
+                  (nestedSubOrgGrp: any, nestedIndex: number) => (
+                    <RenderSubOrg
+                      key={nestedSubOrgGrp.subOrgGrpId}
+                      subOrgGrp={nestedSubOrgGrp}
+                      subOrgGrpIndex={nestedIndex}
+                      parentPath={`${parentPath}.${subOrgGrpIndex}.subOrg.${subOrg.originalIndex}.subOrgGrp`}
+                      parentCode={subOrg.subOrgCode}
+                      assignedOPRList={assignedOPRList}
+                      deleteResource={deleteResource}
+                      handleOrgClick={handleOrgClick}
+                      editContent={editContent}
+                      addContent={addContent}
+                      isSearchOpen={isSearchOpen}
+                      searchTerm={searchTerm}
+                      orgGrpCode={orgGrpCode}
+                      orgGrpName={orgGrpName}
+                      selectedOrg={selectedOrg}
+                    />
+                  )
+                )}
+              </RenderChild>
+            ))}
         </div>
       )}
     </div>

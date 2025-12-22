@@ -20,6 +20,11 @@ import { Modal } from '@/components/Modal'
 import { twMerge } from 'tailwind-merge'
 import i18n from '../i18n'
 import clsx from 'clsx'
+import {
+  hasMatchingOrgOrSubOrg,
+  hasMatchingPsGrpOrPs,
+  hasMatchingRoleGrpOrRole
+} from '../AccessTemplateTable/SearchHelpers'
 
 interface OprMatrixContextType {
   isSearchOpen: string
@@ -1026,15 +1031,18 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
             <div className='flex h-[60vh] w-full flex-col gap-[1vh] overflow-y-auto px-[.5vw] py-[1.5vh]'>
               {organizationDataWithIndexing
                 .filter((group: any) => {
-                  if (isSearchOpen !== 'org') return group
+                  if (isSearchOpen !== 'org') return true
                   const term = searchTerm.toLowerCase()
-                  const matchesGroup = group.orgGrpName
-                    .toLowerCase()
-                    .includes(term)
-                  const matchesProduct = group.org.some((org: any) =>
-                    org.orgName.toLowerCase().includes(term)
+
+                  // Check if group name matches
+                  if (group.orgGrpName.toLowerCase().includes(term)) {
+                    return true
+                  }
+
+                  // Check if any org or subOrg in this group matches
+                  return group.org.some((org: any) =>
+                    hasMatchingOrgOrSubOrg(org, searchTerm)
                   )
-                  return matchesGroup || matchesProduct
                 })
                 .map((orgGrp: any, orgGrpIndex: number) => (
                   <React.Fragment key={orgGrpIndex}>
@@ -1207,16 +1215,9 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
 
             <div className='flex h-[60vh] w-full flex-col gap-[1vh] overflow-y-auto px-[.5vw] py-[1.5vh]'>
               {(isSearchOpen === 'product' && searchTerm
-                ? classifiedProducts.filter(group => {
-                    const term = searchTerm.toLowerCase()
-                    const matchesGroup = group.psGrpName
-                      .toLowerCase()
-                      .includes(term)
-                    const matchesProduct = group.ps.some((p: any) =>
-                      p.psName.toLowerCase().includes(term)
-                    )
-                    return matchesGroup || matchesProduct
-                  })
+                ? classifiedProducts.filter(group =>
+                    hasMatchingPsGrpOrPs(group, searchTerm)
+                  )
                 : getSelectedPsGrps() ?? []
               ).map((psg: any, psgIndex: number) => (
                 <React.Fragment key={psgIndex}>
@@ -1373,19 +1374,13 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
             />
 
             <div className='flex h-[60vh] w-full flex-col gap-[1vh] overflow-y-auto px-[.5vw] py-[1.5vh]'>
-              {(isSearchOpen === 'role' && searchTerm
-                ? classifiedRoles.filter(group => {
-                    const term = searchTerm.toLowerCase()
-                    const matchesGroup = group.roleGrpName
-                      .toLowerCase()
-                      .includes(term)
-                    const matchesRole = group.roles.some((r: any) =>
-                      r.roleName.toLowerCase().includes(term)
-                    )
-                    return matchesGroup || matchesRole
-                  })
-                : getSelectedRoleGrps() ?? []
-              ).map((roleGrp: any, roleGrpIndex: number) => (
+        {(isSearchOpen === "role" && searchTerm
+                ? classifiedRoles.filter((group) =>
+                    hasMatchingRoleGrpOrRole(group, searchTerm)
+                  )
+                : (getSelectedRoleGrps() ?? [])
+              )
+              .map((roleGrp: any, roleGrpIndex: number) => (
                 <React.Fragment key={roleGrpIndex}>
                   <RenderGroup
                     item={roleGrp}

@@ -11,6 +11,7 @@ import { Modal } from '@/components/Modal'
 import { useGlobal } from '@/context/GlobalContext'
 import { useTheme } from '@/hooks/useTheme'
 import Popup from '@/components/Popup'
+import { highlightText } from '../AccessTemplateTable/SearchHelpers'
 
 // ============= RENDER GROUP (REUSABLE) =============
 const RenderGroup = ({
@@ -116,7 +117,10 @@ const RenderGroup = ({
           </span>
           <FaRegFolderOpen />
           <span className='text-xs'>
-            {displayName} - <span>{displayCode.replace(codePrefix, '')}</span>
+            {isSearchOpen === contextKey && searchTerm
+              ? highlightText(displayName, searchTerm, brandColor)
+              : displayName}{' '}
+            - <span>{displayCode.replace(codePrefix, '')}</span>
           </span>
         </div>
 

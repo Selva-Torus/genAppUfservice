@@ -368,7 +368,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     <div className={`g-root grid h-full grid-cols-12`}>
       <div className='col-span-12 overflow-hidden'>
         <div className='flex flex-col rounded-md'>
-          <div className='flex w-full items-center justify-between'>
+          <div className='flex w-full items-center justify-between p-2'>
             <div className=' ml-3.5 flex items-center justify-start gap-1.5 '>
               <LogsHub
                 fill={isDark ? '#fff' : '#000'}
@@ -408,12 +408,11 @@ const TableHeader: React.FC<TableHeaderProps> = ({
             </div>
 
             {/* { PLS DON'T DELETE } */}
-            <LogSwitcher activeTab={activeTab} setActiveTab={handleTabChange} />
+            <LogSwitcher activeTab={activeTab} setActiveTab={handleTabChange} borderColor={borderColor} />
           </div>
           <div className='flex w-full '>
             <div
-              className={` transition-all delay-0 duration-300 ease-out overflow-auto xl:h-[66vh] 2xl:h-[78vh] ${activeTab === 'torus' ? 'block w-1/2 md:w-3/4' : 'w-[100%]'
-                }  `}
+              className={`transition-all delay-0 duration-300 ease-out overflow-auto xl:h-[66vh] 2xl:h-[78vh] ${activeTab === 'torus' ? 'block w-1/2 md:w-3/4' : 'w-[100%]'}`}
             >
               <Table
                 columns={activeTab === 'torus' ? torusColumn : processColumn}
@@ -489,15 +488,17 @@ const HeaderElementContainer = ({
 
 const LogSwitcher = ({
   activeTab,
-  setActiveTab
+  setActiveTab,
+  borderColor
 }: {
   activeTab: string
   setActiveTab: (item: string) => void
+  borderColor: string
 }) => {
   const keyset = i18n.keyset('language')
   return (
     <div>
-      <Tabs className={''} items={[
+      <Tabs className={twMerge('border rounded-md', borderColor)} items={[
         {
           id: "process",
           title: keyset("Process Log"),
