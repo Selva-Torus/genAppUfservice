@@ -52,36 +52,15 @@ const Grouptable = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
   const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
  /////////////
    //another screen
-  const {cf46a, setcf46a}= useContext(TotalContext) as TotalContextProps;
-  const {cf46aProps, setcf46aProps}= useContext(TotalContext) as TotalContextProps;
-  const {4f7b1, set4f7b1}= useContext(TotalContext) as TotalContextProps;
-  const {4f7b1Props, set4f7b1Props}= useContext(TotalContext) as TotalContextProps;
-  const {search676ad, setsearch676ad}= useContext(TotalContext) as TotalContextProps;
-  const {search676adProps, setsearch676adProps}= useContext(TotalContext) as TotalContextProps;
-  const {8394d, set8394d}= useContext(TotalContext) as TotalContextProps;
-  const {8394dProps, set8394dProps}= useContext(TotalContext) as TotalContextProps;
-  const {cardbb124, setcardbb124}= useContext(TotalContext) as TotalContextProps;
-  const {cardbb124Props, setcardbb124Props}= useContext(TotalContext) as TotalContextProps;
-  const {card4d75a4, setcard4d75a4}= useContext(TotalContext) as TotalContextProps;
-  const {card4d75a4Props, setcard4d75a4Props}= useContext(TotalContext) as TotalContextProps;
-  const {card108d97, setcard108d97}= useContext(TotalContext) as TotalContextProps;
-  const {card108d97Props, setcard108d97Props}= useContext(TotalContext) as TotalContextProps;
-  const {card23ac19, setcard23ac19}= useContext(TotalContext) as TotalContextProps;
-  const {card23ac19Props, setcard23ac19Props}= useContext(TotalContext) as TotalContextProps;
-  const {card393c35, setcard393c35}= useContext(TotalContext) as TotalContextProps;
-  const {card393c35Props, setcard393c35Props}= useContext(TotalContext) as TotalContextProps;
-  const {timing0cafc, settiming0cafc}= useContext(TotalContext) as TotalContextProps;
-  const {timing0cafcProps, settiming0cafcProps}= useContext(TotalContext) as TotalContextProps;
-  const {table8472d, settable8472d}= useContext(TotalContext) as TotalContextProps;
-  const {table8472dProps, settable8472dProps}= useContext(TotalContext) as TotalContextProps;
-  const {c6658, setc6658}= useContext(TotalContext) as TotalContextProps;
-  const {2dce4, set2dce4}= useContext(TotalContext) as TotalContextProps;
-  const {6ef9b, set6ef9b}= useContext(TotalContext) as TotalContextProps;
-  const {ae3e1, setae3e1}= useContext(TotalContext) as TotalContextProps;
+  const {overall05a6d, setoverall05a6d}= useContext(TotalContext) as TotalContextProps;
+  const {overall05a6dProps, setoverall05a6dProps}= useContext(TotalContext) as TotalContextProps;
+  const {table5cf93, settable5cf93}= useContext(TotalContext) as TotalContextProps;
+  const {table5cf93Props, settable5cf93Props}= useContext(TotalContext) as TotalContextProps;
+  const {newtransd00f3, setnewtransd00f3}= useContext(TotalContext) as TotalContextProps;
   //////////////
   const [open, setOpen] = React.useState(false);
   async function securityCheck() {
-  const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1",componentId:"6c583af720614965a7c381226948472d",from:"GroupTable",isTable : true,accessProfile:accessProfile},{
+  const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1",componentId:"2f30ba075e5846f3aa9de9ae5185cf93",from:"GroupTable",isTable : true,accessProfile:accessProfile},{
     headers: {
       Authorization: `Bearer ${token}`
     }})
@@ -96,17 +75,8 @@ const Grouptable = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
   setAllowedComponent(allowedGroups) 
     
   /////////////
-    if(orchestrationData?.data?.readableControls.includes("")){
-      setc6658({...c6658,isDisabled:true});
-    }
-    if(orchestrationData?.data?.readableControls.includes("")){
-      set2dce4({...2dce4,isDisabled:true});
-    }
-    if(orchestrationData?.data?.readableControls.includes("")){
-      set6ef9b({...6ef9b,isDisabled:true});
-    }
-    if(orchestrationData?.data?.readableControls.includes("")){
-      setae3e1({...ae3e1,isDisabled:true});
+    if(orchestrationData?.data?.readableControls.includes("newtrans")){
+      setnewtransd00f3({...newtransd00f3,isDisabled:true});
     }
   //////////////
   }
@@ -117,29 +87,29 @@ const Grouptable = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
   const handleOnChange=()=>{
 
   }
-  const table8472dRef = useRef<any>(null);
+  const table5cf93Ref = useRef<any>(null);
   const handleClearSearch = () => {
-    table8472dRef.current?.setSearchParams();
-    table8472dRef.current?.handleSearch({});
+    table5cf93Ref.current?.setSearchParams();
+    table5cf93Ref.current?.handleSearch({});
   };
 
   useEffect(() => {    
     securityCheck()   
     handleOnload()
     if (prevRefreshRef.current) {
-      if(!Array.isArray(table8472d) && Object.keys(table8472d)?.length>0)
+      if(!Array.isArray(table5cf93) && Object.keys(table5cf93)?.length>0)
       {
-        settable8472d({})
+        settable5cf93({})
       }
     }else 
       prevRefreshRef.current= true
-  }, [table8472dProps?.refresh])
+  }, [table5cf93Props?.refresh])
 
   return (
     <div 
       style={{          
-        gridColumn: '1 / 7',
-        gridRow: '260 / 373',
+        gridColumn: '9 / 13',
+        gridRow: '136 / 336',
         height: '100%',
         gridAutoRows: '4px',
         columnGap: '0px',
@@ -162,26 +132,7 @@ const Grouptable = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
         isDark ? "bg-gray-800 text-white" : "bg-white text-black"
       )}
     >
-        {<Tabletable lockedData={lockedData} setLockedData={setLockedData}  primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData}  refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} paginationDetails={paginationDetails} open={open} setOpen={setOpen} ref={table8472dRef}/>}
-        <div
-          className='flex justify-end gap-1 p-2'
-          style={{
-            gridColumn: `1 / 13`,
-            gridRow: `1 / 16`,
-            gap: ``,
-            height: `100%`,
-            overflow: 'auto'
-          }}
-        >
-          <Text
-            className='mr-auto ml-3'
-            variant='display-1'
-            wordBreak='break-all'
-            color='primary'
-          >
-            Patient Data
-          </Text>
-      </div>
+        {<Tabletable lockedData={lockedData} setLockedData={setLockedData}  primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData}  refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} paginationDetails={paginationDetails} open={open} setOpen={setOpen} ref={table5cf93Ref}/>}
     </div>
  )
 }

@@ -78,7 +78,7 @@ const LayoutDecider = ({
     "screenDetails": [
       {
         "name": "menu item 3",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1",
         "allowedAccessProfile": [],
         "static": false
       }
@@ -98,54 +98,6 @@ const LayoutDecider = ({
           "Template 2",
           "Template 3"
         ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "Menu Item 4",
-    "screenDetails": [
-      {
-        "name": "menu item 4",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard3:AFVK:v1",
-        "allowedAccessProfile": [],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "Menu Item 6",
-    "screenDetails": [
-      {
-        "name": "menu item 6",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:New_HomeScreen:AFVK:v1",
-        "allowedAccessProfile": [],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "Menu Item 7",
-    "screenDetails": [
-      {
-        "name": "menu item 7",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Veracious:AFVK:v1",
-        "allowedAccessProfile": [],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "Menu Item 5",
-    "screenDetails": [
-      {
-        "name": "menu item 5",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:columsnCheck:AFVK:v1",
-        "allowedAccessProfile": [],
         "static": false
       }
     ],

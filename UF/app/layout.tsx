@@ -33,7 +33,7 @@
       "screenDetails": [
         {
           "name": "menu item 3",
-          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1",
+          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1",
           "allowedAccessProfile": [],
           "static": false
         }
@@ -53,54 +53,6 @@
             "Template 2",
             "Template 3"
           ],
-          "static": false
-        }
-      ],
-      "items": []
-    },
-    {
-      "menuGroupLabel": "Menu Item 4",
-      "screenDetails": [
-        {
-          "name": "menu item 4",
-          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard3:AFVK:v1",
-          "allowedAccessProfile": [],
-          "static": false
-        }
-      ],
-      "items": []
-    },
-    {
-      "menuGroupLabel": "Menu Item 6",
-      "screenDetails": [
-        {
-          "name": "menu item 6",
-          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:New_HomeScreen:AFVK:v1",
-          "allowedAccessProfile": [],
-          "static": false
-        }
-      ],
-      "items": []
-    },
-    {
-      "menuGroupLabel": "Menu Item 7",
-      "screenDetails": [
-        {
-          "name": "menu item 7",
-          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Veracious:AFVK:v1",
-          "allowedAccessProfile": [],
-          "static": false
-        }
-      ],
-      "items": []
-    },
-    {
-      "menuGroupLabel": "Menu Item 5",
-      "screenDetails": [
-        {
-          "name": "menu item 5",
-          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:columsnCheck:AFVK:v1",
-          "allowedAccessProfile": [],
           "static": false
         }
       ],
@@ -188,12 +140,8 @@
   },
   "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:appearance",
   "allKeys": [
-    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1",
-    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard3:AFVK:v1",
-    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:New_HomeScreen:AFVK:v1",
-    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Veracious:AFVK:v1",
-    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:columsnCheck:AFVK:v1"
+    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1",
+    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
   ],
   "loginDetails": {
     "firstName": "Peer",
@@ -208,7 +156,7 @@
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-12-24T06:21:59.504Z",
+    "lastActive": "2025-12-24T07:55:22.437Z",
     "profile": "torus/9.1/CT003/resources/images/Peer@786/scott-graham-5fNmWej4tAA-unsplash.jpg",
     "quickLinks": [],
     "client": "CT003",
@@ -352,32 +300,12 @@
     {
       "screenName": "menu item 3",
       "screensName": "menu_item_3-v1",
-      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1"
+      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1"
     },
     {
       "screenName": "menu item 4-1",
       "screensName": "menu_item_4-1-v1",
       "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-    },
-    {
-      "screenName": "menu item 4",
-      "screensName": "menu_item_4-v1",
-      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard3:AFVK:v1"
-    },
-    {
-      "screenName": "menu item 6",
-      "screensName": "menu_item_6-v1",
-      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:New_HomeScreen:AFVK:v1"
-    },
-    {
-      "screenName": "menu item 7",
-      "screensName": "menu_item_7-v1",
-      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Veracious:AFVK:v1"
-    },
-    {
-      "screenName": "menu item 5",
-      "screensName": "menu_item_5-v1",
-      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:columsnCheck:AFVK:v1"
     }
   ],
   "deploymentArtifactKey": "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1",

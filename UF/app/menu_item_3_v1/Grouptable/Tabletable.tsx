@@ -31,45 +31,9 @@ import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 let colourIndicatorCols:any= [] ;
 let defaultColumns = [
   {
-    "id": "",
-    "nodeid": "9fb022bc077c49ffa9a08c3806ac6658",
-    "name": "Patient Name",
-    "meta": {
-      "sort": true
-    },
-    "className": "",
-    "hide": false,
-    "isSearch": false,
-    "colourIndicator": []
-  },
-  {
-    "id": "",
-    "nodeid": "ce6ad4910a7d47e09e171eb87b02dce4",
-    "name": "Date In",
-    "meta": {
-      "sort": true
-    },
-    "className": "",
-    "hide": false,
-    "isSearch": false,
-    "colourIndicator": []
-  },
-  {
-    "id": "",
-    "nodeid": "240b2309347b4d7db25f5c5bfd36ef9b",
-    "name": "Diagnostic",
-    "meta": {
-      "sort": true
-    },
-    "className": "",
-    "hide": false,
-    "isSearch": false,
-    "colourIndicator": []
-  },
-  {
-    "id": "",
-    "nodeid": "8bc801fe95c24c99a0f6c940806ae3e1",
-    "name": "Status",
+    "id": "newtrans",
+    "nodeid": "6e6c264297594f67948c9a5001ed00f3",
+    "name": "ID",
     "meta": {
       "sort": true
     },
@@ -156,32 +120,11 @@ const Tabletable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   })
  /////////////
    //another screen
-  const {cf46a, setcf46a}= useContext(TotalContext) as TotalContextProps  
-  const {cf46aProps, setcf46aProps}= useContext(TotalContext) as TotalContextProps  
-  const {4f7b1, set4f7b1}= useContext(TotalContext) as TotalContextProps  
-  const {4f7b1Props, set4f7b1Props}= useContext(TotalContext) as TotalContextProps  
-  const {search676ad, setsearch676ad}= useContext(TotalContext) as TotalContextProps  
-  const {search676adProps, setsearch676adProps}= useContext(TotalContext) as TotalContextProps  
-  const {8394d, set8394d}= useContext(TotalContext) as TotalContextProps  
-  const {8394dProps, set8394dProps}= useContext(TotalContext) as TotalContextProps  
-  const {cardbb124, setcardbb124}= useContext(TotalContext) as TotalContextProps  
-  const {cardbb124Props, setcardbb124Props}= useContext(TotalContext) as TotalContextProps  
-  const {card4d75a4, setcard4d75a4}= useContext(TotalContext) as TotalContextProps  
-  const {card4d75a4Props, setcard4d75a4Props}= useContext(TotalContext) as TotalContextProps  
-  const {card108d97, setcard108d97}= useContext(TotalContext) as TotalContextProps  
-  const {card108d97Props, setcard108d97Props}= useContext(TotalContext) as TotalContextProps  
-  const {card23ac19, setcard23ac19}= useContext(TotalContext) as TotalContextProps  
-  const {card23ac19Props, setcard23ac19Props}= useContext(TotalContext) as TotalContextProps  
-  const {card393c35, setcard393c35}= useContext(TotalContext) as TotalContextProps  
-  const {card393c35Props, setcard393c35Props}= useContext(TotalContext) as TotalContextProps  
-  const {timing0cafc, settiming0cafc}= useContext(TotalContext) as TotalContextProps  
-  const {timing0cafcProps, settiming0cafcProps}= useContext(TotalContext) as TotalContextProps  
-  const {table8472d, settable8472d}= useContext(TotalContext) as TotalContextProps  
-  const {table8472dProps, settable8472dProps}= useContext(TotalContext) as TotalContextProps  
-  const {c6658, setc6658}= useContext(TotalContext) as TotalContextProps  
-  const {2dce4, set2dce4}= useContext(TotalContext) as TotalContextProps  
-  const {6ef9b, set6ef9b}= useContext(TotalContext) as TotalContextProps  
-  const {ae3e1, setae3e1}= useContext(TotalContext) as TotalContextProps  
+  const {overall05a6d, setoverall05a6d}= useContext(TotalContext) as TotalContextProps  
+  const {overall05a6dProps, setoverall05a6dProps}= useContext(TotalContext) as TotalContextProps  
+  const {table5cf93, settable5cf93}= useContext(TotalContext) as TotalContextProps  
+  const {table5cf93Props, settable5cf93Props}= useContext(TotalContext) as TotalContextProps  
+  const {newtransd00f3, setnewtransd00f3}= useContext(TotalContext) as TotalContextProps  
   //////////////
 
   function getValueByPath(obj: any, path: string): any {
@@ -208,10 +151,10 @@ const Tabletable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
     const orchestrationData = await AxiosService.post(
       '/UF/Orchestration',
       {
-        key: 'CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1', 
-        componentId: '6c583af720614965a7c381226948472d',
+        key: 'CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1', 
+        componentId: '2f30ba075e5846f3aa9de9ae5185cf93',
         isTable: true,
-        from :"TablePatient Data",
+        from :"Table",
         accessProfile:accessProfile
       },
       {
@@ -329,12 +272,12 @@ const Tabletable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   const [settings, setSettings] = useState<any>();
   const handleUpdate = (page:any, pageSize:any) =>{
     let searchParams:any = nullFilter(SearchParams);
-    settable8472dProps((pre:any)=>({...pre, selectedIds:[]}))
+    settable5cf93Props((pre:any)=>({...pre, selectedIds:[]}))
     let checkedData: any = selectedPaginationData
     if (checkedData.length) {
       for (let i = 0; i < checkedData.length; i++) {
         if (checkedData[i].page == page) {
-          settable8472dProps((pre:any)=>({...pre, selectedIds:checkedData[i].data}))
+          settable5cf93Props((pre:any)=>({...pre, selectedIds:checkedData[i].data}))
         }
       }
     }
@@ -404,7 +347,7 @@ const Tabletable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
         }))
         }
         if(api_pagination?.data?.records.length==0){ 
-          settable8472d([])
+          settable5cf93([])
           setAllDataObject([])
           return
         }
@@ -414,9 +357,9 @@ const Tabletable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
           page: parseInt(page),
           count: parseInt(pageSize),
           filterDetails: {
-            ufKey:'CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1:UO', 
-            nodeId: '6c583af720614965a7c381226948472d',
-            elementId: '6c583af720614965a7c381226948472d'
+            ufKey:'CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1:UO', 
+            nodeId: '2f30ba075e5846f3aa9de9ae5185cf93',
+            elementId: '2f30ba075e5846f3aa9de9ae5185cf93'
           },
           searchFilter: searchParams
         }
@@ -463,7 +406,7 @@ const Tabletable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
         }))
         }
         if(api_pagination?.data?.records.length==0){ 
-          settable8472d([])
+          settable5cf93([])
           setAllDataObject([])
           return
         }
@@ -496,9 +439,9 @@ const Tabletable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
         uf_paginationDataFilter["data"] = mappedResult;
       // const uf_paginationDataFilterBody: uf_paginationDataFilterDto = {
       //   data: api_pagination.data.records,
-      //   key: 'CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1',
+      //   key: 'CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1',
       //   "dfdType":dfKey?.dfdType,
-      //   "primaryKey":""
+      //   "primaryKey":"trans_ion"
       // }
       // if(encryptionFlagCont) {
       // uf_paginationDataFilterBody["dpdKey"] = encryptionDpd
@@ -516,7 +459,7 @@ const Tabletable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
       // )
       if (uf_paginationDataFilter.data.length >= 0&&Array.isArray(uf_paginationDataFilter.data)) {
         let filtertedData:any=structuredClone(uf_paginationDataFilter.data)||[]
-        settable8472d(uf_paginationDataFilter.data||[])
+        settable5cf93(uf_paginationDataFilter.data||[])
         defaultColumns.map((items:any)=>{
           if(items?.isColourIndicator==true)
           {
@@ -581,10 +524,10 @@ const Tabletable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   }, [])
   useEffect(() => {
     if (prevRefreshRef.current) {
-      UpdatedDataHandle(table8472dProps.filterProps)
+      UpdatedDataHandle(table5cf93Props.filterProps)
     }else 
       prevRefreshRef.current= true
-  }, [table8472dProps.filterProps])
+  }, [table5cf93Props.filterProps])
 
   async function UpdatedDataHandle(filterProps?: any) { 
     setLoading(true)
@@ -619,29 +562,29 @@ const Tabletable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
     if(paginationData?.page != 0 && paginationData?.pageSize != 0 && DFkeyAndRule?.dfKey!='')
     UpdatedDataHandle()
     setLockedData((pre:any)=>({...pre, data:[]}))
-    settable8472dProps((pre:any)=>({...pre, selectedIds:[]}))
+    settable5cf93Props((pre:any)=>({...pre, selectedIds:[]}))
     setSelectedPaginationData([])
     setAllDataObject([])
-  }, [table8472dProps?.refresh])
+  }, [table5cf93Props?.refresh])
 
 
   const handlePrimaryTable = () => {
-    let findData = table8472dProps?.selectedIds[table8472dProps?.selectedIds?.length-1]
-    if(Array.isArray(table8472d) && table8472d.length>0)
+    let findData = table5cf93Props?.selectedIds[table5cf93Props?.selectedIds?.length-1]
+    if(Array.isArray(table5cf93) && table5cf93.length>0)
     {
-      let data = table8472d[findData]
+      let data = table5cf93[findData]
       setPrimaryTableData({
         ...primaryTableData,
-        primaryKey: "",
-        value: data[""],
+        primaryKey: "trans_ion",
+        value: data["trans_ion"],
         parentData: data
       })
     }
   }
 
   useEffect(() => {
-    if (table8472dProps?.selectedIds?.length != 0) handlePrimaryTable()
-  }, [table8472dProps?.selectedIds])
+    if (table5cf93Props?.selectedIds?.length != 0) handlePrimaryTable()
+  }, [table5cf93Props?.selectedIds])
 
 
 
@@ -660,7 +603,7 @@ const Tabletable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
 };
 
 
-  if (table8472d?.isHidden) {
+  if (table5cf93?.isHidden) {
     return <></>
   }
   return(
@@ -671,7 +614,7 @@ const Tabletable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
               data={Array.isArray(allDataObject) && translatedColumns?.length ? allDataObject : []}
               columns={translatedColumns}
               edgePadding={true}
-              selectedIds={table8472dProps?.selectedIds}  
+              selectedIds={table5cf93Props?.selectedIds}  
               onSelectionChange={setLockMode} 
               settings={settings}
               updateSettings={setSettings}

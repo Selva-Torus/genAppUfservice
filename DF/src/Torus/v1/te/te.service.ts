@@ -952,8 +952,8 @@ export class TeService {
     this.logger.log(`Started job: ${name}`); 
   }
 
-   async stopCron() {
-    const job = await this.schedulerRegistry.deleteCronJob('DynamicEventEmitter');
+  async stopCron(jobname) {
+    const job = await this.schedulerRegistry.deleteCronJob(jobname);
     //job.stop();    
   }
 

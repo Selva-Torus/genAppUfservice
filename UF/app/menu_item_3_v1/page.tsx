@@ -14,7 +14,7 @@ import { Text } from "@/components/Text";
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import clsx from "clsx";
-import Group  from "./Group/Group";
+import Groupoverall  from "./Groupoverall/Groupoverall";
 
 
 export default function PageMenuItem3V1() {
@@ -39,21 +39,11 @@ export default function PageMenuItem3V1() {
   const {paginationDetails, setpaginationDetails} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
-  const {dashboard4_v1Props, setdashboard4_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const [check,setCheck,]=useState(false);
-  const [check,setCheck,]=useState(false);
-  const [checksearch,setChecksearch,]=useState(false);
-  const [check,setCheck,]=useState(false);
-  const [checkcard,setCheckcard,]=useState(false);
-  const [checktiming,setChecktiming,]=useState(false);
+  const {openbanking_v1Props, setopenbanking_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const [checkoverall,setCheckoverall,]=useState(false);
   const [checktable,setChecktable,]=useState(false);
-  const {cf46a, setcf46a} = useContext(TotalContext) as TotalContextProps;
-  const {4f7b1, set4f7b1} = useContext(TotalContext) as TotalContextProps;
-  const {search676ad, setsearch676ad} = useContext(TotalContext) as TotalContextProps;
-  const {8394d, set8394d} = useContext(TotalContext) as TotalContextProps;
-  const {cardbb124, setcardbb124} = useContext(TotalContext) as TotalContextProps;
-  const {timing0cafc, settiming0cafc} = useContext(TotalContext) as TotalContextProps;
-  const {table8472d, settable8472d} = useContext(TotalContext) as TotalContextProps;
+  const {overall05a6d, setoverall05a6d} = useContext(TotalContext) as TotalContextProps;
+  const {table5cf93, settable5cf93} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagPage: boolean = false|| encAppFalg.flag;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encAppFalg.dpd;
@@ -69,7 +59,7 @@ export default function PageMenuItem3V1() {
     });
 
   async function securityCheck() {
-    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1",accessProfile:[user],from:"pageMenuItem3V1"},{
+    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1",accessProfile:[user],from:"pageMenuItem3V1"},{
       headers: {
         Authorization: `Bearer ${token}`
       }});
@@ -94,7 +84,7 @@ export default function PageMenuItem3V1() {
             params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1"
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1"
             }
           }) 
         }else{
@@ -103,7 +93,7 @@ export default function PageMenuItem3V1() {
               Authorization: `Bearer ${token}`
              },
             params: {
-              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1"  
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1"  
             }
           })          
         }
@@ -128,7 +118,7 @@ export default function PageMenuItem3V1() {
           params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1"
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1"
             }
         }) 
         }else{
@@ -137,7 +127,7 @@ export default function PageMenuItem3V1() {
              Authorization: `Bearer ${token}`
            },
             params: {
-              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1"
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1"
             }
          })          
         }
@@ -170,29 +160,9 @@ export default function PageMenuItem3V1() {
         try{
           if (security == 'AA') {
           allowedGroup.map((nodes:any)=>{
-            if(nodes?.groupName == '' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
+            if(nodes?.groupName == 'overall' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
             {
-              setCheck(true)
-            }
-            if(nodes?.groupName == '' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
-            {
-              setCheck(true)
-            }
-            if(nodes?.groupName == 'search' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
-            {
-              setChecksearch(true)
-            }
-            if(nodes?.groupName == '' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
-            {
-              setCheck(true)
-            }
-            if(nodes?.groupName == 'card' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
-            {
-              setCheckcard(true)
-            }
-            if(nodes?.groupName == 'timing' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
-            {
-              setChecktiming(true)
+              setCheckoverall(true)
             }
             if(nodes?.groupName == 'table' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
             {
@@ -211,20 +181,10 @@ export default function PageMenuItem3V1() {
         //Code Execution
         if (code !="" ) {
           let codeStates: any = {}
-          codeStates[''] = cf46a;
-          codeStates['set'] = setcf46a;
-          codeStates[''] = 4f7b1;
-          codeStates['set'] = set4f7b1;
-          codeStates['search'] = search676ad;
-          codeStates['setsearch'] = setsearch676ad;
-          codeStates[''] = 8394d;
-          codeStates['set'] = set8394d;
-          codeStates['card'] = cardbb124;
-          codeStates['setcard'] = setcardbb124;
-          codeStates['timing'] = timing0cafc;
-          codeStates['settiming'] = settiming0cafc;
-          codeStates['table'] = table8472d;
-          codeStates['settable'] = settable8472d;
+          codeStates['overall'] = overall05a6d;
+          codeStates['setoverall'] = setoverall05a6d;
+          codeStates['table'] = table5cf93;
+          codeStates['settable'] = settable5cf93;
           codeExecution(code,codeStates);
         }   
         setInitialLoad(true);        
@@ -282,7 +242,7 @@ export default function PageMenuItem3V1() {
           borderWidth: '2px'
       })
       }}>
-        {check && initialLoad &&<Group  
+        {checkoverall && initialLoad &&<Groupoverall  
           lockedData={lockedData} 
           setLockedData={setLockedData} 
           primaryTableData={primaryTableData}
