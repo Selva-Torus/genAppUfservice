@@ -60,7 +60,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "User": {
+  "Template 2": {
     "allowedControls": [
       "addd",
       "wefdwfds",

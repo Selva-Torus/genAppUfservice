@@ -74,30 +74,28 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
-    "menuGroupLabel": "testroute",
+    "menuGroupLabel": "Menu Item 3",
     "screenDetails": [
       {
-        "name": "testroute",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1",
-          "User",
-          "Template 3"
-        ],
+        "name": "menu item 3",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard4:AFVK:v1",
+        "allowedAccessProfile": [],
         "static": false
       }
     ],
     "items": []
   },
   {
-    "menuGroupLabel": "Menu Item 3",
+    "menuGroup": "menu grp 8",
+    "menuGroupLabel": "Menu Grp 8",
     "screenDetails": [
       {
-        "name": "menu item 3",
+        "name": "menu item 4-1",
+        "label": "Menu Item 4-1",
         "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
         "allowedAccessProfile": [
           "Template 1",
-          "User",
+          "Template 2",
           "Template 3"
         ],
         "static": false
@@ -110,28 +108,8 @@ const LayoutDecider = ({
     "screenDetails": [
       {
         "name": "menu item 4",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1",
-          "User",
-          "Template 3"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "Menu Item 5",
-    "screenDetails": [
-      {
-        "name": "menu item 5",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1",
-          "User",
-          "Template 3"
-        ],
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Dashboard3:AFVK:v1",
+        "allowedAccessProfile": [],
         "static": false
       }
     ],
@@ -142,12 +120,8 @@ const LayoutDecider = ({
     "screenDetails": [
       {
         "name": "menu item 6",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1",
-          "User",
-          "Template 3"
-        ],
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:New_HomeScreen:AFVK:v1",
+        "allowedAccessProfile": [],
         "static": false
       }
     ],
@@ -158,12 +132,20 @@ const LayoutDecider = ({
     "screenDetails": [
       {
         "name": "menu item 7",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1",
-          "User",
-          "Template 3"
-        ],
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Veracious:AFVK:v1",
+        "allowedAccessProfile": [],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroupLabel": "Menu Item 5",
+    "screenDetails": [
+      {
+        "name": "menu item 5",
+        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:columsnCheck:AFVK:v1",
+        "allowedAccessProfile": [],
         "static": false
       }
     ],

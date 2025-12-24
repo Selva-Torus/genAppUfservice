@@ -1135,7 +1135,7 @@ export class CommonService{
         let logs = {}
         logs['sessionInfo'] = sessionInfo
         if(key){
-          if(fabric == 'PF-PFD' || fabric == 'DF-DFD' || fabric == 'PF-SFD' )
+          if(fabric == 'PF-PFD' || fabric == 'DF-DFD' || fabric == 'PF-SFD' || fabric == 'PF-SCDL')
             logs['processInfo'] = prcdet
           }
         logs['errorDetails'] = errorDetails   

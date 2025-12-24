@@ -14,35 +14,14 @@ import { Text } from "@/components/Text";
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import clsx from "clsx";
-import Groupgroup  from "./Groupgroup/Groupgroup";
+import Groupbackgorund  from "./Groupbackgorund/Groupbackgorund";
+import Groupbackground1  from "./Groupbackground1/Groupbackground1";
 
 
 export default function PageMenuItem7V1() {
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const [initialLoad, setInitialLoad] = useState(false);
-  const securityData:any={
-  "Template 1": {
-    "allowedGroups": [
-      "canvas",
-      "group",
-      "group"
-    ]
-  },
-  "User": {
-    "allowedGroups": [
-      "canvas",
-      "group",
-      "group"
-    ]
-  },
-  "Template 3": {
-    "allowedGroups": [
-      "canvas",
-      "group",
-      "group"
-    ]
-  }
-};
+  const securityData:any={};
   let code:any="";
   //const language=useLanguage();
   const routes = useRouter();
@@ -61,9 +40,11 @@ export default function PageMenuItem7V1() {
   const {paginationDetails, setpaginationDetails} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
-  const {oprmatrixuf_v1Props, setoprmatrixuf_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const [checkgroup,setCheckgroup,]=useState(false);
-  const {groupaaf24, setgroupaaf24} = useContext(TotalContext) as TotalContextProps;
+  const {veracious_v1Props, setveracious_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const [checkbackgorund,setCheckbackgorund,]=useState(false);
+  const [checkbackground1,setCheckbackground1,]=useState(false);
+  const {backgorunde9308, setbackgorunde9308} = useContext(TotalContext) as TotalContextProps;
+  const {background10bc8a, setbackground10bc8a} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagPage: boolean = false|| encAppFalg.flag;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encAppFalg.dpd;
@@ -79,7 +60,7 @@ export default function PageMenuItem7V1() {
     });
 
   async function securityCheck() {
-    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",accessProfile:[user],from:"pageMenuItem7V1"},{
+    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Veracious:AFVK:v1",accessProfile:[user],from:"pageMenuItem7V1"},{
       headers: {
         Authorization: `Bearer ${token}`
       }});
@@ -104,7 +85,7 @@ export default function PageMenuItem7V1() {
             params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Veracious:AFVK:v1"
             }
           }) 
         }else{
@@ -113,7 +94,7 @@ export default function PageMenuItem7V1() {
               Authorization: `Bearer ${token}`
              },
             params: {
-              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"  
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Veracious:AFVK:v1"  
             }
           })          
         }
@@ -138,7 +119,7 @@ export default function PageMenuItem7V1() {
           params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Veracious:AFVK:v1"
             }
         }) 
         }else{
@@ -147,7 +128,7 @@ export default function PageMenuItem7V1() {
              Authorization: `Bearer ${token}`
            },
             params: {
-              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+              key:"CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:Veracious:AFVK:v1"
             }
          })          
         }
@@ -180,9 +161,13 @@ export default function PageMenuItem7V1() {
         try{
           if (security == 'AA') {
           allowedGroup.map((nodes:any)=>{
-            if(nodes?.groupName == 'group' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
+            if(nodes?.groupName == 'backgorund' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
             {
-              setCheckgroup(true)
+              setCheckbackgorund(true)
+            }
+            if(nodes?.groupName == 'background1' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
+            {
+              setCheckbackground1(true)
             }
           })
           }
@@ -197,8 +182,10 @@ export default function PageMenuItem7V1() {
         //Code Execution
         if (code !="" ) {
           let codeStates: any = {}
-          codeStates['group'] = groupaaf24;
-          codeStates['setgroup'] = setgroupaaf24;
+          codeStates['backgorund'] = backgorunde9308;
+          codeStates['setbackgorund'] = setbackgorunde9308;
+          codeStates['background1'] = background10bc8a;
+          codeStates['setbackground1'] = setbackground10bc8a;
           codeExecution(code,codeStates);
         }   
         setInitialLoad(true);        
@@ -256,7 +243,21 @@ export default function PageMenuItem7V1() {
           borderWidth: '2px'
       })
       }}>
-        {checkgroup && initialLoad &&<Groupgroup  
+        {checkbackgorund && initialLoad &&<Groupbackgorund  
+          lockedData={lockedData} 
+          setLockedData={setLockedData} 
+          primaryTableData={primaryTableData}
+          setPrimaryTableData={setPrimaryTableData}
+          checkToAdd={checkToAdd} 
+          setCheckToAdd={setCheckToAdd}  
+          refetch={refetch}
+          setRefetch={setRefetch}
+          dropdownData={dropdownData} 
+          setDropdownData={setDropdownData}
+          encryptionFlagPageData={encryptionFlagPageData}
+          paginationDetails={paginationDetails}        />}
+        
+        {checkbackground1 && initialLoad &&<Groupbackground1  
           lockedData={lockedData} 
           setLockedData={setLockedData} 
           primaryTableData={primaryTableData}

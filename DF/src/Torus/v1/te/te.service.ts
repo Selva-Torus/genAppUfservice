@@ -42,11 +42,11 @@ export class TeService {
        }
        let client = process.env.CLIENTCODE;
        if (!client) throw new CustomException('client not found', 404);
-       if (currentFabric == 'PF-PFD') {
+       if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SCDL') {
          sourceId = pfdto?.sourceId
        }
        let d_Pfs, d_Po, d_Pfo;
-       if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD') {
+       if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL') {
          d_Pfs = 'PFS';
          d_Po = 'PO';
          d_Pfo = 'PFO';
@@ -55,7 +55,7 @@ export class TeService {
          d_Po = 'DO';
          d_Pfo = 'DFO';
        }
-       if (currentFabric != 'DF-DFD' && (!pfdto.data || pfdto.data.length == 0 || Object.keys(pfdto.data).length == 0))
+       if (currentFabric == 'PF-PFD' && (!pfdto.data || pfdto.data.length == 0 || Object.keys(pfdto.data).length == 0))
          throw new CustomException('data not found', 404);
        let tokenDecode = this.jwtService.decode(pfdto.token, { json: true })
        if (!tokenDecode || !tokenDecode.loginId)
@@ -107,8 +107,8 @@ export class TeService {
              flg++;
            }
          }
-         if (poNode[e].nodeType != 'startnode' && poNode[e].nodeType != 'endnode') {
-           if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD') {
+         if (poNode[e].nodeType != 'startnode' && poNode[e].nodeType != 'endnode' && poNode[e].nodeType != 'schedulernode') {
+           if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL') {
              if (poNode[e].events.length > 0) {
                for (let k = 0; k < poNode[e].events.length; k++) {
                  if (!poNode[e].events[k].source.status) {
@@ -147,7 +147,7 @@ export class TeService {
         let targetQueue;
         let staticQueue = currentFabric == 'DF-DFD' ? 'TDH' : 'TPH';
 
-        if (poNode[i].nodeType == 'startnode') {
+        if (poNode[i].nodeType == 'startnode' || poNode[i].nodeType == 'schedulernode') {
            this.logger.log('Start node');
            if (currentFabric == 'DF-DFD') {
              if (poNode[1].events.sourceStatus) {
@@ -297,7 +297,7 @@ export class TeService {
             srcQueue = poNode[i].events.sourceQueue;
             if (!event) event = pfdto.event
           }
-          if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD') {
+          if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL') {
             if (!pfdto.data) {
               // pfdto.data = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', '.request', client));
               pfdto.data = eventResponse?.data
@@ -383,7 +383,7 @@ export class TeService {
               srcQueue = poNode[i].events?.sourceQueue
               if (!event) event = pfdto.event
             }
-            if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD') {
+            if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL') {
               if (!pfdto.data) {
                 // pfdto.data = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', '.request', client))
                 pfdto.data = eventResponse?.data
@@ -653,7 +653,7 @@ export class TeService {
                             if (!srcQueue) srcQueue = staticQueue;
                             await this.redisService.setStreamData(srcQueue, 'TASK - ' + pfdto.upId, JSON.stringify({ PID: pfdto.upId, TID: pfdto.nodeId, EVENT: 'ProcessCompleted' }));
                             await this.teCommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', '',pfdto.token, currentFabric);
-                            if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD') {
+                            if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL') {
                               pfresponse = pfresponse.data && pfresponse.data[pfjson[pfs].nodeName] ? pfresponse.data[pfjson[pfs].nodeName] : pfresponse;
                               this.logger.log('Event Emmiter Completed....');
                               return { message: 'Success', key: pfdto.key, upId: pfdto.upId, event: event, data: pfresponse };
@@ -950,6 +950,11 @@ export class TeService {
     await this.schedulerRegistry.addCronJob(name, job);
     job.start();   
     this.logger.log(`Started job: ${name}`); 
+  }
+
+   async stopCron() {
+    const job = await this.schedulerRegistry.deleteCronJob('DynamicEventEmitter');
+    //job.stop();    
   }
 
   // pfPreProcessor

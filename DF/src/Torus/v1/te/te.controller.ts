@@ -47,7 +47,12 @@ export class TeController {
           }
         }
         if(TimeInterval){ 
-          await this.teService.startCronJob('DynamicEventEmitter',TimeInterval,pfdto,client);         
+         if(pfdto.schedulerStatus == 'active')
+          await this.teService.startCronJob('DynamicEventEmitter',TimeInterval,pfdto,client);
+          else if(pfdto.schedulerStatus == 'inactive'){
+          await this.teService.stopCron();  
+          return 'scheduler stopped' 
+          }           
         } else{
            if (!pfdto.upId) {
         let result: any = await this.teService.EventEmitter(pfdto);
