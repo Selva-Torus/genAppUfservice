@@ -71,13 +71,13 @@ export default function PieChartspie({ encryptionFlagCompData }: any) {
         codeStates['settable'] = settable5cf93,
       codeExecution(code,codeStates)
       }
-      if(Array.isArray() && ?.length > 0){
-        setData()
-        setoverall05a6d((pre:any)=>({...pre,pie:[0]?.pie}))
-      }
-      if(Array.isArray()){
-        return
-      }
+      // if(Array.isArray() && ?.length > 0){
+      //   setData()
+      //   setoverall05a6d((pre:any)=>({...pre,pie:[0]?.pie}))
+      // }
+      // if(Array.isArray()){
+      //   return
+      // }
     }catch(err){
       console.log(err)
     }
