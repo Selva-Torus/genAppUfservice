@@ -5,6 +5,9 @@ import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
+import { getFontSizeClass } from "@/app/utils/branding";
+
+type ContentAlign = "left" | "center" | "right";
 
 interface DropdownProps {
   static?: boolean;
@@ -14,7 +17,6 @@ interface DropdownProps {
   isArray?: boolean;
   staticProps?: string[];
   dynamicProps?: string;
-  width?: string;
   needTooltip?: boolean;
   tooltipProps?: TooltipPropsType;
   headerText?: string;
@@ -28,6 +30,8 @@ interface DropdownProps {
   value?: string | string[];
   validationState?: "valid" | "invalid" | "none";
   errorMessage?: string;
+  fillContainer?: boolean;
+  contentAlign?: ContentAlign;
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({
@@ -38,7 +42,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
   isArray = false,
   staticProps = [],
   dynamicProps,
-  width = "100%",
   needTooltip = false,
   tooltipProps,
   headerText,
@@ -52,9 +55,11 @@ export const Dropdown: React.FC<DropdownProps> = ({
   value,
   validationState = "none",
   errorMessage,
+  fillContainer = true,
+  contentAlign = "center"
 }) => {
   const isMultiple = multiselect || multiple;
-  const { theme, direction } = useGlobal();
+  const { theme, direction,branding } = useGlobal();
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [filterText, setFilterText] = useState("");
@@ -180,14 +185,53 @@ export const Dropdown: React.FC<DropdownProps> = ({
     return isDark ? "border-gray-600" : "border-gray-300";
   };
 
+  const getFillClasses = () => {
+    if (!fillContainer) return "";
+    return "w-full h-full";
+  };
+
+  const getContentAlignClasses = () => {
+    switch (contentAlign) {
+      case "left":
+        return "justify-start";
+      case "right":
+        return "justify-end";
+      case "center":
+      default:
+        return "justify-center";
+    }
+  };
+
+  const getIconSize = () => {
+    if (fillContainer) {
+      // When fillContainer is true, scale icon with branding fontSize
+      const baseFontSize = fontSizeClass;
+      switch (baseFontSize) {
+        case "text-sm":
+          return 22;
+        case "text-base":
+          return 30;
+        case "text-lg":
+          return 38;
+        case "text-xl":
+          return 46;
+      }
+    }
+  };
+
+  const fontSizeClass = getFontSizeClass(branding.fontSize);
+
   const dropdownElement = (
     <div 
       ref={dropdownRef} 
-      className={`relative w-full ${className}`} 
-      style={{ width }}
+      className={`relative 
+      ${getContentAlignClasses()}
+      ${getFillClasses()}
+      ${className}
+       `} 
     >
       {filterable ? (
-        <div className="relative w-full">
+        <div className="relative w-full h-full">
           <input
             type="text"
             value={filterText}
@@ -202,17 +246,19 @@ export const Dropdown: React.FC<DropdownProps> = ({
             disabled={disabled}
             className={`
               w-full
+              h-full
               px-4 py-2
               ${hasClear && selectedValues.length > 0 ? "pr-16" : "pr-10"}
               border-2
               ${getBorderColor()}
+              ${fontSizeClass}
               ${isDark ? "bg-gray-800 text-white placeholder-gray-400" : "bg-white text-gray-900 placeholder-gray-500"}
               ${disabled ? "opacity-50 cursor-not-allowed" : ""}
               transition-colors
               focus:outline-none
+              ${className}
             `}
             style={{
-              fontSize: "var(--font-size)",
               borderRadius: "var(--border-radius)",
               borderColor: validationState === "none" && isOpen ? "var(--brand-color)" : undefined,
             }}
@@ -225,7 +271,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 style={{ borderRadius: "var(--border-radius)" }}
                 type="button"
               >
-                <Icon data="FaTimes" size={14} />
+                <Icon data="FaTimes" size={getIconSize()} />
               </button>
             )}
             <button
@@ -234,7 +280,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
               type="button"
               disabled={disabled}
             >
-              <Icon data={isOpen ? "FaAngleUp" : "FaAngleDown"} size={16} />
+              <Icon data={isOpen ? "FaAngleUp" : "FaAngleDown"} size={getIconSize()} />
             </button>
           </div>
         </div>
@@ -251,9 +297,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
             ${isDark ? "bg-gray-800 text-white" : "bg-white text-gray-900"}
             ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
             transition-colors
+            ${fontSizeClass}
+            ${className}
           `}
           style={{
-            fontSize: "var(--font-size)",
             borderRadius: "var(--border-radius)",
             borderColor: validationState === "none" && isOpen ? "var(--brand-color)" : undefined,
           }}
@@ -272,10 +319,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
                 style={{ borderRadius: "var(--border-radius)" }}
               >
-                <Icon data="FaTimes" size={14} />
+                <Icon data="FaTimes" size={getIconSize()} />
               </div>
             )}
-            <Icon data={isOpen ? "FaAngleUp" : "FaAngleDown"} size={16} />
+            <Icon data={isOpen ? "FaAngleUp" : "FaAngleDown"} size={getIconSize()} />
           </div>
         </button>
       )}
@@ -310,14 +357,15 @@ export const Dropdown: React.FC<DropdownProps> = ({
                     ? `text-white`
                     : isDark ? "text-gray-200 hover:[background-color:var(--hover-color)]" : "text-gray-700 hover:[background-color:var(--hover-color)]"
                   }
+                  ${fontSizeClass}
+                  ${className}
                 `}
                 style={{
-                  fontSize: "var(--font-size)",
                   backgroundColor: isSelected ? "var(--brand-color)" : undefined,
                 }}
               >
                 <span>{option}</span>
-                {isMultiple && isSelected && <Icon data="FaCheck" size={16} />}
+                {isMultiple && isSelected && <Icon data="FaCheck" size={getIconSize()} />}
               </div>
             );
           })}
@@ -340,49 +388,57 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
     if (!headerText) return elementWithError;
 
-    const headerClasses = `font-semibold mb-2 ${
+    const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 
-    const headerStyle = { fontSize: "var(--font-size)" };
-
     switch (headerPosition) {
-      case "top":
-        return (
-          <div className="flex flex-col w-full">
-            <div className={headerClasses} style={headerStyle}>{headerText}</div>
-            {elementWithError}
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className="flex flex-col w-full">
-            {elementWithError}
-            <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className="flex items-start gap-4 w-full">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
-              {headerText}
+        case "top":
+          return (
+            <div className={`flex flex-col ${fillContainer ? "w-full h-full" : ""}`}>
+              <div className={headerClasses}>{headerText}</div>
+              <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
             </div>
-            <div className="flex-1">{elementWithError}</div>
-          </div>
-        );
-      case "right":
-        return (
-          <div className="flex items-start gap-4 w-full">
-            <div className="flex-1">{elementWithError}</div>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
-              {headerText}
+          );
+        case "bottom":
+          return (
+            <div className={`flex flex-col ${fillContainer ? "w-full h-full" : ""}`}>
+              <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
+              <div className={`${headerClasses} mt-1 mb-0`}>{headerText}</div>
             </div>
-          </div>
-        );
-    }
-  };
+          );
+        case "left":
+          return (
+            <div className={`flex items-center ${fillContainer ? "w-full h-full" : ""}`}>
+              <div
+                className={`${headerClasses} mb-0 ${
+                  direction === "RTL" ? "ml-2" : "mr-2"
+                } flex-shrink-0`}
+              >
+                {headerText}
+              </div>
+              <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
+            </div>
+          );
+        case "right":
+          return (
+            <div className={`flex items-center ${fillContainer ? "w-full h-full" : ""}`}>
+              <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
+              <div
+                className={`${headerClasses} mb-0 ${
+                  direction === "RTL" ? "mr-2" : "ml-2"
+                } flex-shrink-0`}
+              >
+                {headerText}
+              </div>
+            </div>
+          );
+        default:
+          return element;
+      }
+    };
 
-   const finalElement = (<div className={className}>{renderWithHeader(dropdownElement)}</div>);
+  const finalElement = renderWithHeader(dropdownElement);
 
   if (needTooltip && tooltipProps) {
     return (

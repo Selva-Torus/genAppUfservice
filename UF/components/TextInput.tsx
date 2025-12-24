@@ -1,65 +1,72 @@
-"use client";
+'use client'
 
-import React, { useState, useEffect } from "react";
-import { useGlobal } from "@/context/GlobalContext";
-import { useEventBus } from "@/context/EventBusContext";
-import { Tooltip } from "./Tooltip";
-import { Icon } from "./Icon";
-import { ComponentSize, TextInputType, TextInputView, TextAreaPin, HeaderPosition, TooltipProps as TooltipPropsType, ComponentEvents } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
-import { GravityIcon } from "@/types/icons";
-import { RiCloseCircleLine } from "react-icons/ri";
-
+import React, { useState, useEffect } from 'react'
+import { useGlobal } from '@/context/GlobalContext'
+import { useEventBus } from '@/context/EventBusContext'
+import { Tooltip } from './Tooltip'
+import { Icon } from './Icon'
+import {
+  ComponentSize,
+  TextInputType,
+  TextInputView,
+  TextAreaPin,
+  HeaderPosition,
+  TooltipProps as TooltipPropsType,
+  ComponentEvents
+} from '@/types/global'
+import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
+import { RiCloseCircleLine } from 'react-icons/ri'
+type ContentAlign = 'center' | 'left' | 'right'
 interface TextInputProps {
-  nodeId?: string;
-  disabled?: boolean;
-  label?: string;
-  pin?: TextAreaPin;
-  placeholder?: string;
-  size?: ComponentSize;
-  type?: TextInputType;
-  leftContent?: string;
-  rightContent?: string;
-  startContent?: React.ReactNode;
-  endContent?: React.ReactNode;
-  topContent?: boolean;
-  readOnly?: boolean;
-  view?: TextInputView;
-  name?: string;
-  value?: string;
-  note?: string;
-  validationState?: 'valid' | 'invalid';
-  errorMessage?: string;
-  hasClear?: boolean;
-  autoFocus?: boolean;
-  needTooltip?: boolean;
-  tooltipProps?: TooltipPropsType;
-  headerText?: string;
-  headerPosition?: HeaderPosition;
-  require?: boolean;
+  nodeId?: string
+  disabled?: boolean
+  label?: string
+  pin?: TextAreaPin
+  placeholder?: string
+  type?: TextInputType
+  leftContent?: string
+  rightContent?: string
+  startContent?: React.ReactNode
+  endContent?: React.ReactNode
+  topContent?: boolean
+  readOnly?: boolean
+  view?: TextInputView
+  name?: string
+  value?: string
+  note?: string
+  validationState?: 'valid' | 'invalid'
+  errorMessage?: string
+  hasClear?: boolean
+  autoFocus?: boolean
+  needTooltip?: boolean
+  tooltipProps?: TooltipPropsType
+  headerText?: string
+  headerPosition?: HeaderPosition
+  require?: boolean
   onChange?: React.ChangeEventHandler<HTMLInputElement> | undefined
   onBlur?: React.FocusEventHandler<HTMLInputElement> | undefined
-  events?: ComponentEvents[];
-  className?: string;
+  events?: ComponentEvents[]
+  className?: string
+  fillContainer?: boolean
+  contentAlign?: ContentAlign
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
   nodeId,
   disabled = false,
   label,
-  pin = "round-round",
-  placeholder,
-  size,
-  type = "text",
+  pin = 'round-round',
+  placeholder="",
+  type = 'text',
   leftContent,
   rightContent,
   startContent,
   endContent,
   topContent = false,
   readOnly = false,
-  view = "normal",
-  name="",
-  value = "",
+  view = 'normal',
+  name = '',
+  value = '',
   note,
   validationState,
   errorMessage,
@@ -68,185 +75,209 @@ export const TextInput: React.FC<TextInputProps> = ({
   needTooltip = false,
   tooltipProps,
   headerText,
-  headerPosition = "top",
+  headerPosition = 'top',
   require = false,
   onChange,
-  onBlur=() => {},
+  onBlur = () => {},
   events,
-  className = "",
+  className = '',
+  fillContainer = true,
+  contentAlign = 'left'
 }) => {
-  const { theme, direction, branding } = useGlobal();
-  const eventBus = useEventBus();
-  const [internalValue, setInternalValue] = useState(value);
-  const [isDisabled, setIsDisabled] = useState(disabled);
-  const [isVisible, setIsVisible] = useState(true);
+  const { theme, direction, branding } = useGlobal()
+  const eventBus = useEventBus()
+  const [internalValue, setInternalValue] = useState(value)
+  const [isDisabled, setIsDisabled] = useState(disabled)
+  const [isVisible, setIsVisible] = useState(true)
 
   // Sync internal value with prop value
   useEffect(() => {
-    setInternalValue(value);
-  }, [value]);
+    setInternalValue(value)
+  }, [value])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setInternalValue(newValue);
-    onChange?.(e);
+    const newValue = e.target.value
+    setInternalValue(newValue)
+    onChange?.(e)
 
     // Emit rise events when onChange occurs
-    const onChangeEvent = events?.find(e => e.name === "onChange");
+    const onChangeEvent = events?.find(e => e.name === 'onChange')
     if (onChangeEvent?.enabled && onChangeEvent.rise && nodeId) {
       onChangeEvent.rise.forEach(riseEvent => {
         eventBus.emit(riseEvent.key, {
           nodeId,
-          data: { value: newValue },
-        });
-      });
+          data: { value: newValue }
+        })
+      })
     }
-  };
+  }
 
   const handleClear = () => {
-    setInternalValue("");
+    setInternalValue('')
     if (onChange) {
       const syntheticEvent = {
-        target: { value: "", name },
-        currentTarget: { value: "", name }
-      } as React.ChangeEvent<HTMLInputElement>;
-      onChange(syntheticEvent);
+        target: { value: '', name },
+        currentTarget: { value: '', name }
+      } as React.ChangeEvent<HTMLInputElement>
+      onChange(syntheticEvent)
     }
-  };
+  }
 
   // Subscribe to riseListen events
   useEffect(() => {
-    if (!nodeId || !events) return;
+    if (!nodeId || !events) return
 
-    const unsubscribers: (() => void)[] = [];
+    const unsubscribers: (() => void)[] = []
 
     events.forEach(event => {
       if (event.enabled && event.riseListen) {
         event.riseListen.forEach(listener => {
-          const subscribe = listener.listenerType === "type1"
-            ? eventBus.subscribeGlobal
-            : (key: string, cb: any) => eventBus.subscribe(key, nodeId, cb);
+          const subscribe =
+            listener.listenerType === 'type1'
+              ? eventBus.subscribeGlobal
+              : (key: string, cb: any) => eventBus.subscribe(key, nodeId, cb)
 
-          const unsubscribe = subscribe(listener.key, (payload) => {
+          const unsubscribe = subscribe(listener.key, payload => {
             // Handle different event types
             switch (listener.key) {
-              case "hideElement":
-                setIsVisible(false);
-                break;
-              case "showElement":
-                setIsVisible(true);
-                break;
-              case "disableElement":
-                setIsDisabled(true);
-                break;
-              case "enableElement":
-                setIsDisabled(false);
-                break;
-              case "clearHandler":
-                setInternalValue("");
+              case 'hideElement':
+                setIsVisible(false)
+                break
+              case 'showElement':
+                setIsVisible(true)
+                break
+              case 'disableElement':
+                setIsDisabled(true)
+                break
+              case 'enableElement':
+                setIsDisabled(false)
+                break
+              case 'clearHandler':
+                setInternalValue('')
                 // onChange?.("");
-                break;
-              case "refreshElement":
+                break
+              case 'refreshElement':
                 // Refresh could reload value from memory or reset to initial
                 if (payload.data?.value !== undefined) {
-                  setInternalValue(payload.data.value);
+                  setInternalValue(payload.data.value)
                 }
-                break;
+                break
               default:
                 // For custom events, just log them
-                console.log(`TextInput ${nodeId} received event: ${listener.key}`, payload);
+                console.log(
+                  `TextInput ${nodeId} received event: ${listener.key}`,
+                  payload
+                )
             }
-          });
+          })
 
-          unsubscribers.push(unsubscribe);
-        });
+          unsubscribers.push(unsubscribe)
+        })
       }
-    });
+    })
 
     return () => {
-      unsubscribers.forEach(unsub => unsub());
-    };
-  }, [nodeId, events, eventBus]);
-
-  const getSizeClasses = () => {
-    const fontSize = getFontSizeClass(branding.fontSize);
-    switch (size) {
-      case "xs":
-    return `px-2 py-1 ${fontSize === "text-xl"? "text-sm": fontSize === "text-lg"? "text-xs": "text-[10px]"}`;
-      case "s":
-        return `px-3 py-1.5 ${fontSize === "text-xl" ? "text-base" : fontSize === "text-lg" ? "text-sm" : "text-xs"}`;
-      case "m":
-        return `px-4 py-2 ${fontSize}`;
-      case "l":
-        return `px-5 py-2.5 ${fontSize === "text-sm" ? "text-base" : fontSize === "text-base" ? "text-lg" : "text-xl"}`;
-      case "xl":
-        return `px-6 py-3 ${fontSize === "text-sm" ? "text-lg" : fontSize === "text-base" ? "text-xl" : "text-2xl"}`;
-      default:
-        return `px-4 py-2 ${fontSize}`;
+      unsubscribers.forEach(unsub => unsub())
     }
-  };
+  }, [nodeId, events, eventBus])
 
   const getPinClasses = () => {
-    const baseRadius = getBorderRadiusClass(branding.borderRadius);
-    
-    if (pin === "clear-clear") {
-      return baseRadius;
+    const baseRadius = getBorderRadiusClass(branding.borderRadius)
+
+    if (pin === 'clear-clear') {
+      return baseRadius
     }
-    
-    const [left, right] = pin.split("-");
+
+    const [left, right] = pin.split('-')
     const leftRadius =
-      left === "round" ? "rounded-l-full" :
-      left === "brick" ? "rounded-l-none" :
-      `rounded-l${baseRadius.replace("rounded", "")}`;
+      left === 'round'
+        ? 'rounded-l-full'
+        : left === 'brick'
+        ? 'rounded-l-none'
+        : `rounded-l${baseRadius.replace('rounded', '')}`
     const rightRadius =
-      right === "round" ? "rounded-r-full" :
-      right === "brick" ? "rounded-r-none" :
-      `rounded-r${baseRadius.replace("rounded", "")}`;
-    
-    return `${leftRadius} ${rightRadius}`;
-  };
+      right === 'round'
+        ? 'rounded-r-full'
+        : right === 'brick'
+        ? 'rounded-r-none'
+        : `rounded-r${baseRadius.replace('rounded', '')}`
+
+    return `${leftRadius} ${rightRadius}`
+  }
 
   const getInputStyles = (): React.CSSProperties => {
-    const isDark = theme === "dark" || theme === "dark-hc";
-    const styles: React.CSSProperties = {};
+    const isDark = theme === 'dark' || theme === 'dark-hc'
+    const styles: React.CSSProperties = {}
 
     if (validationState === 'invalid' || errorMessage) {
-      styles.borderColor = "#EF4444";
+      styles.borderColor = '#EF4444'
     } else if (validationState === 'valid') {
-      styles.borderColor = "#10B981";
-    } else if (view === "normal") {
-      styles.borderColor = isDark ? "#4B5563" : "#D1D5DB";
-    } else if (view === "clear") {
-      styles.borderColor = "transparent";
+      styles.borderColor = '#10B981'
+    } else if (view === 'normal') {
+      styles.borderColor = isDark ? '#4B5563' : '#D1D5DB'
+    } else if (view === 'clear') {
+      styles.borderColor = 'transparent'
     }
 
-    return styles;
+    return styles
+  }
+  const getFillClasses = () => {
+    if (!fillContainer) return ''
+    return 'w-full h-full'
+  }
+
+  const getTextAlignClasses = () => {
+    switch (contentAlign) {
+      case 'left':
+        return 'text-left'
+      case 'right':
+        return 'text-right'
+      case 'center':
+        return 'text-center'
+      default:
+        return 'text-center'
+    }
+  }
+  const isDark = theme === 'dark' || theme === 'dark-hc'
+
+  // Helper to convert hex to rgba
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
-  const isDark = theme === "dark" || theme === "dark-hc";
-
   const inputElement = (
-    <div className="w-full">
+    <div
+      className={`${getFillClasses()} ${getFontSizeClass(branding.fontSize)}`}
+    >
       {label && topContent && (
         <label
-          className={`block mb-2  font-medium ${
-            isDark ? "text-gray-200" : "text-gray-900"
+          className={`mb-2 block  font-medium ${
+            isDark ? 'text-gray-200' : 'text-gray-900'
           }`}
           style={{ fontFamily: 'var(--font-body)' }}
         >
           {label}
         </label>
       )}
-      
-      <div className="relative flex items-center">
+
+      <div
+        className={`relative flex items-center ${
+          fillContainer ? 'h-full' : ''
+        }`}
+      >
         {(startContent || leftContent) && (
-          <div className={`absolute ${direction === "RTL" ? "right-3" : "left-3"} ${
-            isDark ? "text-gray-400" : "text-gray-500"
-          } flex items-center`}>
+          <div
+            className={`absolute ${
+              direction === 'RTL' ? 'right-3' : 'left-3'
+            } ${isDark ? 'text-gray-400' : 'text-gray-500'} flex items-center`}
+          >
             {startContent || leftContent}
           </div>
         )}
-        
+
         <input
           type={type}
           name={name}
@@ -258,135 +289,224 @@ export const TextInput: React.FC<TextInputProps> = ({
           autoFocus={autoFocus}
           // style={getInputStyles()}
           className={`
-            w-full
-            ${getSizeClasses()}
+            ${getFillClasses()}
             ${getPinClasses()}
-            ${view === "normal" ? "border-2" : view === "clear" ? "border-2 border-transparent" : "border-0 border-b-2"}
-            ${(startContent || leftContent) ? (direction === "RTL" ? "pr-10" : "pl-10") : ""}
-            ${(endContent || rightContent || hasClear) ? (direction === "RTL" ? "pl-10" : "pr-10") : ""}
-            ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}
-            ${isDark ? "bg-gray-800 text-white" : "bg-white text-gray-900"}
-            transition-all
+            ${getTextAlignClasses()}
+            ${
+              view === 'normal'
+                ? 'border-2'
+                : view === 'clear'
+                ? 'border-2 border-transparent'
+                : 'border-0 border-b-2'
+            }
+            ${
+              startContent || leftContent
+                ? direction === 'RTL'
+                  ? 'pr-10'
+                  : 'pl-10'
+                : ''
+            }
+            ${
+              endContent || rightContent || hasClear
+                ? direction === 'RTL'
+                  ? 'pl-10'
+                  : 'pr-10'
+                : ''
+            }
+            ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
+            ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}
+            transition-all duration-200
             focus:outline-none
             ${className}
           `}
           style={{
             fontFamily: 'var(--font-body)',
-            ...getInputStyles(),
-            ...(!errorMessage && view === "normal" ? {
-             // outlineColor: branding.brandColor,
-             // boxShadow: `0 0 0 2px ${branding.brandColor}20`
-            } : {})
+            ...getInputStyles()
           }}
-          onFocus={(e) => {
-            if (!errorMessage && !validationState) {
-              e.currentTarget.style.borderColor = "var(--brand-color)";
-              if (view === "clear") {
-                e.currentTarget.style.boxShadow = "none";
+          onMouseEnter={e => {
+            if (!isDisabled && !errorMessage && !validationState && document.activeElement !== e.currentTarget) {
+              e.currentTarget.style.borderColor = branding.hoverColor
+            }
+          }}
+          onMouseLeave={e => {
+            if (!isDisabled && !errorMessage && !validationState && document.activeElement !== e.currentTarget) {
+              if (view === 'clear') {
+                e.currentTarget.style.borderColor = 'transparent'
+              } else {
+                e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
               }
             }
           }}
-          onBlur={(e) => {
+          onFocus={e => {
             if (!errorMessage && !validationState) {
-              if (view === "clear") {
-                e.currentTarget.style.borderColor = "transparent";
-                e.currentTarget.style.boxShadow = "none";
+              e.currentTarget.style.borderColor = branding.selectionColor
+              if (view !== 'clear') {
+                e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(branding.selectionColor, 0.2)}`
+              }
+            }
+          }}
+          onBlur={e => {
+            if (!errorMessage && !validationState) {
+              if (view === 'clear') {
+                e.currentTarget.style.borderColor = 'transparent'
+                e.currentTarget.style.boxShadow = 'none'
               } else {
-                e.currentTarget.style.borderColor = isDark ? "#4B5563" : "#D1D5DB";
+                e.currentTarget.style.borderColor = isDark
+                  ? '#4B5563'
+                  : '#D1D5DB'
+                e.currentTarget.style.boxShadow = 'none'
               }
             }
             onBlur(e)
           }}
         />
-       
+
         {(endContent || rightContent || (hasClear && internalValue)) && (
-          <div className={`absolute ${direction === "RTL" ? "left-3" : "right-3"} flex items-center gap-2`}>
+          <div
+            className={`absolute ${
+              direction === 'RTL' ? 'left-3' : 'right-3'
+            } flex items-center gap-2`}
+          >
             {hasClear && internalValue && (
               <button
                 onClick={handleClear}
-                type="button"
-                className={`${isDark ? "text-gray-400 hover:text-gray-200" : "text-gray-500 hover:text-gray-700"} transition-colors`}
+                type='button'
+                className={`${
+                  isDark
+                    ? 'text-gray-400'
+                    : 'text-gray-500'
+                } transition-all duration-200`}
+                onMouseEnter={e => {
+                  e.currentTarget.style.color = branding.hoverColor
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.color = isDark ? '#9CA3AF' : '#6B7280'
+                }}
               >
                 <RiCloseCircleLine size={16} />
               </button>
             )}
             {endContent && (
-              <div className={`flex items-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              <div
+                className={`flex items-center ${
+                  isDark ? 'text-gray-400' : 'text-gray-500'
+                }`}
+              >
                 {endContent}
               </div>
             )}
             {!endContent && rightContent && (
-              <span className={isDark ? "text-gray-400" : "text-gray-500"}>
+              <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>
                 {rightContent}
               </span>
             )}
           </div>
         )}
       </div>
-      
+
       {(note || errorMessage || validationState === 'invalid') && (
-        <div className={`mt-1 text-sm ${(validationState === 'invalid' || errorMessage) ? "text-red-500" : isDark ? "text-gray-400" : "text-gray-600"}`}>
+        <div
+          className={`mt-1 text-sm ${
+            validationState === 'invalid' || errorMessage
+              ? 'text-red-500'
+              : isDark
+              ? 'text-gray-400'
+              : 'text-gray-600'
+          }`}
+        >
           {errorMessage || note}
         </div>
       )}
     </div>
-  );
+  )
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return <div className={className}>{element}</div>;
+    if (!headerText)
+      return (
+        <div className={`${fillContainer ? 'h-full w-full' : ''} ${className}`}>
+          {element}
+        </div>
+      )
 
-    const headerClasses = ` font-semibold mb-1 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    }`;
+    const headerClasses = `font-semibold mb-1 overflow-hidden text-ellipsis whitespace-nowrap ${
+      isDark ? 'text-gray-300' : 'text-gray-700'
+    } 
+      ${getFontSizeClass(branding.fontSize)} ${className}`
 
     const headerContent = (
       <>
         {headerText}
-        {require && <span className="text-red-500 ml-1">*</span>}
+        {require && <span className='ml-1 text-red-500'>*</span>}
       </>
-    );
+    )
 
     switch (headerPosition) {
-      case "top":
+      case 'top':
         return (
-          <div className={`flex flex-col w-full ${className}`}>
-            <div className={headerClasses}>{headerContent}</div>
+          <div
+            className={`${
+              fillContainer
+                ? 'flex h-full w-full flex-col'
+                : 'inline-flex flex-col'
+            } ${headerClasses}`}
+          >
+            <div>{headerContent}</div>
             {element}
           </div>
-        );
-      case "bottom":
+        )
+      case 'bottom':
         return (
-          <div className={`flex flex-col w-full ${className}`}>
+          <div
+            className={`${
+              fillContainer
+                ? 'flex h-full w-full flex-col'
+                : 'inline-flex flex-col'
+            }  ${headerClasses}`}
+          >
             {element}
-            <div className={`${headerClasses} mt-1 mb-0`}>{headerContent}</div>
+            <div className='mt-1'>{headerContent}</div>
           </div>
-        );
-      case "left":
+        )
+      case 'left':
         return (
-          <div className={`flex items-center w-full ${className}`}>
-            <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "ml-4" : "mr-4"} whitespace-nowrap`}>
+          <div
+            className={`${
+              fillContainer ? 'flex h-full w-full' : 'inline-flex'
+            } items-center gap-4 ${headerClasses}`}
+          >
+            <div
+              className={`mb-0 min-w-0 max-w-[50%] sm:max-w-[40%] md:max-w-[35%] lg:max-w-[30%]`}
+            >
               {headerContent}
             </div>
-            <div className="flex-1">{element}</div>
+            {element}
           </div>
-        );
-      case "right":
+        )
+      case 'right':
         return (
-          <div className={`flex items-center w-full ${className}`}>
-            <div className="flex-1">{element}</div>
-            <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "mr-4" : "ml-4"} whitespace-nowrap`}>
+          <div
+            className={`${
+              fillContainer
+                ? 'flex h-full w-full flex-col'
+                : 'inline-flex flex-col'
+            } items-center gap-4 ${className} ${headerClasses}`}
+          >
+            {element}
+            <div
+              className={` mb-0 min-w-0 max-w-[50%] sm:max-w-[40%] md:max-w-[35%] lg:max-w-[30%]`}
+            >
               {headerContent}
             </div>
           </div>
-        );
+        )
     }
-  };
+  }
 
-  const finalElement = renderWithHeader(inputElement);
+  const finalElement = renderWithHeader(inputElement)
 
   // Don't render if hidden by event
   if (!isVisible) {
-    return null;
+    return null
   }
 
   if (needTooltip && tooltipProps) {
@@ -394,8 +514,8 @@ export const TextInput: React.FC<TextInputProps> = ({
       <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
         {finalElement}
       </Tooltip>
-    );
+    )
   }
 
-  return <>{finalElement}</>;
+  return <>{finalElement}</>
 };

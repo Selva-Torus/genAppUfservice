@@ -2,18 +2,23 @@ import React, { useEffect, useState } from 'react'
 import { TextInput } from './TextInput'
 import { Button } from './Button'
 import { FiMic, FiMicOff } from 'react-icons/fi'
-import { Icon } from '@/components/Icon';
+import { Icon } from '@/components/Icon'
 import SpeechRecognition, {
   useSpeechRecognition
 } from 'react-speech-recognition'
 import { Tooltip } from './Tooltip'
-import { HeaderPosition, TooltipProps as TooltipPropsType } from '@/types/global'
+import {
+  HeaderPosition,
+  TooltipProps as TooltipPropsType
+} from '@/types/global'
 import { useGlobal } from '@/context/GlobalContext'
+import { getFontSizeClass } from '@/app/utils/branding'
 
 interface TorusSpeechToTextInputProps extends Omit<any, 'onChange'> {
   onChange: (value: string) => void
   value: string
   onSearch: () => {}
+  className?: string
   disabled?: boolean
   needTooltip?: boolean
   tooltipProps?: TooltipPropsType
@@ -28,14 +33,14 @@ export function TorusSpeechToTextInput(props: TorusSpeechToTextInputProps) {
     needTooltip = false,
     tooltipProps,
     headerText,
-    headerPosition = "top",
+    headerPosition = 'top',
     placeholder = 'Start speaking or typing...',
     label,
     ...restProps
   } = props
-  const { theme } = useGlobal()
+  const { theme, direction, branding } = useGlobal()
   const { transcript, resetTranscript, browserSupportsSpeechRecognition } =
-  useSpeechRecognition()
+    useSpeechRecognition()
   const [openMic, setOpenMic] = useState<any>(true)
   const [inputValue, setInputValue] = useState(restProps.value || '')
 
@@ -68,14 +73,16 @@ export function TorusSpeechToTextInput(props: TorusSpeechToTextInputProps) {
     setOpenMic(false)
   }
 
-  const isDark = theme === "dark" || theme === "dark-hc"
+  const isDark = theme === 'dark' || theme === 'dark-hc'
 
   const inputElement = (
-    <div className='relative w-full'>
+    <div className='relative h-full w-full'>
       {label && (
-        <label className={`block mb-2 font-medium ${
-          isDark ? "text-gray-300" : "text-gray-700"
-        }`}>
+        <label
+          className={`mb-2 block font-medium ${
+            isDark ? 'text-gray-300' : 'text-gray-700'
+          }`}
+        >
           {label}
         </label>
       )}
@@ -85,14 +92,14 @@ export function TorusSpeechToTextInput(props: TorusSpeechToTextInputProps) {
         onChange={handleTyping}
         disabled={restProps.disabled}
         placeholder={placeholder}
-        className='w-full rounded-full border border-gray-200 bg-white  shadow-md outline-none transition-all duration-200 text-gray-600 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-400/20 focus:ring-opacity-50 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20 dark:focus:ring-opacity-50'
+        className={`w-full rounded-full border border-gray-200 bg-white  text-gray-600 shadow-md outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-400/20 focus:ring-opacity-50 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20 dark:focus:ring-opacity-50 ${restProps.className}`}
         view='clear'
         endContent={
           <div className='absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-3'>
             <button
               onClick={toggleMic}
               disabled={restProps.disabled}
-              className='rounded-full p-2 transition-colors hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed'
+              className='rounded-full p-2 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
               style={{
                 fontSize: '18px',
                 color: openMic ? 'bg-red-300' : 'bg-greeen-400'
@@ -108,13 +115,13 @@ export function TorusSpeechToTextInput(props: TorusSpeechToTextInputProps) {
                   SpeechRecognition.stopListening()
               }}
               disabled={restProps.disabled}
-              className='rounded-full p-2 transition-colors hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed'
+              className='rounded-full p-2 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50'
               style={{
                 fontSize: '18px',
                 color: '#5f6368'
               }}
             >
-              <Icon data="FaSearch" size={18} />
+              <Icon data='FaSearch' size={18} />
             </button>
           </div>
         }
@@ -123,41 +130,43 @@ export function TorusSpeechToTextInput(props: TorusSpeechToTextInputProps) {
   )
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return <>{element}</>
+    if (!headerText) return <div className='h-full w-full'>{element}</div>
 
-    const headerClasses = `font-semibold mb-1 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    }`
-
+    const headerClasses = `
+      flex h-full w-full overflow-hidden text-ellipsis whitespace-nowrap 
+      ${isDark ? 'text-gray-300' : 'text-gray-700'} 
+      ${getFontSizeClass(branding.fontSize)}
+      ${restProps.className}
+    `
     switch (headerPosition) {
-      case "top":
+      case 'top':
         return (
-          <div className="flex flex-col w-full">
-            <div className={headerClasses}>{headerText}</div>
+          <div className={`${headerClasses} flex-col`}>
+            <div className='font-semibold'>{headerText}</div>
             {element}
           </div>
         )
-      case "bottom":
+      case 'bottom':
         return (
-          <div className="flex flex-col w-full">
+          <div className={`${headerClasses} flex-col`}>
             {element}
-            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
+            <div className='mt-1 font-semibold'>{headerText}</div>
           </div>
         )
-      case "left":
+      case 'left':
         return (
-          <div className="flex items-start gap-4 w-full">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+          <div className={`${headerClasses} items-center gap-4`}>
+            <div className={`mb-0 min-w-0  overflow-hidden font-semibold`}>
               {headerText}
             </div>
-            <div className="flex-1">{element}</div>
+            {element}
           </div>
         )
-      case "right":
+      case 'right':
         return (
-          <div className="flex items-start gap-4 w-full">
-            <div className="flex-1">{element}</div>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+          <div className={`${headerClasses} items-center gap-4`}>
+            {element}
+            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
               {headerText}
             </div>
           </div>

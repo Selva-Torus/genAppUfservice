@@ -3,12 +3,14 @@
 import React, { useState } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
-import { ComponentSize, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
+import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
+import { getFontSizeClass } from "@/app/utils/branding";
+
+type ContentAlign = "left" | "center" | "right";
 
 interface DatePickerProps {
   readOnly?: boolean;
   disabled?: boolean;
-  size?: ComponentSize;
   needTooltip?: boolean;
   tooltipProps?: TooltipPropsType;
   headerText?: string;
@@ -22,12 +24,13 @@ interface DatePickerProps {
   style?: React.CSSProperties;
   validationState?: "invalid" | undefined;
   errorMessage?: string;
+  fillContainer?: boolean;
+  contentAlign?: ContentAlign;
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({
   readOnly = false,
   disabled = false,
-  size = "m",
   needTooltip = false,
   tooltipProps,
   headerText,
@@ -41,8 +44,10 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   style,
   validationState,
   errorMessage,
+  fillContainer = true,
+  contentAlign = "center"
 }) => {
-  const { theme, direction } = useGlobal();
+  const { theme, direction,branding } = useGlobal();
 
   // Convert value to string format for input
   const getDateString = (val: string | Date | null): string => {
@@ -74,44 +79,32 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     onUpdate?.(newValue);
   };
 
-  const getSizeClasses = () => {
-    switch (size) {
-      case "s":
-        return "px-3 py-1.5";
-      case "m":
-        return "px-4 py-2";
-      case "l":
-        return "px-5 py-2.5";
-      case "xl":
-        return "px-6 py-3";
+  const getContentAlignClasses = () => {
+    switch (contentAlign) {
+      case "left":
+        return "justify-start";
+      case "right":
+        return "justify-end";
+      case "center":
       default:
-        return "px-4 py-2";
-    }
-  };
-
-  const getFontSizeForSize = () => {
-    switch (size) {
-      case "s":
-        return "var(--font-size-small)";
-      case "m":
-        return "var(--font-size)";
-      case "l":
-        return "var(--font-size-large)";
-      case "xl":
-        return "var(--font-size-xlarge)";
-      default:
-        return "var(--font-size)";
+        return "justify-center";
     }
   };
 
   const isDark = theme === "dark" || theme === "dark-hc";
+  const fontSizeClass = getFontSizeClass(branding.fontSize);
 
   const datePickerElement = (
-    <div className="w-full" style={style}>
+    <div className={`
+    flex flex-col
+    ${getContentAlignClasses()}
+    ${fillContainer ? "w-full h-full" : ""}
+    ${fontSizeClass}
+    `} 
+      style={style}>
       {label && (
         <label
-          className={`block mb-2 font-medium ${isDark ? "text-gray-200" : "text-gray-700"}`}
-          style={{ fontSize: "var(--font-size)" }}
+          className={`${fontSizeClass} ${getContentAlignClasses()} block mb-2 font-medium flex-shrink-0 ${isDark ? "text-gray-200" : "text-gray-700"} ${className}`}
         >
           {label}
         </label>
@@ -123,8 +116,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         disabled={disabled}
         readOnly={readOnly}
         className={`
-          w-full
-          ${getSizeClasses()}
+          w-full flex-1
           border-2
           ${disabled ? "opacity-50 cursor-not-allowed" : ""}
           ${readOnly ? "cursor-default" : ""}
@@ -132,10 +124,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           ${isDark ? "bg-gray-800 text-white" : "bg-white text-gray-900"}
           transition-colors
           focus:outline-none
+          ${fillContainer ? "w-full h-full" : ""}
+          ${fontSizeClass}
+          ${getContentAlignClasses()}
           ${className}
         `}
         style={{
-          fontSize: getFontSizeForSize(),
           borderRadius: "var(--border-radius)",
         }}
         onFocus={(e) => {
@@ -161,49 +155,57 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `font-semibold mb-2 ${
+    const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 
-    const headerStyle = { fontSize: "var(--font-size)" };
-
     switch (headerPosition) {
-      case "top":
-        return (
-          <div className="flex flex-col">
-            <div className={headerClasses} style={headerStyle}>{headerText}</div>
-            {element}
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className="flex flex-col">
-            {element}
-            <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className="flex items-center gap-4">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
-              {headerText}
+        case "top":
+          return (
+            <div className={`flex flex-col ${fillContainer ? "w-full h-full" : ""}`}>
+              <div className={headerClasses}>{headerText}</div>
+              <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
             </div>
-            {element}
-          </div>
-        );
-      case "right":
-        return (
-          <div className="flex items-center gap-4">
-            {element}
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
-              {headerText}
+          );
+        case "bottom":
+          return (
+            <div className={`flex flex-col ${fillContainer ? "w-full h-full" : ""}`}>
+              <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
+              <div className={`${headerClasses} mt-1 mb-0`}>{headerText}</div>
             </div>
-          </div>
-        );
-    }
-  };
+          );
+        case "left":
+          return (
+            <div className={`flex items-center ${fillContainer ? "w-full h-full" : ""}`}>
+              <div
+                className={`${headerClasses} mb-0 ${
+                  direction === "RTL" ? "ml-2" : "mr-2"
+                } flex-shrink-0`}
+              >
+                {headerText}
+              </div>
+              <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
+            </div>
+          );
+        case "right":
+          return (
+            <div className={`flex items-center ${fillContainer ? "w-full h-full" : ""}`}>
+              <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
+              <div
+                className={`${headerClasses} mb-0 ${
+                  direction === "RTL" ? "mr-2" : "ml-2"
+                } flex-shrink-0`}
+              >
+                {headerText}
+              </div>
+            </div>
+          );
+        default:
+          return element;
+      }
+    };
 
-  const finalElement = (<div className={className}>{renderWithHeader(datePickerElement)}</div>);
+  const finalElement = renderWithHeader(datePickerElement);
 
   if (needTooltip && tooltipProps) {
     return (

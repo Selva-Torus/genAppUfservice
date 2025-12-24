@@ -19,8 +19,6 @@ interface SignatureProps {
   nodeId?: string;
   value?: string;
   title?: string;
-  height?: number;
-  width?: number;
   headerText?: string;
   headerPosition?: HeaderPosition;
   needTooltip?: boolean;
@@ -30,6 +28,7 @@ interface SignatureProps {
   require?: boolean;
   penColor?: string;
   backgroundColor?: string;
+  needClear?: boolean;
   clearButtonText?: string;
   onChange?: (signature: string) => void;
   onEnd?: () => void;
@@ -41,8 +40,6 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
   nodeId,
   value = "",
   title,
-  height = 200,
-  width,
   headerText,
   headerPosition = "top",
   needTooltip = false,
@@ -52,6 +49,7 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
   require = false,
   penColor,
   backgroundColor,
+  needClear = false,
   clearButtonText = "Clear",
   onChange,
   onEnd,
@@ -182,12 +180,20 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
 
   const isDark = theme === "dark" || theme === "dark-hc";
 
+  // Helper to convert hex to rgba
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
   // Determine pen and background colors based on theme
   const defaultPenColor = penColor || (isDark ? "#fff" : "#000");
   const defaultBackgroundColor = backgroundColor || (isDark ? "#1F2937" : "#fff");
 
   const signatureElement = (
-    <div className={`w-full ${className}`}>
+    <div className={`w-full h-full flex flex-col ${className}`}>
       {title && (
         <h3
           className={`mb-2 ${getFontSizeClass(branding.fontSize)} font-semibold ${
@@ -199,21 +205,53 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
         </h3>
       )}
 
-      <div className="relative">
+      <div className="relative w-full flex-1">
         <SignatureCanvas
           ref={sigCanvas}
           canvasProps={{
-            width: width || 500,
-            height: height,
+            tabIndex: 0,
             className: `
+              w-full
+              h-full
               border-2
               ${getBorderRadiusClass(branding.borderRadius)}
               ${isDark ? "border-gray-600" : "border-gray-300"}
               ${isDisabled || readOnly ? "cursor-not-allowed opacity-50" : "cursor-crosshair"}
+              transition-all duration-200
+              focus:outline-none
             `,
             style: {
-              width: width ? `${width}px` : "100%",
-              height: `${height}px`,
+              width: "100%",
+              height: "100%",
+              borderRadius: "var(--border-radius)",
+              fontFamily: "var(--font-body)",
+            },
+            onMouseEnter: (e: React.MouseEvent<HTMLCanvasElement>) => {
+              if (!isDisabled && !readOnly) {
+                e.currentTarget.style.borderColor = branding.hoverColor;
+              }
+            },
+            onMouseLeave: (e: React.MouseEvent<HTMLCanvasElement>) => {
+              if (!isDisabled && !readOnly && document.activeElement !== e.currentTarget) {
+                e.currentTarget.style.borderColor = isDark ? "#4B5563" : "#D1D5DB";
+              }
+            },
+            onClick: (e: React.MouseEvent<HTMLCanvasElement>) => {
+              if (!isDisabled && !readOnly) {
+                e.currentTarget.focus();
+              }
+            },
+            onFocus: (e: React.FocusEvent<HTMLCanvasElement>) => {
+              if (!isDisabled && !readOnly) {
+                e.currentTarget.style.borderColor = branding.selectionColor;
+                e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(branding.selectionColor, 0.2)}`;
+              }
+            },
+            onBlur: (e: React.FocusEvent<HTMLCanvasElement>) => {
+              if (!isDisabled && !readOnly) {
+                e.currentTarget.style.borderColor = isDark ? "#4B5563" : "#D1D5DB";
+                e.currentTarget.style.boxShadow = "none";
+              }
             },
           }}
           penColor={defaultPenColor}
@@ -222,6 +260,55 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
           clearOnResize={false}
         />
       </div>
+
+      {needClear && (
+        <button
+          onClick={handleClear}
+          disabled={isDisabled || readOnly}
+          className={`
+            mt-2
+            px-4
+            py-2
+            ${getFontSizeClass(branding.fontSize)}
+            font-medium
+            ${getBorderRadiusClass(branding.borderRadius)}
+            transition-all duration-200
+            focus:outline-none
+            ${isDisabled || readOnly
+              ? "opacity-50 cursor-not-allowed bg-gray-300 text-gray-500"
+              : ""
+            }
+          `}
+          style={{
+            fontFamily: "var(--font-body)",
+            borderRadius: "var(--border-radius)",
+            backgroundColor: isDisabled || readOnly ? undefined : branding.brandColor,
+            color: isDisabled || readOnly ? undefined : "#ffffff",
+          }}
+          onMouseEnter={(e) => {
+            if (!isDisabled && !readOnly) {
+              e.currentTarget.style.backgroundColor = branding.hoverColor;
+            }
+          }}
+          onMouseLeave={(e) => {
+            if (!isDisabled && !readOnly) {
+              e.currentTarget.style.backgroundColor = branding.brandColor;
+            }
+          }}
+          onFocus={(e) => {
+            if (!isDisabled && !readOnly) {
+              e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(branding.selectionColor, 0.2)}`;
+            }
+          }}
+          onBlur={(e) => {
+            if (!isDisabled && !readOnly) {
+              e.currentTarget.style.boxShadow = "none";
+            }
+          }}
+        >
+          {clearButtonText}
+        </button>
+      )}
     </div>
   );
 
@@ -288,7 +375,10 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
 
   if (needTooltip && tooltipProps) {
     return (
-      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
+      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}
+       triggerClassName=" w-full h-full"
+      
+      >
         {finalElement}
       </Tooltip>
     );

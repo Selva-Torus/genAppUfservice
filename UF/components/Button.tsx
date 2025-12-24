@@ -7,7 +7,6 @@ import { Icon } from "@/components/Icon";
 import { Tooltip } from "@/components/Tooltip";
 import {
   ButtonView,
-  ButtonSize,
   ButtonPin,
   HeaderPosition,
   TooltipProps as TooltipPropsType,
@@ -19,11 +18,11 @@ import {
 } from "@/app/utils/branding";
 
 type IconDisplay = "Icon only" | "Start with Icon" | "End with Icon";
+type ContentAlign = "left" | "center" | "right";
 
 interface ButtonProps {
   nodeId?: any;
   view?: ButtonView;
-  size?: ButtonSize;
   icon?: string;
   disabled?: boolean;
   pin?: ButtonPin;
@@ -40,12 +39,13 @@ interface ButtonProps {
   className?: string;
   startContent?: React.ReactNode;
   endContent?: React.ReactNode;
+  fillContainer?: boolean;
+  contentAlign?: ContentAlign;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   nodeId,
   view = "action",
-  size = "m",
   icon,
   disabled = false,
   pin = "circle-circle",
@@ -62,6 +62,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   className = "",
   startContent,
   endContent,
+  fillContainer = true,
+  contentAlign = "center"
 }, ref) => {
   const { theme, direction, branding } = useGlobal();
   const { emit, subscribe, subscribeGlobal } = useEventBus();
@@ -161,45 +163,45 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     }
   }, [disabled, onFocus, events, emit, nodeId]);
 
-  const getSizeClasses = () => {
-    const baseFontSize = getFontSizeClass(branding.fontSize);
-    switch (size) {
-      case "xs":
-        return `px-2 py-1 ${
-          baseFontSize === "text-xl"
-            ? "text-base"
-            : baseFontSize === "text-lg"
-            ? "text-sm"
-            : "text-xs"
-        }`;
-      case "s":
-        return `px-3 py-1.5 ${
-          baseFontSize === "text-xl"
-            ? "text-lg"
-            : baseFontSize === "text-lg"
-            ? "text-base"
-            : "text-sm"
-        }`;
-      case "m":
-        return `px-4 py-2 ${baseFontSize}`;
-      case "l":
-        return `px-5 py-2.5 ${
-          baseFontSize === "text-sm"
-            ? "text-base"
-            : baseFontSize === "text-base"
-            ? "text-lg"
-            : "text-xl"
-        }`;
-      case "xl":
-        return `px-6 py-3 ${
-          baseFontSize === "text-sm"
-            ? "text-lg"
-            : baseFontSize === "text-base"
-            ? "text-xl"
-            : "text-2xl"
-        }`;
-    }
-  };
+  // const getSizeClasses = () => {
+  //   const baseFontSize = getFontSizeClass(branding.fontSize);
+  //   switch (baseFontSize) {
+  //     case "xs":
+  //       return `px-2 py-1 ${
+  //         baseFontSize === "text-xl"
+  //           ? "text-base"
+  //           : baseFontSize === "text-lg"
+  //           ? "text-sm"
+  //           : "text-xs"
+  //       }`;
+  //     case "s":
+  //       return `px-3 py-1.5 ${
+  //         baseFontSize === "text-xl"
+  //           ? "text-lg"
+  //           : baseFontSize === "text-lg"
+  //           ? "text-base"
+  //           : "text-sm"
+  //       }`;
+  //     case "m":
+  //       return `px-4 py-2 ${baseFontSize}`;
+  //     case "l":
+  //       return `px-5 py-2.5 ${
+  //         baseFontSize === "text-sm"
+  //           ? "text-base"
+  //           : baseFontSize === "text-base"
+  //           ? "text-lg"
+  //           : "text-xl"
+  //       }`;
+  //     case "xl":
+  //       return `px-6 py-3 ${
+  //         baseFontSize === "text-sm"
+  //           ? "text-lg"
+  //           : baseFontSize === "text-base"
+  //           ? "text-xl"
+  //           : "text-2xl"
+  //       }`;
+  //   }
+  // };
 
   const getViewClasses = () => {
     const isDark = theme === "dark" || theme === "dark-hc";
@@ -299,7 +301,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
 
   const getPinClasses = () => {
     const [left, right] = pin.split("-");
-    const baseRadius = getBorderRadiusClass(branding.borderRadius);
+    const baseRadius = "var(--border-radius)";
 
     // Override based on pin style
     if (pin === "circle-circle") {
@@ -335,19 +337,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
 
     // Apply brand color for normal and flat views
     if (view === "normal") {
-      styles.backgroundColor = branding.brandColor;
+      styles.backgroundColor = "var(--brand-color)";
       if (!disabled) {
         styles.transition = "all 0.2s ease";
       }
     } else if (view === "outlined") {
-      styles.borderColor = branding.brandColor;
-      styles.color = branding.brandColor;
+      styles.borderColor = "var(--brand-color)";
+      styles.color = "var(--brand-color)";
     } else if (view === "flat") {
-      styles.color = branding.brandColor;
+      styles.color = "var(--brand-color)";
     }else if (view === "action") {
-      styles.backgroundColor = branding.brandColor;
+      styles.backgroundColor = `var(--brand-color)`;
     }else if (view === "normal-contrast") {
-      styles.backgroundColor = branding.brandColor;
+      styles.backgroundColor = "var(--brand-color)";
     }
 
     return styles;
@@ -367,26 +369,67 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
 
   const renderIcon = () => {
     if (!icon) return null;
+
+    // Get icon size based on fillContainer and branding.fontSize
+    const getIconSize = () => {
+      if (fillContainer) {
+        // When fillContainer is true, scale icon with branding fontSize
+        const baseFontSize = getFontSizeClass(branding.fontSize);
+        switch (baseFontSize) {
+          case "text-sm":
+            return 22;
+          case "text-base":
+            return 30;
+          case "text-lg":
+            return 38;
+          case "text-xl":
+            return 46;
+        }
+      }
+    };
+
     return (
       <Icon
         data={icon}
-        className="inline-block"
-        size={
-          size === "xs" ? 14 : size === "s" ? 16 : size === "m" ? 18 : size === "l" ? 20 : 24
-        }
+        className="inline-block flex-shrink-0"
+        size={getIconSize()}
       />
     );
   };
 
+  const getFillClasses = () => {
+    if (!fillContainer) return "";
+    return "w-full h-full";
+  };
+
+  const getContentAlignClasses = () => {
+    switch (contentAlign) {
+      case "left":
+        return "justify-start";
+      case "right":
+        return "justify-end";
+      case "center":
+      default:
+        return "justify-center";
+    }
+  };
+
   const renderContent = () => {
     const iconElement = renderIcon();
-    const textElement = children && <span>{children}</span>;
+
+    // Apply expanded font size when fillContainer is true
+    // Don't apply default font size if className is provided (to allow override)
+    const textClassName = fillContainer
+      ? `flex-1 text-center`
+      : "truncate";
+
+    const textElement = children && <span className={textClassName}>{children}</span>;
 
     if (iconDisplay === "Icon only") {
       return (
         <>
           {startContent}
-          {iconElement}
+          {fillContainer ? <div className="flex items-center justify-center">{iconElement}</div> : iconElement}
           {endContent}
         </>
       );
@@ -394,27 +437,31 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
       return (
         <>
           {startContent}
-          {iconElement}
+          {fillContainer ? <div className="flex items-center justify-center">{iconElement}</div> : iconElement}
           {textElement && (
-            <span className={direction === "RTL" ? "mr-2" : "ml-2"}>{textElement}</span>
+            <span className={fillContainer ? "flex items-center justify-center" : (direction === "RTL" ? "mr-2" : "ml-2")}>{textElement}</span>
           )}
           {endContent}
         </>
-      );
+      )
     } else {
       // "End with Icon"
       return (
         <>
           {startContent}
-          {textElement}
+          {textElement && (
+            <span className={fillContainer ? " flex items-center justify-center" : ""}>{textElement}</span>
+          )}
           {iconElement && (
-            <span className={direction === "RTL" ? "mr-2" : "ml-2"}>{iconElement}</span>
+            <span className={fillContainer ? "flex items-center justify-center" : (direction === "RTL" ? "mr-2" : "ml-2")}>{iconElement}</span>
           )}
           {endContent}
         </>
       );
     }
   };
+
+  const fontSizeClass = getFontSizeClass(branding.fontSize);
 
   const buttonElement = (
     <button
@@ -424,27 +471,29 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
       disabled={disabled}
       style={getButtonStyles()}
       className={`
-        inline-flex items-center justify-center font-medium
-        ${getSizeClasses()}
+        inline-flex items-center font-medium
         ${getViewClasses()}
         ${getPinClasses()}
         ${getHoverStyles()}
+        ${getContentAlignClasses()}
+        ${getFillClasses()}
         ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
         ${isRecordLevel ? "relative overflow-hidden" : ""}
+        ${fontSizeClass}
         ${className}
       `}
       dir={direction}
       onMouseEnter={(e) => {
         if (!disabled) {
-          e.currentTarget.style.backgroundColor = branding.hoverColor;
+          e.currentTarget.style.backgroundColor = "var(--hover-color)";
         }
       }}
       onMouseLeave={(e) => {
-        if (!disabled && (view.startsWith("outlined") || view.startsWith( "flat") || view === "raised")) {
-          e.currentTarget.style.backgroundColor = "transparent";
-        } else if (view.startsWith("normal") || view === "action") {
-          e.currentTarget.style.backgroundColor = branding.brandColor;
-        }
+          if (!disabled && (view.startsWith("outlined") || view.startsWith( "flat") || view === "raised")) {
+            e.currentTarget.style.backgroundColor = "transparent";
+          } else if (view.startsWith("normal") || view === "action") {
+            e.currentTarget.style.backgroundColor = "var(--brand-color)";
+          }
       }}
     >
       {renderContent()}
@@ -457,53 +506,55 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-1 ${
+    const headerClasses = `${fontSizeClass} font-semibold mb-1 ${
       theme === "dark" || theme === "dark-hc" ? "text-gray-300" : "text-gray-700"
     }`;
 
     switch (headerPosition) {
-      case "top":
-        return (
-          <div className="flex flex-col">
-            <div className={headerClasses}>{headerText}</div>
-            {element}
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className="flex flex-col">
-            {element}
-            <div className={`${headerClasses} mt-1 mb-0`}>{headerText}</div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className="flex items-center">
-            <div
-              className={`${headerClasses} mb-0 ${
-                direction === "RTL" ? "ml-2" : "mr-2"
-              }`}
-            >
-              {headerText}
+        case "top":
+          return (
+            <div className={`flex flex-col ${fillContainer ? "w-full h-full" : ""}`}>
+              <div className={headerClasses}>{headerText}</div>
+              <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
             </div>
-            {element}
-          </div>
-        );
-      case "right":
-        return (
-          <div className="flex items-center">
-            {element}
-            <div
-              className={`${headerClasses} mb-0 ${
-                direction === "RTL" ? "mr-2" : "ml-2"
-              }`}
-            >
-              {headerText}
+          );
+        case "bottom":
+          return (
+            <div className={`flex flex-col ${fillContainer ? "w-full h-full" : ""}`}>
+              <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
+              <div className={`${headerClasses} mt-1 mb-0`}>{headerText}</div>
             </div>
-          </div>
-        );
-    }
-  };
+          );
+        case "left":
+          return (
+            <div className={`flex items-center ${fillContainer ? "w-full h-full" : ""}`}>
+              <div
+                className={`${headerClasses} mb-0 ${
+                  direction === "RTL" ? "ml-2" : "mr-2"
+                } flex-shrink-0`}
+              >
+                {headerText}
+              </div>
+              <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
+            </div>
+          );
+        case "right":
+          return (
+            <div className={`flex items-center ${fillContainer ? "w-full h-full" : ""}`}>
+              <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
+              <div
+                className={`${headerClasses} mb-0 ${
+                  direction === "RTL" ? "mr-2" : "ml-2"
+                } flex-shrink-0`}
+              >
+                {headerText}
+              </div>
+            </div>
+          );
+        default:
+          return element;
+      }
+    };
 
   const finalElement = renderWithHeader(buttonElement);
 

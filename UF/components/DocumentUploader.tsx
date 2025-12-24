@@ -38,6 +38,10 @@ import { Modal } from '@/components/Modal'
 import { Icon } from '@/components/Icon'
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global"
 import { Tooltip } from '@/components/Tooltip'
+import { useGlobal } from '@/context/GlobalContext'
+import { getBorderRadiusClass, getFontSizeClass } from '@/app/utils/branding'
+
+type ContentAlign = "left" | "center" | "right";
 
 type InputProps = {
   className?: string
@@ -53,6 +57,8 @@ type InputProps = {
   headerPosition?: HeaderPosition
   tooltipProps?: TooltipPropsType
   needTooltip?: boolean
+  fillContainer?: boolean;
+  contentAlign?: ContentAlign;
 }
 
 interface FilesType {
@@ -79,12 +85,15 @@ const DocumentUploader = ({
   headerText,
   headerPosition = "top",
   tooltipProps,
-  needTooltip = false
+  needTooltip = false,
+  fillContainer = true,
+  contentAlign = "center"
 }: any) => {
   const [files, setFiles] = React.useState<Drag_file>(value)
   const [open, setOpen] = React.useState(false)
   const [previewModel, setPreviewModel] = React.useState(false)
   const [currentFile, setCurrentFile] = React.useState<FilesType | null>(null);
+  const { theme, direction,branding } = useGlobal();
 
   async function convertUrlToFile(url: string) {
     try {
@@ -177,6 +186,23 @@ const DocumentUploader = ({
     })
   }
 
+  const getFillClasses = () => {
+    if (!fillContainer) return "";
+    return "w-full h-full";
+  };
+
+  const getContentAlignClasses = () => {
+    switch (contentAlign) {
+      case "left":
+        return "left";
+      case "right":
+        return "right";
+      case "center":
+      default:
+        return "center";
+    }
+  };
+
 const removeFile = async (
     fileIndex: number,
     event: React.MouseEvent<HTMLButtonElement>
@@ -201,184 +227,234 @@ const removeFile = async (
   })
 
   const viewTypeUI=()=>{
-    return           <div className='h-full w-full' {...getRootProps()}>
-            <div className={` `}>
+    const isDark = theme === 'dark' || theme === 'dark-hc';
 
-              <input {...getInputProps()} className='hidden' />
+    return (
+      <div className='h-full w-full p-4' {...getRootProps()}>
+        <input {...getInputProps()} className='hidden' />
+        <input
+          id={id}
+          type='file'
+          multiple={!singleSelect}
+          className='hidden'
+          onChange={e => {
+            const selectedFiles = Array.from(e.target.files || [])
+            handleDrop(selectedFiles)
+          }}
+        />
 
-              <input
-                id={id}
-                type='file'
-                multiple={!singleSelect}
-                className='hidden'
-                onChange={e => {
-                  const selectedFiles = Array.from(e.target.files || [])
-                  handleDrop(selectedFiles)
-                }}
-              />
-
-              <div
-                className={`scrollbar-none flex h-[83%] flex-col overflow-x-hidden overflow-y-scroll px-2 `}
-              >
-                <div
-                  className={`flex h-[60%] w-full cursor-pointer items-center justify-center border border-dashed 
-                                    ${isDragActive ? 'border-blue-500 bg-blue-200' : 'border-gray-300 bg-white'} 
-                                    rounded-md`}
+        <div className='flex flex-col gap-4 h-full'>
+          {/* Drop Zone */}
+          <div
+            className={`
+              flex flex-col items-center justify-center
+              min-h-[180px] p-6
+              border-2 border-dashed rounded-lg
+              transition-all duration-200 ease-in-out
+              ${isDragActive
+                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                : isDark
+                  ? 'border-gray-600 bg-gray-800/50 hover:border-gray-500 hover:bg-gray-800'
+                  : 'border-gray-300 bg-gray-50 hover:border-gray-400 hover:bg-gray-100'
+              }
+            `}
+            onClick={e => e.stopPropagation()}
+          >
+            {!isDragActive ? (
+              <div className='flex flex-col items-center justify-center gap-3 text-center'>
+                <div className={`p-3 rounded-full ${isDark ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                  <MdOutlineCloudDownload size={28} className={isDark ? 'text-gray-300' : 'text-gray-600'} />
+                </div>
+                <div className='flex flex-col gap-1'>
+                  <span className={`text-base font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                    Choose a file to upload
+                  </span>
+                  <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    JPEG, PNG, DOC, PDF, XLS, CSV and formats up to 5MB
+                  </span>
+                </div>
+                <Button
+                  pin='round-round'
+                  view='outlined-info'
                   onClick={e => {
+                    document.getElementById(id)?.click()
                     e.stopPropagation()
+                    e.preventDefault()
                   }}
                 >
-                  <div className='flex flex-col items-center justify-center gap-2 '>
-                    {!isDragActive ? (
-                      <>
-                        <MdOutlineCloudDownload size={20} />
-                        <span className='text-sm text-black'>
-                          Choose a file to upload
-                        </span>
-                        <span className='text-xs text-black/50'>
-                          JPEG,PNG,DOC,PDF,XLS,CSV and formats up to 5MB
-                        </span>
-
-                        <Button
-                          pin='round-round'
-                          // width='auto'
-                          view='outlined'
-                          size='l'
-                          onClick={e => {
-                            document.getElementById(id)?.click()
-                            e.stopPropagation()
-                            e.preventDefault()
-                          }}
-                        >
-                          <span className='text-sm text-black'>
-                            Browse File
-                          </span>
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <FaArrowCircleDown size={20} />
-                        <span className='text-sm text-black'>Drop here</span>
-                        <span className='text-xs text-black/50'>
-                          JPEG,PNG,DOC,PDF,XLS,CSV and formats up to 5MB
-                        </span>
-                      </>
-                    )}
-                  </div>
+                  Browse File
+                </Button>
+              </div>
+            ) : (
+              <div className='flex flex-col items-center justify-center gap-3'>
+                <div className='p-3 rounded-full bg-blue-100 dark:bg-blue-900/50'>
+                  <FaArrowCircleDown size={28} className='text-blue-500' />
                 </div>
-                <div className='scrollbar-none flex h-[40%] flex-col gap-1 overflow-y-scroll py-1'>
-                  {files.length > 0 &&
-                    files.map((file: any, index) => (
-                      <div
-                        className='flex w-full cursor-pointer select-none items-center justify-between rounded-md bg-slate-200 px-2 py-2 hover:bg-slate-300/85 '
-                        onClick={e => {
-                          e.stopPropagation()
-                          setCurrentFile(file)
-                          setPreviewModel(true)
-                        }}
-                        key={index}
-                      >
-                        <div className='flex w-[50%] items-center justify-start gap-2 '>
-                          <div>{getFileIcon(file.file)}</div>
-                          <div className='flex items-center justify-between gap-2'>
-                            <div className='flex flex-col'>
-                              <span className='whitespace-nowrap'>
-                                {file.file.name}
-                              </span>
-                              <div className='flex items-center justify-start gap-1'>
-                                <span className='text-black/50'>
-                                  {bytestoKb(file.file.size)}
-                                </span>
-                                <span className='h-[0.25vw] w-[0.25vw] rounded-full bg-black/50'></span>
-                                <div className='flex items-center justify-center gap-1'>
-                                  <span>
-                                    <Completed />
-                                  </span>
-                                  <span>Completed</span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className='flex w-[50%] items-center justify-end'>
-                          <div>
-                            <span
-                              className='flex cursor-pointer items-center justify-center'
-                              onClick={(e: any) => removeFile(index, e)}
-                            >
-                              <RiDeleteBinLine
-                                fill='red'
-                                opacity={0.7}
-                                size={15}
-                              />
-                            </span>
-                          </div>
+                <span className={`text-base font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                  Drop your file here
+                </span>
+                <span className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                  JPEG, PNG, DOC, PDF, XLS, CSV and formats up to 5MB
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* File List */}
+          {files.length > 0 && (
+            <div className='flex flex-col gap-2 max-h-[200px] overflow-y-auto scrollbar-thin'>
+              <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+                Uploaded Files ({files.length})
+              </span>
+              {files.map((file: any, index) => (
+                <div
+                  key={index}
+                  className={`
+                    flex items-center justify-between
+                    p-3 rounded-lg
+                    cursor-pointer select-none
+                    transition-all duration-150
+                    ${isDark
+                      ? 'bg-gray-800 hover:bg-gray-700 border border-gray-700'
+                      : 'bg-white hover:bg-gray-50 border border-gray-200 shadow-sm'
+                    }
+                  `}
+                  onClick={e => {
+                    e.stopPropagation()
+                    setCurrentFile(file)
+                    setPreviewModel(true)
+                  }}
+                >
+                  <div className='flex items-center gap-3 flex-1 min-w-0'>
+                    <div className='flex-shrink-0'>
+                      {getFileIcon(file.file)}
+                    </div>
+                    <div className='flex flex-col min-w-0 flex-1'>
+                      <span className={`text-sm font-medium truncate ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
+                        {file.file.name}
+                      </span>
+                      <div className='flex items-center gap-2 text-xs'>
+                        <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>
+                          {bytestoKb(file.file.size)}
+                        </span>
+                        <span className={`w-1 h-1 rounded-full ${isDark ? 'bg-gray-600' : 'bg-gray-400'}`}></span>
+                        <div className='flex items-center gap-1 text-green-500'>
+                          <Completed />
+                          <span>Completed</span>
                         </div>
                       </div>
-                    ))}
+                    </div>
+                  </div>
+                  <button
+                    className={`
+                      p-2 rounded-full
+                      transition-all duration-150
+                      ${isDark
+                        ? 'hover:bg-red-900/30 text-red-400 hover:text-red-300'
+                        : 'hover:bg-red-50 text-red-500 hover:text-red-600'
+                      }
+                    `}
+                    onClick={(e: any) => removeFile(index, e)}
+                  >
+                    <RiDeleteBinLine size={18} />
+                  </button>
                 </div>
-              </div>
+              ))}
             </div>
-          </div>
+          )}
+        </div>
+      </div>
+    )
   }
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = "text-base font-semibold mb-2 text-gray-700 dark:text-gray-300";
+    const headerClasses = "text-base font-semibold mb-1 text-gray-700 dark:text-gray-300 flex-shrink-0";
 
     switch (headerPosition) {
-      case "top":
-        return (
-          <div className="flex flex-col">
-            <div className={headerClasses}>{headerText}</div>
-            {element}
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className="flex flex-col">
-            {element}
-            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className="flex items-start gap-4">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
-              {headerText}
+        case "top":
+          return (
+            <div className={`flex flex-col ${fillContainer ? "w-full h-full overflow-hidden" : ""}`}>
+              <div className={headerClasses}>{headerText}</div>
+              <div className={fillContainer ? "flex-1 min-h-0 overflow-hidden" : ""}>{element}</div>
             </div>
-            {element}
-          </div>
-        );
-      case "right":
-        return (
-          <div className="flex items-start gap-4">
-            {element}
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
-              {headerText}
+          );
+        case "bottom":
+          return (
+            <div className={`flex flex-col ${fillContainer ? "w-full h-full overflow-hidden" : ""}`}>
+              <div className={fillContainer ? "flex-1 min-h-0 overflow-hidden" : ""}>{element}</div>
+              <div className={`${headerClasses} mt-1 mb-0`}>{headerText}</div>
             </div>
-          </div>
-        );
+          );
+        case "left":
+          return (
+            <div className={`flex items-start ${fillContainer ? "w-full h-full overflow-hidden" : ""}`}>
+              <div
+                className={`${headerClasses} mb-0 ${
+                  direction === "RTL" ? "ml-2" : "mr-2"
+                }`}
+              >
+                {headerText}
+              </div>
+              <div className={fillContainer ? "flex-1 min-w-0 h-full overflow-hidden" : ""}>{element}</div>
+            </div>
+          );
+        case "right":
+          return (
+            <div className={`flex items-start ${fillContainer ? "w-full h-full overflow-hidden" : ""}`}>
+              <div className={fillContainer ? "flex-1 min-w-0 h-full overflow-hidden" : ""}>{element}</div>
+              <div
+                className={`${headerClasses} mb-0 ${
+                  direction === "RTL" ? "mr-2" : "ml-2"
+                }`}
+              >
+                {headerText}
+              </div>
+            </div>
+          );
+        default:
+          return element;
+      }
+  };
+
+  const getIconSize = () => {
+    if (fillContainer) {
+      // When fillContainer is true, scale icon with branding fontSize
+      const baseFontSize = getFontSizeClass(branding.fontSize);
+      switch (baseFontSize) {
+        case "text-sm":
+          return 22;
+        case "text-base":
+          return 30;
+        case "text-lg":
+          return 38;
+        case "text-xl":
+          return 46;
+      }
     }
   };
 
+  const fontSizeClass = getFontSizeClass(branding.fontSize);
+
   const uploaderElement = (
-    <div className='w-full h-full flex justify-center items-center'>
-      <div>
+    <div className={`flex 
+          ${getFillClasses()} ${fillContainer ? "overflow-hidden" : ""}`}>
+
         <div
-          className='flex w-full items-center justify-center px-1 py-0'
+          className={`flex ${fillContainer ? "w-full h-full" : ""}`}
           {...getRootProps()}
         >
           {viewType=='modal'?
-          <div className={`flex w-[95%] justify-start ${className}`}>
+          <div className={`flex ${fillContainer ? "w-full h-full" : "justify-start"} ${className}`}>
             <Button
               pin='round-round'
-              // width='max'
-              view='outlined-info'
-              size='l'
+              fillContainer={fillContainer}
+              contentAlign={`${getContentAlignClasses()}`}
+              className={`${fontSizeClass} ${className}`}
               startContent={
                 <span className='flex h-full items-center justify-center'>
-                  <Icon className='flex items-center justify-center bg-transparent px-[0.15vw] py-[0.25vh]' size={20} data='FaCloudUploadAlt' />
+                  <Icon className='flex items-center justify-center bg-transparent px-[0.15vw] py-[0.25vh]' data='FaCloudUploadAlt'
+                  size={getIconSize()} />
                 </span>
               }
               onClick={e => {
@@ -393,20 +469,23 @@ const removeFile = async (
         </div>
          {viewType=='modal'?<Modal
           open={open}
-          title={              <div className='flex items-center justify-between px-2 py-2'>
-                <div className='flex items-center justify-center gap-2'>
-                  <TbFileUpload size={20} color='black' />
-                  <div className='flex flex-col gap-0'>
-                    <div className='text-sm font-semibold'>Upload Document</div>
-                    <div className='text-xs font-semibold opacity-45'>
-                      Select and upload the required documents
-                    </div>
-                  </div>
-                </div>
-              </div>}
+          title={
+            <div className={`${getBorderRadiusClass(branding.borderRadius)} flex items-center gap-3 px-1 py-1`}>
+              <div className={`p-2 rounded-lg ${theme === 'dark' || theme === 'dark-hc' ? 'bg-blue-900/30' : 'bg-blue-50'}`}>
+                <TbFileUpload size={24} className='text-blue-500' />
+              </div>
+              <div className={`flex flex-col ${getBorderRadiusClass(branding.borderRadius)}`}>
+                <span className={`text-base font-semibold ${theme === 'dark' || theme === 'dark-hc' ? 'text-gray-100' : 'text-gray-800'}`}>
+                  Upload Document
+                </span>
+                <span className={`text-xs ${theme === 'dark' || theme === 'dark-hc' ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Select and upload the required documents
+                </span>
+              </div>
+            </div>
+          }
           onClose={() => {
             setOpen(false)
-            // e.stopPropagation()
           }}>
           {viewTypeUI()}
           </Modal>:  viewTypeUI() }
@@ -427,7 +506,7 @@ const removeFile = async (
             />
           </Modal>
         )}
-      </div>
+     
     </div>
   );
 

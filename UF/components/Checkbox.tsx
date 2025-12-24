@@ -4,14 +4,15 @@ import React from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import {
-  CheckboxSize,
   HeaderPosition,
   TooltipProps as TooltipPropsType,
 } from "@/types/global";
+import { getFontSizeClass } from "@/app/utils/branding";
+
+type ContentAlign = "left" | "center" | "right";
 
 interface CheckboxProps {
   checked?: boolean;
-  size?: CheckboxSize;
   disabled?: boolean;
   content?: string;
   title?: string;
@@ -23,11 +24,12 @@ interface CheckboxProps {
   onBlur?: (event: React.FocusEvent<HTMLInputElement>) => void;
   className?: string;
   value?: boolean;
+  fillContainer?: boolean;
+  contentAlign?: ContentAlign;
 }
 
 export const Checkbox: React.FC<CheckboxProps> = ({
   checked,
-  size,
   disabled = false,
   content,
   title,
@@ -39,17 +41,10 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   onBlur,
   className = "",
   value,
+  fillContainer = true,
+  contentAlign = "center"
 }) => {
-  const { theme, direction } = useGlobal();
-
-  const getSizeClasses = () => {
-    switch (size) {
-      case "m":
-        return "w-5 h-5";
-      case "l":
-        return "w-6 h-6";
-    }
-  };
+  const { theme, direction, branding } = useGlobal();
 
   const getCheckboxStyles = (): React.CSSProperties => {
     const styles: React.CSSProperties = {};
@@ -77,14 +72,41 @@ export const Checkbox: React.FC<CheckboxProps> = ({
     return isDark ? "text-gray-200" : "text-gray-900";
   };
 
+  const getFillClasses = () => {
+    if (!fillContainer) return "";
+    return "w-full";
+  };
 
+  const getContentAlignClasses = () => {
+    switch (contentAlign) {
+      case "left":
+        return "justify-start";
+      case "right":
+        return "justify-end";
+      case "center":
+      default:
+        return "justify-center";
+    }
+  };
+
+  const fontSizeClass = getFontSizeClass(branding.fontSize);
+  
   const checkboxElement = (
     <label
-      className={`inline-flex items-center ${
-        disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
-      } ${className}`}
+      className={`
+      flex items-center
+      ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
+      ${getContentAlignClasses()}
+      ${fontSizeClass}
+      ${getFillClasses()}
+      ${fillContainer ? "h-full max-h-full overflow-hidden" : ""}
+      ${className}
+      `}
     >
-      <div className="relative">
+      <div
+        className={`relative flex-shrink-0 ${fillContainer ? "h-full max-h-full" : ""}`}
+        style={fillContainer ? { aspectRatio: "1/1", maxHeight: "100%" } : {}}
+      >
         <input
           type="checkbox"
           checked={checked}
@@ -97,9 +119,9 @@ export const Checkbox: React.FC<CheckboxProps> = ({
           style={{
             ...getCheckboxStyles(),
             borderRadius: "var(--border-radius)",
+            ...(fillContainer ? { width: "100%", height: "100%" } : {}),
           }}
           className={`
-            ${getSizeClasses()}
             border-2 transition-all flex items-center justify-center
           `}
           onMouseEnter={(e) => {
@@ -114,27 +136,24 @@ export const Checkbox: React.FC<CheckboxProps> = ({
             }
           }}
         >
-          {checked && (
-            <svg
-              className="w-full h-full p-0.5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={3}
-                d="M5 13l4 4L19 7"
-              />
-            </svg>
-          )}
+        <svg
+          className="w-full h-full p-0.5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={3}
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
         </div>
       </div>
       {content && (
         <span
-          className={`${direction === "RTL" ? "mr-2" : "ml-2"} ${getLabelThemeClasses()}`}
-          style={{ fontSize: "var(--font-size)" }}
+          className={`${direction === "RTL" ? "mr-2" : "ml-2"} ${getLabelThemeClasses()} overflow-hidden text-ellipsis whitespace-nowrap flex-shrink`}
         >
           {content}
         </span>
@@ -145,13 +164,13 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   const renderWithTitle = (element: React.ReactNode) => {
     if (!title) return element;
 
-    const titleClasses = `font-semibold mb-2 ${
+    const titleClasses = `${fontSizeClass} font-semibold mb-2 ${
       theme === "dark" || theme === "dark-hc" ? "text-gray-200" : "text-gray-800"
     }`;
 
     return (
       <div className="flex flex-col">
-        <div className={titleClasses} style={{ fontSize: "var(--font-size-large)" }}>{title}</div>
+        <div className={titleClasses}>{title}</div>
         {element}
       </div>
     );
@@ -160,50 +179,59 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `font-semibold mb-1 ${
+    const headerClasses = `${fontSizeClass} font-semibold flex-shrink-0 ${
       theme === "dark" || theme === "dark-hc" ? "text-gray-300" : "text-gray-700"
     }`;
 
-    const headerStyle = { fontSize: "var(--font-size)" };
-
     switch (headerPosition) {
-      case "top":
-        return (
-          <div className="flex flex-col">
-            <div className={headerClasses} style={headerStyle}>{headerText}</div>
-            {element}
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className="flex flex-col">
-            {element}
-            <div className={`${headerClasses} mt-1 mb-0`} style={headerStyle}>{headerText}</div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className="flex items-center">
-            <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "ml-2" : "mr-2"}`} style={headerStyle}>
-              {headerText}
+        case "top":
+          return (
+            <div className={`flex flex-col ${fillContainer ? "w-full h-full overflow-hidden" : ""}`}>
+              <div className={`${headerClasses} mb-1`}>{headerText}</div>
+              <div className={fillContainer ? "flex-1 min-h-0 flex items-center overflow-hidden" : ""}>{element}</div>
             </div>
-            {element}
-          </div>
-        );
-      case "right":
-        return (
-          <div className="flex items-center">
-            {element}
-            <div className={`${headerClasses} mb-0 ${direction === "RTL" ? "mr-2" : "ml-2"}`} style={headerStyle}>
-              {headerText}
+          );
+        case "bottom":
+          return (
+            <div className={`flex flex-col ${fillContainer ? "w-full h-full overflow-hidden" : ""}`}>
+              <div className={fillContainer ? "flex-1 min-h-0 flex items-center overflow-hidden" : ""}>{element}</div>
+              <div className={`${headerClasses} mt-1`}>{headerText}</div>
             </div>
-          </div>
-        );
-    }
-  };
+          );
+        case "left":
+          return (
+            <div className={`flex items-center ${fillContainer ? "w-full h-full overflow-hidden" : ""}`}>
+              <div
+                className={`${headerClasses} ${
+                  direction === "RTL" ? "ml-2" : "mr-2"
+                }`}
+              >
+                {headerText}
+              </div>
+              <div className={fillContainer ? "flex-1 min-w-0 flex items-center h-full overflow-hidden" : ""}>{element}</div>
+            </div>
+          );
+        case "right":
+          return (
+            <div className={`flex items-center ${fillContainer ? "w-full h-full overflow-hidden" : ""}`}>
+              <div className={fillContainer ? "flex-1 min-w-0 flex items-center h-full overflow-hidden" : ""}>{element}</div>
+              <div
+                className={`${headerClasses} ${
+                  direction === "RTL" ? "mr-2" : "ml-2"
+                }`}
+              >
+                {headerText}
+              </div>
+            </div>
+          );
+        default:
+          return element;
+      }
+    };
+
+  const finalElement = renderWithHeader(checkboxElement);
 
   const withTitle = renderWithTitle(checkboxElement);
-  const finalElement = (<div className={className}>{renderWithHeader(withTitle)}</div>);
   
   if (needTooltip && tooltipProps) {
     return (

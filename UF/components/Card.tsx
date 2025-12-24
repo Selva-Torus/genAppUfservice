@@ -5,15 +5,14 @@ import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
+import { getFontSizeClass } from "@/app/utils/branding";
 
-type CardSize = "m" | "l";
 type CardTheme = "normal" | "info" | "success" | "warning" | "danger" | "utility" | "brand";
 type CardView = "outlined" | "clear" | "filled" | "raised";
 type CardType = "selection" | "action" | "container";
-type Alignment = "start" | "center" | "end";
+type ContentAlign = "left" | "center" | "right";
 
 interface CardProps {
-  size?: CardSize;
   theme?: CardTheme;
   view?: CardView;
   type?: CardType;
@@ -22,7 +21,6 @@ interface CardProps {
   title?: string;
   prefixValue?: string;
   icon?: string | React.ReactNode;
-  alignment?: Alignment;
   needTooltip?: boolean;
   tooltipProps?: TooltipPropsType;
   headerText?: string;
@@ -31,10 +29,11 @@ interface CardProps {
   onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
   className?: string;
   style?: React.CSSProperties;
+  fillContainer?: boolean;
+  contentAlign?: ContentAlign;
 }
 
 export const Card: React.FC<CardProps> = ({
-  size = "m",
   theme: cardTheme = "normal",
   view = "filled",
   type = "container",
@@ -43,7 +42,6 @@ export const Card: React.FC<CardProps> = ({
   title,
   prefixValue,
   icon,
-  alignment = "start",
   needTooltip = false,
   tooltipProps,
   headerText,
@@ -52,19 +50,10 @@ export const Card: React.FC<CardProps> = ({
   onClick,
   className = "",
   style = {},
+  fillContainer = true,
+  contentAlign = "center"
 }) => {
-  const { theme } = useGlobal();
-
-  const getSizeClasses = () => {
-    switch (size) {
-      case "m":
-        return "p-4";
-      case "l":
-        return "p-6";
-      default:
-        return "p-4";
-    }
-  };
+  const { theme, direction, branding } = useGlobal();
 
   const getThemeColors = () => {
     const isDark = theme === "dark" || theme === "dark-hc";
@@ -87,32 +76,59 @@ export const Card: React.FC<CardProps> = ({
     }
   };
 
-  const getAlignmentClass = () => {
-    switch (alignment) {
-      case "center":
-        return "items-center text-center";
-      case "end":
-        return "items-end text-right";
-      default:
-        return "items-start text-left";
-    }
-  };
+
 
   const colors = getThemeColors();
   const isDark = theme === "dark" || theme === "dark-hc";
+  const getFillClasses = () => {
+    if (!fillContainer) return "";
+    return "w-full h-full";
+  };
+
+  const getContentAlignClasses = () => {
+    switch (contentAlign) {
+      case "left":
+        return "justify-start";
+      case "right":
+        return "justify-end";
+      case "center":
+      default:
+        return "justify-center";
+    }
+  };
+
+  const getIconSize = () => {
+    if (fillContainer) {
+      // When fillContainer is true, scale icon with branding fontSize
+      const baseFontSize = fontSizeClass;
+      switch (baseFontSize) {
+        case "text-sm":
+          return 22;
+        case "text-base":
+          return 30;
+        case "text-lg":
+          return 38;
+        case "text-xl":
+          return 46;
+      }
+    }
+  };
+
+  const fontSizeClass = getFontSizeClass(branding.fontSize);
 
   const cardElement = (
     <div
       onClick={disabled ? undefined : onClick}
       className={`
-        ${getSizeClasses()}
-        ${getAlignmentClass()}
+        ${fontSizeClass}
         flex flex-col gap-3
+        ${getContentAlignClasses()}
         ${view === "outlined" ? "border-2" : view === "raised" ? "shadow-lg" : view === "filled" ? "border" : ""}
         ${selected ? "ring-2 ring-offset-2" : ""}
         ${disabled ? "opacity-50 cursor-not-allowed" : onClick ? "cursor-pointer hover:shadow-md" : ""}
         ${type === "selection" && selected ? "border-2" : ""}
         transition-all duration-200
+        ${getFillClasses()}
         ${className}
       `}
       style={{
@@ -120,7 +136,6 @@ export const Card: React.FC<CardProps> = ({
         borderColor: selected ? "var(--selection-color)" : view === "outlined" || view === "filled" ? colors.border : "transparent",
         color: colors.text,
         fontFamily: "var(--font-body)",
-        fontSize: size === "l" ? "var(--font-size-large)" : "var(--font-size)",
         borderRadius: "var(--border-radius)",
         ...(selected ? { '--tw-ring-color': 'var(--selection-color)' } as any : {}),
         ...style,
@@ -128,17 +143,18 @@ export const Card: React.FC<CardProps> = ({
     >
       {/* Title Section */}
       {title && (
-        <div className="font-semibold border-b pb-2" style={{ borderColor: isDark ? "#374151" : "#E5E7EB", fontSize: "var(--font-size)" }}>
+        <div className={`${getFillClasses()} font-semibold border-b pb-2`} 
+        style={{ borderColor: isDark ? "#374151" : "#E5E7EB" }}>
           {title}
         </div>
       )}
 
       {/* Icon and Prefix Section */}
       {(icon || prefixValue) && (
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center ${getFillClasses()} gap-2 p-4`}>
           {icon && (
             typeof icon === "string" ? (
-              <Icon data={icon} size={size === "l" ? 24 : 20} />
+              <Icon data={icon} className="inline-block flex-shrink-0" size={getIconSize()} />
             ) : (
               icon
             )
@@ -150,7 +166,7 @@ export const Card: React.FC<CardProps> = ({
       )}
 
       {/* Content Section */}
-      <div className="flex-1">
+      <div className={`flex-1 ${getFillClasses()}`}>
         {children}
       </div>
     </div>
@@ -159,49 +175,57 @@ export const Card: React.FC<CardProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `font-semibold mb-2 ${
+    const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 
-    const headerStyle = { fontSize: "var(--font-size)" };
-
     switch (headerPosition) {
-      case "top":
-        return (
-          <div className="flex flex-col">
-            <div className={headerClasses} style={headerStyle}>{headerText}</div>
-            {element}
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className="flex flex-col">
-            {element}
-            <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className="flex items-start gap-4">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
-              {headerText}
+        case "top":
+          return (
+            <div className={`flex flex-col ${fillContainer ? "w-full h-full" : ""}`}>
+              <div className={headerClasses}>{headerText}</div>
+              <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
             </div>
-            {element}
-          </div>
-        );
-      case "right":
-        return (
-          <div className="flex items-start gap-4">
-            {element}
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
-              {headerText}
+          );
+        case "bottom":
+          return (
+            <div className={`flex flex-col ${fillContainer ? "w-full h-full" : ""}`}>
+              <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
+              <div className={`${headerClasses} mt-1 mb-0`}>{headerText}</div>
             </div>
-          </div>
-        );
-    }
-  };
+          );
+        case "left":
+          return (
+            <div className={`flex items-center ${fillContainer ? "w-full h-full" : ""}`}>
+              <div
+                className={`${headerClasses} mb-0 ${
+                  direction === "RTL" ? "ml-2" : "mr-2"
+                } flex-shrink-0`}
+              >
+                {headerText}
+              </div>
+              <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
+            </div>
+          );
+        case "right":
+          return (
+            <div className={`flex items-center ${fillContainer ? "w-full h-full" : ""}`}>
+              <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
+              <div
+                className={`${headerClasses} mb-0 ${
+                  direction === "RTL" ? "mr-2" : "ml-2"
+                } flex-shrink-0`}
+              >
+                {headerText}
+              </div>
+            </div>
+          );
+        default:
+          return element;
+      }
+    };
 
-  const finalElement = (<div className={className}>{renderWithHeader(cardElement)}</div>);
+  const finalElement = renderWithHeader(cardElement);
 
   if (needTooltip && tooltipProps) {
     return (

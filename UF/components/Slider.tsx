@@ -4,9 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
+import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 
-type SliderSize = "xs" | "s" | "m" | "l" | "xl";
 type ValidationState = "valid" | "invalid";
 type TooltipDisplay = "on" | "off" | "auto";
 
@@ -14,7 +13,6 @@ interface SliderProps {
   disabled?: boolean;
   validationState?: ValidationState;
   tooltipDisplay?: TooltipDisplay;
-  size?: SliderSize;
   min?: number;
   max?: number;
   step?: number;
@@ -27,13 +25,14 @@ interface SliderProps {
   onChange?: (value: number) => void;
   onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   className?: string;
+  showValue?: boolean;
+  valueLabel?: string;
 }
 
 export const Slider: React.FC<SliderProps> = ({
   disabled = false,
   validationState = "valid",
   tooltipDisplay = "auto",
-  size = "m",
   min = 0,
   max = 100,
   step = 1,
@@ -46,6 +45,8 @@ export const Slider: React.FC<SliderProps> = ({
   onChange,
   onBlur,
   className = "",
+  showValue = false,
+  valueLabel,
 }) => {
   const { theme, branding, direction } = useGlobal();
   const [sliderValue, setSliderValue] = useState(value);
@@ -61,41 +62,40 @@ export const Slider: React.FC<SliderProps> = ({
     onChange?.(newValue);
   };
 
-  const getSizeClass = () => {
-    switch (size) {
-      case "xs":
-        return "h-0.5";
-      case "s":
-        return "h-1";
-      case "m":
-        return "h-2";
-      case "l":
-        return "h-3";
-      case "xl":
-        return "h-4";
-      default:
-        return "h-2";
-    }
-  };
-
   const isDark = theme === "dark" || theme === "dark-hc";
+  const fontSizeClass = getFontSizeClass(branding.fontSize);
+
+  // Helper to convert hex to rgba
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
 
   const getTrackColor = () => {
     if (validationState === "invalid") {
       return "#EF4444";
     }
-    return "var(--brand-color)";
+    return branding.brandColor;
   };
+
+  const [isFocused, setIsFocused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   const sliderElement = (
     <div
-      className={`w-full relative ${direction === "RTL" ? "rtl" : ""}`}
+      className={`w-full h-full flex flex-col relative ${direction === "RTL" ? "rtl" : ""}`}
       onMouseEnter={() => {
-        if (!disabled && tooltipDisplay === "auto") {
-          setShowTooltip(true);
+        if (!disabled) {
+          setIsHovered(true);
+          if (tooltipDisplay === "auto") {
+            setShowTooltip(true);
+          }
         }
       }}
       onMouseLeave={() => {
+        setIsHovered(false);
         if (tooltipDisplay === "auto") {
           setShowTooltip(false);
         }
@@ -112,7 +112,7 @@ export const Slider: React.FC<SliderProps> = ({
                 absolute
                 top-0
                 px-2 py-1
-                rounded
+                ${getBorderRadiusClass(branding.borderRadius)}
                 text-xs
                 z-20
                 pointer-events-none
@@ -123,6 +123,8 @@ export const Slider: React.FC<SliderProps> = ({
                 left: `${Math.min(Math.max(((sliderValue - min) / (max - min)) * 100, 5), 95)}%`,
                 transform: "translate(-50%, -100%)",
                 marginTop: "-8px",
+                borderRadius: "var(--border-radius)",
+                fontFamily: "var(--font-body)",
               }}
             >
               {sliderValue}
@@ -136,7 +138,7 @@ export const Slider: React.FC<SliderProps> = ({
                 absolute
                 top-0
                 px-2 py-1
-                rounded
+                ${getBorderRadiusClass(branding.borderRadius)}
                 text-xs
                 z-20
                 pointer-events-none
@@ -147,6 +149,8 @@ export const Slider: React.FC<SliderProps> = ({
                 left: `${Math.min(Math.max(((sliderValue - min) / (max - min)) * 100, 5), 95)}%`,
                 transform: "translate(-50%, -100%)",
                 marginTop: "-8px",
+                borderRadius: "var(--border-radius)",
+                fontFamily: "var(--font-body)",
               }}
             >
               {sliderValue}
@@ -156,53 +160,67 @@ export const Slider: React.FC<SliderProps> = ({
         return null;
       })()}
 
-      {/* Slider container with overflow control */}
-      <div className="w-full relative py-2 overflow-hidden">
-        {/* Background track */}
-        <div
-          className={`absolute w-full ${getSizeClass()} ${
-            isDark ? "bg-gray-700" : "bg-gray-300"
-          } rounded-full pointer-events-none`}
-          style={{ top: "50%", transform: "translateY(-50%)" }}
-        />
+      {/* Slider container - track is 1/2 of parent height, centered */}
+      <div className="w-full flex-1 flex items-center relative">
+        <div className="w-full relative" style={{ height: "50%" }}>
+          {/* Background track */}
+          <div
+            className={`absolute w-full h-full ${
+              isDark ? "bg-gray-700" : "bg-gray-200"
+            } pointer-events-none transition-all duration-200 ${getBorderRadiusClass(branding.borderRadius)}`}
+            style={{
+              borderRadius: "var(--border-radius)",
+              boxShadow: isHovered && !disabled
+                ? `0 0 0 2px ${hexToRgba(branding.hoverColor, 0.2)}`
+                : isFocused && !disabled
+                ? `0 0 0 3px ${hexToRgba(branding.selectionColor, 0.3)}`
+                : "none",
+            }}
+          />
 
-        {/* Filled track */}
-        <div
-          className={`absolute ${getSizeClass()} rounded-full pointer-events-none transition-all`}
-          style={{
-            top: "50%",
-            transform: "translateY(-50%)",
-            width: `${((sliderValue - min) / (max - min)) * 100}%`,
-            backgroundColor: getTrackColor(),
-          }}
-        />
+          {/* Filled track */}
+          <div
+            className={`absolute h-full pointer-events-none transition-all duration-300 ease-out ${getBorderRadiusClass(branding.borderRadius)}`}
+            style={{
+              width: `${((sliderValue - min) / (max - min)) * 100}%`,
+              backgroundColor: isHovered && !disabled ? branding.hoverColor : getTrackColor(),
+              borderRadius: "var(--border-radius)",
+              boxShadow: isFocused && !disabled
+                ? `0 0 12px ${hexToRgba(branding.selectionColor, 0.6)}`
+                : `0 0 8px ${hexToRgba(getTrackColor(), 0.4)}`,
+            }}
+          />
 
-        <input
-          type="range"
-          min={min}
-          max={max}
-          step={step}
-          value={sliderValue}
-          onChange={handleChange}
-          onBlur={onBlur}
-          disabled={disabled}
-          className={`
-            w-full
-            ${getSizeClass()}
-            appearance-none
-            bg-transparent
-            ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-            rounded-full
-            transition-all
-            relative
-            z-10
-            slider-thumb
-            py-2
-          `}
-          style={{
-            accentColor: getTrackColor(),
-          }}
-        />
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={sliderValue}
+            onChange={handleChange}
+            onFocus={() => !disabled && setIsFocused(true)}
+            onBlur={(e) => {
+              setIsFocused(false);
+              onBlur?.(e);
+            }}
+            disabled={disabled}
+            className={`
+              w-full
+              h-full
+              appearance-none
+              bg-transparent
+              ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+              ${getBorderRadiusClass(branding.borderRadius)}
+              transition-all duration-200
+              absolute
+              focus:outline-none
+            `}
+            style={{
+              accentColor: isFocused && !disabled ? branding.selectionColor : getTrackColor(),
+              borderRadius: "var(--border-radius)",
+            }}
+          />
+        </div>
       </div>
 
       {marks ? (() => {
@@ -246,7 +264,7 @@ export const Slider: React.FC<SliderProps> = ({
                     className={`w-0.5 h-2 mx-auto ${isDark ? "bg-gray-600" : "bg-gray-400"}`}
                   />
                   <span
-                    className={` mt-1 block ${isDark ? "text-gray-400" : "text-gray-600"} ${
+                    className={`mt-1 block ${fontSizeClass} ${isDark ? "text-gray-400" : "text-gray-600"} ${
                       isFirst ? "text-left" : isLast ? "text-right" : "text-center"
                     }`}
                     style={{
@@ -254,6 +272,7 @@ export const Slider: React.FC<SliderProps> = ({
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
+                      fontFamily: "var(--font-body)",
                     }}
                   >
                     {markValue}
@@ -263,51 +282,58 @@ export const Slider: React.FC<SliderProps> = ({
             })}
           </div>
         );
-      })() : (
+      })() : !showValue ? (
         <div className="flex justify-between mt-2 px-1">
-          <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>{min}</span>
-          <span className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>{max}</span>
+          <span className={`${fontSizeClass} ${isDark ? "text-gray-400" : "text-gray-600"}`} style={{ fontFamily: "var(--font-body)" }}>{min}</span>
+          <span className={`${fontSizeClass} ${isDark ? "text-gray-400" : "text-gray-600"}`} style={{ fontFamily: "var(--font-body)" }}>{max}</span>
         </div>
+      ) : null}
+
+      {showValue && (
+        <p className={`${fontSizeClass} font-bold text-center mt-2 ${isDark ? "text-gray-200" : "text-gray-900"}`} style={{ fontFamily: "var(--font-body)" }}>
+          {valueLabel ? `${valueLabel} : ${sliderValue}` : sliderValue}
+        </p>
       )}
     </div>
   );
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return <div className={className}>{element}</div>;
+    if (!headerText) return <div className={`w-full h-full ${className}`}>{element}</div>;
 
-    const headerClasses = `font-semibold mb-2 ${
+    const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
+    const headerStyle = { fontFamily: "var(--font-body)" };
 
     switch (headerPosition) {
       case "top":
         return (
-          <div className={`flex flex-col w-full ${className}`}>
-            <div className={headerClasses}>{headerText}</div>
-            {element}
+          <div className={`flex flex-col w-full h-full ${className}`}>
+            <div className={headerClasses} style={headerStyle}>{headerText}</div>
+            <div className="flex-1 min-h-0">{element}</div>
           </div>
         );
       case "bottom":
         return (
-          <div className={`flex flex-col w-full ${className}`}>
-            {element}
-            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
+          <div className={`flex flex-col w-full h-full ${className}`}>
+            <div className="flex-1 min-h-0">{element}</div>
+            <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
           </div>
         );
       case "left":
         return (
-          <div className={`flex items-center gap-4 w-full ${className}`}>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+          <div className={`flex items-center gap-4 w-full h-full ${className}`}>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
-            <div className="flex-1">{element}</div>
+            <div className="flex-1 min-w-0">{element}</div>
           </div>
         );
       case "right":
         return (
-          <div className={`flex items-center gap-4 w-full ${className}`}>
-            <div className="flex-1">{element}</div>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+          <div className={`flex items-center gap-4 w-full h-full ${className}`}>
+            <div className="flex-1 min-w-0">{element}</div>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
               {headerText}
             </div>
           </div>
@@ -322,7 +348,7 @@ export const Slider: React.FC<SliderProps> = ({
       <Tooltip
         title={tooltipProps.title}
         placement={tooltipProps.placement}
-        triggerClassName="block w-full"
+        triggerClassName="block w-full h-full"
       >
         {finalElement}
       </Tooltip>

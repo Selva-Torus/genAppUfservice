@@ -1,81 +1,81 @@
 'use client'
-import React, { useState,useContext,useEffect } from 'react'
-import { TotalContext, TotalContextProps } from '@/app/globalContext';
-import i18n from '@/app/components/i18n';
-import { codeExecution } from '@/app/utils/codeExecution';
-import { AxiosService } from '@/app/components/axiosService';
-import { Tooltip } from './Tooltip';
-import { ComponentSize, HeaderPosition, TooltipProps as TooltipPropsType } from '@/types/global';
-import { useGlobal } from '@/context/GlobalContext';
-import { getFontSizeClass,getBorderRadiusClass } from '@/app/utils/branding';
+import React, { useState, useContext, useEffect } from 'react'
+import { TotalContext, TotalContextProps } from '@/app/globalContext'
+import i18n from '@/app/components/i18n'
+import { codeExecution } from '@/app/utils/codeExecution'
+import { AxiosService } from '@/app/components/axiosService'
+import { Tooltip } from './Tooltip'
+import {
+  ComponentSize,
+  HeaderPosition,
+  TooltipProps as TooltipPropsType
+} from '@/types/global'
+import { useGlobal } from '@/context/GlobalContext'
+import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
 
 interface TimePickerProps {
-  timeType?: "normal" | "24hour";
-  setting?: "HH:mm" | "HH:mm:ss";
-  label?: string;
-  state?: string;
-  setState?: (fn: (prev: any) => any) => void;
-  size?: ComponentSize;
-  needTooltip?: boolean;
-  tooltipProps?: TooltipPropsType;
-  headerText?: string;
-  headerPosition?: HeaderPosition;
-  readOnly?: boolean;
-  disabled?: boolean;
-  className?: string;
-  style?: React.CSSProperties;
+  timeType?: 'normal' | '24hour'
+  setting?: 'HH:mm' | 'HH:mm:ss'
+  label?: string
+  state?: string
+  setState?: (fn: (prev: any) => any) => void
+  needTooltip?: boolean
+  tooltipProps?: TooltipPropsType
+  headerText?: string
+  headerPosition?: HeaderPosition
+  readOnly?: boolean
+  disabled?: boolean
+  className?: string
+  style?: React.CSSProperties
 }
 
 const TimePicker: React.FC<TimePickerProps> = ({
-  timeType="normal",
-  setting="HH:mm",
-  label="",
-  state="",
-  setState=()=>{},
-  size = "m",
+  timeType = 'normal',
+  setting = 'HH:mm',
+  label = '',
+  state = '',
+  setState = () => {},
   needTooltip = false,
   tooltipProps,
   headerText,
-  headerPosition = "top",
+  headerPosition = 'top',
   readOnly = false,
   disabled = false,
-  className = "",
+  className = '',
   style
 }) => {
-const { theme, direction, branding } = useGlobal();
+  const { theme, direction, branding } = useGlobal()
   const [hour, setHour] = useState<string>('00')
   const [minute, setMinute] = useState<string>('00')
   const [second, setSecond] = useState<string>('00')
-  const [period, setPeriod] = useState<string>('AM');
-  const periods = ['AM', 'PM'];
+  const [period, setPeriod] = useState<string>('AM')
+  const periods = ['AM', 'PM']
 
-  const [forFirstTime,setForFirstTime]=useState(false)
+  const [forFirstTime, setForFirstTime] = useState(false)
 
-  const isDark = theme === "dark" || theme === "dark-hc";
+  const isDark = theme === 'dark' || theme === 'dark-hc'
 
   const setTime = () => {
-    let time: any =""
-    if(timeType="normal")
-    {
-        if(period=="AM")
-        {
-            time= `2025-01-23T${hour || '00'}:${minute || '00'}:${second || '00'}Z`
-        }else{
-            time= `2025-01-23T${parseInt(hour)+12 || '00'}:${minute || '00'}:${second || '00'}Z`
-        }
-
-    }else{
-        time= `2025-01-23T${hour || '00'}:${minute || '00'}:${second || '00'}Z`
+    let time: any = ''
+    if ((timeType = 'normal')) {
+      if (period == 'AM') {
+        time = `2025-01-23T${hour || '00'}:${minute || '00'}:${second || '00'}Z`
+      } else {
+        time = `2025-01-23T${parseInt(hour) + 12 || '00'}:${minute || '00'}:${
+          second || '00'
+        }Z`
+      }
+    } else {
+      time = `2025-01-23T${hour || '00'}:${minute || '00'}:${second || '00'}Z`
     }
-  if(forFirstTime)
-    setState((pre: any) => ({ ...pre, [label]: time }))
-  setForFirstTime(true)
+    if (forFirstTime) setState((pre: any) => ({ ...pre, [label]: time }))
+    setForFirstTime(true)
   }
   useEffect(() => {
     setTime()
-  }, [hour, minute, second,period])
+  }, [hour, minute, second, period])
 
-  const hours = Array.from({ length: timeType=="normal"?12: 24}, (_, i) =>
+  const hours = Array.from({ length: timeType == 'normal' ? 12 : 24 }, (_, i) =>
     String(i).padStart(2, '0')
   )
   const minutes = Array.from({ length: 60 }, (_, i) =>
@@ -101,216 +101,231 @@ const { theme, direction, branding } = useGlobal();
     setPeriod(e.target.value)
   }
 
-  const getSizeClasses = () => {
-    const fontSize = getFontSizeClass(branding.fontSize);
-    switch (size) {
-      case "s":
-        return `px-3 py-1.5 ${fontSize === "text-xl" ? "text-base" : fontSize === "text-lg" ? "text-sm" : "text-xs"}`;
-      case "m":
-        return `px-4 py-2 ${fontSize}`;
-      case "l":
-        return `px-5 py-2.5 ${fontSize === "text-sm" ? "text-base" : fontSize === "text-base" ? "text-lg" : "text-xl"}`;
-      case "xl":
-        return `px-6 py-3 ${fontSize === "text-sm" ? "text-lg" : fontSize === "text-base" ? "text-xl" : "text-2xl"}`;
-      default:
-        return `px-4 py-2 ${fontSize}`;
-    }
-  };
-
   const keyset: any = i18n.keyset('language')
 
   const timePickerElement = (
-    <div className="w-full" style={style}>
+    <div
+      className={`
+        flex h-full w-full flex-col
+        ${getFontSizeClass(branding.fontSize)}
+        ${
+          isDark
+            ? 'border-gray-600 bg-gray-800 text-white'
+            : 'border-gray-300 bg-white text-gray-900'
+        }
+      `}
+      style={style}
+    >
       {label && (
-        <label className={`block mb-2 ${getFontSizeClass(branding.fontSize)} font-medium ${isDark ? "text-gray-200" : "text-gray-700"}`}>
+        <label
+          className={`mb-0.5 block text-xs font-medium ${
+            isDark ? 'text-gray-200' : 'text-gray-700'
+          }`}
+        >
           {label}
         </label>
       )}
-      <div className={`flex gap-2 ${className}`}>
+      <div className={`flex min-h-0 flex-1 gap-1 ${className}`}>
         {/* Hour Selector */}
-        <select
+        <div
           className={`
-            ${getSizeClasses()}
+            relative min-h-0 flex-1 border transition-colors focus:outline-none
             ${getBorderRadiusClass(branding.borderRadius)}
-            border-2
-            ${disabled ? "opacity-50 cursor-not-allowed" : ""}
-            ${readOnly ? "cursor-default" : ""}
-            ${isDark ? "border-gray-600 bg-gray-800 text-white" : "border-gray-300 bg-white text-gray-900"}
-            transition-colors
-            focus:outline-none
+            ${disabled ? 'cursor-not-allowed opacity-50' : ''}
+            ${readOnly ? 'cursor-default' : ''}
           `}
-          value={hour}
-          onChange={handleHourChange}
-          disabled={disabled}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = branding.brandColor;
-            e.currentTarget.style.boxShadow = `0 0 0 2px ${branding.brandColor}20`;
+          onFocus={e => {
+            e.currentTarget.style.borderColor = branding.brandColor
+            e.currentTarget.style.boxShadow = `0 0 0 1px ${branding.brandColor}20`
           }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = isDark ? "#4B5563" : "#D1D5DB";
-            e.currentTarget.style.boxShadow = "none";
+          onBlur={e => {
+            e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
+            e.currentTarget.style.boxShadow = 'none'
           }}
         >
-          {hours.map(h => (
-            <option key={h} value={h}>
-              {h}
-            </option>
-          ))}
-        </select>
-
-        {/* Minute Selector */}
-        <select
-          className={`
-            ${getSizeClasses()}
-            ${getBorderRadiusClass(branding.borderRadius)}
-            border-2
-            ${disabled ? "opacity-50 cursor-not-allowed" : ""}
-            ${readOnly ? "cursor-default" : ""}
-            ${isDark ? "border-gray-600 bg-gray-800 text-white" : "border-gray-300 bg-white text-gray-900"}
-            transition-colors
-            focus:outline-none
-          `}
-          value={minute}
-          onChange={handleMinuteChange}
-          disabled={disabled}
-          onFocus={(e) => {
-            e.currentTarget.style.borderColor = branding.brandColor;
-            e.currentTarget.style.boxShadow = `0 0 0 2px ${branding.brandColor}20`;
-          }}
-          onBlur={(e) => {
-            e.currentTarget.style.borderColor = isDark ? "#4B5563" : "#D1D5DB";
-            e.currentTarget.style.boxShadow = "none";
-          }}
-        >
-          {minutes.map(m => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
-
-        {/* Second Selector */}
-        {setting=="HH:mm:ss" && (
           <select
-            className={`
-              ${getSizeClasses()}
-              ${getBorderRadiusClass(branding.borderRadius)}
-              border-2
-              ${disabled ? "opacity-50 cursor-not-allowed" : ""}
-              ${readOnly ? "cursor-default" : ""}
-              ${isDark ? "border-gray-600 bg-gray-800 text-white" : "border-gray-300 bg-white text-gray-900"}
-              transition-colors
-              focus:outline-none
-            `}
-            value={second}
-            onChange={handleSecChange}
+            className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none`}
+            onChange={handleHourChange}
             disabled={disabled}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = branding.brandColor;
-              e.currentTarget.style.boxShadow = `0 0 0 2px ${branding.brandColor}20`;
-            }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = isDark ? "#4B5563" : "#D1D5DB";
-              e.currentTarget.style.boxShadow = "none";
-            }}
+            value={hour}
           >
-            {seconds.map(m => (
+            {hours.map(h => (
+              <option key={h} value={h}>
+                {h}
+              </option>
+            ))}
+          </select>
+          <span className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2'>
+            ▼
+          </span>
+        </div>
+        {/* Minute Selector */}
+        <div
+          className={`
+            relative min-h-0 flex-1 border transition-colors focus:outline-none
+            ${getBorderRadiusClass(branding.borderRadius)}
+            ${disabled ? 'cursor-not-allowed opacity-50' : ''}
+            ${readOnly ? 'cursor-default' : ''}
+              `}
+          onFocus={e => {
+            e.currentTarget.style.borderColor = branding.brandColor
+            e.currentTarget.style.boxShadow = `0 0 0 1px ${branding.brandColor}20`
+          }}
+          onBlur={e => {
+            e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
+            e.currentTarget.style.boxShadow = 'none'
+          }}
+        >
+          <select
+            className='h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none'
+            value={minute}
+            onChange={handleMinuteChange}
+            disabled={disabled}
+          >
+            {minutes.map(m => (
               <option key={m} value={m}>
                 {m}
               </option>
             ))}
           </select>
+          <span className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2'>
+            ▼
+          </span>
+        </div>
+
+        {/* Second Selector */}
+        {setting == 'HH:mm:ss' && (
+          <div
+            className={`
+              relative min-h-0 flex-1 border transition-colors focus:outline-none
+              ${getBorderRadiusClass(branding.borderRadius)}
+              ${disabled ? 'cursor-not-allowed opacity-50' : ''}
+              ${readOnly ? 'cursor-default' : ''}
+            `}
+            onFocus={e => {
+              e.currentTarget.style.borderColor = branding.brandColor
+              e.currentTarget.style.boxShadow = `0 0 0 1px ${branding.brandColor}20`
+            }}
+            onBlur={e => {
+              e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
+              e.currentTarget.style.boxShadow = 'none'
+            }}
+          >
+            <select
+              className='h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none'
+              value={second}
+              onChange={handleSecChange}
+              disabled={disabled}
+            >
+              {seconds.map(m => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+            <span className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm'>
+              ▼
+            </span>
+          </div>
         )}
 
         {/* AM/PM Selector */}
-        {timeType=="normal" && (
-          <select
+        {timeType == 'normal' && (
+          <div
             className={`
-              ${getSizeClasses()}
+              relative min-h-0 flex-1 border transition-colors focus:outline-none
               ${getBorderRadiusClass(branding.borderRadius)}
-              border-2
-              ${disabled ? "opacity-50 cursor-not-allowed" : ""}
-              ${readOnly ? "cursor-default" : ""}
-              ${isDark ? "border-gray-600 bg-gray-800 text-white" : "border-gray-300 bg-white text-gray-900"}
-              transition-colors
-              focus:outline-none
+              ${disabled ? 'cursor-not-allowed opacity-50' : ''}
+              ${readOnly ? 'cursor-default' : ''}
             `}
-            value={period}
-            onChange={handlePeriodChange}
-            disabled={disabled}
-            onFocus={(e) => {
-              e.currentTarget.style.borderColor = branding.brandColor;
-              e.currentTarget.style.boxShadow = `0 0 0 2px ${branding.brandColor}20`;
+            onFocus={e => {
+              e.currentTarget.style.borderColor = branding.brandColor
+              e.currentTarget.style.boxShadow = `0 0 0 1px ${branding.brandColor}20`
             }}
-            onBlur={(e) => {
-              e.currentTarget.style.borderColor = isDark ? "#4B5563" : "#D1D5DB";
-              e.currentTarget.style.boxShadow = "none";
+            onBlur={e => {
+              e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
+              e.currentTarget.style.boxShadow = 'none'
             }}
           >
-            {periods.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
+            <select
+              className='h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none'
+              value={period}
+              onChange={handlePeriodChange}
+              disabled={disabled}
+            >
+              {periods.map(p => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+            <span className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2'>
+              ▼
+            </span>
+          </div>
         )}
       </div>
     </div>
-  );
+  )
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
+    if (!headerText) return <div className='h-full w-full'>{element}</div>
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    }`;
-
+    const headerClasses = `
+      flex h-full w-full overflow-hidden text-ellipsis whitespace-nowrap 
+      ${
+        isDark
+          ? 'border-gray-600 bg-gray-800 text-white'
+          : 'border-gray-300 bg-white text-gray-900'
+      }
+      ${getFontSizeClass(branding.fontSize)}
+      ${className}
+    `
     switch (headerPosition) {
-      case "top":
+      case 'top':
         return (
-          <div className="flex flex-col">
-            <div className={headerClasses}>{headerText}</div>
+          <div className={`${headerClasses} flex-col`}>
+            <div className='font-semibold'>{headerText}</div>
             {element}
           </div>
-        );
-      case "bottom":
+        )
+      case 'bottom':
         return (
-          <div className="flex flex-col">
+          <div className={`${headerClasses} flex-col`}>
             {element}
-            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
+            <div className='mt-1 font-semibold'>{headerText}</div>
           </div>
-        );
-      case "left":
+        )
+      case 'left':
         return (
-          <div className="flex items-center gap-4">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+          <div className={`${headerClasses} items-center gap-4`}>
+            <div className={`mb-0 min-w-0  overflow-hidden font-semibold`}>
               {headerText}
             </div>
             {element}
           </div>
-        );
-      case "right":
+        )
+      case 'right':
         return (
-          <div className="flex items-center gap-4">
+          <div className={`${headerClasses} items-center gap-4`}>
             {element}
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
               {headerText}
             </div>
           </div>
-        );
+        )
     }
-  };
-
-  const finalElement = renderWithHeader(timePickerElement);
+  }
+  const finalElement = renderWithHeader(timePickerElement)
 
   if (needTooltip && tooltipProps) {
     return (
       <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
         {finalElement}
       </Tooltip>
-    );
+    )
   }
 
-  return <>{finalElement}</>;
+  return <>{finalElement}</>
 }
 export default TimePicker

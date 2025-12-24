@@ -1,34 +1,44 @@
-"use client";
+'use client'
 
-import React from "react";
-import { useGlobal } from "@/context/GlobalContext";
-import { Tooltip } from "./Tooltip";
-import { Icon } from "./Icon";
-import { GravityIcon } from "@/types/icons";
-import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-
-type LabelSize = "xs" | "s" | "m";
-type LabelTheme = "normal" | "info" | "danger" | "warning" | "success" | "utility" | "unknown" | "clear";
+import React from 'react'
+import { useGlobal } from '@/context/GlobalContext'
+import { Tooltip } from './Tooltip'
+import { Icon } from './Icon'
+import {
+  HeaderPosition,
+  TooltipProps as TooltipPropsType
+} from '@/types/global'
+import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
+type LabelTheme =
+  | 'normal'
+  | 'info'
+  | 'danger'
+  | 'warning'
+  | 'success'
+  | 'utility'
+  | 'unknown'
+  | 'clear'
+type ContentAlign = 'left' | 'center' | 'right'
 
 interface LabelProps {
-  size?: LabelSize;
-  theme?: LabelTheme;
-  interactive?: boolean;
-  copy?: boolean;
-  copyText?: string;
-  disabled?: boolean;
-  icon?: string;
-  needTooltip?: boolean;
-  tooltipProps?: TooltipPropsType;
-  headerText?: string;
-  headerPosition?: HeaderPosition;
-  children?: React.ReactNode;
-  onClick?: (e:any) => void;
-  className?: string;
+  theme?: LabelTheme
+  interactive?: boolean
+  copy?: boolean
+  copyText?: string
+  disabled?: boolean
+  icon?: string
+  needTooltip?: boolean
+  tooltipProps?: TooltipPropsType
+  headerText?: string
+  headerPosition?: HeaderPosition
+  children?: React.ReactNode
+  onClick?: (e: any) => void
+  className?: string
+  fillContainer?: boolean
+  contentAlign?: ContentAlign
 }
 
 export const Label: React.FC<LabelProps> = ({
-  size,
   theme: labelTheme,
   interactive = false,
   copy = false,
@@ -38,149 +48,185 @@ export const Label: React.FC<LabelProps> = ({
   needTooltip = false,
   tooltipProps,
   headerText,
-  headerPosition = "top",
+  headerPosition = 'top',
   children,
-  onClick=()=>{},
-  className = "",
+  onClick = () => {},
+  className = '',
+  fillContainer = true,
+  contentAlign = 'center'
 }) => {
-  const { theme } = useGlobal();
-
+  const { theme, direction, branding } = useGlobal()
   const handleCopy = () => {
     if (copy) {
-      const textToCopy = copyText || (children ? children.toString() : "");
+      const textToCopy = copyText || (children ? children.toString() : '')
       if (textToCopy) {
-        navigator.clipboard.writeText(textToCopy);
+        navigator.clipboard.writeText(textToCopy)
       }
     }
-  };
+  }
 
-  const getSizeClasses = () => {
-    switch (size) {
-      case "xs":
-        return "px-1.5 py-0.5 text-xs";
-      case "s":
-        return "px-2 py-1 text-sm";
-      case "m":
-        return "px-3 py-1.5 text-base";
+  const getFillClasses = () => {
+    if (!fillContainer) return ''
+    return 'w-full h-full'
+  }
+
+  const getContentAlignClasses = () => {
+    switch (contentAlign) {
+      case 'left':
+        return 'justify-start'
+      case 'right':
+        return 'justify-end'
+      case 'center':
       default:
-        return "px-2 py-1 text-sm";
+        return 'justify-center'
     }
-  };
+  }
 
   const getThemeColors = () => {
-    const isDark = theme === "dark" || theme === "dark-hc";
+    const isDark = theme === 'dark' || theme === 'dark-hc'
 
     switch (labelTheme) {
-      case "info":
-        return { bg: isDark ? "#1E3A8A" : "#DBEAFE", text: isDark ? "#BFDBFE" : "#1E40AF" };
-      case "danger":
-        return { bg: isDark ? "#991B1B" : "#FEE2E2", text: isDark ? "#FECACA" : "#991B1B" };
-      case "warning":
-        return { bg: isDark ? "#854D0E" : "#FEF3C7", text: isDark ? "#FDE68A" : "#854D0E" };
-      case "success":
-        return { bg: isDark ? "#166534" : "#DCFCE7", text: isDark ? "#BBF7D0" : "#166534" };
-      case "utility":
-        return { bg: isDark ? "#374151" : "#F3F4F6", text: isDark ? "#D1D5DB" : "#374151" };
-      case "unknown":
-        return { bg: isDark ? "#4B5563" : "#E5E7EB", text: isDark ? "#9CA3AF" : "#6B7280" };
-      case "clear":
-        return { bg: "transparent", text: isDark ? "#F9FAFB" : "#111827" };
+      case 'info':
+        return {
+          bg: isDark ? '#1E3A8A' : '#DBEAFE',
+          text: isDark ? '#BFDBFE' : '#1E40AF'
+        }
+      case 'danger':
+        return {
+          bg: isDark ? '#991B1B' : '#FEE2E2',
+          text: isDark ? '#FECACA' : '#991B1B'
+        }
+      case 'warning':
+        return {
+          bg: isDark ? '#854D0E' : '#FEF3C7',
+          text: isDark ? '#FDE68A' : '#854D0E'
+        }
+      case 'success':
+        return {
+          bg: isDark ? '#166534' : '#DCFCE7',
+          text: isDark ? '#BBF7D0' : '#166534'
+        }
+      case 'utility':
+        return {
+          bg: isDark ? '#374151' : '#F3F4F6',
+          text: isDark ? '#D1D5DB' : '#374151'
+        }
+      case 'unknown':
+        return {
+          bg: isDark ? '#4B5563' : '#E5E7EB',
+          text: isDark ? '#9CA3AF' : '#6B7280'
+        }
+      case 'clear':
+        return { bg: 'transparent', text: isDark ? '#F9FAFB' : '#111827' }
       default:
-        return { bg: isDark ? "#1F2937" : "#F3F4F6", text: isDark ? "#F9FAFB" : "#111827" };
+        return {
+          bg: isDark ? '#1F2937' : '#F3F4F6',
+          text: isDark ? '#F9FAFB' : '#111827'
+        }
     }
-  };
+  }
 
-  const colors = getThemeColors();
-  const isDark = theme === "dark" || theme === "dark-hc";
+  const colors = getThemeColors()
+  const isDark = theme === 'dark' || theme === 'dark-hc'
 
   const labelElement = (
-  <span
-    onClick={disabled ? undefined : onClick}
-    className={`
-      ${getSizeClasses()}
-      inline-flex items-center gap-1
-      font-medium
-      ${disabled ? "opacity-50 cursor-not-allowed" : interactive ? "cursor-pointer hover:opacity-80" : ""}
-      transition-all
-    `}
-    style={{
-      backgroundColor: colors.bg,
-      color: colors.text,
-      borderRadius: "var(--border-radius)",
-      fontSize: "var(--font-size)",
-    }}
-  >
-    {icon && <Icon data={icon} size={size === "xs" ? 12 : size === "s" ? 14 : 16} />}
-    {children}
-    {copy && (
-      <Icon
-        data="FaCopy"
-        size={size === "xs" ? 12 : size === "s" ? 14 : 16}
-        onClick={(e:any) => {
-          e.stopPropagation();
-          handleCopy();
-        }}
-        className="cursor-pointer hover:opacity-70"
-      />
-    )}
-  </span>
-);
+    <span
+      onClick={disabled ? undefined : onClick}
+      className={`
+        items-center gap-1 overflow-hidden px-2 py-1 font-medium transition-all
+        ${fillContainer ? 'flex' : 'inline-flex'} 
+        ${getContentAlignClasses()}
+        ${
+          disabled
+            ? 'cursor-not-allowed opacity-50'
+            : interactive
+            ? 'cursor-pointer hover:opacity-80'
+            : ''
+        }
+        ${getFillClasses()}
+        ${getFontSizeClass(branding.fontSize)}
+        ${className}
+      `}
+      style={{
+        backgroundColor: colors.bg,
+        color: colors.text,
+        borderRadius: 'var(--border-radius)'
+      }}
+    >
+      {icon && <Icon data={icon} size={16} className='flex-shrink-0' />}
 
+      <span className='overflow-hidden text-ellipsis whitespace-nowrap'>
+        {children}
+      </span>
+
+      {copy && (
+        <Icon
+          data='FaCopy'
+          size={16}
+          onClick={(e: any) => {
+            e.stopPropagation()
+            handleCopy()
+          }}
+          className='flex-shrink-0 cursor-pointer hover:opacity-70'
+        />
+      )}
+    </span>
+  )
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
+    if (!headerText) return <div className='h-full w-full'>{element}</div>
 
-    const headerClasses = `font-semibold mb-1 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    }`;
-
-    const headerStyle = { fontSize: "var(--font-size)" };
+    const headerClasses = `
+      flex h-full w-full overflow-hidden text-ellipsis whitespace-nowrap 
+      ${isDark ? 'text-gray-300' : 'text-gray-700'}
+      ${getFontSizeClass(branding.fontSize)} 
+      ${className} `
 
     switch (headerPosition) {
-      case "top":
+      case 'top':
         return (
-          <div className="flex flex-col">
-            <div className={headerClasses} style={headerStyle}>{headerText}</div>
+          <div className={`${headerClasses} flex-col`}>
+            <div className='font-semibold'>{headerText}</div>
             {element}
           </div>
-        );
-      case "bottom":
+        )
+      case 'bottom':
         return (
-          <div className="flex flex-col">
+          <div className={`${headerClasses} flex-col`}>
             {element}
-            <div className={`${headerClasses} mt-1 mb-0`} style={headerStyle}>{headerText}</div>
+            <div className='mt-1 font-semibold'>{headerText}</div>
           </div>
-        );
-      case "left":
+        )
+      case 'left':
         return (
-          <div className="flex items-center gap-2">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
+          <div className={`${headerClasses} items-center gap-4`}>
+            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
               {headerText}
             </div>
             {element}
           </div>
-        );
-      case "right":
+        )
+      case 'right':
         return (
-          <div className="flex items-center gap-2">
+          <div className={`${headerClasses} items-center gap-4`}>
             {element}
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
+            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
               {headerText}
             </div>
           </div>
-        );
+        )
     }
-  };
+  }
 
-  const finalElement = (<div className={className}>{renderWithHeader(labelElement)}</div>);
+  const finalElement = renderWithHeader(labelElement)
 
   if (needTooltip && tooltipProps) {
     return (
       <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
         {finalElement}
       </Tooltip>
-    );
+    )
   }
 
-  return <>{finalElement}</>;
-};
+  return <>{finalElement}</>
+}

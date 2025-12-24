@@ -1,81 +1,98 @@
-"use client";
+'use client'
 
-import React, { useState } from "react";
-import { useGlobal } from "@/context/GlobalContext";
-import { Tooltip } from "./Tooltip";
-import { ComponentSize, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
+import React, { useState } from 'react'
+import { useGlobal } from '@/context/GlobalContext'
+import { Tooltip } from './Tooltip'
+import {
+  ComponentSize,
+  HeaderPosition,
+  TooltipProps as TooltipPropsType
+} from '@/types/global'
+import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
 
 interface RadioButtonItem {
-  value: string;
-  content: string;
+  value: string
+  content: string
+  // Tailwind/CSS class string for this item
+  className?: string
 }
-
+type ContentAlign = 'left' | 'center' | 'right'
 interface RadioButtonProps {
-  size: ComponentSize;
-  disabled?: boolean;
-  items: RadioButtonItem[];
-  needTooltip?: boolean;
-  tooltipProps?: TooltipPropsType;
-  headerText?: string;
-  headerPosition?: HeaderPosition;
-  onChange?: (value: string) => void;
-  onBlur?: (e: React.FocusEvent<HTMLElement>) => void;
-  onFocus?: (e: React.FocusEvent<HTMLElement>) => void;
-  defaultValue?: string;
-  className?: string;
+  disabled?: boolean
+  items: RadioButtonItem[]
+  needTooltip?: boolean
+  tooltipProps?: TooltipPropsType
+  headerText?: string
+  headerPosition?: HeaderPosition
+  defaultValue?: string
+  className?: string
+  fillContainer?: boolean
+  contentAlign?: ContentAlign
+  onChange?: (value: string) => void
+  onBlur?: (e: React.FocusEvent<HTMLElement>) => void
+  onFocus?: (e: React.FocusEvent<HTMLElement>) => void
 }
 
 export const RadioButton: React.FC<RadioButtonProps> = ({
-  size,
   disabled = false,
   items,
   needTooltip = false,
   tooltipProps,
   headerText,
-  headerPosition = "top",
+  headerPosition = 'top',
+  defaultValue,
+  className = '',
+  fillContainer = true,
+  contentAlign = 'center',
   onChange,
   onBlur,
-  onFocus,
-  defaultValue,
-  className = "",
+  onFocus
 }) => {
-  const { theme, direction, branding } = useGlobal();
-  const [selectedValue, setSelectedValue] = useState(defaultValue || items[0]?.value || "");
+  const { theme, direction, branding } = useGlobal()
+  const [selectedValue, setSelectedValue] = useState(
+    defaultValue || items[0]?.value || ''
+  )
 
   const handleChange = (value: string) => {
     if (!disabled) {
-      setSelectedValue(value);
-      onChange?.(value);
+      setSelectedValue(value)
+      onChange?.(value)
     }
-  };
+  }
 
-  const getSizeClasses = () => {
-    const fontSize = getFontSizeClass(branding.fontSize);
-    switch (size) {
-      case "xs":
-        return `px-2 py-1 ${fontSize === "text-xl" ? "text-sm" : fontSize === "text-lg" ? "text-xs" : "text-xs"}`;
-      case "s":
-        return `px-3 py-1.5 ${fontSize === "text-xl" ? "text-base" : fontSize === "text-lg" ? "text-sm" : "text-xs"}`;
-      case "m":
-        return `px-4 py-2 ${fontSize}`;
-      case "l":
-        return `px-5 py-2.5 ${fontSize === "text-sm" ? "text-base" : fontSize === "text-base" ? "text-lg" : "text-xl"}`;
-      case "xl":
-        return `px-6 py-3 ${fontSize === "text-sm" ? "text-lg" : fontSize === "text-base" ? "text-xl" : "text-2xl"}`;
+  const getFillClasses = () => {
+    if (!fillContainer) return ''
+    return 'w-full h-full'
+  }
+  const getContentAlignClasses = () => {
+    switch (contentAlign) {
+      case 'left':
+        return 'justify-start'
+      case 'right':
+        return 'justify-end'
+      case 'center':
       default:
-        return `px-4 py-2 ${fontSize}`;
+        return 'justify-center'
     }
-  };
-
-  const isDark = theme === "dark" || theme === "dark-hc";
+  }
+  const isDark = theme === 'dark' || theme === 'dark-hc'
 
   const radioButtonElement = (
-    <div className={`inline-flex [border-radius:var(--border-radius)] overflow-hidden ${
-      isDark ? "bg-gray-800" : "bg-gray-100"
-    } p-1 ${direction === "RTL" ? "flex-row-reverse" : ""}`}>
-      {items.map((item) => {
-        const isSelected = selectedValue === item.value;
+    <div
+      className={`
+        overflow-hidden
+        p-1 
+        [border-radius:var(--border-radius)] 
+        ${fillContainer ? 'flex' : 'inline-flex'} 
+        ${isDark ? 'bg-gray-800' : 'bg-gray-100'} 
+        ${direction === 'RTL' ? 'flex-row-reverse' : ''} 
+        ${getFillClasses()}
+        ${getFontSizeClass(branding.fontSize)}
+        ${className}
+      `}
+    >
+      {items.map(item => {
+        const isSelected = selectedValue === item.value
         return (
           <button
             key={item.value}
@@ -84,83 +101,112 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
             onFocus={onFocus}
             disabled={disabled}
             className={`
-              ${getSizeClasses()}
-              [border-radius:var(--border-radius)]
-              font-medium
-              transition-all
-              ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-              ${isSelected
-                ? `text-white`
-                : isDark ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-gray-900"
+              flex items-center
+              px-4 py-2 ${getContentAlignClasses()}
+              overflow-hidden
+              text-ellipsis
+              whitespace-nowrap
+              font-medium transition-all [border-radius:var(--border-radius)]
+              ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
+              ${getFillClasses()}
+              ${
+                isSelected
+                  ? `text-white`
+                  : isDark
+                  ? 'text-gray-300 hover:text-white'
+                  : 'text-gray-700 hover:text-gray-900'
               }
             `}
+            dir={direction}
             style={{
-              backgroundColor: isSelected ? "var(--brand-color)" : "transparent",
+              backgroundColor: isSelected ? 'var(--brand-color)' : 'transparent'
             }}
           >
             {item.content}
           </button>
-        );
+        )
       })}
     </div>
-  );
+  )
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return <div className={className}>{element}</div>;
+    if (!headerText)
+      return (
+        <div className={`${fillContainer ? 'h-full w-full' : ''} `}>
+          {element}
+        </div>
+      )
 
-    const headerClasses = ` font-semibold mb-2 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    }`;
+    const headerClasses = `font-semibold mb-1 overflow-hidden text-ellipsis whitespace-nowrap ${
+      isDark ? 'text-gray-300' : 'text-gray-700'
+    } 
+      ${getFontSizeClass(branding.fontSize)} ${className}`
 
     switch (headerPosition) {
-      case "top":
+      case 'top':
         return (
-          <div className={`inline-flex flex-col ${className}`}>
-            <div className={headerClasses}>{headerText}</div>
+          <div
+            className={`${
+              fillContainer
+                ? 'flex h-full w-full flex-col'
+                : 'inline-flex flex-col'
+            } ${headerClasses}`}
+          >
+            <div>{headerText}</div>
             {element}
           </div>
-        );
-      case "bottom":
+        )
+      case 'bottom':
         return (
-          <div className={`inline-flex flex-col ${className}`}>
+          <div
+            className={`${
+              fillContainer
+                ? 'flex h-full w-full flex-col'
+                : 'inline-flex flex-col'
+            }  ${headerClasses}`}
+          >
             {element}
-            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
+            <div className='mt-1'>{headerText}</div>
           </div>
-        );
-      case "left":
+        )
+      case 'left':
         return (
-          <div className={`inline-flex items-center gap-4 ${className}`}>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
-              {headerText}
-            </div>
+          <div
+            className={`${
+              fillContainer ? 'flex h-full w-full' : 'inline-flex'
+            } items-center gap-4 ${headerClasses}`}
+          >
+            <div className={`mb-0 min-w-0 overflow-hidden`}>{headerText}</div>
             {element}
           </div>
-        );
-      case "right":
+        )
+      case 'right':
         return (
-          <div className={`inline-flex items-center gap-4 ${className}`}>
+          <div
+            className={`${
+              fillContainer ? 'flex h-full w-full ' : 'inline-flex flex-col'
+            } items-center gap-4 ${headerClasses}`}
+          >
             {element}
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
-              {headerText}
-            </div>
+            <div className={`mb-0 min-w-0 overflow-hidden`}>{headerText}</div>
           </div>
-        );
+        )
     }
-  };
+  }
 
-  const finalElement = renderWithHeader(radioButtonElement);
+  const finalElement = renderWithHeader(radioButtonElement)
 
   if (needTooltip && tooltipProps) {
     return (
       <Tooltip
         title={tooltipProps.title}
         placement={tooltipProps.placement}
-        triggerClassName="inline-flex"
+        triggerClassName='inline-flex'
       >
         {finalElement}
       </Tooltip>
-    );
+    )
   }
 
-  return <>{finalElement}</>;
-};
+  return <>{finalElement}</>
+}

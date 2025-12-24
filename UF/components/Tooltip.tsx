@@ -76,6 +76,20 @@ export const Tooltip: React.FC<TooltipProps> = ({
 
       setPosition({ top, left });
     }
+
+    // Hide tooltip on scroll
+    const handleScroll = () => {
+      if (isVisible) {
+        setIsVisible(false);
+      }
+    };
+
+    if (isVisible) {
+      window.addEventListener('scroll', handleScroll, true);
+      return () => {
+        window.removeEventListener('scroll', handleScroll, true);
+      };
+    }
   }, [isVisible, placement]);
 
   const getThemeClasses = () => {
@@ -97,7 +111,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         ref={triggerRef}
         onMouseEnter={() => setIsVisible(true)}
         onMouseLeave={() => setIsVisible(false)}
-        // className={triggerClassName}
+        className={`w-full h-full ${triggerClassName}`}
       >
         {children}
       </div>

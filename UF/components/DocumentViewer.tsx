@@ -7,6 +7,7 @@ import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global
 import { Text } from "./Text";
 
 export declare type viewerType = 'google' | 'office' | 'mammoth' | 'pdf' | 'url';
+type ContentAlign = "left" | "center" | "right";
 
 interface DocViewerProps {
     loaded?: () => void;
@@ -24,9 +25,9 @@ interface DocViewerProps {
     headerPosition?: HeaderPosition;
     tooltipProps?: TooltipPropsType;
     needTooltip?: boolean;
-    height?: string;
-    width?: string;
     enableEncryption?: boolean;
+    fillContainer?: boolean;
+    contentAlign?: ContentAlign;
 }
 
 const DocViewer: React.FC<DocViewerProps> = ({
@@ -43,14 +44,30 @@ const DocViewer: React.FC<DocViewerProps> = ({
     headerPosition = "top",
     tooltipProps,
     needTooltip = false,
-    height,
-    width,
-    enableEncryption
+    enableEncryption,
+    fillContainer = true,
+    contentAlign = "center",
 }) => {
+        const getFillClasses = () => {
+    if (!fillContainer) return "";
+    return "w-full h-full";
+  };
+    const getContentAlignClasses = () => {
+    switch (contentAlign) {
+      case "left":
+        return "text-left";
+      case "right":
+        return "text-right";
+      case "center":
+      default:
+        return "text-center";
+    }
+  };
+
     const documentViewerElement = (
-        <div className="w-full h-full">
+        <div className={`w-full h-full ${fillContainer ? "flex" : "inline-flex"} flex-col ${getFillClasses()}`}>
         {!url?(
-        <div className="items-center justify-center text-center bg-gray-50 rounded-xl border border-red-500 shadow-sm p-2">
+        <div className={`items-center justify-center bg-gray-50 rounded-xl border border-red-500 shadow-sm p-2 ${getContentAlignClasses()}`}>
             <Text variant="body-1" className="text-lg font-semibold text-gray-700">No Document Found</Text>
             <p className="text-sm text-gray-500">
                 The attachment or document you are looking for is unavailable or not uploaded yet.
@@ -68,46 +85,48 @@ const DocViewer: React.FC<DocViewerProps> = ({
             className={className}
             viewerUrl=""
             style={style}
-            {...{ height, width, enableEncryption } as any}
+            {...{ enableEncryption } as any}
         />)
         }
         </div>
     );
 
+  
+
     const renderWithHeader = (element: React.ReactNode) => {
-        if (!headerText) return element;
+        if (!headerText) return <div className={`${getFillClasses()} ${className}`}>{element}</div>;
 
         const headerClasses = "text-base font-semibold mb-2 text-gray-700 dark:text-gray-300";
 
         switch (headerPosition) {
             case "top":
                 return (
-                    <div className="flex flex-col">
+                    <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col ${getFillClasses()} ${className}`}>
                         <div className={headerClasses}>{headerText}</div>
-                        {element}
+                        <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
                     </div>
                 );
             case "bottom":
                 return (
-                    <div className="flex flex-col">
-                        {element}
+                    <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col ${getFillClasses()} ${className}`}>
+                        <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
                         <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
                     </div>
                 );
             case "left":
                 return (
-                    <div className="flex items-start gap-4">
-                        <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+                    <div className={`${fillContainer ? "flex" : "inline-flex"} items-start ${getFillClasses()} gap-4 ${className}`}>
+                        <div className={`${headerClasses} mb-0 whitespace-nowrap flex-shrink-0`}>
                             {headerText}
                         </div>
-                        {element}
+                        <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
                     </div>
                 );
             case "right":
                 return (
-                    <div className="flex items-start gap-4">
-                        {element}
-                        <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
+                    <div className={`${fillContainer ? "flex" : "inline-flex"} items-start ${getFillClasses()} gap-4 ${className}`}>
+                        <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
+                        <div className={`${headerClasses} mb-0 whitespace-nowrap flex-shrink-0`}>
                             {headerText}
                         </div>
                     </div>
@@ -115,7 +134,7 @@ const DocViewer: React.FC<DocViewerProps> = ({
         }
     };
 
-    const finalElement = renderWithHeader(documentViewerElement);
+    const finalElement = (<div className={`${fillContainer ? "w-full h-full" : ""} `}>{renderWithHeader(documentViewerElement)}</div>);
 
     if (needTooltip && tooltipProps) {
         return (
