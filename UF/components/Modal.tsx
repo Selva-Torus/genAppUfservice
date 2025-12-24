@@ -8,12 +8,9 @@ import { Button } from "./Button";
 import { ComponentSize, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 
-type ModalSize = "s" | "m" | "l" | "xl" | "2xl" | "4xl";
-
 interface ModalProps {
   open: boolean;
   onClose: () => void;
-  size?: ModalSize;
   title?: string | React.ReactNode;
   showCloseButton?: boolean;
   closeOnOverlayClick?: boolean;
@@ -30,7 +27,7 @@ interface ModalProps {
 export const Modal: React.FC<ModalProps> = ({
   open,
   onClose,
-  size = "2xl",
+
   title,
   showCloseButton = true,
   closeOnOverlayClick = true,
@@ -116,7 +113,7 @@ export const Modal: React.FC<ModalProps> = ({
           <div
             className={`
               flex items-center justify-between
-              px-6 py-4
+            
               backdrop-blur-sm
             `}
             style={{
@@ -139,7 +136,7 @@ export const Modal: React.FC<ModalProps> = ({
               <button
                 onClick={onClose}
                 className={`
-                  p-2
+  
                   ${getBorderRadiusClass(branding.borderRadius)}
                   transition-all duration-200
                   ${isDark ? "hover:bg-gray-700 hover:shadow-lg" : "hover:bg-gray-100 hover:shadow-md"}

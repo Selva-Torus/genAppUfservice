@@ -92,84 +92,130 @@ export const TextArea: React.FC<TextAreaProps> = ({
 
   const isDark = theme === 'dark' || theme === 'dark-hc'
 
+  // Helper to convert hex to rgba
+  const hexToRgba = (hex: string, alpha: number) => {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  };
+
   const textAreaElement = (
-    <div
-      className={`
-        ${getFillClasses()} 
-        ${getFontSizeClass(branding.fontSize)} overflow-hidden
-      `}
-    >
+    <div className={`${getFillClasses()} ${getFontSizeClass(branding.fontSize)}`}>
       <textarea
         value={value}
         onChange={onChange}
         placeholder={placeholder}
         disabled={disabled}
         readOnly={readOnly}
-        // rows={minRows}
-        // style={{
-        //   maxHeight: `${maxRows * 1.5}em`,
-        //   resize: 'vertical'
-        // }}
         className={`
           ${getFillClasses()}
           ${getPinClasses()}
           ${getTextAlignClasses()}
-          border-2 
+          border-2
           ${disabled ? 'cursor-not-allowed opacity-50' : ''}
           ${
             isDark
               ? 'border-gray-600 bg-gray-800 text-white'
               : 'border-gray-300 bg-white text-gray-900'
           }
-          transition-colors
-          focus:outline-none focus:ring-2 focus:ring-opacity-50
+          transition-all duration-200
+          focus:outline-none
           ${className}
         `}
-        onFocus={e => {
-          e.currentTarget.style.borderColor = 'var(--brand-color)'
-          e.currentTarget.style.boxShadow = `0 0 0 2px var(--brand-color) 20`
+        onMouseEnter={e => {
+          if (!disabled && !readOnly && document.activeElement !== e.currentTarget) {
+            e.currentTarget.style.borderColor = branding.hoverColor
+          }
         }}
-        onBlur={onBlur}
+        onMouseLeave={e => {
+          if (!disabled && !readOnly && document.activeElement !== e.currentTarget) {
+            e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
+          }
+        }}
+        onFocus={e => {
+          e.currentTarget.style.borderColor = branding.selectionColor
+          e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(branding.selectionColor, 0.2)}`
+        }}
+        onBlur={e => {
+          e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
+          e.currentTarget.style.boxShadow = 'none'
+          onBlur?.(e)
+        }}
       />
     </div>
   )
 
   const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return <div className='h-full w-full'>{element}</div>
+    if (!headerText)
+      return (
+        <div className={`${fillContainer ? 'h-full w-full' : ''} `}>
+          {element}
+        </div>
+      )
 
-    const headerClasses = `
-      flex h-full w-full overflow-hidden text-ellipsis whitespace-nowrap 
-      ${isDark ? 'text-gray-300' : 'text-gray-700'} 
-      ${getFontSizeClass(branding.fontSize)}
-      ${className}
-    `
+    const headerClasses = `font-semibold mb-1 overflow-hidden text-ellipsis whitespace-nowrap ${
+      isDark ? 'text-gray-300' : 'text-gray-700'
+    } 
+      ${getFontSizeClass(branding.fontSize)} ${className}`
+
     switch (headerPosition) {
       case 'top':
         return (
-          <div className={`${headerClasses} flex-col`}>
-            <div className='font-semibold'>{headerText}</div>
+          <div
+            className={`${
+              fillContainer
+                ? 'flex h-full w-full flex-col'
+                : 'inline-flex flex-col'
+            } ${headerClasses}`}
+          >
+            <div>{headerText}</div>
             {element}
           </div>
         )
       case 'bottom':
         return (
-          <div className={`${headerClasses} flex-col`}>
+          <div
+            className={`${
+              fillContainer
+                ? 'flex h-full w-full flex-col'
+                : 'inline-flex flex-col'
+            }  ${headerClasses}`}
+          >
             {element}
-            <div className='mt-1 font-semibold'>{headerText}</div>
+            <div className='mt-1'>{headerText}</div>
           </div>
         )
       case 'left':
         return (
-          <div className={`${headerClasses} items-center gap-4`}>
-            <div className={`mb-0 min-w-0  font-semibold overflow-hidden`}>{headerText}</div>
+          <div
+            className={`${
+              fillContainer ? 'flex h-full w-full' : 'inline-flex'
+            } items-center gap-4 ${headerClasses}`}
+          >
+            <div
+              className={`mb-0 min-w-0 max-w-[50%] sm:max-w-[40%] md:max-w-[35%] lg:max-w-[30%]`}
+            >
+              {headerText}
+            </div>
             {element}
           </div>
         )
       case 'right':
         return (
-          <div className={`${headerClasses} items-center gap-4`}>
+          <div
+            className={`${
+              fillContainer
+                ? 'flex h-full w-full'
+                : 'inline-flex flex-col'
+            } items-center gap-4 ${className} ${headerClasses}`}
+          >
             {element}
-            <div className={`mb-0 min-w-0 font-semibold overflow-hidden`}>{headerText}</div>
+            <div
+              className={` mb-0 min-w-0 max-w-[50%] sm:max-w-[40%] md:max-w-[35%] lg:max-w-[30%]`}
+            >
+              {headerText}
+            </div>
           </div>
         )
     }

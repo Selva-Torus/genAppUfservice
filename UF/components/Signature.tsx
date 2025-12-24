@@ -193,7 +193,7 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
   const defaultBackgroundColor = backgroundColor || (isDark ? "#1F2937" : "#fff");
 
   const signatureElement = (
-    <div className={`w-full h-full flex flex-col ${className}`}>
+    <div className={`w-full h-full flex flex-col overflow-hidden  ${className}`}>
       {title && (
         <h3
           className={`mb-2 ${getFontSizeClass(branding.fontSize)} font-semibold ${
@@ -205,14 +205,13 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
         </h3>
       )}
 
-      <div className="relative w-full flex-1">
+      <div className="h-full w-full flex-1 overflow-hidden">
         <SignatureCanvas
           ref={sigCanvas}
           canvasProps={{
             tabIndex: 0,
             className: `
               w-full
-              h-full
               border-2
               ${getBorderRadiusClass(branding.borderRadius)}
               ${isDark ? "border-gray-600" : "border-gray-300"}
@@ -329,7 +328,7 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
     switch (headerPosition) {
       case "top":
         return (
-          <div className="flex flex-col w-full">
+          <div className="flex flex-col w-full h-full">
             <div className={headerClasses} style={{ fontFamily: "var(--font-body)" }}>
               {headerContent}
             </div>
@@ -338,7 +337,7 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
         );
       case "bottom":
         return (
-          <div className="flex flex-col w-full">
+          <div className="flex flex-col w-full h-full">
             {element}
             <div className={`${headerClasses} mt-1 mb-0`} style={{ fontFamily: "var(--font-body)" }}>
               {headerContent}
@@ -347,7 +346,7 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
         );
       case "left":
         return (
-          <div className="flex items-start gap-4 w-full">
+          <div className="flex items-start gap-4 w-full h-full">
             <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={{ fontFamily: "var(--font-body)" }}>
               {headerContent}
             </div>
@@ -356,7 +355,7 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
         );
       case "right":
         return (
-          <div className="flex items-start gap-4 w-full">
+          <div className="flex items-start gap-4 w-full h-full">
             <div className="flex-1">{element}</div>
             <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={{ fontFamily: "var(--font-body)" }}>
               {headerContent}

@@ -305,7 +305,7 @@ export const Popup: React.FC<PopupProps> = ({
       }
     };
 
-    window.addEventListener("scroll", handleUpdate, true);
+    window.addEventListener("scroll", onClose as any, true);
     window.addEventListener("resize", handleUpdate);
 
     return () => {

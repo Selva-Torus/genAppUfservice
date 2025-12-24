@@ -16,6 +16,7 @@ interface IconProps {
   needTooltip?: boolean;
   tooltipProps?: TooltipPropsType;
   headerText?: string;
+  size?: number;
   headerPosition?: HeaderPosition;
   className?: string;
   onClick?: (e: React.MouseEvent) => void;
@@ -37,6 +38,7 @@ const getIconComponent = (iconName?: string) => {
 
 export const Icon: React.FC<IconProps> = ({
   data,
+  size,
   needTooltip = false,
   tooltipProps,
   headerText,
@@ -76,7 +78,7 @@ const iconElement = IconComponent ? (
     `}
     onClick={onClick}
   >
-    <IconComponent className="w-full h-full" />
+    <IconComponent className="w-full h-full"/>
   </div>
 ) : (
   <div
@@ -84,8 +86,8 @@ const iconElement = IconComponent ? (
     onClick={onClick}
   >
     <svg
-      width="100%"
-      height="100%"
+      width={size || "100%"}
+      height={size || "100%"}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

@@ -161,8 +161,8 @@ export const Slider: React.FC<SliderProps> = ({
       })()}
 
       {/* Slider container - track is 1/2 of parent height, centered */}
-      <div className="w-full flex-1 flex items-center relative">
-        <div className="w-full relative" style={{ height: "50%" }}>
+      <div className={`flex flex-col w-full relative ${showValue && headerText ? "h-[50%]": showValue ? "h-[75%]" : "h-[100%]"}`}  >
+        <div className="w-full relative" style={{ height: "100%" }}>
           {/* Background track */}
           <div
             className={`absolute w-full h-full ${

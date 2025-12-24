@@ -29,7 +29,7 @@ function TextAreaWithEndContent({ endContent, placeholder, branding, isDark, ...
   };
 
   return (
-    <div className={`relative w-full h-full ${props.className || ''}`}>
+    <div className={`relative w-full h-full ${props.className || ''} overflow-hidden`}>
       <textarea
         {...props}
         rows={props.rows || 4}
@@ -166,21 +166,21 @@ export function TextToSpeech(props: TextToSpeechProps){
     switch (headerPosition) {
       case "top":
         return (
-          <div className="flex flex-col w-full h-full">
+          <div className="flex flex-col w-full overflow-hidden h-full">
             <div className={headerClasses}>{props.headerText}</div>
             {element}
           </div>
         );
       case "bottom":
         return (
-          <div className="flex flex-col w-full h-full">
+          <div className="flex flex-col w-full overflow-hidden h-full">
             {element}
             <div className={`${headerClasses} mt-2 mb-0`}>{props.headerText}</div>
           </div>
         );
       case "left":
         return (
-          <div className="flex items-start gap-4 w-full h-full">
+          <div className="flex items-start gap-1 overflow-hidden w-full h-full">
             <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
               {props.headerText}
             </div>
@@ -189,7 +189,7 @@ export function TextToSpeech(props: TextToSpeechProps){
         );
       case "right":
         return (
-          <div className="flex items-start gap-4 w-full h-full">
+          <div className="flex items-start gap-1 overflow-hidden w-full h-full">
             <div className="flex-1 h-full">{element}</div>
             <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
               {props.headerText}

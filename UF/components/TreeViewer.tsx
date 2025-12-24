@@ -119,7 +119,7 @@ function createData(
             onClick={() => handleClick(content, path + '/' + content)}
             className='cursor-pointer rounded-full p-1 text-blue-600 transition-colors hover:bg-blue-200'
             view={'flat-success'}
-            size={'xs'}
+            
             icon={'FaSourcetree'}
           ></Button>
           <div className='flex-1'>
@@ -135,7 +135,7 @@ function createData(
                   value={content || ''}
                   onChange={(e: any) => handleChange(e, path)}
                   className='w-full  text-black'
-                  size='s'
+                  
                 />
               ) : (
                 <Text className='rounded border  px-2 py-1 text-black' variant={'body-1'} >
@@ -148,7 +148,7 @@ function createData(
             <Button
               onClick={() => handleDelete(path)}
               view={'normal'}
-              size={'xs'}
+              
               icon={'FaRegTimesCircle'}
               iconDisplay='Icon only'
             ></Button>
@@ -159,7 +159,7 @@ function createData(
           <Button
             onClick={() => handleClick(content, path + '/' + content)}
             view={'flat-success'}
-            size={'xs'}
+            
             icon={'FaSourcetree'}
             iconDisplay='Icon only'
           ></Button>
@@ -178,7 +178,7 @@ function createData(
                 value={content || ''}
                 onChange={(e: any) => handleChange(e, path)}
                 className='w-full  text-black'
-                size='s'
+                
               />
             ) : (
               <Text className='rounded border  px-2 py-1 text-black' variant={'body-1'}>
@@ -190,7 +190,7 @@ function createData(
             <Button
               onClick={() => handleDelete(path)}
               view={'normal'}
-              size={'xs'}
+              
               icon={'FaRegTimesCircle'}
               iconDisplay='Icon only'
             ></Button>
@@ -221,7 +221,7 @@ function createData(
                   setIsModalOpen(true)
                 }}
                 view={'normal'}
-                size={'xs'}
+                
                 icon={'FaPlus'}
                 iconDisplay='Icon only'
               >
@@ -244,7 +244,7 @@ function createData(
                     <Button
                       onClick={() => handleClick(item, path + '/' + idx)}
                      view={'flat-success'}
-                      size={'xs'}
+                      
                       icon={'FaSourcetree'}
                       iconDisplay='Icon only'
                     ></Button>
@@ -253,11 +253,11 @@ function createData(
                     <Button
                       onClick={() => handleDelete(path + '/' + idx)}
                       view={'normal'}
-                      size={'xs'}
+                      
                       icon={'TiDeleteOutline'}
                       iconDisplay='Icon only'
                     >
-                      <Icon data='TiDeleteOutline' size={14} />
+                      <Icon data='TiDeleteOutline'  />
                     </Button>
                   )}
                 </div>
@@ -412,7 +412,7 @@ const NestedObject = ({
               setIsModalOpen(true)
             }}
             view={'normal'}
-            size={'xs'}
+            
             icon={'FaPlus'}
             iconDisplay='Icon only'
           >
@@ -435,7 +435,7 @@ const NestedObject = ({
                   <Button
                     onClick={() => handleClick(data[key], path + '/' + key)}
                     view={'flat-success'}
-                    size={'xs'}
+                    
                     icon={'FaSourcetree'}
                     iconDisplay='Icon only'
                   ></Button>
@@ -454,7 +454,7 @@ const NestedObject = ({
                   <Button
                     onClick={() => toggleKey(key)}
                     view={'flat-info'}
-                    size={'xs'}
+                    
                     iconDisplay='Icon only'
                     icon={isExpanded ? 'FaChevronUp':'FaAngleDown' }
                   ></Button>
@@ -462,7 +462,7 @@ const NestedObject = ({
                     <Button
                       onClick={() => handleDelete(path + '/' + key)}
                       view={'normal'}
-                      size={'xs'}
+                      
                       icon={'TiDeleteOutline'}
                       iconDisplay='Icon only'
                     ></Button>
@@ -634,7 +634,7 @@ export const TreeViewer = ({
                 onChange={(e: any) => setModalKey(e.target.value)}
                 placeholder='e.g., "username", "age", "settings"'
                 className='w-full'
-                size='s'
+                
               />
             </div>
           )}
@@ -673,9 +673,6 @@ export const TreeViewer = ({
               onChange={(e: any) => setModalValue(e.target.value)}
               placeholder='Enter your JSON value here...'
               className='w-full font-mono'
-              minRows={4}
-              maxRows={8}
-              size={'s'}
             />
           </div>
 
@@ -683,11 +680,11 @@ export const TreeViewer = ({
             <Button
               onClick={() => setIsModalOpen(false)}
               view='outlined'
-              size='s'
+              
             >
               Cancel
             </Button>
-            <Button onClick={handleAddFromModal} view='action' size='s'>
+            <Button onClick={handleAddFromModal} view='action' >
               Add {modalTargetType === 'array' ? 'Item' : 'Property'}
             </Button>
           </div>
@@ -696,5 +693,3 @@ export const TreeViewer = ({
     </div>
   )
 }
-
-

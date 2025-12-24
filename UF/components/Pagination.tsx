@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Icon } from "./Icon";
 import { Button } from "./Button";
+import clsx from "clsx";
 export interface PaginationProps {
   /**
    * Current page number (1-based)
@@ -25,10 +26,6 @@ export interface PaginationProps {
    */
   onUpdate: (data: { page: number; pageSize: number }) => void;
   /**
-   * Size variant of the component
-   */
-  size?: 's' | 'm' | 'l';
-  /**
    * Alignment of pagination controls
    */
   alignment?: 'start' | 'middle' | 'end';
@@ -45,7 +42,6 @@ export const Pagination: React.FC<PaginationProps> = ({
   pageSizeOptions = [5, 10, 20, 50, 100],
   total,
   onUpdate,
-  size = 'm',
   alignment = 'end',
   className = "",
   showPageSize=false
@@ -88,58 +84,14 @@ export const Pagination: React.FC<PaginationProps> = ({
 
     return [];
   };
+  const paginationRef = React.useRef<HTMLDivElement>(null);
+  const [paginationHeight, setPaginationHeight] = React.useState(40);
 
   const visiblePages = getVisiblePages();
 
   // Calculate page info
   const startItem = (page - 1) * pageSize + 1;
   const endItem = Math.min(page * pageSize, total);
-
-  // Size variants
-  const sizeClasses = {
-    s: {
-      Button: 'min-w-[28px] h-7 px-1.5 text-xs',
-      text: 'text-xs',
-      select: 'px-1.5 py-0.5 text-xs'
-    },
-    m: {
-      Button: 'min-w-[32px] h-8 px-2 text-sm',
-      text: 'text-sm',
-      select: 'px-2 py-1 text-sm'
-    },
-    l: {
-      Button: 'min-w-[36px] h-9 px-3 text-base',
-      text: 'text-base',
-      select: 'px-3 py-1.5 text-base'
-    }
-  };
-
-  const currentSize:any = sizeClasses[size];
-
-  const buttonBaseClass = `
-    inline-flex items-center justify-center
-    ${currentSize?.Button} mx-0.5
-    font-medium
-    border border-gray-300 dark:border-gray-600
-    bg-white dark:bg-gray-800
-    text-gray-700 dark:text-gray-300
-    hover:bg-gray-50 dark:hover:bg-gray-700
-    disabled:opacity-50 disabled:cursor-not-allowed
-    transition-colors duration-150
-    rounded-md
-  `;
-
-  const activeButtonClass = `
-    inline-flex items-center justify-center
-    ${currentSize?.Button} mx-0.5
-    font-medium
-    bg-blue-600 dark:bg-blue-700
-    text-white border border-blue-600 dark:border-blue-700
-    hover:bg-blue-700 dark:hover:bg-blue-800
-    disabled:opacity-50 disabled:cursor-not-allowed
-    transition-colors duration-150
-    rounded-md
-  `;
 
   const handlePageChange = (newPage: number) => {
     if (newPage >= 1 && newPage <= pageCount) {
@@ -158,25 +110,35 @@ export const Pagination: React.FC<PaginationProps> = ({
     end: 'justify-end'
   };
 
+  useEffect(() => {
+    if (paginationRef.current) {
+      if(paginationRef.current.offsetHeight){
+        setPaginationHeight(paginationRef.current.offsetHeight);
+      }
+    }
+  }, [])
+
+  console.log(paginationHeight);
+  
+
   return (
-    <div className={`flex flex-col sm:flex-row items-start sm:items-center ${alignmentClasses[alignment]} gap-4 ${className}`}>
+    <div className={`flex flex-col sm:flex-row items-start sm:items-center ${alignmentClasses[alignment]} gap-4 ${className}`} ref={paginationRef}>
       {/* Pagination Controls */}
       <div className="flex items-center gap-2">
         {/* Page Size Selector */}
         {showPageSize&&(
         <div className="flex items-center gap-2 mr-4">
-          <span className={`text-gray-600 dark:text-gray-400 ${currentSize?.text}`}>Show:</span>
+          <span className="text-gray-600 dark:text-gray-400">Show:</span>
           <select
             value={pageSize}
             onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-            className={`
-              ${currentSize?.select}
+            className="
               border border-gray-300 dark:border-gray-600
               bg-white dark:bg-gray-800
               text-gray-700 dark:text-gray-300
               rounded
               focus:outline-none focus:ring-2 focus:ring-blue-500
-            `}
+            "
           >
             {pageSizeOptions.map((size) => (
               <option key={size} value={size}>
@@ -200,16 +162,19 @@ export const Pagination: React.FC<PaginationProps> = ({
         )} */}
 
         {/* Previous Page */}
-        <Button
-          onClick={() => handlePageChange(page - 1)}
-          disabled={page <= 1}
-          view='outlined'
-          pin='brick-brick'
-          size={size}
-          aria-label="Previous page"
-        >
-          <Icon data="FaStepBackward" size={16} />
-        </Button>
+        <div style={{ width: paginationHeight, height: paginationHeight }}>
+          <Button
+            onClick={() => handlePageChange(page - 1)}
+            disabled={page <= 1}
+            view='outlined'
+            pin='brick-brick'
+            className="!w-full !h-full flex items-center justify-center !p-0"
+            fillContainer={false}
+            aria-label="Previous page"
+          >
+            <Icon data="FaStepBackward" size={paginationHeight ? paginationHeight * 0.5 : 16}/>
+          </Button>
+        </div>
 
         {/* Page Numbers */}
         {visiblePages.map((pageNum, index) => {
@@ -217,7 +182,8 @@ export const Pagination: React.FC<PaginationProps> = ({
             return (
               <span
                 key={`ellipsis-${index}`}
-                className="px-2 py-2 text-gray-500 dark:text-gray-400"
+                className="flex items-center justify-center text-gray-500 dark:text-gray-400"
+                style={{ width: paginationHeight, height: paginationHeight }}
               >
                 ...
               </span>
@@ -227,31 +193,36 @@ export const Pagination: React.FC<PaginationProps> = ({
           const isActive = pageNum === page;
 
           return (
-            <Button
-              key={pageNum}
-              view={isActive ? 'action' : 'outlined'}
-              pin='brick-brick'
-              size={size}
-              onClick={() => handlePageChange(pageNum)}
-              aria-label={`Page ${pageNum}`}
-              aria-current={isActive ? "page" : undefined}
-            >
-              {pageNum}
-            </Button>
+            <div key={pageNum} style={{ width: paginationHeight, height: paginationHeight }}>
+              <Button
+                view={isActive ? 'action' : 'outlined'}
+                pin='brick-brick'
+                className="!w-full !h-full flex items-center justify-center !p-0"
+                fillContainer={false}
+                onClick={() => handlePageChange(pageNum)}
+                aria-label={`Page ${pageNum}`}
+                aria-current={isActive ? "page" : undefined}
+              >
+                {pageNum}
+              </Button>
+            </div>
           );
         })}
 
         {/* Next Page */}
-        <Button
-          view='outlined'
-          pin='brick-brick'
-          size={size}
-          onClick={() => handlePageChange(page + 1)}
-          disabled={page >= pageCount}
-          aria-label="Next page"
-        >
-          <Icon data="FaStepForward" size={16} />
-        </Button>
+        <div style={{ width: paginationHeight, height: paginationHeight }}>
+          <Button
+            view='outlined'
+            pin='brick-brick'
+            className="!w-full !h-full flex items-center justify-center !p-0"
+            fillContainer={false}
+            onClick={() => handlePageChange(page + 1)}
+            disabled={page >= pageCount}
+            aria-label="Next page"
+          >
+            <Icon data="FaStepForward" size={paginationHeight ? paginationHeight * 0.5 : 16} />
+          </Button>
+        </div>
 
         {/* Last Page */}
         {/* {pageCount > 5 && (

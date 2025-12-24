@@ -19,22 +19,22 @@ export const ConfirmModal = ({confirmMsg, setConfirmMsg, confirmMsgTitle, confir
       open={confirmMsg}
       onClose={handleClose}
       title={confirmMsgTitle}
-      size="s"
       showCloseButton={true}
       closeOnOverlayClick={false}
       closeOnEscape={true}
+      className='p-5'
       footer={
         <div className='flex justify-end gap-3 w-full'>
           <Button
-            size="m"
+          
             view="outlined"
             onClick={handleClose}
           >
             Cancel
           </Button>
           <Button
-            size="m"
-            view="flat"
+       
+             view="outlined"
             onClick={handleConfirmClick}
             className="bg-red-500 hover:bg-red-600 text-white"
           >
@@ -43,7 +43,7 @@ export const ConfirmModal = ({confirmMsg, setConfirmMsg, confirmMsgTitle, confir
         </div>
       }
     >
-      <div className='text-center py-4'>
+      <div className='text-center p-4'>
         <p>
           {confirmMsgContent}
         </p>
@@ -51,4 +51,3 @@ export const ConfirmModal = ({confirmMsg, setConfirmMsg, confirmMsgTitle, confir
     </Modal>
   )
 }
-
