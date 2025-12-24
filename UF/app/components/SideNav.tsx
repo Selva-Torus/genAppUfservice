@@ -12,6 +12,7 @@ import { Avatar } from '@/components/Avatar'
 import { useTheme } from '@/hooks/useTheme'
 import { twMerge } from 'tailwind-merge'
 import { getCdnImage } from '../utils/getAssets'
+import { Button } from '@/components/Button'
 
 const SideNav = ({
   navData,
@@ -157,9 +158,9 @@ const SideNav = ({
 
   const hasMatchingName = (obj: any, input: string): boolean => {
     if (typeof obj !== 'object' || obj === null) return false
-
     for (const key in obj) {
       if (key === 'name' && obj[key] === input) {
+
         return true
       }
       if (typeof obj[key] === 'object') {
@@ -176,7 +177,7 @@ const SideNav = ({
     (menuGroup: any, imageUrl?: boolean) => {
       const menuGrp = navData.find(item => item.menuGroup === menuGroup)
       const currentScreen = pathname.includes('_')
-        ? pathname.split('/').pop()?.split('_').slice(0, -1).join('_') || ''
+        ? pathname.split('/').pop()?.split('_').slice(0, -1).join(' ') || ''
         : pathname.split('/').pop() || ''
 
       const selectedRoute = hasMatchingName(menuGrp, currentScreen)
@@ -206,7 +207,7 @@ const SideNav = ({
   }, [fullView])
   return (
     <div
-      className={`g-root flex h-full flex-col items-center justify-between px-2 py-2`}
+      className={`g-root flex h-full flex-col items-center justify-between px-2 py-2 text-center`}
     >
       <div
         className='scrollbar-none flex max-h-[80vh] w-full flex-col gap-2 overflow-x-hidden overflow-y-scroll pt-2 '
@@ -226,11 +227,17 @@ const SideNav = ({
                 >
                   <button
                     key={index}
-                    className={twMerge(` flex cursor-pointer items-center gap-2 px-3 py-1 transition delay-150 duration-300 ease-in-out ${
-                      sidebarStyle === 'compact' || sidebarStyle === 'hoverView'
-                        ? 'w-full'
-                        : 'w-[98%]'
-                    } rounded-md ` , sidebarStyle == "default" ? "justify-start p-0" : "justify-center")}
+                    className={twMerge(
+                      `${sidebarStyle === 'default' || fullView ? "ml-1.5" : ""} flex cursor-pointer items-center justify-center gap-2 px-3 py-1 transition delay-150 duration-300 ease-in-out ${
+                        sidebarStyle === 'compact' ||
+                        sidebarStyle === 'hoverView'
+                          ? 'w-full'
+                          : 'w-[98%]'
+                      } rounded-md`
+                      // sidebarStyle == 'default'
+                      //   ? 'justify-start p-0'
+                      //   : 'justify-center'
+                    )}
                     style={
                       getDropDownStyles(
                         menu.menuGroup,
@@ -245,67 +252,78 @@ const SideNav = ({
                           className={`flex cursor-pointer items-center justify-center bg-transparent`}
                         >
                           {fullView ? (
-                            <div className={`${getMenuClassName()} w-[100%]`}>
-                              <div className='flex w-[20%] items-center justify-end'>
-                                {menu.icon ? (
-                                  <Image
-                                    className='h-[16px] w-[20px]'
-                                    width={100}
-                                    height={100}
-                                    alt='icon'
-                                    src={getCdnImage(menu.icon)}
-                                    style={{
-                                      filter:
+                            <button
+                              style={{ color: `${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? brandColor : ""}`}}
+                              className={`w-full ${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? 'hover:rounded-full hover:p-3.5' : ''}`}
+                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? hoverColor : ""}`}}
+                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                            >
+                              <div className={`${getMenuClassName()} w-[100%]`}>
+                                <div className='flex w-[20%] items-center justify-end'>
+                                  {menu.icon ? (
+                                    <Image
+                                      className='h-[16px] w-[20px]'
+                                      width={100}
+                                      height={100}
+                                      alt='icon'
+                                      src={getCdnImage(menu.icon)}
+                                      style={{
+                                        filter:
+                                          typeof getDropDownStyles(
+                                            menu.menuGroup,
+                                            true
+                                          ) == 'boolean' || isDark
+                                            ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
+                                            : 'unset'
+                                      }}
+                                    />
+                                  ) : (
+                                    <FileGallery
+                                      height='20'
+                                      width='20'
+                                      fill={
                                         typeof getDropDownStyles(
                                           menu.menuGroup,
                                           true
-                                        ) == 'boolean' ||
-                                        isDark
-                                          ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
-                                          : 'unset'
-                                    }}
-                                  />
-                                ) : (
-                                  <FileGallery
-                                    height='20'
-                                    width='20'
-                                    fill={
-                                      typeof getDropDownStyles(
-                                        menu.menuGroup,
-                                        true
-                                      ) == 'boolean'
-                                        ? isLightColor(brandColor)
-                                        : isDark
-                                        ? '#fff'
-                                        : '#1C274C'
-                                    }
-                                  />
-                                )}
-                              </div>
-                              <span
-                                style={{
-                                  padding: '0px',
-                                  width: '80%',
-                                  display: 'flex',
-                                  justifyContent: `${
-                                    sidebarStyle === 'condensed'
-                                      ? 'center'
-                                      : 'flex-start'
-                                  }`,
-                                  alignItems: 'center'
-                                }}
-                                className='flex items-center justify-center whitespace-nowrap bg-transparent pl-2 text-center transition-all delay-0 duration-75 ease-in-out'
-                              >
-                                <p
-                                  className={twMerge('w-[100px] truncate font-medium leading-[2vh]' , fullView && sidebarStyle !== "condensed" ? "text-start" : "text-center")}
+                                        ) == 'boolean'
+                                          ? isLightColor(brandColor)
+                                          : isDark
+                                          ? '#fff'
+                                          : '#1C274C'
+                                      }
+                                    />
+                                  )}
+                                </div>
+                                <span
                                   style={{
-                                    transition: 'all 0.2s ease-in-out'
+                                    padding: '0px',
+                                    width: '80%',
+                                    display: 'flex',
+                                    justifyContent: `${
+                                      sidebarStyle === 'condensed'
+                                        ? 'center'
+                                        : 'flex-start'
+                                    }`,
+                                    alignItems: 'center'
                                   }}
+                                  className='flex items-center justify-center whitespace-nowrap bg-transparent pl-2 text-center transition-all delay-0 duration-75 ease-in-out'
                                 >
-                                  {menu.menuGroupLabel}
-                                </p>
-                              </span>
-                            </div>
+                                  <p
+                                    className={twMerge(
+                                      'w-[110px] truncate font-medium leading-[2vh]',
+                                      fullView && sidebarStyle !== 'condensed'
+                                        ? 'text-start'
+                                        : 'text-center'
+                                    )}
+                                    style={{
+                                      transition: 'all 0.2s ease-in-out'
+                                    }}
+                                  >
+                                    {menu.menuGroupLabel}
+                                  </p>
+                                </span>
+                              </div>
+                            </button>
                           ) : (
                             <span className='flex items-center'>
                               {menu.icon ? (
@@ -320,8 +338,7 @@ const SideNav = ({
                                       typeof getDropDownStyles(
                                         menu.menuGroup,
                                         true
-                                      ) == 'boolean' ||
-                                      isDark
+                                      ) == 'boolean' || isDark
                                         ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
                                         : 'unset'
                                   }}
@@ -350,7 +367,7 @@ const SideNav = ({
                       items={getNestedMenu(menu)}
                       popupProps={{
                         style: {
-                          position:'fixed'
+                          position: 'fixed'
                         }
                         // placement: `${sidebarStyle !== 'compact' ? 'bottom-end' : 'right-end'}`
                       }}
@@ -376,55 +393,66 @@ const SideNav = ({
                   //   backgroundColor: brandColor
                   // }}
                 >
-                  <div
-                    key={index}
-                    className={twMerge(`${getMenuClassName()} rounded bg-transparent px-0.5 py-2` , fullView ? "" : "px-3 py-2")}
-                    onClick={() => router.push(routingName)}
-                    style={{
-                      backgroundColor:
-                        routingName == pathname
-                          ? `${brandColor}`
-                          : 'transparent',
-                      width: '100%',
-                      justifyContent: fullView ? 'unset' : 'center',
-                      color:
-                        routingName == pathname
-                          ? `${isLightColor(brandColor)}`
-                          : 'unset'
-                    }}
+                  <button
+                    style={{ color: `${routingName !== pathname ? brandColor : ""}`}}
+                    className={`${routingName !== pathname ? `p-1 hover:rounded-full` : ""}`}
+                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${routingName !== pathname ? hoverColor : ""}`}}
+                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
                   >
-                    {menu.screenDetails[0].icon ? (
-                      <Image
-                        className='h-[16px] w-[20px]'
-                        width={100}
-                        height={100}
-                        alt='icon'
-                        src={getCdnImage(menu.screenDetails[0].icon)}
-                        style={{
-                          filter:
-                            routingName == pathname ||
-                            isDark
-                              ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
-                              : 'unset'
-                        }}
-                      />
-                    ) : (
-                      <FileGallery
-                        height='20'
-                        width='20'
-                        fill={
+                    <div
+                      key={index}
+                      className={twMerge(
+                        `${getMenuClassName()} rounded bg-transparent px-0.5 py-2`,
+                        fullView ? '' : 'px-3 py-2'
+                      )}
+                      onClick={() => router.push(routingName)}
+                      style={{
+                        backgroundColor:
+                          routingName == pathname
+                            ? `${brandColor}`
+                            : 'transparent',
+                        width: '100%',
+                        justifyContent: fullView ? 'unset' : 'center',
+                        color:
                           routingName == pathname
                             ? `${isLightColor(brandColor)}`
-                            : isDark
-                            ? '#fff'
-                            : '#1C274C'
-                        }
-                      />
-                    )}
-                    {fullView && (
-                      <button className='w-[100px] truncate' key={index}>{menu.menuGroupLabel}</button>
-                    )}
-                  </div>
+                            : 'unset'
+                      }}
+                    >
+                      {menu.screenDetails[0].icon ? (
+                        <Image
+                          className='h-[16px] w-[20px]'
+                          width={100}
+                          height={100}
+                          alt='icon'
+                          src={getCdnImage(menu.screenDetails[0].icon)}
+                          style={{
+                            filter:
+                              routingName == pathname || isDark
+                                ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
+                                : 'unset'
+                          }}
+                        />
+                      ) : (
+                        <FileGallery
+                          height='20'
+                          width='20'
+                          fill={
+                            routingName == pathname
+                              ? `${isLightColor(brandColor)}`
+                              : isDark
+                              ? '#fff'
+                              : '#1C274C'
+                          }
+                        />
+                      )}
+                      {fullView && (
+                        <button className='w-[100px] truncate' key={index}>
+                          {menu.menuGroupLabel}
+                        </button>
+                      )}
+                    </div>
+                  </button>
                 </Tooltip>
               )
             }
@@ -542,10 +570,10 @@ const FullViewAvatar = ({
         ]}
         popupProps={{
           style: {
-           // backgroundColor: brandColor,
-           // color: isLightColor(brandColor),
-            top: "-100px",
-            left : "130px"
+            // backgroundColor: brandColor,
+            // color: isLightColor(brandColor),
+            top: '-100px',
+            left: '130px'
           }
           // placement: 'right-end'
         }}
@@ -614,8 +642,8 @@ const PartialViewAvatar = ({
           style: {
             //backgroundColor: brandColor,
             //color: isLightColor(brandColor),
-            top: "-120px",
-            left : "70px"
+            top: '-120px',
+            left: '70px'
           }
           // placement: 'right-end'
         }}
