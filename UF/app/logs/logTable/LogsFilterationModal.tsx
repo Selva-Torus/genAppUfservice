@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { getCookie } from '@/app/components/cookieMgment'
 import { checkDataAccess } from '@/app/utils/checkDAP'
 import { AxiosService } from '@/app/components/axiosService'
-import { CiCalendarDate } from "react-icons/ci";
+import { CiCalendarDate } from 'react-icons/ci'
 import { Button } from '@/components/Button'
 import Popup from '@/components/Popup'
 import Spin from '@/components/Spin'
@@ -30,9 +30,7 @@ const LogsFilterationModal = ({
 }: {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
   range: any
-  setRange: React.Dispatch<
-    React.SetStateAction<any>
-  >
+  setRange: React.Dispatch<React.SetStateAction<any>>
   fabrics: Array<string>
   setFabrics: React.Dispatch<React.SetStateAction<Array<string>>>
   user: Array<string>
@@ -49,7 +47,7 @@ const LogsFilterationModal = ({
   const token: string = getCookie('token')
 
   const isAdminUser = useMemo(() => checkDataAccess(token), [token])
-  const { isDark , borderColor , textColor , bgColor} = useTheme()
+  const { isDark, borderColor, textColor, bgColor, branding } = useTheme()
 
   const calendarTriggerRef = useRef<HTMLDivElement>(null)
 
@@ -99,48 +97,51 @@ const LogsFilterationModal = ({
   }, [])
 
   const showDate = (date: any) => {
-    if(!date) return ""
+    if (!date) return ''
     const { year, month, day } = date
     return `${day}/${month}/${year}`
   }
 
+  const toggleFabric = (key: string) => {
+    setSelectedKeys(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    )
+  }
+
   return (
     <div className='h-fit w-full'>
-      <div className='flex w-full items-center justify-between px-[0.7vw] py-[1vh]'>
-        <Text variant='subheader-2' className='flex gap-2'>
+      <div className='flex w-full items-center justify-between px-2 py-1'>
+        <Text variant='subheader-2' className='flex !w-fit gap-2'>
           <FilterIcon fill={isDark ? '#fff' : '#000'} /> Filter
         </Text>
         <Button
-          className='flex items-center justify-center'
+          className='!w-fit rounded-md p-2'
           onClick={() => setOpen(false)}
         >
           {' '}
-          <Multiply
-            width='12'
-            height='12'
-            fill={isDark ? '#fff' : '#000'}
-          />
+          <Multiply width='12' height='12' fill={isDark ? '#fff' : '#000'} />
         </Button>
       </div>
-      <hr
-        className={`w-full ${borderColor}`}
-      />
+      <hr className={`w-full ${borderColor}`} />
       {/* Date Range Selection */}
       <div className='flex flex-col gap-3 px-2 py-3'>
-        <Text variant='subheader-1' >
-          SORT BY DATE
-        </Text>
+        <Text variant='subheader-1'>SORT BY DATE</Text>
         <div
           onClick={e => {
             setDateRangeOpen(!isDateRangeOpen)
             e.stopPropagation()
           }}
           ref={calendarTriggerRef}
-          className={twMerge('flex w-fit cursor-pointer items-center gap-[2vw] rounded border px-[0.5vw] py-[0.5vh]' , borderColor)}
+          className={twMerge(
+            'flex w-fit cursor-pointer items-center gap-[2vw] rounded border px-[0.5vw] py-[0.5vh]',
+            borderColor
+          )}
         >
           <div className='flex flex-col gap-1'>
-            <Text variant='body-2' color='secondary'>Select Date </Text>
-            <Text variant='body-2' >
+            <Text variant='body-2' color='secondary'>
+              Select Date{' '}
+            </Text>
+            <Text variant='body-2'>
               {showDate(selectedDateRange?.start)} -{' '}
               {showDate(selectedDateRange?.end)}
             </Text>
@@ -157,7 +158,7 @@ const LogsFilterationModal = ({
         >
           <RangeCalendar
             value={selectedDateRange}
-            onChange={(val) => setSelectedDateRange(val)}
+            onChange={val => setSelectedDateRange(val)}
             maxValue={{
               year: new Date().getFullYear(),
               month: new Date().getMonth() + 1,
@@ -168,46 +169,48 @@ const LogsFilterationModal = ({
               month: new Date().getMonth() + 1,
               day: new Date().getDate()
             }}
-
           />
         </Popup>
       </div>
+
       {/* Fabric Selection */}
       <div className='flex flex-col gap-3 px-2 py-3'>
         <Text variant='subheader-1'>FABRICS</Text>
-        <div className='flex flex-col gap-[1.5vh]'>
+
+        <div className='flex flex-col gap-2'>
           {(activeTab === 'process'
             ? fabricList.filter(item => ['DF', 'PF'].includes(item.key))
             : fabricList
-          ).map((item, index) => (
-            <Checkbox
-              key={index}
-              content={item.label}
-              value={selectedKeys?.includes(item.key)}
-              onChange={e =>
-                setSelectedKeys(prev => {
-                  if (e) {
-                    return [...prev, item.key]
-                  } else {
-                    return prev.filter(key => key !== item.key)
-                  }
-                })
-              }
-              checked={selectedKeys.includes(item.key)}
-              size='l'
-            />
+          ).map(item => (
+            <label
+              key={item.key}
+              className='flex cursor-pointer items-center gap-2'
+            >
+              <input
+                type='checkbox'
+                className='h-4 w-4 cursor-pointer'
+                style={{ accentColor: branding.selectionColor }}
+                checked={selectedKeys.includes(item.key)}
+                onChange={() => toggleFabric(item.key)}
+              />
+              <Text>{item.label}</Text>
+            </label>
           ))}
         </div>
       </div>
+
       {/* if admin User  */}
       {isAdminUser && (
         <div className='flex flex-col gap-3 px-2 py-3'>
           <Text variant='subheader-1'>USERS</Text>
           {/* Search section */}
           <div
-            className={
-              twMerge('flex w-full items-center gap-[0.5vw] rounded border px-2' , borderColor , bgColor , textColor)
-            }
+            className={twMerge(
+              'flex w-full items-center gap-[0.5vw] rounded border px-2',
+              borderColor,
+              bgColor,
+              textColor
+            )}
           >
             <span>
               <SearchIcon
@@ -220,7 +223,11 @@ const LogsFilterationModal = ({
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder={'Search'}
-              className={twMerge(`h-8 w-full rounded-md border-none font-medium outline-none` , bgColor , textColor)}
+              className={twMerge(
+                `h-8 w-full rounded-md border-none font-medium outline-none`,
+                bgColor,
+                textColor
+              )}
             />
           </div>
           {/* user list section */}
@@ -231,7 +238,12 @@ const LogsFilterationModal = ({
             }}
           >
             {loading ? (
-              <Spin className='flex w-full justify-center' spinning color='success' style='dots' />
+              <Spin
+                className='flex w-full justify-center'
+                spinning
+                color='success'
+                style='dots'
+              />
             ) : (
               userList
                 .filter(u =>
@@ -240,13 +252,17 @@ const LogsFilterationModal = ({
                     .includes(searchTerm.toLowerCase())
                 )
                 .map((userObj: any) => (
-                  <div key={userObj?.loginId} className='flex gap-2 cursor-pointer'>
-                    <Checkbox
-                      value={userObj?.loginId}
-                      className='flex items-center gap-2 text-[0.72vw]'
+                  <label
+                    key={userObj?.loginId}
+                    className='flex cursor-pointer items-center gap-2'
+                  >
+                    <input
+                      type='checkbox'
+                      style={{ accentColor: branding.selectionColor }}
+                      className='h-4 w-4'
                       onChange={e =>
                         setSelectedUsers(prev => {
-                          if (e) {
+                          if (!prev.includes(userObj?.loginId)) {
                             return [...prev, userObj?.loginId]
                           } else {
                             return prev.filter(id => id !== userObj?.loginId)
@@ -254,12 +270,13 @@ const LogsFilterationModal = ({
                         })
                       }
                       checked={selectedUsers.includes(userObj?.loginId)}
-                      size='l'
                     />
-                    <div key={userObj?.loginId} className='flex gap-[0.5vw]'>
+                    <div
+                      key={userObj?.loginId}
+                      className='flex items-center gap-[0.5vw]'
+                    >
                       <Avatar
                         imageUrl={userObj?.profile as string}
-                        size='m'
                         className={`transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
                         theme='normal'
                         view='filled'
@@ -272,21 +289,28 @@ const LogsFilterationModal = ({
                         <Text variant='body-1'>{userObj?.loginId}</Text>
                       </div>
                     </div>
-                  </div>
+                  </label>
                 ))
             )}
           </div>
         </div>
       )}
-      <hr
-        className={twMerge('w-full' , borderColor)}
-      />
+      <hr className={twMerge('w-full', borderColor)} />
 
-      <div className='flex justify-end gap-[1vw] px-2 py-3'>
-        <Button view='raised' onClick={() => setOpen(false)}>
+      <div className='flex justify-end gap-[1vw] pt-2'>
+        <Button
+          className='!w-fit rounded-md p-2'
+          view='raised'
+          onClick={() => setOpen(false)}
+        >
           Cancel
         </Button>
-        <Button onClick={handleUpdateFilterInputs}>Save</Button>
+        <Button
+          onClick={handleUpdateFilterInputs}
+          className='!w-fit rounded-md p-2'
+        >
+          Save
+        </Button>
       </div>
     </div>
   )

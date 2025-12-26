@@ -108,7 +108,7 @@ const AccessTemplateTable = ({
       <Text variant='body-2' className='mb-4 text-xl font-bold'>
         {keyset('Access Template')}
       </Text>
-      <div className='h-[73vh] w-full overflow-x-auto'>
+      <div className='h-[73vh] w-[80vw] 2xl:w-[unset] overflow-x-auto'>
         <table className='min-w-full rounded text-left'>
           <thead
             className={twMerge(
@@ -133,13 +133,13 @@ const AccessTemplateTable = ({
                   )}
                 />
               </th>
-              <th className='w-[250px] px-4 py-4'>
+              <th className='w-[150px] px-4 py-4'>
                 {keyset('Access Template')}
               </th>
-              <th className='w-[200px] px-4 py-4'>
+              <th className='w-[100px] px-4 py-4'>
                 {keyset('Data Access Privilege')}
               </th>
-              <th className='w-[220px] px-2 py-4'>{keyset('No.ofusers')}</th>
+              <th className='w-[100px] px-2 py-4'>{keyset('No.ofusers')}</th>
               <th className='w-[220px] px-4 py-4'>{keyset('Created On')}</th>
               <th className='w-[250px] px-4 py-4 lg:w-[600px]'></th>
             </tr>
@@ -187,20 +187,21 @@ const AccessTemplateTable = ({
                 <td className='px-1 py-1 text-center'>
                   {template['no.ofusers']}
                 </td>
-                <td className='w-[220px] px-1 py-1'>{template.createdOn}</td>
+                <td className='w-[220px] px-4 py-1'>{template.createdOn}</td>
                 <td className='flex w-[250px] items-center justify-end px-1 py-1 xl:w-[600px]'>
-                  <div className='flex gap-2'>
+                  <div className='flex gap-3 items-center'>
                     <Button
                       onClick={() => {
                         setTemplateToBeUpdated(template)
                         setIndexOfTemplateToBeUpdated(template.originalIndex)
                         setIsView(true)
                       }}
+                      className='px-0.5 rounded-md'
                     >
                       <span className='flex items-center gap-1'>
                         <Preview
-                          height='30px'
-                          width='30px'
+                          height='28px'
+                          width='28px'
                           fill={isDark ? 'white' : 'black'}
                         />
                         {keyset('view')}
@@ -218,12 +219,13 @@ const AccessTemplateTable = ({
                         setTemplateToBeUpdated(template)
                         setIndexOfTemplateToBeUpdated(template.originalIndex)
                       }}
+                      className='px-1.5 py-0.5 rounded-md'
                     >
-                      <span className='flex items-center gap-1'>
+                      <span className='flex items-center gap-2'>
                         <EditIcon
                           fill={isDark ? 'white' : 'black'}
-                          height='0.8vw'
-                          width='0.8vw'
+                          height='15px'
+                          width='15px'
                         />
                         {keyset('edit')}
                       </span>

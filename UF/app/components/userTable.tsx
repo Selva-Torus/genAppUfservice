@@ -250,14 +250,13 @@ const UserTable: React.FC<{
                   width: '40px',
                   height: '40px',
                   borderRadius: '50%',
-                  // backgroundColor: '#f0f1f2',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center'
                 }}
                 className='rounded-full border'
               >
-                <Text variant='subheader-1'>
+                <Text variant='subheader-1' className='flex items-center'>
                   {item.firstName?.charAt(0)}
                   {item.lastName?.charAt(0)}
                 </Text>
@@ -321,24 +320,24 @@ const UserTable: React.FC<{
           </Text>
         ),
         dateAdded: (
-           <Text variant='body-2' key={index}>
-          {!item.dateAdded || item.dateAdded === 'NA'
-            ? 'NA'
-            : formatDate(item.dateAdded)}
-        </Text>
+          <Text variant='body-2' key={index}>
+            {!item.dateAdded || item.dateAdded === 'NA'
+              ? 'NA'
+              : formatDate(item.dateAdded)}
+          </Text>
         ),
         edit: (
-           <div className='flex flex-col items-center gap-2' key={index}>
           <Button
             onClick={() => {
               setEditUserModalOpen(true)
               setUserData(item)
             }}
             view='flat'
+            className='!w-fit rounded-md p-2'
+            key={index}
           >
             <Icon data='FaPencilAlt' size={18} />
           </Button>
-        </div>
         )
       }))
     }
@@ -346,38 +345,42 @@ const UserTable: React.FC<{
   }, [])
 
   return (
-    <div className={`g-root h-[80vh] w-full`}>
+    <div className={`g-root h-full w-full`}>
       <div>
-         <Modal
-            className='w-[800px] lg:min-w-[800px]'
-            onClose={() => setEditUserModalOpen(false)}
-            open={editUserModalOpen}
-            closeOnOverlayClick
-            showCloseButton={false}
-          >
-            <UserCreationModal
-              setModalOpen={setEditUserModalOpen}
-              newUser={userData}
-              setNewUser={setUserData}
-              accessProfiles={accessProfiles}
-              data={data}
-              setData={setData}
-              isEdit={true}
-            />
-          </Modal>
+        <Modal
+          className='w-[800px] lg:min-w-[800px]'
+          onClose={() => setEditUserModalOpen(false)}
+          open={editUserModalOpen}
+          closeOnOverlayClick
+          showCloseButton={false}
+        >
+          <UserCreationModal
+            setModalOpen={setEditUserModalOpen}
+            newUser={userData}
+            setNewUser={setUserData}
+            accessProfiles={accessProfiles}
+            data={data}
+            setData={setData}
+            isEdit={true}
+          />
+        </Modal>
       </div>
-      <Text variant='header-1'>{keyset('User Management')}</Text>
-      <CustomTable
-        className='mt-5 h-[73vh]'
-        data={rowOfCurrentGrps}
-        columns={columns as any}
-        // emptyMessage='No data available'
-      />
+      <div>
+        <Text variant='header-1'>{keyset('User Management')}</Text>
+      </div>
+      <div>
+        <CustomTable
+          className='h-[73vh] w-[80vw] 2xl:w-[unset]'
+          data={rowOfCurrentGrps}
+          columns={columns as any}
+          // emptyMessage='No data available'
+        />
+      </div>
       <Pagination
         className='mt-1 justify-center'
         page={currentPage}
         pageSize={userDataPerPage}
-        onUpdate={(data) => setCurrentPage(data.page)}
+        onUpdate={data => setCurrentPage(data.page)}
         total={data.length}
       />
     </div>

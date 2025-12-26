@@ -254,7 +254,7 @@ const SideNav = ({
                           {fullView ? (
                             <button
                               style={{ color: `${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? brandColor : ""}`}}
-                              className={`w-full ${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? 'hover:rounded-full hover:p-3.5' : ''}`}
+                              className={`w-full ${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? 'hover:rounded-md hover:p-3.5' : ''}`}
                               onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? hoverColor : ""}`}}
                               onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
                             >
@@ -325,7 +325,13 @@ const SideNav = ({
                               </div>
                             </button>
                           ) : (
-                            <span className='flex items-center'>
+                            <button
+                              style={{ color: `${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? brandColor : ""}`}}
+                              className={`w-full ${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? 'hover:rounded-md hover:p-3.5' : ''}`}
+                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? hoverColor : ""}`}}
+                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                            >
+                             <span className='flex items-center'>
                               {menu.icon ? (
                                 <Image
                                   className='h-[16px] w-[20px]'
@@ -359,7 +365,8 @@ const SideNav = ({
                                   }
                                 />
                               )}
-                            </span>
+                             </span>
+                            </button>
                           )}
                         </div>
                       )}
@@ -395,7 +402,7 @@ const SideNav = ({
                 >
                   <button
                     style={{ color: `${routingName !== pathname ? brandColor : ""}`}}
-                    className={`${routingName !== pathname ? `p-1 hover:rounded-full` : ""}`}
+                    className={`${routingName !== pathname ? `p-1 hover:rounded-md` : ""}`}
                     onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${routingName !== pathname ? hoverColor : ""}`}}
                     onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
                   >
@@ -519,7 +526,6 @@ const FullViewAvatar = ({
                 theme='brand'
                 view='filled'
                 imageUrl={getCdnImage(userDetails?.profile)}
-                size='m'
                 className={`${
                   !fullView ? 'hidden opacity-0' : 'block opacity-100'
                 } transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
@@ -573,8 +579,10 @@ const FullViewAvatar = ({
             // backgroundColor: brandColor,
             // color: isLightColor(brandColor),
             top: '-100px',
-            left: '130px'
-          }
+            left: '130px',
+            borderRadius: '0.375rem'
+          },
+          className: 'rounded-md hover:rounded-md'
           // placement: 'right-end'
         }}
       />
@@ -609,7 +617,6 @@ const PartialViewAvatar = ({
               theme='brand'
               view='filled'
               imageUrl={getCdnImage(userDetails?.profile)}
-              size='m'
               className={`${
                 fullView ? 'hidden opacity-0' : 'block opacity-100'
               } transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
@@ -643,8 +650,11 @@ const PartialViewAvatar = ({
             //backgroundColor: brandColor,
             //color: isLightColor(brandColor),
             top: '-120px',
-            left: '70px'
-          }
+            left: '70px',
+            textAlign: 'start',
+            borderRadius: '0.375rem'
+          },
+          className: 'hover:rounded-md rounded-md'
           // placement: 'right-end'
         }}
       />

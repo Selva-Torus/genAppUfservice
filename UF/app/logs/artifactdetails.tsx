@@ -118,8 +118,7 @@ const RenderNodesInfo = ({
                   UID: {item?.subFlowInfo?.subFlowUpId}
                   <Button
                     view='flat'
-                    size='xs'
-                    className='border-none'
+                    className='!w-4 rounded-md p-1'
                     onClick={e => {
                       e.stopPropagation()
                       handleCopyToClipboard(item?.subFlowInfo?.subFlowUpId)
@@ -253,6 +252,22 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
     }
   }
 
+  const NodeLevelDetails = ({ tabId }: { tabId: string }) => {
+    return (
+      <JsonView
+        src={
+          selectedNode?.[tabId] ?? {
+            data: `no ${tabId} data available`
+          }
+        }
+        theme='atom'
+        enableClipboard={false}
+        style={{ fill: '#1A2024' }}
+        className='g-text g-text_variant_code-2 h-full overflow-scroll'
+      />
+    )
+  }
+
   return (
     <div className='flex h-full w-full gap-2 overflow-hidden p-2'>
       <div
@@ -282,7 +297,7 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                 </span>
               </Text>
             </div>
-            <Text variant='body-1' color='brand' className='rounded-xl px-3'>
+            <Text variant='body-1' color='brand' className='rounded-xl px-3 text-end'>
               {version}
             </Text>
           </div>
@@ -296,8 +311,7 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
               <Text variant='body-1'>UID: {processId}</Text>
               <Button
                 view='flat'
-                size='xs'
-                className='border-none'
+                className='!w-4 rounded-md p-1'
                 onClick={e => {
                   e.stopPropagation()
                   handleCopyToClipboard(processId)
@@ -330,16 +344,30 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
       >
         <div className='flex h-[99.5%] w-full rounded-lg'>
           <div className='flex h-full w-[70%] min-w-[400px] flex-col gap-3 p-2'>
-            <div className={twMerge('flex w-full justify-between rounded px-[1.5vw] py-[1vh] border', borderColor, bgColor)}>
-              <Text variant='body-1'>Queue Name</Text>
-              <Text variant='body-1'>
+            <div
+              className={twMerge(
+                'flex w-full justify-between rounded border px-[1.5vw] py-[1vh]',
+                borderColor,
+                bgColor
+              )}
+            >
+              <Text variant='body-1' className='text-start'>
+                Queue Name
+              </Text>
+              <Text variant='body-1' className='text-center'>
                 Processing Time
               </Text>
-              <Text variant='body-1'>
-                Status  
+              <Text variant='body-1' className='text-end'>
+                Status
               </Text>
             </div>
-            <div className={twMerge('flex w-full gap-2 rounded-lg p-3 border', borderColor, bgColor)}>
+            <div
+              className={twMerge(
+                'flex w-full gap-2 rounded-lg border p-3',
+                borderColor,
+                bgColor
+              )}
+            >
               <div className='flex gap-3'>
                 <p
                   className='text-torus-text w-[5vw] truncate font-semibold'
@@ -406,23 +434,19 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
 
               <div className='flex w-full justify-between'>
                 <div>
-                  <Text variant='body-2' className='text-nowrap ml-16'>
+                  <Text variant='body-2' className='ml-16 text-nowrap'>
                     {handleGetFinishingTime(selectedNode?.time).processingTime}
                   </Text>
                 </div>
-                <div className='flex gap-3 text-center'>
                   <Text
                     variant='body-1'
-                    color={
-                      status.toLowerCase() == 'success'
-                        ? 'brand'
-                        : 'danger-heavy'
-                    }
-                    className={`rounded-full px-2`}
+                    className={twMerge(
+                      `rounded-full bg-red-500 px-2 py-1 text-white !w-fit !h-fit`,
+                     selectedNode && selectedNode.status.toLowerCase() == 'success' && 'bg-green-500'
+                    )}
                   >
                     {selectedNode ? selectedNode.status : status}
                   </Text>
-                </div>
               </div>
             </div>
           </div>
@@ -441,23 +465,24 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                 items={[
                   {
                     id: 'request',
-                    title: 'Request'
+                    title: 'Request',
+                    content: <NodeLevelDetails tabId='request' />
                   },
                   {
                     id: 'response',
-                    title: 'Response'
+                    title: 'Response',
+                    content: <NodeLevelDetails tabId='response' />
                   },
                   {
                     id: 'exception',
-                    title: 'Exception'
+                    title: 'Exception',
+                    content: <NodeLevelDetails tabId='exception' />
                   }
                 ]}
                 onChange={setActiveTab}
-                size='m'
-                className={twMerge('w-full border rounded-md', borderColor)}
-              />
-              <div className={`h-[95.5%] overflow-auto pl-2 pt-3`}>
-                {['request', 'response', 'exception'].map(tabId => (
+                className={twMerge(' w-full ', borderColor)}
+              ></Tabs>
+              {/* {['request', 'response', 'exception'].map(tabId => (
                   <div
                     style={{
                       display: activeTab === tabId ? 'block' : 'none'
@@ -473,11 +498,10 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                       theme='atom'
                       enableClipboard={false}
                       style={{ fill: '#1A2024' }}
-                      className='g-text g-text_variant_code-2'
+                      className='g-text g-text_variant_code-2 h-[90%] overflow-scroll'
                     />
                   </div>
-                ))}
-              </div>
+                ))} */}
             </div>
           </div>
         </div>

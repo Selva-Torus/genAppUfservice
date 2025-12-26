@@ -745,9 +745,7 @@ const SetupScreen = ({
             className={`g-root flex h-[90%] w-full flex-col overflow-hidden`}
           >
             <div
-              className={clsx('flex w-2/3 items-center justify-between px-2', {
-                'w-full': selectedMenuItem === 'org'
-              })}
+              className={'flex w-full items-center justify-between px-2'}
             >
               {/* LEFT : TITLE */}
               <Text variant='header-1' className='whitespace-nowrap'>
@@ -755,7 +753,7 @@ const SetupScreen = ({
               </Text>
 
               {/* CENTER : SEARCH + ACTIONS */}
-              <div className='flex items-center gap-2 py-2'>
+              <div className='flex items-center gap-2 py-2 w-full'>
                 <div
                   style={{
                     visibility:
@@ -930,14 +928,15 @@ const SetupScreen = ({
                   ]}
                   onChange={setActiveTab}
                   defaultActiveId='orgsetup'
-                  size='m'
-                  className='w-[400px]'
+                  className='!w-[900px]'
                 />
               )}
             </div>
 
             <hr className={twMerge('w-full', borderColor)}></hr>
-            <div className='flex h-[85vh]'>
+            <div className={clsx(`flex h-[85vh]`, {
+              "h-fit": selectedMenuItem === 'st'
+            })}>
               <div
                 style={{
                   borderRight: `1px solid ${borderColor}`,
@@ -959,7 +958,7 @@ const SetupScreen = ({
                   ))}
                 </Menu>
               </div>
-              <div className='flex h-full w-full overflow-hidden px-2 py-3'>
+              <div className='flex h-full w-full px-2 py-3'>
                 {selectedMenuItem == 'general' ? (
                   <GeneralSettings
                     currentLang={currentLang}

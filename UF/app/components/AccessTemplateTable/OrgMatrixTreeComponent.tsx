@@ -23,11 +23,9 @@ const OrgMatrixTreeComponent = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('')
   const {
-    indexOfTemplateToBeUpdated,
     setIndexOfTemplateToBeUpdated,
     templateToBeUpdated,
     setTemplateToBeUpdated,
-    securityData
   } = useContext(SetupScreenContext) as SetupScreenContextType
   const fontSize = 1
   const { branding } = useGlobal()
@@ -216,12 +214,14 @@ const OrgMatrixTreeComponent = ({
             )}
             {name}
           </div>
-          <Text
-            color='positive-heavy'
-            className='inline-block text-nowrap rounded-full border px-[0.3vw] py-[0.5vh] text-xs font-medium opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100'
-          >
-            {keyName}
-          </Text>
+          <div>
+            <Text
+              color='positive-heavy'
+              className='inline-block text-nowrap rounded-full border px-[0.3vw] py-[0.5vh] text-xs font-medium opacity-0 shadow-md transition-opacity duration-200 group-hover:opacity-100'
+            >
+              {keyName}
+            </Text>
+          </div>
         </div>
 
         <div
@@ -254,18 +254,23 @@ const OrgMatrixTreeComponent = ({
     <div className='flex h-full w-full flex-col gap-[1vh]'>
       <div className='flex flex-col'>
         <div className='flex w-full items-center justify-between'>
-          <div className='flex items-center gap-[.8vw]'>
-            <Text
-              variant='body-3'
-              color='secondary'
-              className='flex items-center gap-2 text-nowrap'
-            >
-              <Security fill={isDark ? 'white' : 'black'} />{' '}
-              {keyset('Access Template')}
-            </Text>
-            <Text variant='header-2' color='primary'>
-              {'>'}
-            </Text>
+          <div className='flex w-[30%] items-center gap-[.8vw]'>
+            <div>
+              <Text
+                variant='body-3'
+                color='secondary'
+                className='flex items-center gap-2 text-nowrap'
+              >
+                <Security fill={isDark ? 'white' : 'black'} />{' '}
+                {keyset('Access Template')}
+              </Text>
+            </div>
+            <div>
+              <Text variant='header-2' color='primary'>
+                {'>'}
+              </Text>
+            </div>
+
             <Text variant='body-3'>{templateToBeUpdated?.accessProfile}</Text>
           </div>
 
@@ -305,16 +310,25 @@ const OrgMatrixTreeComponent = ({
           >
             <ArrowBackward fill={isDark ? 'white' : 'black'} />
           </button>
-          <div className='flex w-full gap-2'>
+          <div
+            className={clsx('flex gap-2', {
+              'w-full': isEdit
+            })}
+          >
             {!isEdit ? (
-              <Text variant='header-1'>{templateToBeUpdated?.accessProfile}</Text>
+              <Text variant='header-1'>
+                {templateToBeUpdated?.accessProfile}
+              </Text>
             ) : (
               <input
                 type='text'
                 defaultValue={templateToBeUpdated?.accessProfile}
                 title={templateToBeUpdated?.accessProfile}
                 readOnly={templateToBeUpdated?.['no.ofusers'] !== 0}
-                className={twMerge('w-full truncate border-none text-xl outline-none py-0.5', bgColor)}
+                className={twMerge(
+                  'w-full truncate border-none py-0.5 text-xl outline-none',
+                  bgColor
+                )}
                 disabled={!isEdit}
                 onBlur={handleInputChange}
                 onKeyDown={e => {

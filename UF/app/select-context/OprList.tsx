@@ -39,39 +39,49 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
   setIsSearchOpen,
   borderColor
 }) => {
+  const { isDark } = useTheme()
+
   return (
     <div
       className={twMerge(
-        'flex w-full items-center justify-between rounded border px-[.5vw] py-[1vh]',
+        'flex w-full items-center justify-between rounded border px-2 py-2',
         borderColor
       )}
     >
       <Text variant='body-1' className='font-semibold'>
         {title}
       </Text>
-      <div>
+      <div className='h-6'>
         {isSearchOpen === searchKey ? (
-          <div className='flex w-[8vw] gap-[.5vw]'>
+          <div className='flex h-full items-center gap-2'>
             <input
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder='Search...'
-              className={`w-full rounded-xl border border-[var(--g-color-line-generic)] bg-[var(--g-color-base-background)] px-[.5vw] py-[.2vh] text-sm text-[var(--g-color-text-primary)] focus:outline-none`}
+              className={`w-full rounded-xl border border-[var(--g-color-line-generic)] bg-[var(--g-color-base-background)] px-2 py-0.5 text-sm text-[var(--g-color-text-primary)] focus:outline-none`}
             />
             <Button
-              className={'flex items-center'}
+              className={'!w-4 !bg-[unset]'}
               onClick={() => setIsSearchOpen('')}
             >
-              <Multiply height='.7vw' width='.7vw' />
+              <Multiply
+                height='12px'
+                width='12px'
+                fill={isDark ? 'white' : 'black'}
+              />
             </Button>
           </div>
         ) : (
-          <div className='flex gap-[.5vw]'>
+          <div className='flex'>
             <Button
               onClick={() => setIsSearchOpen(searchKey)}
-              className={'flex items-center disabled:opacity-50'}
+              className={'!bg-[unset] p-1'}
             >
-              <SearchIcon height='.8vw' width='.8vw' />
+              <SearchIcon
+                height='16px'
+                width='16px'
+                fill={isDark ? 'white' : 'black'}
+              />
             </Button>
           </div>
         )}
@@ -189,7 +199,7 @@ const OPRList = ({
         psName: requiredPsGroup?.['ps'][0]['psName'],
         psCode: requiredPsGroup?.['ps'][0]['psCode'],
         path: `${obj['path']}.0.ps.0.roleGrp`,
-        id : requiredPsGroup?.['ps'][0]['psId']
+        id: requiredPsGroup?.['ps'][0]['psId']
       })
     } else {
       setSelectedPs({})
@@ -209,7 +219,7 @@ const OPRList = ({
         roleCode: requiredRoleGrp?.['roles'][0]['roleCode'],
         roleCount: requiredRoleGrp?.['roles']?.length ?? 0,
         path: `${obj['path']}.0.roles.0`,
-        id : requiredRoleGrp?.['roles'][0]['roleId']
+        id: requiredRoleGrp?.['roles'][0]['roleId']
       })
     } else {
       setSelectedRole({})
@@ -534,7 +544,7 @@ const OPRList = ({
                                 psCode: ps.psCode,
                                 psName: ps.psName,
                                 path: `${selectedOrg.path}.${psg?.originalIndex}.ps.${ps?.originalIndex}.roleGrp`,
-                                id : ps.psId
+                                id: ps.psId
                               })
                             }
                             existsInContext={isExist}

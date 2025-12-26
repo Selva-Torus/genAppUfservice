@@ -169,7 +169,7 @@ const TopNav = ({
                             <Button
                               {...props}
                               view='flat'
-                              className='max-w-[100px] truncate font-medium leading-[1.5vh]'
+                              className='max-w-[100px] truncate font-medium leading-[1.5vh] p-2'
                             >
                               {menu.menuGroupLabel}
                             </Button>
@@ -253,7 +253,6 @@ const TopNav = ({
                   }}
                 >
                   <Avatar
-                    size='s'
                     theme='brand'
                     view='filled'
                     imageUrl={getCdnImage(userDetails?.profile)}
@@ -289,8 +288,10 @@ const TopNav = ({
               ]}
               popupProps={{
                 style: {
-                  right: '10px'
-                }
+                  right: '10px',
+                  borderRadius: '0.375rem'
+                },
+                className: 'rounded-md hover:rounded-md'
               }}
             />
           </div>

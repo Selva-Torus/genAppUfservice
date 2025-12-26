@@ -70,6 +70,8 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
   addContentProps
 }) => {
   const [open, setOpen] = useState(false)
+  const { isDark } = useTheme()
+
   return (
     <div
       className={twMerge(
@@ -90,21 +92,21 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
               className={`w-full rounded-xl border border-[var(--g-color-line-generic)] bg-[var(--g-color-base-background)] px-[.5vw] py-[.2vh] text-sm text-[var(--g-color-text-primary)] focus:outline-none`}
             />
             <Button
-              className={'flex items-center'}
+              className={'!w-fit !bg-[unset] p-1 disabled:opacity-50'}
               onClick={() => setIsSearchOpen('')}
             >
-              <Multiply height='.7vw' width='.7vw' />
+              <Multiply height='.7vw' width='.7vw' fill={isDark ? 'white' : 'black'} />
             </Button>
           </div>
         ) : (
-          <div className='flex gap-[.5vw]'>
+          <div className='flex gap-[.5vw] items-center'>
             {showAddButton && addContentProps && (
               <>
                 {title !== 'Organization' && (
                   <Button
                     onClick={() => setOpen(true)}
                     disabled={isAddDisabled}
-                    className='flex items-center'
+                    className='rounded-md p-1'
                   >
                     <PlusIcon
                       height='.8vw'
@@ -128,10 +130,14 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
             )}
             <Button
               onClick={() => setIsSearchOpen(searchKey)}
-              className={'flex items-center disabled:opacity-50'}
+              className={'!w-fit !bg-[unset] p-1 disabled:opacity-50'}
               disabled={isAddDisabled && searchKey !== 'org'}
             >
-              <SearchIcon height='.8vw' width='.8vw' />
+              <SearchIcon
+                height='.8vw'
+                width='.8vw'
+                fill={isDark ? 'white' : 'black'}
+              />
             </Button>
           </div>
         )}
@@ -1374,13 +1380,12 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
             />
 
             <div className='flex h-[60vh] w-full flex-col gap-[1vh] overflow-y-auto px-[.5vw] py-[1.5vh]'>
-        {(isSearchOpen === "role" && searchTerm
-                ? classifiedRoles.filter((group) =>
+              {(isSearchOpen === 'role' && searchTerm
+                ? classifiedRoles.filter(group =>
                     hasMatchingRoleGrpOrRole(group, searchTerm)
                   )
-                : (getSelectedRoleGrps() ?? [])
-              )
-              .map((roleGrp: any, roleGrpIndex: number) => (
+                : getSelectedRoleGrps() ?? []
+              ).map((roleGrp: any, roleGrpIndex: number) => (
                 <React.Fragment key={roleGrpIndex}>
                   <RenderGroup
                     item={roleGrp}

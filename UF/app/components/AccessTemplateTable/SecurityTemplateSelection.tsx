@@ -517,7 +517,7 @@ export default function SecurityTemplateSelection({
                   setIsSearchOpen(null)
                   setOrgSearchTerm('')
                 }}
-                className='flex items-center'
+                className='!w-fit p-1 !bg-[unset]'
               >
                 <Multiply
                   height='.7vw'
@@ -528,7 +528,7 @@ export default function SecurityTemplateSelection({
             </div>
           ) : (
             <Button
-              className='flex items-center'
+              className='!w-fit p-1 !bg-[unset]'
               onClick={() => {
                 setIsSearchOpen('org')
                 setOrgSearchTerm('')
@@ -680,7 +680,7 @@ export default function SecurityTemplateSelection({
                 )}
               />
               <Button
-                className='flex items-center'
+                className='!w-fit p-1 !bg-[unset]'
                 onClick={() => {
                   setIsSearchOpen(null)
                   setPsSearchTerm('')
@@ -695,7 +695,7 @@ export default function SecurityTemplateSelection({
             </div>
           ) : (
             <Button
-              className='flex items-center'
+              className='!w-fit p-1 !bg-[unset]'
               onClick={() => {
                 setIsSearchOpen('ps')
                 setPsSearchTerm('')
@@ -807,7 +807,7 @@ export default function SecurityTemplateSelection({
                 )}
               />
               <Button
-                className='flex items-center'
+                className='!w-fit p-1 !bg-[unset]'
                 onClick={() => {
                   setIsSearchOpen(null)
                   setRoleSearchTerm('')
@@ -822,7 +822,7 @@ export default function SecurityTemplateSelection({
             </div>
           ) : (
             <Button
-              className='flex items-center'
+              className='!w-fit p-1 !bg-[unset]'
               onClick={() => {
                 setIsSearchOpen('role')
                 setRoleSearchTerm('')
@@ -920,6 +920,9 @@ export default function SecurityTemplateSelection({
                                 checked={selectedRoles.includes(role.roleId)}
                                 onChange={() => toggleRole(role.roleId)}
                                 disabled={isView}
+                                style={{
+                                  accentColor : brandColor
+                                }}
                               />
                             </label>
                           ))}

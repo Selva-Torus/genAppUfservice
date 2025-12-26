@@ -387,15 +387,14 @@ const ContextSelector = () => {
             </div>
             <div className='flex gap-2 py-2'>
               <Button
-                className='flex items-center h-8 rounded-md disabled:opacity-50'
+                className='h-8 w-16 px-2 py-1 rounded-md disabled:opacity-50'
                 icon={'MdArrowForward'}
                 onClick={handleNavigationClick}
                 disabled={Object.keys(selectedRole).length === 0 || loading || isPending}
-                size='s'
               >
                 {loading || isPending ? (
                   <Spin
-                    className='flex w-full justify-center'
+                    className='w-12 h-6'
                     spinning
                     color='success'
                     style='dots'

@@ -10,8 +10,8 @@ import { Text } from '@/components/Text'
 import { Button } from '@/components/Button'
 import { Tabs } from '@/components/Tabs'
 import { Modal } from '@/components/Modal'
-import { TbCopy } from "react-icons/tb";
-import { TbCopyCheckFilled } from "react-icons/tb";
+import { TbCopy } from 'react-icons/tb'
+import { TbCopyCheckFilled } from 'react-icons/tb'
 import { twMerge } from 'tailwind-merge'
 import { useTheme } from '@/hooks/useTheme'
 import { useGlobal } from '@/context/GlobalContext'
@@ -33,9 +33,7 @@ interface TableHeaderProps {
   setActiveTab: React.Dispatch<SetStateAction<'process' | 'torus'>>
   setNodeData: React.Dispatch<SetStateAction<any>>
   range: any
-  setRange: React.Dispatch<
-    React.SetStateAction<any>
-  >
+  setRange: React.Dispatch<React.SetStateAction<any>>
   fabrics: Array<string>
   setFabrics: React.Dispatch<React.SetStateAction<Array<string>>>
   user: Array<string>
@@ -176,7 +174,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         </Text>
         {processId && (
           <div
-            className={twMerge('flex w-fit rounded-full p-2')}
+            className={twMerge('flex w-fit rounded-full p-2 gap-2')}
             style={{
               backgroundColor: selectionColor
             }}
@@ -184,9 +182,8 @@ const TableHeader: React.FC<TableHeaderProps> = ({
             <Text variant='body-2'>UID: {processId}</Text>
             <Button
               view='flat'
-              size='xs'
-              className='border-none'
-              onClick={(e) => {
+              className='!w-4 rounded-md p-1'
+              onClick={e => {
                 e.stopPropagation()
                 handleCopyToClipboard(processId)
               }}
@@ -278,17 +275,15 @@ const TableHeader: React.FC<TableHeaderProps> = ({
             <Text variant='body-2' className=''>
               {item?.user}
             </Text>
-            {
-              item.accessProfile && Array.isArray(item.accessProfile) ? (
-                item.accessProfile.map((profile: string, i: number) => (
-                  <Text key={i} color='secondary' variant='caption-2'>
-                    {profile} {item.accessProfile.length - 1 === i ? '' : ','}
-                  </Text>
-                ))
-              ) : (
-                <></>
-              )
-            }
+            {item.accessProfile && Array.isArray(item.accessProfile) ? (
+              item.accessProfile.map((profile: string, i: number) => (
+                <Text key={i} color='secondary' variant='caption-2'>
+                  {profile} {item.accessProfile.length - 1 === i ? '' : ','}
+                </Text>
+              ))
+            ) : (
+              <></>
+            )}
           </div>
         ) : (
           <div className='text-center'>N/A</div>
@@ -306,7 +301,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
       </Text>
     ),
     'Error Description': (
-      <Text key={index} variant='body-2' className='block py-1.5 text-center'>
+      <Text key={index} variant='body-2' className='block py-1.5 text-center max-w-[300px] text-wrap'>
         {item?.errorDescription}
       </Text>
     ),
@@ -314,19 +309,19 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   }))
 
   const capitalize = (val: string) => {
-    return val.charAt(0).toUpperCase() + val.slice(1);
-  };
+    return val.charAt(0).toUpperCase() + val.slice(1)
+  }
 
   function camelCaseToParagraphCase(str: string) {
     // Step 1: Insert spaces before capital letters
-    let result = str.replace(/([A-Z])/g, " $1");
+    let result = str.replace(/([A-Z])/g, ' $1')
 
     result = result
-      .split(" ")
-      .map((word) => capitalize(word))
-      .join(" ");
+      .split(' ')
+      .map(word => capitalize(word))
+      .join(' ')
 
-    return result;
+    return result
   }
 
   const processColumn = useMemo(() => {
@@ -358,7 +353,6 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     }
   }
 
-
   const handleTabChange = (tab: string) => {
     setActiveTab(tab === 'process' ? 'process' : 'torus')
     setFabrics([])
@@ -370,11 +364,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         <div className='flex flex-col rounded-md'>
           <div className='flex w-full items-center justify-between p-2'>
             <div className=' ml-3.5 flex items-center justify-start gap-1.5 '>
-              <LogsHub
-                fill={isDark ? '#fff' : '#000'}
-                width='24'
-                height='24'
-              />
+              <LogsHub fill={isDark ? '#fff' : '#000'} width='24' height='24' />
               <HeaderElementContainer header='Logs Hub' rounded='' />
             </div>
             <div className='flex w-[70%] items-center justify-center gap-2'>
@@ -383,16 +373,30 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 placeholder='Search...'
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value.trim())}
-                className={twMerge('w-[50%] rounded-md border px-2 shadow-md outline-none focus:border xl:py-1 2xl:py-2', borderColor, textColor, bgColor)}
+                className={twMerge(
+                  'w-[50%] rounded-md border px-2 shadow-md outline-none focus:border xl:py-1 2xl:py-2',
+                  borderColor,
+                  textColor,
+                  bgColor
+                )}
               />
 
               <div>
-                <Button ref={buttonElement} onClick={() => setOpen(!open)}>
+                <Button
+                  ref={buttonElement}
+                  onClick={() => setOpen(!open)}
+                  className='rounded-md p-2'
+                >
                   <span className='flex items-center gap-2'>
                     Filter <FilterIcon fill={isDark ? '#fff' : '#000'} />
                   </span>
                 </Button>
-                <Modal className='w-[50vw] lg:w-[30vw]' open={open} onClose={() => setOpen(!open)} showCloseButton={false}>
+                <Modal
+                  className='w-[50vw] lg:w-[30vw]'
+                  open={open}
+                  onClose={() => setOpen(!open)}
+                  showCloseButton={false}
+                >
                   <LogsFilterationModal
                     setOpen={setOpen}
                     range={range}
@@ -408,33 +412,51 @@ const TableHeader: React.FC<TableHeaderProps> = ({
             </div>
 
             {/* { PLS DON'T DELETE } */}
-            <LogSwitcher activeTab={activeTab} setActiveTab={handleTabChange} borderColor={borderColor} />
+            <LogSwitcher
+              activeTab={activeTab}
+              setActiveTab={handleTabChange}
+              borderColor={borderColor}
+            />
           </div>
           <div className='flex w-full '>
-            <div
-              className={`transition-all delay-0 duration-300 ease-out overflow-auto xl:h-[66vh] 2xl:h-[78vh] ${activeTab === 'torus' ? 'block w-1/2 md:w-3/4' : 'w-[100%]'}`}
-            >
-              <Table
-                columns={activeTab === 'torus' ? torusColumn : processColumn}
-                data={activeTab === 'torus'
-                  ? loading
-                    ? []
-                    : torusRow
-                  : loading
-                    ? []
-                    : (processRow as any)}
-                onRowClick={e => handleRowClick(e)}
-                // width='auto'
-                wordWrap={false}
-                edgePadding={true}
-                // verticalAlign='middle'
-                emptyMessage={loading ? <Spin spinning style='dots' /> : 'No data found'}
+            <div className={`${activeTab === 'torus' ? 'block w-1/2 md:w-3/4' : 'w-full'}`}>
+              <div
+                className={`overflow-auto transition-all delay-0 duration-300 ease-out xl:h-[66vh] 2xl:h-[78vh]`}
+              >
+                <Table
+                  columns={activeTab === 'torus' ? torusColumn : processColumn}
+                  data={
+                    activeTab === 'torus'
+                      ? loading
+                        ? []
+                        : torusRow
+                      : loading
+                      ? []
+                      : (processRow as any)
+                  }
+                  onRowClick={e => handleRowClick(e)}
+                  // width='auto'
+                  wordWrap={false}
+                  edgePadding={true}
+                  // verticalAlign='middle'
+                  emptyMessage={
+                    loading ? <Spin spinning style='dots' /> : 'No data found'
+                  }
+                />
+              </div>
+              <Pagination
+                className='flex w-full select-none items-center justify-center'
+                page={jsonData?.page}
+                pageSize={jsonData?.limit}
+                pageSizeOptions={[3, 5, 10, 20, 50, 100]}
+                total={jsonData?.totalDocuments}
+                onUpdate={data => handleUpdate(data.page, data.pageSize)}
               />
-
             </div>
             <div
-              className={`${activeTab === 'torus' ? 'block w-1/2 md:w-1/4 ' : 'hidden'
-                } h-[100%] `}
+              className={`${
+                activeTab === 'torus' ? 'block w-1/2 md:w-1/4 ' : 'hidden'
+              } h-[100%] `}
             >
               <div className='flex w-full items-center justify-center'>
                 <JsonViewer tabdata={jsonViewerData} />
@@ -442,17 +464,6 @@ const TableHeader: React.FC<TableHeaderProps> = ({
             </div>
           </div>
         </div>
-        <Pagination
-          className='flex w-full select-none items-center justify-center'
-          page={jsonData?.page}
-          pageSize={jsonData?.limit}
-          pageSizeOptions={[3, 5, 10, 20, 50, 100]}
-          total={jsonData?.totalDocuments}
-          onUpdate={(data) => handleUpdate(data.page, data.pageSize)}
-          // showInput={false}
-          size='m'
-        // compact={false}
-        />
       </div>
     </div>
   )
@@ -478,8 +489,9 @@ const HeaderElementContainer = ({
   const keyset = i18n.keyset('language')
   return (
     <div
-      className={`h-full w-full px-1 py-1 text-center ${rounded ? rounded : 'rounded-none'
-        } `}
+      className={`h-full w-full px-1 py-1 text-center ${
+        rounded ? rounded : 'rounded-none'
+      } `}
     >
       <Text variant='subheader-1'>{keyset(header.toLocaleUpperCase())}</Text>
     </div>
@@ -498,18 +510,21 @@ const LogSwitcher = ({
   const keyset = i18n.keyset('language')
   return (
     <div>
-      <Tabs className={twMerge('border rounded-md', borderColor)} items={[
-        {
-          id: "process",
-          title: keyset("Process Log"),
-        },
-        {
-          id: "torus",
-          title: keyset("System Log"),
-        }
-
-      ]} onChange={setActiveTab} size='m' direction='horizontal'>
-      </Tabs>
+      <Tabs
+        className={twMerge('rounded-md border', borderColor)}
+        items={[
+          {
+            id: 'process',
+            title: keyset('Process Log')
+          },
+          {
+            id: 'torus',
+            title: keyset('System Log')
+          }
+        ]}
+        onChange={setActiveTab}
+        direction='horizontal'
+      ></Tabs>
     </div>
   )
 }

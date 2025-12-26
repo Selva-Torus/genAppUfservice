@@ -1,4 +1,3 @@
-
 'use client'
 import React, { useState } from 'react'
 import axios from 'axios'
@@ -95,17 +94,17 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
           document.cookie = `language=${'en'}`
           let screenDetails: any = {
             keys:[
-  {
+              {
     "screenName": "menu item 3",
     "screensName": "menu_item_3-v1",
     "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1"
-  },
-  {
+              },
+              {
     "screenName": "menu item 4-1",
     "screensName": "menu_item_4-1-v1",
     "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-  }
-]
+              }
+            ]
           }
           const ORM: any = decodeToken(api_signin.data.token)
           sessionStorage.setItem(
@@ -298,7 +297,6 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
               </Link>
               <Button
                 onClick={handleFormSubmit}
-                size='m'
                 className='h-10 rounded-lg 2xl:h-12 w-full'
               >
                 {loading ? (
@@ -317,9 +315,8 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
                 <div className='flex w-full justify-center'>
                   <Button
                     onClick={() => singleSignOn('fusionauth')}
-                    size='s'
                     view='outlined'
-                    className='rounded-lg h-8'
+                    className='h-8 !w-fit rounded-lg p-2'
                   >
                     <span className='flex gap-2'>
                       <FusionAuth fill={brandColor} />

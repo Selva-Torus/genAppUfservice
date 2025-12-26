@@ -43,97 +43,97 @@ const UserCreationModal = ({
       readOnly?: boolean
     }[]
   }[] = [
-      {
-        heading: 'Profile Photo',
-        subHeading: 'Upload your profile image',
-        formData: [
-          {
-            type: 'file',
-            name: 'logo',
-            label: 'logo'
-          }
-        ]
-      },
-      {
-        heading: 'Full Name*',
-        subHeading: 'Enter the full name of the user.',
-        formData: [
-          {
-            type: 'text',
-            name: 'firstName',
-            label: 'First Name'
-          },
-          {
-            type: 'text',
-            name: 'lastName',
-            label: 'Last Name'
-          }
-        ]
-      },
-      {
-        heading: 'Username*',
-        subHeading: 'Enter the username of the user.',
-        formData: [
-          {
-            type: 'text',
-            name: 'loginId',
-            label: 'Username',
-            readOnly: isEdit
-          }
-        ]
-      },
-      {
-        heading: 'Email Address*',
-        subHeading: 'Enter the email address of the user.',
-        formData: [
-          {
-            type: 'text',
-            name: 'email',
-            label: 'Email Address',
-            readOnly: isEdit
-          },
-          {
-            type: 'text',
-            name: 'domain',
-            label: '',
-            readOnly: true
-          }
-        ]
-      },
-      {
-        heading: 'Access Profile*',
-        subHeading: 'Select the access profile of the user.',
-        formData: [
-          {
-            type: 'dropdown',
-            name: 'accessProfile',
-            label: 'Select from the list'
-          }
-        ]
-      },
-      {
-        heading: 'Validity Period*',
-        subHeading: 'Select the validity period of the user.',
-        formData: [
-          {
-            type: 'date',
-            name: 'accessExpires',
-            label: 'Select date'
-          }
-        ]
-      },
-      {
-        heading: 'Grant Admin Access',
-        subHeading: 'Toggle to grant or revoke admin access to this user',
-        formData: [
-          {
-            type: 'switch',
-            name: 'isAppAdmin',
-            label: 'isAppAdmin'
-          }
-        ]
-      }
-    ]
+    {
+      heading: 'Profile Photo',
+      subHeading: 'Upload your profile image',
+      formData: [
+        {
+          type: 'file',
+          name: 'logo',
+          label: 'logo'
+        }
+      ]
+    },
+    {
+      heading: 'Full Name*',
+      subHeading: 'Enter the full name of the user.',
+      formData: [
+        {
+          type: 'text',
+          name: 'firstName',
+          label: 'First Name'
+        },
+        {
+          type: 'text',
+          name: 'lastName',
+          label: 'Last Name'
+        }
+      ]
+    },
+    {
+      heading: 'Username*',
+      subHeading: 'Enter the username of the user.',
+      formData: [
+        {
+          type: 'text',
+          name: 'loginId',
+          label: 'Username',
+          readOnly: isEdit
+        }
+      ]
+    },
+    {
+      heading: 'Email Address*',
+      subHeading: 'Enter the email address of the user.',
+      formData: [
+        {
+          type: 'text',
+          name: 'email',
+          label: 'Email Address',
+          readOnly: isEdit
+        },
+        {
+          type: 'text',
+          name: 'domain',
+          label: '',
+          readOnly: true
+        }
+      ]
+    },
+    {
+      heading: 'Access Profile*',
+      subHeading: 'Select the access profile of the user.',
+      formData: [
+        {
+          type: 'dropdown',
+          name: 'accessProfile',
+          label: 'Select from the list'
+        }
+      ]
+    },
+    {
+      heading: 'Validity Period*',
+      subHeading: 'Select the validity period of the user.',
+      formData: [
+        {
+          type: 'date',
+          name: 'accessExpires',
+          label: 'Select date'
+        }
+      ]
+    },
+    {
+      heading: 'Grant Admin Access',
+      subHeading: 'Toggle to grant or revoke admin access to this user',
+      formData: [
+        {
+          type: 'switch',
+          name: 'isAppAdmin',
+          label: 'isAppAdmin'
+        }
+      ]
+    }
+  ]
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -164,7 +164,7 @@ const UserCreationModal = ({
 
   const handleAddUser = async (filename: string) => {
     let user = { ...newUser }
-    let userProfileImg = newUser?.profile;
+    let userProfileImg = newUser?.profile
     if (selectedFile) {
       const data = new FormData()
       data.append('file', selectedFile)
@@ -294,7 +294,11 @@ const UserCreationModal = ({
   }
 
   const accessprofileOptions = useMemo(() => {
-    if (accessProfiles && typeof accessProfiles === 'object' && Object.keys(accessProfiles).length > 0) {
+    if (
+      accessProfiles &&
+      typeof accessProfiles === 'object' &&
+      Object.keys(accessProfiles).length > 0
+    ) {
       return Object.keys(accessProfiles).map((profile: string) => ({
         value: profile,
         label: profile
@@ -304,18 +308,12 @@ const UserCreationModal = ({
     }
   }, [accessProfiles])
 
-
   return (
-    <div
-      className={`g-root flex flex-col items-center justify-center`}
-    >
-      <div className='flex w-full items-center justify-between px-4 py-2'>
+    <div className={`g-root flex flex-col items-center justify-center`}>
+      <div className='flex w-full items-center justify-between pl-2 py-2'>
         <Text variant='header-1'>{isEdit ? 'Edit User Info' : 'Add User'}</Text>
-        <Button
-          onClick={handleCloseModal}
-          className='cursor-pointer outline-none'
-        >
-          <Multiply fill={isDark ? "white" : "black"} />
+        <Button onClick={handleCloseModal} className='!w-fit rounded-md p-2'>
+          <Multiply fill={isDark ? 'white' : 'black'} />
         </Button>
       </div>
 
@@ -378,53 +376,35 @@ const UserCreationModal = ({
                           type='text'
                           placeholder={keyset(label)}
                           readOnly={readOnly}
-                          className='w-full rounded text-base h-10'
-                          size='xs'
+                          className='h-10 w-full rounded p-2 text-base'
                           onChange={handleInputChange}
                           value={
                             readOnly && name == 'domain'
                               ? emailDomain
                               : readOnly && name == 'email'
-                                ? newUser.email.split('@')[0]
-                                : newUser[name]
+                              ? newUser.email.split('@')[0]
+                              : newUser[name]
                           }
                           view='normal'
                           pin='clear-clear'
                         />
-                        // <input
-                        //   type={name == 'accessExpires' ? 'date' : 'text'}
-                        //   placeholder={label}
-                        //   autoComplete='off'
-                        //   readOnly={readOnly}
-                        //   name={name}
-                        //   style={{
-                        //     backgroundColor: 'var(--g-color-base-background)',
-                        //     color: 'var(--g-color-text-primary)',
-                        //     borderColor: 'var(--g-color-line-generic)'
-                        //   }}
-                        //   className={`w-full rounded-lg border px-2 py-2 outline-none `}
-                        //   onChange={handleInputChange}
-                        //   min={
-                        // name === 'accessExpires'
-                        //   ? new Date().toISOString().split('T')[0]
-                        //   : undefined
-                        //   }
-                        // value={
-                        //   readOnly && name == 'domain'
-                        //     ? emailDomain
-                        //     : readOnly && name == 'email'
-                        //     ? newUser.email.split('@')[0]
-                        //     : newUser[name]
-                        // }
-                        // />
                       )}
-                      {type == "date" && (
+                      {type == 'date' && (
                         <DatePicker
-                          size='s'
-                          onChange={(e) => setNewUser((prev: any) => ({ ...prev, accessExpires: e }))}
-                          value={newUser.accessExpires ?? ""}
-                          validationState={new Date().toISOString().split('T')[0] as any}
-                          className='h-10'
+                          onChange={e =>
+                            setNewUser((prev: any) => ({
+                              ...prev,
+                              accessExpires: e
+                            }))
+                          }
+                          value={newUser.accessExpires ?? ''}
+                          validationState={
+                            new Date().toISOString().split('T')[0] as any
+                          }
+                          className='px-2'
+                          style={{
+                            height: '40px'
+                          }}
                         />
                       )}
                       {type == 'dropdown' && (
@@ -444,38 +424,16 @@ const UserCreationModal = ({
                             size='s'
                             className='w-full'
                             options={accessprofileOptions}
-                            customRenderSelectedLabels={newUser?.accessProfile?.length > 1 ? "Multiple Template" : undefined}
+                            customRenderSelectedLabels={
+                              newUser?.accessProfile?.length > 1
+                                ? 'Multiple Template'
+                                : undefined
+                            }
                           />
-                          {/* <Select
-                            value={newUser?.accessProfile ?? []}
-                            onUpdate={selectedKey => {
-                              handleInputChange({
-                                target: {
-                                  name: 'accessProfile',
-                                  value: selectedKey
-                                }
-                              })
-                            }}
-                            width={'max'}
-                            placeholder='Select Access Profile'
-                            multiple
-                          >
-                            {(accessProfiles &&
-                            typeof accessProfiles === 'object' &&
-                            !Array.isArray(accessProfiles)
-                              ? Object.keys(accessProfiles)
-                              : []
-                            ).map((profile: string, index: number) => (
-                              <Select.Option key={index} value={profile}>
-                                {profile}
-                              </Select.Option>
-                            ))}
-                          </Select> */}
                         </>
                       )}
                       {type == 'switch' && (
                         <Switch
-                          size='l'
                           checked={newUser[name] == true ? true : false}
                           onChange={() =>
                             setNewUser((pre: any) => ({
@@ -483,6 +441,7 @@ const UserCreationModal = ({
                               isAppAdmin: !pre[name]
                             }))
                           }
+                          className='h-6 w-6'
                         />
                       )}
                     </div>
@@ -494,14 +453,18 @@ const UserCreationModal = ({
 
       <hr style={{ borderColor: borderColor }} className='w-full' />
 
-      <div className='flex w-full justify-end gap-2 px-2 py-4'>
-        <Button onClick={handleCloseModal} view='raised' size='m'>
+      <div className='flex w-full justify-end gap-2 px-2 pt-2'>
+        <Button
+          onClick={handleCloseModal}
+          view='raised'
+          className='!w-fit rounded-md p-2'
+        >
           {keyset('Cancel')}
         </Button>
         <Button
           onClick={() => handleAddUser('profile')}
           view='normal-contrast'
-          size='m'
+          className='!w-fit rounded-md p-2'
         >
           {keyset('Save')}
         </Button>

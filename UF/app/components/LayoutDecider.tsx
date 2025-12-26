@@ -388,7 +388,7 @@ const LayoutDecider = ({
           userDetails={userDetails}
         />
       </div>
-      <div className='flex h-[95%] flex-1'>
+      <div className='flex h-[90%] 2xl:h-[95%] flex-1'>
         <div
           className={twMerge(`cursor-pointer transition-all duration-700 ease-in-out ${getSideNavClassName}` , borderColor)}
         >

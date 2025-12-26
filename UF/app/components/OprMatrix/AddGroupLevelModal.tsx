@@ -70,7 +70,7 @@ const AddGroupLevelModal = ({
     <div className='flex h-fit flex-col '>
       <div className='flex w-full items-center justify-between py-[.5vh]'>
         <Text variant='body-3'>{modalTitle}</Text>
-        <Button className={'flex items-center outline-none'} onClick={close}>
+        <Button className={'!w-fit p-1 rounded-md'} onClick={close}>
           <Multiply height='.7vw' width='.7vw' />
         </Button>
       </div>
@@ -84,18 +84,10 @@ const AddGroupLevelModal = ({
       <div
         className='flex flex-col gap-[1vh] py-[1vh] text-base'
       >
-        <Label theme='clear' size='s' className='font-semibold'>
+        <Label theme='clear' className='font-semibold !justify-start'>
           Name
         </Label>
-        {/* <TextInput
-          size='s'
-          type='text'
-          placeholder={`Enter ${resourceField} name`}
-          key='name'
-          nodeId='name'
-          onChange={handleInputChange}
-          value={inputValue.name}
-        /> */}
+     
         <input
           id='name'
           name='name'
@@ -105,19 +97,10 @@ const AddGroupLevelModal = ({
           onChange={handleInputChange}
           value={inputValue.name}
         />
-        <Label theme='clear' size='s' className='font-semibold'>
+        <Label theme='clear'  className='font-semibold !justify-start'>
           Code
         </Label>
-        {/* <TextInput
-          nodeId='code'
-          size='s'
-          type='text'
-          placeholder={`Enter ${resourceField} code`}
-          key='=code'
-          onChange={handleInputChange}
-          readOnly={resource?.code ? true : false}
-          value={inputValue.code?.replace(`${parentCode}`, '')}
-        /> */}
+        
         <input
           id='code'
           name='code'
@@ -133,15 +116,13 @@ const AddGroupLevelModal = ({
         <Button
           onClick={close}
           view='raised'
-          size='m'
-          className={'rounded-lg border px-[.5vw] py-[.5vh] outline-none'}
+          className={'!w-fit rounded-md p-2'}
         >
           Cancel
         </Button>
         <Button
           onClick={handleAdd}
-          size='m'
-          className={'rounded-lg px-[.5vw] py-[.5vh] outline-none'}
+          className={'!w-fit rounded-md p-2'}
         >
           {resource?.code ? 'Update' : 'Create'}
         </Button>
