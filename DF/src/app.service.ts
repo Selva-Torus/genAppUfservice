@@ -15,8 +15,35 @@ export class AppService implements OnModuleInit{
 
   async onModuleInit() {
     console.log('Application started, calling API...');
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiUGVlckA3ODYiLCJjbGllbnQiOiJDVDAwMyIsInR5cGUiOiJjIiwibG9nVHlwZSI6Im1vbmdvZGIiLCJzaWQiOiJlYjA5MThhMy0yZTZmLTQ5NzEtODQzMC1mZTQxNzAyY2VlZDQiLCJpYXQiOjE3NjY0MTAyNzAsImV4cCI6MTc2NjQxMTQ3MH0.V3K2otuXwXoGfw_zUHydVVXl4czja4HYMsJYjTKD7yA';
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnQiOiJDVDI2MSIsImxvZ2luSWQiOiJzcmlyYW0iLCJzaWQiOiJhYzQyNWMwOC1kMmY0LTRjOTctYmM1MC00YWUzNTM0ZTE0OTkiLCJsb2dUeXBlIjoibW9uZ29kYiIsInR5cGUiOiJjIiwiaWF0IjoxNzY3MzMxNjI1LCJleHAiOjE3NjczMzI4MjV9.0cGo43biedV3pzsmKDFlHvacW1BTsNgUgBR76nYcKyU';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
+    if(Object.keys(preParedData).includes('erdWithData'))
+      {
+      let endPointData : any = {};
+      let erdDatas: any = {};
+      endPointData.data = preParedData?.erdWithData||{}
+      endPointData.type =  "json";
+      let res =  await this.ufservice.getEndPoints(endPointData);
+      //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData,{
+      //  headers: {
+      //    Authorization: `Bearer ${token}`, 
+      //  }
+      //});
+      erdDatas.endpoint = res;
+      erdDatas.tenant =  "CT261";
+      erdDatas.domain = "AppGroup";
+      erdDatas.collection = "Veracious Message Convertor";
+      erdDatas.data = preParedData?.erdWithData||{}
+      erdDatas.fabric = 'API-APIPD';
+      erdDatas.loginId = "sriram";    
+      erdDatas.erdFlag = true;  
+      await this.ufservice.createApiCollection(erdDatas,this.clientcode);
+      //await axios.post(this.apiUrl+'/createApiCollection', erdDatas,{
+      //  headers: {
+      //    Authorization: `Bearer ${token}`, 
+      //  }
+      //});
+      }
     if(Object.keys(preParedData).includes('torusApis'))
     {
       let torusData: any = {};
@@ -25,12 +52,12 @@ export class AppService implements OnModuleInit{
       //endPointData.type =  "json";
       //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData);
       //torusData.endpoint = res.data;
-      torusData.tenant =  "CT003";
-      torusData.domain = "appgroup"; 
-      torusData.collection = "oprmatrix";
+      torusData.tenant =  "CT261";
+      torusData.domain = "AppGroup"; 
+      torusData.collection = "Veracious Message Convertor";
       torusData.fabric = 'API-APIPD-TORUS';
       torusData.data = preParedData?.torusApis||{}
-      torusData.loginId = "Peer@786";    
+      torusData.loginId = "sriram";    
       //await axios.post(this.apiUrl, torusData);
     }
   }

@@ -12,6 +12,8 @@ import { CodeService } from "src/codeService";
 import { LockService } from "src/lock.service";
 import { MongoService } from "src/mongoService";
 import { ConfigService } from "@nestjs/config";
+import { BullModule } from "@nestjs/bullmq";
+import { EventEmitterProcessor } from "./event-emitter.processor";
 
 @Module({
     imports: [      
@@ -21,10 +23,11 @@ import { ConfigService } from "@nestjs/config";
           transport: Transport.TCP,
           options: { port: parseInt(process.env.PO_PORT) },
         },
-      ]), 
+      ])    
     ],
     controllers: [TeController],
-    providers: [TeService, RedisService, CommonService,SecurityService,RuleService,JwtService,CodeService,LockService,MongoService,ConfigService],
+    providers: [TeService, RedisService, CommonService,SecurityService,RuleService,JwtService,CodeService,LockService,MongoService,ConfigService,EventEmitterProcessor],
+    exports:[TeService]
 })
   export class TeModule implements NestModule 
   {

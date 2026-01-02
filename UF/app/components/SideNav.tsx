@@ -153,7 +153,7 @@ const SideNav = ({
     localStorage.clear()
     sessionStorage.clear()
     deleteAllCookies()
-    window.location.href = '/ct003/ag001/oprmatrix/v1'
+    window.location.href = '/ct261/ag001/a001/v1'
   }
 
   const hasMatchingName = (obj: any, input: string): boolean => {

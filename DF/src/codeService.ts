@@ -84,7 +84,7 @@ function buildLiteralAST(value: any, seen = new Set()): t.Expression {
             }          
          }
         }
-      }else if(fabric == "PF-PFD" || fabric == "PF-SFD"){
+      }else if(fabric == "PF-PFD" || fabric == "PF-SFD" || fabric == "PF-SCDL"){
          if(await this.redisService.exist(key + ':NPV:'+declaredVars[a]+'.PRO',process.env.CLIENTCODE)){
         var pro:any = JSON.parse(await this.redisService.getJsonData(key + ':NPV:'+declaredVars[a]+'.PRO',process.env.CLIENTCODE)) 
       

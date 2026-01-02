@@ -1,0 +1,346 @@
+'use client'
+import { useLanguage } from "../components/languageContext";
+import React,{ useContext,useEffect,useState,useRef } from "react";
+import { AxiosService } from '@/app/components/axiosService';
+import { uf_authorizationCheckDto,te_refreshDto,te_dfDto,api_paginationDto } from '@/app/interfaces/interfaces';
+import { codeExecution } from "../utils/codeExecution";
+import { useInfoMsg } from "@/app/components/infoMsgHandler";
+import { deleteAllCookies,getCookie } from '@/app/components/cookieMgment';
+import { TotalContext, TotalContextProps } from "../globalContext";
+import decodeToken from "../components/decodeToken";
+import { Button } from "@/components/Button";
+import { Icon } from "@/components/Icon";
+import { Text } from "@/components/Text";
+import { useRouter } from 'next/navigation';
+import { useTheme } from '@/hooks/useTheme';
+import clsx from "clsx";
+import Groupvmc_viewmsg_info  from "./Groupvmc_viewmsg_info/Groupvmc_viewmsg_info";
+
+
+export default function PageVmcViewInfoV1() {
+  const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
+  const [initialLoad, setInitialLoad] = useState(false);
+  const securityData:any={
+  "EQBAdmin": {
+    "allowedGroups": [
+      "canvas",
+      "vmc_viewmsg_info",
+      "viewmsg_group"
+    ]
+  },
+  "EQBOperator": {
+    "allowedGroups": [
+      "vmc_viewmsg_info",
+      "viewmsg_group"
+    ]
+  }
+};
+  let code:any="";
+  //const language=useLanguage();
+  const routes = useRouter();
+  const toast=useInfoMsg();
+  const [primaryTableData, setPrimaryTableData] = useState<any>({primaryKey:"",value:"",compName:""});
+  const [checkToAdd, setCheckToAdd] = useState<any>({});
+  const [dropdownData, setDropdownData] = useState<any>({});
+  const token:string = getCookie('token'); 
+  const decodedTokenObj: any = decodeToken(token);
+  const screenName:string = "vmc_error_screen";
+  const user = decodedTokenObj?.selectedAccessProfile;
+  const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
+  const {refetch, setRefetch} = useContext(TotalContext) as TotalContextProps;
+  const { encAppFalg,setEncAppFalg}= useContext(TotalContext) as TotalContextProps;
+  const {lockedData, setLockedData} = useContext(TotalContext) as TotalContextProps;
+  const {paginationDetails, setpaginationDetails} = useContext(TotalContext) as TotalContextProps;
+  const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
+  const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
+  const {vmc_view_info_v1Props, setvmc_view_info_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const [checkvmc_viewmsg_info,setCheckvmc_viewmsg_info,]=useState(false);
+  const [checkviewmsg_group,setCheckviewmsg_group,]=useState(false);
+  const {vmc_viewmsg_info0ee89, setvmc_viewmsg_info0ee89} = useContext(TotalContext) as TotalContextProps;
+  const {viewmsg_groupf2810, setviewmsg_groupf2810} = useContext(TotalContext) as TotalContextProps;
+  const {dfd_vmc_error_logs_v1Props, setdfd_vmc_error_logs_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const encryptionFlagPage: boolean = false|| encAppFalg.flag;
+  let encryptionDpd: string = "";
+  encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encAppFalg.dpd;
+  let encryptionMethod: string = "";
+  encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encAppFalg.method;
+  let encryptionFlagPageData :any ={
+    "flag":encryptionFlagPage,
+    "dpd":encryptionDpd,
+    "method":encryptionMethod
+  }
+  const [paginationData,setPaginationData]=useState<any>({count:10,page:1})
+    const prevRefreshRef = useRef({
+      vmc_error_logs_v1:false,
+    });
+    async function vmc_error_logs_v1(pagination:any){
+        let vmc_error_logs_v1Body:te_refreshDto={
+          key: "CK:CT261:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:VMC_Error_Logs:AFVK:v1"+":",
+          refreshFlag: "Y",
+          count:parseInt(pagination?.count) || 10,
+          page:parseInt(pagination?.page) || 1
+        }
+        if (encryptionFlagPage) {          
+          vmc_error_logs_v1Body["dpdKey"] = encryptionDpd;
+          vmc_error_logs_v1Body["method"] = encryptionMethod;
+        }
+        if(vmc_view_info_v1Props.length > 0){
+          let filterData :any[] =[];
+          for(let i=0;i< vmc_view_info_v1Props.length;i++){
+            if(vmc_view_info_v1Props[i].DFDkey == "CK:CT261:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:VMC_Error_Logs:AFVK:v1"){
+              delete vmc_view_info_v1Props[i].DFDkey;
+              filterData.push(vmc_view_info_v1Props[i])
+            }           
+          }
+          vmc_error_logs_v1Body['filterData'] = filterData;
+        }
+        const vmc_error_logs_v1Data:any=await AxiosService.post("/te/eventEmitter",vmc_error_logs_v1Body,{
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+
+        if (vmc_error_logs_v1Data?.data?.dataset) {
+          setdfd_vmc_error_logs_v1Props(vmc_error_logs_v1Data?.data?.dataset?.data || []);
+        }else{
+         //////////////
+        let dstKey:any=vmc_error_logs_v1Body?.key || ""
+        dstKey=dstKey.replace(":AFC:",":AFCP:").replace(":AF:",":AFP:").replace(":DF-DFD:",":DF-DST:");
+
+        const api_paginationBody: api_paginationDto = {
+          key: dstKey,
+          count:parseInt(pagination?.count) || 10,
+          page:parseInt(pagination?.page) || 1
+        }
+        // if(encryptionFlagCont) {
+        // api_paginationBody["dpdKey"] = encryptionDpd
+        // api_paginationBody["method"] = encryptionMethod
+        // }
+        const api_paginationData:any = await AxiosService.post(
+          '/UF/pagination',
+          api_paginationBody,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            }
+          }
+        )
+        if (api_paginationData?.data?.error == true) {
+          toast(api_paginationData?.data?.errorDetails?.message, 'danger')
+          return
+        }
+        setdfd_vmc_error_logs_v1Props(api_paginationData?.data?.records || []);
+        }
+      }
+  useEffect(()=>{
+    if (prevRefreshRef?.current?.vmc_error_logs_v1) {
+      vmc_error_logs_v1(paginationData)
+    }else 
+      prevRefreshRef.current.vmc_error_logs_v1= true
+  },[refetch?.vmc_error_logs_v1])
+
+  async function securityCheck() {
+    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_View_Info:AFVK:v1",accessProfile:[user],from:"pageVmcViewInfoV1"},{
+      headers: {
+        Authorization: `Bearer ${token}`
+      }});
+    const uf_dfKey:string[] = orchestrationData?.data?.DFkeys;
+    const security:string = orchestrationData?.data?.security; 
+    const allowedGroup:any[] = orchestrationData?.data?.allowedGroup||[];
+    code = orchestrationData?.data?.code;
+    const pagination:any = orchestrationData?.data?.action?.pagination;
+    setpaginationDetails({
+      page: +orchestrationData?.data?.action?.pagination?.page || 0,
+      pageSize: +orchestrationData?.data?.action?.pagination?.count || 0
+    })
+    let encryptionData:any = {};
+    if (token) {
+      try {
+        let introspect:any;
+        if(encryptionFlagPage){
+           introspect = await AxiosService.get("/UF/introspect",{
+            headers: {
+              Authorization: `Bearer ${token}`
+            },
+            params: {
+              dpdKey: encryptionDpd,
+              method: encryptionMethod,
+              key:"CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_View_Info:AFVK:v1"
+            }
+          }) 
+        }else{
+          introspect = await AxiosService.get("/UF/introspect",{
+            headers: {
+              Authorization: `Bearer ${token}`
+             },
+            params: {
+              key:"CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_View_Info:AFVK:v1"  
+            }
+          })          
+        }
+        if(introspect?.data?.authenticated === false){
+        localStorage.clear();
+        deleteAllCookies();
+        window.location.href = '/ct261/ag001/a001/v1';
+        }
+      }catch (err: any) {
+        toast("The token is no longer active.", 'danger');
+        localStorage.clear();
+        deleteAllCookies();
+        window.location.href = '/ct261/ag001/a001/v1';
+      }
+      try {
+        let myAccount:any;
+        if(encryptionFlagPage){
+         myAccount = await AxiosService.get("/UF/myAccount-for-client",{
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
+              dpdKey: encryptionDpd,
+              method: encryptionMethod,
+              key:"CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_View_Info:AFVK:v1"
+            }
+        }) 
+        }else{
+          myAccount = await AxiosService.get("/UF/myAccount-for-client",{
+           headers: {
+             Authorization: `Bearer ${token}`
+           },
+            params: {
+              key:"CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_View_Info:AFVK:v1"
+            }
+         })          
+        }
+        if( user != "" && user != null){
+          setAccessProfile([user]);
+        }
+        let actionDetails:any = {
+  "lock": {
+    "lockMode": "",
+    "name": "",
+    "ttl": ""
+  },
+  "stateTransition": {
+    "sourceQueue": "",
+    "sourceStatus": "",
+    "targetQueue": "",
+    "targetStatus": ""
+  },
+  "pagination": {
+    "page": "1",
+    "count": "10"
+  },
+  "encryption": {
+    "isEnabled": false,
+    "selectedDpd": "",
+    "encryptionMethod": ""
+  },
+  "events": {}
+};
+        try{
+    await vmc_error_logs_v1(pagination)
+          if (security == 'AA') {
+          allowedGroup.map((nodes:any)=>{
+            if(nodes?.groupName == 'vmc_viewmsg_info' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
+            {
+              setCheckvmc_viewmsg_info(true)
+            }
+            if(nodes?.groupName == 'viewmsg_group' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
+            {
+              setCheckviewmsg_group(true)
+            }
+          })
+          }
+           }catch(err:any)
+          {
+            if( typeof err =='string')
+              toast(err, 'danger');
+            else
+              toast(err?.response?.data?.message, 'danger');
+          }
+        /////////
+        //Code Execution
+        if (code !="" ) {
+          let codeStates: any = {}
+          codeStates['vmc_viewmsg_info'] = vmc_viewmsg_info0ee89;
+          codeStates['setvmc_viewmsg_info'] = setvmc_viewmsg_info0ee89;
+          codeStates['viewmsg_group'] = viewmsg_groupf2810;
+          codeStates['setviewmsg_group'] = setviewmsg_groupf2810;
+          codeExecution(code,codeStates);
+        }   
+        setInitialLoad(true);        
+      } catch (err: any) {
+        toast(err?.message, 'danger');
+      }
+    
+    }else{
+      toast('token not found','danger');
+    }    
+  }
+  const handleClick = () => {
+    routes.push("/");
+  }
+  const handleOnload=()=>{
+  }
+
+  useEffect(() => {    
+    setMemoryVariables((prev: any) => ({
+      ...prev,
+      screenName: screenName,    
+    }))
+    securityCheck();
+    handleOnload();
+  }, [])
+  return (
+    <>
+     <div className={clsx("",
+        "w-full",
+        isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'
+      )}
+     style={{
+        gridColumn: '',
+        gridRow: '',
+        gridAutoRows: '4px',
+        columnGap: '',
+        rowGap: '',
+        display: "grid",
+        gridTemplateColumns: 'repeat(12, 1fr)',
+        gridTemplateRows: '',
+        height: '',
+        overflow: '',
+        backgroundColor:'#ffffff',
+        backgroundImage:'',
+        backgroundPosition: '',
+        backgroundSize: '',
+        backgroundRepeat: '',
+        backgroundAttachment: '',
+        backgroundClip: '',
+        backgroundBlendMode: '',
+        color: textStyle,
+       // minHeight: '100vh',
+        ...(isHighContrast && {
+          fontWeight: '500',
+          borderWidth: '2px'
+      })
+      }}>
+        {checkvmc_viewmsg_info && initialLoad &&<Groupvmc_viewmsg_info  
+          lockedData={lockedData} 
+          setLockedData={setLockedData} 
+          primaryTableData={primaryTableData}
+          setPrimaryTableData={setPrimaryTableData}
+          checkToAdd={checkToAdd} 
+          setCheckToAdd={setCheckToAdd}  
+          refetch={refetch}
+          setRefetch={setRefetch}
+          dropdownData={dropdownData} 
+          setDropdownData={setDropdownData}
+          encryptionFlagPageData={encryptionFlagPageData}
+          paginationDetails={paginationDetails}        />}
+        
+          </div> 
+    </>
+  )
+}
+    

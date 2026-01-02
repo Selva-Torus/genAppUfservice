@@ -2,10 +2,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: ct003-oprmatrix-df-generator
-  namespace: ct003-oprmatrix-df-v1
+  name: ct261-a001-df-generator
+  namespace: ct261-a001-df-v1
   labels:
-    app: ct003-oprmatrix-df-generator
+    app: ct261-a001-df-generator
 spec:
   replicas: 1
   strategy:
@@ -18,15 +18,15 @@ spec:
       - setWeight: 100  # 100% Canary (Stable)
   selector:
     matchLabels:
-      app: ct003-oprmatrix-df-generator
+      app: ct261-a001-df-generator
   template:
     metadata:
       labels:
-        app: ct003-oprmatrix-df-generator
+        app: ct261-a001-df-generator
     spec:
       containers:
-      - name: ct003-oprmatrix-df-generator-backend-container
-        image: 192.168.2.164:5000/ct003-oprmatrix-df-v1:docker_tag
+      - name: ct261-a001-df-generator-backend-container
+        image: 192.168.2.164:5000/ct261-a001-df-v1:docker_tag
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -41,13 +41,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ct003-oprmatrix-df-generator
-  namespace: ct003-oprmatrix-df-v1
+  name: ct261-a001-df-generator
+  namespace: ct261-a001-df-v1
   labels:
-    app: ct003-oprmatrix-df-generator
+    app: ct261-a001-df-generator
 spec:
   selector:
-    app: ct003-oprmatrix-df-generator
+    app: ct261-a001-df-generator
   ports:
     - name: http
       protocol: TCP

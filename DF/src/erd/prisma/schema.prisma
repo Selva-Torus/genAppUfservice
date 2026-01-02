@@ -1,0 +1,164 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+provider = "prisma-client-js"
+}
+model bank_scheme_setup {
+  id  String @id @default(auto()) @map("_id") @db.ObjectId 
+  bankcode    String?        
+  countries    Bank_scheme_country? 
+
+  trs_creator_email    String?       
+  trs_created_date    DateTime     @default(now())  
+  trs_created_by    String?       
+  trs_modified_date    DateTime     @updatedAt  
+  trs_modified_by    String?       
+  trs_status    String?       
+  trs_next_status    String?  
+  trs_process_id    String?
+  trs_access_profile    String?
+  trs_org_grp_code    String?
+  trs_org_code    String?
+  trs_role_grp_code    String?
+  trs_role_code    String?
+  trs_ps_grp_code    String?
+  trs_ps_code     String?
+  trs_sub_org_grp_code    String?
+  trs_sub_org_code    String?
+
+  @@map("ct261_ag001.bank_scheme_setup")  
+  
+}
+model master_scheme_setup {
+  id  String @id @default(auto()) @map("_id") @db.ObjectId 
+  countrycode    String?        
+  schemetypes    Country_schemetypea? 
+
+  trs_creator_email    String?       
+  trs_created_date    DateTime     @default(now())  
+  trs_created_by    String?       
+  trs_modified_date    DateTime     @updatedAt  
+  trs_modified_by    String?       
+  trs_status    String?       
+  trs_next_status    String?  
+  trs_process_id    String?
+  trs_access_profile    String?
+  trs_org_grp_code    String?
+  trs_org_code    String?
+  trs_role_grp_code    String?
+  trs_role_code    String?
+  trs_ps_grp_code    String?
+  trs_ps_code     String?
+  trs_sub_org_grp_code    String?
+  trs_sub_org_code    String?
+
+  @@map("ct261_ag001.master_scheme_setup")  
+  
+}
+model vmc_process_log {
+  id  String @id @default(auto()) @map("_id") @db.ObjectId 
+  country_name    String?        
+  scheme_type    String?        
+  source_msg_type    String?        
+  target_msg_type    String?        
+  source_msg_format    String?        
+  target_msg_format    String?        
+  source_content    String?        
+  target_content    String?        
+  scheme    String?        
+
+  vmc_api_repositorysid String? @db.ObjectId
+  vmc_api_repositorys   vmc_api_repositorys?   @relation(fields: [vmc_api_repositorysid], references: [id])   
+  trs_creator_email    String?       
+  trs_created_date    DateTime     @default(now())  
+  trs_created_by    String?       
+  trs_modified_date    DateTime     @updatedAt  
+  trs_modified_by    String?       
+  trs_status    String?       
+  trs_next_status    String?  
+  trs_process_id    String?
+  trs_access_profile    String?
+  trs_org_grp_code    String?
+  trs_org_code    String?
+  trs_role_grp_code    String?
+  trs_role_code    String?
+  trs_ps_grp_code    String?
+  trs_ps_code     String?
+  trs_sub_org_grp_code    String?
+  trs_sub_org_code    String?
+
+  @@map("ct261_a001.vmc_process_log")
+  
+}
+model vmc_api_repositorys {
+  id  String @id @default(auto()) @map("_id") @db.ObjectId 
+  source_msg_type    String?        
+  version    String?        
+  status    String?        
+  release_date    DateTime?      
+
+  vmc_process_log   vmc_process_log[]    
+  trs_creator_email    String?       
+  trs_created_date    DateTime     @default(now())  
+  trs_created_by    String?       
+  trs_modified_date    DateTime     @updatedAt  
+  trs_modified_by    String?       
+  trs_status    String?       
+  trs_next_status    String?  
+  trs_process_id    String?
+  trs_access_profile    String?
+  trs_org_grp_code    String?
+  trs_org_code    String?
+  trs_role_grp_code    String?
+  trs_role_code    String?
+  trs_ps_grp_code    String?
+  trs_ps_code     String?
+  trs_sub_org_grp_code    String?
+  trs_sub_org_code    String?
+
+  @@map("ct261_a001.vmc_api_repositorys")
+  
+}
+type Bank_scheme_country{
+  countrycode    String?      
+  schemetypes    Country_schemetype      
+  }
+type Country_schemetype{
+  type    String?      
+  schemes    schemetype_scheme      
+  }
+type schemetype_scheme{
+  name    String?      
+  messagetypes    scheme_messagetype[]      
+  }
+type scheme_messagetype{
+  sourcemsgname    String?      
+  sourcemsgversion    String?      
+  targetmsgname    String?      
+  targetmsgversion    String?      
+  sourcename    String?      
+  sourcevalue    String?      
+  sourceformat    String?      
+  targetname    String?      
+  targetvalue    String?      
+  targetformat    String?      
+  }
+type Country_schemetypea{
+  type    String?      
+  schemes    schemetype_schemes      
+  }
+type schemetype_schemes{
+  name    String?      
+  messagetypes    scheme_messagetypes[]      
+  }
+type scheme_messagetypes{
+  sourcemsgname    String?      
+  sourcemsgversion    String?      
+  targetmsgname    String?      
+  targetmsgversion    String?      
+  }
+
+

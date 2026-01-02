@@ -1,5 +1,5 @@
 let data:any ={
-  "oprmatrixtestdpd": {
+  "VMCDPD": {
     "encryptionType": {
       "name": "encryptionType",
       "_type": "select",

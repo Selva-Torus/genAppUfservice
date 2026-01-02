@@ -39,14 +39,14 @@ const LayoutDecider = ({
   const {borderColor} = useTheme()
   const { brandColor, hoverColor, selectionColor } = branding;
   const encryptionFlagApp: boolean = false;    
-  const encryptionDpd: string = "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1";
+  const encryptionDpd: string = "CK:CT261:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:VMCDPD:AFVK:v1";
   const encryptionMethod: string = "";
-  const logo = ""
-  const appName = "oprmatrix"
+  const logo = "https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT261/resources/images/transmx-logo.svg"
+  const appName = "Veracious Message Convertor"
   const toast = useInfoMsg()
   const [loading, setLoading] = useState(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
-  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc"
+  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT261:AFGK:AG001:AFK:A001:AFVK:v1:bldc"
   const [rawNavData, setRawNavData] = useState<MenuItem[] | null>(null);
   const navData: MenuItem[] = [
   {
@@ -74,15 +74,16 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
-    "menuGroupLabel": "testroute",
+    "menuGroup": "operator",
+    "menuGroupLabel": "Operator",
     "screenDetails": [
       {
-        "name": "testroute",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "name": "message_convertor",
+        "label": "Message_Convertor",
+        "key": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Operations_v1:AFVK:v1",
         "allowedAccessProfile": [
-          "Template 1",
-          "User",
-          "Template 3"
+          "EQBOperator",
+          "DTBOperator"
         ],
         "static": false
       }
@@ -90,79 +91,34 @@ const LayoutDecider = ({
     "items": []
   },
   {
-    "menuGroupLabel": "Menu Item 3",
+    "menuGroup": "manager",
+    "menuGroupLabel": "Manager",
     "screenDetails": [
       {
-        "name": "menu item 3",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "name": "vmc_dashboard_screen",
+        "label": "VMC_Dashboard_Screen",
+        "key": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Dashboard_Screen:AFVK:v1",
         "allowedAccessProfile": [
-          "Template 1",
-          "User",
-          "Template 3"
+          "EQBAdmin"
         ],
         "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "Menu Item 4",
-    "screenDetails": [
+      },
       {
-        "name": "menu item 4",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "name": "vmc_error_screen",
+        "label": "VMC_Error_Screen",
+        "key": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Error_Screen:AFVK:v1",
         "allowedAccessProfile": [
-          "Template 1",
-          "User",
-          "Template 3"
+          "EQBAdmin"
         ],
         "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "Menu Item 5",
-    "screenDetails": [
+      },
       {
-        "name": "menu item 5",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "name": "master_setup",
+        "label": "Master_Setup",
+        "key": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:Add_Master_Setup:AFVK:v1",
         "allowedAccessProfile": [
-          "Template 1",
-          "User",
-          "Template 3"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "Menu Item 6",
-    "screenDetails": [
-      {
-        "name": "menu item 6",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1",
-          "User",
-          "Template 3"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "Menu Item 7",
-    "screenDetails": [
-      {
-        "name": "menu item 7",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1",
-          "User",
-          "Template 3"
+          "EQBAdmin",
+          "EQBOperator"
         ],
         "static": false
       }

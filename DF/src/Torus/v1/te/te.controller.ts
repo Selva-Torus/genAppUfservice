@@ -12,12 +12,14 @@ import { RedisService } from 'src/redisService';
 @ApiTags('Torus API')
 @Controller('te')
 export class TeController {
-  constructor (private readonly teService:TeService,private readonly apiService:CommonService,private readonly lockservice:LockService,private readonly redisService:RedisService){}
+  constructor (private readonly teService:TeService,private readonly apiService:CommonService,private readonly lockservice:LockService,
+    private readonly redisService:RedisService,   
+  ){}
   private readonly logger = new Logger(TeController.name);
 
 
   @Post('eventEmitter')
-  async pfEventEmitter(@Body() pfdto: pfDto, @Headers('Authorization') auth: any): Promise<any> {
+   async pfEventEmitter(@Body() pfdto: pfDto, @Headers('Authorization') auth: any): Promise<any> {
     pfdto.token = auth.split(' ')[1];
     var upidarr = []
     const eventval = pfdto
@@ -34,21 +36,51 @@ export class TeController {
       return result;
     } else {   
       let flowSummary = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'PFS',client))       
-        
+         let TimeInterval, milliseconds
         if (flowSummary && flowSummary.length > 0) {
           for (let s = 0; s < flowSummary.length; s++) {
-            if (flowSummary[s].nodeType == 'schedulernode') {
+            if (flowSummary[s].nodeType == 'schedulernode' && currentFabric == 'PF-SCDL') {
               let schedulerNode = JSON.parse(await this.redisService.getJsonDataWithPath(pfdto.key + 'NDP', '.' + flowSummary[s].nodeId,client))
-              if (schedulerNode) {
-                let schInterval = schedulerNode?.data?.pro?.schedulerInfo?.interval
-                var TimeInterval = `${schInterval.seconds} ${schInterval.minutes} ${schInterval.hours} ${schInterval.dayOfmonth} ${schInterval.months} ${schInterval.dayOfweek}`
+              if (schedulerNode) {               
+                let schInterval = schedulerNode?.data?.pro?.schedulerInfo?.interval               
+                 TimeInterval = `${schInterval.seconds} ${schInterval.minutes} ${schInterval.hours} ${schInterval.dayOfmonth} ${schInterval.months} ${schInterval.dayOfweek}`
+              }
+            }else if(flowSummary[s].nodeType == 'intervalnode' && currentFabric == 'PF-SCDL'){
+              let schedulerNode = JSON.parse(await this.redisService.getJsonDataWithPath(pfdto.key + 'NDP', '.' + flowSummary[s].nodeId,client))
+              if (schedulerNode) {               
+                 milliseconds = schedulerNode?.data?.pro?.milliseconds?.value
               }
             }
           }
         }
+          
         if(TimeInterval){ 
-          await this.teService.startCronJob('DynamicEventEmitter',TimeInterval,pfdto,client);         
-        } else{
+          let keyname = (pfdto?.key).split(':')
+          let jobname = ((keyname[1] + keyname[5] + keyname[7] + keyname[9] + keyname[11] + keyname[13]).replace(/[-_]/g, '')).replace(/\s+/g, '');
+          if(pfdto.schedulerStatus == 'active'){  
+              await this.teService.startCronJob(jobname,TimeInterval,pfdto,client,pfdto.token);             
+          }
+          else if(pfdto.schedulerStatus == 'inactive'){           
+          await this.teService.stopCron(jobname);  
+          return 'scheduler stopped' 
+          }           
+        }  else if (milliseconds) {
+        
+          let keyname = (pfdto?.key).split(':');
+          let jobname = ((keyname[1] + keyname[5] + keyname[7] + keyname[9] + keyname[11] + keyname[13]).replace(/[-_]/g, '')).replace(/\s+/g, '');
+
+          if (pfdto.schedulerStatus == 'active') {
+            // Start interval job with Bull Queue
+            // const result = await this.queueService.startIntervalJob(jobname,jobname, milliseconds, pfdto,client,pfdto.token);
+            const result = await this.teService.startInterval(jobname,milliseconds, pfdto,client,pfdto.token);
+            return result;
+          } else if (pfdto.schedulerStatus == 'inactive') {
+            // Stop interval job
+             const result = await this.teService.stopIntervalJob(jobname);
+             return result;
+          } 
+        }
+        else{
            if (!pfdto.upId) {
         let result: any = await this.teService.EventEmitter(pfdto);
         if (dpdKey && method) {
@@ -174,7 +206,7 @@ export class TeController {
         return 'data is required'
       }
   } 
-
+  
 }
 
 

@@ -165,7 +165,8 @@ export class RedisService {
    */
 
   async setStreamData(streamName: string, key: string, strValue: any) {
-    try {     
+    try {   
+      streamName = streamName?.trim()  
       if(streamName && streamName != '' && key && strValue) {
         var result = await redis.xadd(streamName, '*', key, strValue);
        if(result){     
@@ -245,9 +246,17 @@ export class RedisService {
    * @throws {Error} - If there is an error retrieving the stream data.
    */
 
-  async getStreamRange(streamName){
+   async getStreamRange(streamName,end?,start?){
     try {
-      var messages = await redis.call('XRANGE', streamName, '-', '+');
+      let messages;
+      if(start && !end) 
+        end = '+'
+      if(end && !start)
+        start = '-'
+       if(end && start){
+       messages = await redis.call('XRANGE', streamName, start, end);
+       }else
+         messages = await redis.call('XRANGE', streamName, '-', '+');
       // if(messages?.length == 0){    
       //   return await this.convertStreamRangeStruct(streamName)
       // }else{

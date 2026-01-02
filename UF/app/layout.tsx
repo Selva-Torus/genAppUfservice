@@ -1,5 +1,5 @@
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT261:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
   "ufKey": "Logs Screen",
   "screenName": "logs",
   "screenLabel": "logs",
@@ -29,15 +29,16 @@
       "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
     },
     {
-      "menuGroupLabel": "testroute",
+      "menuGroup": "operator",
+      "menuGroupLabel": "Operator",
       "screenDetails": [
         {
-          "name": "testroute",
-          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+          "name": "message_convertor",
+          "label": "Message_Convertor",
+          "key": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Operations_v1:AFVK:v1",
           "allowedAccessProfile": [
-            "Template 1",
-            "User",
-            "Template 3"
+            "EQBOperator",
+            "DTBOperator"
           ],
           "static": false
         }
@@ -45,79 +46,34 @@
       "items": []
     },
     {
-      "menuGroupLabel": "Menu Item 3",
+      "menuGroup": "manager",
+      "menuGroupLabel": "Manager",
       "screenDetails": [
         {
-          "name": "menu item 3",
-          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+          "name": "vmc_dashboard_screen",
+          "label": "VMC_Dashboard_Screen",
+          "key": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Dashboard_Screen:AFVK:v1",
           "allowedAccessProfile": [
-            "Template 1",
-            "User",
-            "Template 3"
+            "EQBAdmin"
           ],
           "static": false
-        }
-      ],
-      "items": []
-    },
-    {
-      "menuGroupLabel": "Menu Item 4",
-      "screenDetails": [
+        },
         {
-          "name": "menu item 4",
-          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+          "name": "vmc_error_screen",
+          "label": "VMC_Error_Screen",
+          "key": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Error_Screen:AFVK:v1",
           "allowedAccessProfile": [
-            "Template 1",
-            "User",
-            "Template 3"
+            "EQBAdmin"
           ],
           "static": false
-        }
-      ],
-      "items": []
-    },
-    {
-      "menuGroupLabel": "Menu Item 5",
-      "screenDetails": [
+        },
         {
-          "name": "menu item 5",
-          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+          "name": "master_setup",
+          "label": "Master_Setup",
+          "key": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:Add_Master_Setup:AFVK:v1",
           "allowedAccessProfile": [
-            "Template 1",
-            "User",
-            "Template 3"
-          ],
-          "static": false
-        }
-      ],
-      "items": []
-    },
-    {
-      "menuGroupLabel": "Menu Item 6",
-      "screenDetails": [
-        {
-          "name": "menu item 6",
-          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-          "allowedAccessProfile": [
-            "Template 1",
-            "User",
-            "Template 3"
-          ],
-          "static": false
-        }
-      ],
-      "items": []
-    },
-    {
-      "menuGroupLabel": "Menu Item 7",
-      "screenDetails": [
-        {
-          "name": "menu item 7",
-          "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-          "allowedAccessProfile": [
-            "Template 1",
-            "User",
-            "Template 3"
+            "EQBAdmin",
+            "EQBOperator"
           ],
           "static": false
         }
@@ -127,283 +83,151 @@
   ],
   "setupData": {
     "appInfo": {
-      "name": "oprmatrix",
-      "code": "oprmatrix",
-      "logType": "dfs",
+      "name": "Veracious Message Convertor",
+      "code": "A001",
+      "logType": "mongodb",
       "encryption": {
         "type": ""
       },
-      "applicationUniqueId": "5e2933ae-b085-4cf7-91fa-ec64f2bf6b97",
-      "deploymentArtifactKey": "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1",
-      "appGrpName": "appgroup",
+      "applicationUniqueId": "8b0a29ea-0c85-4d0f-a848-42eababe7a26",
+      "deploymentArtifactKey": "CK:CT261:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:VMCDPD:AFVK:v1",
+      "lastBuildVersion": "v1",
+      "lastBuildOn": "2025-12-05T12:54:25.837Z",
+      "accessUrl": "https://tgadev.toruslowcode.com/ct261/ag001/a001/v1",
+      "logo": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT261/resources/images/transmx-logo.svg",
+      "appGrpName": "AppGroup",
       "appGrpCode": "AG001",
-      "fusionAuthAppClientSecret": "tFZPbDTDhHCtOwy8K95ai3IF_U8-SP11XfMgC6gnL7k"
+      "fusionAuthAppClientSecret": "mvli9MLp_VOfYEhmSLPvK-JiHIU6yZXIS22nUL1CTjw"
     },
-    "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CT003:AFK:PROFILE:AFVK:v1:appearance",
-    "selectedPresetKey": "1753097390330",
-    "name": "Oprmatrix",
-    "language": "Arabic",
+    "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CT261:AFK:PROFILE:AFVK:v1:appearance",
+    "selectedPresetKey": "default",
+    "group-bg-color": "#ffffff",
     "fontSize": "Medium",
     "direction": "LTR",
-    "brandColor": "#2AE38F",
-    "selectionColor": "#EC407A",
-    "hoverColor": "#FFC723",
-    "borderRadius": "xl",
-    "navigationStyles": "horizontal",
-    "theme": "light",
+    "brandColor": "#6966ff",
+    "selectionColor": "#7875ff",
+    "hoverColor": "#99b3ff",
+    "borderRadius": "s",
     "topbarColor": "#ffffff",
     "menubarColor": "#ffffff",
-    "layoutMode": "closed",
     "sidebarStyle": "",
+    "navigationStyles": "horizontal",
+    "theme": "light",
+    "layoutMode": "fluid",
     "mobileAppearance": {
-      "brandColors": {
-        "primary": "#0736C4"
-      },
+      "language": "English",
+      "direction": "LTR",
       "theme": "light",
-      "fontFamily": "Roboto",
+      "brandColors": {
+        "primary": "#4b39ef",
+        "secondary": "#39d2c0",
+        "tertiary": "#ee8b60"
+      },
+      "accentColors": {
+        "accentOne": "#4c4b39ef",
+        "accentTwo": "#4d39d2c0"
+      },
       "utilityColors": {
         "lightMode": {
-          "primaryText": "#0736C4",
-          "primaryBackground": "#FF5722",
-          "secondaryBackground": "#FFC723",
-          "linearGradient": true
+          "primaryText": "#14181b",
+          "secondaryText": "#57636c",
+          "primaryBackground": "#f1f4f8",
+          "secondaryBackground": "#ffffff"
         },
         "darkMode": {
-          "primaryText": "#00BFFF",
-          "primaryBackground": "#0736C4",
-          "secondaryBackground": "#00BFFF",
-          "linearGradient": true
+          "primaryText": "#ffffff",
+          "secondaryText": "#95a1ac",
+          "primaryBackground": "#1d2428",
+          "secondaryBackground": "#14181b"
         }
       },
-      "navigationStyle": "Bottom Navigation",
-      "accentColors": {
-        "accentOne": "#f0fdff"
-      },
-      "language": "English",
       "fontSize": {
-        "displayLarge": 48
-      }
+        "displayLarge": "64",
+        "displayMedium": "44",
+        "displaySmall": "36",
+        "headlineLarge": "32",
+        "headlineMedium": "28",
+        "headlineSmall": "24",
+        "titleLarge": "20",
+        "titleMedium": "18",
+        "titleSmall": "16",
+        "labelLarge": "16",
+        "labelMedium": "14",
+        "labelSmall": "12",
+        "bodyLarge": "16",
+        "bodyMedium": "14",
+        "bodySmall": "12"
+      },
+      "fontFamily": "Roboto",
+      "navigationStyle": "Bottom Navigation",
+      "drawerStyle": ""
     },
-    "fontFamily": [
-      {
-        "label": "Roboto",
-        "fontUrl": "https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap"
-      },
-      {
-        "label": "Poppins",
-        "fontUrl": "https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
-      },
-      {
-        "label": "RobotoFlex",
-        "fontUrl": "https://fonts.googleapis.com/css2?family=Playwrite+US+Trad+Guides&display=swap"
-      }
-    ],
-    "text-body-font": "Poppins",
-    "text-header-font": "RobotoFlex",
-    "text-display-font": "RobotoFlex",
-    "group-bg-color": "#f5fff5",
-    "page-bg-color": "#ffffff"
+    "page-bg-color": "#ffffff",
+    "language": "English",
+    "name": "default"
   },
-  "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:appearance",
+  "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT261:AFGK:AG001:AFK:A001:AFVK:v1:appearance",
   "allKeys": [
-    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
-    "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Operations_v1:AFVK:v1",
+    "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Dashboard_Screen:AFVK:v1",
+    "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Error_Screen:AFVK:v1",
+    "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:Add_Master_Setup:AFVK:v1"
   ],
   "loginDetails": {
-    "firstName": "Peer",
-    "lastName": "m",
-    "username": "",
-    "email": "peerm@torus.tech",
-    "mobile": "8124805539",
-    "loginId": "Peer@786",
-    "dateAdded": "2024-10-11T04:37:31.922Z",
+    "loginId": "sriram",
+    "firstName": "sriram",
+    "lastName": "s",
+    "email": "marip@torus.tech",
+    "mobile": "6345435345",
+    "2FAFlag": "N",
+    "scope": "client_admin",
     "status": "active",
-    "users": "Peer@786Peer m",
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-12-22T13:31:10.265Z",
-    "profile": "torus/9.1/CT003/resources/images/Peer@786/scott-graham-5fNmWej4tAA-unsplash.jpg",
-    "quickLinks": [],
-    "client": "CT003",
+    "accessExpires": "2025-11-30",
+    "dateAdded": "2025-09-01T11:13:43.262Z",
+    "isRestricted": false,
+    "lastActive": "2026-01-02T05:00:58.731Z",
+    "users": "sriramsriram s",
+    "profile": "",
     "edit": "",
-    "noOfProductsService": 0,
-    "userUniqueId": "6828417e-5fe0-43bb-8c55-c465ee6581a0",
-    "touring": {
-      "isneedTouring": true,
-      "touringData": {
-        "/": {
-          "stepIndex": 5,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "/logic-center": {
-          "stepIndex": 3,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "Security": {
-          "stepIndex": 1,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "artifactselector": {
-          "stepIndex": 1,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "build": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/torus": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/company-profile": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/logs_hub": {
-          "stepIndex": 1,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/tenant": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "logs": {
-          "stepIndex": 1,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": [
-            0
-          ]
-        },
-        "/control-center/account-profile": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/appearance": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/user-roles": {
-          "stepIndex": 1,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "/control-center/storage-configuration": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/user-management": {
-          "stepIndex": 2,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "/tenant-settings": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/notifications": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/resource-library": {
-          "stepIndex": 1,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "notification": {
-          "stepIndex": 0,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "detailNotification": {
-          "stepIndex": 1,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        }
-      }
-    }
+    "client": "CT261"
   },
   "webOnBoarding": {
-    "landingScreen": "User Screen",
     "loginType": "standard",
-    "image": "torus/9.1/CT003/resources/images/Group.png"
+    "landingScreen": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Operations_v1:AFVK:v1",
+    "image": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT261/resources/images/mtmx.png"
   },
   "allKeyswithScreenNames": [
     {
-      "screenName": "testroute",
-      "screensName": "testroute-v1",
-      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+      "screenName": "message_convertor",
+      "screensName": "message_convertor-v1",
+      "ufKey": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Operations_v1:AFVK:v1"
     },
     {
-      "screenName": "menu item 3",
-      "screensName": "menu_item_3-v1",
-      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+      "screenName": "vmc_dashboard_screen",
+      "screensName": "vmc_dashboard_screen-v1",
+      "ufKey": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Dashboard_Screen:AFVK:v1"
     },
     {
-      "screenName": "menu item 4",
-      "screensName": "menu_item_4-v1",
-      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+      "screenName": "vmc_error_screen",
+      "screensName": "vmc_error_screen-v1",
+      "ufKey": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Error_Screen:AFVK:v1"
     },
     {
-      "screenName": "menu item 5",
-      "screensName": "menu_item_5-v1",
-      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-    },
-    {
-      "screenName": "menu item 6",
-      "screensName": "menu_item_6-v1",
-      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-    },
-    {
-      "screenName": "menu item 7",
-      "screensName": "menu_item_7-v1",
-      "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+      "screenName": "master_setup",
+      "screensName": "master_setup-v1",
+      "ufKey": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:Add_Master_Setup:AFVK:v1"
     }
   ],
-  "deploymentArtifactKey": "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1",
-  "appGroupDesc": "appgroup",
+  "deploymentArtifactKey": "CK:CT261:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:VMCDPD:AFVK:v1",
+  "appGroupDesc": "AppGroup",
   "logType": "mongodb",
-  "appDesc": "oprmatrix",
+  "appDesc": "Veracious Message Convertor",
+  "appLogo": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT261/resources/images/transmx-logo.svg",
   "isOld": true,
-  "clientCode": "CT003"
+  "clientCode": "CT261"
 } */
 import './globals.css';
 import type { Metadata } from 'next';
@@ -415,8 +239,8 @@ import { GlobalProvider } from '@/context/GlobalContext';
 import { EventBusProvider } from '@/context/EventBusContext';
 import { ThemeWrapper } from '@/components/ThemeWrapper';
 export const metadata: Metadata = {
-  title: 'oprmatrix',
-  description: 'oprmatrix Generated by Torus'
+  title: 'Veracious Message Convertor',
+  description: 'Veracious Message Convertor Generated by Torus'
 }
 
 export default function RootLayout({

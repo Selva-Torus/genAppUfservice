@@ -31,7 +31,7 @@ const ContextSelector = () => {
   const tp_ps: any = getCookie('tp_ps')
   const toast = useInfoMsg();
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
-  const appName = 'oprmatrix'
+  const appName = 'Veracious Message Convertor'
   const [accessProfiles, setAccessProfiles] = useState<any[]>([])
   const router = useRouter();
   const [loading, setLoading] = useState(false)
@@ -46,38 +46,28 @@ const ContextSelector = () => {
   const [selectedRole, setSelectedRole] = useState<Record<string, string>>({})
   const [orgGrpData, setOrgGrpData] = useState<any>([])
   const [isPending, startTransition] = useTransition();  
-  let landingScreen:string = 'User Screen';
+  let landingScreen:string = 'CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Operations_v1:AFVK:v1';
   let screenDetails: any = {
            keys:[
   {
-    "screenName": "testroute",
-    "screensName": "testroute-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    "screenName": "message_convertor",
+    "screensName": "message_convertor-v1",
+    "ufKey": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Operations_v1:AFVK:v1"
   },
   {
-    "screenName": "menu item 3",
-    "screensName": "menu_item_3-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    "screenName": "vmc_dashboard_screen",
+    "screensName": "vmc_dashboard_screen-v1",
+    "ufKey": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Dashboard_Screen:AFVK:v1"
   },
   {
-    "screenName": "menu item 4",
-    "screensName": "menu_item_4-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    "screenName": "vmc_error_screen",
+    "screensName": "vmc_error_screen-v1",
+    "ufKey": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Error_Screen:AFVK:v1"
   },
   {
-    "screenName": "menu item 5",
-    "screensName": "menu_item_5-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 6",
-    "screensName": "menu_item_6-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 7",
-    "screensName": "menu_item_7-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    "screenName": "master_setup",
+    "screensName": "master_setup-v1",
+    "ufKey": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:Add_Master_Setup:AFVK:v1"
   }
 ]
   }

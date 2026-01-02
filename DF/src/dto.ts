@@ -123,7 +123,8 @@ export class readAPIDTO {
       public filterData?:object,
       public lock?:Object,
       public childTable?:any,
-      public logicCenter?:boolean
+      public logicCenter?:boolean,
+      public schedulerStatus?:string
       ) {}
     }
  
@@ -148,6 +149,7 @@ export class readAPIDTO {
       lock?:Object
       childTable?:any
       logicCenter?:boolean
+      schedulerStatus?:string
     }
   
     export class pageDto { 

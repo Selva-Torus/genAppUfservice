@@ -1,158 +1,32 @@
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc",
-  "deploymentArtifactKey": "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1",
-  "appGroupDesc": "appgroup",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT261:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+  "deploymentArtifactKey": "CK:CT261:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:VMCDPD:AFVK:v1",
+  "appGroupDesc": "AppGroup",
   "logType": "mongodb",
-  "appDesc": "oprmatrix",
+  "appDesc": "Veracious Message Convertor",
+  "appLogo": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT261/resources/images/transmx-logo.svg",
   "isOld": true,
-  "clientCode": "CT003",
+  "clientCode": "CT261",
   "loginDetails": {
-    "firstName": "Peer",
-    "lastName": "m",
-    "username": "",
-    "email": "peerm@torus.tech",
-    "mobile": "8124805539",
-    "loginId": "Peer@786",
-    "dateAdded": "2024-10-11T04:37:31.922Z",
+    "loginId": "sriram",
+    "firstName": "sriram",
+    "lastName": "s",
+    "email": "marip@torus.tech",
+    "mobile": "6345435345",
+    "2FAFlag": "N",
+    "scope": "client_admin",
     "status": "active",
-    "users": "Peer@786Peer m",
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-12-22T13:31:10.265Z",
-    "profile": "torus/9.1/CT003/resources/images/Peer@786/scott-graham-5fNmWej4tAA-unsplash.jpg",
-    "quickLinks": [],
-    "client": "CT003",
+    "accessExpires": "2025-11-30",
+    "dateAdded": "2025-09-01T11:13:43.262Z",
+    "isRestricted": false,
+    "lastActive": "2026-01-02T05:00:58.731Z",
+    "users": "sriramsriram s",
+    "profile": "",
     "edit": "",
-    "noOfProductsService": 0,
-    "userUniqueId": "6828417e-5fe0-43bb-8c55-c465ee6581a0",
-    "touring": {
-      "isneedTouring": true,
-      "touringData": {
-        "/": {
-          "stepIndex": 5,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "/logic-center": {
-          "stepIndex": 3,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "Security": {
-          "stepIndex": 1,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "artifactselector": {
-          "stepIndex": 1,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "build": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/torus": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/company-profile": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/logs_hub": {
-          "stepIndex": 1,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/tenant": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "logs": {
-          "stepIndex": 1,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": [
-            0
-          ]
-        },
-        "/control-center/account-profile": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/appearance": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/user-roles": {
-          "stepIndex": 1,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "/control-center/storage-configuration": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/user-management": {
-          "stepIndex": 2,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "/tenant-settings": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/notifications": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/resource-library": {
-          "stepIndex": 1,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "notification": {
-          "stepIndex": 0,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "detailNotification": {
-          "stepIndex": 1,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        }
-      }
-    }
+    "client": "CT261"
   }
 } */
 import { NestFactory } from '@nestjs/core';
@@ -215,7 +89,7 @@ async function bootstrap() {
     { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 
     'JWT-auth',
     )
-    .addServer('https://tgadev.gsstvl.com/ct003/ag001/oprmatrix/v1/api','Production Server')
+    .addServer('https://tgadev.toruslowcode.com/ct261/ag001/a001/v1/api','Production Server')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger.json', JSON.stringify(document, null, 2));

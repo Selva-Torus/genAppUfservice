@@ -13,43 +13,33 @@ export default function HomePage() {
   const token = getCookie('token');
   const decodedToken = decodeToken(token)
   const encryptionFlagApp: boolean = false;    
-  let landingScreen:string = 'User Screen';
+  let landingScreen:string = 'CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Operations_v1:AFVK:v1';
   const toast = useInfoMsg()
   let screenDetails: any = [
   {
-    "screenName": "testroute",
-    "screensName": "testroute-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    "screenName": "message_convertor",
+    "screensName": "message_convertor-v1",
+    "ufKey": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Operations_v1:AFVK:v1"
   },
   {
-    "screenName": "menu item 3",
-    "screensName": "menu_item_3-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    "screenName": "vmc_dashboard_screen",
+    "screensName": "vmc_dashboard_screen-v1",
+    "ufKey": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Dashboard_Screen:AFVK:v1"
   },
   {
-    "screenName": "menu item 4",
-    "screensName": "menu_item_4-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    "screenName": "vmc_error_screen",
+    "screensName": "vmc_error_screen-v1",
+    "ufKey": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:VMC_Error_Screen:AFVK:v1"
   },
   {
-    "screenName": "menu item 5",
-    "screensName": "menu_item_5-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 6",
-    "screensName": "menu_item_6-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 7",
-    "screensName": "menu_item_7-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    "screenName": "master_setup",
+    "screensName": "master_setup-v1",
+    "ufKey": "CK:CT261:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:Add_Master_Setup:AFVK:v1"
   }
 ]
   const securityCheck = async () => {
     try {
-      const encryptionDpd: string = "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1";
+      const encryptionDpd: string = "CK:CT261:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:VMCDPD:AFVK:v1";
       const encryptionMethod: string = "";
       let introspect:any;
       if(encryptionFlagApp){
@@ -118,7 +108,7 @@ export default function HomePage() {
 
   return (
     <>
-      <LoginForm logo=""   loginType="standard"   image="torus/9.1/CT003/resources/images/Group.png"/>
+      <LoginForm logo="https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT261/resources/images/transmx-logo.svg"   loginType="standard"   image="https://cdns3dfsdev.toruslowcode.com/torus/9.1/CT261/resources/images/mtmx.png"/>
     </>
   )
 }

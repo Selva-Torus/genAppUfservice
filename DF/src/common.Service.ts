@@ -64,7 +64,7 @@ export class CommonService{
   }
   async onModuleInit() {
     const collection = client.db("UploadFile")
-    this.bucket = new GridFSBucket(collection, { bucketName: 'CT003/AG001/oprmatrix/v1' });
+    this.bucket = new GridFSBucket(collection, { bucketName: 'CT261/AG001/A001/v1' });
   }
   private readonly logger = new Logger(CommonService.name) 
 
@@ -1135,15 +1135,15 @@ export class CommonService{
         let logs = {}
         logs['sessionInfo'] = sessionInfo
         if(key){
-          if(fabric == 'PF-PFD' || fabric == 'DF-DFD' || fabric == 'PF-SFD' )
+          if(fabric == 'PF-PFD' || fabric == 'DF-DFD' || fabric == 'PF-SFD' || fabric == 'PF-SCDL')
             logs['processInfo'] = prcdet
           }
         logs['errorDetails'] = errorDetails   
         
         if(typeof key != 'string')
         key = 'commonError'
-        tenant=tenant || "CT003"
-        app=app ||  "oprmatrix"
+        tenant=tenant || "CT261"
+        app=app ||  "A001"
         await this.redisService.setStreamData(tenant+'-'+app+'-TSL',key,JSON.stringify(logs))    
         return logs
 
