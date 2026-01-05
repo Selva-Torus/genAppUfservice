@@ -48,23 +48,26 @@ const ContextSelector = () => {
   const [isPending, startTransition] = useTransition();  
   let landingScreen:string = 'User Screen';
   let screenDetails: any = {
-           keys:[
-  {
-    "screenName": "progress",
-    "screensName": "progress-v1",
-    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1"
-  },
-  {
-    "screenName": "tablecheck",
-    "screensName": "tablecheck-v1",
-    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1"
-  },
-  {
-    "screenName": "indisave",
-    "screensName": "indisave-v1",
-    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1"
-  }
-]
+    keys: [
+      {
+        screenName: 'progress',
+        screensName: 'progress-v1',
+        ufKey:
+          'CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1'
+      },
+      {
+        screenName: 'tablecheck',
+        screensName: 'tablecheck-v1',
+        ufKey:
+          'CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1'
+      },
+      {
+        screenName: 'indisave',
+        screensName: 'indisave-v1',
+        ufKey:
+          'CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1'
+      }
+    ]
   }
   screenDetails = screenDetails.keys
 
@@ -293,46 +296,58 @@ const ContextSelector = () => {
       />
 
       <hr className={twMerge('w-full border', borderColor)} />
-      <div className='h-[90vh] px-5 py-2.5'>
-        <div
-          className={twMerge(
-            'gap-1- flex h-full flex-col rounded-md border-2 px-5 py-2',
-            borderColor
-          )}
-        >
-          <div className='h-1\5 flex w-full items-center justify-between'>
-            <div className='flex flex-col items-start'>
-             {/* <Text variant='display-1' className='text-nowrap'>Profile Selector</Text> */}
-              <Text variant='body-2' className='text-nowrap' color='secondary'>
-                Select Access Profile
-              </Text>
-              <div className='w-[10vw]'>
-                <Dropdown
-                  value={selectedAccessProfile[0]}
-                  staticProps={accessProfiles.map(item => item.accessProfile)}
-                  className=''
-                  onChange={val => {
-                    setSelectedAccessProfile([val] as string[])
-                    const resultORGData = accessProfiles.find(
-                      item => item.accessProfile === val
-                    )
-                    if (
-                      resultORGData &&
-                      resultORGData['orgGrp'] &&
-                      Array.isArray(resultORGData['orgGrp'])
-                    ) {
-                      setOrgGrpData(resultORGData?.orgGrp ?? [])
-                    } else {
-                      setOrgGrpData([])
-                    }
-                    setSelectedOrg({})
-                    setSelectedPs({})
-                    setSelectedRole({})
-                    setSelectedCombination({})
-                  }}
+      <div className='px-5 py-2.5'>
+        <div className='flex w-full items-center justify-end gap-5'>
+          <div className='w-[12vw]'>
+            <Dropdown
+              placeholder='Select Access Profile'
+              value={selectedAccessProfile[0]}
+              staticProps={accessProfiles.map(item => item.accessProfile)}
+              onChange={val => {
+                setSelectedAccessProfile([val] as string[])
+                const resultORGData = accessProfiles.find(
+                  item => item.accessProfile === val
+                )
+                if (
+                  resultORGData &&
+                  resultORGData['orgGrp'] &&
+                  Array.isArray(resultORGData['orgGrp'])
+                ) {
+                  setOrgGrpData(resultORGData?.orgGrp ?? [])
+                } else {
+                  setOrgGrpData([])
+                }
+                setSelectedOrg({})
+                setSelectedPs({})
+                setSelectedRole({})
+                setSelectedCombination({})
+              }}
+            />
+          </div>
+          <div className='flex gap-2 py-2'>
+            <Button
+              className='flex px-5 py-2 items-center rounded-md disabled:opacity-50'
+              icon={'MdArrowForward'}
+              onClick={handleNavigationClick}
+              disabled={
+                Object.keys(selectedRole).length === 0 || loading || isPending
+              }
+            >
+              {loading || isPending ? (
+                <Spin
+                  className='flex w-full justify-center'
+                  spinning
+                  color='success'
+                  style='dots'
                 />
-              </div>
-            </div>
+              ) : (
+                'Next'
+              )}
+            </Button>
+          </div>
+        </div>
+        <div className={'gap-1- flex h-full flex-col rounded-md px-5 py-2'}>
+          <div className='h-1\5 flex w-full items-center justify-between'>
             <div className='flex h-[20vh] w-full items-center justify-center rounded-lg'>
               {blocks.map((block, idx) => (
                 <div key={idx} className='flex items-center '>
@@ -350,9 +365,13 @@ const ContextSelector = () => {
                       )}
                     >
                       <block.icon
-                        className={clsx('h-[0.7vw] w-[0.7vw] transition-all duration-300 ease-in-out', {
-                          'h-[1.1vw] w-[1.1vw]': !block?.group || !block?.title
-                        })}
+                        className={clsx(
+                          'h-[0.7vw] w-[0.7vw] transition-all duration-300 ease-in-out',
+                          {
+                            'h-[1.1vw] w-[1.1vw]':
+                              !block?.group || !block?.title
+                          }
+                        )}
                         style={{
                           color: isLightColor(brandColor)
                         }}
@@ -390,47 +409,20 @@ const ContextSelector = () => {
                 </div>
               ))}
             </div>
-            <div className='flex gap-2 py-2'>
-              <Button
-                className='h-8 w-16 px-2 py-1 rounded-md disabled:opacity-50'
-                icon={'MdArrowForward'}
-                onClick={handleNavigationClick}
-                disabled={Object.keys(selectedRole).length === 0 || loading || isPending}
-              >
-                {loading || isPending ? (
-                  <Spin
-                    className='w-12 h-6'
-                    spinning
-                    color='success'
-                    style='dots'
-                  />
-                ) : (
-                  'OK'
-                )}
-              </Button>
-            </div>
           </div>
 
           {/* Main Content Area */}
           <div className='flex h-4/5'>
-            {selectedAccessProfile.length > 0 ? (
-              <OPRList
-                orgData={orgGrpData}
-                setOrgData={setOrgGrpData}
-                selectedOrg={selectedOrg}
-                selectedPs={selectedPs}
-                selectedRole={selectedRole}
-                setSelectedOrg={setSelectedOrg}
-                setSelectedPs={setSelectedPs}
-                setSelectedRole={setSelectedRole}
-              />
-            ) : (
-              <div className='flex h-[50vh] w-full items-center justify-center'>
-                <Text variant='body-1' color='secondary'>
-                  Please select an access profile to continue
-                </Text>
-              </div>
-            )}
+            <OPRList
+              orgData={orgGrpData}
+              setOrgData={setOrgGrpData}
+              selectedOrg={selectedOrg}
+              selectedPs={selectedPs}
+              selectedRole={selectedRole}
+              setSelectedOrg={setSelectedOrg}
+              setSelectedPs={setSelectedPs}
+              setSelectedRole={setSelectedRole}
+            />
           </div>
         </div>
       </div>

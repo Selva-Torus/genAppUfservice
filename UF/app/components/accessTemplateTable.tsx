@@ -10,6 +10,7 @@ import { Pagination } from '@/components/Pagination'
 import i18n from './i18n'
 import { twMerge } from 'tailwind-merge'
 import { Button } from '@/components/Button'
+import ViewSecurityTemplate from './AccessTemplateTable/ViewSecurityTemplate'
 
 const AccessTemplateTable = ({
   isView = false,
@@ -100,12 +101,13 @@ const AccessTemplateTable = ({
   }
 
   if (templateToBeUpdated) {
+    if (isView) return <ViewSecurityTemplate setIsView={setIsView} />
     return <OrgMatrixTreeComponent isView={isView} setIsView={setIsView} />
   }
 
   return (
     <div className={`g-root h-full w-full`}>
-      <Text variant='body-2' className='mb-4 text-xl font-bold'>
+      <Text contentAlign='left' variant='body-2' className='mb-4 text-xl font-bold'>
         {keyset('Access Template')}
       </Text>
       <div className='h-[73vh] w-[80vw] 2xl:w-[unset] overflow-x-auto'>

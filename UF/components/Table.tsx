@@ -6,6 +6,7 @@ import { Icon } from "./Icon";
 import { getFontSizeClass, getBorderRadiusClass } from"@/app/utils/branding";
 import { BiSort } from "react-icons/bi";
 import { twMerge } from "tailwind-merge";
+import { useTheme } from "@/hooks/useTheme";
 
 interface RenderRowActionsProps {
   item: any;
@@ -59,6 +60,7 @@ export const Table: React.FC<TableProps> = ({
   loading = false,
 }) => {
   const { theme, branding } = useGlobal();
+  const { borderColor } = useTheme()
   const [searchTerm, setSearchTerm] = useState("");
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -362,7 +364,7 @@ export const Table: React.FC<TableProps> = ({
         </div>
       )}
 
-      <div className="border rounded-lg flex-1 flex flex-col overflow-hidden">
+      <div className={twMerge("border rounded-lg flex-1 flex flex-col overflow-hidden", borderColor)}>
         <div className="overflow-auto flex-1 min-h-0">
           <table
             className={`

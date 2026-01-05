@@ -83,13 +83,18 @@ const SetupScreen = ({
 }: {
   tenantAccess: 'view' | 'edit' | null | undefined
 }) => {
-  const [selectedMenuItem, setSelectedMenuItem] = useState<SettingTabs>('general')
+  const [selectedMenuItem, setSelectedMenuItem] =
+    useState<SettingTabs>('general')
   const [orgGrpData, setOrgGrpData] = useState<any>([])
-  const [tenantProfileData, setTenantProfileData] = useState<Record<string, any>>({})
+  const [tenantProfileData, setTenantProfileData] = useState<
+    Record<string, any>
+  >({})
   const [securityData, setSecurityData] = useState<any>([])
   const [userProfileData, setUserProfileData] = useState<any>([])
   const [loading, setLoading] = useState(true)
-  const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>({})
+  const [selectedItems, setSelectedItems] = useState<Record<string, boolean>>(
+    {}
+  )
   const { branding } = useGlobal()
   const { borderColor, textColor, bgColor, isDark } = useTheme()
   const { brandColor } = branding
@@ -100,7 +105,9 @@ const SetupScreen = ({
   const [assignedOPRList, setAssignedOPRList] = useState<Array<string>>([])
   const [refetch, setRefetch] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [activeTab, setActiveTab] = useState<'orgsetup' | 'oprmatrix'>('orgsetup')
+  const [activeTab, setActiveTab] = useState<'orgsetup' | 'oprmatrix'>(
+    'orgsetup'
+  )
   const [masterState, setMasterState] = useState<Record<string, any>>({
     profile: {},
     org: [],
@@ -119,8 +126,13 @@ const SetupScreen = ({
     () => checkDataAccess(getCookie('token')),
     []
   )
-  const [indexOfTemplateToBeUpdated, setIndexOfTemplateToBeUpdated] = useState<number | null>(null)
-  const [templateToBeUpdated, setTemplateToBeUpdated] = useState<Record<string, any> | null>(null)
+  const [indexOfTemplateToBeUpdated, setIndexOfTemplateToBeUpdated] = useState<
+    number | null
+  >(null)
+  const [templateToBeUpdated, setTemplateToBeUpdated] = useState<Record<
+    string,
+    any
+  > | null>(null)
   const [isView, setIsView] = useState(false)
   const [currentLang, setCurrentLang] = useState(getCookie('cfg_lang')) // 'en'
   const keyset = useMemo(() => {
@@ -265,22 +277,22 @@ const SetupScreen = ({
       return [
         {
           name: 'General',
-          svg: <GeneralSettingsIcon fill={isDark ? "white" : "black"} />,
+          svg: <GeneralSettingsIcon fill={isDark ? 'white' : 'black'} />,
           code: 'general'
         },
         {
           name: 'Organizational Matrix',
-          svg: <Org fill={isDark ? "white" : "black"} />,
+          svg: <Org fill={isDark ? 'white' : 'black'} />,
           code: 'org'
         },
         {
           name: 'Access Template',
-          svg: <Security fill={isDark ? "white" : "black"} />,
+          svg: <Security fill={isDark ? 'white' : 'black'} />,
           code: 'st'
         },
         {
           name: 'User Management',
-          svg: <Management fill={isDark ? "white" : "black"} />,
+          svg: <Management fill={isDark ? 'white' : 'black'} />,
           code: 'user'
         }
       ]
@@ -288,7 +300,7 @@ const SetupScreen = ({
       return [
         {
           name: 'General',
-          svg: <GeneralSettingsIcon fill={isDark ? "white" : "black"} />,
+          svg: <GeneralSettingsIcon fill={isDark ? 'white' : 'black'} />,
           code: 'general'
         }
       ]
@@ -318,7 +330,7 @@ const SetupScreen = ({
     setTemplateToBeUpdated(null)
     setIndexOfTemplateToBeUpdated(null)
     resetStates(itemCode)
-    setActiveTab("orgsetup")
+    setActiveTab('orgsetup')
   }
 
   const saveJson = async (key: string, data: any) => {
@@ -744,16 +756,18 @@ const SetupScreen = ({
           <div
             className={`g-root flex h-[90%] w-full flex-col overflow-hidden`}
           >
-            <div
-              className={'flex w-full items-center justify-between px-2'}
-            >
+            <div className={'flex w-full items-center justify-between px-2'}>
               {/* LEFT : TITLE */}
-              <Text variant='header-1' className='whitespace-nowrap'>
+              <Text
+                contentAlign='left'
+                variant='header-1'
+                className='whitespace-nowrap'
+              >
                 {keyset('User Management')}
               </Text>
 
               {/* CENTER : SEARCH + ACTIONS */}
-              <div className='flex items-center gap-2 py-2 w-full'>
+              <div className='flex w-full items-center gap-2 py-2'>
                 <div
                   style={{
                     visibility:
@@ -934,9 +948,11 @@ const SetupScreen = ({
             </div>
 
             <hr className={twMerge('w-full', borderColor)}></hr>
-            <div className={clsx(`flex h-[85vh]`, {
-              "h-fit": selectedMenuItem === 'st'
-            })}>
+            <div
+              className={clsx(`flex h-[85vh]`, {
+                'h-fit': selectedMenuItem === 'st'
+              })}
+            >
               <div
                 style={{
                   borderRight: `1px solid ${borderColor}`,
@@ -951,7 +967,10 @@ const SetupScreen = ({
                       key={item.code}
                       className='truncate text-nowrap'
                       active={selectedMenuItem === item.code}
-                      onClick={() => handleMenuClick(item.code as SettingTabs)}
+                      onClick={() => {
+                        handleMenuClick(item.code as SettingTabs)
+                        setIsView(false)
+                      }}
                     >
                       <span title={keyset(item.name)}>{keyset(item.name)}</span>
                     </Menu.Item>
@@ -981,7 +1000,12 @@ const SetupScreen = ({
                     )}
                   </div>
                 ) : (
-                  selectedMenuItem === 'st' && <AccessTemplateTable isView={isView} setIsView={setIsView} />
+                  selectedMenuItem === 'st' && (
+                    <AccessTemplateTable
+                      isView={isView}
+                      setIsView={setIsView}
+                    />
+                  )
                 )}
               </div>
             </div>

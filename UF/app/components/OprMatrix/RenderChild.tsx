@@ -88,13 +88,13 @@ const RenderChild = ({
             </span>
           )}
           <div className='flex flex-col'>
-            <Text variant='body-2'>
+            <Text contentAlign='left' variant='body-2'>
               {' '}
               {isSearchOpen && searchTerm
                 ? highlightText(displayName, searchTerm, brandColor)
                 : displayName}
             </Text>
-            <Text color='secondary'>{displayCode.replace(codePrefix, '')}</Text>
+            <Text contentAlign='left' color='secondary'>{displayCode.replace(codePrefix, '')}</Text>
           </div>
         </div>
         {!existsInContext && onAddToContext ? (

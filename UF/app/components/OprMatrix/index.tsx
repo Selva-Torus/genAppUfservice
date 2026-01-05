@@ -79,7 +79,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
         borderColor
       )}
     >
-      <Text variant='body-1' className='font-semibold'>
+      <Text contentAlign='left' variant='body-1' className='font-semibold'>
         {title}
       </Text>
       <div>

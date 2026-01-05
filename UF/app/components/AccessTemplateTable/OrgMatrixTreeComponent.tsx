@@ -271,7 +271,7 @@ const OrgMatrixTreeComponent = ({
               </Text>
             </div>
 
-            <Text variant='body-3'>{templateToBeUpdated?.accessProfile}</Text>
+            <Text contentAlign='left' variant='body-3'>{templateToBeUpdated?.accessProfile}</Text>
           </div>
 
           <div>
@@ -356,8 +356,8 @@ const OrgMatrixTreeComponent = ({
       <div className='flex h-full w-full gap-4 '>
         <div className='flex h-full w-1/3 flex-col gap-3'>
           <span className='flex flex-col'>
-            <Text variant='header-1'>{keyset('Organization Matrix')}</Text>
-            <Text variant='body-1' color='secondary'>
+            <Text contentAlign='left' variant='header-1'>{keyset('Organization Matrix')}</Text>
+            <Text contentAlign='left' variant='body-1' color='secondary'>
               {keyset('Interact with the tree to modify')}
             </Text>
           </span>

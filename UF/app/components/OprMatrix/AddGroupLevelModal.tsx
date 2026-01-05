@@ -69,12 +69,13 @@ const AddGroupLevelModal = ({
   return (
     <div className='flex h-fit flex-col '>
       <div className='flex w-full items-center justify-between py-[.5vh]'>
-        <Text variant='body-3'>{modalTitle}</Text>
+        <Text contentAlign='left' variant='body-3'>{modalTitle}</Text>
         <Button className={'!w-fit p-1 rounded-md'} onClick={close}>
           <Multiply height='.7vw' width='.7vw' />
         </Button>
       </div>
       <Text
+        contentAlign='left'
         variant='caption-1'
         color='secondary'
       >

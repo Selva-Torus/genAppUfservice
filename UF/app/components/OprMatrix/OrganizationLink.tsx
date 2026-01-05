@@ -44,6 +44,7 @@ interface OrgLinkContextType {
     value: { code: string; name: string }
   ) => void
   deleteOrgMasterContent: (path: string, index: number) => void
+  dragTypeRef: React.MutableRefObject<string>
 }
 
 const OrgLinkContext = React.createContext<OrgLinkContextType | null>(null)
@@ -58,6 +59,9 @@ const OrganizationLink = ({
   const [collapsedItems, setCollapsedItems] = useState<Record<string, boolean>>(
     {}
   )
+  const { branding } = useGlobal()
+  const { borderColor } = useTheme()
+  const { brandColor } = branding
   const {
     orgGrpData: linkedOrgData,
     setOrgGrpData: setLinkedOrgData,
@@ -65,6 +69,7 @@ const OrganizationLink = ({
     setOrgMasterData: setOrgMaster
   } = React.useContext(SetupScreenContext) as SetupScreenContextType
   const toast = useInfoMsg()
+  const dragTypeRef = useRef('')
 
   const toggleDropdown = (id: string) => {
     setCollapsedItems(prev => ({ ...prev, [id]: !prev[id] }))
@@ -384,13 +389,19 @@ const OrganizationLink = ({
         setOrgMaster,
         addOrgMasterContent,
         editOrgMasterContent,
-        deleteOrgMasterContent
+        deleteOrgMasterContent,
+        dragTypeRef
       }}
     >
       <div className='flex h-[83vh] w-full gap-[2vw]'>
         {/* LEFT PANEL - Organization Master */}
-        <div className='border-torus-border h-full w-1/2 rounded-lg border'>
-          <div className='border-torus-border flex items-center justify-between border-b px-[1vw] py-[1.5vh]'>
+        <div className={twMerge('h-full w-1/2 rounded-lg border', borderColor)}>
+          <div
+            className={twMerge(
+              'flex items-center justify-between border-b px-[1vw] py-[1.5vh]',
+              borderColor
+            )}
+          >
             <h2 className='text-torus-text font-semibold'>
               Available Organizations
             </h2>
@@ -410,18 +421,30 @@ const OrganizationLink = ({
         </div>
 
         {/* RIGHT PANEL - Linked Organization Structure */}
-        <div className='border-torus-border h-full w-1/2 rounded-lg border'>
-          <div className='border-torus-border flex items-center justify-between border-b px-[1vw] py-[1.5vh]'>
+        <div className={twMerge('h-full w-1/2 rounded-lg border', borderColor)}>
+          <div
+            className={twMerge(
+              'flex items-center justify-between border-b px-[1vw] py-[1.5vh]',
+              borderColor
+            )}
+          >
             <h2 className='text-torus-text font-semibold'>
               Organization Links
             </h2>
           </div>
 
           <div
-            className='flex h-[calc(80vh-5vh)] flex-col gap-[1vh] overflow-y-auto px-[0.5vw] py-[1.5vh]'
-            onDragOver={e => e.preventDefault()}
+            className={twMerge(
+              'flex h-[calc(82.2vh-5vh)] flex-col gap-[1vh] overflow-y-auto rounded-md border px-[0.5vw] py-[1.5vh]',
+              borderColor
+            )}
+            onDragOver={e => {
+              e.preventDefault()
+              e.currentTarget.style.borderColor = brandColor
+            }}
             onDrop={e => {
               e.preventDefault()
+              e.currentTarget.style.borderColor = ''
               const type = e.dataTransfer.getData('type')
               const data = JSON.parse(e.dataTransfer.getData('data'))
               if (
@@ -454,9 +477,15 @@ const OrganizationLink = ({
                 toast('Organization group added to links', 'success')
               }
             }}
+            onDragLeave={e => (e.currentTarget.style.borderColor = '')}
           >
             {linkedOrgData.length === 0 ? (
-              <div className='border-torus-border flex h-full items-center justify-center rounded-lg border-2 border-dashed'>
+              <div
+                className={twMerge(
+                  'flex h-full items-center justify-center rounded-lg border-2 border-dashed',
+                  borderColor
+                )}
+              >
                 <p className='text-torus-text-opacity-50 text-sm'>
                   Drag organization groups here to create links
                 </p>
@@ -531,7 +560,8 @@ const LeftPanelOrgGroup = ({
     editOrgMasterContent,
     deleteOrgMasterContent,
     setOrgMaster,
-    orgMaster
+    orgMaster,
+    dragTypeRef
   } = useOrgLink()
   const isOpen = !collapsedItems[orgGrp.orgGrpId]
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
@@ -544,6 +574,7 @@ const LeftPanelOrgGroup = ({
   const popoverButtonElement = useRef(null)
 
   const handleDragStart = (e: React.DragEvent) => {
+    dragTypeRef.current = 'orgGrp'
     e.dataTransfer.setData('type', 'orgGrp')
     e.dataTransfer.setData('data', JSON.stringify(orgGrp))
   }
@@ -594,7 +625,7 @@ const LeftPanelOrgGroup = ({
           >
             <div className='flex flex-col gap-[0.58vh] px-[0.46vw] py-[0.58vh]'>
               <div
-                className='hover:bg-torus-bg-hover flex cursor-pointer items-center gap-[0.5vw] rounded p-[0.29vw] leading-[2.22vh] outline-none'
+                className='flex cursor-pointer items-center gap-[0.5vw] rounded p-[0.29vw] leading-[2.22vh] outline-none'
                 onClick={e => {
                   e.stopPropagation()
                   setIsPopoverOpen(false)
@@ -604,12 +635,12 @@ const LeftPanelOrgGroup = ({
                 <PlusIcon
                   height='.8vw'
                   width='.8vw'
-                  fill={isDark ? "white" : "black"}
+                  fill={isDark ? 'white' : 'black'}
                 />
                 Add Organization
               </div>
               <div
-                className='hover:bg-torus-bg-hover flex cursor-pointer items-center gap-[0.5vw] rounded p-[0.29vw] leading-[2.22vh] outline-none'
+                className='flex cursor-pointer items-center gap-[0.5vw] rounded p-[0.29vw] leading-[2.22vh] outline-none'
                 onClick={e => {
                   if (srcOrgIds.includes(orgGrp.orgGrpId)) {
                     toast(
@@ -623,11 +654,15 @@ const LeftPanelOrgGroup = ({
                   setTimeout(() => setIsEditModalOpen(true), 100)
                 }}
               >
-                <EditIcon height='.8vw' width='.8vw' />
+                <EditIcon
+                  fill={isDark ? 'white' : 'black'}
+                  height='.8vw'
+                  width='.8vw'
+                />
                 Edit Group
               </div>
               <div
-                className='hover:bg-torus-bg-hover flex cursor-pointer items-center gap-[0.5vw] rounded p-[0.29vw] leading-[2.22vh] outline-none'
+                className='flex cursor-pointer items-center gap-[0.5vw] rounded p-[0.29vw] leading-[2.22vh] outline-none'
                 onClick={e => {
                   if (srcOrgIds.includes(orgGrp.orgGrpId)) {
                     toast(
@@ -735,16 +770,18 @@ const LeftPanelOrg = ({
   orgGrp: any
   srcOrgIds: Array<string>
 }) => {
-  const { editOrgMasterContent, deleteOrgMasterContent } = useOrgLink()
+  const { editOrgMasterContent, deleteOrgMasterContent, dragTypeRef } =
+    useOrgLink()
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const { branding } = useGlobal()
-  const { isDark, bgColor } = useTheme()
+  const { isDark, bgColor, borderColor } = useTheme()
   const { brandColor } = branding
   const popoverButtonElement = useRef(null)
   const toast = useInfoMsg()
 
   const handleDragStart = (e: React.DragEvent) => {
+    dragTypeRef.current = 'org'
     e.stopPropagation()
     e.dataTransfer.setData('type', 'org')
     e.dataTransfer.setData(
@@ -762,7 +799,11 @@ const LeftPanelOrg = ({
     <div
       draggable
       onDragStart={handleDragStart}
-      className={twMerge('group flex cursor-grab items-center justify-between gap-[0.5vw] rounded-lg border px-[0.5vw] py-[1vh] active:cursor-grabbing hover:border-[var(--brand-color)]', bgColor)}
+      className={twMerge(
+        'group flex cursor-grab items-center justify-between gap-[0.5vw] rounded-lg border px-[0.5vw] py-[1vh] hover:border-[var(--brand-color)] active:cursor-grabbing',
+        bgColor,
+        borderColor
+      )}
     >
       <div className='flex items-center gap-[0.5vw]'>
         <SixDotsSvg fill={isDark ? 'white' : 'black'} />
@@ -807,7 +848,11 @@ const LeftPanelOrg = ({
                 setTimeout(() => setIsEditModalOpen(true), 100)
               }}
             >
-              <EditIcon height='.8vw' width='.8vw' fill={isDark ? 'white' : 'black'} />
+              <EditIcon
+                height='.8vw'
+                width='.8vw'
+                fill={isDark ? 'white' : 'black'}
+              />
               Edit Organization
             </div>
             <div
@@ -874,11 +919,16 @@ const RightPanelOrgGroup = ({
   orgGrpIndex: number
   assignedOPRList: Array<string>
 }) => {
-  const { collapsedItems, toggleDropdown, handleDrop, handleRemoveFromLink } =
-    useOrgLink()
+  const {
+    collapsedItems,
+    toggleDropdown,
+    handleDrop,
+    handleRemoveFromLink,
+    dragTypeRef
+  } = useOrgLink()
   const isOpen = !collapsedItems[`linked-${orgGrp.orgGrpId}`]
   const { branding } = useGlobal()
-  const { isDark } = useTheme()
+  const { isDark, borderColor } = useTheme()
   const { brandColor } = branding
   const toast = useInfoMsg()
 
@@ -896,12 +946,25 @@ const RightPanelOrgGroup = ({
 
   return (
     <div
-      onDragOver={e => e.preventDefault()}
-      onDrop={handleDropOnOrgGroup}
+      onDragOver={e => {
+        e.preventDefault()
+        if (dragTypeRef.current === 'org') {
+          e.currentTarget.style.borderColor = brandColor
+        }
+        e.stopPropagation()
+      }}
+      onDrop={e => {
+        handleDropOnOrgGroup(e)
+        e.currentTarget.style.borderColor = ''
+      }}
+      onDragLeave={e => (e.currentTarget.style.borderColor = '')}
       style={{
         backgroundColor: hexWithOpacity(brandColor, 0.1)
       }}
-      className='flex w-full flex-col gap-[1vh] rounded-lg px-[1vw] py-[1.5vh]'
+      className={twMerge(
+        'flex w-full flex-col gap-[1vh] rounded-lg border px-[1vw] py-[1.5vh]',
+        borderColor
+      )}
     >
       <div
         onClick={() => toggleDropdown(`linked-${orgGrp.orgGrpId}`)}
@@ -967,16 +1030,16 @@ const RightPanelOrg = ({
   parentPath: string
   assignedOPRList: Array<string>
 }) => {
-  const { collapsedItems, toggleDropdown, handleRemoveFromLink } = useOrgLink()
+  const { collapsedItems, toggleDropdown, handleRemoveFromLink, dragTypeRef } =
+    useOrgLink()
   const toast = useInfoMsg()
   const { orgGrpData: linkedOrgData, setOrgGrpData: setLinkedOrgData } =
     React.useContext(SetupScreenContext) as SetupScreenContextType
-
   const isOpen = !collapsedItems[`linked-${org.orgId}`]
   const hasSubOrgs = org.subOrgGrp && org.subOrgGrp.length > 0
   const orgPath = `${parentPath}.${orgIndex}`
   const { branding } = useGlobal()
-  const { isDark, bgColor } = useTheme()
+  const { borderColor, bgColor } = useTheme()
   const { brandColor } = branding
 
   const handleDropOnOrg = (e: React.DragEvent) => {
@@ -1072,14 +1135,86 @@ const RightPanelOrg = ({
       }
 
       toast('Organization converted to sub-organization', 'success')
+    } else if (type === 'orgGrp') {
+      // Create sub-org group when org is dropped into another org
+      const subOrgGrpPath = `${orgPath}.subOrgGrp`
+      const existingSubOrgGrps = _.get(linkedOrgData, subOrgGrpPath) || []
+
+      if (existingSubOrgGrps.length === 0) {
+        // Create first sub-org group
+        const newSubOrgGrp = {
+          subOrgGrpCode: data.orgGrpCode,
+          subOrgGrpName: data.orgGrpName,
+          srcId: data.orgGrpId,
+          subOrgGrpId: uuidv4(),
+          subOrg:
+            data.org && Array.isArray(data.org)
+              ? data.org.map((org: any) => ({
+                  subOrgCode: org.orgCode,
+                  subOrgName: org.orgName,
+                  srcId: org.orgId,
+                  subOrgId: uuidv4(),
+                  psGrp: org.psGrp || []
+                }))
+              : []
+        }
+
+        const updatedLinkedData = structuredClone(linkedOrgData)
+        _.set(updatedLinkedData, subOrgGrpPath, [newSubOrgGrp])
+        setLinkedOrgData(updatedLinkedData)
+      } else {
+        const isGroupExist = existingSubOrgGrps.find(
+          (so: any) => so.subOrgGrpCode === data.orgGrpCode
+        )
+
+        if (isGroupExist) {
+          toast('Sub-organization group with same code already exists', 'warning')
+          return
+        }
+        const newSubOrgGrp = {
+          subOrgGrpCode: data.orgGrpCode,
+          subOrgGrpName: data.orgGrpName,
+          srcId: data.orgGrpId,
+          subOrgGrpId: uuidv4(),
+          subOrg:
+            data.org && Array.isArray(data.org)
+              ? data.org.map((org: any) => ({
+                  subOrgCode: org.orgCode,
+                  subOrgName: org.orgName,
+                  srcId: org.orgId,
+                  subOrgId: uuidv4(),
+                  psGrp: org.psGrp || []
+                }))
+              : []
+        }
+
+        const updatedLinkedData = structuredClone(linkedOrgData)
+        _.set(updatedLinkedData, subOrgGrpPath, [
+          ...existingSubOrgGrps,
+          newSubOrgGrp
+        ])
+        setLinkedOrgData(updatedLinkedData)
+      }
     }
   }
 
   return (
     <div
-      onDragOver={e => e.preventDefault()}
-      onDrop={handleDropOnOrg}
-      className={twMerge('flex flex-col gap-[0.5vh] rounded-lg border pb-[1vh]', bgColor)}
+      onDragOver={e => {
+        e.preventDefault()
+        e.currentTarget.style.borderColor = brandColor
+        e.stopPropagation()
+      }}
+      onDragLeave={e => (e.currentTarget.style.borderColor = '')}
+      onDrop={e => {
+        handleDropOnOrg(e)
+        e.currentTarget.style.borderColor = ''
+      }}
+      className={twMerge(
+        'flex flex-col gap-[0.5vh] rounded-lg border pb-[1vh]',
+        bgColor,
+        borderColor
+      )}
     >
       <div
         className={
@@ -1141,19 +1276,69 @@ const RightPanelSubOrgGroup = ({
   parentPath: string
   assignedOPRList: Array<string>
 }) => {
-  const { collapsedItems, toggleDropdown, handleRemoveFromLink } = useOrgLink()
+  const { collapsedItems, toggleDropdown, handleRemoveFromLink, dragTypeRef } =
+    useOrgLink()
+  const { orgGrpData: linkedOrgData, setOrgGrpData: setLinkedOrgData } =
+    React.useContext(SetupScreenContext) as SetupScreenContextType
   const { branding } = useGlobal()
-  const { isDark } = useTheme()
+  const { isDark, borderColor } = useTheme()
   const { brandColor } = branding
   const toast = useInfoMsg()
   const isOpen = !collapsedItems[`linked-${subOrgGrp.subOrgGrpId}`]
+
+  const handleDropSubOrg = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    const type = e.dataTransfer.getData('type')
+    const data = JSON.parse(e.dataTransfer.getData('data'))
+
+    if (type === 'org') {
+      const checkExist = subOrgGrp.subOrg.find(
+        (so: any) => so.subOrgCode === data.orgCode
+      )
+      if (checkExist) {
+        toast('Organization already exists in this group', 'warning')
+        return
+      }
+
+      const newSubOrg = {
+        subOrgName: data.orgName,
+        subOrgCode: data.orgCode,
+        subOrgId: data.orgId
+      }
+
+      const existingSubOrgs = subOrgGrp.subOrg || []
+      const updatedLinkedData = structuredClone(linkedOrgData)
+      _.set(updatedLinkedData, `${parentPath}.${subOrgGrpIndex}.subOrg`, [
+        ...existingSubOrgs,
+        newSubOrg
+      ])
+      setLinkedOrgData(updatedLinkedData)
+    }
+  }
 
   return (
     <div
       style={{
         backgroundColor: hexWithOpacity(brandColor, 0.1)
       }}
-      className='flex flex-col gap-[0.5vh] rounded-lg border px-[0.5vw] py-[0.5vh]'
+      onDragOver={e => {
+        e.preventDefault()
+        if (dragTypeRef.current === 'org') {
+          e.currentTarget.style.borderColor = brandColor
+        }
+        e.stopPropagation()
+      }}
+      onDragLeave={e => (e.currentTarget.style.borderColor = '')}
+      onDrop={e => {
+        handleDropSubOrg(e)
+        e.currentTarget.style.borderColor = ''
+      }}
+      className={twMerge(
+        'flex flex-col gap-[0.5vh] rounded-lg border px-[0.5vw] py-[0.5vh]',
+        borderColor
+      )}
     >
       <div
         onClick={() => toggleDropdown(`linked-${subOrgGrp.subOrgGrpId}`)}
@@ -1219,11 +1404,17 @@ const RightPanelSubOrg = ({
   const { handleRemoveFromLink } = useOrgLink()
   const toast = useInfoMsg()
   const { branding } = useGlobal()
-  const { isDark, bgColor } = useTheme()
+  const { borderColor, bgColor } = useTheme()
   const { brandColor } = branding
 
   return (
-    <div className={twMerge('group flex items-center justify-between rounded border px-[0.5vw] py-[0.5vh]', bgColor)}>
+    <div
+      className={twMerge(
+        'group flex items-center justify-between rounded border px-[0.5vw] py-[0.5vh]',
+        bgColor,
+        borderColor
+      )}
+    >
       <div className='flex items-center gap-[0.5vw]'>
         <LuBuilding2 className='h-[0.8vw] w-[0.8vw]' />
         <div className='flex flex-col'>

@@ -498,7 +498,10 @@ export default function SecurityTemplateSelection({
         )}
       >
         <div className='flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
-          <Text className='w-4/5 truncate text-nowrap text-lg font-semibold'>
+          <Text
+            contentAlign='left'
+            className='w-4/5 truncate text-nowrap text-lg font-semibold'
+          >
             <span title={keyset('Organization')}>{keyset('Organization')}</span>
           </Text>
           {isSearchOpen === 'org' ? (
@@ -517,7 +520,7 @@ export default function SecurityTemplateSelection({
                   setIsSearchOpen(null)
                   setOrgSearchTerm('')
                 }}
-                className='!w-fit p-1 !bg-[unset]'
+                className='!w-fit !bg-[unset] p-1'
               >
                 <Multiply
                   height='.7vw'
@@ -528,7 +531,7 @@ export default function SecurityTemplateSelection({
             </div>
           ) : (
             <Button
-              className='!w-fit p-1 !bg-[unset]'
+              className='!w-fit !bg-[unset] p-1'
               onClick={() => {
                 setIsSearchOpen('org')
                 setOrgSearchTerm('')
@@ -584,9 +587,11 @@ export default function SecurityTemplateSelection({
                     >
                       <DownArrow fill={isDark ? 'white' : 'black'} />
                     </span>
-                    <Text>{grp.orgGrpName}</Text>
+                    <Text contentAlign='left' className='text-nowrap'>
+                      {grp.orgGrpName}
+                    </Text>
                   </div>
-                  <Text>{grp.org.length}</Text>
+                  <Text contentAlign='right'>{grp.org.length}</Text>
                 </div>
 
                 {/* ORG LIST */}
@@ -607,14 +612,7 @@ export default function SecurityTemplateSelection({
                             borderColor:
                               selectedOrgId === org.orgId ? brandColor : ''
                           }}
-                          className={clsx(
-                            `border-torus-border mt-2 w-full cursor-pointer rounded border-2 p-2`,
-                            {
-                              'border-torus-accent-color':
-                                selectedOrgId === org.orgId,
-                              'bg-torus-bg': selectedOrgId !== org.orgId
-                            }
-                          )}
+                          className={twMerge(`mt-2 w-full cursor-pointer rounded border-2 p-2`, borderColor)}
                         >
                           <div
                             style={{ fontSize: `${fontSize * 0.8}vw` }}
@@ -663,7 +661,7 @@ export default function SecurityTemplateSelection({
         )}
       >
         <div className='flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
-          <Text className='w-4/5 truncate text-nowrap text-lg font-semibold'>
+          <Text contentAlign='left' className='w-4/5 truncate text-nowrap text-lg font-semibold'>
             <span title={keyset('Products/Services')}>
               {keyset('Products/Services')}
             </span>
@@ -680,7 +678,7 @@ export default function SecurityTemplateSelection({
                 )}
               />
               <Button
-                className='!w-fit p-1 !bg-[unset]'
+                className='!w-fit !bg-[unset] p-1'
                 onClick={() => {
                   setIsSearchOpen(null)
                   setPsSearchTerm('')
@@ -695,7 +693,7 @@ export default function SecurityTemplateSelection({
             </div>
           ) : (
             <Button
-              className='!w-fit p-1 !bg-[unset]'
+              className='!w-fit !bg-[unset] p-1'
               onClick={() => {
                 setIsSearchOpen('ps')
                 setPsSearchTerm('')
@@ -748,7 +746,7 @@ export default function SecurityTemplateSelection({
                         >
                           <DownArrow fill={isDark ? 'white' : 'black'} />
                         </span>
-                        <Text>
+                        <Text contentAlign='left' className='text-nowrap'>
                           {highlightText(
                             pg.psGrpName,
                             psSearchTerm,
@@ -756,7 +754,7 @@ export default function SecurityTemplateSelection({
                           )}
                         </Text>
                       </div>
-                      <Text>{pg.ps.length}</Text>
+                      <Text contentAlign='right'>{pg.ps.length}</Text>
                     </div>
 
                     {/* PS LIST */}
@@ -770,10 +768,10 @@ export default function SecurityTemplateSelection({
                             bgColor
                           )}
                         >
-                          <Text>
+                          <Text contentAlign='left'>
                             {highlightText(ps.psName, psSearchTerm, brandColor)}
                           </Text>
-                          <Text color='secondary'>
+                          <Text contentAlign='left' color='secondary'>
                             {ps.psCode.split('-').pop()}
                           </Text>
                         </div>
@@ -792,7 +790,7 @@ export default function SecurityTemplateSelection({
         )}
       >
         <div className='flex w-full items-center justify-between rounded-t-lg px-[.8vw] py-[.5vh]'>
-          <Text className='w-4/5 truncate text-nowrap text-lg font-semibold'>
+          <Text contentAlign='left' className='w-4/5 truncate text-nowrap text-lg font-semibold'>
             <span title={keyset('Roles')}>{keyset('Roles')}</span>
           </Text>
           {isSearchOpen === 'role' ? (
@@ -807,7 +805,7 @@ export default function SecurityTemplateSelection({
                 )}
               />
               <Button
-                className='!w-fit p-1 !bg-[unset]'
+                className='!w-fit !bg-[unset] p-1'
                 onClick={() => {
                   setIsSearchOpen(null)
                   setRoleSearchTerm('')
@@ -822,7 +820,7 @@ export default function SecurityTemplateSelection({
             </div>
           ) : (
             <Button
-              className='!w-fit p-1 !bg-[unset]'
+              className='!w-fit !bg-[unset] p-1'
               onClick={() => {
                 setIsSearchOpen('role')
                 setRoleSearchTerm('')
@@ -880,7 +878,7 @@ export default function SecurityTemplateSelection({
                             >
                               <DownArrow fill={isDark ? 'white' : 'black'} />
                             </span>
-                            <Text>
+                            <Text contentAlign='left' className='text-nowrap'>
                               {highlightText(
                                 rg.roleGrpName,
                                 roleSearchTerm,
@@ -888,7 +886,7 @@ export default function SecurityTemplateSelection({
                               )}
                             </Text>
                           </div>
-                          <Text>{rg.roles.length}</Text>
+                          <Text contentAlign='right'>{rg.roles.length}</Text>
                         </div>
 
                         {/* ROLE LIST */}
@@ -921,7 +919,7 @@ export default function SecurityTemplateSelection({
                                 onChange={() => toggleRole(role.roleId)}
                                 disabled={isView}
                                 style={{
-                                  accentColor : brandColor
+                                  accentColor: brandColor
                                 }}
                               />
                             </label>

@@ -48,7 +48,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
         borderColor
       )}
     >
-      <Text variant='body-1' className='font-semibold'>
+      <Text contentAlign='left' variant='body-1' className='font-semibold'>
         {title}
       </Text>
       <div className='h-6'>
@@ -310,6 +310,18 @@ const OPRList = ({
     })
   }, [allProducts, selectedOrg, organizationDataWithIndexing])
 
+  const psGroupsToRender =
+    isSearchOpen === 'product' && searchTerm
+      ? classifiedProducts.filter(group => {
+          const term = searchTerm.toLowerCase()
+          const matchesGroup = group.psGrpName.toLowerCase().includes(term)
+          const matchesProduct = group.ps.some((p: any) =>
+            p.psName.toLowerCase().includes(term)
+          )
+          return matchesGroup || matchesProduct
+        })
+      : getSelectedPsGrps() ?? []
+
   const allRoles = useMemo(() => {
     const result: any[] = []
     organizationDataWithIndexing.forEach((orgGrp: any) => {
@@ -388,6 +400,18 @@ const OPRList = ({
     })
   }, [allRoles, selectedPs, organizationDataWithIndexing])
 
+  const roleGroupsToRender =
+    isSearchOpen === 'role' && searchTerm
+      ? classifiedRoles.filter(group => {
+          const term = searchTerm.toLowerCase()
+          const matchesGroup = group.roleGrpName.toLowerCase().includes(term)
+          const matchesRole = group.roles.some((r: any) =>
+            r.roleName.toLowerCase().includes(term)
+          )
+          return matchesGroup || matchesRole
+        })
+      : getSelectedRoleGrps() ?? []
+
   return (
     <OprListContext.Provider
       value={{
@@ -414,71 +438,77 @@ const OPRList = ({
             />
 
             <div className='flex h-[55vh] w-full flex-col gap-[1vh] overflow-y-auto px-[.5vw] py-[1.5vh]'>
-              {organizationDataWithIndexing
-                .filter((group: any) => {
-                  if (isSearchOpen !== 'org') return group
-                  const term = searchTerm.toLowerCase()
-                  const matchesGroup = group.orgGrpName
-                    .toLowerCase()
-                    .includes(term)
-                  const matchesProduct = group.org.some((org: any) =>
-                    org.orgName.toLowerCase().includes(term)
-                  )
-                  return matchesGroup || matchesProduct
-                })
-                .map((orgGrp: any, orgGrpIndex: number) => (
-                  <React.Fragment key={orgGrpIndex}>
-                    <RenderGroup
-                      displayCode={orgGrp.orgGrpCode}
-                      displayName={orgGrp.orgGrpName}
-                      codePrefix={''}
-                      itemId={orgGrp.orgGrpId}
-                    >
-                      {orgGrp.org.map((org: any, orgIndex: number) => (
-                        <RenderChild
-                          displayName={org.orgName}
-                          displayCode={org.orgCode}
-                          codePrefix={`${orgGrp.orgGrpCode}-`}
-                          isSelected={selectedOrg.id === org.orgId}
-                          existsInContext={true}
-                          onClick={() =>
-                            handleOrgClick({
-                              orgGrpCode: orgGrp.orgGrpCode,
-                              orgGrpName: orgGrp.orgGrpName,
-                              orgName: org.orgName,
-                              orgCode: org.orgCode,
-                              path: `${orgGrp?.originalIndex}.org.${org?.originalIndex}.psGrp`,
-                              id: org.orgId
-                            })
-                          }
-                          key={org.orgId}
-                        >
-                          {org?.subOrgGrp?.map(
-                            (sub: any, suborgIndex: number) => {
-                              return (
-                                <RenderSubOrg
-                                  key={sub.subOrgGrpId}
-                                  subOrgGrp={sub}
-                                  subOrgGrpIndex={suborgIndex}
-                                  parentPath={`${orgGrp?.originalIndex}.org.${org?.originalIndex}.subOrgGrp`}
-                                  parentCode={org.orgCode}
-                                  handleOrgClick={handleOrgClick}
-                                  isSearchOpen={isSearchOpen}
-                                  searchTerm={searchTerm}
-                                  orgGrpCode={orgGrp.orgGrpCode}
-                                  orgGrpName={orgGrp.orgGrpName}
-                                  orgName={org.orgName}
-                                  orgCode={org.orgCode}
-                                  selectedOrg={selectedOrg}
-                                />
-                              )
+              {organizationDataWithIndexing.length ? (
+                organizationDataWithIndexing
+                  .filter((group: any) => {
+                    if (isSearchOpen !== 'org') return group
+                    const term = searchTerm.toLowerCase()
+                    const matchesGroup = group.orgGrpName
+                      .toLowerCase()
+                      .includes(term)
+                    const matchesProduct = group.org.some((org: any) =>
+                      org.orgName.toLowerCase().includes(term)
+                    )
+                    return matchesGroup || matchesProduct
+                  })
+                  .map((orgGrp: any, orgGrpIndex: number) => (
+                    <React.Fragment key={orgGrpIndex}>
+                      <RenderGroup
+                        displayCode={orgGrp.orgGrpCode}
+                        displayName={orgGrp.orgGrpName}
+                        codePrefix={''}
+                        itemId={orgGrp.orgGrpId}
+                      >
+                        {orgGrp.org.map((org: any, orgIndex: number) => (
+                          <RenderChild
+                            displayName={org.orgName}
+                            displayCode={org.orgCode}
+                            codePrefix={`${orgGrp.orgGrpCode}-`}
+                            isSelected={selectedOrg.id === org.orgId}
+                            existsInContext={true}
+                            onClick={() =>
+                              handleOrgClick({
+                                orgGrpCode: orgGrp.orgGrpCode,
+                                orgGrpName: orgGrp.orgGrpName,
+                                orgName: org.orgName,
+                                orgCode: org.orgCode,
+                                path: `${orgGrp?.originalIndex}.org.${org?.originalIndex}.psGrp`,
+                                id: org.orgId
+                              })
                             }
-                          )}
-                        </RenderChild>
-                      ))}
-                    </RenderGroup>
-                  </React.Fragment>
-                ))}
+                            key={org.orgId}
+                          >
+                            {org?.subOrgGrp?.map(
+                              (sub: any, suborgIndex: number) => {
+                                return (
+                                  <RenderSubOrg
+                                    key={sub.subOrgGrpId}
+                                    subOrgGrp={sub}
+                                    subOrgGrpIndex={suborgIndex}
+                                    parentPath={`${orgGrp?.originalIndex}.org.${org?.originalIndex}.subOrgGrp`}
+                                    parentCode={org.orgCode}
+                                    handleOrgClick={handleOrgClick}
+                                    isSearchOpen={isSearchOpen}
+                                    searchTerm={searchTerm}
+                                    orgGrpCode={orgGrp.orgGrpCode}
+                                    orgGrpName={orgGrp.orgGrpName}
+                                    orgName={org.orgName}
+                                    orgCode={org.orgCode}
+                                    selectedOrg={selectedOrg}
+                                  />
+                                )
+                              }
+                            )}
+                          </RenderChild>
+                        ))}
+                      </RenderGroup>
+                    </React.Fragment>
+                  ))
+              ) : (
+                <Text variant='body-1' color='secondary'>
+                  Please select an access profile to continue
+                </Text>
+              )}
             </div>
           </div>
 
@@ -497,64 +527,58 @@ const OPRList = ({
             />
 
             <div className='flex h-[55vh] w-full flex-col gap-[1vh] overflow-y-auto px-[.5vw] py-[1.5vh]'>
-              {(isSearchOpen === 'product' && searchTerm
-                ? classifiedProducts.filter(group => {
-                    const term = searchTerm.toLowerCase()
-                    const matchesGroup = group.psGrpName
-                      .toLowerCase()
-                      .includes(term)
-                    const matchesProduct = group.ps.some((p: any) =>
-                      p.psName.toLowerCase().includes(term)
-                    )
-                    return matchesGroup || matchesProduct
-                  })
-                : getSelectedPsGrps() ?? []
-              ).map((psg: any, psgIndex: number) => (
-                <React.Fragment key={psgIndex}>
-                  <RenderGroup
-                    displayCode={psg.psGrpCode}
-                    displayName={psg.psGrpName}
-                    codePrefix={`${selectedOrg.orgCode}-`}
-                    itemId={psg.psGrpId}
-                  >
-                    {psg.ps
-                      .filter((val: any) =>
-                        isSearchOpen === 'product' && searchTerm
-                          ? val.psName
-                              .toLowerCase()
-                              .includes(searchTerm.toLowerCase())
-                          : true
-                      )
-                      .map((ps: any, psIndex: number) => {
-                        const isExist =
-                          isSearchOpen === 'product'
-                            ? ps?.existsInCurrentOrg
+              {psGroupsToRender.length ? (
+                psGroupsToRender.map((psg: any, psgIndex: number) => (
+                  <React.Fragment key={psgIndex}>
+                    <RenderGroup
+                      displayCode={psg.psGrpCode}
+                      displayName={psg.psGrpName}
+                      codePrefix={`${selectedOrg.orgCode}-`}
+                      itemId={psg.psGrpId}
+                    >
+                      {psg.ps
+                        .filter((ps: any) =>
+                          isSearchOpen === 'product' && searchTerm
+                            ? ps.psName
+                                .toLowerCase()
+                                .includes(searchTerm.toLowerCase())
                             : true
-
-                        return (
-                          <RenderChild
-                            displayName={ps.psName}
-                            displayCode={ps.psCode}
-                            codePrefix={`${psg.psGrpCode}-`}
-                            isSelected={selectedPs.id === ps.psId}
-                            onClick={() =>
-                              handlePsClick({
-                                psGrpCode: psg.psGrpCode,
-                                psGrpName: psg.psGrpName,
-                                psCode: ps.psCode,
-                                psName: ps.psName,
-                                path: `${selectedOrg.path}.${psg?.originalIndex}.ps.${ps?.originalIndex}.roleGrp`,
-                                id: ps.psId
-                              })
-                            }
-                            existsInContext={isExist}
-                            key={ps.psId}
-                          />
                         )
-                      })}
-                  </RenderGroup>
-                </React.Fragment>
-              ))}
+                        .map((ps: any) => {
+                          const isExist =
+                            isSearchOpen === 'product'
+                              ? ps.existsInCurrentOrg
+                              : true
+
+                          return (
+                            <RenderChild
+                              key={ps.psId}
+                              displayName={ps.psName}
+                              displayCode={ps.psCode}
+                              codePrefix={`${psg.psGrpCode}-`}
+                              isSelected={selectedPs.id === ps.psId}
+                              existsInContext={isExist}
+                              onClick={() =>
+                                handlePsClick({
+                                  psGrpCode: psg.psGrpCode,
+                                  psGrpName: psg.psGrpName,
+                                  psCode: ps.psCode,
+                                  psName: ps.psName,
+                                  path: `${selectedOrg.path}.${psg.originalIndex}.ps.${ps.originalIndex}.roleGrp`,
+                                  id: ps.psId
+                                })
+                              }
+                            />
+                          )
+                        })}
+                    </RenderGroup>
+                  </React.Fragment>
+                ))
+              ) : (
+                <Text variant='body-1' color='secondary'>
+                  Please select a organization to continue
+                </Text>
+              )}
             </div>
           </div>
 
@@ -573,57 +597,51 @@ const OPRList = ({
             />
 
             <div className='flex h-[55vh] w-full flex-col gap-[1vh] overflow-y-auto px-[.5vw] py-[1.5vh]'>
-              {(isSearchOpen === 'role' && searchTerm
-                ? classifiedRoles.filter(group => {
-                    const term = searchTerm.toLowerCase()
-                    const matchesGroup = group.roleGrpName
-                      .toLowerCase()
-                      .includes(term)
-                    const matchesRole = group.roles.some((r: any) =>
-                      r.roleName.toLowerCase().includes(term)
-                    )
-                    return matchesGroup || matchesRole
-                  })
-                : getSelectedRoleGrps() ?? []
-              ).map((roleGrp: any, roleGrpIndex: number) => (
-                <React.Fragment key={roleGrpIndex}>
-                  <RenderGroup
-                    displayCode={roleGrp.roleGrpCode}
-                    displayName={roleGrp.roleGrpName}
-                    codePrefix={`${selectedPs.psCode}-`}
-                    itemId={roleGrp.roleGrpId}
-                  >
-                    {roleGrp.roles.map((role: any, roleIndex: number) => {
-                      const isExist =
-                        isSearchOpen === 'role'
-                          ? role.existsInCurrentRoleGrp
-                          : true
+              {roleGroupsToRender.length ? (
+                roleGroupsToRender.map((roleGrp: any, roleGrpIndex: number) => (
+                  <React.Fragment key={roleGrpIndex}>
+                    <RenderGroup
+                      displayCode={roleGrp.roleGrpCode}
+                      displayName={roleGrp.roleGrpName}
+                      codePrefix={`${selectedPs.psCode}-`}
+                      itemId={roleGrp.roleGrpId}
+                    >
+                      {roleGrp.roles.map((role: any) => {
+                        const isExist =
+                          isSearchOpen === 'role'
+                            ? role.existsInCurrentRoleGrp
+                            : true
 
-                      return (
-                        <RenderChild
-                          displayName={role.roleName}
-                          displayCode={role.roleCode}
-                          codePrefix={`${roleGrp.roleGrpCode}-`}
-                          isSelected={selectedRole.id === role.roleId}
-                          onClick={() =>
-                            handleRoleClick({
-                              roleGrpCode: roleGrp.roleGrpCode,
-                              roleGrpName: roleGrp.roleGrpName,
-                              roleCode: role.roleCode,
-                              roleName: role.roleName,
-                              roleCount: roleGrp.roles?.length ?? 0,
-                              path: `${selectedPs.path}.${roleGrp?.originalIndex}.roles.${role?.originalIndex}`,
-                              id: role.roleId
-                            })
-                          }
-                          existsInContext={isExist}
-                          key={role.roleId}
-                        />
-                      )
-                    })}
-                  </RenderGroup>
-                </React.Fragment>
-              ))}
+                        return (
+                          <RenderChild
+                            key={role.roleId}
+                            displayName={role.roleName}
+                            displayCode={role.roleCode}
+                            codePrefix={`${roleGrp.roleGrpCode}-`}
+                            isSelected={selectedRole.id === role.roleId}
+                            existsInContext={isExist}
+                            onClick={() =>
+                              handleRoleClick({
+                                roleGrpCode: roleGrp.roleGrpCode,
+                                roleGrpName: roleGrp.roleGrpName,
+                                roleCode: role.roleCode,
+                                roleName: role.roleName,
+                                roleCount: roleGrp.roles?.length ?? 0,
+                                path: `${selectedPs.path}.${roleGrp.originalIndex}.roles.${role.originalIndex}`,
+                                id: role.roleId
+                              })
+                            }
+                          />
+                        )
+                      })}
+                    </RenderGroup>
+                  </React.Fragment>
+                ))
+              ) : (
+                <Text variant='body-1' color='secondary'>
+                  Please select a product/service to continue
+                </Text>
+              )}
             </div>
           </div>
         </div>
