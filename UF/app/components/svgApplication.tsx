@@ -164,7 +164,8 @@ export const Org = ({ fill = 'black' }) => {
 export const PlusIcon = ({
   width = '1.25vw',
   height = '1.25vw',
-  fill = 'black'
+  fill = 'black',
+  opaity = 0
 }) => {
   return (
     <svg
@@ -174,7 +175,7 @@ export const PlusIcon = ({
       fill='none'
       xmlns='http://www.w3.org/2000/svg'
     >
-      <g opacity={fill == 'black' ? '0.35' : '1'}>
+      <g opacity={opaity ? opaity : fill == 'black' ? '0.35' : '1'}>
         <rect
           x='-0.015'
           y='0.015'

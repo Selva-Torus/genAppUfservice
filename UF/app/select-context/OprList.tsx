@@ -59,6 +59,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
               className={`w-full rounded-xl border border-[var(--g-color-line-generic)] bg-[var(--g-color-base-background)] px-[.5vw] py-[.2vh] text-sm text-[var(--g-color-text-primary)] focus:outline-none`}
             />
             <Button
+              view='flat'
               className={'flex items-center'}
               onClick={() => setIsSearchOpen('')}
             >
@@ -68,6 +69,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
         ) : (
           <div className='flex gap-[.5vw]'>
             <Button
+              view='flat'
               onClick={() => setIsSearchOpen(searchKey)}
               className={'flex items-center disabled:opacity-50'}
             >

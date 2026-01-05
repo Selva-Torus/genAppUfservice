@@ -368,7 +368,7 @@ const UserTable: React.FC<{
       </div>
       <Text variant='header-1'>{keyset('User Management')}</Text>
       <CustomTable
-        className='mt-5 h-[73vh]'
+        className='h-[73vh]'
         data={rowOfCurrentGrps}
         columns={columns as any}
         // emptyMessage='No data available'

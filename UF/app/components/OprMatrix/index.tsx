@@ -54,6 +54,7 @@ interface ColumnHeaderProps {
   showAddButton?: boolean
   isAddDisabled?: boolean
   addContentProps: any
+  isDark: boolean
 }
 
 const ColumnHeader: React.FC<ColumnHeaderProps> = ({
@@ -67,7 +68,8 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
   brandColor,
   showAddButton = true,
   isAddDisabled = false,
-  addContentProps
+  addContentProps,
+  isDark
 }) => {
   const [open, setOpen] = useState(false)
   return (
@@ -90,6 +92,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
               className={`w-full rounded-xl border border-[var(--g-color-line-generic)] bg-[var(--g-color-base-background)] px-[.5vw] py-[.2vh] text-sm text-[var(--g-color-text-primary)] focus:outline-none`}
             />
             <Button
+              view='flat'
               className={'flex items-center'}
               onClick={() => setIsSearchOpen('')}
             >
@@ -102,6 +105,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
               <>
                 {title !== 'Organization' && (
                   <Button
+                    view='flat'
                     onClick={() => setOpen(true)}
                     disabled={isAddDisabled}
                     className='flex items-center'
@@ -109,7 +113,8 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
                     <PlusIcon
                       height='.8vw'
                       width='.8vw'
-                      fill={isLightColor(brandColor)}
+                      fill={isDark ? 'white' : 'black'}
+                      opaity={1}
                     />
                   </Button>
                 )}
@@ -127,6 +132,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
               </>
             )}
             <Button
+              view='flat'
               onClick={() => setIsSearchOpen(searchKey)}
               className={'flex items-center disabled:opacity-50'}
               disabled={isAddDisabled && searchKey !== 'org'}
@@ -156,7 +162,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
   ) as SetupScreenContextType
   const toast = useInfoMsg()
   const { branding } = useGlobal()
-  const { borderColor } = useTheme()
+  const { borderColor, isDark } = useTheme()
   const { brandColor } = branding
   const keyset = i18n.keyset('language')
 
@@ -1026,6 +1032,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                 ),
                 resourceField: keyset('organization group')
               }}
+              isDark={isDark}
             />
 
             <div className='flex h-[60vh] w-full flex-col gap-[1vh] overflow-y-auto px-[.5vw] py-[1.5vh]'>
@@ -1211,6 +1218,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                 ),
                 resourceField: 'product group'
               }}
+              isDark={isDark}
             />
 
             <div className='flex h-[60vh] w-full flex-col gap-[1vh] overflow-y-auto px-[.5vw] py-[1.5vh]'>
@@ -1371,16 +1379,16 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                 ),
                 resourceField: 'role group'
               }}
+              isDark={isDark}
             />
 
             <div className='flex h-[60vh] w-full flex-col gap-[1vh] overflow-y-auto px-[.5vw] py-[1.5vh]'>
-        {(isSearchOpen === "role" && searchTerm
-                ? classifiedRoles.filter((group) =>
+              {(isSearchOpen === 'role' && searchTerm
+                ? classifiedRoles.filter(group =>
                     hasMatchingRoleGrpOrRole(group, searchTerm)
                   )
-                : (getSelectedRoleGrps() ?? [])
-              )
-              .map((roleGrp: any, roleGrpIndex: number) => (
+                : getSelectedRoleGrps() ?? []
+              ).map((roleGrp: any, roleGrpIndex: number) => (
                 <React.Fragment key={roleGrpIndex}>
                   <RenderGroup
                     item={roleGrp}
