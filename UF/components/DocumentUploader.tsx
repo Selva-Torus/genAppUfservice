@@ -369,7 +369,7 @@ const removeFile = async (
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = "text-base font-semibold mb-1 text-gray-700 dark:text-gray-300 flex-shrink-0";
+    const headerClasses = `text-base font-semibold mb-1 text-gray-700 dark:text-gray-300 flex-shrink-0 ${className}`;
 
     switch (headerPosition) {
         case "top":
@@ -452,7 +452,7 @@ const removeFile = async (
               contentAlign={`${getContentAlignClasses()}`}
               className={`${fontSizeClass} ${className}`}
               startContent={
-                <span className='flex h-full items-center justify-center'>
+                <span className='flex  items-center justify-center'>
                   <Icon className='flex items-center justify-center bg-transparent px-[0.15vw] py-[0.25vh]' data='FaCloudUploadAlt'
                   size={getIconSize()} />
                 </span>

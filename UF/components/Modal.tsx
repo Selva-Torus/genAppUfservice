@@ -79,7 +79,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   const modalElement = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn rounded-lg"
       style={{
         backgroundColor: "rgba(0, 0, 0, 0.6)",
         backdropFilter: "blur(2px)",
@@ -88,14 +88,16 @@ export const Modal: React.FC<ModalProps> = ({
       onClick={handleOverlayClick}
     >
       <div
+        role="dialog"
+        aria-modal="true"
         className={`
           ${className}
-          ${getBorderRadiusClass(branding.borderRadius)}
           animate-scaleIn
           flex flex-col
           ${isHighContrast ? 'border-2' : 'border'}
           transition-all duration-300 ease-in-out
           hover:shadow-2xl
+          rounded-lg
         `}
         style={{
           backgroundColor: isDark ? "#1F2937" : "#FFFFFF",

@@ -155,63 +155,57 @@ export const Radio: React.FC<RadioProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText)
       return (
-        <div className={`${fillContainer ? 'h-full w-full' : ''} ${className}`}>
+        <div
+          className={`h-full w-full 
+            ${getFontSizeClass(branding.fontSize)} 
+            ${isDark ? 'text-gray-300' : 'text-gray-700'} 
+            ${direction === 'RTL' ? 'flex-row-reverse' : ''}
+            ${className}
+          `}
+        >
           {element}
         </div>
       )
 
-    const headerClasses = `font-semibold mb-1 overflow-hidden text-ellipsis whitespace-nowrap ${
-      isDark ? 'text-gray-300' : 'text-gray-700'
-    } 
-      ${getFontSizeClass(branding.fontSize)} ${className}`
+    const headerClasses = `
+      flex h-full w-full overflow-hidden text-ellipsis whitespace-nowrap 
+      ${isDark ? 'text-gray-300' : 'text-gray-700'}
+      ${direction === 'RTL' ? 'flex-row-reverse' : ''}
+      ${getFontSizeClass(branding.fontSize)}
+      ${className}
+      `
 
     switch (headerPosition) {
       case 'top':
         return (
-          <div
-            className={`${
-              fillContainer
-                ? 'flex h-full w-full flex-col'
-                : 'inline-flex flex-col'
-            } ${headerClasses}`}
-          >
-            <div>{headerText}</div>
+          <div className={`${headerClasses} flex-col `}>
+            <div className='font-semibold '>{headerText}</div>
             {element}
           </div>
         )
       case 'bottom':
         return (
-          <div
-            className={`${
-              fillContainer
-                ? 'flex h-full w-full flex-col'
-                : 'inline-flex flex-col'
-            }  ${headerClasses}`}
-          >
+          <div className={`${headerClasses} flex-col`}>
             {element}
-            <div className='mt-1'>{headerText}</div>
+            <div className='mt-1 font-semibold'>{headerText}</div>
           </div>
         )
       case 'left':
         return (
-          <div
-            className={`${
-              fillContainer ? 'flex h-full w-full' : 'inline-flex'
-            } items-center gap-4 ${headerClasses}`}
-          >
-            <div className={`mb-0 min-w-0 overflow-hidden`}>{headerText}</div>
+          <div className={`${headerClasses} items-center gap-4`}>
+            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
+              {headerText}
+            </div>
             {element}
           </div>
         )
       case 'right':
         return (
-          <div
-            className={`${
-              fillContainer ? 'flex h-full w-full ' : 'inline-flex flex-col'
-            } items-center gap-4 ${className} ${headerClasses}`}
-          >
+          <div className={`${headerClasses} items-center gap-4`}>
             {element}
-            <div className={`mb-0 min-w-0 overflow-hidden`}>{headerText}</div>
+            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
+              {headerText}
+            </div>
           </div>
         )
     }

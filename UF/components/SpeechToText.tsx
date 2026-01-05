@@ -14,7 +14,8 @@ import {
 import { useGlobal } from '@/context/GlobalContext'
 import { getFontSizeClass } from '@/app/utils/branding'
 
-interface TorusSpeechToTextInputProps extends Omit<any, 'onChange'> {
+type ContentAlign = 'left' | 'center' | 'right'
+interface SpeechToTextInputProps extends Omit<any, 'onChange'> {
   onChange: (value: string) => void
   value: string
   onSearch: () => {}
@@ -26,9 +27,10 @@ interface TorusSpeechToTextInputProps extends Omit<any, 'onChange'> {
   headerPosition?: HeaderPosition
   placeholder?: string
   label?: string
+  contentAlign?: ContentAlign
 }
 
-export function TorusSpeechToTextInput(props: TorusSpeechToTextInputProps) {
+export function SpeechToTextInput(props: SpeechToTextInputProps) {
   const {
     needTooltip = false,
     tooltipProps,
@@ -92,6 +94,7 @@ export function TorusSpeechToTextInput(props: TorusSpeechToTextInputProps) {
         onChange={handleTyping}
         disabled={restProps.disabled}
         placeholder={placeholder}
+        contentAlign={restProps.contentAlign}
         className={`w-full rounded-full border border-gray-200 bg-white  text-gray-600 shadow-md outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-400/20 focus:ring-opacity-50 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20 dark:focus:ring-opacity-50 ${restProps.className}`}
         view='clear'
         endContent={

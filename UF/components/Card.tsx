@@ -20,12 +20,13 @@ interface CardProps {
   selected?: boolean;
   title?: string;
   prefixValue?: string;
+  label?: string;
   icon?: string | React.ReactNode;
   needTooltip?: boolean;
   tooltipProps?: TooltipPropsType;
   headerText?: string;
   headerPosition?: HeaderPosition;
-  children?: React.ReactNode;
+  children?: string | React.ReactNode;
   onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
   className?: string;
   style?: React.CSSProperties;
@@ -41,6 +42,7 @@ export const Card: React.FC<CardProps> = ({
   selected = false,
   title,
   prefixValue,
+  label,
   icon,
   needTooltip = false,
   tooltipProps,
@@ -75,8 +77,6 @@ export const Card: React.FC<CardProps> = ({
         return { bg: isDark ? "#1F2937" : "#FFFFFF", border: isDark ? "#4B5563" : "##E5E7EB", text: isDark ? "#F9FAFB" : "#111827" };
     }
   };
-
-
 
   const colors = getThemeColors();
   const isDark = theme === "dark" || theme === "dark-hc";
@@ -120,14 +120,14 @@ export const Card: React.FC<CardProps> = ({
     <div
       onClick={disabled ? undefined : onClick}
       className={`
-        ${fontSizeClass}
-        flex flex-col gap-3
-        ${getContentAlignClasses()}
+        flex flex-col justify-around
         ${view === "outlined" ? "border-2" : view === "raised" ? "shadow-lg" : view === "filled" ? "border" : ""}
         ${selected ? "ring-2 ring-offset-2" : ""}
         ${disabled ? "opacity-50 cursor-not-allowed" : onClick ? "cursor-pointer hover:shadow-md" : ""}
         ${type === "selection" && selected ? "border-2" : ""}
         transition-all duration-200
+        ${getContentAlignClasses()}
+        ${fontSizeClass}
         ${getFillClasses()}
         ${className}
       `}
@@ -137,37 +137,47 @@ export const Card: React.FC<CardProps> = ({
         color: colors.text,
         fontFamily: "var(--font-body)",
         borderRadius: "var(--border-radius)",
+        boxSizing: "border-box",
+        padding: "min(12px, 3%)",
+        gap: "min(12px, 2%)",
         ...(selected ? { '--tw-ring-color': 'var(--selection-color)' } as any : {}),
         ...style,
       }}
     >
       {/* Title Section */}
       {title && (
-        <div className={`${getFillClasses()} font-semibold border-b pb-2`} 
-        style={{ borderColor: isDark ? "#374151" : "#E5E7EB" }}>
+        <div className={`font-semibold border-b flex-shrink-0`}
+        style={{
+          borderColor: isDark ? "#374151" : "#E5E7EB",
+          paddingBottom: "min(8px, 2%)"
+        }}>
           {title}
         </div>
       )}
 
       {/* Icon and Prefix Section */}
-      {(icon || prefixValue) && (
-        <div className={`flex items-center ${getFillClasses()} gap-2 p-4`}>
+      {(icon || label) && (
+        <div className={`flex items-center flex-shrink-0 ${getContentAlignClasses()}`} style={{ gap: "min(8px, 2%)" }}>
           {icon && (
-            typeof icon === "string" ? (
-              <Icon data={icon} className="inline-block flex-shrink-0" size={getIconSize()} />
-            ) : (
-              icon
-            )
+            <div className="flex items-center justify-center flex-shrink-0">
+              {typeof icon === "string" ? (
+                <Icon data={icon} fillContainer={false} size={getIconSize()} className="flex-shrink-0 align-middle" />
+              ) : (
+                icon
+              )}
+            </div>
           )}
-          {prefixValue && (
-            <span className="font-semibold">{prefixValue}</span>
+          {label && (
+            <span className="font-semibold flex items-center">{label}</span>
           )}
         </div>
       )}
 
       {/* Content Section */}
-      <div className={`flex-1 ${getFillClasses()}`}>
-        {children}
+      <div className={`flex flex-end min-h-0 ${getContentAlignClasses()}`}>
+        {prefixValue && (
+            <span className="font-semibold flex items-center">{prefixValue}</span>
+          )}{children}
       </div>
     </div>
   );
@@ -177,7 +187,7 @@ export const Card: React.FC<CardProps> = ({
 
     const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
-    }`;
+    } ${className}`;
 
     switch (headerPosition) {
         case "top":

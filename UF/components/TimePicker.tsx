@@ -12,9 +12,9 @@ import {
 } from '@/types/global'
 import { useGlobal } from '@/context/GlobalContext'
 import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
-
+type ContentAlign = 'center' | 'left' | 'right'
 interface TimePickerProps {
-  timeType?: 'normal' | '24hour'
+  timeType?: 'normal' | 'railway'
   setting?: 'HH:mm' | 'HH:mm:ss'
   label?: string
   state?: string
@@ -26,6 +26,7 @@ interface TimePickerProps {
   readOnly?: boolean
   disabled?: boolean
   className?: string
+  contentAlign?: ContentAlign
   style?: React.CSSProperties
 }
 
@@ -41,6 +42,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
   headerPosition = 'top',
   readOnly = false,
   disabled = false,
+  contentAlign = 'center',
   className = '',
   style
 }) => {
@@ -54,7 +56,18 @@ const TimePicker: React.FC<TimePickerProps> = ({
   const [forFirstTime, setForFirstTime] = useState(false)
 
   const isDark = theme === 'dark' || theme === 'dark-hc'
-
+    const getTextAlignClasses = () => {
+    switch (contentAlign) {
+      case 'left':
+        return 'text-left'
+      case 'right':
+        return 'text-right'
+      case 'center':
+        return 'text-center'
+      default:
+        return 'text-center'
+    }
+  }
   const setTime = () => {
     let time: any = ''
     if ((timeType = 'normal')) {
@@ -144,7 +157,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
           }}
         >
           <select
-            className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none`}
+            className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()}`}
             onChange={handleHourChange}
             disabled={disabled}
             value={hour}
@@ -166,18 +179,18 @@ const TimePicker: React.FC<TimePickerProps> = ({
             ${getBorderRadiusClass(branding.borderRadius)}
             ${disabled ? 'cursor-not-allowed opacity-50' : ''}
             ${readOnly ? 'cursor-default' : ''}
-              `}
-          onFocus={e => {
-            e.currentTarget.style.borderColor = branding.brandColor
-            e.currentTarget.style.boxShadow = `0 0 0 1px ${branding.brandColor}20`
-          }}
-          onBlur={e => {
-            e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
-            e.currentTarget.style.boxShadow = 'none'
-          }}
-        >
+            `}
+            onFocus={e => {
+              e.currentTarget.style.borderColor = branding.brandColor
+              e.currentTarget.style.boxShadow = `0 0 0 1px ${branding.brandColor}20`
+            }}
+            onBlur={e => {
+              e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
+              e.currentTarget.style.boxShadow = 'none'
+            }}
+            >
           <select
-            className='h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none'
+            className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()}`}
             value={minute}
             onChange={handleMinuteChange}
             disabled={disabled}
@@ -212,7 +225,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
             }}
           >
             <select
-              className='h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none'
+              className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()}`}
               value={second}
               onChange={handleSecChange}
               disabled={disabled}
@@ -248,7 +261,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
             }}
           >
             <select
-              className='h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none'
+              className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()}`}
               value={period}
               onChange={handlePeriodChange}
               disabled={disabled}

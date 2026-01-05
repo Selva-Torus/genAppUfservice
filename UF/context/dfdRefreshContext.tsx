@@ -126,10 +126,38 @@ export async function dfdRefreshContext(dfdkey:any,setState:any,page:any,count:a
 export function useHandleDfdRefresh(){
 
 
+    const {dfd_mydfddata_v1Props,setdfd_mydfddata_v1Props} = useContext(TotalContext) as TotalContextProps;
     const toast=useInfoMsg();
     const token:string = getCookie('token'); 
 
     return (nodename:any,page:any=1,count:any=10,dpdEncryption:any) => {
+            if("progress1c37ec"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("pivottable703fa"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("ide6871"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("name15d49"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("ids51838"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("namesb9438"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("id2c392"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("names0c3b9"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("name1e0ed"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
     };
 }
 

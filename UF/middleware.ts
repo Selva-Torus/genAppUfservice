@@ -8,14 +8,19 @@ export function middleware(request: NextRequest) {
     let screenDetails: any = {
         keys:[
   {
-    "screenName": "menu item 3",
-    "screensName": "menu_item_3-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1"
+    "screenName": "progress",
+    "screensName": "progress-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1"
   },
   {
-    "screenName": "menu item 4-1",
-    "screensName": "menu_item_4-1-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
+    "screenName": "tablecheck",
+    "screensName": "tablecheck-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1"
+  },
+  {
+    "screenName": "indisave",
+    "screensName": "indisave-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1"
   }
 ]
     }

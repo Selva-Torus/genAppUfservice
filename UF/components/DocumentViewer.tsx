@@ -1,150 +1,185 @@
-"use client";
-import React from "react";
-import { CSSProperties } from "react";
-import { DocumentViewer } from "react-documents";
-import { Tooltip } from "./Tooltip";
-import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { Text } from "./Text";
+'use client'
 
-export declare type viewerType = 'google' | 'office' | 'mammoth' | 'pdf' | 'url';
-type ContentAlign = "left" | "center" | "right";
+import React from 'react'
+import { CSSProperties } from 'react'
+import { Tooltip } from './Tooltip'
+import {
+  HeaderPosition,
+  TooltipProps as TooltipPropsType
+} from '@/types/global'
+import { Text } from './Text'
+import { FiMaximize2 } from 'react-icons/fi'
+import { getFontSizeClass } from '@/app/utils/branding'
+import { useGlobal } from '@/context/GlobalContext'
 
 interface DocViewerProps {
-    loaded?: () => void;
-    url?: string;
-    queryParams?: string;
-    viewerUrl?: string;
-    googleCheckInterval?: number;
-    googleMaxChecks?: number;
-    googleCheckContentLoaded?: boolean;
-    viewer?: viewerType;
-    overrideLocalhost?: string;
-    style?: CSSProperties | undefined;
-    className?: string | undefined;
-    headerText?: string;
-    headerPosition?: HeaderPosition;
-    tooltipProps?: TooltipPropsType;
-    needTooltip?: boolean;
-    enableEncryption?: boolean;
-    fillContainer?: boolean;
-    contentAlign?: ContentAlign;
+  url?: string  | null
+  className?: string
+  style?: CSSProperties
+  headerText?: string
+  headerPosition?: HeaderPosition
+  tooltipProps?: TooltipPropsType
+  needTooltip?: boolean
 }
 
+/* ---------- helpers ---------- */
+const isImage = (url?: string) =>
+  !!url &&
+  (url.startsWith('blob:') || /\.(png|jpe?g|gif|webp|bmp|svg|jfif)$/i.test(url))
+
+const isPdf = (url?: string) => !!url && /\.pdf$/i.test(url)
+const isText = (url?: string) => !!url && /\.(txt|xml|json|csv)$/i.test(url)
+const isOffice = (url?: string) => !!url && /\.(docx?|xlsx?|pptx?)$/i.test(url)
+
+/* ---------- component ---------- */
+
 const DocViewer: React.FC<DocViewerProps> = ({
-    url,
-    viewer = "url",
-    queryParams = "",
-    googleCheckInterval = 500,
-    googleMaxChecks = 5,
-    overrideLocalhost = "null",
-    googleCheckContentLoaded = true,
-    className = "document-viewer",
-    style,
-    headerText,
-    headerPosition = "top",
-    tooltipProps,
-    needTooltip = false,
-    enableEncryption,
-    fillContainer = true,
-    contentAlign = "center",
+  url,
+  className = '',
+  style,
+  headerText,
+  headerPosition = 'top',
+  tooltipProps,
+  needTooltip = false
 }) => {
-        const getFillClasses = () => {
-    if (!fillContainer) return "";
-    return "w-full h-full";
-  };
-    const getContentAlignClasses = () => {
-    switch (contentAlign) {
-      case "left":
-        return "text-left";
-      case "right":
-        return "text-right";
-      case "center":
-      default:
-        return "text-center";
-    }
-  };
+  const { theme, direction, branding } = useGlobal()
+  const isDark = theme === 'dark' || theme === 'dark-hc'
+  const openFullscreen = () => {
+    if (!url) return
+    window.open(url, '_blank', 'noopener,noreferrer')
+  }
 
-    const documentViewerElement = (
-        <div className={`w-full h-full ${fillContainer ? "flex" : "inline-flex"} flex-col ${getFillClasses()}`}>
-        {!url?(
-        <div className={`items-center justify-center bg-gray-50 rounded-xl border border-red-500 shadow-sm p-2 ${getContentAlignClasses()}`}>
-            <Text variant="body-1" className="text-lg font-semibold text-gray-700">No Document Found</Text>
-            <p className="text-sm text-gray-500">
-                The attachment or document you are looking for is unavailable or not uploaded yet.
-            </p>
-        </div>)
-            :
-        (<DocumentViewer
-            url={url}
-            viewer={viewer}
-            queryParams={queryParams}
-            googleCheckInterval={googleCheckInterval}
-            googleMaxChecks={googleMaxChecks}
-            overrideLocalhost={overrideLocalhost}
-            googleCheckContentLoaded={googleCheckContentLoaded}
-            className={className}
-            viewerUrl=""
-            style={style}
-            {...{ enableEncryption } as any}
-        />)
-        }
+  const renderContent = () => {
+    if (!url) {
+      return (
+        <div className='flex h-full w-full flex-col justify-center overflow-hidden whitespace-break-spaces rounded-xl border border-red-500 bg-gray-50 p-4 text-center shadow-sm'>
+          <text className='    text-[clamp(0.75rem,1.2vw,1.125rem)] font-semibold leading-tight text-gray-700 '>
+            No Document Found
+          </text>
+          <p className=' text-sm text-gray-500'>
+            The attachment or document you are looking for is unavailable or not
+            uploaded yet.
+          </p>
         </div>
-    );
-
-  
-
-    const renderWithHeader = (element: React.ReactNode) => {
-        if (!headerText) return <div className={`${getFillClasses()} ${className}`}>{element}</div>;
-
-        const headerClasses = "text-base font-semibold mb-2 text-gray-700 dark:text-gray-300";
-
-        switch (headerPosition) {
-            case "top":
-                return (
-                    <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col ${getFillClasses()} ${className}`}>
-                        <div className={headerClasses}>{headerText}</div>
-                        <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
-                    </div>
-                );
-            case "bottom":
-                return (
-                    <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col ${getFillClasses()} ${className}`}>
-                        <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
-                        <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
-                    </div>
-                );
-            case "left":
-                return (
-                    <div className={`${fillContainer ? "flex" : "inline-flex"} items-start ${getFillClasses()} gap-4 ${className}`}>
-                        <div className={`${headerClasses} mb-0 whitespace-nowrap flex-shrink-0`}>
-                            {headerText}
-                        </div>
-                        <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
-                    </div>
-                );
-            case "right":
-                return (
-                    <div className={`${fillContainer ? "flex" : "inline-flex"} items-start ${getFillClasses()} gap-4 ${className}`}>
-                        <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
-                        <div className={`${headerClasses} mb-0 whitespace-nowrap flex-shrink-0`}>
-                            {headerText}
-                        </div>
-                    </div>
-                );
-        }
-    };
-
-    const finalElement = (<div className={`${fillContainer ? "w-full h-full" : ""} `}>{renderWithHeader(documentViewerElement)}</div>);
-
-    if (needTooltip && tooltipProps) {
-        return (
-            <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
-                {finalElement}
-            </Tooltip>
-        );
+      )
     }
 
-    return <>{finalElement}</>;
-};
+    /* IMAGE → NO iframe */
+    if (isImage(url)) {
+      return (
+        <img
+          src={url}
+          alt='document'
+          className='h-full w-full object-contain'
+        />
+      )
+    }
 
-export default DocViewer;
+    /* PDF / TEXT / OFFICE → iframe preview only */
+    return (
+      <iframe
+        src={
+          isOffice(url)
+            ? `https://docs.google.com/gview?url=${encodeURIComponent(
+                url
+              )}&embedded=true`
+            : url
+        }
+        className='h-full w-full border-0 object-contain'
+      />
+    )
+  }
+
+  const viewerElement = (
+    <div
+      className={`relative h-full min-h-0 w-full min-w-0 overflow-hidden ${className}`}
+      style={style}
+    >
+      {/* Fullscreen button */}
+
+      {url && (
+        <button
+          onClick={openFullscreen}
+          className='absolute right-2 top-2 z-10 overflow-hidden rounded bg-black/60 object-contain p-2 text-white hover:bg-black'
+          title='Open fullscreen'
+        >
+          <FiMaximize2 size={16} />
+        </button>
+      )}
+
+      {renderContent()}
+    </div>
+  )
+
+  const renderWithHeader = (element: React.ReactNode) => {
+    if (!headerText)
+      return (
+        <div
+          className={`h-full w-full 
+            ${getFontSizeClass(branding.fontSize)} 
+            ${direction === 'RTL' ? 'flex-row-reverse' : ''}
+            ${className}
+          `}
+        >
+          {element}
+        </div>
+      )
+
+    const headerClasses = `
+      flex h-full w-full overflow-hidden text-ellipsis whitespace-nowrap 
+      ${isDark ? 'text-gray-300' : 'text-gray-700'}
+      ${direction === 'RTL' ? 'flex-row-reverse' : ''}
+      ${getFontSizeClass(branding.fontSize)}
+      ${className}
+      `
+
+    switch (headerPosition) {
+      case 'top':
+        return (
+          <div className={`${headerClasses} flex-col `}>
+            <div className='font-semibold '>{headerText}</div>
+            {element}
+          </div>
+        )
+      case 'bottom':
+        return (
+          <div className={`${headerClasses} flex-col`}>
+            {element}
+            <div className='mt-1 font-semibold'>{headerText}</div>
+          </div>
+        )
+      case 'left':
+        return (
+          <div className={`${headerClasses} items-center gap-4`}>
+            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
+              {headerText}
+            </div>
+            {element}
+          </div>
+        )
+      case 'right':
+        return (
+          <div className={`${headerClasses} items-center gap-4`}>
+            {element}
+            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
+              {headerText}
+            </div>
+          </div>
+        )
+    }
+  }
+
+  const finalElement = renderWithHeader(viewerElement)
+
+  if (needTooltip && tooltipProps) {
+    return (
+      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
+        {finalElement}
+      </Tooltip>
+    )
+  }
+
+  return finalElement
+}
+
+export default DocViewer

@@ -19,7 +19,7 @@ interface DropdownProps {
   dynamicProps?: string;
   needTooltip?: boolean;
   tooltipProps?: TooltipPropsType;
-  headerText?: string;
+  headerText?: string | React.ReactNode;
   headerPosition?: HeaderPosition;
   onChange?: (selected: string | string[]) => void;
   className?: string;
@@ -236,7 +236,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
             type="text"
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
-            onFocus={() => !disabled && setIsOpen(true)}
             placeholder={selectedValues.length > 0
               ? isMultiple
                 ? `${selectedValues.length} selected`
@@ -260,7 +259,22 @@ export const Dropdown: React.FC<DropdownProps> = ({
             `}
             style={{
               borderRadius: "var(--border-radius)",
-              borderColor: validationState === "none" && isOpen ? "var(--brand-color)" : undefined,
+              borderColor: validationState === "none" && isOpen ? branding.selectionColor : undefined,
+            }}
+            onMouseEnter={e => {
+              if (!disabled && validationState === "none" && !isOpen) {
+                e.currentTarget.style.borderColor = branding.hoverColor
+              }
+            }}
+            onMouseLeave={e => {
+              if (!disabled && validationState === "none" && !isOpen) {
+                e.currentTarget.style.borderColor = ''
+              }
+            }}
+            onFocus={() => {
+              if (!disabled) {
+                setIsOpen(true)
+              }
             }}
           />
           <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
@@ -302,7 +316,17 @@ export const Dropdown: React.FC<DropdownProps> = ({
           `}
           style={{
             borderRadius: "var(--border-radius)",
-            borderColor: validationState === "none" && isOpen ? "var(--brand-color)" : undefined,
+            borderColor: validationState === "none" && isOpen ? branding.selectionColor : undefined,
+          }}
+          onMouseEnter={e => {
+            if (!disabled && validationState === "none" && !isOpen) {
+              e.currentTarget.style.borderColor = branding.hoverColor
+            }
+          }}
+          onMouseLeave={e => {
+            if (!disabled && validationState === "none" && !isOpen) {
+              e.currentTarget.style.borderColor = ''
+            }
           }}
         >
           <span className="w-4/5 truncate">
@@ -361,11 +385,11 @@ export const Dropdown: React.FC<DropdownProps> = ({
                   ${className}
                 `}
                 style={{
-                  backgroundColor: isSelected ? "var(--brand-color)" : undefined,
+                  backgroundColor: isSelected ? branding.selectionColor : undefined,
                 }}
               >
                 <span>{option}</span>
-                {isMultiple && isSelected && <Icon data="FaCheck" size={getIconSize()} />}
+                {isMultiple && isSelected && <Icon fillContainer={false} data="FaCheck" size={getIconSize()} />}
               </div>
             );
           })}
@@ -390,7 +414,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
     const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
-    }`;
+    } ${className}`;
 
     switch (headerPosition) {
         case "top":

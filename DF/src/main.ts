@@ -1,158 +1,33 @@
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc",
-  "deploymentArtifactKey": "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT309:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+  "deploymentArtifactKey": "CK:CT309:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:mydpd:AFVK:v1",
   "appGroupDesc": "appgroup",
   "logType": "mongodb",
-  "appDesc": "oprmatrix",
+  "appDesc": "application",
   "isOld": true,
-  "clientCode": "CT003",
+  "clientCode": "CT309",
   "loginDetails": {
-    "firstName": "Peer",
-    "lastName": "m",
-    "username": "",
-    "email": "peerm@torus.tech",
-    "mobile": "8124805539",
-    "loginId": "Peer@786",
-    "dateAdded": "2024-10-11T04:37:31.922Z",
+    "loginId": "game",
+    "firstName": "game",
+    "lastName": "changer",
+    "email": "harin@torus.tech",
+    "mobile": "1111111111",
+    "2FAFlag": "N",
+    "scope": "client_admin",
     "status": "active",
-    "users": "Peer@786Peer m",
     "accessProfile": [
       "admin"
     ],
-    "lastActive": "2025-12-24T07:55:22.437Z",
-    "profile": "torus/9.1/CT003/resources/images/Peer@786/scott-graham-5fNmWej4tAA-unsplash.jpg",
-    "quickLinks": [],
-    "client": "CT003",
-    "edit": "",
-    "noOfProductsService": 0,
-    "userUniqueId": "6828417e-5fe0-43bb-8c55-c465ee6581a0",
+    "accessExpires": "",
+    "dateAdded": "2025-12-26T12:31:04.570Z",
+    "isRestricted": false,
+    "userUniqueId": "ed36774d-6089-4386-9d6f-e278b0b55ee5",
     "touring": {
-      "isneedTouring": true,
-      "touringData": {
-        "/": {
-          "stepIndex": 5,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "/logic-center": {
-          "stepIndex": 3,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "Security": {
-          "stepIndex": 1,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "artifactselector": {
-          "stepIndex": 1,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "build": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/torus": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/company-profile": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/logs_hub": {
-          "stepIndex": 1,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/tenant": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "logs": {
-          "stepIndex": 1,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": [
-            0
-          ]
-        },
-        "/control-center/account-profile": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/appearance": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/user-roles": {
-          "stepIndex": 1,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "/control-center/storage-configuration": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/user-management": {
-          "stepIndex": 2,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "/tenant-settings": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/notifications": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/resource-library": {
-          "stepIndex": 1,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "notification": {
-          "stepIndex": 0,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        },
-        "detailNotification": {
-          "stepIndex": 1,
-          "isSkipped": false,
-          "completed": true,
-          "notVisited": []
-        }
-      }
-    }
+      "isneedTouring": false,
+      "touringData": {}
+    },
+    "lastActive": "2026-01-05T04:36:38.154Z",
+    "client": "CT309"
   }
 } */
 import { NestFactory } from '@nestjs/core';
@@ -166,6 +41,7 @@ import { CommonService } from './common.Service';
 import * as fs from 'fs';
 import DecryptPayloadMiddleware from './decryptPayloadMiddleware';
 import multipart from '@fastify/multipart';
+import { BigIntInterceptor } from './bigint.interceptor';
 
 async function bootstrap() {
     const fastifyAdapter = new FastifyAdapter({
@@ -177,6 +53,8 @@ async function bootstrap() {
     AppModule,
     fastifyAdapter,
   );
+    // Global interceptor for BigInt serialization
+  app.useGlobalInterceptors(new BigIntInterceptor());
   //app.use(
     //session({
       //secret: 'Torus9x',
@@ -215,7 +93,7 @@ async function bootstrap() {
     { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 
     'JWT-auth',
     )
-    .addServer('https://tgadev.gsstvl.com/ct003/ag001/oprmatrix/v1/api','Production Server')
+    .addServer('http://192.168.2.86:3108','Production Server')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger.json', JSON.stringify(document, null, 2));

@@ -89,23 +89,25 @@ export const PinInput: React.FC<PinInputProps> = ({
 
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+    const r = parseInt(hex?.slice(1, 3), 16);
+    const g = parseInt(hex?.slice(3, 5), 16);
+    const b = parseInt(hex?.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
   const pinInputElement = (
     <div className={`flex gap-2 h-full ${direction === "RTL" ? "flex-row-reverse" : ""} ${className}`}>
       {Array.from({ length }).map((_, index) => (
+        
         <input
+          autoComplete="off"
           key={index}
           ref={(el:any) => (inputRefs.current[index] = el)}
           type={mask ? "password" : "text"}
           inputMode="numeric"
           pattern="\d*"
           maxLength={1}
-          value={values[index]}
+          value={values[index]||""}
           onChange={(e) => handleChange(index, e.target.value)}
           onKeyDown={(e) => handleKeyDown(index, e)}
           placeholder={placeholder}
@@ -193,12 +195,12 @@ export const PinInput: React.FC<PinInputProps> = ({
     }
   };
 
-  const finalElement = (<div className={`h-full ${className}`}>{renderWithHeader(pinInputElement)}</div>);
+  const finalElement = renderWithHeader(pinInputElement);
 
   if (needTooltip && tooltipProps) {
     return (
       <Tooltip title={tooltipProps.title} placement={tooltipProps.placement} triggerClassName="h-full">
-        {finalElement}
+        <div className="h-full">{finalElement}</div>
       </Tooltip>
     );
   }

@@ -109,6 +109,23 @@ const config: Config = {
           '&::-webkit-scrollbar': {
             display: 'none'
           }
+        },
+        '.scrollbar-thin': {
+          'scrollbar-width': 'thin',
+          '&::-webkit-scrollbar': {
+            width: '6px',
+            height: '6px'
+          },
+          '&::-webkit-scrollbar-track': {
+            background: '#f1f1f1'
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: '#888',
+            borderRadius: '3px'
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: '#555'
+          }
         }
       })
     }

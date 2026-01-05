@@ -67,9 +67,9 @@ export const Slider: React.FC<SliderProps> = ({
 
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+    const r = parseInt(hex?.slice(1, 3), 16);
+    const g = parseInt(hex?.slice(3, 5), 16);
+    const b = parseInt(hex?.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
@@ -305,35 +305,35 @@ export const Slider: React.FC<SliderProps> = ({
     }`;
     const headerStyle = { fontFamily: "var(--font-body)" };
 
-    switch (headerPosition) {
+     switch (headerPosition) {
       case "top":
         return (
-          <div className={`flex flex-col w-full h-full ${className}`}>
-            <div className={headerClasses} style={headerStyle}>{headerText}</div>
-            <div className="flex-1 min-h-0">{element}</div>
+          <div className="flex flex-col w-full h-full">
+            <div className={headerClasses}>{headerText}</div>
+            {element}
           </div>
         );
       case "bottom":
         return (
-          <div className={`flex flex-col w-full h-full ${className}`}>
-            <div className="flex-1 min-h-0">{element}</div>
-            <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
+          <div className="flex flex-col w-full h-full">
+            {element}
+            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
           </div>
         );
       case "left":
         return (
-          <div className={`flex items-center gap-4 w-full h-full ${className}`}>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
+          <div className="flex items-center w-full h-full gap-4">
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
               {headerText}
             </div>
-            <div className="flex-1 min-w-0">{element}</div>
+            <div className="flex-1 h-full">{element}</div>
           </div>
         );
       case "right":
         return (
-          <div className={`flex items-center gap-4 w-full h-full ${className}`}>
-            <div className="flex-1 min-w-0">{element}</div>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={headerStyle}>
+          <div className="flex items-center w-full h-full gap-4">
+            <div className="flex-1 h-full">{element}</div>
+            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
               {headerText}
             </div>
           </div>

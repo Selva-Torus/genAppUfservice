@@ -51,3 +51,4 @@ export const ConfirmModal = ({confirmMsg, setConfirmMsg, confirmMsgTitle, confir
     </Modal>
   )
 }
+

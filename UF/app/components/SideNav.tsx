@@ -153,7 +153,7 @@ const SideNav = ({
     localStorage.clear()
     sessionStorage.clear()
     deleteAllCookies()
-    window.location.href = '/ct003/ag001/oprmatrix/v1'
+    window.location.href = '/ct309/ag001/a001/v1'
   }
 
   const hasMatchingName = (obj: any, input: string): boolean => {
@@ -331,7 +331,7 @@ const SideNav = ({
                               onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? hoverColor : ""}`}}
                               onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
                             >
-                             <span className='flex items-center'>
+                            <span className='flex items-center'>
                               {menu.icon ? (
                                 <Image
                                   className='h-[16px] w-[20px]'
@@ -365,7 +365,7 @@ const SideNav = ({
                                   }
                                 />
                               )}
-                             </span>
+                            </span>
                             </button>
                           )}
                         </div>

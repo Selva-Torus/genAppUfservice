@@ -242,9 +242,9 @@ export const TextInput: React.FC<TextInputProps> = ({
 
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+    const r = parseInt(hex?.slice(1, 3), 16);
+    const g = parseInt(hex?.slice(3, 5), 16);
+    const b = parseInt(hex?.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
@@ -292,6 +292,7 @@ export const TextInput: React.FC<TextInputProps> = ({
             ${getFillClasses()}
             ${getPinClasses()}
             ${getTextAlignClasses()}
+            ${isDark ? 'bg-gray-800' : 'bg-gray-100'} 
             ${
               view === 'normal'
                 ? 'border-2'
@@ -315,7 +316,7 @@ export const TextInput: React.FC<TextInputProps> = ({
             }
             ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
             ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}
-            transition-all duration-200
+            p-2 transition-all duration-200
             focus:outline-none
             ${className}
           `}
@@ -423,79 +424,55 @@ export const TextInput: React.FC<TextInputProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText)
       return (
-        <div className={`${fillContainer ? 'h-full w-full' : ''} ${className}`}>
+        <div
+          className={`h-full w-full 
+            ${getFontSizeClass(branding.fontSize)} 
+            ${direction === 'RTL' ? 'flex-row-reverse' : ''}
+            ${className}
+          `}
+        >
           {element}
         </div>
       )
 
-    const headerClasses = `font-semibold mb-1 overflow-hidden text-ellipsis whitespace-nowrap ${
-      isDark ? 'text-gray-300' : 'text-gray-700'
-    } 
-      ${getFontSizeClass(branding.fontSize)} ${className}`
-
-    const headerContent = (
-      <>
-        {headerText}
-        {require && <span className='ml-1 text-red-500'>*</span>}
-      </>
-    )
+    const headerClasses = `
+      flex h-full w-full overflow-hidden text-ellipsis whitespace-nowrap 
+      ${isDark ? 'text-gray-300' : 'text-gray-700'}
+      ${direction === 'RTL' ? 'flex-row-reverse' : ''}
+      ${getFontSizeClass(branding.fontSize)}
+      ${className}
+      `
 
     switch (headerPosition) {
       case 'top':
         return (
-          <div
-            className={`${
-              fillContainer
-                ? 'flex h-full w-full flex-col'
-                : 'inline-flex flex-col'
-            } ${headerClasses}`}
-          >
-            <div>{headerContent}</div>
+          <div className={`${headerClasses} flex-col `}>
+            <div className='font-semibold '>{headerText}</div>
             {element}
           </div>
         )
       case 'bottom':
         return (
-          <div
-            className={`${
-              fillContainer
-                ? 'flex h-full w-full flex-col'
-                : 'inline-flex flex-col'
-            }  ${headerClasses}`}
-          >
+          <div className={`${headerClasses} flex-col`}>
             {element}
-            <div className='mt-1'>{headerContent}</div>
+            <div className='mt-1 font-semibold'>{headerText}</div>
           </div>
         )
       case 'left':
         return (
-          <div
-            className={`${
-              fillContainer ? 'flex h-full w-full' : 'inline-flex'
-            } items-center gap-4 ${headerClasses}`}
-          >
-            <div
-              className={`mb-0 min-w-0 max-w-[50%] sm:max-w-[40%] md:max-w-[35%] lg:max-w-[30%]`}
-            >
-              {headerContent}
+          <div className={`${headerClasses} items-center gap-4`}>
+            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
+              {headerText}
             </div>
             {element}
           </div>
         )
       case 'right':
         return (
-          <div
-            className={`${
-              fillContainer
-                ? 'flex h-full w-full flex-col'
-                : 'inline-flex flex-col'
-            } items-center gap-4 ${className} ${headerClasses}`}
-          >
+          <div className={`${headerClasses} items-center gap-4`}>
             {element}
-            <div
-              className={` mb-0 min-w-0 max-w-[50%] sm:max-w-[40%] md:max-w-[35%] lg:max-w-[30%]`}
-            >
-              {headerContent}
+            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
+              {headerText}
             </div>
           </div>
         )

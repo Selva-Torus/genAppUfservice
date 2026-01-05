@@ -39,14 +39,14 @@ const LayoutDecider = ({
   const {borderColor} = useTheme()
   const { brandColor, hoverColor, selectionColor } = branding;
   const encryptionFlagApp: boolean = false;    
-  const encryptionDpd: string = "CK:CT003:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixtestdpd:AFVK:v1";
+  const encryptionDpd: string = "CK:CT309:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:mydpd:AFVK:v1";
   const encryptionMethod: string = "";
   const logo = ""
-  const appName = "oprmatrix"
+  const appName = "application"
   const toast = useInfoMsg()
   const [loading, setLoading] = useState(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
-  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc"
+  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT309:AFGK:AG001:AFK:A001:AFVK:v1:bldc"
   const [rawNavData, setRawNavData] = useState<MenuItem[] | null>(null);
   const navData: MenuItem[] = [
   {
@@ -74,29 +74,44 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
-    "menuGroupLabel": "Menu Item 3",
+    "menuGroupLabel": "progress",
     "screenDetails": [
       {
-        "name": "menu item 3",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1",
-        "allowedAccessProfile": [],
+        "name": "progress",
+        "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1",
+          "Template 2"
+        ],
         "static": false
       }
     ],
     "items": []
   },
   {
-    "menuGroup": "menu grp 8",
-    "menuGroupLabel": "Menu Grp 8",
+    "menuGroupLabel": "tablecheck",
     "screenDetails": [
       {
-        "name": "menu item 4-1",
-        "label": "Menu Item 4-1",
-        "key": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1",
+        "name": "tablecheck",
+        "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1",
         "allowedAccessProfile": [
           "Template 1",
-          "Template 2",
-          "Template 3"
+          "Template 2"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroupLabel": "indisave",
+    "screenDetails": [
+      {
+        "name": "indisave",
+        "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1",
+          "Template 2"
         ],
         "static": false
       }

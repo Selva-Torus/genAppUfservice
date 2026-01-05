@@ -47,14 +47,10 @@ export class TeController {
           }
         }
         if(TimeInterval){ 
-          let jobname
-         if(pfdto.schedulerStatus == 'active'){
-           let keyname = pfdto?.key.split(':')
-            jobname = ((keyname[1] + keyname[5] + keyname[7] + keyname[9] + keyname[11] + keyname[13]).replace(/[-_]/g, '')).replace(/\s+/g, '');
-          await this.teService.startCronJob(jobname,TimeInterval,pfdto,client);
-         }
+         if(pfdto.schedulerStatus == 'active')
+          await this.teService.startCronJob('DynamicEventEmitter',TimeInterval,pfdto,client);
           else if(pfdto.schedulerStatus == 'inactive'){
-          await this.teService.stopCron(jobname);  
+          await this.teService.stopCron();  
           return 'scheduler stopped' 
           }           
         } else{

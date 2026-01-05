@@ -199,13 +199,13 @@ export const Text: React.FC<TextProps> = ({
 
   const renderContent = () => {
     if (iconDisplay === 'Icon only' && icon) {
-      return <Icon data={icon} size={iconSize} />
+      return <Icon fillContainer={false} data={icon} size={iconSize} className={`flex items-center justify-center ${className}`} />
     }
 
     if (iconDisplay === 'Start with Icon' && icon) {
       return (
         <>
-          <Icon data={icon} size={iconSize} />
+          <Icon fillContainer={false} data={icon} size={iconSize} className={`flex items-center justify-center ${className}`}/>
           <span>{displayContent}</span>
         </>
       )
@@ -215,7 +215,7 @@ export const Text: React.FC<TextProps> = ({
       return (
         <>
           <span>{displayContent}</span>
-          <Icon data={icon} size={iconSize} />
+          <Icon fillContainer={false} data={icon} size={iconSize} className={`flex items-center justify-center ${className}`}/>
         </>
       )
     }
@@ -230,12 +230,12 @@ export const Text: React.FC<TextProps> = ({
   const getContentAlignClasses = () => {
     switch (contentAlign) {
       case 'left':
-        return 'justify-start'
+        return 'text-left justify-start'
       case 'right':
-        return 'justify-end'
+        return 'text-right justify-end'
       case 'center':
       default:
-        return 'justify-center'
+        return 'text-center justify-center'
     }
   }
 
@@ -246,7 +246,7 @@ export const Text: React.FC<TextProps> = ({
         ${getVariantClasses()}
         ${getFillClasses()}
         ${getContentAlignClasses()}
-        overflow-hidden text-ellipsis whitespace-nowrap
+        overflow-hidden
         ${
           wordBreak === 'break-all'
             ? 'break-all'
@@ -263,7 +263,7 @@ export const Text: React.FC<TextProps> = ({
         }
         ${
           iconDisplay && icon
-            ? `${getFillClasses()} inline-flex items-center gap-2`
+            ? `inline-flex items-center`
             : ''
         }
         ${className}
@@ -282,7 +282,7 @@ export const Text: React.FC<TextProps> = ({
       <Tooltip
         title={tooltipProps.title}
         placement={tooltipProps.placement}
-        triggerClassName='inline-block'
+        triggerClassName=''
       >
         {textElement}
       </Tooltip>

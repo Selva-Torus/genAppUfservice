@@ -100,7 +100,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     ${getContentAlignClasses()}
     ${fillContainer ? "w-full h-full" : ""}
     ${fontSizeClass}
-    `} 
+    overflow-hidden
+    `}
       style={style}>
       {label && (
         <label
@@ -116,7 +117,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         disabled={disabled}
         readOnly={readOnly}
         className={`
-          w-full flex-1
+          w-full flex-1 min-h-0
           border-2
           ${disabled ? "opacity-50 cursor-not-allowed" : ""}
           ${readOnly ? "cursor-default" : ""}
@@ -131,17 +132,26 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         `}
         style={{
           borderRadius: "var(--border-radius)",
+          overflow: "hidden",
+        }}
+        onMouseEnter={(e) => {
+          if (!disabled && !readOnly && validationState !== "invalid") {
+            e.currentTarget.style.borderColor = branding.hoverColor;
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!disabled && !readOnly && validationState !== "invalid" && document.activeElement !== e.currentTarget) {
+            e.currentTarget.style.borderColor = "";
+          }
         }}
         onFocus={(e) => {
-          if (validationState !== "invalid") {
-            e.currentTarget.style.borderColor = "var(--brand-color)";
-            e.currentTarget.style.boxShadow = "0 0 0 2px var(--brand-color-transparent)";
+          if (!disabled && !readOnly && validationState !== "invalid") {
+            e.currentTarget.style.borderColor = branding.selectionColor;
           }
         }}
         onBlur={(e) => {
-          if (validationState !== "invalid") {
-            e.currentTarget.style.borderColor = isDark ? "#4B5563" : "#D1D5DB";
-            e.currentTarget.style.boxShadow = "none";
+          if (!disabled && !readOnly && validationState !== "invalid") {
+            e.currentTarget.style.borderColor = "";
           }
           onBlur?.(e);
         }}
@@ -157,7 +167,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
     const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
-    }`;
+    } ${className}`;
 
     switch (headerPosition) {
         case "top":

@@ -305,11 +305,27 @@ export const Popup: React.FC<PopupProps> = ({
       }
     };
 
-    window.addEventListener("scroll", onClose as any, true);
+    const handleScroll = (event: Event) => {
+      // Check if scroll is happening inside a modal
+      const target = event.target as HTMLElement;
+      const isInsideModal = target?.closest('[role="dialog"]') || target?.closest('.modal') || target?.closest('[data-modal="true"]');
+
+      // Don't close if scrolling inside a modal
+      if (isInsideModal) {
+        return;
+      }
+
+      // Close popup if scrolling outside
+      if (onClose) {
+        onClose();
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, true);
     window.addEventListener("resize", handleUpdate);
 
     return () => {
-      window.removeEventListener("scroll", handleUpdate, true);
+      window.removeEventListener("scroll", handleScroll, true);
       window.removeEventListener("resize", handleUpdate);
     };
   }, [open, isVisible, placement, offset, preventFlip, anchorRef]);

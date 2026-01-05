@@ -1,3 +1,4 @@
+
 'use client'
 import React, { useState } from 'react'
 import axios from 'axios'
@@ -28,7 +29,7 @@ interface LoginProps {
   image?: string
 }
 
-const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image }: LoginProps) => {
+const LoginForm = ({ logo, appName = "application", loginType = "standard", image }: LoginProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     password: ''
@@ -65,7 +66,7 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT003:AFGK:AG001:AFK:oprmatrix:AFVK:v1:bldc",
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT309:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
           ufClientType: 'UFW'
         }
         const api_signin = await axios.post(
@@ -94,17 +95,22 @@ const LoginForm = ({ logo, appName = "oprmatrix", loginType = "standard", image 
           document.cookie = `language=${'en'}`
           let screenDetails: any = {
             keys:[
-              {
-    "screenName": "menu item 3",
-    "screensName": "menu_item_3-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:OpenBanking:AFVK:v1"
-              },
-              {
-    "screenName": "menu item 4-1",
-    "screensName": "menu_item_4-1-v1",
-    "ufKey": "CK:CT003:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:oprmatrix:AFK:oprmatrixUF:AFVK:v1"
-              }
-            ]
+  {
+    "screenName": "progress",
+    "screensName": "progress-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1"
+  },
+  {
+    "screenName": "tablecheck",
+    "screensName": "tablecheck-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1"
+  },
+  {
+    "screenName": "indisave",
+    "screensName": "indisave-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1"
+  }
+]
           }
           const ORM: any = decodeToken(api_signin.data.token)
           sessionStorage.setItem(

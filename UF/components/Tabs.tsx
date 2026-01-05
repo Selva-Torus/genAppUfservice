@@ -62,9 +62,9 @@ export const Tabs: React.FC<TabsProps> = ({
 
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+    const r = parseInt(hex?.slice(1, 3), 16);
+    const g = parseInt(hex?.slice(3, 5), 16);
+    const b = parseInt(hex?.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
@@ -91,11 +91,12 @@ export const Tabs: React.FC<TabsProps> = ({
               className={`
                 ${getSizeClasses()}
                 [border-radius:var(--border-radius)]
-                flex items-center gap-2
+
+                flex items-center justify-center gap-2
                 font-medium
                 whitespace-nowrap
-                transition-all duration-200
-                w-1/${items?.length}
+                transition-all
+                ${direction === "vertical" ? "" : "flex-1"}
                 ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
                 ${isActive
                   ? "text-white shadow-sm"
@@ -194,3 +195,4 @@ export const Tabs: React.FC<TabsProps> = ({
 
   return <div className={`h-full w-full ${className}`}>{finalElement}</div>;
 };
+ 

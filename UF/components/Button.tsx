@@ -508,7 +508,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
 
     const headerClasses = `${fontSizeClass} font-semibold mb-1 ${
       theme === "dark" || theme === "dark-hc" ? "text-gray-300" : "text-gray-700"
-    }`;
+    }
+    ${className}`;
 
     switch (headerPosition) {
         case "top":

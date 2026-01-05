@@ -22,24 +22,35 @@ interface TextAreaWithEndContentProps {
 function TextAreaWithEndContent({ endContent, placeholder, branding, isDark, ...props }: TextAreaWithEndContentProps & { branding: any; isDark: boolean }) {
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+    const r = parseInt(hex?.slice(1, 3), 16);
+    const g = parseInt(hex?.slice(3, 5), 16);
+    const b = parseInt(hex?.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
+  // Extract non-DOM props to avoid React warnings
+  const {
+    className,
+    needTooltip,
+    tooltipProps,
+    headerText,
+    headerPosition,
+    tooltipDisplay,
+    onUpdate,
+    label,
+    ...domProps
+  } = props;
+
   return (
-    <div className={`relative w-full h-full ${props.className || ''} overflow-hidden`}>
+    <div className={`relative w-full h-full ${className || ''} overflow-hidden`}>
       <textarea
-        {...props}
-        rows={props.rows || 4}
+        {...domProps}
+
         placeholder={placeholder}
         className={`
           w-full
           h-full
-          px-3 py-2
-          sm:px-4 sm:py-3
-          pr-14 sm:pr-16
+          p-2
           border-2
           ${isDark ? 'border-gray-600 bg-gray-800 text-white' : 'border-gray-300 bg-white text-gray-900'}
           resize-vertical
@@ -48,7 +59,7 @@ function TextAreaWithEndContent({ endContent, placeholder, branding, isDark, ...
           font-inherit
         `}
         style={{
-          ...props.style,
+          ...domProps.style,
           borderRadius: 'var(--border-radius)',
         }}
         onFocus={(e) => {
@@ -58,15 +69,15 @@ function TextAreaWithEndContent({ endContent, placeholder, branding, isDark, ...
         onBlur={(e) => {
           e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB';
           e.currentTarget.style.boxShadow = 'none';
-          props.onBlur?.(e);
+          domProps.onBlur?.(e);
         }}
         onMouseEnter={(e) => {
-          if (!props.disabled && document.activeElement !== e.currentTarget) {
+          if (!domProps.disabled && document.activeElement !== e.currentTarget) {
             e.currentTarget.style.borderColor = branding.hoverColor;
           }
         }}
         onMouseLeave={(e) => {
-          if (!props.disabled && document.activeElement !== e.currentTarget) {
+          if (!domProps.disabled && document.activeElement !== e.currentTarget) {
             e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB';
           }
         }}
@@ -130,9 +141,6 @@ export function TextToSpeech(props: TextToSpeechProps){
         text-white
         text-base sm:text-lg md:text-xl
         shadow-md
-        w-8 h-8
-        sm:w-9 sm:h-9
-        md:w-10 md:h-10
         p-0
         min-w-0
         transition-all duration-200
@@ -141,6 +149,8 @@ export function TextToSpeech(props: TextToSpeechProps){
       `}
       style={{
         backgroundColor: branding.brandColor,
+        width: '10%',
+        height: '10%',
       }}
       onMouseEnter={(e: React.MouseEvent<HTMLButtonElement>) => {
         if (!isSpeaking && !props.disabled) {
@@ -153,7 +163,7 @@ export function TextToSpeech(props: TextToSpeechProps){
         }
       }}
     >
-      <FiVolume2 className="w-4 h-4 sm:w-5 sm:h-5" />
+      <FiVolume2 style={{ width: '60%', height: '60%' }} />
     </button>
   );
 
@@ -210,7 +220,7 @@ export function TextToSpeech(props: TextToSpeechProps){
         <TextAreaWithEndContent
           {...props}
           value={text}
-          rows={props?.rows||4}
+          // rows={props?.rows||4}
           disabled={props.disabled}
           placeholder={props.placeholder}
           onChange={(e) => {

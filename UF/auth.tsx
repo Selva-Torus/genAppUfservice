@@ -6,31 +6,14 @@ import FusionAuth from 'next-auth/providers/fusionauth'
 export const { auth, handlers, signIn, signOut } = NextAuth({
   secret: process.env.AUTH_SECRET,
   providers: [
-   FusionAuth({
-      clientId: process.env.AUTH_FUSIONAUTH_ID,
-      clientSecret: process.env.AUTH_FUSIONAUTH_SECRET,
-      tenantId: process.env.AUTH_FUSIONAUTH_TENANT_ID,
-      issuer: process.env.AUTH_FUSIONAUTH_ISSUER,
-      wellKnown: `${process.env.AUTH_FUSIONAUTH_ISSUER}/.well-known/openid-configuration/${process.env.AUTH_FUSIONAUTH_TENANT_ID}`,
-      authorization: {
-        url: `${process.env.AUTH_FUSIONAUTH_ISSUER}/oauth2/authorize`,
-        params: {
-          scope: "openid profile email",
-          response_type: "code",
-          client_id: process.env.AUTH_FUSIONAUTH_ID,
-          tenantId: process.env.AUTH_FUSIONAUTH_TENANT_ID,
-        },
-      },
-      token: {
-        url: `${process.env.AUTH_FUSIONAUTH_ISSUER}/oauth2/token`,
-      },
-      userinfo: {
-        url: `${process.env.AUTH_FUSIONAUTH_ISSUER}/oauth2/userinfo`,
-      },
-      client: {
-        token_endpoint_auth_method: "client_secret_post",
-      },
+    Google({
+      clientId: process.env.AUTH_GOOGLE_ID,
+      clientSecret: process.env.AUTH_GOOGLE_SECRET
     }),
+    Github({
+      clientId: process.env.AUTH_GITHUB_ID,
+      clientSecret: process.env.AUTH_GITHUB_SECRET
+    })
 
 
   ],

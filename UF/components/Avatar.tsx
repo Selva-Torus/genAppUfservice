@@ -167,7 +167,7 @@ export const Avatar: React.FC<AvatarProps> = ({
         <img
           src={imageUrl}
           alt={alt}
-          className="w-full h-full object-cover"
+          className={`h-full object-contain ${contentAlign === "center" ? "w-full" : ""}`}
           onError={(e) => {
             if (fallbackImgUrl) {
               e.currentTarget.src = fallbackImgUrl;
@@ -178,7 +178,7 @@ export const Avatar: React.FC<AvatarProps> = ({
         <Icon
           data={icon}
           size={getIconSize()}
-          className={fillContainer ? "w-full h-full" : ""}
+          className={`p-2 ${fillContainer} ? "w-full h-full" : ""`}
         />
       ) : text ? (
         <span>{text.charAt(0).toUpperCase()}</span>
@@ -186,7 +186,7 @@ export const Avatar: React.FC<AvatarProps> = ({
         <Icon
           data="user"
           size={getIconSize()}
-          className={fillContainer ? "w-full h-full" : ""}
+          className={`p-2 ${fillContainer} ? "w-full h-full" : ""`}
         />
       )}
     </div>
@@ -196,7 +196,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     if (!headerText) return element;
 
     const isDark = theme === "dark" || theme === "dark-hc";
-    const headerClasses = `${fontSizeClass} font-semibold mb-1 ${isDark ? "text-gray-300" : "text-gray-700"}`;
+    const headerClasses = `${fontSizeClass} font-semibold mb-1 ${isDark ? "text-gray-300" : "text-gray-700"} ${className}`;
 
     switch (headerPosition) {
         case "top":

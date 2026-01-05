@@ -15,8 +15,35 @@ export class AppService implements OnModuleInit{
 
   async onModuleInit() {
     console.log('Application started, calling API...');
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiUGVlckA3ODYiLCJjbGllbnQiOiJDVDAwMyIsInR5cGUiOiJjIiwibG9nVHlwZSI6Im1vbmdvZGIiLCJzaWQiOiIzZDkzNDM2Yy00YmM1LTRlNDAtYTU1NS03MzI0OGI3OGQzNGYiLCJpYXQiOjE3NjY1NjI0NDcsImV4cCI6MTc2NjU2MzY0N30.13-iuMUwU-5JyoPZKMgktM5vPunnPIDqZ8G7f4EarHQ';
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiZ2FtZSIsImNsaWVudCI6IkNUMzA5IiwidHlwZSI6ImMiLCJsb2dUeXBlIjoibW9uZ29kYiIsInNpZCI6Ijc2Y2Y2MzQ1LTIxYjItNGZlYi05ZDBlLTFkMGQxZTkxMDRlMyIsImlhdCI6MTc2NzU4Nzc5OCwiZXhwIjoxNzY3NTg4OTk4fQ.QSPzMjqJgo2_7-ywYjzkB95NVwB-1MeYzioPRZcfzt4';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
+    if(Object.keys(preParedData).includes('erdWithData'))
+      {
+      let endPointData : any = {};
+      let erdDatas: any = {};
+      endPointData.data = preParedData?.erdWithData||{}
+      endPointData.type =  "json";
+      let res =  await this.ufservice.getEndPoints(endPointData);
+      //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData,{
+      //  headers: {
+      //    Authorization: `Bearer ${token}`, 
+      //  }
+      //});
+      erdDatas.endpoint = res;
+      erdDatas.tenant =  "CT309";
+      erdDatas.domain = "appgroup";
+      erdDatas.collection = "application";
+      erdDatas.data = preParedData?.erdWithData||{}
+      erdDatas.fabric = 'API-APIPD';
+      erdDatas.loginId = "game";    
+      erdDatas.erdFlag = true;  
+      await this.ufservice.createApiCollection(erdDatas,this.clientcode);
+      //await axios.post(this.apiUrl+'/createApiCollection', erdDatas,{
+      //  headers: {
+      //    Authorization: `Bearer ${token}`, 
+      //  }
+      //});
+      }
     if(Object.keys(preParedData).includes('torusApis'))
     {
       let torusData: any = {};
@@ -25,12 +52,12 @@ export class AppService implements OnModuleInit{
       //endPointData.type =  "json";
       //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData);
       //torusData.endpoint = res.data;
-      torusData.tenant =  "CT003";
+      torusData.tenant =  "CT309";
       torusData.domain = "appgroup"; 
-      torusData.collection = "oprmatrix";
+      torusData.collection = "application";
       torusData.fabric = 'API-APIPD-TORUS';
       torusData.data = preParedData?.torusApis||{}
-      torusData.loginId = "Peer@786";    
+      torusData.loginId = "game";    
       //await axios.post(this.apiUrl, torusData);
     }
   }

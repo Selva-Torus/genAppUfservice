@@ -9,6 +9,7 @@ import {
   TooltipProps as TooltipPropsType
 } from '@/types/global'
 import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
+type IconDisplay = 'Icon only' | 'Start with Icon' | 'End with Icon'
 type LabelTheme =
   | 'normal'
   | 'info'
@@ -27,6 +28,8 @@ interface LabelProps {
   copyText?: string
   disabled?: boolean
   icon?: string
+  iconSize?: number
+  iconDisplay?: IconDisplay
   needTooltip?: boolean
   tooltipProps?: TooltipPropsType
   headerText?: string
@@ -45,6 +48,8 @@ export const Label: React.FC<LabelProps> = ({
   copyText,
   disabled = false,
   icon,
+  iconSize = 16,
+  iconDisplay,
   needTooltip = false,
   tooltipProps,
   headerText,
@@ -73,12 +78,12 @@ export const Label: React.FC<LabelProps> = ({
   const getContentAlignClasses = () => {
     switch (contentAlign) {
       case 'left':
-        return 'justify-start'
+        return 'text-left justify-start'
       case 'right':
-        return 'justify-end'
+        return 'text-right justify-end'
       case 'center':
       default:
-        return 'justify-center'
+        return 'text-center justify-center'
     }
   }
 
@@ -126,61 +131,92 @@ export const Label: React.FC<LabelProps> = ({
     }
   }
 
+  const getIconSize = () => {
+    if (fillContainer) {
+      // When fillContainer is true, scale icon with branding fontSize
+      const baseFontSize = getFontSizeClass(branding.fontSize);
+      switch (baseFontSize) {
+        case "text-sm":
+          return 22;
+        case "text-base":
+          return 30;
+        case "text-lg":
+          return 38;
+        case "text-xl":
+          return 46;
+      }
+    }
+  };
+
   const colors = getThemeColors()
   const isDark = theme === 'dark' || theme === 'dark-hc'
 
   const labelElement = (
-    <span
+    <div
       onClick={disabled ? undefined : onClick}
       className={`
-        items-center gap-1 overflow-hidden px-2 py-1 font-medium transition-all
-        ${fillContainer ? 'flex' : 'inline-flex'} 
-        ${getContentAlignClasses()}
-        ${
-          disabled
-            ? 'cursor-not-allowed opacity-50'
-            : interactive
-            ? 'cursor-pointer hover:opacity-80'
-            : ''
-        }
-        ${getFillClasses()}
-        ${getFontSizeClass(branding.fontSize)}
-        ${className}
-      `}
+          flex
+          items-center gap-1 overflow-hidden px-2 py-1 font-medium transition-all
+          ${fillContainer ? 'flex' : 'inline-flex'} 
+          ${
+            disabled
+              ? 'cursor-not-allowed opacity-50'
+              : interactive
+              ? 'cursor-pointer hover:opacity-80'
+              : ''
+          }
+          ${getFillClasses()}
+          ${getFontSizeClass(branding.fontSize)}
+          ${getContentAlignClasses()}
+          ${className}
+        `}
       style={{
         backgroundColor: colors.bg,
         color: colors.text,
         borderRadius: 'var(--border-radius)'
       }}
     >
-      {icon && <Icon data={icon} size={16} className='flex-shrink-0' />}
-
-      <span className='overflow-hidden text-ellipsis whitespace-nowrap'>
-        {children}
-      </span>
-
-      {copy && (
-        <Icon
-          data='FaCopy'
-          size={16}
-          onClick={(e: any) => {
-            e.stopPropagation()
-            handleCopy()
-          }}
-          className='flex-shrink-0 cursor-pointer hover:opacity-70'
-        />
-      )}
-    </span>
+        {icon && iconDisplay === 'Icon only' && (
+          <Icon data={icon} fillContainer={false} size={getIconSize()} className={`${className}`} />
+        )}
+        {icon && iconDisplay === 'Start with Icon' && (
+          <Icon data={icon} fillContainer={false} size={getIconSize()} className={`${className}`} />
+        )}
+        {iconDisplay !== 'Icon only' && (
+          <span className='overflow-hidden text-ellipsis whitespace-nowrap'>
+            {children}
+          </span>
+        )}
+        {icon && iconDisplay === 'End with Icon' && (
+          <Icon data={icon} fillContainer={false} size={getIconSize()} className={`${className}`} />
+        )}
+        {icon && !iconDisplay && (
+          <Icon data={icon} fillContainer={false} size={getIconSize()} className={`${className}`} />
+        )}
+      <div className='flex !h-full  items-center justify-end'>
+        {copy && (
+          <Icon
+            data='FaCopy'
+            fillContainer={false}
+            onClick={(e: any) => {
+              e.stopPropagation()
+              handleCopy()
+            }}
+            className='cursor-pointer'
+          />
+        )}
+      </div>
+    </div>
   )
 
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return <div className='h-full w-full'>{element}</div>
 
     const headerClasses = `
-      flex h-full w-full overflow-hidden text-ellipsis whitespace-nowrap 
-      ${isDark ? 'text-gray-300' : 'text-gray-700'}
-      ${getFontSizeClass(branding.fontSize)} 
-      ${className} `
+        flex h-full w-full overflow-hidden text-ellipsis whitespace-nowrap 
+        ${isDark ? 'text-gray-300' : 'text-gray-700'}
+        ${getFontSizeClass(branding.fontSize)} 
+        ${className} `
 
     switch (headerPosition) {
       case 'top':

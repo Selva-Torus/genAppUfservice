@@ -157,7 +157,7 @@ export const List: React.FC<ListProps> = ({
               `}
               style={{
                 fontSize: "var(--font-size)",
-                backgroundColor: isSelected ? "var(--brand-color)" : undefined,
+                backgroundColor: isSelected ? "var(--selection-color)" : undefined,
               }}
             >
               {title}

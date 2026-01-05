@@ -66,7 +66,7 @@ export const Image: React.FC<ImageProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) {
       return (
-        <div className={`${fillContainer ? "flex" : "inline-flex"} ${getContentAlignClasses()} ${getFillClasses()} ${className}`}>
+        <div className={`${fillContainer ? "flex w-full h-full" : "inline-flex"} ${getContentAlignClasses()} ${getFillClasses()} ${className}`}>
           {element}
         </div>
       );
@@ -81,14 +81,14 @@ export const Image: React.FC<ImageProps> = ({
     switch (headerPosition) {
       case "top":
         return (
-          <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col ${getContentAlignClasses()} ${getFillClasses()} ${className}`}>
+          <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col  ${getFillClasses()} ${className}`}>
             <div className={headerClasses} style={headerStyle}>{headerText}</div>
             <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
           </div>
         );
       case "bottom":
         return (
-          <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col ${getContentAlignClasses()} ${getFillClasses()} ${className}`}>
+          <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col  ${getFillClasses()} ${className}`}>
             <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
             <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
           </div>

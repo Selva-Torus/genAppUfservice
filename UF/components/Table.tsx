@@ -5,6 +5,7 @@ import { useGlobal } from "@/context/GlobalContext";
 import { Icon } from "./Icon";
 import { getFontSizeClass, getBorderRadiusClass } from"@/app/utils/branding";
 import { BiSort } from "react-icons/bi";
+import { twMerge } from "tailwind-merge";
 
 interface RenderRowActionsProps {
   item: any;
@@ -27,7 +28,7 @@ interface TableProps {
   renderRowActions?: (props: RenderRowActionsProps) => React.ReactNode;
   selectedIds?: string[];
   onSelectionChange?: (selectedIds: string[]) => void;
-  selectionMode?: 'single' | 'multi';
+  selectionMode?: 'Single' | 'Multi';
   getRowId?: (row: any, index: number) => string;
   edgePadding?: boolean;
   wordWrap?: boolean;
@@ -51,7 +52,7 @@ export const Table: React.FC<TableProps> = ({
   renderRowActions,
   selectedIds=[],
   onSelectionChange,
-  selectionMode = 'multi',
+  selectionMode = 'single',
   getRowId,
   edgePadding = true,
   wordWrap = false,
@@ -170,7 +171,12 @@ export const Table: React.FC<TableProps> = ({
           newSelectedIds.push(id);
         }
       });
-      onSelectionChange(newSelectedIds);
+      if(selectedIds?.length==0 && selectionMode!='Single')
+      {
+        onSelectionChange(newSelectedIds);
+        return
+      }
+      onSelectionChange([]);
     }
   };
 
@@ -183,16 +189,16 @@ export const Table: React.FC<TableProps> = ({
 
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex.slice(1, 3), 16);
-    const g = parseInt(hex.slice(3, 5), 16);
-    const b = parseInt(hex.slice(5, 7), 16);
+    const r = parseInt(hex?.slice(1, 3), 16);
+    const g = parseInt(hex?.slice(3, 5), 16);
+    const b = parseInt(hex?.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
   const tableElement = (
-    <div className={`w-full ${edgePadding ? "p-4" : ""} ${className}`}>
-      <div className="flex gap-4 mb-4">
-        {search && (
+    <div className={`w-full h-full flex flex-col ${edgePadding ? "" : ""} ${className}`}>
+      {search && (
+        <div className="flex mb-4 flex-shrink-0">
           <div className="flex-1">
             <input
               type="text"
@@ -229,9 +235,8 @@ export const Table: React.FC<TableProps> = ({
               }}
             />
           </div>
-        )}
-
-      </div>
+        </div>
+      )}
 
       {/* Column Visibility Modal */}
       {showColumnModal && (
@@ -243,7 +248,6 @@ export const Table: React.FC<TableProps> = ({
               border-2
               p-6
               w-96
-              max-h-[80vh]
               overflow-auto
               shadow-xl
             `}
@@ -358,23 +362,24 @@ export const Table: React.FC<TableProps> = ({
         </div>
       )}
 
-      <div className="overflow-x-auto border rounded-lg" style={{
-        maxHeight: '600px',
-        overflow: 'auto'
-      }}>
-        <table
-          className={`
-            w-full
-            ${getBorderRadiusClass(branding.borderRadius)}
-            ${isDark ? "bg-gray-800" : "bg-white"}
-          `}
-        >
-          <thead
+      <div className="border rounded-lg flex-1 flex flex-col overflow-hidden">
+        <div className="overflow-auto flex-1 min-h-0">
+          <table
             className={`
-              sticky top-0 z-10
-              ${isDark ? "bg-gray-700" : "bg-gray-100"}
+              w-full
+              ${getBorderRadiusClass(branding.borderRadius)}
+              ${isDark ? "bg-gray-800" : "bg-white"}
             `}
           >
+            <thead
+              className={`
+                sticky top-0 z-10
+                ${isDark ? "bg-gray-700" : "bg-gray-100"}
+              `}
+              style={{
+                boxShadow: isDark ? "0 2px 4px rgba(0,0,0,0.3)" : "0 2px 4px rgba(0,0,0,0.1)"
+              }}
+            >
             <tr>
               {tableSelection && (
                 <th className="px-4 py-3 w-12">
@@ -388,10 +393,7 @@ export const Table: React.FC<TableProps> = ({
                         }
                       }}
                       onChange={handleSelectAllRows}
-                      className="w-4 h-4 cursor-pointer"
-                      style={{
-                        accentColor: branding.brandColor,
-                      }}
+                      className={twMerge("accent-[var(--selection-color)] hover:accent-[var(--hover-color)] " , ``)}
                     />
                   </div>
                 </th>
@@ -467,7 +469,7 @@ export const Table: React.FC<TableProps> = ({
 
               {/* Column Visibility Control */}
               {tableSettings && 
-              <th className="">
+                 <th className="px-4 py-3 w-12">
                 <button
                   onClick={() => setShowColumnModal(!showColumnModal)}
                   className={`
@@ -555,14 +557,11 @@ export const Table: React.FC<TableProps> = ({
                     <td className="px-4 py-3 w-12">
                       <div className="flex items-center justify-center">
                         <input
-                          type={selectionMode === 'single' ? "radio" : "checkbox"}
+                          type={ "checkbox"}
                           checked={isSelected}
                           onChange={() => handleRowSelection(row, index)}
                           onClick={(e) => e.stopPropagation()}
-                          className="w-4 h-4 cursor-pointer"
-                          style={{
-                            accentColor: branding.brandColor,
-                          }}
+                          className={twMerge("accent-[var(--selection-color)] hover:accent-[var(--hover-color)] " , ``)}
                         />
                       </div>
                     </td>
@@ -570,7 +569,10 @@ export const Table: React.FC<TableProps> = ({
                                     {
                     (visibleColumns.find((cols:any)=>(cols?.type=='__ActionDetails__'))&&tableActions==true && renderRowActions)&&
                     (
-                      <td>{renderRowActions({ item: row, index,nodeName:`${"ss"}`})}</td>
+                      <td 
+                      className="w-[10%]"
+                      
+                      >{renderRowActions({ item: row, index,nodeName:`${"ss"}`})}</td>
                     )
                   }
                   {visibleColumns.map((column) =>
@@ -579,6 +581,7 @@ export const Table: React.FC<TableProps> = ({
                     {
                       return(
                         <td
+                        className="w-[10%]"
                           key={column.id}
                           >
                           {renderRowActions({ item: row, index,nodeName:`${column?.controlType+column?.id}`})}
@@ -607,13 +610,14 @@ export const Table: React.FC<TableProps> = ({
               );
             }))}
 
-            
+
           </tbody>
         </table>
+        </div>
       </div>
 
     </div>
   );
-
-  return <>{tableElement}</>;
+// return <></>
+  return tableElement;
 };

@@ -339,10 +339,10 @@ export const Select: React.FC<SelectProps> = ({
                     }}
                   >
                     <div className="flex items-center gap-2">
-                      {option.icon && <Icon data={option.icon} size={16} />}
+                      {option.icon && <Icon fillContainer={false} data={option.icon} size={16} />}
                       <span>{option.label}</span>
                     </div>
-                    {selected && <Icon data="FaCheck" size={16} />}
+                    {selected && <Icon fillContainer={false} data="FaCheck" size={16} />}
                   </button>
                 );
               })

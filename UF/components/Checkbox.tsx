@@ -166,7 +166,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
 
     const titleClasses = `${fontSizeClass} font-semibold mb-2 ${
       theme === "dark" || theme === "dark-hc" ? "text-gray-200" : "text-gray-800"
-    }`;
+    } ${className}`;
 
     return (
       <div className="flex flex-col">
@@ -181,7 +181,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
 
     const headerClasses = `${fontSizeClass} font-semibold flex-shrink-0 ${
       theme === "dark" || theme === "dark-hc" ? "text-gray-300" : "text-gray-700"
-    }`;
+    } ${className}`;
 
     switch (headerPosition) {
         case "top":
