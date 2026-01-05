@@ -17,6 +17,7 @@ export class AppService implements OnModuleInit{
     console.log('Application started, calling API...');
     const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiZ2FtZSIsImNsaWVudCI6IkNUMzA5IiwidHlwZSI6ImMiLCJsb2dUeXBlIjoibW9uZ29kYiIsInNpZCI6Ijc2Y2Y2MzQ1LTIxYjItNGZlYi05ZDBlLTFkMGQxZTkxMDRlMyIsImlhdCI6MTc2NzU4Nzc5OCwiZXhwIjoxNzY3NTg4OTk4fQ.QSPzMjqJgo2_7-ywYjzkB95NVwB-1MeYzioPRZcfzt4';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
+    return
     if(Object.keys(preParedData).includes('erdWithData'))
       {
       let endPointData : any = {};
