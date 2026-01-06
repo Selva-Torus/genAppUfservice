@@ -11,6 +11,10 @@ import { Avatar } from '@/components/Avatar'
 import { BsThreeDotsVertical } from 'react-icons/bs'
 import { DropdownMenu } from '@/components/DropdownMenu'
 import { getCdnImage } from '../utils/getAssets'
+import { twMerge } from 'tailwind-merge'
+import { useTheme } from '@/hooks/useTheme'
+import Popup from '@/components/Popup'
+import { LogoutIcon, RotateIcon, SettingsIcon } from '../utils/svgApplications'
 
 const TopNav = ({
   navData,
@@ -38,9 +42,13 @@ const TopNav = ({
   const selectedAccessProfile = decodedTokenObj?.selectedAccessProfile
   const pathname = usePathname()
   const menuRef = useRef<HTMLDivElement>(null)
+  const { borderColor, isDark } = useTheme()
   const [visibleItems, setVisibleItems] = useState<MenuItem[]>(navData || [])
   const [hiddenItems, setHiddenItems] = useState<MenuItem[]>([])
   const tp_ps = getCookie('tp_ps')
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false)
+  const popoverButtonElement = useRef(null)
+
   useEffect(() => {
     const checkOverflow = () => {
       if (!menuRef.current) return
@@ -132,8 +140,6 @@ const TopNav = ({
     return false
   }
 
-  
-
   return (
     <div
       suppressHydrationWarning
@@ -169,7 +175,7 @@ const TopNav = ({
                             <Button
                               {...props}
                               view='flat'
-                              className='max-w-[100px] truncate font-medium leading-[1.5vh] p-2'
+                              className='max-w-[100px] truncate p-2 font-medium leading-[1.5vh]'
                             >
                               {menu.menuGroupLabel}
                             </Button>
@@ -242,59 +248,82 @@ const TopNav = ({
               )}
             </div>
           </div>
-          <div>
-            <DropdownMenu
-              renderSwitcher={(props: any) => (
-                <div
-                  {...props}
-                  className='flex items-center gap-2 rounded-full border'
-                  style={{
-                    borderColor: brandColor
-                  }}
-                >
-                  <Avatar
-                    theme='brand'
-                    view='filled'
-                    imageUrl={getCdnImage(userDetails?.profile)}
-                    icon='FaRegUser'
-                  />
-                  <Text className='pr-2'>{user}</Text>
-                </div>
-              )}
-              items={[
-                {
-                  text: user,
-                  action: () => {}
-                },
-                ...(pathname !== '/select-context'
-                  ? [
-                      {
-                        text: 'Switch accessProfile',
-                        action: () => {
-                          if (tp_ps) {
-                            router.push('/select-context')
-                          }
-                        }
-                      }
-                    ]
-                  : []),
-
-                {
-                  text: 'Log out',
-                  action: () => {
-                    logout()
-                  }
-                }
-              ]}
-              popupProps={{
-                style: {
-                  right: '10px',
-                  borderRadius: '0.375rem'
-                },
-                className: 'rounded-md hover:rounded-md'
-              }}
+          <div
+            onClick={() => setIsPopoverOpen(prev => !prev)}
+            ref={popoverButtonElement}
+            className='h-11 w-12 rounded-full cursor-pointer'
+          >
+            <Avatar
+              theme='brand'
+              view='filled'
+              imageUrl={getCdnImage(userDetails?.profile)}
+              icon='FaRegUser'
             />
           </div>
+          <Popup
+            anchorRef={popoverButtonElement}
+            open={isPopoverOpen}
+            onClose={() => setIsPopoverOpen(false)}
+            className='w-[12vw]'
+            placement='bottom'
+          >
+            <div className='flex flex-col gap-1 items-center'>
+              {/* Profile section */}
+              <div className='h-11 w-11 rounded-full'>
+                <Avatar
+                  theme='brand'
+                  view='filled'
+                  imageUrl={getCdnImage(userDetails?.profile)}
+                  icon='FaRegUser'
+                />
+              </div>
+
+                <Text className='font-medium'>
+                  {' '}
+                  {`${userDetails.firstName} ${userDetails.lastName}`}
+                </Text>
+            </div>
+
+            <hr className={twMerge('w-full border', borderColor)} />
+
+            <div className='flex flex-col gap-2 pt-3'>
+              {pathname !== '/select-context' && (
+                <div
+                  onClick={() => router.push('/select-context')}
+                  className='flex cursor-pointer items-center gap-2'
+                >
+                  <RotateIcon fill={isDark ? 'white' : 'black'} />
+                  <div>
+                    <Text variant='code-inline-2'>Change Profile</Text>
+                  </div>
+                </div>
+              )}
+
+              {pathname !== '/select-context' && pathname !== '/user' && (
+                <div
+                  onClick={() => router.push('/user')}
+                  className='flex cursor-pointer items-center gap-2'
+                >
+                  <SettingsIcon fill={isDark ? 'white' : 'black'} />
+                  <div>
+                    <Text variant='code-inline-2'>Settings</Text>
+                  </div>
+                </div>
+              )}
+
+              <div
+                onClick={logout}
+                className='flex cursor-pointer items-center gap-2'
+              >
+                <LogoutIcon />
+                <div>
+                  <Text variant='code-inline-2' className='text-[#F44336]'>
+                    Log out
+                  </Text>
+                </div>
+              </div>
+            </div>
+          </Popup>
         </>
       )}
     </div>

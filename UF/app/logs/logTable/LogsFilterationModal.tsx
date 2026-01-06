@@ -17,6 +17,7 @@ import { Avatar } from '@/components/Avatar'
 import { useTheme } from '@/hooks/useTheme'
 import { twMerge } from 'tailwind-merge'
 import { RangeCalendar } from '@/components/RangeCalendar'
+import { getCdnImage } from '@/app/utils/getAssets'
 
 const LogsFilterationModal = ({
   range,
@@ -111,7 +112,11 @@ const LogsFilterationModal = ({
   return (
     <div className='h-fit w-full'>
       <div className='flex w-full items-center justify-between px-2 py-1'>
-        <Text variant='subheader-2' className='flex !w-fit gap-2'>
+        <Text
+          contentAlign='left'
+          variant='subheader-2'
+          className='flex !w-fit gap-2'
+        >
           <FilterIcon fill={isDark ? '#fff' : '#000'} /> Filter
         </Text>
         <Button
@@ -125,7 +130,9 @@ const LogsFilterationModal = ({
       <hr className={`w-full ${borderColor}`} />
       {/* Date Range Selection */}
       <div className='flex flex-col gap-3 px-2 py-3'>
-        <Text variant='subheader-1'>SORT BY DATE</Text>
+        <Text contentAlign='left' variant='subheader-1'>
+          SORT BY DATE
+        </Text>
         <div
           onClick={e => {
             setDateRangeOpen(!isDateRangeOpen)
@@ -138,10 +145,10 @@ const LogsFilterationModal = ({
           )}
         >
           <div className='flex flex-col gap-1'>
-            <Text variant='body-2' color='secondary'>
+            <Text contentAlign='left' variant='body-2' color='secondary'>
               Select Date{' '}
             </Text>
-            <Text variant='body-2'>
+            <Text contentAlign='left' variant='body-2'>
               {showDate(selectedDateRange?.start)} -{' '}
               {showDate(selectedDateRange?.end)}
             </Text>
@@ -175,7 +182,9 @@ const LogsFilterationModal = ({
 
       {/* Fabric Selection */}
       <div className='flex flex-col gap-3 px-2 py-3'>
-        <Text variant='subheader-1'>FABRICS</Text>
+        <Text contentAlign='left' variant='subheader-1'>
+          FABRICS
+        </Text>
 
         <div className='flex flex-col gap-2'>
           {(activeTab === 'process'
@@ -193,7 +202,7 @@ const LogsFilterationModal = ({
                 checked={selectedKeys.includes(item.key)}
                 onChange={() => toggleFabric(item.key)}
               />
-              <Text>{item.label}</Text>
+              <Text contentAlign='left'>{item.label}</Text>
             </label>
           ))}
         </div>
@@ -202,7 +211,9 @@ const LogsFilterationModal = ({
       {/* if admin User  */}
       {isAdminUser && (
         <div className='flex flex-col gap-3 px-2 py-3'>
-          <Text variant='subheader-1'>USERS</Text>
+          <Text contentAlign='left' variant='subheader-1'>
+            USERS
+          </Text>
           {/* Search section */}
           <div
             className={twMerge(
@@ -275,18 +286,25 @@ const LogsFilterationModal = ({
                       key={userObj?.loginId}
                       className='flex items-center gap-[0.5vw]'
                     >
-                      <Avatar
-                        imageUrl={userObj?.profile as string}
-                        className={`transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
-                        theme='normal'
-                        view='filled'
-                        icon='FaRegUser'
-                      />
+                      <div className='h-11 w-11 rounded-full'>
+                        <Avatar
+                          theme='normal'
+                          view='filled'
+                          imageUrl={getCdnImage(userObj?.profile)}
+                          icon='FaRegUser'
+                        />
+                      </div>
                       <div className='flex flex-col gap-1'>
-                        <Text variant='body-2'>
+                        <Text
+                          className='text-nowrap'
+                          contentAlign='left'
+                          variant='body-2'
+                        >
                           {userObj?.firstName + ' ' + userObj?.lastName}
                         </Text>
-                        <Text variant='body-1'>{userObj?.loginId}</Text>
+                        <Text contentAlign='left' variant='body-1'>
+                          {userObj?.loginId}
+                        </Text>
                       </div>
                     </div>
                   </label>

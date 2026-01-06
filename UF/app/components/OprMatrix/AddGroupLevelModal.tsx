@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Multiply } from '../svgApplication'
 import { useInfoMsg } from '../infoMsgHandler'
 import { Text } from '@/components/Text'
@@ -36,6 +36,7 @@ const AddGroupLevelModal = ({
     name: string
   }
 }) => {
+  const nameInputRef = useRef<HTMLInputElement>(null)
   const [inputValue, setInputValue] = useState(
     resource
       ? resource
@@ -45,7 +46,11 @@ const AddGroupLevelModal = ({
         }
   )
   const toast = useInfoMsg()
-  const { borderColor , bgColor , isDark , textColor } = useTheme()
+  const { borderColor, bgColor, isDark, textColor } = useTheme()
+
+  useEffect(() => {
+    nameInputRef.current?.focus()
+  }, [])
 
   const handleInputChange = (e: any) => {
     let { name, value } = e.target
@@ -69,45 +74,52 @@ const AddGroupLevelModal = ({
   return (
     <div className='flex h-fit flex-col '>
       <div className='flex w-full items-center justify-between py-[.5vh]'>
-        <Text contentAlign='left' variant='body-3'>{modalTitle}</Text>
-        <Button className={'!w-fit p-1 rounded-md'} onClick={close}>
+        <Text contentAlign='left' variant='body-3'>
+          {modalTitle}
+        </Text>
+        <Button className={'!w-fit rounded-md p-1'} onClick={close}>
           <Multiply height='.7vw' width='.7vw' />
         </Button>
       </div>
-      <Text
-        contentAlign='left'
-        variant='caption-1'
-        color='secondary'
-      >
+      <Text contentAlign='left' variant='caption-1' color='secondary'>
         {modalSubText}
       </Text>
 
-      <div
-        className='flex flex-col gap-[1vh] py-[1vh] text-base'
-      >
-        <Label theme='clear' className='font-semibold !justify-start'>
+      <div className='flex flex-col gap-[1vh] py-[1vh] text-base'>
+        <Label theme='clear' className='!justify-start font-semibold'>
           Name
         </Label>
-     
+
         <input
           id='name'
+          ref={nameInputRef}
           name='name'
           type='text'
           placeholder={`Enter ${resourceField} name`}
-          className={twMerge(`rounded-lg border px-[.5vw] py-[.4vh] outline-none` , borderColor , bgColor , textColor)}
+          className={twMerge(
+            `rounded-lg border px-[.5vw] py-[.4vh] outline-none`,
+            borderColor,
+            bgColor,
+            textColor
+          )}
           onChange={handleInputChange}
           value={inputValue.name}
         />
-        <Label theme='clear'  className='font-semibold !justify-start'>
+        <Label theme='clear' className='!justify-start font-semibold'>
           Code
         </Label>
-        
+
         <input
           id='code'
           name='code'
           type='text'
           placeholder={`Enter ${resourceField} code`}
-          className={twMerge(`rounded-lg border px-[.5vw] py-[.4vh] outline-none` , borderColor , bgColor , textColor)}
+          className={twMerge(
+            `rounded-lg border px-[.5vw] py-[.4vh] outline-none`,
+            borderColor,
+            bgColor,
+            textColor
+          )}
           onChange={handleInputChange}
           readOnly={resource?.code ? true : false}
           value={inputValue.code?.replace(`${parentCode}`, '')}
@@ -121,10 +133,7 @@ const AddGroupLevelModal = ({
         >
           Cancel
         </Button>
-        <Button
-          onClick={handleAdd}
-          className={'!w-fit rounded-md p-2'}
-        >
+        <Button onClick={handleAdd} className={'!w-fit rounded-md p-2'}>
           {resource?.code ? 'Update' : 'Create'}
         </Button>
       </div>

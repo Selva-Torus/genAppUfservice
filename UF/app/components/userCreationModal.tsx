@@ -13,6 +13,7 @@ import { DatePicker } from '@/components/DatePicker'
 import { Switch } from '@/components/Switch'
 import i18n from './i18n'
 import { getCdnImage } from '../utils/getAssets'
+import { useGlobal } from '@/context/GlobalContext'
 
 const UserCreationModal = ({
   setModalOpen,
@@ -31,6 +32,7 @@ const UserCreationModal = ({
   setData: any
   isEdit?: boolean
 }) => {
+  const { branding } = useGlobal()
   const { borderColor, isDark } = useTheme()
   const keyset = i18n.keyset('language')
   const userAdditionDetails: {
@@ -310,8 +312,10 @@ const UserCreationModal = ({
 
   return (
     <div className={`g-root flex flex-col items-center justify-center`}>
-      <div className='flex w-full items-center justify-between pl-2 py-2'>
-        <Text variant='header-1'>{isEdit ? 'Edit User Info' : 'Add User'}</Text>
+      <div className='flex w-full items-center justify-between py-2 pl-2'>
+        <Text contentAlign='left' variant='header-1'>
+          {isEdit ? 'Edit User Info' : 'Add User'}
+        </Text>
         <Button onClick={handleCloseModal} className='!w-fit rounded-md p-2'>
           <Multiply fill={isDark ? 'white' : 'black'} />
         </Button>
@@ -326,10 +330,20 @@ const UserCreationModal = ({
             .map(({ heading, subHeading, formData }, index) => (
               <div key={index} className='flex w-full '>
                 <div className='flex w-1/2 flex-col gap-0.5'>
-                  <Text variant='subheader-2'>{keyset(heading)}</Text>
-                  <Text variant='body-2' color='secondary'>
-                    {keyset(subHeading)}
-                  </Text>
+                  <div>
+                    <Text contentAlign='left' variant='subheader-2'>
+                      {keyset(heading)}
+                    </Text>
+                  </div>
+                  <div>
+                    <Text
+                      contentAlign='left'
+                      variant='body-1'
+                      color='secondary'
+                    >
+                      {keyset(subHeading)}
+                    </Text>
+                  </div>
                 </div>
                 <div className='flex w-1/2 gap-2'>
                   {formData.map(({ type, name, label, readOnly }) => (
@@ -376,7 +390,7 @@ const UserCreationModal = ({
                           type='text'
                           placeholder={keyset(label)}
                           readOnly={readOnly}
-                          className='h-10 w-full rounded p-2 text-base'
+                          className='h-12 w-full rounded p-2 text-base'
                           onChange={handleInputChange}
                           value={
                             readOnly && name == 'domain'
@@ -433,16 +447,29 @@ const UserCreationModal = ({
                         </>
                       )}
                       {type == 'switch' && (
-                        <Switch
-                          checked={newUser[name] == true ? true : false}
-                          onChange={() =>
+                        <div
+                          onClick={() =>
                             setNewUser((pre: any) => ({
                               ...pre,
                               isAppAdmin: !pre[name]
                             }))
                           }
-                          className='h-6 w-6'
-                        />
+                          style={{
+                            backgroundColor:
+                              newUser[name] == true
+                                ? branding.selectionColor
+                                : '#D1D5DB'
+                          }}
+                          className='h-10 w-20 cursor-pointer rounded-3xl'
+                        >
+                          <div
+                            className={`mt-1 h-8 w-8 rounded-full bg-white ${
+                              newUser[name] == true
+                                ? 'translate-x-12'
+                                : 'translate-x-0'
+                            }`}
+                          ></div>
+                        </div>
                       )}
                     </div>
                   ))}
