@@ -48,6 +48,7 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
     theme?: string;
     'page-bg-color':string;
     'group-bg-color':string;
+    appBackgroundImage : string | undefined
   }
 
   const [data, setData] = useState<SetupKeyData | null>(null);
@@ -91,6 +92,7 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
       document.documentElement.style.setProperty('--hover-color', hoverColor);
       document.documentElement.style.setProperty('--border-radius', borderRadius);
       document.documentElement.style.setProperty('--g--font-size', fontSize);
+      document.documentElement.style.setProperty('--app-bg-image', `url("${process.env.NEXT_PUBLIC_FTP_OUTPUT_HOST}/${data['appBackgroundImage']}")`);
       // document.documentElement.style.setProperty('--page-bg-color', data['page-bg-color']);
       // document.documentElement.style.setProperty('--group-bg-color', data['group-bg-color']);
 

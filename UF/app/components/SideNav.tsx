@@ -225,7 +225,7 @@ const SideNav = ({
                   placement='right-start'
                   // disable={fullView}
                 >
-                  <button
+                  <div
                     key={index}
                     className={twMerge(
                       `${sidebarStyle === 'default' || fullView ? "ml-1.5" : ""} flex cursor-pointer items-center justify-center gap-2 px-3 py-1 transition delay-150 duration-300 ease-in-out ${
@@ -380,7 +380,7 @@ const SideNav = ({
                       }}
                       // switcherWrapperClassName='bg-transparent w-[100%] flex items-center justify-center'
                     />
-                  </button>
+                  </div>
                 </Tooltip>
               )
             } else {

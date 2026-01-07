@@ -48,11 +48,7 @@ export const DeleteIcon = ({ width = '16', height = '16', fill = 'black' }) => {
   )
 }
 
-export const Management = ({
-  fill = 'black',
-  width = '16',
-  height = '16'
-}) => {
+export const Management = ({ fill = 'black', width = '16', height = '16' }) => {
   return (
     <svg
       width={width}
@@ -197,7 +193,7 @@ export const PlusIcon = ({
   )
 }
 
-export const SaveIcon = ({height = "1.25vw" , width = "1.25vw"}) => {
+export const SaveIcon = ({ height = '1.25vw', width = '1.25vw' }) => {
   return (
     <svg
       width={width}
@@ -413,7 +409,7 @@ export const CameraIcon = ({ fill = 'black' }) => {
   )
 }
 
-export const EditIcon = ({ width = '17', height = '18' , fill='white' }) => {
+export const EditIcon = ({ width = '17', height = '18', fill = 'white' }) => {
   return (
     <svg
       width={width}
@@ -2164,30 +2160,191 @@ export const ThreeDots = ({ fill = 'black' }) => {
   )
 }
 
-
 export const Preview = ({
-  fill = "black",
-  width = "2.13vw",
-  height = "2.13vw",
+  fill = 'black',
+  width = '2.13vw',
+  height = '2.13vw'
 }) => {
   return (
     <svg
       width={width}
       height={height}
-      viewBox="0 0 41 41"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
+      viewBox='0 0 41 41'
+      fill='none'
+      xmlns='http://www.w3.org/2000/svg'
     >
       <path
-        d="M12.2749 24.2957C11.425 23.1915 11 22.6394 11 21C11 19.3606 11.425 18.8085 12.2749 17.7043C13.972 15.4996 16.8181 13 21 13C25.1819 13 28.028 15.4996 29.7251 17.7043C30.575 18.8085 31 19.3606 31 21C31 22.6394 30.575 23.1915 29.7251 24.2957C28.028 26.5004 25.1819 29 21 29C16.8181 29 13.972 26.5004 12.2749 24.2957Z"
+        d='M12.2749 24.2957C11.425 23.1915 11 22.6394 11 21C11 19.3606 11.425 18.8085 12.2749 17.7043C13.972 15.4996 16.8181 13 21 13C25.1819 13 28.028 15.4996 29.7251 17.7043C30.575 18.8085 31 19.3606 31 21C31 22.6394 30.575 23.1915 29.7251 24.2957C28.028 26.5004 25.1819 29 21 29C16.8181 29 13.972 26.5004 12.2749 24.2957Z'
         stroke={fill}
-        strokeWidth="1.5"
+        strokeWidth='1.5'
       />
       <path
-        d="M24 21C24 22.6569 22.6569 24 21 24C19.3431 24 18 22.6569 18 21C18 19.3431 19.3431 18 21 18C22.6569 18 24 19.3431 24 21Z"
+        d='M24 21C24 22.6569 22.6569 24 21 24C19.3431 24 18 22.6569 18 21C18 19.3431 19.3431 18 21 18C22.6569 18 24 19.3431 24 21Z'
         stroke={fill}
-        strokeWidth="1.5"
+        strokeWidth='1.5'
       />
     </svg>
-  );
-};
+  )
+}
+
+export const OrgStructure = ({
+  fill = 'currentColor',
+  width = '14',
+  height = '14'
+}) => {
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox='0 0 14 14'
+      fill='none'
+      xmlns='http://www.w3.org/2000/svg'
+    >
+      <g clipPath='url(#clip0_264_316460)'>
+        <path
+          d='M4.66724 2.91699C4.66724 3.88349 3.88373 4.66699 2.91724 4.66699C1.95074 4.66699 1.16724 3.88349 1.16724 2.91699C1.16724 1.9505 1.95074 1.16699 2.91724 1.16699C3.88373 1.16699 4.66724 1.9505 4.66724 2.91699Z'
+          stroke={fill}
+          strokeWidth='0.875'
+        />
+        <path
+          d='M12.8328 2.91699C12.8328 3.88349 12.0493 4.66699 11.0828 4.66699C10.1162 4.66699 9.33276 3.88349 9.33276 2.91699C9.33276 1.9505 10.1162 1.16699 11.0828 1.16699C12.0493 1.16699 12.8328 1.9505 12.8328 2.91699Z'
+          stroke={fill}
+          strokeWidth='0.875'
+        />
+        <path
+          d='M4.66724 11.083C4.66724 12.0495 3.88373 12.833 2.91724 12.833C1.95074 12.833 1.16724 12.0495 1.16724 11.083C1.16724 10.1165 1.95074 9.33301 2.91724 9.33301C3.88373 9.33301 4.66724 10.1165 4.66724 11.083Z'
+          stroke={fill}
+          strokeWidth='0.875'
+        />
+        <path
+          d='M12.8328 11.083C12.8328 12.0495 12.0493 12.833 11.0828 12.833C10.1162 12.833 9.33276 12.0495 9.33276 11.083C9.33276 10.1165 10.1162 9.33301 11.0828 9.33301C12.0493 9.33301 12.8328 10.1165 12.8328 11.083Z'
+          stroke={fill}
+          strokeWidth='0.875'
+        />
+        <path
+          d='M4.66724 11.083H9.3339'
+          stroke={fill}
+          strokeWidth='0.875'
+          strokeLinecap='round'
+        />
+        <path
+          d='M4.66724 2.91699H9.3339'
+          stroke={fill}
+          strokeWidth='0.875'
+          strokeLinecap='round'
+        />
+        <path
+          d='M11.0828 9.33366V4.66699'
+          stroke={fill}
+          strokeWidth='0.875'
+          strokeLinecap='round'
+        />
+        <path
+          d='M2.91724 9.33366V4.66699'
+          stroke={fill}
+          strokeWidth='0.875'
+          strokeLinecap='round'
+        />
+      </g>
+      <defs>
+        <clipPath id='clip0_264_316460'>
+          <rect width='14' height='14' fill='white' />
+        </clipPath>
+      </defs>
+    </svg>
+  )
+}
+
+export const ProdStructure = ({
+  fill = 'currentColor',
+  width = '14',
+  height = '14'
+}) => {
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox='0 0 14 14'
+      fill='none'
+      xmlns='http://www.w3.org/2000/svg'
+    >
+      <g clipPath='url(#clip0_264_339827)'>
+        <path
+          d='M9.08732 1.97314L10.254 2.58538C11.5091 3.24404 12.1367 3.57338 12.4852 4.16517C12.8337 4.75697 12.8337 5.49338 12.8337 6.9662V7.03445C12.8337 8.50725 12.8337 9.24371 12.4852 9.8355C12.1367 10.4273 11.5091 10.7566 10.254 11.4153L9.08732 12.0275C8.06322 12.5649 7.55117 12.8337 7.00033 12.8337C6.44948 12.8337 5.93743 12.5649 4.91333 12.0275L3.74666 11.4153C2.49153 10.7566 1.86395 10.4273 1.51548 9.8355C1.16699 9.24371 1.16699 8.50725 1.16699 7.03445V6.9662C1.16699 5.49338 1.16699 4.75697 1.51548 4.16517C1.86395 3.57338 2.49153 3.24404 3.74666 2.58538L4.91333 1.97314C5.93743 1.43571 6.44948 1.16699 7.00033 1.16699C7.55117 1.16699 8.06322 1.43571 9.08732 1.97314Z'
+          stroke={fill}
+          strokeWidth='0.875'
+          strokeLinecap='round'
+        />
+        <path
+          d='M12.25 4.375L7 7M7 7L1.75 4.375M7 7V12.5417'
+          stroke={fill}
+          strokeWidth='0.875'
+          strokeLinecap='round'
+        />
+      </g>
+      <defs>
+        <clipPath id='clip0_264_339827'>
+          <rect width='14' height='14' fill={fill} />
+        </clipPath>
+      </defs>
+    </svg>
+  )
+}
+
+export const RoleStructure = ({
+  fill = 'currentColor',
+  width = '14',
+  height = '14'
+}) => {
+  return (
+    <svg
+      width={width}
+      height={height}
+      viewBox='0 0 14 14'
+      fill='none'
+      xmlns='http://www.w3.org/2000/svg'
+    >
+      <g clipPath='url(#clip0_264_339838)'>
+        <path
+          d='M7.00033 5.83366C8.28899 5.83366 9.33366 4.78899 9.33366 3.50033C9.33366 2.21166 8.28899 1.16699 7.00033 1.16699C5.71166 1.16699 4.66699 2.21166 4.66699 3.50033C4.66699 4.78899 5.71166 5.83366 7.00033 5.83366Z'
+          stroke={fill}
+          strokeWidth='0.875'
+        />
+        <path
+          d='M10.5 5.24967C11.4665 5.24967 12.25 4.59676 12.25 3.79134C12.25 2.98593 11.4665 2.33301 10.5 2.33301'
+          stroke={fill}
+          strokeWidth='0.875'
+          strokeLinecap='round'
+        />
+        <path
+          d='M3.5 5.24967C2.5335 5.24967 1.75 4.59676 1.75 3.79134C1.75 2.98593 2.5335 2.33301 3.5 2.33301'
+          stroke={fill}
+          strokeWidth='0.875'
+          strokeLinecap='round'
+        />
+        <path
+          d='M7 12.2497C8.933 12.2497 10.5 11.205 10.5 9.91634C10.5 8.62768 8.933 7.58301 7 7.58301C5.067 7.58301 3.5 8.62768 3.5 9.91634C3.5 11.205 5.067 12.2497 7 12.2497Z'
+          stroke={fill}
+          strokeWidth='0.875'
+        />
+        <path
+          d='M11.667 11.0837C12.6903 10.8593 13.417 10.291 13.417 9.62533C13.417 8.95968 12.6903 8.3914 11.667 8.16699'
+          stroke={fill}
+          strokeWidth='0.875'
+          strokeLinecap='round'
+        />
+        <path
+          d='M2.33301 11.0837C1.3097 10.8593 0.583008 10.291 0.583008 9.62533C0.583008 8.95968 1.3097 8.3914 2.33301 8.16699'
+          stroke={fill}
+          strokeWidth='0.875'
+          strokeLinecap='round'
+        />
+      </g>
+      <defs>
+        <clipPath id='clip0_264_339838'>
+          <rect width='14' height='14' fill={fill} />
+        </clipPath>
+      </defs>
+    </svg>
+  )
+}

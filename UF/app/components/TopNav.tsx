@@ -4,24 +4,24 @@ import { Logo } from '@/app/components/Logo'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { MenuItem, MenuStructure } from '../interfaces/interfaces'
-import { isLightColor } from './utils'
 import { Text } from '@/components/Text'
 import { Button } from '@/components/Button'
 import { Avatar } from '@/components/Avatar'
 import { BsThreeDotsVertical } from 'react-icons/bs'
 import { DropdownMenu } from '@/components/DropdownMenu'
 import { getCdnImage } from '../utils/getAssets'
+import OPRTopNavSelector from './TopNav/OPRTopNavSelector'
 import { twMerge } from 'tailwind-merge'
 import { useTheme } from '@/hooks/useTheme'
 import Popup from '@/components/Popup'
 import { LogoutIcon, RotateIcon, SettingsIcon } from '../utils/svgApplications'
+import clsx from 'clsx'
 
 const TopNav = ({
   navData,
   listMenuItems = true,
   mode,
   brandColor = '#fff',
-  // topbarColor = '#fff',
   appName,
   logo,
   userDetails
@@ -30,7 +30,6 @@ const TopNav = ({
   listMenuItems?: boolean
   mode: string
   brandColor: string
-  //  topbarColor: string
   appName: string
   logo?: string
   userDetails: any
@@ -52,7 +51,6 @@ const TopNav = ({
   useEffect(() => {
     const checkOverflow = () => {
       if (!menuRef.current) return
-
       const containerWidth = menuRef.current.clientWidth
       const maxWidth = window.innerWidth * 0.62 // 62vw
       let totalWidth = 0
@@ -67,7 +65,7 @@ const TopNav = ({
         testElement.textContent = menu.menuGroup || menu.screenDetails[0]?.name
         document.body.appendChild(testElement)
 
-        const itemWidth = testElement.clientWidth + 70 // Add padding/margin
+        const itemWidth = testElement.clientWidth + 150 // Add padding/margin
         document.body.removeChild(testElement)
 
         if (totalWidth + itemWidth < maxWidth) {
@@ -140,6 +138,22 @@ const TopNav = ({
     return false
   }
 
+  const isSelectedMenuGroup = useCallback(
+    (menuGroup: any) => {
+      const menuGrp = navData.find(item => item.menuGroup === menuGroup)
+      const currentScreen = pathname.includes('_')
+        ? pathname.split('/').pop()?.split('_').slice(0, -1).join(' ') || ''
+        : pathname.split('/').pop() || ''
+
+      const selectedRoute = hasMatchingName(menuGrp, currentScreen)
+      if (selectedRoute) {
+        return true
+      }
+      return false
+    },
+    [brandColor]
+  )
+
   return (
     <div
       suppressHydrationWarning
@@ -163,7 +177,7 @@ const TopNav = ({
       </div>
       {listMenuItems && (
         <>
-          <div className='flex w-full justify-center gap-1'>
+          <div className='flex w-full justify-start gap-1 pl-4'>
             <div className='flex max-w-[62%] items-center gap-2' ref={menuRef}>
               {navData &&
                 visibleItems.map((menu, index) => {
@@ -174,8 +188,12 @@ const TopNav = ({
                           renderSwitcher={(props: any) => (
                             <Button
                               {...props}
-                              view='flat'
-                              className='max-w-[100px] truncate p-2 font-medium leading-[1.5vh]'
+                              view={
+                                isSelectedMenuGroup(menu.menuGroup)
+                                  ? 'action'
+                                  : 'raised'
+                              }
+                              className='px-2 py-0.5'
                             >
                               {menu.menuGroupLabel}
                             </Button>
@@ -193,18 +211,8 @@ const TopNav = ({
                       menu.screenDetails[0].key.split(':').at(-1)
                     return (
                       <Button
-                        view='flat'
-                        // style={{
-                        //   backgroundColor:
-                        //     routingName == pathname
-                        //       ? `${brandColor}`
-                        //       : 'transparent',
-                        //   color:
-                        //     routingName == pathname
-                        //       ? `${isLightColor(brandColor)}`
-                        //       : 'unset'
-                        // }}
-                        className='rounded-full px-2 py-2 '
+                        view={routingName == pathname ? 'action' : 'raised'}
+                        className=' px-2 py-0.5'
                         key={index}
                         onClick={() => router.push(routingName)}
                       >
@@ -218,7 +226,7 @@ const TopNav = ({
               {hiddenItems.length > 0 && (
                 <DropdownMenu
                   renderSwitcher={(props: any) => (
-                    <Button {...props} view='flat' className='mt-1 rotate-90'>
+                    <Button {...props} view='raised' className='mt-2 rotate-90'>
                       <BsThreeDotsVertical />
                     </Button>
                   )}
@@ -249,6 +257,14 @@ const TopNav = ({
             </div>
           </div>
           <div
+            className={clsx('flex w-full justify-end gap-2', {
+              hidden: !tp_ps
+            })}
+          >
+            <OPRTopNavSelector selectedAccessProfile={selectedAccessProfile} />
+          </div>
+          <div>
+           <div
             onClick={() => setIsPopoverOpen(prev => !prev)}
             ref={popoverButtonElement}
             className='h-11 w-12 rounded-full cursor-pointer'
@@ -260,7 +276,8 @@ const TopNav = ({
               icon='FaRegUser'
             />
           </div>
-          <Popup
+          <div>
+            <Popup
             anchorRef={popoverButtonElement}
             open={isPopoverOpen}
             onClose={() => setIsPopoverOpen(false)}
@@ -324,6 +341,8 @@ const TopNav = ({
               </div>
             </div>
           </Popup>
+          </div>
+          </div>
         </>
       )}
     </div>

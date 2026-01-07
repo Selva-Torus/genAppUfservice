@@ -36,7 +36,7 @@ const LayoutDecider = ({
   )
   const {userDetails, setUserDetails } = useContext(TotalContext) as TotalContextProps
   const { branding,  } = useGlobal();
-  const {borderColor} = useTheme()
+  const {borderColor , bgColor} = useTheme()
   const { brandColor, hoverColor, selectionColor } = branding;
   const encryptionFlagApp: boolean = false;    
   const encryptionDpd: string = "CK:CT309:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:mydpd:AFVK:v1";
@@ -391,7 +391,9 @@ const LayoutDecider = ({
     return (<div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><span>Loading...</span></div>);
   }
   return (
-    <div className={`flex h-screen w-screen flex-col overflow-auto`}>
+    <div className={`flex h-screen w-screen flex-col overflow-auto  bg-cover bg-center`} 
+    style={{ backgroundImage: 'var(--app-bg-image)' }}
+    >
       <div className={`g-root flex-shrink-0`}>
         <TopNav
           navData={updatedNavData}
@@ -420,7 +422,7 @@ const LayoutDecider = ({
           />
         </div>
         <div
-          className={twMerge(`flex-1 overflow-auto ${childrenClassName} pageStyle border` , borderColor)}
+          className={twMerge(`flex-1 overflow-auto ${childrenClassName} border` , borderColor , bgColor)}
         >
           {children}
         </div>

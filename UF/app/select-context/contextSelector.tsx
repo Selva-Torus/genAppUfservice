@@ -1,5 +1,11 @@
 'use client'
-import React, { useContext, useEffect, useMemo, useState, useTransition } from 'react'
+import React, {
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition
+} from 'react'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import axios from 'axios'
 import { getCookie, setCookie } from '../components/cookieMgment'
@@ -23,17 +29,19 @@ import { RiUserShared2Fill } from 'react-icons/ri'
 import clsx from 'clsx'
 
 const ContextSelector = () => {
-  const [selectedAccessProfile, setSelectedAccessProfile] = useState<string[]>([])
+  const [selectedAccessProfile, setSelectedAccessProfile] = useState<string[]>(
+    []
+  )
   const { userDetails, setUserDetails } = useContext(
     TotalContext
   ) as TotalContextProps
   const token: string = getCookie('token')
   const tp_ps: any = getCookie('tp_ps')
-  const toast = useInfoMsg();
+  const toast = useInfoMsg()
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
   const appName = 'application'
   const [accessProfiles, setAccessProfiles] = useState<any[]>([])
-  const router = useRouter();
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const { branding } = useGlobal()
   const { brandColor } = branding
@@ -45,8 +53,8 @@ const ContextSelector = () => {
   const [selectedPs, setSelectedPs] = useState<Record<string, string>>({})
   const [selectedRole, setSelectedRole] = useState<Record<string, string>>({})
   const [orgGrpData, setOrgGrpData] = useState<any>([])
-  const [isPending, startTransition] = useTransition();  
-  let landingScreen:string = 'User Screen';
+  const [isPending, startTransition] = useTransition()
+  let landingScreen: string = 'User Screen'
   let screenDetails: any = {
     keys: [
       {
@@ -140,7 +148,7 @@ const ContextSelector = () => {
                 ? selectedCombinationData.subOrgName
                 : selectedCombinationData.orgName,
               path: selectedCombinationData?.orgPath,
-              id : selectedCombinationData?.id
+              id: selectedCombinationData?.id
             }
           : {}
       )
@@ -200,14 +208,18 @@ const ContextSelector = () => {
       orgName,
       roleGrpCode: selectedRole?.roleGrpCode,
       roleCode: selectedRole?.roleCode,
+      roleGrpName: selectedRole?.roleGrpName,
+      roleName: selectedRole?.roleName,
       psGrpCode: selectedPs?.psGrpCode,
       psCode: selectedPs?.psCode,
+      psGrpName: selectedPs?.psGrpName,
+      psName: selectedPs?.psName,
       psPath: selectedPs?.path,
       subOrgGrpCode,
       subOrgGrpName,
       subOrgCode,
       subOrgName,
-      id : selectedOrg?.id
+      id: selectedOrg?.id
     }
     setLoading(true)
     try {
@@ -252,8 +264,8 @@ const ContextSelector = () => {
           })
         )
         startTransition(() => {
-            router.push(landingScreen);
-          });
+          router.push(landingScreen)
+        })
         // here we have to set the default authentication route
         setLoading(false)
       }
@@ -293,6 +305,7 @@ const ContextSelector = () => {
         userDetails={userDetails}
         brandColor={brandColor}
         mode='closed'
+        listMenuItems={false}
       />
 
       <hr className={twMerge('w-full border', borderColor)} />
@@ -326,7 +339,7 @@ const ContextSelector = () => {
           </div>
           <div className='flex gap-2 py-2'>
             <Button
-              className='flex px-5 py-2 items-center rounded-md disabled:opacity-50'
+              className='flex items-center rounded-md px-5 py-2 disabled:opacity-50'
               icon={'MdArrowForward'}
               onClick={handleNavigationClick}
               disabled={
