@@ -418,7 +418,6 @@ const LayoutDecider = ({
             setFullView={setFullView}
             brandColor={brandColor}
             hoverColor={hoverColor}
-            selectionColor={selectionColor}
             userDetails={userDetails}
           />
         </div>

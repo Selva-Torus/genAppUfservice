@@ -1,18 +1,27 @@
 import { usePathname, useRouter } from 'next/navigation'
-import React, { useCallback, useMemo } from 'react'
+import React, { useCallback, useMemo, useRef, useState } from 'react'
 import { deleteAllCookies, getCookie } from '@/app/components/cookieMgment'
 import decodeToken from '@/app/components/decodeToken'
 import { MenuItem, MenuStructure } from '../interfaces/interfaces'
 import Image from 'next/image'
 import { isLightColor } from './utils'
-import { FileGallery } from '../utils/svgApplications'
+import {
+  FileGallery,
+  LogoutIcon,
+  RotateIcon,
+  SettingsIcon
+} from '../utils/svgApplications'
 import { Tooltip } from '@/components/Tooltip'
 import { DropdownMenu } from '@/components/DropdownMenu'
 import { Avatar } from '@/components/Avatar'
 import { useTheme } from '@/hooks/useTheme'
 import { twMerge } from 'tailwind-merge'
 import { getCdnImage } from '../utils/getAssets'
-import { Button } from '@/components/Button'
+import Popup from '@/components/Popup'
+import { Text } from '@/components/Text'
+import clsx from 'clsx'
+import OPRTopNavSelector from './TopNav/OPRTopNavSelector'
+import { OrgStructure, ProdStructure, RoleStructure } from './svgApplication'
 
 const SideNav = ({
   navData,
@@ -20,7 +29,6 @@ const SideNav = ({
   sidebarStyle = 'default',
   fullView,
   setFullView,
-  selectionColor,
   brandColor,
   hoverColor,
   userDetails
@@ -36,12 +44,12 @@ const SideNav = ({
     | 'hidden'
   fullView: boolean
   setFullView: React.Dispatch<React.SetStateAction<boolean>>
-  selectionColor: string
   brandColor: string
   hoverColor: string
   userDetails: any
 }) => {
   const router = useRouter()
+  const tp_ps = getCookie('tp_ps')
   const token: string = getCookie('token')
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.loginId
@@ -204,14 +212,15 @@ const SideNav = ({
     if (fullView) return ''
     return 'center'
   }, [fullView])
+  
   return (
     <div
       className={`g-root flex h-full flex-col items-center justify-between px-2 py-2 text-center`}
+      onMouseEnter={() => sidebarStyle == 'hoverView' && setFullView(true)}
+      onMouseLeave={() => sidebarStyle == 'hoverView' && setFullView(false)}
     >
       <div
         className='scrollbar-none flex max-h-[80vh] w-full flex-col gap-2 overflow-x-hidden overflow-y-scroll pt-2 '
-        onMouseEnter={() => sidebarStyle == 'hoverView' && setFullView(true)}
-        onMouseLeave={() => sidebarStyle == 'hoverView' && setFullView(false)}
         style={{ alignItems: menuPlacement }}
       >
         {navData &&
@@ -235,9 +244,6 @@ const SideNav = ({
                           ? 'w-full'
                           : 'w-[98%]'
                       } rounded-md`
-                      // sidebarStyle == 'default'
-                      //   ? 'justify-start p-0'
-                      //   : 'justify-center'
                     )}
                     style={
                       getDropDownStyles(
@@ -433,9 +439,7 @@ const SideNav = ({
                         style: {
                           position: 'fixed'
                         }
-                        // placement: `${sidebarStyle !== 'compact' ? 'bottom-end' : 'right-end'}`
                       }}
-                      // switcherWrapperClassName='bg-transparent w-[100%] flex items-center justify-center'
                     />
                   </div>
                 </Tooltip>
@@ -449,13 +453,8 @@ const SideNav = ({
               return (
                 <Tooltip
                   key={index}
-                  // openDelay={0}
                   title={menu.menuGroupLabel}
                   placement='right-start'
-                  // disable={fullView}
-                  // style={{
-                  //   backgroundColor: brandColor
-                  // }}
                 >
                   <button
                     style={{
@@ -532,7 +531,19 @@ const SideNav = ({
             }
           })}
       </div>
-      <div className='flex w-full items-center justify-center'>
+      <div className='flex w-full flex-col items-center justify-center'>
+        <div
+          className={clsx('px-0', {
+            hidden: !tp_ps
+          })}
+        >
+          <OPRTopNavSelector
+            selectedAccessProfile={selectedAccessProfile}
+            className='flex-col px-0 pb-2'
+            popupPlacement='right-end'
+            fullView={fullView}
+          />
+        </div>
         {fullView ? (
           <FullViewAvatar
             brandColor={brandColor}
@@ -575,84 +586,160 @@ const FullViewAvatar = ({
 }) => {
   const router = useRouter()
   const tp_ps = getCookie('tp_ps')
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false)
+  const popoverButtonElement = useRef(null)
+  const { borderColor, isDark } = useTheme()
+  const pathname = usePathname()
+  const token: string = getCookie('token')
+  const decodedTokenObj: any = decodeToken(token)
   return (
-    <div
-      className='flex w-full items-center justify-center  gap-1 rounded-md px-2 py-1 shadow-md'
-      style={{
-        backgroundColor: brandColor
-      }}
-    >
-      <DropdownMenu
-        renderSwitcher={(props: any) => (
-          <div
-            className='flex w-[100%] items-center justify-center bg-transparent'
-            {...props}
-          >
-            <div className='flex w-[40%] items-center justify-start '>
+    <div>
+      <div
+        onClick={() => setIsPopoverOpen(prev => !prev)}
+        ref={popoverButtonElement}
+        className={twMerge(
+          'flex w-40 items-center gap-2 rounded-lg border px-2 py-3',
+          borderColor
+        )}
+      >
+        <div className='h-11 w-12 cursor-pointer rounded-full'>
+          <Avatar
+            theme='brand'
+            view='filled'
+            imageUrl={getCdnImage(userDetails?.profile)}
+            icon='FaRegUser'
+          />
+        </div>
+        <div>
+          <Text contentAlign='left'>{user}</Text>
+          <Text contentAlign='left'>
+            {userDetails.accessProfile[0]}
+          </Text>
+        </div>
+      </div>
+      <div>
+        <Popup
+          anchorRef={popoverButtonElement}
+          open={isPopoverOpen}
+          onClose={() => setIsPopoverOpen(false)}
+          placement='right'
+        >
+          <div className='flex flex-col items-center gap-1'>
+            {/* Profile section */}
+            <div className='h-11 w-11 rounded-full'>
               <Avatar
                 theme='brand'
                 view='filled'
                 imageUrl={getCdnImage(userDetails?.profile)}
-                className={`${
-                  !fullView ? 'hidden opacity-0' : 'block opacity-100'
-                } transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
+                icon='FaRegUser'
               />
             </div>
-            <div className='flex w-[60%] select-none flex-col items-start justify-start '>
-              <span
-                className='text-start font-bold'
-                style={{
-                  color: isLightColor(brandColor)
-                }}
+
+            <Text className='font-medium'>
+              {' '}
+              {`${userDetails.firstName} ${userDetails.lastName}`}
+            </Text>
+          </div>
+
+          <hr className={twMerge('mt-1 w-full border', borderColor)} />
+
+          <div className='mt-2 flex flex-col gap-2'>
+            <Text variant='body-1' contentAlign='left'>
+              ORGANIZATION MATRIX
+            </Text>
+            <div className='flex items-center gap-1'>
+              <OrgStructure
+                height='20'
+                width='20'
+                fill={isDark ? 'white' : 'black'}
+              />
+              <Text variant='body-2' contentAlign='left'>
+                Organization
+              </Text>
+            </div>
+            <Text
+              color='brand'
+              contentAlign='left'
+              className='block w-full truncate text-left'
+            >
+              {decodedTokenObj.orgName}
+            </Text>
+            <div className='flex items-center gap-1'>
+              <ProdStructure
+                height='20'
+                width='20'
+                fill={isDark ? 'white' : 'black'}
+              />
+              <Text variant='body-2' contentAlign='left'>
+                Products
+              </Text>
+            </div>
+            <Text
+              color='brand'
+              contentAlign='left'
+              className='block w-full truncate text-left'
+            >
+              {decodedTokenObj.psName}
+            </Text>
+            <div className='flex items-center gap-1'>
+              <RoleStructure
+                height='20'
+                width='20'
+                fill={isDark ? 'white' : 'black'}
+              />
+              <Text variant='body-2' contentAlign='left'>
+                Roles
+              </Text>
+            </div>
+            <Text
+              color='brand'
+              contentAlign='left'
+              className='block w-full truncate text-left'
+            >
+              {decodedTokenObj.roleName}
+            </Text>
+          </div>
+
+          <hr className={twMerge('mt-1 w-full border', borderColor)} />
+
+          <div className='flex flex-col gap-2 pt-2'>
+            {pathname !== '/select-context' && (
+              <div
+                onClick={() => router.push('/select-context')}
+                className='flex cursor-pointer items-center gap-2'
               >
-                {' '}
-                {user}{' '}
-              </span>
-              <span
-                className='text-start font-semibold '
-                style={{
-                  color: `${isLightColor(brandColor)}`
-                }}
+                <RotateIcon fill={isDark ? 'white' : 'black'} />
+                <div>
+                  <Text variant='code-inline-2'>Change Profile</Text>
+                </div>
+              </div>
+            )}
+
+            {pathname !== '/select-context' && pathname !== '/user' && (
+              <div
+                onClick={() => router.push('/user')}
+                className='flex cursor-pointer items-center gap-2'
               >
-                {selectedAccessProfile}
-              </span>
+                <SettingsIcon fill={isDark ? 'white' : 'black'} />
+                <div>
+                  <Text variant='code-inline-2'>Settings</Text>
+                </div>
+              </div>
+            )}
+            <div
+              onClick={logout}
+              className='flex cursor-pointer items-center gap-2'
+            >
+              <LogoutIcon />
+              <div>
+                <Text variant='code-inline-2' className='text-[#F44336]'>
+                  Log out
+                </Text>
+              </div>
             </div>
           </div>
-        )}
-        // switcherWrapperClassName='w-[100%] flex items-center justify-center'
-        items={[
-          {
-            text: user,
-            action: () => {}
-            // selected: true
-          },
-          {
-            text: 'Switch accessProfile',
-            action: () => {
-              if (tp_ps) {
-                router.push('/select-context')
-              }
-            }
-          },
-          {
-            text: 'Log out',
-            action: () => {
-              logout()
-            }
-          }
-        ]}
-        popupProps={{
-          style: {
-            // backgroundColor: brandColor,
-            // color: isLightColor(brandColor),
-            top: '-100px',
-            left: '130px',
-            borderRadius: '0.375rem'
-          },
-          className: 'rounded-md hover:rounded-md'
-          // placement: 'right-end'
-        }}
-      />
+        </Popup>
+      </div>
     </div>
   )
 }
@@ -672,59 +759,150 @@ const PartialViewAvatar = ({
 }) => {
   const router = useRouter()
   const tp_ps = getCookie('tp_ps')
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false)
+  const popoverButtonElement = useRef(null)
+  const { borderColor, isDark } = useTheme()
+  const pathname = usePathname()
+  const token: string = getCookie('token')
+  const decodedTokenObj: any = decodeToken(token)
+
   return (
-    <>
-      <DropdownMenu
-        renderSwitcher={(props: any) => (
-          <div
-            className='flex w-[100%] items-center justify-center bg-transparent'
-            {...props}
-          >
-            <Avatar
-              theme='brand'
-              view='filled'
-              imageUrl={getCdnImage(userDetails?.profile)}
-              className={`${
-                fullView ? 'hidden opacity-0' : 'block opacity-100'
-              } transition-all delay-75 duration-300 ease-in-out hover:scale-[1.2] `}
-            />
+    <div>
+      <div
+        onClick={() => setIsPopoverOpen(prev => !prev)}
+        ref={popoverButtonElement}
+        className='h-11 w-12 cursor-pointer rounded-full'
+      >
+        <Avatar
+          theme='brand'
+          view='filled'
+          imageUrl={getCdnImage(userDetails?.profile)}
+          icon='FaRegUser'
+        />
+      </div>
+      <div>
+        <Popup
+          anchorRef={popoverButtonElement}
+          open={isPopoverOpen}
+          onClose={() => setIsPopoverOpen(false)}
+          placement='right'
+        >
+          <div className='flex flex-col items-center gap-1'>
+            {/* Profile section */}
+            <div className='h-11 w-11 rounded-full'>
+              <Avatar
+                theme='brand'
+                view='filled'
+                imageUrl={getCdnImage(userDetails?.profile)}
+                icon='FaRegUser'
+              />
+            </div>
+
+            <Text className='font-medium'>
+              {' '}
+              {`${userDetails.firstName} ${userDetails.lastName}`}
+            </Text>
           </div>
-        )}
-        // switcherWrapperClassName='w-[100%] flex items-center justify-center'
-        items={[
-          {
-            text: user,
-            action: () => {}
-            // selected: true
-          },
-          {
-            text: 'Switch accessProfile',
-            action: () => {
-              if (tp_ps) {
-                router.push('/select-context')
-              }
-            }
-          },
-          {
-            text: 'Log out',
-            action: () => {
-              logout()
-            }
-          }
-        ]}
-        popupProps={{
-          style: {
-            //backgroundColor: brandColor,
-            //color: isLightColor(brandColor),
-            top: '-120px',
-            left: '70px',
-            textAlign: 'start',
-            borderRadius: '0.375rem'
-          },
-          className: 'hover:rounded-md rounded-md'
-          // placement: 'right-end'
-        }}
-      />
-    </>
+
+          <hr className={twMerge('mt-1 w-full border', borderColor)} />
+
+          <div className='mt-2 flex flex-col gap-2'>
+            <Text variant='body-1' contentAlign='left'>
+              ORGANIZATION MATRIX
+            </Text>
+            <div className='flex items-center gap-1'>
+              <OrgStructure
+                height='20'
+                width='20'
+                fill={isDark ? 'white' : 'black'}
+              />
+              <Text variant='body-2' contentAlign='left'>
+                Organization
+              </Text>
+            </div>
+            <Text
+              color='brand'
+              contentAlign='left'
+              className='block w-full truncate text-left'
+            >
+              {decodedTokenObj.orgName}
+            </Text>
+            <div className='flex items-center gap-1'>
+              <ProdStructure
+                height='20'
+                width='20'
+                fill={isDark ? 'white' : 'black'}
+              />
+              <Text variant='body-2' contentAlign='left'>
+                Products
+              </Text>
+            </div>
+            <Text
+              color='brand'
+              contentAlign='left'
+              className='block w-full truncate text-left'
+            >
+              {decodedTokenObj.psName}
+            </Text>
+            <div className='flex items-center gap-1'>
+              <RoleStructure
+                height='20'
+                width='20'
+                fill={isDark ? 'white' : 'black'}
+              />
+              <Text variant='body-2' contentAlign='left'>
+                Roles
+              </Text>
+            </div>
+            <Text
+              color='brand'
+              contentAlign='left'
+              className='block w-full truncate text-left'
+            >
+              {decodedTokenObj.roleName}
+            </Text>
+          </div>
+
+          <hr className={twMerge('mt-1 w-full border', borderColor)} />
+
+          <div className='flex flex-col gap-2 pt-2'>
+            {pathname !== '/select-context' && (
+              <div
+                onClick={() => router.push('/select-context')}
+                className='flex cursor-pointer items-center gap-2'
+              >
+                <RotateIcon fill={isDark ? 'white' : 'black'} />
+                <div>
+                  <Text variant='code-inline-2'>Change Profile</Text>
+                </div>
+              </div>
+            )}
+
+            {pathname !== '/select-context' && pathname !== '/user' && (
+              <div
+                onClick={() => router.push('/user')}
+                className='flex cursor-pointer items-center gap-2'
+              >
+                <SettingsIcon fill={isDark ? 'white' : 'black'} />
+                <div>
+                  <Text variant='code-inline-2'>Settings</Text>
+                </div>
+              </div>
+            )}
+            <div
+              onClick={logout}
+              className='flex cursor-pointer items-center gap-2'
+            >
+              <LogoutIcon />
+              <div>
+                <Text variant='code-inline-2' className='text-[#F44336]'>
+                  Log out
+                </Text>
+              </div>
+            </div>
+          </div>
+        </Popup>
+      </div>
+    </div>
   )
 }

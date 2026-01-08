@@ -1,4 +1,4 @@
-import Popup from '@/components/Popup'
+import Popup, { PopupPlacement } from '@/components/Popup'
 import React, { useEffect, useMemo } from 'react'
 import { getCookie, setCookie } from '../cookieMgment'
 import { AxiosService } from '../axiosService'
@@ -702,9 +702,15 @@ const RenderRole = ({
 }
 
 const OPRTopNavSelector = ({
-  selectedAccessProfile
+  selectedAccessProfile,
+  className,
+  fullView = true,
+  popupPlacement
 }: {
   selectedAccessProfile: any
+  fullView: boolean
+  className?: string
+  popupPlacement?: PopupPlacement
 }) => {
   const [activeStage, setActiveStage] = React.useState<
     'org' | 'prod' | 'role' | null
@@ -1011,7 +1017,7 @@ const OPRTopNavSelector = ({
   }
 
   return (
-    <div className='flex gap-2 px-4'>
+    <div className={clsx('flex gap-2 px-4', className)}>
       <div>
         <button
           ref={orgPopupRef}
@@ -1023,29 +1029,38 @@ const OPRTopNavSelector = ({
             'flex w-36 items-center gap-2 rounded-full border px-4 py-1 hover:bg-[var(--hover-color)]',
             borderColor,
             {
-              'bg-[var(--selection-color)]': activeStage == 'org'
+              'bg-[var(--selection-color)]': activeStage == 'org',
+              'w-[unset]': !fullView
             }
           )}
           title={selectedOrg?.orgName ?? 'Select Organization'}
         >
-          <div className='w-[90%]'>
-            <div className='flex items-center gap-1'>
-              <OrgStructure />
-              <Text variant='body-1' contentAlign='left'>
-                Organization
-              </Text>
+          {fullView ? (
+            <>
+              <div className='w-[90%]'>
+                <div className='flex items-center gap-1'>
+                  <OrgStructure />
+                  <Text variant='body-1' contentAlign='left'>
+                    Organization
+                  </Text>
+                </div>
+                <Text contentAlign='left' className='block w-full truncate text-left'>
+                  {selectedOrg?.orgName}
+                </Text>
+              </div>
+              <div
+                className={clsx('w-[10%] transition-transform duration-300', {
+                  'rotate-180': activeStage == 'org'
+                })}
+              >
+                <GoChevronDown />
+              </div>
+            </>
+          ) : (
+            <div>
+              <OrgStructure height='18' width='18'/>
             </div>
-            <Text className='block w-full truncate text-left'>
-              {selectedOrg?.orgName}
-            </Text>
-          </div>
-          <div
-            className={clsx('w-[10%] transition-transform duration-300', {
-              'rotate-180': activeStage == 'org'
-            })}
-          >
-            <GoChevronDown />
-          </div>
+          )}
         </button>
       </div>
       <div>
@@ -1059,29 +1074,38 @@ const OPRTopNavSelector = ({
             'flex w-36 items-center gap-2 rounded-full border px-4 py-1 hover:bg-[var(--hover-color)]',
             borderColor,
             {
-              'bg-[var(--selection-color)]': activeStage == 'prod'
+              'bg-[var(--selection-color)]': activeStage == 'prod',
+              'w-[unset]': !fullView
             }
           )}
           title={selectedProd?.psName ?? 'Select Product'}
         >
-          <div className='w-[90%]'>
-            <div className='flex items-center gap-1'>
-              <ProdStructure />
-              <Text variant='body-1' contentAlign='left'>
-                Products
-              </Text>
+          {fullView ? (
+            <>
+              <div className='w-[90%]'>
+                <div className='flex items-center gap-1'>
+                  <ProdStructure />
+                  <Text variant='body-1' contentAlign='left'>
+                    Products
+                  </Text>
+                </div>
+                <Text contentAlign='left' className='block w-full truncate text-left'>
+                  {selectedProd?.psName}
+                </Text>
+              </div>
+              <div
+                className={clsx('w-[10%] transition-transform duration-300', {
+                  'rotate-180': activeStage == 'prod'
+                })}
+              >
+                <GoChevronDown />
+              </div>
+            </>
+          ) : (
+            <div>
+              <ProdStructure height='18' width='18' />
             </div>
-            <Text className='block w-full truncate text-left'>
-              {selectedProd?.psName}
-            </Text>
-          </div>
-          <div
-            className={clsx('w-[10%] transition-transform duration-300', {
-              'rotate-180': activeStage == 'prod'
-            })}
-          >
-            <GoChevronDown />
-          </div>
+          )}
         </button>
       </div>
       <div>
@@ -1095,29 +1119,38 @@ const OPRTopNavSelector = ({
             'flex w-36 items-center gap-2 rounded-full border px-4 py-1 hover:bg-[var(--hover-color)]',
             borderColor,
             {
-              'bg-[var(--selection-color)]': activeStage == 'role'
+              'bg-[var(--selection-color)]': activeStage == 'role',
+              'w-[unset]': !fullView
             }
           )}
           title={selectedRole?.roleName ?? 'Select Product'}
         >
-          <div className='w-[90%]'>
-            <div className='flex items-center gap-1'>
-              <RoleStructure />
-              <Text variant='body-1' contentAlign='left'>
-                Roles
-              </Text>
+          {fullView ? (
+            <>
+              <div className='w-[90%]'>
+                <div className='flex items-center gap-1'>
+                  <RoleStructure />
+                  <Text variant='body-1' contentAlign='left'>
+                    Roles
+                  </Text>
+                </div>
+                <Text contentAlign='left' className='block w-full truncate text-left'>
+                  {selectedRole?.roleName}
+                </Text>
+              </div>
+              <div
+                className={clsx('w-[10%] transition-transform duration-300', {
+                  'rotate-180': activeStage == 'role'
+                })}
+              >
+                <GoChevronDown />
+              </div>
+            </>
+          ) : (
+            <div>
+              <RoleStructure height='18' width='18'/>
             </div>
-            <Text className='block w-full truncate text-left'>
-              {selectedRole?.roleName}
-            </Text>
-          </div>
-          <div
-            className={clsx('w-[10%] transition-transform duration-300', {
-              'rotate-180': activeStage == 'role'
-            })}
-          >
-            <GoChevronDown />
-          </div>
+          )}
         </button>
       </div>
       <Popup
@@ -1132,7 +1165,9 @@ const OPRTopNavSelector = ({
         onClose={() => setActiveStage(null)}
         size='xl'
         placement={
-          activeStage == 'role'
+          popupPlacement
+            ? popupPlacement
+            : activeStage == 'role'
             ? 'bottom-start'
             : activeStage == 'prod'
             ? 'bottom'
