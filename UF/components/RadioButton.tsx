@@ -9,7 +9,7 @@ import {
   TooltipProps as TooltipPropsType
 } from '@/types/global'
 import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
-
+import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 interface RadioButtonItem {
   value: string
   content: string
@@ -100,22 +100,28 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
           <button
             key={item.value}
             onClick={() => handleChange(item.value)}
-            onBlur={(e) => {
+            onBlur={e => {
               e.currentTarget.style.boxShadow = 'none'
               onBlur?.(e)
             }}
-            onFocus={(e) => {
+            onFocus={e => {
               if (!disabled) {
-                e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(branding.selectionColor, 0.2)}`
+                e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(
+                  branding.selectionColor,
+                  0.2
+                )}`
               }
               onFocus?.(e)
             }}
-            onMouseEnter={(e) => {
+            onMouseEnter={e => {
               if (!disabled && !isSelected) {
-                e.currentTarget.style.backgroundColor = hexToRgba(branding.hoverColor, 0.1)
+                e.currentTarget.style.backgroundColor = hexToRgba(
+                  branding.hoverColor,
+                  0.1
+                )
               }
             }}
-            onMouseLeave={(e) => {
+            onMouseLeave={e => {
               if (!disabled && !isSelected) {
                 e.currentTarget.style.backgroundColor = 'transparent'
               }
@@ -139,7 +145,9 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
             `}
             dir={direction}
             style={{
-              backgroundColor: isSelected ? branding.selectionColor : 'transparent'
+              backgroundColor: isSelected
+                ? branding.selectionColor
+                : 'transparent'
             }}
           >
             {item.content}
@@ -149,76 +157,16 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
     </div>
   )
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText)
-      return (
-        <div
-          className={`h-full w-full 
-            ${getFontSizeClass(branding.fontSize)} 
-            ${isDark ? 'bg-gray-800' : 'bg-gray-100'} 
-            ${direction === 'RTL' ? 'flex-row-reverse' : ''}
-            ${className}
-          `}
-        >
-          {element}
-        </div>
-      )
-
-    const headerClasses = `
-      flex h-full w-full overflow-hidden text-ellipsis whitespace-nowrap 
-      ${isDark ? 'text-gray-300' : 'text-gray-700'}
-      ${direction === 'RTL' ? 'flex-row-reverse' : ''}
-      ${getFontSizeClass(branding.fontSize)}
-      ${className}
-      `
-
-    switch (headerPosition) {
-      case 'top':
-        return (
-          <div className={`${headerClasses} flex-col `}>
-            <div className='font-semibold '>{headerText}</div>
-            {element}
-          </div>
-        )
-      case 'bottom':
-        return (
-          <div className={`${headerClasses} flex-col`}>
-            {element}
-            <div className='mt-1 font-semibold'>{headerText}</div>
-          </div>
-        )
-      case 'left':
-        return (
-          <div className={`${headerClasses} items-center gap-4`}>
-            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
-              {headerText}
-            </div>
-            {element}
-          </div>
-        )
-      case 'right':
-        return (
-          <div className={`${headerClasses} items-center gap-4`}>
-            {element}
-            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
-              {headerText}
-            </div>
-          </div>
-        )
-    }
-  }
-  const finalElement = renderWithHeader(radioButtonElement)
-
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip
-        title={tooltipProps.title}
-        placement={tooltipProps.placement}
-      >
-        {finalElement}
-      </Tooltip>
-    )
-  }
-
-  return <>{finalElement}</>
+  return (
+    <CommonHeaderAndTooltip
+      needTooltip={needTooltip}
+      tooltipProps={tooltipProps}
+      headerText={headerText}
+      headerPosition={headerPosition}
+      className={className}
+      fillContainer={fillContainer}
+    >
+      {radioButtonElement}
+    </CommonHeaderAndTooltip>
+  )
 }

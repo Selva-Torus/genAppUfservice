@@ -380,7 +380,7 @@ const SideNav = ({
                       }}
                       // switcherWrapperClassName='bg-transparent w-[100%] flex items-center justify-center'
                     />
-                  </div>
+                    </div>
                 </Tooltip>
               )
             } else {

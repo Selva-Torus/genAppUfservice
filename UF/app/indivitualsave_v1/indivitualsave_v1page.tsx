@@ -18,7 +18,7 @@ import Groupform  from "./Groupform/Groupform";
 import Groupuserdatable  from "./Groupuserdatable/Groupuserdatable";
 
 
-export default function PageIndisaveV1() {
+export default function PageIndivitualsaveV1() {
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const [initialLoad, setInitialLoad] = useState(false);
   const securityData:any={
@@ -46,7 +46,7 @@ export default function PageIndisaveV1() {
   const [dropdownData, setDropdownData] = useState<any>({});
   const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token);
-  const screenName:string = "indisave";
+  const screenName:string = "tabs";
   const user = decodedTokenObj?.selectedAccessProfile;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {refetch, setRefetch} = useContext(TotalContext) as TotalContextProps;
@@ -143,7 +143,7 @@ export default function PageIndisaveV1() {
   },[refetch?.mydfddata_v1])
 
   async function securityCheck() {
-    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1",accessProfile:[user],from:"pageIndisaveV1"},{
+    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1",accessProfile:[user],from:"pageIndivitualsaveV1"},{
       headers: {
         Authorization: `Bearer ${token}`
       }});

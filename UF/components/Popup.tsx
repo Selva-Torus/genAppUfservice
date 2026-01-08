@@ -1,5 +1,6 @@
 "use client";
 
+import { useTheme } from "@/hooks/useTheme";
 import React, { useRef, useEffect, useState, useLayoutEffect } from "react";
 import ReactDOM from "react-dom";
 
@@ -259,7 +260,7 @@ export const Popup: React.FC<PopupProps> = ({
   const [position, setPosition] = useState({ top: 0, left: 0, placement });
   const [isVisible, setIsVisible] = useState(false);
   const [isPositioned, setIsPositioned] = useState(false);
-
+  const { isDark, isHighContrast, branding } = useTheme();
   // Handle visibility animation
   useEffect(() => {
     if (open) {
@@ -393,6 +394,14 @@ export const Popup: React.FC<PopupProps> = ({
         left: isPositioned ? position.left : -9999,
         zIndex,
         transformOrigin: "center",
+        backgroundColor: isDark ? "#1F2937" : "#FFFFFF",
+        borderColor: isDark ? "#4B5563" : "#E5E7EB",
+        color: isDark ? "#F9FAFB" : "#111827",
+        maxHeight: "90vh",
+        boxShadow: isDark
+          ? "0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)"
+          : "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)",
+        
         ...style
       }}
       role="tooltip"

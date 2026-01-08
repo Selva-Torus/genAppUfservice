@@ -6,6 +6,7 @@ import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { getFontSizeClass } from "@/app/utils/branding";
+import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 type ContentAlign = "left" | "center" | "right";
 
@@ -19,7 +20,7 @@ interface DropdownProps {
   dynamicProps?: string;
   needTooltip?: boolean;
   tooltipProps?: TooltipPropsType;
-  headerText?: string | React.ReactNode;
+  headerText?: string
   headerPosition?: HeaderPosition;
   onChange?: (selected: string | string[]) => void;
   className?: string;
@@ -398,79 +399,16 @@ export const Dropdown: React.FC<DropdownProps> = ({
     </div>
   );
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    const elementWithError = (
-      <>
-        {element}
-        {validationState === "invalid" && errorMessage && (
-          <div className="mt-1 text-red-500" style={{ fontSize: "var(--font-size)" }}>
-            {errorMessage}
-          </div>
-        )}
-      </>
-    );
-
-    if (!headerText) return elementWithError;
-
-    const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    } ${className}`;
-
-    switch (headerPosition) {
-        case "top":
-          return (
-            <div className={`flex flex-col ${fillContainer ? "w-full h-full" : ""}`}>
-              <div className={headerClasses}>{headerText}</div>
-              <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
-            </div>
-          );
-        case "bottom":
-          return (
-            <div className={`flex flex-col ${fillContainer ? "w-full h-full" : ""}`}>
-              <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
-              <div className={`${headerClasses} mt-1 mb-0`}>{headerText}</div>
-            </div>
-          );
-        case "left":
-          return (
-            <div className={`flex items-center ${fillContainer ? "w-full h-full" : ""}`}>
-              <div
-                className={`${headerClasses} mb-0 ${
-                  direction === "RTL" ? "ml-2" : "mr-2"
-                } flex-shrink-0`}
-              >
-                {headerText}
-              </div>
-              <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
-            </div>
-          );
-        case "right":
-          return (
-            <div className={`flex items-center ${fillContainer ? "w-full h-full" : ""}`}>
-              <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
-              <div
-                className={`${headerClasses} mb-0 ${
-                  direction === "RTL" ? "mr-2" : "ml-2"
-                } flex-shrink-0`}
-              >
-                {headerText}
-              </div>
-            </div>
-          );
-        default:
-          return element;
-      }
-    };
-
-  const finalElement = renderWithHeader(dropdownElement);
-
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
-        {finalElement}
-      </Tooltip>
-    );
-  }
-
-  return <>{finalElement}</>;
+  return (
+    <CommonHeaderAndTooltip
+      needTooltip={needTooltip}
+      tooltipProps={tooltipProps}
+      headerText={headerText}
+      headerPosition={headerPosition}
+      className={className}
+      fillContainer={fillContainer}
+    >
+      {dropdownElement}
+    </CommonHeaderAndTooltip>
+  )
 };

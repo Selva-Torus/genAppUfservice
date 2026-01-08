@@ -9,6 +9,7 @@ import {
   TooltipProps as TooltipPropsType
 } from '@/types/global'
 import { getFontSizeClass } from '@/app/utils/branding'
+import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 
 interface TimeLineProps {
   steps: Array<Record<string, any>>
@@ -48,12 +49,14 @@ export const TimeLine: React.FC<TimeLineProps> = ({
 
   const timelineElement = (
     <div
-      className={`overflow-hidden rounded-xl border bg-white p-4 shadow-lg ${className}`}
+      className={`overflow-hidden rounded-xl border  ${
+        isDark ? 'bg-gray-800' : 'bg-white'
+      } p-4 shadow-lg ${className}`}
     >
       <ol
         className={
           isHorizontal
-            ? 'scrollbar-thin relative flex items-start gap-0 overflow-x-auto pb-4'
+            ? 'relative flex items-start gap-0 overflow-x-auto pb-4 scrollbar-thin'
             : 'x scrollbar-none relative h-full overflow-auto'
         }
         style={isHorizontal ? { scrollBehavior: 'smooth' } : undefined}
@@ -78,23 +81,16 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                 <>
                   {/* Horizontal Layout */}
                   <time
-                    className={`mb-4 text-center text-sm font-medium ${
-                      isDark ? 'text-gray-400' : 'text-gray-600'
+                    className={`mb-4 text-center text-lg sm:text-sm ${
+                      isDark ? 'text-gray-200' : 'text-gray-600'
                     }`}
                   >
                     {step[date]}
                   </time>
 
                   <div className='relative mb-4 flex w-full items-center'>
-                    {idx !== 0 && (
-                      <div
-                        className='absolute right-1/2 top-1/2 h-0.5 w-full -translate-y-1/2'
-                        style={{ backgroundColor: statusStyles.color }}
-                      />
-                    )}
-
                     <span
-                      className='relative z-10 mx-auto flex h-8 w-8 items-center justify-center rounded-full border-4 border-white'
+                      className={`relative z-10 mx-auto flex h-8 w-8 items-center justify-center rounded-full border-4 border-white `}
                       style={{ backgroundColor: statusStyles.color }}
                     >
                       {statusStyles.icon && (
@@ -116,15 +112,15 @@ export const TimeLine: React.FC<TimeLineProps> = ({
 
                   <div className='flex flex-col gap-1 text-center'>
                     <Text
-                      className={`text-sm font-semibold ${
-                        isDark ? 'text-gray-200' : 'text-gray-900'
+                      className={`text-lg sm:text-sm ${
+                        isDark ? 'text-gray-200' : 'text-gray-600'
                       }`}
                     >
                       {step[title]}
                     </Text>
                     <Text
-                      className={`text-xs ${
-                        isDark ? 'text-gray-400' : 'text-gray-600'
+                      className={`text-lg sm:text-sm ${
+                        isDark ? 'text-gray-200' : 'text-gray-600'
                       }`}
                     >
                       {step[status]}
@@ -135,7 +131,11 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                 <>
                   {/* Vertical Layout */}
                   <div className='basis-1/3 p-2 text-center'>
-                    <time className='overflow-hidden text-lg *:text-gray-500 sm:text-sm'>
+                    <time
+                      className={`overflow-hidden text-lg sm:text-sm ${
+                        isDark ? 'text-gray-200' : 'text-gray-700'
+                      }`}
+                    >
                       {step[date]}
                     </time>
                   </div>
@@ -162,7 +162,11 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                     </span>
                   </div>
 
-                  <div className='flex basis-1/3 flex-col overflow-hidden p-2 text-center'>
+                  <div
+                    className={`flex basis-1/3 flex-col overflow-hidden p-2 text-center ${
+                      isDark ? 'text-gray-200' : 'text-gray-700'
+                    }`}
+                  >
                     <Text className='text-lg sm:text-sm'>{step[title]}</Text>
                     <Text className='text-lg sm:text-sm'>{step[status]}</Text>
                   </div>
@@ -201,64 +205,15 @@ export const TimeLine: React.FC<TimeLineProps> = ({
     </div>
   )
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element
-
-    const headerClasses = `${getFontSizeClass(
-      branding.fontSize
-    )} font-semibold mb-2 ${isDark ? 'text-gray-300' : 'text-gray-700'}`
-
-    switch (headerPosition) {
-      case 'top':
-        return (
-          <div className='flex flex-col'>
-            <div className={`${headerClasses} text-center`}>{headerText}</div>
-            {element}
-          </div>
-        )
-      case 'bottom':
-        return (
-          <div className='flex flex-col '>
-            {element}
-            <div className={`${headerClasses} mb-0 mt-2 text-center`}>
-              {headerText}
-            </div>
-          </div>
-        )
-      case 'left':
-        return (
-          <div className='flex  gap-4'>
-            <div
-              className={`${headerClasses} mb-0 whitespace-nowrap text-center`}
-            >
-              {headerText}
-            </div>
-            {element}
-          </div>
-        )
-      case 'right':
-        return (
-          <div className='flex  gap-4'>
-            {element}
-            <div
-              className={`${headerClasses}  text-centermb-0 whitespace-nowrap`}
-            >
-              {headerText}
-            </div>
-          </div>
-        )
-    }
-  }
-
-  const finalElement = renderWithHeader(timelineElement)
-
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
-        {finalElement}
-      </Tooltip>
-    )
-  }
-
-  return <>{finalElement}</>
+  return (
+    <CommonHeaderAndTooltip
+      needTooltip={needTooltip}
+      tooltipProps={tooltipProps}
+      headerText={headerText}
+      headerPosition={headerPosition}
+      className={className}
+    >
+      {timelineElement}
+    </CommonHeaderAndTooltip>
+  )
 }

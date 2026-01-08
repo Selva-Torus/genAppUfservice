@@ -544,7 +544,6 @@ export const GitHubIcon = () => {
     </svg>
   )
 }
-
 export const RotateIcon = ({ fill = 'black' }) => {
   return (
     <svg

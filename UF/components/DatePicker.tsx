@@ -5,6 +5,7 @@ import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { getFontSizeClass } from "@/app/utils/branding";
+import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 type ContentAlign = "left" | "center" | "right";
 
@@ -162,68 +163,16 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     </div>
   );
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
-
-    const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    } ${className}`;
-
-    switch (headerPosition) {
-        case "top":
-          return (
-            <div className={`flex flex-col ${fillContainer ? "w-full h-full" : ""}`}>
-              <div className={headerClasses}>{headerText}</div>
-              <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
-            </div>
-          );
-        case "bottom":
-          return (
-            <div className={`flex flex-col ${fillContainer ? "w-full h-full" : ""}`}>
-              <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
-              <div className={`${headerClasses} mt-1 mb-0`}>{headerText}</div>
-            </div>
-          );
-        case "left":
-          return (
-            <div className={`flex items-center ${fillContainer ? "w-full h-full" : ""}`}>
-              <div
-                className={`${headerClasses} mb-0 ${
-                  direction === "RTL" ? "ml-2" : "mr-2"
-                } flex-shrink-0`}
-              >
-                {headerText}
-              </div>
-              <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
-            </div>
-          );
-        case "right":
-          return (
-            <div className={`flex items-center ${fillContainer ? "w-full h-full" : ""}`}>
-              <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
-              <div
-                className={`${headerClasses} mb-0 ${
-                  direction === "RTL" ? "mr-2" : "ml-2"
-                } flex-shrink-0`}
-              >
-                {headerText}
-              </div>
-            </div>
-          );
-        default:
-          return element;
-      }
-    };
-
-  const finalElement = renderWithHeader(datePickerElement);
-
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
-        {finalElement}
-      </Tooltip>
-    );
-  }
-
-  return <>{finalElement}</>;
+  return (
+    <CommonHeaderAndTooltip
+      needTooltip={needTooltip}
+      tooltipProps={tooltipProps}
+      headerText={headerText}
+      headerPosition={headerPosition}
+      className={className}
+      fillContainer={fillContainer}
+    >
+      {datePickerElement}
+    </CommonHeaderAndTooltip>
+  )
 };

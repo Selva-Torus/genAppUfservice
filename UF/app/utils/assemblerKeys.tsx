@@ -1,6 +1,11 @@
 export function getRouteScreenDetails(key: string, artfactName: string): string {
   let assemblerKeys: any = [
   {
+    "screenName": "tabs",
+    "screensName": "tabs-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:newTab:AFVK:v1"
+  },
+  {
     "screenName": "progress",
     "screensName": "progress-v1",
     "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1"
@@ -9,11 +14,6 @@ export function getRouteScreenDetails(key: string, artfactName: string): string 
     "screenName": "tablecheck",
     "screensName": "tablecheck-v1",
     "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1"
-  },
-  {
-    "screenName": "indisave",
-    "screensName": "indisave-v1",
-    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1"
   }
 ]
 

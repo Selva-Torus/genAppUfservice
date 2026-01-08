@@ -7,6 +7,7 @@ import { useEventBus } from "@/context/EventBusContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType, ComponentEvents } from "@/types/global";
 import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
+import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 export interface SignatureRef {
   clear: () => void;
@@ -310,81 +311,26 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
       )}
     </div>
   );
-
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
-
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-1 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    }`;
-
-    const headerContent = (
-      <>
-        {headerText}
-        {require && <span className="text-red-500 ml-1">*</span>}
-      </>
-    );
-
-    switch (headerPosition) {
-      case "top":
-        return (
-          <div className="flex flex-col w-full h-full">
-            <div className={headerClasses} style={{ fontFamily: "var(--font-body)" }}>
-              {headerContent}
-            </div>
-            {element}
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className="flex flex-col w-full h-full">
-            {element}
-            <div className={`${headerClasses} mt-1 mb-0`} style={{ fontFamily: "var(--font-body)" }}>
-              {headerContent}
-            </div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className="flex items-start gap-4 w-full h-full">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={{ fontFamily: "var(--font-body)" }}>
-              {headerContent}
-            </div>
-            <div className="flex-1">{element}</div>
-          </div>
-        );
-      case "right":
-        return (
-          <div className="flex items-start gap-4 w-full h-full">
-            <div className="flex-1">{element}</div>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={{ fontFamily: "var(--font-body)" }}>
-              {headerContent}
-            </div>
-          </div>
-        );
-    }
-  };
-
-  const finalElement = renderWithHeader(signatureElement);
+  
 
   // Don't render if hidden by event
   if (!isVisible) {
     return null;
   }
 
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}
-       triggerClassName=" w-full h-full"
-      
-      >
-        {finalElement}
-      </Tooltip>
-    );
-  }
 
-  return <>{finalElement}</>;
+return (
+  <CommonHeaderAndTooltip
+    needTooltip={needTooltip}
+    tooltipProps={tooltipProps}
+    headerText={headerText}
+    headerPosition={headerPosition}
+    className={className}
+    fillContainer
+  >
+    {signatureElement}
+  </CommonHeaderAndTooltip>
+);
 });
 
 Signature.displayName = "Signature";
- 

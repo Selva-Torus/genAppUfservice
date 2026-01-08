@@ -78,8 +78,8 @@ const TextToSpeechOutputtext_to_speech = ({checkToAdd,setCheckToAdd,refetch,setR
   const {groupbffe9, setgroupbffe9}= useContext(TotalContext) as TotalContextProps;
   const {groupbffe9Props, setgroupbffe9Props}= useContext(TotalContext) as TotalContextProps;
   const {qrcode1c711, setqrcode1c711}= useContext(TotalContext) as TotalContextProps;
-  const {sliderf7242, setsliderf7242}= useContext(TotalContext) as TotalContextProps;
   const {progress1c37ec, setprogress1c37ec}= useContext(TotalContext) as TotalContextProps;
+  const {slider2edf6a, setslider2edf6a}= useContext(TotalContext) as TotalContextProps;
   const {treeviewer4d8cf, settreeviewer4d8cf}= useContext(TotalContext) as TotalContextProps;
   const {signatureb24c1, setsignatureb24c1}= useContext(TotalContext) as TotalContextProps;
   const {pininputd19b1, setpininputd19b1}= useContext(TotalContext) as TotalContextProps;
@@ -178,7 +178,7 @@ const TextToSpeechOutputtext_to_speech = ({checkToAdd,setCheckToAdd,refetch,setR
     <div 
       style={{
         gridColumn: `2 / 8`,
-        gridRow: `199 / 222`, 
+        gridRow: `199 / 244`, 
         gap:``, 
         height: `100%`, 
         overflow: 'visible',
@@ -189,6 +189,8 @@ const TextToSpeechOutputtext_to_speech = ({checkToAdd,setCheckToAdd,refetch,setR
         // label={keyset("text_to_speech")}
         needTooltip={true}  
         tooltipProps={{title:"tool",placement:"bottom-start"}}
+        headerPosition='right'
+        headerText="header"
         onUpdate= {handleChange}
         onBlur={()=>handleBlur()}
         // type={dynamicStateandType.type}

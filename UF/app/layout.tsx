@@ -29,6 +29,22 @@
       "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
     },
     {
+      "menuGroupLabel": "tabs",
+      "screenDetails": [
+        {
+          "name": "tabs",
+          "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:newTab:AFVK:v1",
+          "allowedAccessProfile": [
+            "Template 1",
+            "Template 2",
+            "Template 3"
+          ],
+          "static": false
+        }
+      ],
+      "items": []
+    },
+    {
       "menuGroupLabel": "progress",
       "screenDetails": [
         {
@@ -57,21 +73,6 @@
         }
       ],
       "items": []
-    },
-    {
-      "menuGroupLabel": "indisave",
-      "screenDetails": [
-        {
-          "name": "indisave",
-          "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1",
-          "allowedAccessProfile": [
-            "Template 1",
-            "Template 2"
-          ],
-          "static": false
-        }
-      ],
-      "items": []
     }
   ],
   "setupData": {
@@ -91,7 +92,7 @@
       "appGrpCode": "AG001"
     },
     "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CT309:AFK:PROFILE:AFVK:v1:appearance",
-    "selectedPresetKey": "default",
+    "selectedPresetKey": "1767793103582",
     "group-bg-color": "#ffffff",
     "fontSize": "Medium",
     "direction": "LTR",
@@ -101,8 +102,8 @@
     "borderRadius": "s",
     "topbarColor": "#ffffff",
     "menubarColor": "#ffffff",
-    "sidebarStyle": "",
-    "navigationStyles": "horizontal",
+    "sidebarStyle": "default",
+    "navigationStyles": "vertical",
     "theme": "light",
     "layoutMode": "fluid",
     "mobileAppearance": {
@@ -155,13 +156,23 @@
     },
     "page-bg-color": "#ffffff",
     "language": "English",
-    "name": "default"
+    "appBackgroundImage": "torus/9.1/CT003/resources/images/signinbanner.png",
+    "name": "Preset 1",
+    "fontFamily": [
+      {
+        "fontUrl": "https://fonts.googleapis.com/css2?family=Gravitas+One&display=swap",
+        "label": "test"
+      }
+    ],
+    "text-body-font": "test",
+    "text-header-font": "test",
+    "text-display-font": "test"
   },
   "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT309:AFGK:AG001:AFK:A001:AFVK:v1:appearance",
   "allKeys": [
+    "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:newTab:AFVK:v1",
     "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1",
-    "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1",
-    "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1"
+    "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1"
   ],
   "loginDetails": {
     "loginId": "game",
@@ -183,13 +194,18 @@
       "isneedTouring": false,
       "touringData": {}
     },
-    "lastActive": "2026-01-05T04:36:38.154Z",
+    "lastActive": "2026-01-07T13:35:00.744Z",
     "client": "CT309"
   },
   "webOnBoarding": {
     "landingScreen": "User Screen"
   },
   "allKeyswithScreenNames": [
+    {
+      "screenName": "tabs",
+      "screensName": "tabs-v1",
+      "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:newTab:AFVK:v1"
+    },
     {
       "screenName": "progress",
       "screensName": "progress-v1",
@@ -199,11 +215,6 @@
       "screenName": "tablecheck",
       "screensName": "tablecheck-v1",
       "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1"
-    },
-    {
-      "screenName": "indisave",
-      "screensName": "indisave-v1",
-      "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1"
     }
   ],
   "deploymentArtifactKey": "CK:CT309:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:mydpd:AFVK:v1",

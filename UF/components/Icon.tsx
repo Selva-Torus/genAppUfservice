@@ -10,6 +10,7 @@ import * as ReactIconsFa from "react-icons/fa";
 import * as ReactIconsIo5 from "react-icons/io5";
 import { getFontSizeClass } from "@/app/utils/branding";
 import * as ReactIconsRX  from "react-icons/rx";
+import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 type ContentAlign = "left" | "center" | "right";
 
@@ -122,71 +123,17 @@ export const Icon: React.FC<IconProps> = ({
 
 
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) {
-      return (
-        <div className={`${fillContainer ? "flex" : "inline-flex"} ${getContentAlignClasses()} ${getFillClasses()} ${className}`}>
-          {element}
-        </div>
-      );
-    }
 
-    const headerClasses = `font-semibold mb-2 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    }`;
-
-    const headerStyle = { fontSize: "var(--font-size)" };
-
-    switch (headerPosition) {
-      case "top":
-        return (
-          <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col ${getContentAlignClasses()} ${getFillClasses()} ${className}`}>
-            <div className={headerClasses} style={headerStyle}>{headerText}</div>
-            <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col ${getContentAlignClasses()} ${getFillClasses()} ${className}`}>
-            <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
-            <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className={`${fillContainer ? "flex" : "inline-flex"} items-start ${getFillClasses()} gap-4 ${className}`}>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap flex-shrink-0`} style={headerStyle}>
-              {headerText}
-            </div>
-            <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
-          </div>
-        );
-      case "right":
-        return (
-          <div className={`${fillContainer ? "flex" : "inline-flex"} items-start ${getFillClasses()} gap-4 ${className}`}>
-            <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap flex-shrink-0`} style={headerStyle}>
-              {headerText}
-            </div>
-          </div>
-        );
-    }
-  };
-
-  // const finalElement = renderWithHeader(iconElement);
-  const finalElement = (<div className={`${getFillClasses()} ${className }`}>{renderWithHeader(iconElement)}</div>);
-
-
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip
-        title={tooltipProps.title}
-        placement={tooltipProps.placement}
-      >
-        {finalElement}
-      </Tooltip>
-    );
-  }
-
-  return <>{finalElement}</>;
+ return (
+          <CommonHeaderAndTooltip
+            needTooltip={needTooltip}
+            tooltipProps={tooltipProps}
+            headerText={headerText}
+            headerPosition={headerPosition}
+            className={className}
+            fillContainer={fillContainer}
+          >
+            {iconElement}
+          </CommonHeaderAndTooltip>
+        )
 };

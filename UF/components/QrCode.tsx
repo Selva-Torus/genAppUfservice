@@ -5,6 +5,7 @@ import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { getFontSizeClass } from "@/app/utils/branding";
+import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 interface QrCodeProps {
   value: string;
@@ -99,58 +100,15 @@ export const QrCode: React.FC<QrCodeProps> = ({
     </div>
   );
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
-
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    }`;
-
-    switch (headerPosition) {
-      case "top":
-        return (
-          <div className="flex flex-col items-center">
-            <div className={headerClasses}>{headerText}</div>
-            {element}
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className="flex flex-col items-center">
-            {element}
-            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className="flex items-center gap-4">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
-              {headerText}
-            </div>
-            {element}
-          </div>
-        );
-      case "right":
-        return (
-          <div className="flex items-center gap-4">
-            {element}
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
-              {headerText}
-            </div>
-          </div>
-        );
-    }
-  };
-
-  const finalElement = renderWithHeader(qrCodeElement);
-
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
-        {finalElement}
-      </Tooltip>
-    );
-  }
-
-  return <>{finalElement}</>;
+return (
+     <CommonHeaderAndTooltip
+       needTooltip={needTooltip}
+       tooltipProps={tooltipProps}
+       headerText={headerText}
+       headerPosition={headerPosition}
+       className={className}
+     >
+       {qrCodeElement}
+     </CommonHeaderAndTooltip>
+   )
 };

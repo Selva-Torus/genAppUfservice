@@ -10,6 +10,7 @@ import {
   TooltipProps as TooltipPropsType
 } from '@/types/global'
 import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
+import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 type ContentAlign = 'left' | 'right' | 'center'
 interface TextAreaProps {
   disabled?: boolean
@@ -94,14 +95,16 @@ export const TextArea: React.FC<TextAreaProps> = ({
 
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex?.slice(1, 3), 16);
-    const g = parseInt(hex?.slice(3, 5), 16);
-    const b = parseInt(hex?.slice(5, 7), 16);
-    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-  };
+    const r = parseInt(hex?.slice(1, 3), 16)
+    const g = parseInt(hex?.slice(3, 5), 16)
+    const b = parseInt(hex?.slice(5, 7), 16)
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  }
 
   const textAreaElement = (
-    <div className={`${getFillClasses()} ${getFontSizeClass(branding.fontSize)}`}>
+    <div
+      className={`${getFillClasses()} ${getFontSizeClass(branding.fontSize)}`}
+    >
       <textarea
         value={value}
         onChange={onChange}
@@ -121,21 +124,33 @@ export const TextArea: React.FC<TextAreaProps> = ({
           }
           p-2 transition-all duration-200
           focus:outline-none
+
           ${className}
         `}
         onMouseEnter={e => {
-          if (!disabled && !readOnly && document.activeElement !== e.currentTarget) {
+          if (
+            !disabled &&
+            !readOnly &&
+            document.activeElement !== e.currentTarget
+          ) {
             e.currentTarget.style.borderColor = branding.hoverColor
           }
         }}
         onMouseLeave={e => {
-          if (!disabled && !readOnly && document.activeElement !== e.currentTarget) {
+          if (
+            !disabled &&
+            !readOnly &&
+            document.activeElement !== e.currentTarget
+          ) {
             e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
           }
         }}
         onFocus={e => {
           e.currentTarget.style.borderColor = branding.selectionColor
-          e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(branding.selectionColor, 0.2)}`
+          e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(
+            branding.selectionColor,
+            0.2
+          )}`
         }}
         onBlur={e => {
           e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
@@ -146,90 +161,16 @@ export const TextArea: React.FC<TextAreaProps> = ({
     </div>
   )
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText)
-      return (
-        <div className={`${fillContainer ? 'h-full w-full' : ''} `}>
-          {element}
-        </div>
-      )
-
-    const headerClasses = `font-semibold mb-1 overflow-hidden text-ellipsis whitespace-nowrap ${
-      isDark ? 'text-gray-300' : 'text-gray-700'
-    } 
-      ${getFontSizeClass(branding.fontSize)} ${className}`
-
-    switch (headerPosition) {
-      case 'top':
-        return (
-          <div
-            className={`${
-              fillContainer
-                ? 'flex h-full w-full flex-col'
-                : 'inline-flex flex-col'
-            } ${headerClasses}`}
-          >
-            <div>{headerText}</div>
-            {element}
-          </div>
-        )
-      case 'bottom':
-        return (
-          <div
-            className={`${
-              fillContainer
-                ? 'flex h-full w-full flex-col'
-                : 'inline-flex flex-col'
-            }  ${headerClasses}`}
-          >
-            {element}
-            <div className='mt-1'>{headerText}</div>
-          </div>
-        )
-      case 'left':
-        return (
-          <div
-            className={`${
-              fillContainer ? 'flex h-full w-full' : 'inline-flex'
-            } items-center gap-4 ${headerClasses}`}
-          >
-            <div
-              className={`mb-0 min-w-0 max-w-[50%] sm:max-w-[40%] md:max-w-[35%] lg:max-w-[30%]`}
-            >
-              {headerText}
-            </div>
-            {element}
-          </div>
-        )
-      case 'right':
-        return (
-          <div
-            className={`${
-              fillContainer
-                ? 'flex h-full w-full'
-                : 'inline-flex flex-col'
-            } items-center gap-4 ${className} ${headerClasses}`}
-          >
-            {element}
-            <div
-              className={` mb-0 min-w-0 max-w-[50%] sm:max-w-[40%] md:max-w-[35%] lg:max-w-[30%]`}
-            >
-              {headerText}
-            </div>
-          </div>
-        )
-    }
-  }
-
-  const finalElement = renderWithHeader(textAreaElement)
-
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
-        {finalElement}
-      </Tooltip>
-    )
-  }
-
-  return <>{finalElement}</>
+  return (
+    <CommonHeaderAndTooltip
+      needTooltip={needTooltip}
+      tooltipProps={tooltipProps}
+      headerText={headerText}
+      headerPosition={headerPosition}
+      className={className}
+      fillContainer={fillContainer}
+    >
+      {textAreaElement}
+    </CommonHeaderAndTooltip>
+  )
 }

@@ -12,6 +12,7 @@ import {
 } from '@/types/global'
 import { useGlobal } from '@/context/GlobalContext'
 import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
+import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 type ContentAlign = 'center' | 'left' | 'right'
 interface TimePickerProps {
   timeType?: 'normal' | 'railway'
@@ -56,7 +57,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
   const [forFirstTime, setForFirstTime] = useState(false)
 
   const isDark = theme === 'dark' || theme === 'dark-hc'
-    const getTextAlignClasses = () => {
+  const getTextAlignClasses = () => {
     switch (contentAlign) {
       case 'left':
         return 'text-left'
@@ -119,7 +120,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
   const timePickerElement = (
     <div
       className={`
-        flex h-full w-full flex-col
+        flex h-full w-full flex-col overflow-hidden
         ${getFontSizeClass(branding.fontSize)}
         ${
           isDark
@@ -180,15 +181,15 @@ const TimePicker: React.FC<TimePickerProps> = ({
             ${disabled ? 'cursor-not-allowed opacity-50' : ''}
             ${readOnly ? 'cursor-default' : ''}
             `}
-            onFocus={e => {
-              e.currentTarget.style.borderColor = branding.brandColor
-              e.currentTarget.style.boxShadow = `0 0 0 1px ${branding.brandColor}20`
-            }}
-            onBlur={e => {
-              e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
-              e.currentTarget.style.boxShadow = 'none'
-            }}
-            >
+          onFocus={e => {
+            e.currentTarget.style.borderColor = branding.brandColor
+            e.currentTarget.style.boxShadow = `0 0 0 1px ${branding.brandColor}20`
+          }}
+          onBlur={e => {
+            e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
+            e.currentTarget.style.boxShadow = 'none'
+          }}
+        >
           <select
             className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()}`}
             value={minute}
@@ -281,64 +282,16 @@ const TimePicker: React.FC<TimePickerProps> = ({
     </div>
   )
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return <div className='h-full w-full'>{element}</div>
-
-    const headerClasses = `
-      flex h-full w-full overflow-hidden text-ellipsis whitespace-nowrap 
-      ${
-        isDark
-          ? 'border-gray-600 bg-gray-800 text-white'
-          : 'border-gray-300 bg-white text-gray-900'
-      }
-      ${getFontSizeClass(branding.fontSize)}
-      ${className}
-    `
-    switch (headerPosition) {
-      case 'top':
-        return (
-          <div className={`${headerClasses} flex-col`}>
-            <div className='font-semibold'>{headerText}</div>
-            {element}
-          </div>
-        )
-      case 'bottom':
-        return (
-          <div className={`${headerClasses} flex-col`}>
-            {element}
-            <div className='mt-1 font-semibold'>{headerText}</div>
-          </div>
-        )
-      case 'left':
-        return (
-          <div className={`${headerClasses} items-center gap-4`}>
-            <div className={`mb-0 min-w-0  overflow-hidden font-semibold`}>
-              {headerText}
-            </div>
-            {element}
-          </div>
-        )
-      case 'right':
-        return (
-          <div className={`${headerClasses} items-center gap-4`}>
-            {element}
-            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
-              {headerText}
-            </div>
-          </div>
-        )
-    }
-  }
-  const finalElement = renderWithHeader(timePickerElement)
-
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
-        {finalElement}
-      </Tooltip>
-    )
-  }
-
-  return <>{finalElement}</>
+  return (
+    <CommonHeaderAndTooltip
+      needTooltip={needTooltip}
+      tooltipProps={tooltipProps}
+      headerText={headerText}
+      headerPosition={headerPosition}
+      className={className}
+    >
+      {timePickerElement}
+    </CommonHeaderAndTooltip>
+  )
 }
 export default TimePicker

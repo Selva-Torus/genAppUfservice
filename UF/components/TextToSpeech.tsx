@@ -6,6 +6,7 @@ import { Tooltip } from './Tooltip';
 import { HeaderPosition, TooltipProps as TooltipPropsType } from '@/types/global';
 import { useGlobal } from '@/context/GlobalContext';
 import { getFontSizeClass } from '@/app/utils/branding';
+import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip';
 
 interface TextAreaWithEndContentProps {
   value?: string;
@@ -166,49 +167,6 @@ export function TextToSpeech(props: TextToSpeechProps){
       <FiVolume2 style={{ width: '60%', height: '60%' }} />
     </button>
   );
-
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!props.headerText) return <>{element}</>;
-
-    const headerClasses = `${fontSizeClass} font-semibold mb-1 text-gray-700 dark:text-gray-300`;
-    const headerPosition = props.headerPosition || "top";
-
-    switch (headerPosition) {
-      case "top":
-        return (
-          <div className="flex flex-col w-full overflow-hidden h-full">
-            <div className={headerClasses}>{props.headerText}</div>
-            {element}
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className="flex flex-col w-full overflow-hidden h-full">
-            {element}
-            <div className={`${headerClasses} mt-2 mb-0`}>{props.headerText}</div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className="flex items-start gap-1 overflow-hidden w-full h-full">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
-              {props.headerText}
-            </div>
-            <div className="flex-1 h-full">{element}</div>
-          </div>
-        );
-      case "right":
-        return (
-          <div className="flex items-start gap-1 overflow-hidden w-full h-full">
-            <div className="flex-1 h-full">{element}</div>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
-              {props.headerText}
-            </div>
-          </div>
-        );
-    }
-  };
-
   const textAreaContent = (
     <div className="w-full h-full flex flex-col">
       {props.label && (
@@ -241,16 +199,17 @@ export function TextToSpeech(props: TextToSpeechProps){
       )}
     </div>
   );
+  return (
+    <CommonHeaderAndTooltip
+      needTooltip={props?.needTooltip}
+      tooltipProps={props?.tooltipProps}
+      headerText={props?.headerText}
+      headerPosition={props?.headerPosition}
+      className={props?.className}
+      fillContainer={props?.fillContainer}
 
-  const finalElement = renderWithHeader(textAreaContent);
-
-  if (props.needTooltip && props.tooltipProps) {
-    return (
-      <Tooltip title={props.tooltipProps.title} placement={props.tooltipProps.placement} triggerClassName="h-full w-full">
-        {finalElement}
-      </Tooltip>
-    );
-  }
-
-  return <>{finalElement}</>;
+    >
+      {textAreaContent}
+    </CommonHeaderAndTooltip>
+       )
 }

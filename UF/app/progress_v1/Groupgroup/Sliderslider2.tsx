@@ -18,7 +18,7 @@ import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys'
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 
     
-const Sliderslider = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}:any) => {
+const Sliderslider2 = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}:any) => {
   const token: string = getCookie('token');
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
@@ -39,8 +39,8 @@ const Sliderslider = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFla
   const {groupbffe9, setgroupbffe9}= useContext(TotalContext) as TotalContextProps;
   const {groupbffe9Props, setgroupbffe9Props}= useContext(TotalContext) as TotalContextProps;
   const {qrcode1c711, setqrcode1c711}= useContext(TotalContext) as TotalContextProps;
-  const {sliderf7242, setsliderf7242}= useContext(TotalContext) as TotalContextProps;
   const {progress1c37ec, setprogress1c37ec}= useContext(TotalContext) as TotalContextProps;
+  const {slider2edf6a, setslider2edf6a}= useContext(TotalContext) as TotalContextProps;
   const {treeviewer4d8cf, settreeviewer4d8cf}= useContext(TotalContext) as TotalContextProps;
   const {signatureb24c1, setsignatureb24c1}= useContext(TotalContext) as TotalContextProps;
   const {pininputd19b1, setpininputd19b1}= useContext(TotalContext) as TotalContextProps;
@@ -66,10 +66,10 @@ const Sliderslider = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFla
         {
           key: "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1",
           componentId: "7a5f6e1c8f4f4801b28383ae87fbffe9",
-          controlId: "b056432c565a41f8b4bd634a946f7242",
+          controlId: "ba8cf1ff5b094c64be58d532b94edf6a",
           isTable: false,
           accessProfile:accessProfile,
-          from:"sliderslider"
+          from:"sliderslider2"
         },
         {
           headers: {
@@ -88,14 +88,14 @@ const Sliderslider = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFla
 
   useEffect(()=>{
     handleMapperValue()
-  },[sliderf7242?.refresh])
+  },[slider2edf6a?.refresh])
 
   useEffect(() => { 
-    setgroupbffe9((pre:any)=>({...pre,slider:""}))
-  },[sliderf7242?.refresh])
+    setgroupbffe9((pre:any)=>({...pre,slider2:""}))
+  },[slider2edf6a?.refresh])
 
   const handleChange = async(newValue: number) => {
-    setgroupbffe9((prev: any) => ({ ...prev, slider: newValue}));
+    setgroupbffe9((prev: any) => ({ ...prev, slider2: newValue}));
   }
   const handleBlur=async(e:any)=>{
     code = allCode
@@ -111,35 +111,32 @@ const Sliderslider = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFla
     }
   }
 
-  if (sliderf7242?.isHidden) {
+  if (slider2edf6a?.isHidden) {
     return <></>
   }
 return (   
   <div 
-    style={{gridColumn: `10 / 18`,gridRow: `15 / 40`, gap:``, height: `100%`, overflow: 'auto'}}>
+    style={{gridColumn: `10 / 18`,gridRow: `49 / 100`, gap:``, height: `100%`, overflow: 'auto'}}>
 
 
     <Slider
       className=""
       onChange={handleChange}
       onBlur={handleBlur}
-      value={typeof groupbffe9?.slider=='number' ? groupbffe9?.slider:0}
+      value={typeof groupbffe9?.slider2=='number' ? groupbffe9?.slider2:0}
       min = {1}
       max = {100}
-      step = {20}
-      disabled= {sliderf7242?.isDisabled ? true : false}
-      validationState='invalid'
+      step = {10}
+      marks
+      disabled= {slider2edf6a?.isDisabled ? true : false}
+      validationState="invalid"
       tooltipDisplay='on'
-      needTooltip={true}  
-      tooltipProps={{title:"test",placement:"top-end"}}
-      headerPosition='top'
-      headerText="header"
       showValue={true}
-      valueLabel="slider"
+      valueLabel="slider2"
       />
     </div>
         
   )
 }
 
-export default Sliderslider
+export default Sliderslider2

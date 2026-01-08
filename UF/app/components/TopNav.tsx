@@ -327,7 +327,6 @@ const TopNav = ({
                   </div>
                 </div>
               )}
-
               <div
                 onClick={logout}
                 className='flex cursor-pointer items-center gap-2'

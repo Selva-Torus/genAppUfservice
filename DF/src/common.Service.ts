@@ -26,13 +26,16 @@ import { Cron, CronExpression } from "@nestjs/schedule";
 
 export const client = new MongoClient(process.env.MONGODB_URL);
  client.connect()
-            .then(() => {
-            console.log('Connected to the database successfully!');
-            })
-            .catch((err) => {
-            console.error('Error connecting to the database:', err);
-            });
-         var db= client.db(process.env.MONGODB_NAME)
+  .then(() => {
+  console.log('Connected to the database successfully!');
+  })
+  .catch((err) => {
+  console.error('Error connecting to the database:', err);
+  });
+var db= client.db(process.env.MONGODB_NAME)
+type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
+type JsonObject = { [key: string]: JsonValue };
+type JsonArray = JsonValue[];
 
 @Injectable()
 export class CommonService{
@@ -62,6 +65,29 @@ export class CommonService{
           token: process.env.VAULT_TOKEN, //Use a service token with limited permissions
         });
   }
+
+  replaceKeysWithDollar(
+    obj: JsonValue,
+    replacement: string = ''
+  ): JsonValue {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.replaceKeysWithDollar(item, replacement));
+    }
+
+    const result: JsonObject = {};
+    
+    for (const key of Object.keys(obj)) {
+      const newKey = key.includes('$') ? key.replace(/\$/g, replacement) : key;
+      result[newKey] = this.replaceKeysWithDollar((obj as JsonObject)[key], replacement);
+    }
+
+    return result;
+  }
+  
   async onModuleInit() {
     const collection = client.db("UploadFile")
     this.bucket = new GridFSBucket(collection, { bucketName: 'CT309/AG001/A001/v1' });

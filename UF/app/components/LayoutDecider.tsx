@@ -74,6 +74,22 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
+    "menuGroupLabel": "tabs",
+    "screenDetails": [
+      {
+        "name": "tabs",
+        "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:newTab:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1",
+          "Template 2",
+          "Template 3"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
     "menuGroupLabel": "progress",
     "screenDetails": [
       {
@@ -94,21 +110,6 @@ const LayoutDecider = ({
       {
         "name": "tablecheck",
         "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1",
-          "Template 2"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "indisave",
-    "screenDetails": [
-      {
-        "name": "indisave",
-        "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1",
         "allowedAccessProfile": [
           "Template 1",
           "Template 2"

@@ -8,6 +8,7 @@ import {
   TooltipProps as TooltipPropsType,
 } from "@/types/global";
 import { getFontSizeClass } from "@/app/utils/branding";
+import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 type ContentAlign = "left" | "center" | "right";
 
@@ -176,70 +177,16 @@ export const Checkbox: React.FC<CheckboxProps> = ({
     );
   };
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
-
-    const headerClasses = `${fontSizeClass} font-semibold flex-shrink-0 ${
-      theme === "dark" || theme === "dark-hc" ? "text-gray-300" : "text-gray-700"
-    } ${className}`;
-
-    switch (headerPosition) {
-        case "top":
-          return (
-            <div className={`flex flex-col ${fillContainer ? "w-full h-full overflow-hidden" : ""}`}>
-              <div className={`${headerClasses} mb-1`}>{headerText}</div>
-              <div className={fillContainer ? "flex-1 min-h-0 flex items-center overflow-hidden" : ""}>{element}</div>
-            </div>
-          );
-        case "bottom":
-          return (
-            <div className={`flex flex-col ${fillContainer ? "w-full h-full overflow-hidden" : ""}`}>
-              <div className={fillContainer ? "flex-1 min-h-0 flex items-center overflow-hidden" : ""}>{element}</div>
-              <div className={`${headerClasses} mt-1`}>{headerText}</div>
-            </div>
-          );
-        case "left":
-          return (
-            <div className={`flex items-center ${fillContainer ? "w-full h-full overflow-hidden" : ""}`}>
-              <div
-                className={`${headerClasses} ${
-                  direction === "RTL" ? "ml-2" : "mr-2"
-                }`}
-              >
-                {headerText}
-              </div>
-              <div className={fillContainer ? "flex-1 min-w-0 flex items-center h-full overflow-hidden" : ""}>{element}</div>
-            </div>
-          );
-        case "right":
-          return (
-            <div className={`flex items-center ${fillContainer ? "w-full h-full overflow-hidden" : ""}`}>
-              <div className={fillContainer ? "flex-1 min-w-0 flex items-center h-full overflow-hidden" : ""}>{element}</div>
-              <div
-                className={`${headerClasses} ${
-                  direction === "RTL" ? "mr-2" : "ml-2"
-                }`}
-              >
-                {headerText}
-              </div>
-            </div>
-          );
-        default:
-          return element;
-      }
-    };
-
-  const finalElement = renderWithHeader(checkboxElement);
-
-  const withTitle = renderWithTitle(checkboxElement);
-  
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
-        {finalElement}
-      </Tooltip>
-    );
-  }
-
-  return <>{finalElement}</>;
+  return (
+    <CommonHeaderAndTooltip
+      needTooltip={needTooltip}
+      tooltipProps={tooltipProps}
+      headerText={headerText}
+      headerPosition={headerPosition}
+      className={className}
+      fillContainer={fillContainer}
+    >
+      {checkboxElement}
+    </CommonHeaderAndTooltip>
+  )
 };

@@ -14,6 +14,7 @@ import { Button } from './Button'
 import { Modal } from './Modal'
 import { Text } from './Text'
 import { Tooltip } from './Tooltip'
+import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 function createData(
   mainObject: any,
   data: any,
@@ -715,64 +716,18 @@ export const TreeViewer = ({
     </div>
   )
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element
+  return (
+     <CommonHeaderAndTooltip
+       needTooltip={needTooltip}
+       tooltipProps={tooltipProps}
+       headerText={headerText}
+       headerPosition={headerPosition}
+       className={className}
 
-    const headerClasses = `font-semibold mb-2 ${
-      isDark ? 'text-gray-300' : 'text-gray-700'
-    }`
-
-    switch (headerPosition) {
-      case 'top':
-        return (
-          <div className='flex h-full flex-col'>
-            <div className={headerClasses}>{headerText}</div>
-            {element}
-          </div>
-        )
-      case 'bottom':
-        return (
-          <div className='flex h-full flex-col'>
-            {element}
-            <div className={`${headerClasses} mb-0 mt-2`}>{headerText}</div>
-          </div>
-        )
-      case 'left':
-        return (
-          <div className='flex h-full items-center gap-4'>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
-              {headerText}
-            </div>
-            {element}
-          </div>
-        )
-      case 'right':
-        return (
-          <div className='flex h-full items-center gap-4'>
-            {element}
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
-              {headerText}
-            </div>
-          </div>
-        )
-    }
-  }
-
-  const finalElement = renderWithHeader(treeViewerElement)
-
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip
-        title={tooltipProps.title}
-        placement={tooltipProps.placement}
-        triggerClassName='h-full'
-      >
-        <div className='h-full'>{finalElement}</div>
-      </Tooltip>
-    )
-  }
-
-  return <div className='h-full'>{finalElement}</div>
+     >
+       {treeViewerElement}
+     </CommonHeaderAndTooltip>
+   )
 }
 
 

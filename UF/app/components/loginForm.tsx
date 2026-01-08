@@ -96,6 +96,11 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
           let screenDetails: any = {
             keys:[
   {
+    "screenName": "tabs",
+    "screensName": "tabs-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:newTab:AFVK:v1"
+  },
+  {
     "screenName": "progress",
     "screensName": "progress-v1",
     "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1"
@@ -104,11 +109,6 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
     "screenName": "tablecheck",
     "screensName": "tablecheck-v1",
     "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1"
-  },
-  {
-    "screenName": "indisave",
-    "screensName": "indisave-v1",
-    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1"
   }
 ]
           }

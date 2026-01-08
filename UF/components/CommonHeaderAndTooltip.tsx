@@ -10,6 +10,7 @@ import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 
 interface CommonHeaderAndTooltip {
   needTooltip?: boolean;
+  fillContainer?:boolean;
   tooltipProps?: TooltipPropsType;
   headerText?: string;
   headerPosition?: HeaderPosition;
@@ -22,10 +23,11 @@ export const CommonHeaderAndTooltip: React.FC<CommonHeaderAndTooltip> = ({
   tooltipProps,
   headerText,
   headerPosition = "top",
+  fillContainer = true,
    className = "",
    children,    
 }) => {
-  const { theme, branding } = useGlobal();
+  const { theme,direction, branding } = useGlobal();
   const fontSizeClass = getFontSizeClass(branding.fontSize);
   const isDark = theme === "dark" || theme === "dark-hc";
   const tabsElement = (
@@ -38,39 +40,71 @@ export const CommonHeaderAndTooltip: React.FC<CommonHeaderAndTooltip> = ({
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 
-    switch (headerPosition) {
-      case "top":
+     switch (headerPosition) {
+      case 'top':
         return (
-          <div className={`flex flex-col w-full h-full ${className}`}>
+          <div
+            className={`flex flex-col ${
+              fillContainer ? 'h-full w-full' : ''
+            } ${className}`}
+          >
             <div className={headerClasses}>{headerText}</div>
-            {element}
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className={`flex flex-col w-full h-full ${className}`}>
-            {element}
-            <div className={`${headerClasses} mt-2 mb-0`}>{headerText}</div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className={`flex items-start gap-4 w-full h-full ${className}`}>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
-              {headerText}
-            </div>
-            <div className="flex-1 h-full">{element}</div>
-          </div>
-        );
-      case "right":
-        return (
-          <div className={`flex items-start gap-4 w-full h-full ${className}`}>
-            <div className="flex-1 h-full">{element}</div>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`}>
-              {headerText}
+            <div className={fillContainer ? 'min-h-0 flex-1' : ''}>
+              {element}
             </div>
           </div>
-        );
+        )
+      case 'bottom':
+        return (
+          <div
+            className={`flex flex-col ${
+              fillContainer ? 'h-full w-full' : ''
+            } ${className}`}
+          >
+            <div className={fillContainer ? 'min-h-0 flex-1' : ''}>
+              {element}
+            </div>
+            <div className={`${headerClasses} mb-0 mt-1`}>{headerText}</div>
+          </div>
+        )
+      case 'left':
+        return (
+          <div
+            className={`flex items-center ${
+              fillContainer ? 'h-full w-full' : ''
+            } ${className}`}
+          >
+            <div
+              className={`${headerClasses} mb-0 flex-shrink-0 ${
+                direction === 'RTL' ? 'ml-2' : 'mr-2'
+              }`}
+            >
+              {headerText}
+            </div>
+            <div className={fillContainer ? 'h-full min-w-0 flex-1' : ''}>
+              {element}
+            </div>
+          </div>
+        )
+      case 'right':
+        return (
+          <div
+            className={`flex items-center ${
+              fillContainer ? 'h-full w-full' : ''
+            } ${className}`}
+          >
+            <div className={fillContainer ? 'h-full min-w-0 flex-1' : ''}>
+              {element}
+            </div>
+            <div
+              className={`${headerClasses} mb-0 flex-shrink-0 ${
+                direction === 'RTL' ? 'mr-2' : 'ml-2'
+              }`}
+            >
+              {headerText}
+            </div>
+          </div>
+        )
     }
   };
 

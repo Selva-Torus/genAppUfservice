@@ -13,6 +13,7 @@ import {
 } from '@/types/global'
 import { useGlobal } from '@/context/GlobalContext'
 import { getFontSizeClass } from '@/app/utils/branding'
+import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 
 type ContentAlign = 'left' | 'center' | 'right'
 interface SpeechToTextInputProps extends Omit<any, 'onChange'> {
@@ -38,6 +39,7 @@ export function SpeechToTextInput(props: SpeechToTextInputProps) {
     headerPosition = 'top',
     placeholder = 'Start speaking or typing...',
     label,
+    className = '',
     ...restProps
   } = props
   const { theme, direction, branding } = useGlobal()
@@ -95,7 +97,7 @@ export function SpeechToTextInput(props: SpeechToTextInputProps) {
         disabled={restProps.disabled}
         placeholder={placeholder}
         contentAlign={restProps.contentAlign}
-        className={`w-full rounded-full border border-gray-200 bg-white  text-gray-600 shadow-md outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-400/20 focus:ring-opacity-50 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20 dark:focus:ring-opacity-50 ${restProps.className}`}
+        className={`w-full rounded-full border border-gray-200 bg-white  text-gray-600 shadow-md outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-blue-400 focus:outline-none focus:ring focus:ring-blue-400/20 focus:ring-opacity-50 dark:bg-gray-800 dark:text-gray-100 dark:placeholder:text-gray-500 dark:focus:border-blue-400 dark:focus:ring-blue-400/20 dark:focus:ring-opacity-50 ${className}`}
         view='clear'
         endContent={
           <div className='absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-3'>
@@ -132,60 +134,15 @@ export function SpeechToTextInput(props: SpeechToTextInputProps) {
     </div>
   )
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return <div className='h-full w-full'>{element}</div>
-
-    const headerClasses = `
-      flex h-full w-full overflow-hidden text-ellipsis whitespace-nowrap 
-      ${isDark ? 'text-gray-300' : 'text-gray-700'} 
-      ${getFontSizeClass(branding.fontSize)}
-      ${restProps.className}
-    `
-    switch (headerPosition) {
-      case 'top':
-        return (
-          <div className={`${headerClasses} flex-col`}>
-            <div className='font-semibold'>{headerText}</div>
-            {element}
-          </div>
-        )
-      case 'bottom':
-        return (
-          <div className={`${headerClasses} flex-col`}>
-            {element}
-            <div className='mt-1 font-semibold'>{headerText}</div>
-          </div>
-        )
-      case 'left':
-        return (
-          <div className={`${headerClasses} items-center gap-4`}>
-            <div className={`mb-0 min-w-0  overflow-hidden font-semibold`}>
-              {headerText}
-            </div>
-            {element}
-          </div>
-        )
-      case 'right':
-        return (
-          <div className={`${headerClasses} items-center gap-4`}>
-            {element}
-            <div className={`mb-0 min-w-0 overflow-hidden font-semibold`}>
-              {headerText}
-            </div>
-          </div>
-        )
-    }
-  }
-
-  const finalElement = renderWithHeader(inputElement)
-
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement}>
-        {finalElement}
-      </Tooltip>
-    )
-  }
-
-  return <>{finalElement}</>
+  return (
+    <CommonHeaderAndTooltip
+      needTooltip={needTooltip}
+      tooltipProps={tooltipProps}
+      headerText={headerText}
+      headerPosition={headerPosition}
+      className={className}
+    >
+      {inputElement}
+    </CommonHeaderAndTooltip>
+  )
 }

@@ -49,6 +49,7 @@ for (let i = 0; i < defaultColumns.length; i++) {
 }
 let mapperData:any;
 let schemaDataDFO:any;
+let filterPropsData:any;
 const Tableuserdatable = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableData,refetch, setRefetch,setData,encryptionFlagCompData,paginationDetails,open, setOpen, ref, ButtonGoRuleData, setButtonGoRuleData }: any)=>{
   const token: string | any = getCookie('token');
   const decodedTokenObj: any = decodeToken(token);
@@ -274,7 +275,7 @@ const Tableuserdatable = ({ lockedData,setLockedData,primaryTableData, setPrimar
     fetchData(page, pageSize,searchParams,DFkeyAndRule,DFkeyAndRule?.isRulePresent,false)
   }
 
-  async function fetchData(page:any = 1, pageSize:any = 10, searchParams = {},dfKey:any,isRulePresent:any=false,isOnLoad = false) {
+  async function fetchData(page:any = 1, pageSize:any = 10, searchParams = {},dfKey:any,isRulePresent:any=false,isOnLoad = false,filterProps?:any) {
     if(isRulePresent==undefined)
       isRulePresent=DFkeyAndRule?.isRulePresent||false
     if(searchFilterFlag===true){
@@ -292,6 +293,28 @@ const Tableuserdatable = ({ lockedData,setLockedData,primaryTableData, setPrimar
 
       let api_pagination: any
       if (isRulePresent==false) {
+        let te_refreshBody: te_refreshDto = {
+          key: dfKey?.dfKey,
+          upId: upId,
+          refreshFlag: "Y",
+          count:paginationDetails.pageSize,
+          page:paginationDetails.page
+        }
+        if(encryptionFlagCont) {
+        te_refreshBody["dpdKey"] = encryptionDpd
+        te_refreshBody["method"] = encryptionMethod
+        }
+        te_refreshBody["filterData"] = filterProps
+        const te_refresh: any = await AxiosService.post(
+          '/te/eventEmitter',
+          te_refreshBody,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            }
+          }
+        )
         const api_paginationBody: api_paginationDto = {
           key: dstKey,
           page: parseInt(page),
@@ -346,6 +369,28 @@ const Tableuserdatable = ({ lockedData,setLockedData,primaryTableData, setPrimar
           return
         }
       } else {
+        let te_refreshBody: te_refreshDto = {
+          key: dfKey?.dfKey,
+          upId: upId,
+          refreshFlag: "Y",
+          count:paginationDetails.pageSize,
+          page:paginationDetails.page
+        }
+        if(encryptionFlagCont) {
+        te_refreshBody["dpdKey"] = encryptionDpd
+        te_refreshBody["method"] = encryptionMethod
+        }
+        te_refreshBody["filterData"] = filterProps
+        const te_refresh: any = await AxiosService.post(
+          '/te/eventEmitter',
+          te_refreshBody,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            }
+          }
+        )
         const api_paginationBody: api_paginationDto = {
           key: dstKey,
           page: parseInt(page),
@@ -536,7 +581,9 @@ const colurIndicator = (keyValue:any=[], comingValue:any) => {
 
   async function UpdatedDataHandle(filterProps?: any) { 
     setLoading(true)
-    filterProps[0]= {...filterProps[0],...SearchParams}
+    let searchParams:any = nullFilter(SearchParams);
+    filterProps[0]= {...filterProps[0],...searchParams}
+    filterPropsData = filterProps;
     let te_refreshBody: te_refreshDto = {
         key: DFkeyAndRule?.dfKey,
         upId: upId,
@@ -560,7 +607,7 @@ const colurIndicator = (keyValue:any=[], comingValue:any) => {
         }
       )
 
-    fetchData(paginationData.page , paginationData.pageSize,{},DFkeyAndRule,DFkeyAndRule?.isRulePresent,true)
+    fetchData(paginationData.page , paginationData.pageSize,{},DFkeyAndRule,DFkeyAndRule?.isRulePresent,true,filterProps)
     setLoading(false)
   }
   

@@ -131,6 +131,15 @@ export function useHandleDfdRefresh(){
     const token:string = getCookie('token'); 
 
     return (nodename:any,page:any=1,count:any=10,dpdEncryption:any) => {
+            if("ids24da4"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("name5545c"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("name1e0ed"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
             if("progress1c37ec"==nodename){
                 dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
             }
@@ -153,9 +162,6 @@ export function useHandleDfdRefresh(){
                 dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
             }
             if("names0c3b9"==nodename){
-                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
-            }
-            if("name1e0ed"==nodename){
                 dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
             }
     };

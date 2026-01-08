@@ -13,6 +13,7 @@ import {
   XAxis,
   YAxis
 } from 'recharts';
+import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip';
 
 type ContentAlign = "left" | "center" | "right";
 
@@ -170,67 +171,15 @@ export const LineChart: React.FC<LineChartProps> = ({
     </div>
   );
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) {
-      return (
-        <div className={`${fillContainer ? "flex w-full h-full" : "inline-flex"} ${getContentAlignClasses()} ${getFillClasses()}`}>
-          {element}
-        </div>
-      );
-    }
-
-    const headerClasses = `font-semibold mb-2 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    }`;
-
-    const headerStyle = { fontSize: "var(--font-size)" };
-
-    switch (headerPosition) {
-      case "top":
-        return (
-          <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col ${getFillClasses()}`}>
-            <div className={headerClasses} style={headerStyle}>{headerText}</div>
-            <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col ${getFillClasses()}`}>
-            <div className={fillContainer ? "flex-1 min-h-0" : ""}>{element}</div>
-            <div className={`${headerClasses} mt-2 mb-0`} style={headerStyle}>{headerText}</div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className={`${fillContainer ? "flex" : "inline-flex"} items-start ${getFillClasses()} gap-4`}>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap flex-shrink-0`} style={headerStyle}>
-              {headerText}
-            </div>
-            <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
-          </div>
-        );
-      case "right":
-        return (
-          <div className={`${fillContainer ? "flex" : "inline-flex"} items-start ${getFillClasses()} gap-4`}>
-            <div className={fillContainer ? "flex-1 min-w-0 h-full" : ""}>{element}</div>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap flex-shrink-0`} style={headerStyle}>
-              {headerText}
-            </div>
-          </div>
-        );
-    }
-  };
-
-  const wrappedElement = needTooltip && tooltipProps ? (
-    <Tooltip
-      title={tooltipProps.title || ""}
-      placement={tooltipProps.placement || "bottom-end"}
-    >
-      {renderWithHeader(chartElement)}
-    </Tooltip>
-  ) : (
-    renderWithHeader(chartElement)
-  );
-
-  return <>{wrappedElement}</>;
+ return (
+         <CommonHeaderAndTooltip
+           needTooltip={needTooltip}
+           tooltipProps={tooltipProps}
+           headerText={headerText}
+           headerPosition={headerPosition}
+           fillContainer={fillContainer}
+         >
+           {chartElement}
+         </CommonHeaderAndTooltip>
+       )
 }

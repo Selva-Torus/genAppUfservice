@@ -53,29 +53,26 @@ const ContextSelector = () => {
   const [selectedPs, setSelectedPs] = useState<Record<string, string>>({})
   const [selectedRole, setSelectedRole] = useState<Record<string, string>>({})
   const [orgGrpData, setOrgGrpData] = useState<any>([])
-  const [isPending, startTransition] = useTransition()
-  let landingScreen: string = 'User Screen'
+  const [isPending, startTransition] = useTransition();  
+  let landingScreen:string = 'User Screen';
   let screenDetails: any = {
-    keys: [
-      {
-        screenName: 'progress',
-        screensName: 'progress-v1',
-        ufKey:
-          'CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1'
-      },
-      {
-        screenName: 'tablecheck',
-        screensName: 'tablecheck-v1',
-        ufKey:
-          'CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1'
-      },
-      {
-        screenName: 'indisave',
-        screensName: 'indisave-v1',
-        ufKey:
-          'CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:indivitualsave:AFVK:v1'
-      }
-    ]
+           keys:[
+  {
+    "screenName": "tabs",
+    "screensName": "tabs-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:newTab:AFVK:v1"
+  },
+  {
+    "screenName": "progress",
+    "screensName": "progress-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1"
+  },
+  {
+    "screenName": "tablecheck",
+    "screensName": "tablecheck-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1"
+  }
+]
   }
   screenDetails = screenDetails.keys
 
