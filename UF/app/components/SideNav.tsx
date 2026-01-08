@@ -160,7 +160,6 @@ const SideNav = ({
     if (typeof obj !== 'object' || obj === null) return false
     for (const key in obj) {
       if (key === 'name' && obj[key] === input) {
-
         return true
       }
       if (typeof obj[key] === 'object') {
@@ -228,7 +227,9 @@ const SideNav = ({
                   <div
                     key={index}
                     className={twMerge(
-                      `${sidebarStyle === 'default' || fullView ? "ml-1.5" : ""} flex cursor-pointer items-center justify-center gap-2 px-3 py-1 transition delay-150 duration-300 ease-in-out ${
+                      `${
+                        sidebarStyle === 'default' || fullView ? 'ml-1.5' : ''
+                      } flex cursor-pointer items-center justify-center gap-2 px-3 py-1 transition delay-150 duration-300 ease-in-out ${
                         sidebarStyle === 'compact' ||
                         sidebarStyle === 'hoverView'
                           ? 'w-full'
@@ -253,10 +254,38 @@ const SideNav = ({
                         >
                           {fullView ? (
                             <button
-                              style={{ color: `${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? brandColor : ""}`}}
-                              className={`w-full ${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? 'hover:rounded-md hover:p-3.5' : ''}`}
-                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? hoverColor : ""}`}}
-                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                              style={{
+                                color: `${
+                                  typeof getDropDownStyles(
+                                    menu.menuGroup,
+                                    true
+                                  ) !== 'boolean'
+                                    ? brandColor
+                                    : ''
+                                }`
+                              }}
+                              className={`w-full ${
+                                typeof getDropDownStyles(
+                                  menu.menuGroup,
+                                  true
+                                ) !== 'boolean'
+                                  ? 'hover:rounded-md hover:p-3.5'
+                                  : ''
+                              }`}
+                              onMouseEnter={e => {
+                                e.currentTarget.style.backgroundColor = `${
+                                  typeof getDropDownStyles(
+                                    menu.menuGroup,
+                                    true
+                                  ) !== 'boolean'
+                                    ? hoverColor
+                                    : ''
+                                }`
+                              }}
+                              onMouseLeave={e => {
+                                e.currentTarget.style.backgroundColor =
+                                  'transparent'
+                              }}
                             >
                               <div className={`${getMenuClassName()} w-[100%]`}>
                                 <div className='flex w-[20%] items-center justify-end'>
@@ -326,46 +355,74 @@ const SideNav = ({
                             </button>
                           ) : (
                             <button
-                              style={{ color: `${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? brandColor : ""}`}}
-                              className={`w-full ${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? 'hover:rounded-md hover:p-3.5' : ''}`}
-                              onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${typeof getDropDownStyles(menu.menuGroup, true) !== 'boolean' ? hoverColor : ""}`}}
-                              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                              style={{
+                                color: `${
+                                  typeof getDropDownStyles(
+                                    menu.menuGroup,
+                                    true
+                                  ) !== 'boolean'
+                                    ? brandColor
+                                    : ''
+                                }`
+                              }}
+                              className={`w-full ${
+                                typeof getDropDownStyles(
+                                  menu.menuGroup,
+                                  true
+                                ) !== 'boolean'
+                                  ? 'hover:rounded-md hover:p-3.5'
+                                  : ''
+                              }`}
+                              onMouseEnter={e => {
+                                e.currentTarget.style.backgroundColor = `${
+                                  typeof getDropDownStyles(
+                                    menu.menuGroup,
+                                    true
+                                  ) !== 'boolean'
+                                    ? hoverColor
+                                    : ''
+                                }`
+                              }}
+                              onMouseLeave={e => {
+                                e.currentTarget.style.backgroundColor =
+                                  'transparent'
+                              }}
                             >
-                            <span className='flex items-center'>
-                              {menu.icon ? (
-                                <Image
-                                  className='h-[16px] w-[20px]'
-                                  width={100}
-                                  height={100}
-                                  alt='icon'
-                                  src={getCdnImage(menu.icon)}
-                                  style={{
-                                    filter:
+                              <span className='flex items-center'>
+                                {menu.icon ? (
+                                  <Image
+                                    className='h-[16px] w-[20px]'
+                                    width={100}
+                                    height={100}
+                                    alt='icon'
+                                    src={getCdnImage(menu.icon)}
+                                    style={{
+                                      filter:
+                                        typeof getDropDownStyles(
+                                          menu.menuGroup,
+                                          true
+                                        ) == 'boolean' || isDark
+                                          ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
+                                          : 'unset'
+                                    }}
+                                  />
+                                ) : (
+                                  <FileGallery
+                                    height='20'
+                                    width='20'
+                                    fill={
                                       typeof getDropDownStyles(
                                         menu.menuGroup,
                                         true
-                                      ) == 'boolean' || isDark
-                                        ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
-                                        : 'unset'
-                                  }}
-                                />
-                              ) : (
-                                <FileGallery
-                                  height='20'
-                                  width='20'
-                                  fill={
-                                    typeof getDropDownStyles(
-                                      menu.menuGroup,
-                                      true
-                                    ) == 'boolean'
-                                      ? isLightColor(brandColor)
-                                      : isDark
-                                      ? '#fff'
-                                      : '#1C274C'
-                                  }
-                                />
-                              )}
-                            </span>
+                                      ) == 'boolean'
+                                        ? isLightColor(brandColor)
+                                        : isDark
+                                        ? '#fff'
+                                        : '#1C274C'
+                                    }
+                                  />
+                                )}
+                              </span>
                             </button>
                           )}
                         </div>
@@ -380,7 +437,7 @@ const SideNav = ({
                       }}
                       // switcherWrapperClassName='bg-transparent w-[100%] flex items-center justify-center'
                     />
-                    </div>
+                  </div>
                 </Tooltip>
               )
             } else {
@@ -401,10 +458,20 @@ const SideNav = ({
                   // }}
                 >
                   <button
-                    style={{ color: `${routingName !== pathname ? brandColor : ""}`}}
-                    className={`${routingName !== pathname ? `p-1 hover:rounded-md` : ""}`}
-                    onMouseEnter={e => { e.currentTarget.style.backgroundColor = `${routingName !== pathname ? hoverColor : ""}`}}
-                    onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'transparent' }}
+                    style={{
+                      color: `${routingName !== pathname ? brandColor : ''}`
+                    }}
+                    className={`${
+                      routingName !== pathname ? `p-1 hover:rounded-md` : ''
+                    }`}
+                    onMouseEnter={e => {
+                      e.currentTarget.style.backgroundColor = `${
+                        routingName !== pathname ? hoverColor : ''
+                      }`
+                    }}
+                    onMouseLeave={e => {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                    }}
                   >
                     <div
                       key={index}
