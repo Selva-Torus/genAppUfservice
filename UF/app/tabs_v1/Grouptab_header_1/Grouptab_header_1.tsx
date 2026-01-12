@@ -219,7 +219,7 @@ const Grouptab_header_1 = ({lockedData={},setLockedData,primaryTableData={}, set
         backgroundClip: '',
         backgroundBlendMode: ''
       }}
-      className={`flex flex-col overflow-auto rounded-md ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
     >
         {allowedControls.includes("code") ?<TextInputcode   /* 86871 */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
         {        (("button" in ButtonGoRuleData)?ButtonGoRuleData["button"]:true) && 

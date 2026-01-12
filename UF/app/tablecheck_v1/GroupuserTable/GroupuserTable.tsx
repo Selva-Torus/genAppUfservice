@@ -156,7 +156,7 @@ const GroupuserTable = ({lockedData={},setLockedData,primaryTableData={}, setPri
         backgroundClip: '',
         backgroundBlendMode: ''
       }}
-      className={`flex flex-col overflow-auto rounded-md ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
     >
         <CommonHeaderAndTooltip
           headerPosition='top'

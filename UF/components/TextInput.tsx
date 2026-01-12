@@ -285,7 +285,7 @@ export const TextInput: React.FC<TextInputProps> = ({
           value={internalValue}
           onChange={handleChange}
           placeholder={placeholder}
-          disabled={isDisabled}
+          disabled={disabled}
           readOnly={readOnly}
           autoFocus={autoFocus}
           // style={getInputStyles()}
@@ -315,7 +315,7 @@ export const TextInput: React.FC<TextInputProps> = ({
                   : 'pr-10'
                 : ''
             }
-            ${isDisabled ? 'cursor-not-allowed opacity-50' : ''}
+            ${disabled ? 'cursor-not-allowed opacity-50' : ''}
             ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}
             p-2 transition-all duration-200
             focus:outline-none
@@ -326,12 +326,12 @@ export const TextInput: React.FC<TextInputProps> = ({
             ...getInputStyles()
           }}
           onMouseEnter={e => {
-            if (!isDisabled && !errorMessage && !validationState && document.activeElement !== e.currentTarget) {
+            if (!disabled && !errorMessage && !validationState && document.activeElement !== e.currentTarget) {
               e.currentTarget.style.borderColor = branding.hoverColor
             }
           }}
           onMouseLeave={e => {
-            if (!isDisabled && !errorMessage && !validationState && document.activeElement !== e.currentTarget) {
+            if (!disabled && !errorMessage && !validationState && document.activeElement !== e.currentTarget) {
               if (view === 'clear') {
                 e.currentTarget.style.borderColor = 'transparent'
               } else {

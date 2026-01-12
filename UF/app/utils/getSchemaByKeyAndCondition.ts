@@ -39,6 +39,33 @@ export async function getSchemaByKeyAndCondition(
 
     const keyFieldName = item.key.value; // e.g., "psName"
 
+    // If keyFieldName is "all", directly fetch schema without condition checking
+    if(keyFieldName === 'all'){
+      // Check if value has items array
+      if (!item.value.items || !Array.isArray(item.value.items)) {
+        continue;
+      }
+
+      // Get the first schema item directly without condition matching
+      for (const valueItem of item.value.items) {
+        if (!valueItem.schema) {
+          continue;
+        }
+
+        const schemaValue = valueItem.schema.value;
+        if (schemaValue) {
+          // Fetch data from Redis using the schemaValue as key
+          const redisData = await getData(schemaValue, 'ReJSON-RL');
+          const conditionValue = valueItem.condition?.value || 'all';
+          result[conditionValue] = redisData;
+          let nodeID:any = Object.values(redisData)[0];
+          res = nodeID?.dataset;
+          break; // Take the first schema and exit
+        }
+      }
+      continue; // Move to next item
+    }
+else{
     // Check if the key field exists in user context
     if (!(keyFieldName in userContext)) {
       continue;
@@ -68,7 +95,7 @@ export async function getSchemaByKeyAndCondition(
         let nodeID:any = Object.values(redisData)[0];
         res =  nodeID?.dataset;
       }
-    }
+    }}
   }
 
   // Return null if no schemas found

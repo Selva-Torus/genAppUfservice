@@ -150,6 +150,7 @@ export class readAPIDTO {
       childTable?:any
       logicCenter?:boolean
       schedulerStatus?:string
+      parentUpId?:string
     }
   
     export class pageDto { 

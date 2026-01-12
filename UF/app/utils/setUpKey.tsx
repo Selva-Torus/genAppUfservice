@@ -30,7 +30,7 @@ const languageMap = {
 
 export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
   const { property, setProperty } = useContext(TotalContext) as TotalContextProps;
-  const { setTheme, setLanguage, setDirection, updateBranding } = useGlobal();
+  const { setTheme, setLanguage, setDirection, updateBranding, setAppBackgroundImage } = useGlobal();
 
   interface SetupKeyData {
     direction: string;
@@ -85,14 +85,14 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
       const borderRadius = borderRadiusMap[data?.borderRadius] || '3px';
       const fontSize = fontSizeMap[data?.fontSize] || '13px';
       const language = languageMap[data?.language] || 'en';
-
+      const bgImage = `url("${process.env.NEXT_PUBLIC_FTP_OUTPUT_HOST}/${data['appBackgroundImage']}")`;
       // Set CSS variables for legacy components
       document.documentElement.style.setProperty('--brand-color', brandColor);
       document.documentElement.style.setProperty('--selection-color', selectionColor);
       document.documentElement.style.setProperty('--hover-color', hoverColor);
       document.documentElement.style.setProperty('--border-radius', borderRadius);
       document.documentElement.style.setProperty('--g--font-size', fontSize);
-      document.documentElement.style.setProperty('--app-bg-image', `url("${process.env.NEXT_PUBLIC_FTP_OUTPUT_HOST}/${data['appBackgroundImage']}")`);  
+      document.documentElement.style.setProperty('--app-bg-image', bgImage);  
       // document.documentElement.style.setProperty('--page-bg-color', data['page-bg-color']);
       // document.documentElement.style.setProperty('--group-bg-color', data['group-bg-color']);
 
@@ -143,6 +143,9 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
         hoverColor: hoverColor,
         borderRadius: data.borderRadius as any || 's',
       });
+
+      // Set background image in global context
+      setAppBackgroundImage(data['appBackgroundImage']);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);

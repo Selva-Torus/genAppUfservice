@@ -19,7 +19,7 @@ function createData(
   mainObject: any,
   data: any,
   handleClick: (val: any, path: string) => void = () => {},
-  isDynamic: boolean = true,
+  isDynamic: boolean = false,
   path: string = '',
   setData: any = () => {},
   setModalPath: any = () => {},
@@ -149,24 +149,27 @@ function createData(
             </a>
           </div>
           {isDynamic && (
-            <Button
-              onClick={() => handleDelete(path)}
-              view={'normal'}
-           
-              icon={'FaRegTimesCircle'}
-              iconDisplay='Icon only'
-            ></Button>
+            <div className='w-[80px]'>
+              <Button
+                onClick={() => handleDelete(path)}
+                view={'normal'}
+             
+                icon={'FaRegTimesCircle'}
+                iconDisplay='Icon only'
+              ></Button>
+            </div>
           )}
         </div>
       ) : (
-        <div className='flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1.5 transition-colors hover:bg-gray-100'>
+        <div className='flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1.5 transition-colors hover:bg-gray-100'>    
+          <div className='w-[80px]'>
           <Button
             onClick={() => handleClick(content, path + '/' + content)}
             view={'flat-success'}
-            
             icon={'FaSourcetree'}
             iconDisplay='Icon only'
           ></Button>
+          </div>
           <div className='flex-1'>
             <div className='mb-1 text-xs font-medium'>
               {typeof data === 'string'
@@ -177,7 +180,7 @@ function createData(
                 ? '✅ Boolean'
                 : '📄 Value'}
             </div>
-            {!isDynamic ? (
+            {isDynamic ? (
               <TextInput
                 value={content || ''}
                 onChange={(e: any) => handleChange(e, path)}
@@ -191,13 +194,15 @@ function createData(
             )}
           </div>
           {isDynamic && (
-            <Button
-              onClick={() => handleDelete(path)}
-              view={'normal'}
-              
-              icon={'FaRegTimesCircle'}
-              iconDisplay='Icon only'
-            ></Button>
+            <div className='w-[80px]'>
+              <Button
+                onClick={() => handleDelete(path)}
+                view={'normal'}
+                
+                icon={'FaRegTimesCircle'}
+                iconDisplay='Icon only'
+              ></Button>
+            </div>
           )}
         </div>
       )
@@ -216,6 +221,7 @@ function createData(
               </span>
             </div>
             {isDynamic && (
+              <div className='w-[80px]'>
               <Button
                 onClick={() => {
                   setModalPath(path)
@@ -231,6 +237,7 @@ function createData(
               >
                 Add Item
               </Button>
+              </div>
             )}
           </div>
 
@@ -247,22 +254,23 @@ function createData(
                     </span>
                     <Button
                       onClick={() => handleClick(item, path + '/' + idx)}
-                     view={'flat-success'}
+                      view={'flat-success'}
                       
                       icon={'FaSourcetree'}
                       iconDisplay='Icon only'
                     ></Button>
                   </div>
                   {isDynamic && (
+                    <div className='w-[80px]'>
                     <Button
                       onClick={() => handleDelete(path + '/' + idx)}
                       view={'normal'}
                       
-                      icon={'TiDeleteOutline'}
+                      icon={'FaRegTimesCircle'}
                       iconDisplay='Icon only'
                     >
-                      <Icon data='TiDeleteOutline' size={14} />
                     </Button>
+                    </div>
                   )}
                 </div>
                 <div className='pl-4'>
@@ -318,7 +326,7 @@ const NestedObject = ({
   mainObject,
   data,
   handleClick,
-  isDynamic = true,
+  isDynamic = false,
   path,
   setData = () => {},
   setModalPath = () => {},
@@ -407,6 +415,7 @@ const NestedObject = ({
           </span>
         </div>
         {isDynamic && (
+          <div className='w-[80px]'>
           <Button
             onClick={() => {
               setModalPath(path)
@@ -420,9 +429,8 @@ const NestedObject = ({
             icon={'FaPlus'}
             iconDisplay='Icon only'
           >
-            <span className='text-xs'>➕</span>
-            Add Property
           </Button>
+          </div>
         )}
       </div>
 
@@ -455,6 +463,7 @@ const NestedObject = ({
                   </span>
                 </div>
                 <div className='flex items-center gap-2'>
+                  <div className='w-[80px]'>
                   <Button
                     onClick={() => toggleKey(key)}
                     view={'flat-info'}
@@ -462,14 +471,17 @@ const NestedObject = ({
                     iconDisplay='Icon only'
                     icon={isExpanded ? 'FaChevronUp':'FaAngleDown' }
                   ></Button>
+                  </div>
                   {isDynamic && (
-                    <Button
-                      onClick={() => handleDelete(path + '/' + key)}
-                      view={'normal'}
-                      
-                      icon={'TiDeleteOutline'}
-                      iconDisplay='Icon only'
-                    ></Button>
+                    <div className='w-[80px]'>
+                      <Button
+                        onClick={() => handleDelete(path + '/' + key)}
+                        view={'normal'}
+                        
+                        icon={'FaRegTimesCircle'}
+                        iconDisplay='Icon only'
+                      ></Button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -518,7 +530,7 @@ export const TreeViewer = ({
   mainData,
   data,
   handleClick,
-  isEditable,
+  isEditable=false,
   path,
   viewtype = 'expanded',
   setData,
@@ -534,7 +546,6 @@ export const TreeViewer = ({
   const [modalValue, setModalValue] = useState<any>('')
   const [modalKey, setModalKey] = useState('')
   const [modalTargetType, setModalTargetType] = useState('') // 'array' or 'object'
-
   const handleAddFromModal = () => {
     if (modalValue.trim() === '') return
 
@@ -594,38 +605,40 @@ export const TreeViewer = ({
       style={{
         height: `100%`,
         width: `100%`,
-        overflow: 'auto'
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
       }}
     >
       {/* Main Content */}
-      <div className='flex gap-3'>
+      <div className='flex h-full flex-col gap-3'>
         {/* Tree Viewer Panel */}
         <div
-          className='w-full
+          className='flex h-full w-full flex-col
            rounded-lg border border-gray-200  shadow-lg'
         >
-          <div className='flex h-full w-full flex-col'>
-            <div className='rounded-t-lg border-b border-gray-200 bg-gray-50 px-6 py-4'>
-              <h2 className='flex items-center gap-1 text-lg font-semibold text-gray-800'>
-                🌳 Tree View
-              </h2>
-            </div>
-            <div className='flex-1 overflow-y-auto p-6'>
-              {createData(
-                mainData,
-                data,
-                handleClick,
-                isEditable,
-                path,
-                setData,
-                setModalPath,
-                setModalValue,
-                setIsModalOpen,
-                setModalKey,
-                setModalTargetType,
-                viewtype
-              )}
-            </div>
+          {/* Fixed Header */}
+          <div className='flex-shrink-0 rounded-t-lg border-b border-gray-200 bg-gray-50 px-6 py-4'>
+            <h2 className='flex items-center gap-1 text-lg font-semibold text-gray-800'>
+              🌳 Tree View
+            </h2>
+          </div>
+          {/* Scrollable Body */}
+          <div className='flex-1 overflow-y-auto p-6'>
+            {createData(
+              mainData,
+              data,
+              handleClick,
+              isEditable,
+              path,
+              setData,
+              setModalPath,
+              setModalValue,
+              setIsModalOpen,
+              setModalKey,
+              setModalTargetType,
+              viewtype
+            )}
           </div>
         </div>
       </div>

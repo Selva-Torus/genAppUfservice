@@ -1,3 +1,4 @@
+
 'use client'
 import React, { useContext, useEffect, useState } from "react";
 import i18n from "@/app/components/i18n";
@@ -116,7 +117,7 @@ const TreeViewertreeviewer = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
         tooltipProps={{title:"tooltip",placement:"bottom-end"}}
       headerPosition='left'
       headerText="header"
-        mainData={groupbffe9?.treeviewer} data={groupbffe9?.treeviewer}  handleClick={handleClick} isEditable={false} path={''} setData={setgroupbffe9}/>
+        mainData={groupbffe9?.treeviewer} data={groupbffe9?.treeviewer}  handleClick={handleClick} isEditable={false}  path={''} setData={setgroupbffe9}/>
     </div>
   );
 }

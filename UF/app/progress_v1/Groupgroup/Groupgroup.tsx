@@ -264,7 +264,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
         backgroundClip: '',
         backgroundBlendMode: ''
       }}
-      className={`flex flex-col overflow-auto rounded-md ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
     >
         {allowedControls.includes("qrcode") ?<QrCodeqrcode   /* 1c711 */checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
         {allowedControls.includes("progress1")?<Progressprogress1  /* c37ec */ isDynamic={false } index={idx} item={item} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}

@@ -34,19 +34,29 @@ export class MongoService {
 
   private readonly logger = new Logger(MongoService.name) 
 
-  async findDocument(collectionName: any, findQuery: any, projectionValue?: any): Promise<any> {
-    const collection = db.collection(collectionName);
-    if (projectionValue) {
-      var result = await collection.find(findQuery, { projection: projectionValue }).toArray();
-    } else {
-      var result = await collection.find(findQuery).toArray();
-    }
+  // async findDocument(collectionName: any, findQuery: any, projectionValue?: any): Promise<any> {
+  //   const collection = db.collection(collectionName);
+  //   if (projectionValue) {
+  //     var result = await collection.find(findQuery, { projection: projectionValue }).toArray();
+  //   } else {
+  //     var result = await collection.find(findQuery).toArray();
+  //   }
 
-    if (result) {
-      return result
-    } else {
-      return 0
-    }
+  //   if (result) {
+  //     return result
+  //   } else {
+  //     return 0
+  //   }
+  // }
+
+  async findDocument(collectionName: any, findQuery: any, projectionValue?: any, Options?: any): Promise<any> {
+    const collection = db.collection(collectionName);
+    const { page = 0, limit = 0, sortOrder = 0 } = Options || {}; 
+
+    const queryOptions: any = { projection: projectionValue, skip: page, limit: limit, sort: sortOrder };
+        
+    const result = await collection.find(findQuery, projectionValue ? queryOptions : {}).toArray();
+    return result || 0;
   }
 
   async updateDocument(collectionName: any, path: any, findQuery: any): Promise<any> {
@@ -57,6 +67,11 @@ export class MongoService {
     } else {
       return 0
     }
+  }
+
+   async countDocuments(collectionName: any, findQuery: any): Promise<any> {
+    let countDocumentsLists = db.collection(collectionName).countDocuments(findQuery)
+    return countDocumentsLists
   }
 
   async insertDocument(collectionName: any,key:string,insertValue: any) {

@@ -89,10 +89,27 @@ export class userableController {
     description: 'Read all the records from the userable table',
   })
   
-  async findAll(@Headers() authHeader: string,@Req() req: any,@Query() query?: Record<string, any>) {
+  async findAll(@Headers() authHeader: string,@Req() req: any,@Query("trs_creator_email") trs_creator_email?: string,@Query("trs_created_date") trs_created_date?: Date,@Query("trs_created_by") trs_created_by?: string,@Query("trs_modified_date") trs_modified_date?: Date,@Query("trs_modified_by") trs_modified_by?: string,@Query("trs_next_status") trs_next_status?: string,@Query("trs_status") trs_status?: string,@Query("trs_process_id") trs_process_id?: string,@Query("trs_access_profile") trs_access_profile?: string,@Query("trs_org_grp_code") trs_org_grp_code?: string,@Query("trs_org_code") trs_org_code?: string,@Query("trs_role_grp_code") trs_role_grp_code?: string,@Query("trs_role_code") trs_role_code?: string,@Query("trs_ps_grp_code") trs_ps_grp_code?: string,@Query("trs_ps_code") trs_ps_code?: string,@Query("trs_sub_org_grp_code") trs_sub_org_grp_code?: string,@Query("trs_sub_org_code") trs_sub_org_code?: string,@Query() query?: Record<string, any>) {
     const token = req.headers?.authorization?.split(' ')[1];
     //await this.ufservice.introspectToken(authHeader,"",token);
     let presentQueryKeys:any=[
+      "trs_creator_email",
+      "trs_created_date",
+      "trs_created_by",
+      "trs_modified_date",
+      "trs_modified_by",
+      "trs_next_status",
+      "trs_status",
+      "trs_process_id",
+      "trs_access_profile",
+      "trs_org_grp_code",
+      "trs_org_code",
+      "trs_role_grp_code",
+      "trs_role_code",
+      "trs_ps_grp_code",
+      "trs_ps_code",
+      "trs_sub_org_grp_code",
+      "trs_sub_org_code"
     ]
     let comingQueryKeys:any=Object.keys(query)||[]
     let isComingQuerysAreValid=true;
@@ -114,7 +131,7 @@ export class userableController {
     if (req.originalUrl.includes('?') && req.originalUrl.split('?')[1].includes('/') || isComingQuerysAreValid==false) {
       throw new NotFoundException('Invalid query parameter structure.');
     }
-    const result = this.userableService.findAll(token,);
+    const result = this.userableService.findAll(token,trs_creator_email,trs_created_date,trs_created_by,trs_modified_date,trs_modified_by,trs_next_status,trs_status,trs_process_id,trs_access_profile,trs_org_grp_code,trs_org_code,trs_role_grp_code,trs_role_code,trs_ps_grp_code,trs_ps_code,trs_sub_org_grp_code,trs_sub_org_code,);
     return plainToInstance(userableEntity, result);
   } 
 

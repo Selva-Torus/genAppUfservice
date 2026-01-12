@@ -17,7 +17,7 @@ export class AppService implements OnModuleInit{
 
   async onModuleInit() {
     console.log('Application started, calling API...');
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiZ2FtZSIsImNsaWVudCI6IkNUMzA5IiwidHlwZSI6ImMiLCJsb2dUeXBlIjoibW9uZ29kYiIsInNpZCI6IjFlY2JmMjBmLWE3MmItNDhlOS04MTRmLWVhMzM2MDQwY2Q4MSIsImlhdCI6MTc2Nzc5MjkwMCwiZXhwIjoxNzY3Nzk0MTAwfQ.CBefdktW8LJqHLP1w6w9Dhu4QjzHNSVK__VHad6IVMY';
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiZ2FtZSIsImNsaWVudCI6IkNUMzA5IiwidHlwZSI6ImMiLCJsb2dUeXBlIjoibW9uZ29kYiIsInNpZCI6IjAxOWVmZGEyLTI3NTUtNGViMy05MjMzLWM2ODA1MjQ1MGU0ZSIsImlhdCI6MTc2ODE5MDkwOCwiZXhwIjoxNzY4MTkyMTA4fQ.KwSQVUDKAu-BiJbvKnOuy1Emf2rvfSOjxDp5P1Pt-Kg';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
     if(Object.keys(preParedData).includes('erdWithData'))
       {

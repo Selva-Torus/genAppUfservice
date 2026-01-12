@@ -18,7 +18,6 @@ import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys'
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import * as v from 'valibot';
 
-
 const TextInputtextinput = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}:any) => {  
   const token: string = getCookie('token');
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
@@ -101,6 +100,18 @@ const TextInputtextinput = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encrypt
       /// vvv
   schemaArray = [] ;
   const handleChange = async(e: any) => {
+    const newInputValue = dynamicStateandType.type=="number" ? +e.target.value : e.target.value;
+    let code:any=allCode
+     if (code != '') {
+      let codeStates: any = {}
+      codeStates['group']  = {...groupeca86,textinput:newInputValue},
+      codeStates['setgroup'] = setgroupeca86,
+      codeStates['oldtabgroup']  = {...oldtabgroup527ef,textinput:newInputValue},
+      codeStates['setoldtabgroup'] = setoldtabgroup527ef,
+      codeStates['table2']  = {...table2c0657,textinput:newInputValue},
+      codeStates['settable2'] = settable2c0657,
+    codeExecution(code,codeStates)
+    }  
     setError('')
     setValidate((pre:any)=>({...pre,textinput:undefined}))
     if(dynamicStateandType.type=="number"){
@@ -111,17 +122,7 @@ const TextInputtextinput = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encrypt
     }
   }
   const handleBlur=async () => {
-    let code:any=allCode
-     if (code != '') {
-      let codeStates: any = {}
-      codeStates['group']  = groupeca86,
-      codeStates['setgroup'] = setgroupeca86,
-      codeStates['oldtabgroup']  = oldtabgroup527ef,
-      codeStates['setoldtabgroup'] = setoldtabgroup527ef,
-      codeStates['table2']  = table2c0657,
-      codeStates['settable2'] = settable2c0657,
-    codeExecution(code,codeStates)
-    }
+    
   }
   const handleMapperValue=async()=>{
     try{
@@ -183,7 +184,6 @@ const TextInputtextinput = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encrypt
       handleMapperValue()
       handleBlur()
   },[validateRefetch.value])
-
   if (textinput88309?.isHidden) {
     return <></>
   }

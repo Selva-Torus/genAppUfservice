@@ -118,6 +118,40 @@ const LayoutDecider = ({
       }
     ],
     "items": []
+  },
+  {
+    "menuGroupLabel": "dynamicforms",
+    "screenDetails": [
+      {
+        "name": "dynamicforms",
+        "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:dynamicforms:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1",
+          "Template 2",
+          "Template 3",
+          "User"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroupLabel": "save",
+    "screenDetails": [
+      {
+        "name": "save",
+        "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:savescreen:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1",
+          "Template 2",
+          "Template 3",
+          "User"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
   }
 ]
   const token:string = getCookie('token'); 

@@ -5,6 +5,8 @@
 import React from 'react';
 import { getCookie } from './components/cookieMgment';
 export interface TotalContextProps {
+  currentToken: any 
+  setCurrentToken: React.Dispatch<React.SetStateAction<any>>
   groupeca86: any 
   setgroupeca86: React.Dispatch<React.SetStateAction<any>>
   groupeca86Props: any 
@@ -73,6 +75,26 @@ export interface TotalContextProps {
   settexttablebadf1: React.Dispatch<React.SetStateAction<any>>
   texttablebadf1Props: any 
   settexttablebadf1Props: React.Dispatch<React.SetStateAction<any>>
+  parent0e5b8: any 
+  setparent0e5b8: React.Dispatch<React.SetStateAction<any>>
+  parent0e5b8Props: any 
+  setparent0e5b8Props: React.Dispatch<React.SetStateAction<any>>
+  form775ce: any 
+  setform775ce: React.Dispatch<React.SetStateAction<any>>
+  form775ceProps: any 
+  setform775ceProps: React.Dispatch<React.SetStateAction<any>>
+  child6747b: any 
+  setchild6747b: React.Dispatch<React.SetStateAction<any>>
+  child6747bProps: any 
+  setchild6747bProps: React.Dispatch<React.SetStateAction<any>>
+  maingroup7f4e1: any 
+  setmaingroup7f4e1: React.Dispatch<React.SetStateAction<any>>
+  maingroup7f4e1Props: any 
+  setmaingroup7f4e1Props: React.Dispatch<React.SetStateAction<any>>
+  userable8d616: any 
+  setuserable8d616: React.Dispatch<React.SetStateAction<any>>
+  userable8d616Props: any 
+  setuserable8d616Props: React.Dispatch<React.SetStateAction<any>>
   code86871: any,
   setcode86871:React.Dispatch<React.SetStateAction<any>>
   code86871Props: any 
@@ -225,6 +247,50 @@ export interface TotalContextProps {
   setb6031c:React.Dispatch<React.SetStateAction<any>>
   b6031cProps: any 
   setb6031cProps: React.Dispatch<React.SetStateAction<any>>
+  searchvalue25fa2: any,
+  setsearchvalue25fa2:React.Dispatch<React.SetStateAction<any>>
+  searchvalue25fa2Props: any 
+  setsearchvalue25fa2Props: React.Dispatch<React.SetStateAction<any>>
+  search2b9e0: any,
+  setsearch2b9e0:React.Dispatch<React.SetStateAction<any>>
+  search2b9e0Props: any 
+  setsearch2b9e0Props: React.Dispatch<React.SetStateAction<any>>
+  fff4d19f: any,
+  setfff4d19f:React.Dispatch<React.SetStateAction<any>>
+  fff4d19fProps: any 
+  setfff4d19fProps: React.Dispatch<React.SetStateAction<any>>
+  name228ad: any,
+  setname228ad:React.Dispatch<React.SetStateAction<any>>
+  name228adProps: any 
+  setname228adProps: React.Dispatch<React.SetStateAction<any>>
+  dataswitch55413: any,
+  setdataswitch55413:React.Dispatch<React.SetStateAction<any>>
+  dataswitch55413Props: any 
+  setdataswitch55413Props: React.Dispatch<React.SetStateAction<any>>
+  save8d5a7: any,
+  setsave8d5a7:React.Dispatch<React.SetStateAction<any>>
+  save8d5a7Props: any 
+  setsave8d5a7Props: React.Dispatch<React.SetStateAction<any>>
+  username57f7f: any,
+  setusername57f7f:React.Dispatch<React.SetStateAction<any>>
+  username57f7fProps: any 
+  setusername57f7fProps: React.Dispatch<React.SetStateAction<any>>
+  date419b1: any,
+  setdate419b1:React.Dispatch<React.SetStateAction<any>>
+  date419b1Props: any 
+  setdate419b1Props: React.Dispatch<React.SetStateAction<any>>
+  idfc377: any,
+  setidfc377:React.Dispatch<React.SetStateAction<any>>
+  idfc377Props: any 
+  setidfc377Props: React.Dispatch<React.SetStateAction<any>>
+  name28713: any,
+  setname28713:React.Dispatch<React.SetStateAction<any>>
+  name28713Props: any 
+  setname28713Props: React.Dispatch<React.SetStateAction<any>>
+  copyffc78: any,
+  setcopyffc78:React.Dispatch<React.SetStateAction<any>>
+  copyffc78Props: any 
+  setcopyffc78Props: React.Dispatch<React.SetStateAction<any>>
 
 ////// screen states 
   newtab_v1Props: any 
@@ -237,6 +303,10 @@ export interface TotalContextProps {
   setbindranscreen_v1Props: React.Dispatch<React.SetStateAction<any>>
   tablecheck_v1Props: any 
   settablecheck_v1Props: React.Dispatch<React.SetStateAction<any>>
+  dynamicforms_v1Props: any 
+  setdynamicforms_v1Props: React.Dispatch<React.SetStateAction<any>>
+  savescreen_v1Props: any 
+  setsavescreen_v1Props: React.Dispatch<React.SetStateAction<any>>
 
 ///////// dfd
   dfd_mydfddata_v1Props: any 
@@ -281,6 +351,7 @@ export interface TotalContextProps {
 export const TotalContext = React.createContext<TotalContextProps | {}>({})
 
 const GlobalContext = ({children} : {children: React.ReactNode}) => {
+    const [currentToken, setCurrentToken ] = React.useState<any>({}) 
       //////////
         const [groupeca86, setgroupeca86 ] = React.useState<any>({}) 
     const [groupeca86Props, setgroupeca86Props ] = React.useState<any>({
@@ -466,6 +537,62 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     
     const [texttablebadf1, settexttablebadf1 ] = React.useState<any>([]) 
     const [texttablebadf1Props, settexttablebadf1Props ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[],
+      refresh:false,
+      }) 
+        const [parent0e5b8, setparent0e5b8 ] = React.useState<any>({}) 
+    const [parent0e5b8Props, setparent0e5b8Props ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
+        const [form775ce, setform775ce ] = React.useState<any>({}) 
+    const [form775ceProps, setform775ceProps ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
+        const [child6747b, setchild6747b ] = React.useState<any>({}) 
+    const [child6747bProps, setchild6747bProps ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
+        const [maingroup7f4e1, setmaingroup7f4e1 ] = React.useState<any>({}) 
+    const [maingroup7f4e1Props, setmaingroup7f4e1Props ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
+    
+    const [userable8d616, setuserable8d616 ] = React.useState<any>([]) 
+    const [userable8d616Props, setuserable8d616Props ] = React.useState<any>({
       validation:false,
       required:false,
       refetch:false,
@@ -741,6 +868,83 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refetch:false,
     refresh:false,
     }) 
+   const [searchvalue25fa2,setsearchvalue25fa2] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [search2b9e0,setsearch2b9e0] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [fff4d19f,setfff4d19f] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [name228ad,setname228ad] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [dataswitch55413,setdataswitch55413] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [save8d5a7,setsave8d5a7] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [username57f7f,setusername57f7f] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [date419b1,setdate419b1] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [idfc377,setidfc377] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [name28713,setname28713] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [copyffc78,setcopyffc78] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
     ///////////
     const [refresh, setRefresh] = React.useState<any>({       textinputcode86871:false,
        buttonbutton823f2:false,
@@ -780,6 +984,17 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
        columnnames0c3b9:false,
        buttona00e4d:false,
        buttonb6031c:false,
+       textinputsearchvalue25fa2:false,
+       switchsearch2b9e0:false,
+       buttonfff4d19f:false,
+       textname228ad:false,
+       switchdataswitch55413:false,
+       buttonsave8d5a7:false,
+       textinputusername57f7f:false,
+       datepickerdate419b1:false,
+       columnidfc377:false,
+       columnname28713:false,
+       buttoncopyffc78:false,
        groupgroupeca86:false,
        grouptabgroupe7646:false,
        grouptab_header_12cce3:false,
@@ -797,6 +1012,11 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
        tableuserTablee2c3b:false,
        grouptablegroup1fc0b:false,
        tabletexttablebadf1:false,
+       groupparent0e5b8:false,
+       groupform775ce:false,
+       groupchild6747b:false,
+       groupmaingroup7f4e1:false,
+       tableuserable8d616:false,
       })
 
   ////// screen states 
@@ -805,6 +1025,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
    const [progress_v1Props,setprogress_v1Props] = React.useState<any>([])
    const [bindranscreen_v1Props,setbindranscreen_v1Props] = React.useState<any>([])
    const [tablecheck_v1Props,settablecheck_v1Props] = React.useState<any>([])
+   const [dynamicforms_v1Props,setdynamicforms_v1Props] = React.useState<any>([])
+   const [savescreen_v1Props,setsavescreen_v1Props] = React.useState<any>([])
 
 ///////// dfd
   const [dfd_mydfddata_v1Props,setdfd_mydfddata_v1Props] = React.useState<any>([])
@@ -834,6 +1056,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       value={
       {
       //
+        currentToken,
+        setCurrentToken,
         groupeca86, 
         setgroupeca86,
         groupeca86Props, 
@@ -902,6 +1126,26 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         settexttablebadf1,
         texttablebadf1Props, 
         settexttablebadf1Props,
+        parent0e5b8, 
+        setparent0e5b8,
+        parent0e5b8Props, 
+        setparent0e5b8Props,
+        form775ce, 
+        setform775ce,
+        form775ceProps, 
+        setform775ceProps,
+        child6747b, 
+        setchild6747b,
+        child6747bProps, 
+        setchild6747bProps,
+        maingroup7f4e1, 
+        setmaingroup7f4e1,
+        maingroup7f4e1Props, 
+        setmaingroup7f4e1Props,
+        userable8d616, 
+        setuserable8d616,
+        userable8d616Props, 
+        setuserable8d616Props,
         code86871,
         setcode86871, 
         button823f2,
@@ -978,6 +1222,28 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         seta00e4d, 
         b6031c,
         setb6031c, 
+        searchvalue25fa2,
+        setsearchvalue25fa2, 
+        search2b9e0,
+        setsearch2b9e0, 
+        fff4d19f,
+        setfff4d19f, 
+        name228ad,
+        setname228ad, 
+        dataswitch55413,
+        setdataswitch55413, 
+        save8d5a7,
+        setsave8d5a7, 
+        username57f7f,
+        setusername57f7f, 
+        date419b1,
+        setdate419b1, 
+        idfc377,
+        setidfc377, 
+        name28713,
+        setname28713, 
+        copyffc78,
+        setcopyffc78, 
         ////// screen states 
           newtab_v1Props,
           setnewtab_v1Props,
@@ -989,6 +1255,10 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
           setbindranscreen_v1Props,
           tablecheck_v1Props,
           settablecheck_v1Props,
+          dynamicforms_v1Props,
+          setdynamicforms_v1Props,
+          savescreen_v1Props,
+          setsavescreen_v1Props,
         //////////
 
         ///////// dfd

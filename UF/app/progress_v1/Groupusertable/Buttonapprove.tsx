@@ -6,7 +6,7 @@ import i18n from '@/app/components/i18n';
 import { codeExecution } from '@/app/utils/codeExecution';
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { TotalContext, TotalContextProps } from '@/app/globalContext';
-import { uf_getPFDetailsDto,uf_initiatePfDto,te_eventEmitterDto,uf_ifoDto,te_updateDto } from '@/app/interfaces/interfaces';
+import { uf_getPFDetailsDto,uf_initiatePfDto,te_eventEmitterDto,uf_ifoDto,te_updateDto, te_refreshDto } from '@/app/interfaces/interfaces';
 import decodeToken from '@/app/components/decodeToken';
 import { AxiosService } from '@/app/components/axiosService';
 import { getCookie } from '@/app/components/cookieMgment';
@@ -20,6 +20,7 @@ import { Text } from '@/components/Text';
 import { Icon } from '@/components/Icon';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
+import { evaluateDecisionTableBooleanResult } from '@/app/utils/evaluateDecisionTable';
 import { XMLParser } from 'fast-xml-parser'
 
 
@@ -47,6 +48,7 @@ function objectToQueryString(obj: any) {
 
 const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}: { lockedData:any,setLockedData:any,checkToAdd:any,setCheckToAdd:any,refetch:any,setRefetch:any,primaryTableData:any,setPrimaryTableData:any,encryptionFlagCompData:any,}) => {
   const token:string = getCookie('token');
+  const {currentToken, setCurrentToken} = useContext(TotalContext) as TotalContextProps;
   const decodedTokenObj:any = decodeToken(token);
   const createdBy:string =decodedTokenObj.users;
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
@@ -64,6 +66,7 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
   const confirmMsgFlag: boolean = false; 
   const toast:any=useInfoMsg();
   let dfKey: string | any;
+  const [showFlag, setShowFlag] = React.useState(true);
   const lockMode:any = lockedData.lockMode;
   const [loading, setLoading] = useState(false);
   const routes = useRouter();
@@ -131,6 +134,15 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
         return
       }
       setAllCode(orchestrationData?.data?.code);
+      if(orchestrationData?.data?.rule.nodes.length > 0){
+        let schemaFlag:any = evaluateDecisionTableBooleanResult(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
+        // schemaFlag =schemaFlag.output;
+        if (schemaFlag === false) {
+          setShowFlag(false);
+        }else{
+          setShowFlag(true)
+        }
+      }
     }catch(err){
         console.log(err);
     }
@@ -143,7 +155,7 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
         handleClick();
       }
     });
-  },[approve25433?.refresh])
+  },[approve25433?.refresh,currentToken])
 
   function SourceIdFilter(eventProperty:any,matchingSequence?:string){
     let ans=[]
@@ -208,7 +220,7 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
   return (
     <div 
       style={{gridColumn: ` / `,gridRow: ` / `, gap:``, height: `100%`, overflow: 'auto'}} >
-        <Button 
+        {showFlag && <Button 
           ref={buttonRef}
           className=""
           onClick={handleClick}
@@ -218,7 +230,7 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
           contentAlign={"center"}
         >
           {keyset("approve")}
-        </Button>
+        </Button>}
       </div>
     
   )

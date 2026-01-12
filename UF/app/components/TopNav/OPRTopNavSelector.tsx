@@ -1,5 +1,5 @@
 import Popup, { PopupPlacement } from '@/components/Popup'
-import React, { useEffect, useMemo } from 'react'
+import React, { useContext,useEffect, useMemo } from 'react'
 import { getCookie, setCookie } from '../cookieMgment'
 import { AxiosService } from '../axiosService'
 import clsx from 'clsx'
@@ -9,6 +9,7 @@ import { Text } from '@/components/Text'
 import { useTheme } from '@/hooks/useTheme'
 import { MdClose } from 'react-icons/md'
 import { LuSearch } from 'react-icons/lu'
+import { TotalContext, TotalContextProps } from '@/app/globalContext'
 
 interface Role {
   roleCode: string
@@ -718,6 +719,7 @@ const OPRTopNavSelector = ({
   const orgPopupRef = React.useRef<HTMLButtonElement>(null)
   const prodPopupRef = React.useRef<HTMLButtonElement>(null)
   const rolePopupRef = React.useRef<HTMLButtonElement>(null)
+  const {currentToken, setCurrentToken} = useContext(TotalContext) as TotalContextProps;
   const tp_ps = getCookie('tp_ps')
   const token = getCookie('token')
   const [selectedOrg, setSelectedOrg] = React.useState<null | any>(null)
@@ -992,6 +994,7 @@ const OPRTopNavSelector = ({
       )
       if (res.status == 201) {
         setCookie('token', res.data.token)
+        setCurrentToken(res.data.token)
         setCookie(
           'tp_ps',
           btoa(

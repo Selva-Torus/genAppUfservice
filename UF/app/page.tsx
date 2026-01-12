@@ -30,6 +30,16 @@ export default function HomePage() {
     "screenName": "tablecheck",
     "screensName": "tablecheck-v1",
     "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1"
+  },
+  {
+    "screenName": "dynamicforms",
+    "screensName": "dynamicforms-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:dynamicforms:AFVK:v1"
+  },
+  {
+    "screenName": "save",
+    "screensName": "save-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:savescreen:AFVK:v1"
   }
 ]
   const securityCheck = async () => {

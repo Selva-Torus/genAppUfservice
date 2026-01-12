@@ -347,9 +347,63 @@ export class userableService {
   }
   }
 
-  async findAll(token : string) {
+  async findAll(token : string,trs_creator_email?: string,trs_created_date?: Date,trs_created_by?: string,trs_modified_date?: Date,trs_modified_by?: string,trs_next_status?: string,trs_status?: string,trs_process_id?: string,trs_access_profile?: string,trs_org_grp_code?: string,trs_org_code?: string,trs_role_grp_code?: string,trs_role_code?: string,trs_ps_grp_code?: string,trs_ps_code?: string,trs_sub_org_grp_code?: string,trs_sub_org_code?: string
+) {
     try{
+      const whereClause: any = {};
+      if (trs_creator_email) {
+        whereClause.trs_creator_email = trs_creator_email;
+      }
+      if (trs_created_date) {
+        whereClause.trs_created_date = trs_created_date;
+      }
+      if (trs_created_by) {
+        whereClause.trs_created_by = trs_created_by;
+      }
+      if (trs_modified_date) {
+        whereClause.trs_modified_date = trs_modified_date;
+      }
+      if (trs_modified_by) {
+        whereClause.trs_modified_by = trs_modified_by;
+      }
+      if (trs_next_status) {
+        whereClause.trs_next_status = trs_next_status;
+      }
+      if (trs_status) {
+        whereClause.trs_status = trs_status;
+      }
+      if (trs_process_id) {
+        whereClause.trs_process_id = trs_process_id;
+      }
+      if (trs_access_profile) {
+        whereClause.trs_access_profile = trs_access_profile;
+      }
+      if (trs_org_grp_code) {
+        whereClause.trs_org_grp_code = trs_org_grp_code;
+      }
+      if (trs_org_code) {
+        whereClause.trs_org_code = trs_org_code;
+      }
+      if (trs_role_grp_code) {
+        whereClause.trs_role_grp_code = trs_role_grp_code;
+      }
+      if (trs_role_code) {
+        whereClause.trs_role_code = trs_role_code;
+      }
+      if (trs_ps_grp_code) {
+        whereClause.trs_ps_grp_code = trs_ps_grp_code;
+      }
+      if (trs_ps_code) {
+        whereClause.trs_ps_code = trs_ps_code;
+      }
+      if (trs_sub_org_grp_code) {
+        whereClause.trs_sub_org_grp_code = trs_sub_org_grp_code;
+      }
+      if (trs_sub_org_code) {
+        whereClause.trs_sub_org_code = trs_sub_org_code;
+      }
       const res = await this.prismaService.userable.findMany({ 
+      where: whereClause,
       select: {id:true,name:true,        trs_creator_email:true,
         trs_created_date:true,
         trs_created_by:true,

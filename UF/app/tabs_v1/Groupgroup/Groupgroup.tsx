@@ -203,7 +203,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
         backgroundClip: '',
         backgroundBlendMode: ''
       }}
-      className={`flex flex-col overflow-auto rounded-md ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
     >
         {allowedComponent.includes("tabgroup")  &&<Grouptabgroup  
           lockedData={lockedData} 

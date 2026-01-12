@@ -1,4 +1,4 @@
- // ============ TYPE DEFINITIONS ============
+// ============ TYPE DEFINITIONS ============
 
 interface Position {
   x: number;
@@ -377,6 +377,52 @@ class DecisionTableEvaluator {
 
     return false;
   }
+
+  /**
+   * Evaluate the decision table and return the actual boolean output value
+   * Returns the boolean value from the matched rule's output field
+   * Returns false if no rule matches
+   */
+  public evaluateBooleanResult(inputData: InputData): boolean {
+    if (!this.decisionTableNode) {
+      throw new Error("No decision table node found in rule configuration");
+    }
+
+    const { inputs, outputs, rules } = this.decisionTableNode.content;
+
+    for (const rule of rules) {
+      // Skip rules with all empty outputs
+      if (this.shouldSkipRule(rule, inputs, outputs)) {
+        continue;
+      }
+
+      // Check if this rule matches the input data
+      if (this.doesRuleMatch(rule, inputData, inputs)) {
+        // Build the result from matched rule
+        const result = this.buildResult(rule, outputs);
+
+        // Get the first output value and convert to boolean
+        const outputKeys = Object.keys(result);
+        if (outputKeys.length > 0) {
+          const outputValue = result[outputKeys[0]];
+          // Handle string "true"/"false"
+          if (typeof outputValue === "string") {
+            return outputValue.toLowerCase() === "true";
+          }
+          // Handle array - return true if non-empty
+          if (Array.isArray(outputValue)) {
+            return outputValue.length > 0;
+          }
+          return Boolean(outputValue);
+        }
+        // No output value defined, default to true (rule matched)
+        return true;
+      }
+    }
+
+    // No rule matched
+    return false;
+  }
 }
 
 // ============ STANDALONE FUNCTIONS ============
@@ -407,3 +453,22 @@ export function evaluateDecisionTableBoolean(
   return evaluator.evaluateBoolean(inputData);
 }
 
+/**
+ * Evaluate decision table and return the actual boolean output value from matched rule
+ * Returns the boolean value defined in the rule's output field
+ * Returns true if ruleConfig is empty
+ * Returns false if no rule matches
+ */
+export function evaluateDecisionTableBooleanResult(
+  ruleConfig: RuleNode[],
+  inputData: InputData,
+  variableContext: VariableContext = {}
+): boolean {
+  
+  if (ruleConfig?.length === 0) {
+    return true;
+  }
+  const evaluator = new DecisionTableEvaluator(ruleConfig, variableContext);
+  const result = evaluator.evaluateBooleanResult(inputData);
+  return result;
+}

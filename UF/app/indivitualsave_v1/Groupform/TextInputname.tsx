@@ -18,7 +18,6 @@ import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys'
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import * as v from 'valibot';
 
-
 const TextInputname = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}:any) => {  
   const token: string = getCookie('token');
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
@@ -67,6 +66,7 @@ const TextInputname = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
     "type": "string"
   }
 }
+  const {dfd_mydfddata_v1Props, setdfd_mydfddata_v1Props} = useContext(TotalContext) as TotalContextProps; 
   const [isRequredData,setIsRequredData]=useState(false)
   const toast:any=useInfoMsg()
   const keyset:any=i18n.keyset("language"); 
@@ -99,6 +99,16 @@ const TextInputname = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
       /// vvv
   schemaArray = [] ;
   const handleChange = async(e: any) => {
+    const newInputValue = dynamicStateandType.type=="number" ? +e.target.value : e.target.value;
+    let code:any=allCode
+     if (code != '') {
+      let codeStates: any = {}
+      codeStates['form']  = {...form5c5a4,name:newInputValue},
+      codeStates['setform'] = setform5c5a4,
+      codeStates['userdatable']  = {...userdatablea0a95,name:newInputValue},
+      codeStates['setuserdatable'] = setuserdatablea0a95,
+    codeExecution(code,codeStates)
+    }  
     setError('')
     setValidate((pre:any)=>({...pre,name:undefined}))
     if(dynamicStateandType.type=="number"){
@@ -109,15 +119,7 @@ const TextInputname = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
     }
   }
   const handleBlur=async () => {
-    let code:any=allCode
-     if (code != '') {
-      let codeStates: any = {}
-      codeStates['form']  = form5c5a4,
-      codeStates['setform'] = setform5c5a4,
-      codeStates['userdatable']  = userdatablea0a95,
-      codeStates['setuserdatable'] = setuserdatablea0a95,
-    codeExecution(code,codeStates)
-    }
+    
   }
   const handleMapperValue=async()=>{
     try{
@@ -179,7 +181,14 @@ const TextInputname = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
       handleMapperValue()
       handleBlur()
   },[validateRefetch.value])
-
+  useEffect(() => {
+  if(dfd_mydfddata_v1Props?.setSearchFilters && dfd_mydfddata_v1Props?.data)
+  {
+    if(Array.isArray(dfd_mydfddata_v1Props.data) && dfd_mydfddata_v1Props.data.length > 0){
+      setform5c5a4((pre:any)=>({...pre,name:dfd_mydfddata_v1Props.data[0]?.name}));
+    }
+  }
+  },[dfd_mydfddata_v1Props?.setSearchFilters])
   if (name1e0ed?.isHidden) {
     return <></>
   }

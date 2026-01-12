@@ -6,7 +6,9 @@ import { Tooltip } from "./Tooltip";
 import { Button } from "./Button";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
+import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
+type ContentAlign = 'center' | 'left' | 'right';
 type FieldValue = string | number | boolean | null;
 type FieldValues = { [key: string]: FieldValue | FieldValues };
 
@@ -38,6 +40,8 @@ interface DynamicContentFieldsProps {
   headerText?: string;
   headerPosition?: HeaderPosition;
   className?: string;
+  contentAlign?: ContentAlign;
+  
 }
 
 
@@ -51,6 +55,7 @@ export default function DynamicContentFields({
   headerText,
   headerPosition = "top",
   className = "",
+  contentAlign = 'left',
 }: DynamicContentFieldsProps) {
   const { theme, branding } = useGlobal();
   const isDark = theme === "dark" || theme === "dark-hc";
@@ -95,6 +100,19 @@ export default function DynamicContentFields({
     }));
   };
 
+  const getTextAlignClasses = () => {
+    switch (contentAlign) {
+      case 'left':
+        return 'text-left';
+      case 'right':
+        return 'text-right';
+      case 'center':
+        return 'text-center';
+      default:
+        return 'text-left';
+    }
+  };
+
   const updateValue = (key: string, nestedKey: string | null, value: FieldValue) => {
     setValues((prev) => {
       const newValues = { ...prev };
@@ -134,6 +152,7 @@ export default function DynamicContentFields({
       w-full px-3 py-2
       ${getFontSizeClass(branding.fontSize)}
       ${getBorderRadiusClass(branding.borderRadius)}
+      ${getTextAlignClasses()}
       border-2 transition-all
       ${isDark ? 'bg-gray-800 text-white border-gray-600' : 'bg-white text-gray-900 border-gray-300'}
       focus:outline-none focus:ring-2
@@ -400,63 +419,16 @@ export default function DynamicContentFields({
     </div>
   );
 
-  const renderWithHeader = (element: React.ReactNode) => {
-    if (!headerText) return element;
-
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    }`;
-
-    switch (headerPosition) {
-      case "top":
-        return (
-          <div className="flex flex-col w-full h-full">
-            <div className={headerClasses} style={{ fontFamily: 'var(--font-body)' }}>
-              {headerText}
-            </div>
-            {element}
-          </div>
-        );
-      case "bottom":
-        return (
-          <div className="flex flex-col w-full h-full">
-            {element}
-            <div className={`${headerClasses} mt-2 mb-0`} style={{ fontFamily: 'var(--font-body)' }}>
-              {headerText}
-            </div>
-          </div>
-        );
-      case "left":
-        return (
-          <div className="flex items-start gap-4 w-full h-full">
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={{ fontFamily: 'var(--font-body)' }}>
-              {headerText}
-            </div>
-            <div className="flex-1">{element}</div>
-          </div>
-        );
-      case "right":
-        return (
-          <div className="flex items-start gap-4 w-full h-full">
-            <div className="flex-1">{element}</div>
-            <div className={`${headerClasses} mb-0 whitespace-nowrap`} style={{ fontFamily: 'var(--font-body)' }}>
-              {headerText}
-            </div>
-          </div>
-        );
-    }
-  };
-
-  const finalElement = renderWithHeader(contentElement);
-
-  if (needTooltip && tooltipProps) {
-    return (
-      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement} triggerClassName="h-full w-full">
-        <div className="h-full w-full">{finalElement}</div>
-      </Tooltip>
-    );
-  }
-
-  return <div className="h-full w-full">{finalElement}</div>;
+  return <div className="h-full w-full">
+ <CommonHeaderAndTooltip
+        needTooltip={needTooltip}
+        tooltipProps={tooltipProps}
+        headerText={headerText}
+        headerPosition={headerPosition}
+        className={className}
+      >
+        {contentElement}
+      </CommonHeaderAndTooltip>
+</div>;
 }
  

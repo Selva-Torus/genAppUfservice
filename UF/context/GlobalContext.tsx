@@ -11,6 +11,8 @@ interface GlobalContextType extends GlobalProps {
   updateBranding: (updates: Partial<Branding>) => void;
   setTypography: (typography: Typography) => void;
   updateTypography: (updates: Partial<Typography>) => void;
+  appBackgroundImage: string | undefined;
+  setAppBackgroundImage: (image: string | undefined) => void;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -66,6 +68,7 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
     headerFont: "Roboto",
     displayFont: "Roboto",
   });
+  const [appBackgroundImage, setAppBackgroundImage] = useState<string | undefined>(undefined);
 
   // Wrapper to save theme to cookie when it changes
   const setTheme = (newTheme: Theme) => {
@@ -110,6 +113,7 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
         direction,
         branding,
         typography,
+        appBackgroundImage,
         setTheme,
         setLanguage,
         setDirection,
@@ -117,6 +121,7 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
         updateBranding,
         setTypography,
         updateTypography,
+        setAppBackgroundImage,
       }}
     >
       {children}

@@ -214,7 +214,7 @@ const Groupoldtabgroup = ({lockedData={},setLockedData,primaryTableData={}, setP
         backgroundClip: '',
         backgroundBlendMode: ''
       }}
-      className={`flex flex-col overflow-auto rounded-md ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
     >
         {allowedComponent.includes("tab2")  &&<Grouptab2  
           lockedData={lockedData} 

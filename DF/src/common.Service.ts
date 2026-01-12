@@ -25,22 +25,23 @@ const NodeRSA = require('node-rsa')
 import { Cron, CronExpression } from "@nestjs/schedule";
 
 export const client = new MongoClient(process.env.MONGODB_URL);
- client.connect()
-  .then(() => {
-  console.log('Connected to the database successfully!');
-  })
-  .catch((err) => {
-  console.error('Error connecting to the database:', err);
-  });
-var db= client.db(process.env.MONGODB_NAME)
-type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
-type JsonObject = { [key: string]: JsonValue };
-type JsonArray = JsonValue[];
+  client.connect()
+    .then(() => {
+    console.log('Connected to the database successfully!');
+    })
+    .catch((err) => {
+    console.error('Error connecting to the database:', err);
+    });
+  var db= client.db(process.env.MONGODB_NAME)
+  type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
+  type JsonObject = { [key: string]: JsonValue };
+  type JsonArray = JsonValue[];
 
 @Injectable()
 export class CommonService{
 
   private readonly ftpOutputPath: string;
+  private readonly seaweedOutPutPath:string;
   private vaultClient: ReturnType<typeof vault>;
   private client: MongoClient;
   private readonly encryptionKey =  process.env.VAULT_KEY;
@@ -56,6 +57,7 @@ export class CommonService{
     private readonly configService: ConfigService
   ) {  
     this.ftpOutputPath = process.env.FTP_OUTPUT_HOST; 
+    this.seaweedOutPutPath = process.env.SEAWEED_OUTPUT_HOST;
     this.vaultAddr = this.configService.get<string>('VAULT_URL',process.env.VAULT_URL);
     this.vaultToken = this.configService.get<string>('VAULT_TOKEN',process.env.VAULT_TOKEN); // Store this in .env
     this.vaultKey = this.configService.get<string>('VAULT_KEY',process.env.VAULT_KEY);
@@ -87,7 +89,7 @@ export class CommonService{
 
     return result;
   }
-  
+
   async onModuleInit() {
     const collection = client.db("UploadFile")
     this.bucket = new GridFSBucket(collection, { bucketName: 'CT309/AG001/A001/v1' });
@@ -1106,7 +1108,7 @@ export class CommonService{
     }
 
 
-     async commonErrorLogs(errdata:any,stoken:any,key:any,error:any,status:any,optnlParams?:any){  
+    async commonErrorLogs(errdata:any,stoken:any,key:any,error:any,status:any,optnlParams?:any){  
       try{
        let sessionInfo:any = {} 
        let prcdet:any;
@@ -1116,13 +1118,13 @@ export class CommonService{
         ag = process.env.APPGROUPCODE;
         app = process.env.APPCODE;
         afvk = process.env.VERSION 
-    
+     
         if(optnlParams){
           artifact = optnlParams.artifact
           sessionInfo['user'] =  optnlParams.users 
-          key = `CK:${tenant}:FNGK:AF:FNK:UF-UFW:CATK:${ag}:AFGK:${app}:AFK:${artifact}:AFVK:${afvk}:`        
-        }
-        
+          
+          key = optnlParams.key?optnlParams.key:`CK:${tenant}:FNGK:AF:FNK:UF-UFW:CATK:${ag}:AFGK:${app}:AFK:${artifact}:AFVK:${afvk}:`        
+        }        
         else {          
           artifact = key        
         }
@@ -1133,7 +1135,7 @@ export class CommonService{
         const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
         requiredMarkers.forEach(marker => {
           const idx = parts.indexOf(marker);
-          if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === "undefined" || parts.length <= 14) {
+          if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === "undefined" || parts.length < 14) {
             keyFlag++
           }
         });
@@ -1209,14 +1211,14 @@ export class CommonService{
 
 
 
-      async getMongoProcessLogs(input, type): Promise<any> {
+    async getMongoProcessLogs(input, type): Promise<any> {
       try {
         this.logger.log('get MongoProcess started');
 
         const {
           tenant, user, FromDate, ToDate,
           fabric, appgroup, app,
-          searchParam, page = 1, limit = 10
+          searchParam, page = 1, limit = 10,sortOrder
         } = input;
 
         if(!tenant) throw 'Invalid Payload'   
@@ -1267,31 +1269,35 @@ export class CommonService{
         }
 
         // console.log('filter', filter);
-        //console.log('fileName', fileName);
-        
-        
+        // console.log('fileName', fileName);
+              
         const allCollections:any = await this.redisService.listCollections(fileName);
-       
-        if(!allCollections || !(Array.isArray(allCollections)) || allCollections?.length == 0) throw `Data not found in ${fileName}-${type}`
+      
+        if(!allCollections || !(Array.isArray(allCollections)) || allCollections?.length == 0) throw `Data not found in ${fileName}${type}`
 
         const targetCollections = allCollections.filter(name => name.endsWith(type));
 
-      
+        let sortingNum = (sortOrder === 'newest') ? -1 : (sortOrder === 'oldest') ? 1 : -1;
+
+        const countPromises = targetCollections.map(name =>
+          this.mongoService.countDocuments(name, filter)
+        );
+        console.log("countPromises",countPromises);
+        const counts = await Promise.all(countPromises);
+        const totalDocuments = counts.reduce((sum, c) => sum + c, 0);
+               
         const documentPromises = targetCollections.map(name =>
-          this.mongoService.findDocument(name, filter, { _id: 0})//value: 1 
+          this.mongoService.findDocument(name, filter, { _id: 0},{skip: (page - 1) * limit, limit, sortOrder:{DateAndTime:sortingNum}})//value: 1 
         );
         
-        const allDocs = (await Promise.all(documentPromises)).flat();
-             
-        const totalDocuments = allDocs.length;
-        if (totalDocuments === 0) throw `Data not found in ${fileName}`;
+        const allDocs = (await Promise.all(documentPromises)).flat();       
 
-        const paginatedData = allDocs.slice((page - 1) * limit, page * limit)//.map(d => d.value);
+        //const paginatedData = allDocs.slice((page - 1) * limit, page * limit)//.map(d => d.value);
 
         this.logger.log('get MongoProcess completed');
 
         return {
-          data: paginatedData,
+          data: allDocs,
           page,
           limit,
           totalPages: Math.ceil(totalDocuments / limit),
@@ -1381,111 +1387,137 @@ export class CommonService{
             }
           }
           if (msgid?.length > 0) {
-          var AfskValue = "logInfo"
-          let resultFlg = 0
-          for (var s = 0; s < msgid.length; s++) {
-            let streamKey = strmarr[s][0]
-            if(streamName.endsWith('-TPL')){              
-              var upidsplit = streamKey.split(':');
-              if (upidsplit.length > 14) {
-                var upid = upidsplit[upidsplit.length - 1]
-                AfskValue = upid
+            var AfskValue = "logInfo"
+            let resultFlg = 0
+            for (var s = 0; s < msgid.length; s++) {
+              let streamKey = strmarr[s][0]
+              if(streamName.endsWith('-TPL')){              
+                var upidsplit = streamKey.split(':');
+                if (upidsplit.length > 14) {
+                  var upid = upidsplit[upidsplit.length - 1]
+                  AfskValue = upid
+                }
               }
-            }
-  
-            var date = new Date(Number(msgid[s].split("-")[0]));
-            var entryId = format(date, 'yyyy-MM-dd')
-  
-            var afskvalue: any = JSON.parse(strmarr[s][1])
-            afskvalue['DateAndTime'] = format(date, 'yyyy-MM-dd HH:mm:ss:SSS')
-  
-            var user
-            if (afskvalue?.sessionInfo && Object.keys(afskvalue.sessionInfo).length > 0) {
-              user = afskvalue.sessionInfo.user
-            } 
-            // else {
-            //   user = 'user'
-            // }
+    
+              var date = new Date(Number(msgid[s].split("-")[0]));
+              var entryId = format(date, 'yyyy-MM-dd')
+    
+              var afskvalue: any = JSON.parse(strmarr[s][1])
+              afskvalue['DateAndTime'] = format(date, 'yyyy-MM-dd HH:mm:ss:SSS')
+    
+              var user
+              if (afskvalue?.sessionInfo && Object.keys(afskvalue.sessionInfo).length > 0) {
+                user = afskvalue.sessionInfo.user
+              } 
+              // else {
+              //   user = 'user'
+              // }
 
-            let CK = await this.splitcommonkey(streamKey, 'CK')
-            let FNGK = await this.splitcommonkey(streamKey, 'FNGK')
-            let FNK = await this.splitcommonkey(streamKey, 'FNK')
-            let CATK = await this.splitcommonkey(streamKey, 'CATK')
-            let AFGK = await this.splitcommonkey(streamKey, 'AFGK')
-            let AFK = await this.splitcommonkey(streamKey, 'AFK')
-            let AFVK = await this.splitcommonkey(streamKey, 'AFVK')
-            
-            let isDocExist:any
-            let filter = {}               
-            filter['CK'] = CK
-            filter['FNGK'] = FNGK
-            filter['FNK'] = FNK
-            filter['CATK'] = CATK
-            filter['AFGK'] = AFGK
-            filter['AFK'] = AFK
-            filter['AFVK'] = AFVK
-            filter['DATE'] = entryId
-            if(user){
-              filter['USER'] = user
-            }
-            if(AfskValue !=  "logInfo"){
-              filter['UPID'] = AfskValue
-            }
-            isDocExist = await this.mongoService.existsDocument(streamName,'',filter)   
-            
-             if(isDocExist && Object.keys(isDocExist).length > 0 && isDocExist._id){
-              let appendRes:any = await this.mongoService.appendFileInToDocument(streamName,isDocExist._id,'AFSK.'+AfskValue,afskvalue);
-                        
-              resultFlg++ 
-              if(appendRes.modifiedCount){
-                await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])   
-                await this.redisService.deleteWithEntryId(streamName,msgid[s])    
-                let isStreamExist = await this.redisService.getStreamRange(streamName)
-                if(!isStreamExist || isStreamExist.length == 0){
-                  await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
-                }                        
-              }
-            }else{
-              await db.collection(streamName).createIndex({ "CK": 1, "FNGK": 1, "FNK": 1, "CATK": 1, "AFGK": 1, "AFK": 1, "AFVK": 1, "DATE": 1, "USER": 1 });
-              let insertRes:any = await this.mongoService.insertDocument(streamName,'',{
-                CK,
-                FNGK,
-                FNK,
-                CATK,
-                AFGK,
-                AFK,
-                AFVK,
-                UPID:AfskValue,
-                DATE: entryId,
-                USER: user,
-                AFSK: 
-                  {[AfskValue]:[afskvalue]}
+              let CK = await this.splitcommonkey(streamKey, 'CK')
+              let FNGK = await this.splitcommonkey(streamKey, 'FNGK')
+              let FNK = await this.splitcommonkey(streamKey, 'FNK')
+              let CATK = await this.splitcommonkey(streamKey, 'CATK')
+              let AFGK = await this.splitcommonkey(streamKey, 'AFGK')
+              let AFK = await this.splitcommonkey(streamKey, 'AFK')
+              let AFVK = await this.splitcommonkey(streamKey, 'AFVK')
+              
+              if(streamName.endsWith('-TPL')){
+                let isDocExist:any
+                let filter = {}               
+                filter['CK'] = CK
+                filter['FNGK'] = FNGK
+                filter['FNK'] = FNK
+                filter['CATK'] = CATK
+                filter['AFGK'] = AFGK
+                filter['AFK'] = AFK
+                filter['AFVK'] = AFVK
+                filter['DATE'] = entryId
+                if(user){
+                  filter['USER'] = user
+                }
+                if(AfskValue !=  "logInfo"){
+                  filter['UPID'] = AfskValue
+                }
+                isDocExist = await this.mongoService.existsDocument(streamName,'',filter)  
+                if(isDocExist && Object.keys(isDocExist).length > 0 && isDocExist._id){
+                  let appendRes:any = await this.mongoService.appendFileInToDocument(streamName,isDocExist._id,'AFSK.'+AfskValue,afskvalue);
+                            
+                  resultFlg++ 
+                   if(appendRes.modifiedCount){
+                     await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])   
+                     await this.redisService.deleteWithEntryId(streamName,msgid[s])    
+                     let isStreamExist = await this.redisService.getStreamRange(streamName)
+                     if(!isStreamExist || isStreamExist.length == 0){
+                       await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
+                     }                        
+                   }
+                }else{
+                  await db.collection(streamName).createIndex({ "CK": 1, "FNGK": 1, "FNK": 1, "CATK": 1, "AFGK": 1, "AFK": 1, "AFVK": 1, "DATE": 1, "USER": 1 });
+                  let insertRes:any = await this.mongoService.insertDocument(streamName,'',{
+                    CK,
+                    FNGK,
+                    FNK,
+                    CATK,
+                    AFGK,
+                    AFK,
+                    AFVK,
+                    UPID:AfskValue,
+                    DATE: entryId,
+                    USER: user,
+                    AFSK: 
+                      {[AfskValue]:[afskvalue]}
+                    
+                  })
                 
-              })
-             
-              resultFlg++ 
-              if(insertRes.insertedId) {
-                await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])    
-                await this.redisService.deleteWithEntryId(streamName,msgid[s])   
-                let isStreamExist = await this.redisService.getStreamRange(streamName)
-                if(!isStreamExist || isStreamExist.length == 0){
-                  await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
-                }                  
-              }     
-            }          
-          }
-         
-          if(resultFlg == msgid.length){           
-            return 'Success'
-          }
+                  resultFlg++ 
+                   if(insertRes.insertedId) {
+                     await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])    
+                     await this.redisService.deleteWithEntryId(streamName,msgid[s])   
+                     let isStreamExist = await this.redisService.getStreamRange(streamName)
+                     if(!isStreamExist || isStreamExist.length == 0){
+                       await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
+                     }                  
+                   }     
+                }
+              }else if(streamName.endsWith('-TSL')){              
+                await db.collection(streamName).createIndex({ "CK": 1, "FNGK": 1, "FNK": 1, "CATK": 1, "AFGK": 1, "AFK": 1, "AFVK": 1, "DATE": 1, "USER": 1 });
+                let insertRes:any = await this.mongoService.insertDocument(streamName,'',{
+                  CK,
+                  FNGK,
+                  FNK,
+                  CATK,
+                  AFGK,
+                  AFK,
+                  AFVK,
+                  // UPID:AfskValue,
+                  DATE: entryId,
+                  DateAndTime: format(date, 'yyyy-MM-dd HH:mm:ss:SSS'),
+                  USER: user,
+                  AFSK: afskvalue                                 
+                })
+              
+                resultFlg++ 
+                 if(insertRes.insertedId) {
+                   await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])    
+                   await this.redisService.deleteWithEntryId(streamName,msgid[s])   
+                   let isStreamExist = await this.redisService.getStreamRange(streamName)
+                   if(!isStreamExist || isStreamExist.length == 0){
+                     await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
+                   }                  
+                 }   
+              }                      
+            }
+          
+            if(resultFlg == msgid.length){           
+              return 'Success'
+            }
           }  
-
         } 
       
       } catch (error) {
         this.logger.log('error',error)
       }
-    } 
+    }
 
     async deleteLog(input){
       try {

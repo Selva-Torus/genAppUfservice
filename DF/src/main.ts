@@ -1,3 +1,4 @@
+
 /* {
   "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT309:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
   "deploymentArtifactKey": "CK:CT309:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:mydpd:AFVK:v1",
@@ -26,7 +27,7 @@
       "isneedTouring": false,
       "touringData": {}
     },
-    "lastActive": "2026-01-05T04:36:38.154Z",
+    "lastActive": "2026-01-12T04:08:28.292Z",
     "client": "CT309"
   }
 } */
@@ -42,6 +43,7 @@ import * as fs from 'fs';
 import DecryptPayloadMiddleware from './decryptPayloadMiddleware';
 import multipart from '@fastify/multipart';
 import { BigIntInterceptor } from './bigint.interceptor';
+
 
 async function bootstrap() {
     const fastifyAdapter = new FastifyAdapter({

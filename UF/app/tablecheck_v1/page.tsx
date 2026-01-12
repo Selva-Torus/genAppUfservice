@@ -309,7 +309,7 @@ export default function PageTablecheckV1() {
     <>
      <div className={clsx("",
         "w-full",
-        isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'
+        isDark ? 'text-white' : 'text-black'
       )}
      style={{
         gridColumn: '',

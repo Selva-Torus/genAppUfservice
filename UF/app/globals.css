@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Gravitas+One&amp;display=swap');  
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
 
@@ -9,10 +8,9 @@
 /* CSS Variables for Typography - These will be set dynamically by setUpKey.tsx */
 :root {
   --g-font-family-sans: "Inter", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
-  --g-font-family-test:"test", sans-serif;
-  --font-body:var(--g-font-family-test);
-  --font-header:var(--g-font-family-test);  
-  --font-display:var(--g-font-family-test);}
+  --font-body:var(--g-font-family-sans);
+  --font-header:var(--g-font-family-monospace);  
+  --font-display:var(--g-font-family-sans);}
 
 
 /* .pc-Grid .container-fluid, .pc-Grid .container {
@@ -167,7 +165,7 @@ button *,
 /* Dark theme styling */
 html.dark,
 html.dark-hc {
-  background-color: #1f2937;
+  background-color: transparent;
   color: #ffffff;
 }
 
@@ -184,12 +182,12 @@ html.dark-hc * {
 
 /* Light theme styling */
 html.light {
-  background-color: #ffffff;
+ background-color: transparent;
   color: #000000;
 }
 
 html.light body {
-  background-color: #ffffff;
+  background-color: transparent;
   color: #000000;
 }
 
@@ -202,13 +200,13 @@ html.dark main,
 html.dark-hc main,
 html.dark div[class*="page"],
 html.dark-hc div[class*="page"] {
-  background-color: #1f2937;
+  background-color: transparent;
   color: #ffffff;
 }
 
 html.light main,
 html.light div[class*="page"] {
-  background-color: #ffffff;
+  background-color: transparent;
   color: #000000;
 }
 

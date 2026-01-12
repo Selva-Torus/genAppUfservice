@@ -164,6 +164,15 @@ export function useHandleDfdRefresh(){
             if("names0c3b9"==nodename){
                 dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
             }
+            if("username57f7f"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("idfc377"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("name28713"==nodename){
+                dfdRefreshContext("CK:CT309:FNGK:AF:FNK:DF-DFD:CATK:AG001:AFGK:A001:AFK:myDfdData:AFVK:v1",setdfd_mydfddata_v1Props,page,count,dpdEncryption,toast,token);
+            }
     };
 }
 

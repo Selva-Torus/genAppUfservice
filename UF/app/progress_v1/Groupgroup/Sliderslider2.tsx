@@ -116,7 +116,7 @@ const Sliderslider2 = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
   }
 return (   
   <div 
-    style={{gridColumn: `10 / 18`,gridRow: `49 / 100`, gap:``, height: `100%`, overflow: 'auto'}}>
+    style={{gridColumn: `10 / 18`,gridRow: `49 / 75`, gap:``, height: `100%`, overflow: 'auto'}}>
 
 
     <Slider
@@ -127,11 +127,10 @@ return (
       min = {1}
       max = {100}
       step = {10}
-      marks
       disabled= {slider2edf6a?.isDisabled ? true : false}
       validationState="invalid"
       tooltipDisplay='on'
-      showValue={true}
+      showValue={false}
       valueLabel="slider2"
       />
     </div>

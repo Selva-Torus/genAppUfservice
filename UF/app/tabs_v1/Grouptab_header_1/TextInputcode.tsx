@@ -18,7 +18,6 @@ import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys'
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import * as v from 'valibot';
 
-
 const TextInputcode = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}:any) => {  
   const token: string = getCookie('token');
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
@@ -102,6 +101,18 @@ const TextInputcode = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
       /// vvv
   schemaArray = [] ;
   const handleChange = async(e: any) => {
+    const newInputValue = dynamicStateandType.type=="number" ? +e.target.value : e.target.value;
+    let code:any=allCode
+     if (code != '') {
+      let codeStates: any = {}
+      codeStates['group']  = {...groupeca86,code:newInputValue},
+      codeStates['setgroup'] = setgroupeca86,
+      codeStates['oldtabgroup']  = {...oldtabgroup527ef,code:newInputValue},
+      codeStates['setoldtabgroup'] = setoldtabgroup527ef,
+      codeStates['table2']  = {...table2c0657,code:newInputValue},
+      codeStates['settable2'] = settable2c0657,
+    codeExecution(code,codeStates)
+    }  
     setError('')
     setValidate((pre:any)=>({...pre,code:undefined}))
     if(dynamicStateandType.type=="number"){
@@ -112,17 +123,7 @@ const TextInputcode = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
     }
   }
   const handleBlur=async () => {
-    let code:any=allCode
-     if (code != '') {
-      let codeStates: any = {}
-      codeStates['group']  = groupeca86,
-      codeStates['setgroup'] = setgroupeca86,
-      codeStates['oldtabgroup']  = oldtabgroup527ef,
-      codeStates['setoldtabgroup'] = setoldtabgroup527ef,
-      codeStates['table2']  = table2c0657,
-      codeStates['settable2'] = settable2c0657,
-    codeExecution(code,codeStates)
-    }
+    
   }
   const handleMapperValue=async()=>{
     try{
@@ -184,7 +185,6 @@ const TextInputcode = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFl
       handleMapperValue()
       handleBlur()
   },[validateRefetch.value])
-
   if (code86871?.isHidden) {
     return <></>
   }
