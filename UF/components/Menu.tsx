@@ -12,6 +12,7 @@ import {
   getFontSizeClass,
   getBorderRadiusClass,
 } from "@/app/utils/branding";
+import { useTheme } from "@/hooks/useTheme";
 
 interface MenuProps {
   nodeId?: any;
@@ -56,9 +57,7 @@ export const Menu: React.FC<MenuProps> & { Item: React.FC<MenuItemProps> } = ({
 }) => {
   const { theme, direction, branding } = useGlobal();
   const { emit, subscribe, subscribeGlobal } = useEventBus();
-
-  const isDark = theme === "dark" || theme === "dark-hc";
-  const isHighContrast = theme === "light-hc" || theme === "dark-hc";
+  const { bgColor, isDark, isHighContrast } = useTheme()
 
   // Setup event listeners
   useEffect(() => {
@@ -97,14 +96,8 @@ export const Menu: React.FC<MenuProps> & { Item: React.FC<MenuItemProps> } = ({
       orientation === "horizontal"
         ? "flex flex-row items-center"
         : "flex flex-col";
-
-    const themeClasses = isDark
-      ? "bg-gray-800 border-gray-700"
-      : "bg-white border-gray-200";
-
     return `
       ${orientationClasses}
-      ${themeClasses}
       ${borderRadius}
       ${fontSize}
       ${isHighContrast ? "border-2" : "border"}
@@ -135,9 +128,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
   const { theme, direction, branding } = useGlobal();
   const { emit, subscribe, subscribeGlobal } = useEventBus();
   const context = React.useContext(MenuContext);
-
-  const isDark = theme === "dark" || theme === "dark-hc";
-  const isHighContrast = theme === "light-hc" || theme === "dark-hc";
+  const { bgColor, isDark, isHighContrast } = useTheme()
 
   // Setup event listeners
   useEffect(() => {

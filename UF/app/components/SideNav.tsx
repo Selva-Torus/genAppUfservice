@@ -31,7 +31,8 @@ const SideNav = ({
   setFullView,
   brandColor,
   hoverColor,
-  userDetails
+  userDetails,
+  navBarItemsOrder
 }: {
   navData: MenuStructure
   mode?: 'fluid' | 'closed' | 'detached'
@@ -47,6 +48,11 @@ const SideNav = ({
   brandColor: string
   hoverColor: string
   userDetails: any
+  navBarItemsOrder?: {
+    name: string
+    'gridColumn'?: string
+    'gridRow'?: string
+  }[]
 }) => {
   const router = useRouter()
   const tp_ps = getCookie('tp_ps')
@@ -212,189 +218,107 @@ const SideNav = ({
     if (fullView) return ''
     return 'center'
   }, [fullView])
-  
-  return (
+
+  // Helper function to get grid style for a section
+  const getGridStyle: (sectionName: string) => React.CSSProperties = (
+    sectionName: string
+  ) => {
+    if (!navBarItemsOrder) return {}
+
+    const item = navBarItemsOrder.find(
+      order => order.name.toLowerCase() === sectionName.toLowerCase()
+    )
+
+    if (!item) return { display: 'none' }
+
+    return {
+      gridRow: item['gridRow']
+    }
+  }
+
+  // Menu Items section - with conditional overflow handling
+  const MenuItemsSection = () => (
     <div
-      className={`g-root flex h-full flex-col items-center justify-between px-2 py-2 text-center`}
-      onMouseEnter={() => sidebarStyle == 'hoverView' && setFullView(true)}
-      onMouseLeave={() => sidebarStyle == 'hoverView' && setFullView(false)}
+      className={clsx('scrollbar-none flex w-full flex-col gap-2 overflow-x-hidden pt-2', {
+        'max-h-[80vh] overflow-y-scroll': !navBarItemsOrder,
+        'overflow-y-auto min-h-0': navBarItemsOrder
+      })}
+      style={{
+        ...getGridStyle('menu items'),
+        alignItems: menuPlacement
+      }}
     >
-      <div
-        className='scrollbar-none flex max-h-[80vh] w-full flex-col gap-2 overflow-x-hidden overflow-y-scroll pt-2 '
-        style={{ alignItems: menuPlacement }}
-      >
-        {navData &&
-          navData.map((menu, index): any => {
-            if (menu.menuGroup) {
-              return (
-                <Tooltip
+      {navData &&
+        navData.map((menu, index): any => {
+          if (menu.menuGroup) {
+            return (
+              <Tooltip
+                key={index}
+                title={menu.menuGroupLabel}
+                placement='right-start'
+              >
+                <div
                   key={index}
-                  title={menu.menuGroupLabel}
-                  placement='right-start'
-                  // disable={fullView}
+                  className={twMerge(
+                    `${
+                      sidebarStyle === 'default' || fullView ? 'ml-1.5' : ''
+                    } flex cursor-pointer items-center justify-center gap-2 px-3 py-1 transition delay-150 duration-300 ease-in-out ${
+                      sidebarStyle === 'compact' ||
+                      sidebarStyle === 'hoverView'
+                        ? 'w-full'
+                        : 'w-[98%]'
+                    } rounded-md`
+                  )}
+                  style={
+                    getDropDownStyles(
+                      menu.menuGroup,
+                      false
+                    ) as React.CSSProperties
+                  }
                 >
-                  <div
-                    key={index}
-                    className={twMerge(
-                      `${
-                        sidebarStyle === 'default' || fullView ? 'ml-1.5' : ''
-                      } flex cursor-pointer items-center justify-center gap-2 px-3 py-1 transition delay-150 duration-300 ease-in-out ${
-                        sidebarStyle === 'compact' ||
-                        sidebarStyle === 'hoverView'
-                          ? 'w-full'
-                          : 'w-[98%]'
-                      } rounded-md`
-                    )}
-                    style={
-                      getDropDownStyles(
-                        menu.menuGroup,
-                        false
-                      ) as React.CSSProperties
-                    }
-                  >
-                    <DropdownMenu
-                      renderSwitcher={(props: any) => (
-                        <div
-                          {...props}
-                          className={`flex cursor-pointer items-center justify-center bg-transparent`}
-                        >
-                          {fullView ? (
-                            <button
-                              style={{
-                                color: `${
-                                  typeof getDropDownStyles(
-                                    menu.menuGroup,
-                                    true
-                                  ) !== 'boolean'
-                                    ? brandColor
-                                    : ''
-                                }`
-                              }}
-                              className={`w-full ${
+                  <DropdownMenu
+                    renderSwitcher={(props: any) => (
+                      <div
+                        {...props}
+                        className={`flex cursor-pointer items-center justify-center bg-transparent`}
+                      >
+                        {fullView ? (
+                          <button
+                            style={{
+                              color: `${
                                 typeof getDropDownStyles(
                                   menu.menuGroup,
                                   true
                                 ) !== 'boolean'
-                                  ? 'hover:rounded-md hover:p-3.5'
+                                  ? brandColor
                                   : ''
-                              }`}
-                              onMouseEnter={e => {
-                                e.currentTarget.style.backgroundColor = `${
-                                  typeof getDropDownStyles(
-                                    menu.menuGroup,
-                                    true
-                                  ) !== 'boolean'
-                                    ? hoverColor
-                                    : ''
-                                }`
-                              }}
-                              onMouseLeave={e => {
-                                e.currentTarget.style.backgroundColor =
-                                  'transparent'
-                              }}
-                            >
-                              <div className={`${getMenuClassName()} w-[100%]`}>
-                                <div className='flex w-[20%] items-center justify-end'>
-                                  {menu.icon ? (
-                                    <Image
-                                      className='h-[16px] w-[20px]'
-                                      width={100}
-                                      height={100}
-                                      alt='icon'
-                                      src={getCdnImage(menu.icon)}
-                                      style={{
-                                        filter:
-                                          typeof getDropDownStyles(
-                                            menu.menuGroup,
-                                            true
-                                          ) == 'boolean' || isDark
-                                            ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
-                                            : 'unset'
-                                      }}
-                                    />
-                                  ) : (
-                                    <FileGallery
-                                      height='20'
-                                      width='20'
-                                      fill={
-                                        typeof getDropDownStyles(
-                                          menu.menuGroup,
-                                          true
-                                        ) == 'boolean'
-                                          ? isLightColor(brandColor)
-                                          : isDark
-                                          ? '#fff'
-                                          : '#1C274C'
-                                      }
-                                    />
-                                  )}
-                                </div>
-                                <span
-                                  style={{
-                                    padding: '0px',
-                                    width: '80%',
-                                    display: 'flex',
-                                    justifyContent: `${
-                                      sidebarStyle === 'condensed'
-                                        ? 'center'
-                                        : 'flex-start'
-                                    }`,
-                                    alignItems: 'center'
-                                  }}
-                                  className='flex items-center justify-center whitespace-nowrap bg-transparent pl-2 text-center transition-all delay-0 duration-75 ease-in-out'
-                                >
-                                  <p
-                                    className={twMerge(
-                                      'w-[110px] truncate font-medium leading-[2vh]',
-                                      fullView && sidebarStyle !== 'condensed'
-                                        ? 'text-start'
-                                        : 'text-center'
-                                    )}
-                                    style={{
-                                      transition: 'all 0.2s ease-in-out'
-                                    }}
-                                  >
-                                    {menu.menuGroupLabel}
-                                  </p>
-                                </span>
-                              </div>
-                            </button>
-                          ) : (
-                            <button
-                              style={{
-                                color: `${
-                                  typeof getDropDownStyles(
-                                    menu.menuGroup,
-                                    true
-                                  ) !== 'boolean'
-                                    ? brandColor
-                                    : ''
-                                }`
-                              }}
-                              className={`w-full ${
+                              }`
+                            }}
+                            className={`w-full ${
+                              typeof getDropDownStyles(
+                                menu.menuGroup,
+                                true
+                              ) !== 'boolean'
+                                ? 'hover:rounded-md hover:p-3.5'
+                                : ''
+                            }`}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.backgroundColor = `${
                                 typeof getDropDownStyles(
                                   menu.menuGroup,
                                   true
                                 ) !== 'boolean'
-                                  ? 'hover:rounded-md hover:p-3.5'
+                                  ? hoverColor
                                   : ''
-                              }`}
-                              onMouseEnter={e => {
-                                e.currentTarget.style.backgroundColor = `${
-                                  typeof getDropDownStyles(
-                                    menu.menuGroup,
-                                    true
-                                  ) !== 'boolean'
-                                    ? hoverColor
-                                    : ''
-                                }`
-                              }}
-                              onMouseLeave={e => {
-                                e.currentTarget.style.backgroundColor =
-                                  'transparent'
-                              }}
-                            >
-                              <span className='flex items-center'>
+                              }`
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.backgroundColor =
+                                'transparent'
+                            }}
+                          >
+                            <div className={`${getMenuClassName()} w-[100%]`}>
+                              <div className='flex w-[20%] items-center justify-end'>
                                 {menu.icon ? (
                                   <Image
                                     className='h-[16px] w-[20px]'
@@ -428,146 +352,295 @@ const SideNav = ({
                                     }
                                   />
                                 )}
+                              </div>
+                              <span
+                                style={{
+                                  padding: '0px',
+                                  width: '80%',
+                                  display: 'flex',
+                                  justifyContent: `${
+                                    sidebarStyle === 'condensed'
+                                      ? 'center'
+                                      : 'flex-start'
+                                  }`,
+                                  alignItems: 'center'
+                                }}
+                                className='flex items-center justify-center whitespace-nowrap bg-transparent pl-2 text-center transition-all delay-0 duration-75 ease-in-out'
+                              >
+                                <p
+                                  className={twMerge(
+                                    'w-[110px] truncate font-medium leading-[2vh]',
+                                    fullView && sidebarStyle !== 'condensed'
+                                      ? 'text-start'
+                                      : 'text-center'
+                                  )}
+                                  style={{
+                                    transition: 'all 0.2s ease-in-out'
+                                  }}
+                                >
+                                  {menu.menuGroupLabel}
+                                </p>
                               </span>
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      key={index}
-                      items={getNestedMenu(menu)}
-                      popupProps={{
-                        style: {
-                          position: 'fixed'
-                        }
-                      }}
-                    />
-                  </div>
-                </Tooltip>
-              )
-            } else {
-              const routingName =
-                '/' +
-                menu.screenDetails[0].name.replace(/ /g, '_') +
-                '_' +
-                menu.screenDetails[0].key.split(':').at(-1)
-              return (
-                <Tooltip
-                  key={index}
-                  title={menu.menuGroupLabel}
-                  placement='right-start'
+                            </div>
+                          </button>
+                        ) : (
+                          <button
+                            style={{
+                              color: `${
+                                typeof getDropDownStyles(
+                                  menu.menuGroup,
+                                  true
+                                ) !== 'boolean'
+                                  ? brandColor
+                                  : ''
+                              }`
+                            }}
+                            className={`w-full ${
+                              typeof getDropDownStyles(
+                                menu.menuGroup,
+                                true
+                              ) !== 'boolean'
+                                ? 'hover:rounded-md hover:p-3.5'
+                                : ''
+                            }`}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.backgroundColor = `${
+                                typeof getDropDownStyles(
+                                  menu.menuGroup,
+                                  true
+                                ) !== 'boolean'
+                                  ? hoverColor
+                                  : ''
+                              }`
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.backgroundColor =
+                                'transparent'
+                            }}
+                          >
+                            <span className='flex items-center'>
+                              {menu.icon ? (
+                                <Image
+                                  className='h-[16px] w-[20px]'
+                                  width={100}
+                                  height={100}
+                                  alt='icon'
+                                  src={getCdnImage(menu.icon)}
+                                  style={{
+                                    filter:
+                                      typeof getDropDownStyles(
+                                        menu.menuGroup,
+                                        true
+                                      ) == 'boolean' || isDark
+                                        ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
+                                        : 'unset'
+                                  }}
+                                />
+                              ) : (
+                                <FileGallery
+                                  height='20'
+                                  width='20'
+                                  fill={
+                                    typeof getDropDownStyles(
+                                      menu.menuGroup,
+                                      true
+                                    ) == 'boolean'
+                                      ? isLightColor(brandColor)
+                                      : isDark
+                                      ? '#fff'
+                                      : '#1C274C'
+                                  }
+                                />
+                              )}
+                            </span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    key={index}
+                    items={getNestedMenu(menu)}
+                    popupProps={{
+                      style: {
+                        position: 'fixed'
+                      }
+                    }}
+                  />
+                </div>
+              </Tooltip>
+            )
+          } else {
+            const routingName =
+              '/' +
+              menu.screenDetails[0].name.replace(/ /g, '_') +
+              '_' +
+              menu.screenDetails[0].key.split(':').at(-1)
+            return (
+              <Tooltip
+                key={index}
+                title={menu.menuGroupLabel}
+                placement='right-start'
+              >
+                <button
+                  style={{
+                    color: `${routingName !== pathname ? brandColor : ''}`
+                  }}
+                  className={`${
+                    routingName !== pathname ? `p-1 hover:rounded-md` : ''
+                  }`}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.backgroundColor = `${
+                      routingName !== pathname ? hoverColor : ''
+                    }`
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.backgroundColor = 'transparent'
+                  }}
                 >
-                  <button
+                  <div
+                    key={index}
+                    className={twMerge(
+                      `${getMenuClassName()} rounded bg-transparent px-0.5 py-2`,
+                      fullView ? '' : 'px-3 py-2'
+                    )}
+                    onClick={() => router.push(routingName)}
                     style={{
-                      color: `${routingName !== pathname ? brandColor : ''}`
-                    }}
-                    className={`${
-                      routingName !== pathname ? `p-1 hover:rounded-md` : ''
-                    }`}
-                    onMouseEnter={e => {
-                      e.currentTarget.style.backgroundColor = `${
-                        routingName !== pathname ? hoverColor : ''
-                      }`
-                    }}
-                    onMouseLeave={e => {
-                      e.currentTarget.style.backgroundColor = 'transparent'
+                      backgroundColor:
+                        routingName == pathname
+                          ? `${brandColor}`
+                          : 'transparent',
+                      width: '100%',
+                      justifyContent: fullView ? 'unset' : 'center',
+                      color:
+                        routingName == pathname
+                          ? `${isLightColor(brandColor)}`
+                          : 'unset'
                     }}
                   >
-                    <div
-                      key={index}
-                      className={twMerge(
-                        `${getMenuClassName()} rounded bg-transparent px-0.5 py-2`,
-                        fullView ? '' : 'px-3 py-2'
-                      )}
-                      onClick={() => router.push(routingName)}
-                      style={{
-                        backgroundColor:
-                          routingName == pathname
-                            ? `${brandColor}`
-                            : 'transparent',
-                        width: '100%',
-                        justifyContent: fullView ? 'unset' : 'center',
-                        color:
+                    {menu.screenDetails[0].icon ? (
+                      <Image
+                        className='h-[16px] w-[20px]'
+                        width={100}
+                        height={100}
+                        alt='icon'
+                        src={getCdnImage(menu.screenDetails[0].icon)}
+                        style={{
+                          filter:
+                            routingName == pathname || isDark
+                              ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
+                              : 'unset'
+                        }}
+                      />
+                    ) : (
+                      <FileGallery
+                        height='20'
+                        width='20'
+                        fill={
                           routingName == pathname
                             ? `${isLightColor(brandColor)}`
-                            : 'unset'
-                      }}
-                    >
-                      {menu.screenDetails[0].icon ? (
-                        <Image
-                          className='h-[16px] w-[20px]'
-                          width={100}
-                          height={100}
-                          alt='icon'
-                          src={getCdnImage(menu.screenDetails[0].icon)}
-                          style={{
-                            filter:
-                              routingName == pathname || isDark
-                                ? 'invert(1) sepia(1) hue-rotate(180deg) saturate(3)'
-                                : 'unset'
-                          }}
-                        />
-                      ) : (
-                        <FileGallery
-                          height='20'
-                          width='20'
-                          fill={
-                            routingName == pathname
-                              ? `${isLightColor(brandColor)}`
-                              : isDark
-                              ? '#fff'
-                              : '#1C274C'
-                          }
-                        />
-                      )}
-                      {fullView && (
-                        <button className='w-[100px] truncate' key={index}>
-                          {menu.menuGroupLabel}
-                        </button>
-                      )}
-                    </div>
-                  </button>
-                </Tooltip>
-              )
-            }
-          })}
-      </div>
-      <div className='flex w-full flex-col items-center justify-center'>
-        <div
-          className={clsx('px-0', {
-            hidden: !tp_ps
-          })}
-        >
-          <OPRTopNavSelector
-            selectedAccessProfile={selectedAccessProfile}
-            className='flex-col px-0 pb-2'
-            popupPlacement='right-end'
-            fullView={fullView}
-          />
+                            : isDark
+                            ? '#fff'
+                            : '#1C274C'
+                        }
+                      />
+                    )}
+                    {fullView && (
+                      <button className='w-[100px] truncate' key={index}>
+                        {menu.menuGroupLabel}
+                      </button>
+                    )}
+                  </div>
+                </button>
+              </Tooltip>
+            )
+          }
+        })}
+    </div>
+  )
+
+  // OPR Matrix section
+  const OPRMatrixSection = () => (
+    <div
+      className={clsx('px-0 overflow-x-hidden', {
+        hidden: !tp_ps,
+        'scale-90 2xl:scale-100': fullView
+      })}
+      style={getGridStyle('opr matrix')}
+    >
+      <OPRTopNavSelector
+        selectedAccessProfile={selectedAccessProfile}
+        className='flex-col pb-2 px-[unset] 2xl:px-4'
+        popupPlacement='right-end'
+        fullView={fullView}
+      />
+    </div>
+  )
+
+  // Profile section
+  const ProfileSection = () => (
+    <div 
+      style={getGridStyle('profile')}
+      className='flex items-center justify-center'
+    >
+      {fullView ? (
+        <FullViewAvatar
+          brandColor={brandColor}
+          logout={logout}
+          user={user}
+          fullView={fullView}
+          userDetails={userDetails}
+          selectedAccessProfile={selectedAccessProfile}
+        />
+      ) : (
+        <PartialViewAvatar
+          brandColor={brandColor}
+          logout={logout}
+          user={user}
+          fullView={fullView}
+          userDetails={userDetails}
+        />
+      )}
+    </div>
+  )
+
+  // Default layout (without grid)
+  if (!navBarItemsOrder || navBarItemsOrder?.length === 0) {
+    return (
+      <div
+        className={`g-root flex h-full flex-col items-center justify-between px-2 py-2 text-center`}
+        onMouseEnter={() => sidebarStyle == 'hoverView' && setFullView(true)}
+        onMouseLeave={() => sidebarStyle == 'hoverView' && setFullView(false)}
+      >
+        <MenuItemsSection />
+        <div className='flex w-full flex-col items-center justify-center'>
+          <OPRMatrixSection />
+          <ProfileSection />
         </div>
-        {fullView ? (
-          <FullViewAvatar
-            brandColor={brandColor}
-            logout={logout}
-            user={user}
-            fullView={fullView}
-            userDetails={userDetails}
-            selectedAccessProfile={selectedAccessProfile}
-          />
-        ) : (
-          <PartialViewAvatar
-            brandColor={brandColor}
-            logout={logout}
-            user={user}
-            fullView={fullView}
-            userDetails={userDetails}
-          />
-        )}
       </div>
+    )
+  }
+
+  // Grid layout (with navBarItemsOrder)
+  return (
+    <div
+      className={`grid h-full w-full px-2 py-2 text-center overflow-hidden`}
+      style={{
+        gridTemplateRows: 'repeat(12, minmax(0, 1fr))',
+        gridTemplateColumns: '1fr',
+        gap: '0.5rem'
+      }}
+      onMouseEnter={() => sidebarStyle == 'hoverView' && setFullView(true)}
+      onMouseLeave={() => sidebarStyle == 'hoverView' && setFullView(false)}
+    >
+      <MenuItemsSection />
+      <OPRMatrixSection />
+      <ProfileSection />
     </div>
   )
 }
 
 export default SideNav
+
+// FullViewAvatar and PartialViewAvatar components remain the same...
 
 const FullViewAvatar = ({
   logout,
@@ -602,7 +675,7 @@ const FullViewAvatar = ({
           borderColor
         )}
       >
-        <div className='h-11 w-12 cursor-pointer rounded-full'>
+        <div className='h-11 w-12 cursor-pointer rounded-full justify-self-center'>
           <Avatar
             theme='brand'
             view='filled'
@@ -612,9 +685,7 @@ const FullViewAvatar = ({
         </div>
         <div>
           <Text contentAlign='left'>{user}</Text>
-          <Text contentAlign='left'>
-            {userDetails.accessProfile[0]}
-          </Text>
+          <Text contentAlign='left'>{userDetails.accessProfile[0]}</Text>
         </div>
       </div>
       <div>
@@ -623,9 +694,9 @@ const FullViewAvatar = ({
           open={isPopoverOpen}
           onClose={() => setIsPopoverOpen(false)}
           placement='right'
+          hasArrow={false}
         >
           <div className='flex flex-col items-center gap-1'>
-            {/* Profile section */}
             <div className='h-11 w-11 rounded-full'>
               <Avatar
                 theme='brand'
@@ -636,7 +707,6 @@ const FullViewAvatar = ({
             </div>
 
             <Text className='font-medium'>
-              {' '}
               {`${userDetails.firstName} ${userDetails.lastName}`}
             </Text>
           </div>
@@ -771,7 +841,7 @@ const PartialViewAvatar = ({
       <div
         onClick={() => setIsPopoverOpen(prev => !prev)}
         ref={popoverButtonElement}
-        className='h-11 w-12 cursor-pointer rounded-full'
+        className='h-11 w-12 cursor-pointer rounded-full justify-self-center'
       >
         <Avatar
           theme='brand'
@@ -786,9 +856,9 @@ const PartialViewAvatar = ({
           open={isPopoverOpen}
           onClose={() => setIsPopoverOpen(false)}
           placement='right'
+          hasArrow={false}
         >
           <div className='flex flex-col items-center gap-1'>
-            {/* Profile section */}
             <div className='h-11 w-11 rounded-full'>
               <Avatar
                 theme='brand'
@@ -799,7 +869,6 @@ const PartialViewAvatar = ({
             </div>
 
             <Text className='font-medium'>
-              {' '}
               {`${userDetails.firstName} ${userDetails.lastName}`}
             </Text>
           </div>

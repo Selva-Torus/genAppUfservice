@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { useEventBus } from "@/context/EventBusContext";
-import { Icon } from "@/components/Icon";
 import {
   ComponentSize,
   ComponentEvents,
@@ -12,6 +11,7 @@ import {
   getFontSizeClass,
   getBorderRadiusClass,
 } from "@/app/utils/branding";
+import { IoChevronBackOutline, IoChevronForward } from "react-icons/io5";
 
 export interface DropdownMenuItem {
   text: string;
@@ -305,16 +305,15 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
           <div className="flex items-center gap-2 rounded-md">
             {item.icon && (
               <>{item.icon}</>
-              // <Icon data={item.icon} size={16} className="flex-shrink-0" />
             )}
             <span>{item.text}</span>
           </div>
           {hasSubmenu && (
-            <Icon
-              data={direction === "RTL" ? "ChevronLeft" : "ChevronRight"}
-              size={14}
-              className="flex-shrink-0"
-            />
+            direction === "RTL" ? (
+              <IoChevronBackOutline />
+            ) : (
+              <IoChevronForward />
+            )
           )}
         </div>
 

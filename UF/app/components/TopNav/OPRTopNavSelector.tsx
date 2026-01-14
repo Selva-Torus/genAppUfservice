@@ -1029,11 +1029,12 @@ const OPRTopNavSelector = ({
           }}
           disabled={activeStage != null}
           className={clsx(
-            'flex w-36 items-center gap-2 rounded-full border px-4 py-1 hover:bg-[var(--hover-color)]',
+            'flex items-center justify-center gap-2 rounded-full border px-3 py-1 hover:bg-[var(--hover-color)]',
             borderColor,
             {
               'bg-[var(--selection-color)]': activeStage == 'org',
-              'w-[unset]': !fullView
+              'w-[unset]': !fullView,
+              'max-w-36': fullView
             }
           )}
           title={selectedOrg?.orgName ?? 'Select Organization'}
@@ -1074,11 +1075,12 @@ const OPRTopNavSelector = ({
           }}
           disabled={activeStage != null}
           className={clsx(
-            'flex w-36 items-center gap-2 rounded-full border px-4 py-1 hover:bg-[var(--hover-color)]',
+            'flex items-center justify-center gap-2 rounded-full border px-3 py-1 hover:bg-[var(--hover-color)]',
             borderColor,
             {
               'bg-[var(--selection-color)]': activeStage == 'prod',
-              'w-[unset]': !fullView
+              'w-[unset]': !fullView,
+              'max-w-36': fullView
             }
           )}
           title={selectedProd?.psName ?? 'Select Product'}
@@ -1119,11 +1121,12 @@ const OPRTopNavSelector = ({
           }}
           disabled={activeStage != null}
           className={clsx(
-            'flex w-36 items-center gap-2 rounded-full border px-4 py-1 hover:bg-[var(--hover-color)]',
+            'flex items-center justify-center gap-2 rounded-full border px-3 py-1 hover:bg-[var(--hover-color)]',
             borderColor,
             {
               'bg-[var(--selection-color)]': activeStage == 'role',
-              'w-[unset]': !fullView
+              'w-[unset]': !fullView,
+              'max-w-36': fullView
             }
           )}
           title={selectedRole?.roleName ?? 'Select Product'}
@@ -1176,6 +1179,8 @@ const OPRTopNavSelector = ({
             ? 'bottom'
             : 'bottom-end'
         }
+        hasArrow={false}
+        autoClose={false}
       >
         {activeStage === 'role' && (
           <div>

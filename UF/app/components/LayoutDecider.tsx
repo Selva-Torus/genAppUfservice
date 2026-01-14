@@ -49,34 +49,34 @@ const LayoutDecider = ({
   const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT309:AFGK:AG001:AFK:A001:AFVK:v1:bldc"
   const [rawNavData, setRawNavData] = useState<MenuItem[] | null>(null);
   const navData: MenuItem[] = [
-  {
+    {
     "menuGroup": "admin",
     "menuGroupLabel": "Admin",
     "screenDetails": [
-      {
+        {
         "name": "logs",
         "label": "Logs",
         "key": "Logs Screen",
         "allowedAccessProfile": [],
         "static": true,
         "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/document-add-svgrepo-com.svg"
-      },
-      {
+        },
+        {
         "name": "user",
         "label": "User",
         "key": "User Screen",
         "allowedAccessProfile": [],
         "static": true,
         "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/user-plus-svgrepo-com.svg"
-      }
-    ],
+        }
+      ],
     "items": [],
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
-  },
-  {
+    },
+    {
     "menuGroupLabel": "tabs",
     "screenDetails": [
-      {
+        {
         "name": "tabs",
         "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:newTab:AFVK:v1",
         "allowedAccessProfile": [
@@ -85,14 +85,14 @@ const LayoutDecider = ({
           "Template 3"
         ],
         "static": false
-      }
-    ],
+        }
+      ],
     "items": []
-  },
-  {
+    },
+    {
     "menuGroupLabel": "progress",
     "screenDetails": [
-      {
+        {
         "name": "progress",
         "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1",
         "allowedAccessProfile": [
@@ -100,14 +100,14 @@ const LayoutDecider = ({
           "Template 2"
         ],
         "static": false
-      }
-    ],
+        }
+      ],
     "items": []
-  },
-  {
+    },
+    {
     "menuGroupLabel": "tablecheck",
     "screenDetails": [
-      {
+        {
         "name": "tablecheck",
         "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1",
         "allowedAccessProfile": [
@@ -115,14 +115,14 @@ const LayoutDecider = ({
           "Template 2"
         ],
         "static": false
-      }
-    ],
+        }
+      ],
     "items": []
-  },
-  {
+    },
+    {
     "menuGroupLabel": "dynamicforms",
     "screenDetails": [
-      {
+        {
         "name": "dynamicforms",
         "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:dynamicforms:AFVK:v1",
         "allowedAccessProfile": [
@@ -130,16 +130,16 @@ const LayoutDecider = ({
           "Template 2",
           "Template 3",
           "User"
-        ],
+          ],
         "static": false
-      }
-    ],
+        }
+      ],
     "items": []
-  },
-  {
+    },
+    {
     "menuGroupLabel": "save",
     "screenDetails": [
-      {
+        {
         "name": "save",
         "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:savescreen:AFVK:v1",
         "allowedAccessProfile": [
@@ -147,13 +147,13 @@ const LayoutDecider = ({
           "Template 2",
           "Template 3",
           "User"
-        ],
+          ],
         "static": false
-      }
-    ],
+        }
+      ],
     "items": []
-  }
-]
+    }
+  ]
   const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.selectedAccessProfile
@@ -270,92 +270,92 @@ const LayoutDecider = ({
   }
 
     const getNavData = async() => {
- try {
-   const res = await axios.post(
-    `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/getNavbarData`,
-    { key: aKey },
-    { headers: { authorization: `Bearer ${token}` } }
-   )
-   //console.log(res.data);
+    try {
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/getNavbarData`,
+        { key: aKey },
+        { headers: { authorization: `Bearer ${token}` } }
+      )
+      //console.log(res.data);
    setRawNavData(res.data); // Set the raw data into state
-  } catch (error) {
+    } catch (error) {
    console.error("Failed to fetch nav data:", error);
    toast('Failed to load navigation data', 'danger');
    setLoading(false);
+    }
   }
- }
 
-   async function checkAccessProfile(token: string, navData: MenuItem[]) {
-  try {
+  async function checkAccessProfile(token: string, navData: MenuItem[]) {
+    try {
    let myAccount:any;
-   if (encryptionFlagApp) {
-    myAccount = await AxiosService.get('/UF/myAccount-for-client', {
-     headers: {
-      Authorization: `Bearer ${token}`
-     },
-     params: {
-      dpdKey: encryptionDpd,
-      method: encryptionMethod,
+      if (encryptionFlagApp) {
+        myAccount = await AxiosService.get('/UF/myAccount-for-client', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
+            dpdKey: encryptionDpd,
+            method: encryptionMethod,
       key:"Logs Screen"
-     }
-    })
+          }
+        })
    }else{
-    myAccount = await AxiosService.get('/UF/myAccount-for-client', {
-     headers: {
-      Authorization: `Bearer ${token}`
-      },
-     params: {
+        myAccount = await AxiosService.get('/UF/myAccount-for-client', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          },
+          params: {
       key:"Logs Screen"
-     }
-    })
-   }
-   setUserDetails(myAccount?.data)
+          }
+        })
+      }
+      setUserDetails(myAccount?.data)
    if (
    user != "" && user != null
    ) {
-    const processedMenuItems = await processMenuItems(
-     navData, // Use the passed-in navData
-     [user],
-     token
-    )
-    setUpdatedNavData(processedMenuItems)
-    setLoading(false)
-   } else {
-    toast('user lack access to any screen', 'danger')
-    logout()
-   }
-  } catch (err: any) {
-   console.error(err)
-   toast('user lack access to any screen', 'danger')
-   logout()
+        const processedMenuItems = await processMenuItems(
+          navData, // Use the passed-in navData
+          [user],
+          token
+        )
+        setUpdatedNavData(processedMenuItems)
+        setLoading(false)
+      } else {
+        toast('user lack access to any screen', 'danger')
+        logout()
+      }
+    } catch (err: any) {
+      console.error(err)
+      toast('user lack access to any screen', 'danger')
+      logout()
+    }
   }
- }  
-
- useEffect(() => {
-  if (typeof window !== undefined) {
-   const currentToken = getCookie('token')
-   if (currentToken) {
-    // 4a. Initial fetch of raw navigation data
-    getNavData()
-   } else {
-    // Handle missing token scenario if necessary
-    setLoading(false);
-    // Optional: Redirect to login/logout()
-   }
-  }
- }, []) 
 
   useEffect(() => {
-  if (rawNavData) {
-   const currentToken = getCookie('token')
-   if (currentToken) {
-    checkAccessProfile(currentToken, rawNavData)
-   }
-  }
- }, [rawNavData])
+    if (typeof window !== undefined) {
+      const currentToken = getCookie('token')
+      if (currentToken) {
+        // 4a. Initial fetch of raw navigation data
+        getNavData()
+      } else {
+        // Handle missing token scenario if necessary
+    setLoading(false);
+        // Optional: Redirect to login/logout()
+      }
+    }
+  }, [])
 
- ///////////
- /* async function checkAccessProfile(token: string) {
+  useEffect(() => {
+    if (rawNavData) {
+      const currentToken = getCookie('token')
+      if (currentToken) {
+        checkAccessProfile(currentToken, rawNavData)
+      }
+    }
+  }, [rawNavData])
+
+  ///////////
+  /* async function checkAccessProfile(token: string) {
     try {
       let myAccount:any;
       if (encryptionFlagApp) {  
@@ -422,12 +422,44 @@ const LayoutDecider = ({
     return false
   }
 
+  const navBarItemsOrder: {
+    name: string
+    'gridColumn'?: string
+    'gridRow'?: string
+  }[] = [
+    {
+      name: 'logo',
+      'gridColumn': '1/3',
+      "gridRow" : "1/5"
+    },
+    {
+      name: 'menu items',
+      'gridColumn': '7/11',
+      "gridRow" : "2/8"
+    },
+    {
+      name: 'opr matrix',
+      'gridColumn': '3/7',
+      "gridRow" : '8/10'
+    },
+    {
+      name: 'app logo',
+      'gridColumn': '11/13',
+      'gridRow': '10/12'
+    },
+    {
+      name: 'profile',
+      'gridColumn': '13/13',
+      'gridRow': '10/12'
+    }
+  ]
+
    if (loading == true){
     return (<div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><span>Loading...</span></div>);
   }
   return (
     <div className={`flex h-screen w-screen flex-col overflow-auto  bg-cover bg-center`} 
-    style={{ backgroundImage: 'var(--app-bg-image)' }}
+      style={{ backgroundImage: 'var(--app-bg-image)' }}
     >
       <div className={`g-root flex-shrink-0`}>
         <TopNav
@@ -438,6 +470,7 @@ const LayoutDecider = ({
           appName={appName}
           logo={logo}
           userDetails={userDetails}
+          navBarItemsOrder={navBarItemsOrder}
         />
       </div>
       <div className='flex h-[90%] 2xl:h-[95%] flex-1'>
@@ -453,6 +486,7 @@ const LayoutDecider = ({
             brandColor={brandColor}
             hoverColor={hoverColor}
             userDetails={userDetails}
+            navBarItemsOrder={navBarItemsOrder}
           />
         </div>
         <div
