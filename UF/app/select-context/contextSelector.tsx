@@ -221,6 +221,7 @@ const ContextSelector = () => {
       psCode: selectedPs?.psCode,
       psGrpName: selectedPs?.psGrpName,
       psName: selectedPs?.psName,
+      psLogo: selectedPs?.psLogo,
       psPath: selectedPs?.path,
       subOrgGrpCode,
       subOrgGrpName,

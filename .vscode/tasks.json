@@ -4,27 +4,28 @@
   "version": "2.0.0",
   "tasks": [
     {
-       "label": "DF",
-       "command" : "pnpm dev",
-       "type": "shell",
-       "options": {
+      "label": "DF",
+      "command": "pnpm dev",
+      "type": "shell",
+      "options": {
         "cwd": "${workspaceFolder}/DF"
-       } 
+      }
     },
-      {
-       "label": "UF",
-       "command" : "pnpm dev",
-       "type": "shell",
-       "options": {
+    {
+      "label": "UF",
+      "command": "pnpm dev",
+      "type": "shell",
+      "options": {
         "cwd": "${workspaceFolder}/UF"
-       } 
+      }
     },
-      {
-       "label": "DF&UF",
+    {
+      "label": "DF&UF",
       "dependsOn": [
-          "DF",
-          "UF"
-      ] 
+        "DF",
+        "UF"
+      ],
+      "problemMatcher": []
     }
   ]
 }

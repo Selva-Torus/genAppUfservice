@@ -197,6 +197,7 @@ const OPRList = ({
         psGrpName: requiredPsGroup.psGrpName,
         psGrpCode: requiredPsGroup.psGrpCode,
         psName: requiredPsGroup?.['ps'][0]['psName'],
+        psLogo: requiredPsGroup?.['ps'][0]['psLogo'],
         psCode: requiredPsGroup?.['ps'][0]['psCode'],
         path: `${obj['path']}.0.ps.0.roleGrp`,
         id: requiredPsGroup?.['ps'][0]['psId']
@@ -346,6 +347,7 @@ const OPRList = ({
                   psGrpName: psGrp.psGrpName,
                   psCode: ps.psCode,
                   psName: ps.psName,
+                  psLogo: ps.psLogo,
                   roleGrpCode: roleGrp.roleGrpCode,
                   roleGrpName: roleGrp.roleGrpName,
                   ...role
@@ -361,6 +363,7 @@ const OPRList = ({
                   psGrpName: psGrp.psGrpName,
                   psCode: ps.psCode,
                   psName: ps.psName,
+                  psLogo: ps.psLogo,
                   roleGrpCode: roleGrp.roleGrpCode,
                   roleGrpName: roleGrp.roleGrpName,
                   roleGrpId: roleGrp.roleGrpId,
@@ -564,6 +567,7 @@ const OPRList = ({
                                   psGrpName: psg.psGrpName,
                                   psCode: ps.psCode,
                                   psName: ps.psName,
+                                  psLogo: ps.psLogo,
                                   path: `${selectedOrg.path}.${psg.originalIndex}.ps.${ps.originalIndex}.roleGrp`,
                                   id: ps.psId
                                 })

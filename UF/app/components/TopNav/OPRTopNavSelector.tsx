@@ -1,5 +1,5 @@
 import Popup, { PopupPlacement } from '@/components/Popup'
-import React, { useContext,useEffect, useMemo } from 'react'
+import React, { useContext, useEffect, useMemo } from 'react'
 import { getCookie, setCookie } from '../cookieMgment'
 import { AxiosService } from '../axiosService'
 import clsx from 'clsx'
@@ -10,6 +10,7 @@ import { useTheme } from '@/hooks/useTheme'
 import { MdClose } from 'react-icons/md'
 import { LuSearch } from 'react-icons/lu'
 import { TotalContext, TotalContextProps } from '@/app/globalContext'
+import { getCdnImage } from '@/app/utils/getAssets'
 
 interface Role {
   roleCode: string
@@ -29,6 +30,7 @@ interface RoleGroup {
 interface Product {
   psCode: string
   psName: string
+  psLogo: string
   psId: string
   roleGrp: RoleGroup[]
   originalIndex?: number
@@ -719,7 +721,9 @@ const OPRTopNavSelector = ({
   const orgPopupRef = React.useRef<HTMLButtonElement>(null)
   const prodPopupRef = React.useRef<HTMLButtonElement>(null)
   const rolePopupRef = React.useRef<HTMLButtonElement>(null)
-  const {currentToken, setCurrentToken} = useContext(TotalContext) as TotalContextProps;
+  const { currentToken, setCurrentToken } = useContext(
+    TotalContext
+  ) as TotalContextProps
   const tp_ps = getCookie('tp_ps')
   const token = getCookie('token')
   const [selectedOrg, setSelectedOrg] = React.useState<null | any>(null)
@@ -806,7 +810,8 @@ const OPRTopNavSelector = ({
           psGrpCode: selectedCombination?.psGrpCode,
           psGrpName: selectedCombination?.psGrpName,
           psCode: selectedCombination?.psCode,
-          psName: selectedCombination?.psName
+          psName: selectedCombination?.psName,
+          psLogo: selectedCombination?.psLogo
         })
         setSelectedRole({
           roleGrpCode: selectedCombination?.roleGrpCode,
@@ -970,6 +975,7 @@ const OPRTopNavSelector = ({
         psCode: currentProd?.psCode,
         psGrpName: currentProd?.psGrpName,
         psName: currentProd?.psName,
+        psLogo: currentProd?.psLogo,
         subOrgGrpCode: currentSubOrg ? currentSubOrg?.subOrgGrpCode : '',
         subOrgGrpName: currentSubOrg ? currentSubOrg?.subOrgGrpName : '',
         subOrgCode: currentSubOrg ? currentSubOrg?.subOrgCode : '',
@@ -1048,7 +1054,10 @@ const OPRTopNavSelector = ({
                     Organization
                   </Text>
                 </div>
-                <Text contentAlign='left' className='block w-full truncate text-left'>
+                <Text
+                  contentAlign='left'
+                  className='block w-full truncate text-left'
+                >
                   {selectedOrg?.orgName}
                 </Text>
               </div>
@@ -1062,7 +1071,7 @@ const OPRTopNavSelector = ({
             </>
           ) : (
             <div>
-              <OrgStructure height='18' width='18'/>
+              <OrgStructure height='18' width='18' />
             </div>
           )}
         </button>
@@ -1094,7 +1103,10 @@ const OPRTopNavSelector = ({
                     Products
                   </Text>
                 </div>
-                <Text contentAlign='left' className='block w-full truncate text-left'>
+                <Text
+                  contentAlign='left'
+                  className='block w-full truncate text-left'
+                >
                   {selectedProd?.psName}
                 </Text>
               </div>
@@ -1140,7 +1152,10 @@ const OPRTopNavSelector = ({
                     Roles
                   </Text>
                 </div>
-                <Text contentAlign='left' className='block w-full truncate text-left'>
+                <Text
+                  contentAlign='left'
+                  className='block w-full truncate text-left'
+                >
                   {selectedRole?.roleName}
                 </Text>
               </div>
@@ -1154,11 +1169,22 @@ const OPRTopNavSelector = ({
             </>
           ) : (
             <div>
-              <RoleStructure height='18' width='18'/>
+              <RoleStructure height='18' width='18' />
             </div>
           )}
         </button>
       </div>
+      {selectedProd?.psLogo && (
+        <div>
+          <img
+            className='h-[50px] w-[50px]'
+            width={100}
+            height={100}
+            src={getCdnImage(selectedProd?.psLogo)}
+            alt='appLogo'
+          />
+        </div>
+      )}
       <Popup
         anchorRef={
           activeStage == 'role'

@@ -41,7 +41,8 @@ const LayoutDecider = ({
   const encryptionFlagApp: boolean = false;    
   const encryptionDpd: string = "CK:CT309:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:mydpd:AFVK:v1";
   const encryptionMethod: string = "";
-  const logo = ""
+  const logo = "torus/9.1/CT309/resources/images/images.png"
+  const appLogo = "torus/9.1/CT309/resources/images/lg-b44d8cea7df3575abf83e2bcb765f68779.jpg"
   const appName = "application"
   const toast = useInfoMsg()
   const [loading, setLoading] = useState(true)
@@ -469,8 +470,10 @@ const LayoutDecider = ({
           brandColor={brandColor}
           appName={appName}
           logo={logo}
+          appLogo={appLogo}
           userDetails={userDetails}
           navBarItemsOrder={navBarItemsOrder}
+          navigationStyles={navigationStyles}
         />
       </div>
       <div className='flex h-[90%] 2xl:h-[95%] flex-1'>

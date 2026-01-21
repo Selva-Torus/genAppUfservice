@@ -24,7 +24,9 @@ const TopNav = ({
   mode,
   brandColor = '#fff',
   appName,
+  navigationStyles,
   logo,
+  appLogo,
   userDetails,
   navBarItemsOrder
 }: {
@@ -33,12 +35,14 @@ const TopNav = ({
   mode: string
   brandColor: string
   appName: string
+  navigationStyles?: string
   logo?: string
+  appLogo?: string
   userDetails: any
   navBarItemsOrder?: {
     name: string
-    'gridColumn'?: string
-    'gridRow'?: string
+    gridColumn?: string
+    gridRow?: string
   }[]
 }) => {
   const router = useRouter()
@@ -175,7 +179,7 @@ const TopNav = ({
 
     return {
       gridColumn: item['gridColumn'],
-      gridRow:  '1'
+      gridRow: '1'
     }
   }
 
@@ -184,7 +188,7 @@ const TopNav = ({
     <div className='flex items-center gap-1' style={getGridStyle('logo')}>
       {logo ? (
         <img
-          className='h-[16px] w-[20px]'
+          className='h-[50px] w-[50px]'
           width={100}
           height={100}
           src={getCdnImage(logo)}
@@ -196,6 +200,20 @@ const TopNav = ({
       <Text className='text-nowrap text-start font-bold' contentAlign='left'>
         {appName}
       </Text>
+    </div>
+  )
+
+  const AppLogoSection = () => (
+    <div className='flex items-center gap-1' style={getGridStyle('app logo')}>
+      {appLogo && (
+        <img
+          className='h-[60px] w-[60px]'
+          width={100}
+          height={100}
+          src={getCdnImage(appLogo)}
+          alt='appLogo'
+        />
+      )}
     </div>
   )
 
@@ -443,7 +461,11 @@ const TopNav = ({
   )
 
   // Default layout (without grid)
-  if (!navBarItemsOrder || navBarItemsOrder?.length === 0) {
+  if (
+    !navBarItemsOrder ||
+    navBarItemsOrder?.length === 0 ||
+    navigationStyles === 'vertical'
+  ) {
     return (
       <div
         suppressHydrationWarning
@@ -453,7 +475,14 @@ const TopNav = ({
           }`
         )}
       >
-        <LogoSection />
+        {appLogo ? (
+          <div className='flex items-center gap-3 w-full'>
+            <LogoSection />
+            <AppLogoSection />
+          </div>
+        ) : (
+          <LogoSection />
+        )}
         {listMenuItems && (
           <>
             <MenuItemsSection />
@@ -478,6 +507,7 @@ const TopNav = ({
       }}
     >
       <LogoSection />
+      <AppLogoSection />
       {listMenuItems && (
         <>
           <MenuItemsSection />
