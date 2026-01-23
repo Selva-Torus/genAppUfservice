@@ -721,7 +721,7 @@ const OPRTopNavSelector = ({
   const orgPopupRef = React.useRef<HTMLButtonElement>(null)
   const prodPopupRef = React.useRef<HTMLButtonElement>(null)
   const rolePopupRef = React.useRef<HTMLButtonElement>(null)
-  const { currentToken, setCurrentToken } = useContext(
+  const { currentToken, setCurrentToken , matchedAccessProfileData , setMatchedAccessProfileData } = useContext(
     TotalContext
   ) as TotalContextProps
   const tp_ps = getCookie('tp_ps')
@@ -730,8 +730,6 @@ const OPRTopNavSelector = ({
   const [selectedSubOrg, setSelectedSubOrg] = React.useState<null | any>(null)
   const [selectedProd, setSelectedProd] = React.useState<null | any>(null)
   const [selectedRole, setSelectedRole] = React.useState<null | any>(null)
-  const [matchedAccessProfileData, setMatchedAccessProfileData] =
-    React.useState<any>({})
   const { borderColor, isDark } = useTheme()
 
   const assignOriginalIndex = (data: any): any => {
@@ -821,7 +819,9 @@ const OPRTopNavSelector = ({
         })
       }
     }
-    getSecurityTemplate()
+    if(!Object.keys(matchedAccessProfileData).length){
+      getSecurityTemplate()
+    }
   }, [])
 
   const products = useMemo(() => {

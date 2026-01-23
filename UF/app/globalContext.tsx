@@ -7,6 +7,8 @@ import { getCookie } from './components/cookieMgment';
 export interface TotalContextProps {
   currentToken: any 
   setCurrentToken: React.Dispatch<React.SetStateAction<any>>
+  matchedAccessProfileData: any;
+  setMatchedAccessProfileData: React.Dispatch<any>
   groupeca86: any 
   setgroupeca86: React.Dispatch<React.SetStateAction<any>>
   groupeca86Props: any 
@@ -352,6 +354,8 @@ export const TotalContext = React.createContext<TotalContextProps | {}>({})
 
 const GlobalContext = ({children} : {children: React.ReactNode}) => {
     const [currentToken, setCurrentToken ] = React.useState<any>({}) 
+    const [matchedAccessProfileData, setMatchedAccessProfileData] =
+        React.useState<any>({})
       //////////
         const [groupeca86, setgroupeca86 ] = React.useState<any>({}) 
     const [groupeca86Props, setgroupeca86Props ] = React.useState<any>({
@@ -1058,6 +1062,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       //
         currentToken,
         setCurrentToken,
+        matchedAccessProfileData,
+        setMatchedAccessProfileData,
         groupeca86, 
         setgroupeca86,
         groupeca86Props, 

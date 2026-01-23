@@ -32,7 +32,7 @@ const ContextSelector = () => {
   const [selectedAccessProfile, setSelectedAccessProfile] = useState<string[]>(
     []
   )
-  const { userDetails, setUserDetails } = useContext(
+  const { userDetails, setUserDetails , setMatchedAccessProfileData } = useContext(
     TotalContext
   ) as TotalContextProps
   const token: string = getCookie('token')
@@ -271,6 +271,7 @@ const ContextSelector = () => {
             psCode: ORM.psCode
           })
         )
+        setMatchedAccessProfileData({})
         startTransition(() => {
           router.push(landingScreen)
         })
