@@ -4,6 +4,8 @@ import 'dotenv/config';
 import { Db, MongoClient } from 'mongodb';
 const _ = require("lodash")
 import { connectToMongo, connectToRedis, getDb, getRedis } from './mongoClient';
+import { queueMongoOperation } from './mongoQueue-dynamic';
+// import { queueMongoOperation } from './mongoQueue';
 
 let db: Db;
 let redis
@@ -45,20 +47,24 @@ export class RedisService {
             throw new Error(`Invalid Redis key`);
           }
         });
-        let redisResult = await redis.call('JSON.GET', key);    
+        let redisResult = await redis.call('JSON.GET', key);
         if (redisResult) {
           returnValue = redisResult;
         } else {
-          var mongoResult:any = await this.getDocument(collectionName,key)       
-          
-          if(mongoResult?.length>0 && mongoResult[0]?.value){          
-            
+          // Queue MongoDB operation to prevent connection exhaustion
+          var mongoResult:any = await queueMongoOperation(
+            () => this.getDocument(collectionName, key),
+            `getDocument:${key}`
+          );
+
+          if(mongoResult?.length>0 && mongoResult[0]?.value){
+
             await redis.call('JSON.SET', key, '$', JSON.stringify(mongoResult[0]?.value));
-          
+
             returnValue = JSON.stringify(mongoResult[0]?.value);
           }else{
             returnValue = null
-          }       
+          }
         }
       }else{
         throw 'client not found'
@@ -77,8 +83,8 @@ export class RedisService {
    * @returns The JSON value at the specified path.
    * @throws {Error} If there is an error retrieving the JSON value.
 +   */
-  async getJsonDataWithPath(key: string, path:any,collectionName: string) {         
-    try {  
+  async getJsonDataWithPath(key: string, path:any,collectionName: string) {
+    try {
       const parts = key.split(":");
       const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
       requiredMarkers.forEach(marker => {
@@ -86,35 +92,43 @@ export class RedisService {
         if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === "undefined" || parts.length <= 14) {
           throw new Error(`Invalid Redis key`);
         }
-      });    
-      return await redis.call('JSON.GET', key, path);    
+      });
+      return await redis.call('JSON.GET', key, path);
     } catch (error) {
-      //console.log('ERROR',error.message); 
-      let mongoResult = await this.getDocument(collectionName,key,path)    
+      //console.log('ERROR',error.message);
+      // Queue MongoDB operation
+      let mongoResult = await queueMongoOperation(
+        () => this.getDocument(collectionName, key, path),
+        `getDocumentWithPath:${key}`
+      );
       if(mongoResult && mongoResult?.length>0){
         return mongoResult
       }else{
         throw error;
-      }      
+      }
     }
   }
 
   async AppendJsonArr(key: string, value: any,collectionName:string, path?: string) {
     try {
       if(path){
-        var request = await redis.call('JSON.ARRAPPEND', key, '$.'+path, value)   
+        var request = await redis.call('JSON.ARRAPPEND', key, '$.'+path, value)
       }else{
-        var request = await redis.call('JSON.ARRAPPEND', key, '$', value)   
-      }            
-      
+        var request = await redis.call('JSON.ARRAPPEND', key, '$', value)
+      }
+
       if(request){
-        await this.appendDocumentData(collectionName,key,JSON.parse(value))  
-      }      
-      return request; 
-     
+        // Queue MongoDB operation
+        await queueMongoOperation(
+          () => this.appendDocumentData(collectionName, key, JSON.parse(value)),
+          `appendDocumentData:${key}`
+        );
+      }
+      return request;
+
     } catch (error) {
       throw error
-    }    
+    }
   }
   
 
@@ -128,9 +142,9 @@ export class RedisService {
    * @throws {Error} If there is an error storing the JSON data.
    */
    async setJsonData(key: string, value: any, collectionName:string, path?: string) {
-    try {      
+    try {
       if (!collectionName && !key) throw "client/key not found";
-   
+
         const parts = key.split(":");
         const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
         requiredMarkers.forEach(marker => {
@@ -141,19 +155,89 @@ export class RedisService {
         });
 
         const defpath = path ? `.${path}` : "$";
-        await this.exist(key,collectionName)       
+        await this.exist(key,collectionName)
         let redisResult = await redis.call('JSON.SET', key, defpath, value);
-      
-        if(redisResult == 'OK')
-          var mongoResult:any  = await this.setDocument(collectionName,key, JSON.parse(value),path)
-              
+
+        if(redisResult == 'OK') {
+          // Queue MongoDB operation to prevent connection pool exhaustion
+          var mongoResult:any = await queueMongoOperation(
+            () => this.setDocument(collectionName, key, JSON.parse(value), path),
+            `setDocument:${key}`
+          );
+        }
+
         if(mongoResult?.value)
           return 'Value Stored';
- 
+
     } catch (error) {
       throw error;
     }
   }
+
+  async setJsonDataBatch(
+    operations: Array<{ key: string; value: any; path?: string }>,
+    collectionName: string
+  ): Promise<void> {
+    try {
+      if (!collectionName) throw new Error('client not found');
+      if (!operations || operations.length === 0) return;
+
+      // Validate all keys first
+      for (const op of operations) {
+        const parts = op.key.split(':');
+        const requiredMarkers = ['CK', 'FNGK', 'FNK', 'CATK', 'AFGK', 'AFK', 'AFVK'];
+        requiredMarkers.forEach(marker => {
+          const idx = parts.indexOf(marker);
+          if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === 'undefined' || parts.length <= 14) {
+            throw new Error(`Invalid Redis key: ${op.key}`);
+          }
+        });
+      }
+
+      // Create Redis pipeline
+      const pipeline = redis.pipeline();
+
+      // Add all operations to pipeline
+      for (const op of operations) {
+        const defpath = op.path ? `.${op.path}` : '$';
+        pipeline.call('JSON.SET', op.key, defpath, op.value);
+      }
+
+      // Execute pipeline (single network round-trip)
+      const results = await pipeline.exec();
+
+      // Check for errors
+      if (results) {
+        for (let i = 0; i < results.length; i++) {
+          const [error, result] = results[i];
+          if (error) {
+            throw new Error(`Pipeline command ${i} failed: ${error.message}`);
+          }
+        }
+      }
+
+      // WRITE-BEHIND: Fire-and-forget MongoDB operations
+      // Don't await - let them process in background via batched queue
+      // Promise.all(
+      //   operations.map(op =>
+      //     this.writeBehindBuffer.addOperation({
+      //       type: 'SET_DOCUMENT',
+      //       collectionName,
+      //       key: op.key,
+      //       value: JSON.parse(op.value),
+      //       path: op.path,
+      //     })
+      //   )
+      // ).catch(err => {
+      //   console.error('Batch write-behind queue error:', err.message);
+      // });
+
+    } catch (error) {
+      console.error('Batch setJsonData error:', error);
+      throw error;
+    }
+  }
+
   //To store Stream data in redis
  /**
    * Stores stream data in Redis.
@@ -206,16 +290,23 @@ export class RedisService {
   async exist(key,collectionName: string) {
     try {
       if(collectionName){
-              
+
         let redisResult = await redis.call('EXISTS', key);
         if(redisResult){
           return redisResult;
         }else{
-          let mongoResult = await this.existsDocument(collectionName,key)
+          // Queue MongoDB operations
+          let mongoResult = await queueMongoOperation(
+            () => this.existsDocument(collectionName, key),
+            `existsDocument:${key}`
+          );
           if(mongoResult){
-            let doc = await this.getDocument(collectionName,key)
-            if(doc?.length>0 && doc[0]?.value){          
-            
+            let doc = await queueMongoOperation(
+              () => this.getDocument(collectionName, key),
+              `getDocument:${key}`
+            );
+            if(doc?.length>0 && doc[0]?.value){
+
             await redis.call('JSON.SET', key, '$', JSON.stringify(doc[0]?.value));}
             //await redis.call('JSON.SET', key, '$', JSON.stringify(doc));
             return 1
@@ -462,7 +553,7 @@ export class RedisService {
           redisKey = isKeySuffix ? '*:'+ key : key + '*';
         else
           redisKey = isKeySuffix ? '*:'+ key : key + ':*';
-       
+
         const parts = key.split(":").map(p => p.trim());
         const KeyrequiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
         KeyrequiredMarkers.forEach(marker => {
@@ -473,36 +564,35 @@ export class RedisService {
         });
 
         let keys = await redis.keys(redisKey);
-        const arrID: string[] = [];
-        const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
-        for (const item of keys) {
-          const _id = item         
-          const parts = _id.split(":").map(p => p.trim()); 
-            let isValid = true;  
-            for (const marker of requiredMarkers) {
-              const idx = parts.indexOf(marker);
-              
-              const next = parts[idx + 1];                
-              if (idx === -1 ||next === undefined ||next === null ||next.trim?.() === "" ||next.toLowerCase?.() === "undefined" || parts.length <= 14) {
-                isValid = false;
-                await this.deleteKey(_id,collectionName)
-                break;
+        if(keys?.length == 0) {
+          const arrID: string[] = [];
+          const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+          for (const item of keys) {
+            const _id = item
+            const parts = _id.split(":").map(p => p.trim());
+              let isValid = true;
+              for (const marker of requiredMarkers) {
+                const idx = parts.indexOf(marker);
+  
+                const next = parts[idx + 1];
+                if (idx === -1 ||next === undefined ||next === null ||next.trim?.() === "" ||next.toLowerCase?.() === "undefined" || parts.length <= 14) {
+                  isValid = false;
+                  await this.deleteKey(_id,collectionName)
+                  break;
+                }
               }
-            }  
-            if (isValid && !arrID.includes(_id)) {
-              arrID.push(_id);
-            }                 
+              if (isValid && !arrID.includes(_id)) {
+                arrID.push(_id);
+              }
+          }
+          if(arrID.length>0)  keys = arrID
+          // Queue MongoDB operation
+          keys = await queueMongoOperation(
+            () => this.getDocumentKeys(collectionName, key),
+            `getDocumentKeys:${key}`
+          );   
         }
-        if(arrID.length>0)  keys = arrID 
-        let mkeys = await this.getDocumentKeys(collectionName,key)
-        if(keys?.length == mkeys?.length){
-          return keys
-        }else{
-         if(mkeys?.length > keys?.length)
-          return mkeys;
-         else
-          return keys;
-       }
+        return keys;
       }else{
         throw 'client not found'
       }
@@ -548,10 +638,17 @@ export class RedisService {
   async renameKey(oldKey, newKey,client) {
     try {
       var result = await redis.call('RENAME', oldKey, newKey);
-       let mongoResult = await this.existsDocument(client,oldKey)
-       if(mongoResult){
-        await this.renameDocumentId(client,oldKey,newKey)
-       }
+      // Queue MongoDB operations
+      let mongoResult = await queueMongoOperation(
+        () => this.existsDocument(client, oldKey),
+        `existsDocument:${oldKey}`
+      );
+      if(mongoResult){
+        await queueMongoOperation(
+          () => this.renameDocumentId(client, oldKey, newKey),
+          `renameDocumentId:${oldKey}`
+        );
+      }
       return result;
     } catch (error) {
       throw error;
@@ -749,10 +846,12 @@ export class RedisService {
         }
       });
 
+      // ✅ PERFORMANCE FIX: Use exact match instead of case-insensitive regex
+      // Regex queries with 'i' flag can't use indexes efficiently and cause 10-30 second delays
       let customId:any = {
-        _id: new RegExp(`${key}`, 'i')
-      }    
-          
+        _id: key  // Exact match - uses index, completes in milliseconds
+      }
+
       var result = await collection.find(customId).toArray();  
      // console.log(1,JSON.stringify(result));     
       if (result?.length>0) { 

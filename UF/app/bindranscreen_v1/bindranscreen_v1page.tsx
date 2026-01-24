@@ -43,7 +43,7 @@ export default function PageBindranscreenV1() {
   const [dropdownData, setDropdownData] = useState<any>({});
   const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token);
-  const screenName:string = "progress";
+  const screenName:string = "tablecheck";
   const user = decodedTokenObj?.selectedAccessProfile;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {refetch, setRefetch} = useContext(TotalContext) as TotalContextProps;

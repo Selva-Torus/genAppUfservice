@@ -26,9 +26,19 @@ export class EventEmitterProcessor implements OnModuleInit {
       connection: {
         host: process.env.HOST,
         port: parseInt(process.env.PORT),
+        maxRetriesPerRequest: 3,
       },
-      concurrency: 10,
+      concurrency: 20, //50,
+      lockDuration: 120000, //30000,      // Increased to 120 seconds (2 minutes) to handle longer jobs
+      lockRenewTime: 30000, //10000,       // Renew lock every 30 seconds
+      stalledInterval: 60000, //5000,     // Increased to 60 seconds
+      maxStalledCount: 2,         // Allow 2 stalled attempts before failing
+      limiter: {
+        max: 100,      // Max 100 jobs
+        duration: 1000 // per second
+      }
     };
+     
 
     const worker = new Worker(
       queueName,
@@ -42,7 +52,7 @@ export class EventEmitterProcessor implements OnModuleInit {
           this.logger.log(`Job ${job.id} - Completed successfully`);
           return result;
         } catch (error) {
-          this.logger.error(`Job ${job.id} - Failed with error: ${error.message}`);
+          this.logger.error(`Job ${job.id} - Failed with error: ${error}`);
           // return null;
           throw error;
         }

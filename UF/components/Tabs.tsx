@@ -10,6 +10,7 @@ import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 type TabDirection = "horizontal" | "vertical";
+type HeaderAlignment = "left" | "center" | "right" | "full";
 
 interface TabItem {
   id: string;
@@ -26,6 +27,7 @@ interface TabsProps {
   tooltipProps?: TooltipPropsType;
   headerText?: string;
   headerPosition?: HeaderPosition;
+  headerAlignment?: HeaderAlignment;
   defaultActiveId?: string;
   onChange?: (id: any) => void;
   className?: string;
@@ -39,6 +41,7 @@ export const Tabs: React.FC<TabsProps> = ({
   tooltipProps,
   headerText,
   headerPosition = "top",
+  headerAlignment = "full",
   defaultActiveId,
   onChange=()=>{},
   className = "",
@@ -69,6 +72,22 @@ export const Tabs: React.FC<TabsProps> = ({
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
+  // Get justify class based on alignment
+  const getJustifyClass = () => {
+    if (direction === "vertical") return "";
+    switch (headerAlignment) {
+      case "left":
+        return "justify-start";
+      case "center":
+        return "justify-center";
+      case "right":
+        return "justify-end";
+      case "full":
+      default:
+        return "";
+    }
+  };
+
   const tabsElement = (
     <div className={`w-full h-full flex ${direction === "vertical" ? "flex-row gap-4" : "flex-col"}`}>
       <div
@@ -76,10 +95,10 @@ export const Tabs: React.FC<TabsProps> = ({
           flex-shrink-0
           flex
           ${direction === "vertical" ? "flex-col" : "flex-row"}
-          ${isDark ? "bg-gray-800" : "bg-gray-100"}
           ${getBorderRadiusClass(branding.borderRadius)}
           p-1
           ${direction === "vertical" ? "w-auto" : "w-full"}
+          ${getJustifyClass()}
         `}
       >
         {items.map((item) => {
@@ -91,13 +110,12 @@ export const Tabs: React.FC<TabsProps> = ({
               disabled={disabled}
               className={`
                 ${getSizeClasses()}
-                [border-radius:var(--border-radius)]
-
+                rounded-lg
                 flex items-center justify-center gap-2
                 font-medium
                 whitespace-nowrap
                 transition-all
-                ${direction === "vertical" ? "" : "flex-1"}
+                ${direction === "vertical" ? "" : headerAlignment === "full" ? "flex-1" : ""}
                 ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
                 ${isActive
                   ? "text-white shadow-sm"

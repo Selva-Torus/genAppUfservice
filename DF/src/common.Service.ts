@@ -1,6 +1,6 @@
 
 import { BadGatewayException, BadRequestException, HttpStatus, Injectable,Logger } from "@nestjs/common";
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 import * as FormData from 'form-data';
 import { readAPIDTO,errorObj } from "./dto";
 import { RuleService } from "./ruleService";
@@ -18,6 +18,8 @@ import * as fs from 'fs';
 import * as stream from 'stream';
 import { Readable } from "stream";
 import path from "path";
+import Redis from 'ioredis';
+import * as pg from "pg";
 import { GridFSBucket } from "mongodb";
 import { MongoClient, ObjectId } from "mongodb";
 import { ConfigService } from "@nestjs/config";
@@ -744,8 +746,8 @@ export class CommonService{
         let zenresult
         var ResultObj = {}
         let fieldarr = []
-        var rule = currentNode.rule
-        var customCode = currentNode.code   
+        let rule = currentNode?.rule
+        let customCode = currentNode?.code   
         //console.log("SessionInfo",SessionInfo);        
         if(rule && Object.keys(rule).length > 0){
           var nodes = rule.nodes     
@@ -842,83 +844,190 @@ export class CommonService{
     }
 
     //RollBack Check
-    async checkRollBack(Ndp,client,action,currentNode?){
-      try {       
-        for (let item in Ndp) {         
-          if(Ndp[item]?.rollback == "true"){          
-            if(action == 'check'){           
-              if(Ndp[item]?.savePoint){
-                if (!Ndp[item].data?.pro?.primaryKey) throw new CustomException(`PrimaryKey not found in ${Ndp[item].nodeName}`,404)
-                if(Ndp[item].nodeType == 'apinode') {        
+    async checkRollBack(Ndp,collectionName,action,currentNode?){
+      try {
+        for (let item in Ndp) {
+          if (Ndp[item]?.rollback == "true") {
+            if (action == 'check') {
+              if (Ndp[item]?.savePoint) {
+                if (Ndp[item].nodeType == 'apinode') {
+                  if (!Ndp[item].data?.pro?.primaryKey) throw new CustomException(`PrimaryKey not found in ${Ndp[item].nodeName}`, 404)
                   let apiKey = Ndp[item]?.apiKey
-                  if (!apiKey) throw new CustomException(`Reference not found in ${Ndp[item].nodeName}`,404)
-                  let apiNdp = JSON.parse(await this.redisService.getJsonData(apiKey, client))
-                  if (!apiNdp) throw new CustomException( `${apiKey} not found `,404)        
-                  let serverUrl: any = Object.values(apiNdp)[0]['data']['serverUrl']        
-                  let endPoint = Object.values(apiNdp)[0]['data']['apiEndpoint']        
-                  if (!serverUrl || !endPoint) throw new CustomException(`serverUrl/endPoint not found in ${apiKey}`,404)                    
+                  if (!apiKey) throw new CustomException(`Reference not found in ${Ndp[item].nodeName}`, 404)
+                  let apiNdp = JSON.parse(await this.redisService.getJsonData(apiKey, collectionName))
+                  if (!apiNdp) throw new CustomException(`${apiKey} not found `, 404)
+                  let serverUrl: any = Object.values(apiNdp)[0]['data']['serverUrl']
+                  let endPoint = Object.values(apiNdp)[0]['data']['apiEndpoint']
+                  if (!serverUrl || !endPoint) throw new CustomException(`serverUrl/endPoint not found in ${apiKey}`, 404)
                 }
-                else if(Ndp[item].nodeType == 'dbnode'){
+                else if (Ndp[item].nodeType == 'dbnode') {
+                  let primaryKey = Ndp[item].data?.pro?.primaryKey
                   let tablename = Ndp[item].data?.pro?.tableName
-                  if(!tablename) throw new CustomException(`TableName not found in ${Ndp[item].nodeName}`,404)
+                  if (!primaryKey || !tablename) throw new CustomException(`PrimaryKey / TableName not found in ${Ndp[item].nodeName}`, 404)
                 }
-              }else{
-                throw new CustomException(`Savepoint not found in ${Ndp[item].nodeName}`,404)
-              }            
-            }else if(action == 'rollback'){                              
-              if(Ndp[item]?.savePoint == currentNode.savepoint){  
-                if (Ndp[item].nodeType == 'apinode') {                       
-                  let primaryKey = Ndp[item]?.data?.pro?.primaryKey
-                  let insertedData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO', '.response', client));
-                  if(!insertedData || (Object.keys(insertedData).length == 0) || insertedData.length == 0){
+              } else {
+                throw new CustomException(`Savepoint not found in ${Ndp[item].nodeName}`, 404)
+              }
+            } else if (action == 'rollback') {
+              let primaryKey = Ndp[item]?.data?.pro?.primaryKey
+              let insertedData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO', '.response', collectionName));
+              if (!insertedData || (Object.keys(insertedData).length == 0) || insertedData.length == 0) {
+                insertedData = currentNode.data
+              }
+              if (Ndp[item]?.savePoint == currentNode.savepoint) {
+                if (Ndp[item].nodeType == 'apinode') {
+                  // let insertedData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO', '.response', collectionName));
+                  if (!insertedData || (Object.keys(insertedData).length == 0) || insertedData.length == 0) {
                     insertedData = currentNode.data
-                  } 
-                  let apiKey = Ndp[item]?.apiKey                
-                  let apiNdp = JSON.parse(await this.redisService.getJsonData(apiKey, client))                     
-                  let serverUrl: any = Object.values(apiNdp)[0]['data']['serverUrl']        
-                  let endPoint = Object.values(apiNdp)[0]['data']['apiEndpoint']                 
-                  if(insertedData){                                   
-                    if(Array.isArray(insertedData) && insertedData.length > 0){
-                      for(let i=0;i< insertedData.length;i++){
-                        if(insertedData[i][primaryKey]){
-                          let rollBackurl = serverUrl + endPoint + '/' + insertedData[i][primaryKey]
-                          var deleteRes = await this.deleteCall(rollBackurl)
-                          console.log('deleteRes', deleteRes);
-                          if(deleteRes?.status == 'Success' && (deleteRes?.statusCode == 200 || deleteRes?.statusCode == 201) && deleteRes?.result){
-                            await this.redisService.deleteKey(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO',client)
-                            // let nodeRes = JSON.parse(await this.redisService.getJsonData(currentNode.key + ':nodeResponse', client));
-                            // if(nodeRes?.length > 0){
-                            //   nodeRes = nodeRes.filter(item => item.nodeId !== Ndp[item].nodeId);
-                            //   await this.redisService.setJsonData(currentNode.key + ':nodeResponse', JSON.stringify(nodeRes), client);
-                            // }
+                  }
+                  let apiKey = Ndp[item]?.apiKey
+                  let apiNdp = JSON.parse(await this.redisService.getJsonData(apiKey, collectionName))
+                  let serverUrl: any = Object.values(apiNdp)[0]['data']['serverUrl']
+                  let endPoint = Object.values(apiNdp)[0]['data']['apiEndpoint']
+                  let method = (Object.values(apiNdp)[0]['data']['method']).toLowerCase()
+                  const requestConfig: AxiosRequestConfig = {
+                    headers: {
+                      Authorization: `Bearer ${currentNode.token}`,
+                    },
+                  };
+                  if (insertedData) {
+                    let deleteRes;
+                    if (method == 'post') {
+                      if (Array.isArray(insertedData) && insertedData.length > 0) {
+                        for (let i = 0; i < insertedData.length; i++) {
+                          if (insertedData[i][primaryKey]) {
+                            let rollBackurl = serverUrl + endPoint + '/' + insertedData[i][primaryKey]
+                            deleteRes = await this.deleteCall(rollBackurl, requestConfig)
+                          }
+                        }
+                      } else if (Object.keys(insertedData).length > 0) {
+                        for (let item of insertedData) {
+                          if (item[primaryKey]) {
+                            let rollBackurl = serverUrl + endPoint + '/' + item[primaryKey]
+                            deleteRes = await this.deleteCall(rollBackurl, requestConfig)
                           }
                         }
                       }
-                    }else if(Object.keys(insertedData).length > 0){
-                      for(let item of insertedData){
-                        if(item[primaryKey]){
+                    } else if (method == 'patch') {
+                      let rollbackData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO', '.rollback', collectionName));
+                      for (let item of rollbackData) {
+                        if (item[primaryKey]) {
                           let rollBackurl = serverUrl + endPoint + '/' + item[primaryKey]
-                          var deleteRes = await this.deleteCall(rollBackurl)
-                          console.log('deleteRes', deleteRes);
-                          if(deleteRes?.status == 'Success' && (deleteRes?.statusCode == 200 || deleteRes?.statusCode == 201) && deleteRes?.result){
-                            await this.redisService.deleteKey(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO',client)
-                            // let nodeRes = JSON.parse(await this.redisService.getJsonData(currentNode.key + ':nodeResponse', client));
-                            // if(nodeRes?.length > 0){
-                            //   nodeRes = nodeRes.filter(item => item.nodeId !== Ndp[item].nodeId);
-                            //   await this.redisService.setJsonData(currentNode.key + ':nodeResponse', JSON.stringify(nodeRes), client);
-                            // }
-                          }
+                          deleteRes = await this.patchCall(rollBackurl, rollbackData, requestConfig)
                         }
                       }
                     }
-                  }      
-                }   
-                // rollBackArr.push({
-                //   nodeName: Ndp[item].nodeName,
-                //   nodeId: Ndp[item].nodeId,
-                //   primaryKey: Ndp[item].data.pro.primaryKey,
-                //   savePoint:Ndp[item]?.savepoint
-                // })                                     
+                  }
+                } else if (Ndp[item].nodeType == 'dbnode') {
+                  let qryres: any, manualQry, qry
+                  let rollback = Ndp[item]['data']['pro']['enableRollback']['value']
+                  if (rollback)
+                    manualQry = rollback.subSelection._true.manualQuery
+                  Object.keys(insertedData).forEach(key => {
+                    const regex = new RegExp(`\\$\\$${key}`, 'g');
+                    const value = typeof insertedData[key] === 'string' ? `'${insertedData[key]}'` : insertedData[key];
+                    qry = manualQry.replace(regex, value);
+                  });
+                  // let qry = `DELETE FROM ${tablename} WHERE ${primaryKey} = ${insertedData[primaryKey]};`
+                  let conectdb = await this.dbconfig(Ndp[item], collectionName)
+                  let db = conectdb.client
+                  await db.connect();
+                  if (qry) qryres = await db.query(qry);
+                  await db.end();
+                  //}
+                } else if (Ndp[item].nodeType == 'mongo-dbnode') {
+                  let manualQry, rmanualQry, manualQryType
+                  let rollback = Ndp[item]['data']['pro']['enableRollback']['value']
+                  if (rollback) {
+                    manualQryType = rollback.subSelection._true.manualQueryType.value
+                    rmanualQry = rollback.subSelection._true.manualQueryType.manualQuery
+                  }
+                  let mconfig = await this.mongodbconfig(Ndp[item], collectionName)
+                  let mongodbUrl = mconfig.mongodbUrl
+                  //let manualQryType = mconfig.manualQryType
+                  const client = new MongoClient(mongodbUrl);
+                  client.connect()
+                    .then(() => {
+                      console.log('Connected to the database successfully!');
+                    })
+                    .catch((err) => {
+                      console.error('Error connecting to the database:', err);
+                    });
+                  let oprname, idarr = [];
+                  let db = client.db();
+                  if (manualQryType == 'deleteOne' || manualQryType == 'deleteMany') {
+                    if (insertedData.length > 0) {
+                      if (manualQryType == 'deleteMany') {
+                        for (let x = 0; x < insertedData.length; x++)
+                          idarr.push(insertedData[x]['_id'])
+                        manualQry = manualQry.replace('$$_ids', idarr)
+                        // manualQry = `{ _id : { $in: ${idarr}}}`
+                        await db.collection(collectionName)[manualQryType](manualQry);
+                      }
+                      else {
+                        let ids = insertedData[0]['_id']
+                        manualQry = manualQry.replace('$$_id', ids)
+                        //manualQry = {_id : ids}
+                        await db.collection(collectionName)[manualQryType](manualQry);
+                      }
+                    }
+                  }
+                }
+                else if (Ndp[item].nodeType == 'streamnode') {
+                  let rollbackData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO', '.rollback', collectionName));
+                  let reqData: any;
+                  let sconf = await this.streamConfig(Ndp[item], collectionName)
+                  if (!sconf.streamName)
+                    reqData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodename + '.PRO', '.request', collectionName));
+                  else
+                    reqData = sconf.streamName
+                  if (sconf.oprname == 'write') {
+                    if (rollbackData) {
+                      if (Array.isArray(rollbackData) && rollbackData.length)
+                        rollbackData.forEach(async (item) => await sconf.redisconfig.call('JSON.SET', reqData, '$', JSON.stringify(item)))
+                      else
+                        await sconf.redisconfig.call('JSON.SET', reqData, '$', JSON.stringify(item))
+                    } else {
+                      if (Array.isArray(insertedData) && insertedData.length)
+                        insertedData.forEach(async (item) => await sconf.redisconfig.call('XDEL', reqData, item))
+                      else
+                        await sconf.redisconfig.call('XDEL', reqData, insertedData)
+                    }
+
+                  }
+                }
+                else if (Ndp[item].nodeType == 'filenode') {
+                  let rollbackData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO', '.rollback', collectionName));
+
+                  let fconf = await this.fileConfig(Ndp[item], collectionName)
+                  if (fconf.oprname == 'write') {
+                    let auth = {
+                      username: fconf.seaWeedConfig.username,
+                      password: fconf.seaWeedConfig.password
+                    }
+                    let reqData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodename + '.PRO', '.request', collectionName));
+                    let url = `${fconf.seaWeedConfig.url}/${reqData}`
+                    if (rollbackData) {
+                      await axios.patch(url, rollbackData, { auth });
+                    } else
+                      await axios.delete(url, { auth });
+                  }
+                }
+                else if (Ndp[item].nodeType == 'procedureexecutionnode' || 'function_node') {
+                  let pconf = await this.procedureConfig(Ndp[item], collectionName)
+                  if (insertedData && Object.keys(insertedData).length > 0) {
+                    Object.keys(insertedData).forEach(key => {
+                      const regex = new RegExp(`\\$\\$${key}`, 'g');
+                      const value = typeof insertedData[key] === 'string' ? `'${insertedData[key]}'` : insertedData[key];
+                      pconf.rexecmd = pconf.rexecmd.replace(regex, value);
+                    });
+                  }
+                  await pconf.client.connect();
+                  await pconf.client.query(pconf.rqry)
+                  const result = await pconf.client.query(`${pconf.rexecmd}`);
+                  await pconf.client.end();
+                  // await this.qryExec(pconf.dbType,pconf.dbUrl,pconf.rqry,pconf.rexecmd,'PF-PFD')
+                }
               }
             }
           }
@@ -1528,5 +1637,404 @@ export class CommonService{
     }
 
    
+
+     async dbconfig(customConfig,collectionName){
+    try {
+      let client: any;
+      let nodeVersion = customConfig?.nodeVersion;
+      if (!nodeVersion)
+        throw new CustomException('Node version not found', 404);
+      let oprname, oprkey, tablename, sessionParams, selcol, filterParams, connectorType, storageType, dpdkey, conncectorName, manualQuery, insertParams,rule;
+      if (nodeVersion.toLowerCase() == 'v1') {
+        connectorType = customConfig?.data?.pro?.connector?.value;
+        storageType = customConfig?.data?.pro?.connector?._selection?._selection?.value;
+        dpdkey = customConfig?.data?.pro?.connector?._selection?.value;
+        conncectorName = customConfig?.data?.pro?.connector?._selection?.subSelection?.value;
+        oprname = customConfig.data?.pro?.operationName?.value;
+        oprkey = Object.keys(customConfig.data.pro);
+        tablename = customConfig.data?.pro?.tableName;
+        sessionParams = customConfig.data?.pro?.filterParams
+         rule = customConfig?.rule
+        if (oprname == 'select') {
+          filterParams = customConfig.data?.pro[oprname]?.filterParams?.items;
+        }
+        manualQuery = customConfig.data?.pro?.manualQuery;
+        if (oprname == 'insert') {
+          insertParams = customConfig.data?.pro[oprname]?.insertParams?.items;
+        }
+      }
+      else if (nodeVersion.toLowerCase() == 'v2') {
+
+      }
+      if (!dpdkey) throw new CustomException('DPD key not found', 404);
+      let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+      let nodedata = Object.keys(extdata)[0];
+      let dbUrl, schemaname, dbConfig, Querystr, dbtype;
+      if (customConfig) {
+        if (storageType?.toLowerCase() == 'external') {
+          let configConnectors = extdata[nodedata].data['externalConnectors-DB']?.items;
+          if (configConnectors?.length > 0) {
+            for (let i = 0; i < configConnectors.length; i++) {
+              if (configConnectors[i].connectorName == conncectorName) {
+                dbConfig = configConnectors[i]?.credentials;
+                dbtype = configConnectors[i]?.type
+              }
+            }
+          }
+          if (!dbConfig?.host) {
+            throw new CustomException(`Invalid DB credentials`,404);
+          }
+          if (dbtype == 'postgres'){
+            if(dbConfig?.username && dbConfig?.password && dbConfig?.host && dbConfig?.port && dbConfig?.database && dbConfig?.schema)
+            dbUrl = `postgresql://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/${dbConfig?.database}?schema=${dbConfig?.schema}`
+            else
+            dbUrl = dbConfig?.host
+          }              
+          else if (dbtype == 'mysql'){
+            if(dbConfig?.username && dbConfig?.password && dbConfig?.host && dbConfig?.port && dbConfig?.database && dbConfig?.schema)
+            dbUrl = `mysql://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/${dbConfig?.database}?schema=${dbConfig?.schema}`
+            else
+            dbUrl = dbConfig?.host
+          }              
+          else if (dbtype == 'oracle'){
+            if(dbConfig?.username && dbConfig?.password && dbConfig?.host && dbConfig?.port && dbConfig?.serviceName)
+            dbUrl = `oracle://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/?serviceName=${dbConfig?.serviceName}`;
+            else
+            dbUrl = dbConfig?.host
+          }              
+          schemaname = dbConfig?.schema
+        } else {
+          if (nodedata)
+            dbtype = extdata[nodedata]['data']?.applicationDBType.value
+          dbUrl = process.env.DATABASE_URL;
+          schemaname = process.env.DATABASE_URL.split('schema=')[1];
+        }
+        if (!dbUrl) throw new CustomException('DB url not found', 404);
+        if (dbtype && dbtype == 'postgres') {
+          const { Client } = pg;
+          client = new Client({
+            connectionString: dbUrl,
+          });
+        } else if (dbtype == 'mysql') {
+          const mysql = require('mysql2/promise');
+          client = await mysql.createConnection({
+            connectionString: dbUrl,
+          });
+        } else if (dbtype == 'oracle') {
+          const oracledb = require('oracledb');
+          client = await oracledb.createConnection({
+            connectionString: dbUrl,
+          });
+        }
+      }
+      return { client, oprname, sessionParams, manualQuery, filterParams,rule}
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async mongodbconfig(customConfig,collectionName){
+   try {
+    let collnName, manualQryType, manualQry, sessionfilterParams, connectorType, storageType, dpdkey, conncectorName, filterParams;
+    let nodeVersion = customConfig?.nodeVersion;
+    if (!nodeVersion) throw 'Node version not found';
+    if (nodeVersion.toLowerCase() == 'v1') {
+      connectorType = customConfig?.data?.pro?.connector?.value;
+      storageType = customConfig?.data?.pro?.connector?._selection?._selection?.value;
+      dpdkey = customConfig?.data?.pro?.connector?._selection?.value;
+      conncectorName = customConfig?.data?.pro?.connector?._selection?.subSelection?.value;
+      collnName = customConfig?.data?.pro?.collectionName;
+      manualQryType = customConfig?.data?.pro?.manualQueryType?.value;
+      manualQry = customConfig?.data?.pro?.manualQueryType?.manualQuery;
+      sessionfilterParams = customConfig?.data?.pro?.filterParams
+      filterParams = customConfig.data?.pro['select']?.filterParams?.items;
+    } 
+      let mongoQry, mongoDbarr, mongodbConfig, mongodbUrl;
+      if (storageType?.toLowerCase() == 'external') {
+        if (!dpdkey) throw new CustomException('DPD key not found', 404);
+        let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+        if (!extdata) throw new CustomException('DPD value not found', 404);   
+        let nodedata = Object.keys(extdata)[0];
+        let configConnectors = extdata[nodedata].data['externalConnectors-DB']?.items;
+        if (configConnectors?.length > 0) {
+          for (let i = 0; i < configConnectors.length; i++) {
+            if (configConnectors[i].connectorName == conncectorName) {
+              mongodbConfig = configConnectors[i]?.credentials;
+            }
+          }
+        }
+        if (!mongodbConfig?.host) {
+          throw new CustomException(`Invalid MongoDB credentials`,404);
+        }
+        if (mongodbConfig.password.includes('@'))
+        mongodbConfig.password = mongodbConfig.password?.replaceAll('@', '%40');
+        if(mongodbConfig?.username && mongodbConfig?.password && mongodbConfig?.host && mongodbConfig?.port && mongodbConfig?.database)
+        mongodbUrl = `mongodb://${mongodbConfig?.username}:${mongodbConfig?.password}@${mongodbConfig?.host}:${mongodbConfig?.port}/${mongodbConfig?.database}?directConnection=true&authSource=admin`;
+        else
+        mongodbUrl = mongodbConfig?.host
+      } else {
+        mongodbUrl = process.env.DATABASE_URL
+      }
+      if (!mongodbUrl)
+        throw new CustomException('Mongo DB url not found', 404);    
+
+        return {mongodbUrl,manualQryType,manualQry,sessionfilterParams,filterParams,collnName}
+      } catch (error) {
+        throw error
+      }
+    
+  }
+
+  async streamConfig(customConfig,collectionName){
+      let oprname, oprkey, streamName, fromStreamid, toStreamid, connectorType, storageType, dpdkey, conncectorName,apikey,responseNodeName,fieldName,isStatic,useAsConsumer,consumerName,consumerGroupName,rollback,filterParams,ConsumerBasedOnJob;
+      let nodeVersion = customConfig?.nodeVersion;
+      if (!nodeVersion)
+        throw new CustomException('nodeVersion not found', 404);
+
+      if (nodeVersion.toLowerCase() == 'v1') {
+        connectorType = customConfig?.data?.props?.connector?.value;
+        storageType = customConfig?.data?.props?.connector?._selection?.value;
+        dpdkey = customConfig?.data?.props?.connector?.value;
+        conncectorName = customConfig?.data?.props?.connector?.subSelection?.value;        
+        useAsConsumer = customConfig?.data?.props?.useAsConsumer?.value
+        oprname = customConfig?.data?.props?.operation?.value
+        rollback =  customConfig?.rollback
+        filterParams = customConfig?.data?.filterParams
+        ConsumerBasedOnJob = customConfig?.data?.props?.jobBased?.value
+          isStatic = customConfig?.data?.props?.operation?.subSelection[oprname]?.isStatic.value
+          if (isStatic) {
+          if(oprname == 'read'){ 
+            streamName = customConfig?.data?.props?.operation?.subSelection[oprname]?.isStatic?.subSelection?._true?.streamName?.value
+            fromStreamid = customConfig?.data?.props?.operation?.subSelection[oprname]?.isStatic?.subSelection?._true?.startTime?.value
+            toStreamid = customConfig?.data?.props?.operation?.subSelection[oprname]?.isStatic?.subSelection?._true?.endTime?.value
+            if (useAsConsumer) {
+              consumerName = customConfig?.data?.props?.operation?.subSelection[oprname]?.isStatic?.subSelection?._true?.useAsConsumer?.subSelection?._true?.consumerName?.value
+              consumerGroupName = customConfig?.data?.props?.operation?.subSelection[oprname]?.isStatic?.subSelection?._true?.useAsConsumer?.subSelection?._true?.consumerGroupName?.value
+              if (!consumerName || !consumerGroupName)
+                throw new CustomException('consumerName/consumerGroupName not found', 404)
+            }          
+          }else if (oprname == 'write'){            
+            streamName = customConfig?.data?.props?.operation?.subSelection[oprname]?.isStatic?.subSelection?._true?.streamName?.value
+            fieldName = customConfig?.data?.props?.operation?.subSelection[oprname]?.isStatic?.subSelection?._true?.streamName?.value            
+          }
+        }       
+        apikey = customConfig.data?.apiKey
+        responseNodeName = customConfig?.outputDataNodes;
+      }
+
+      let streamhost
+      let streamport
+      let redisconfig
+      if (storageType?.toLowerCase() == 'external') {
+        if (!dpdkey) throw new CustomException('DPD key not found', 404);
+        let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+        let nodedata = Object.keys(extdata)[0];
+        let configConnectors = extdata[nodedata].data['externalConnectors-STREAM']?.items;
+        if (configConnectors?.length > 0) {
+          for (let i = 0; i < configConnectors.length; i++) {
+            if (configConnectors[i].connectorName == conncectorName) {
+              streamhost = configConnectors[i]?.credentials.host;
+              streamport = parseInt(configConnectors[i]?.credentials.port);
+            }
+          }
+        }
+        redisconfig = new Redis({
+          host: streamhost,
+          port: streamport,
+        });
+                    
+        
+        if (!streamhost || !streamport) {
+          throw new CustomException('Invalid stream credentials', 422);
+        }
+      }
+     
+      if(oprname == 'read' ){        
+        if(isStatic)
+         return {ConsumerBasedOnJob,storageType,redisconfig,isStatic,streamName,fromStreamid,toStreamid,consumerName,consumerGroupName,oprname,apikey,responseNodeName,useAsConsumer,filterParams}
+       else return {ConsumerBasedOnJob,storageType,redisconfig,isStatic,oprname,apikey,responseNodeName,useAsConsumer,filterParams}
+       }     
+       else if (oprname == 'write'){
+         if(isStatic)
+          return {ConsumerBasedOnJob,storageType,redisconfig,isStatic,streamName,fieldName,oprname,apikey,rollback,filterParams}
+        else return {ConsumerBasedOnJob,storageType,redisconfig,isStatic,oprname,apikey,responseNodeName,rollback,filterParams}
+       }
+  }
+
+  async fileConfig(customConfig,collectionName){
+    try {
+    let nodeVersion = customConfig?.nodeVersion;
+    let connectorType, storageType, dpdkey, conncectorName, oprname, oprkey, encryptionFlag, fileFolderPath, fileType, fileName, ndpPro,apikey,responseNodeName,rollback,filterParams,isStatic;
+
+    if (!nodeVersion)
+      throw new CustomException('nodeVersion not found', 404);  
+    let url, userName, password;
+    if (nodeVersion.toLowerCase() == 'v1') {
+      connectorType = customConfig?.data?.pro?.connector?.value;
+      storageType = customConfig?.data?.pro?.connector?._selection?._selection?.value;
+      dpdkey = customConfig?.data?.pro?.connector?._selection?.value;
+      conncectorName = customConfig?.data?.pro?.connector?._selection?.subSelection?.value;
+      ndpPro = customConfig.data?.pro;
+      oprname = ndpPro?.operationName.value;
+      oprkey = Object.keys(ndpPro);
+      encryptionFlag = ndpPro?.encryptionFlag;
+      apikey = customConfig?.data?.apiKey
+      responseNodeName = customConfig?.outputDataNodes;
+      rollback = customConfig?.rollback     
+    }else if (nodeVersion.toLowerCase() == 'v2') {
+      dpdkey = customConfig?.data?.connector?.value;
+      storageType = customConfig?.data?.connector?._selection?.value;               
+      conncectorName = customConfig?.data?.connector?.subSelection?.value;
+      oprname = customConfig?.data?.operationName.value
+      encryptionFlag = customConfig?.data?.isEncrypted?.value;
+      filterParams = customConfig?.data?.filterParams
+      apikey = customConfig?.apiKey
+      responseNodeName = customConfig?.outputDataNodes;
+      isStatic =  customConfig?.data?.operationName.subSelection[oprname]?.isStaticFile.value
+      if(isStatic){
+        fileName = customConfig?.data?.operationName.subSelection[oprname]?.isStaticFile?.subSelection?._true?.fileName?.value
+        fileType = customConfig?.data?.operationName.subSelection[oprname]?.isStaticFile?.subSelection?._true?.fileType?.value
+        fileFolderPath = customConfig?.data?.operationName.subSelection[oprname]?.isStaticFile?.subSelection?._true?.pathName?.value
+      }
+    }
+    //else if (nodeVersion.toLowerCase() == 'v3') {
+
+    //}
+
+    if (storageType.toLowerCase() == 'external') {
+      if (!dpdkey) throw new CustomException('DPD key not found', 404);
+      let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+      if(extdata && Object.keys(extdata).length > 0) {
+        let nodedata = Object.keys(extdata)[0];
+        let configConnectors = extdata[nodedata].data['externalConnectors-FILE']?.items;
+        if (configConnectors?.length > 0) {
+          for (let i = 0; i < configConnectors.length; i++) {
+            if (configConnectors[i].connectorName == conncectorName) {
+              url = configConnectors[i]?.credentials.host;
+              userName = configConnectors[i]?.credentials.username;
+              password = configConnectors[i]?.credentials.password;
+            }
+          }
+        }
+      }
+    } else {
+      url = process.env.SEAWEED_OUTPUT_HOST
+      userName = process.env.SEAWEED_USERNAME
+      password = process.env.SEAWEED_PASSWORD
+    }
+
+      if (!url || !userName || !password)                
+        throw new CustomException('Invalid File Credentials',404);
+
+      const seaWeedConfig = {
+        url: url,
+        username: userName,
+        password: password,
+      };
+      if(isStatic)
+        return {seaWeedConfig,oprname,responseNodeName,apikey,rollback,fileName,fileType,fileFolderPath,isStatic,filterParams}
+      else
+      return {seaWeedConfig,oprname,responseNodeName,apikey,rollback,filterParams}
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async procedureConfig(customConfig,collectionName){
+    try {
+      let params, procedurequery, nodeVersion, dbType, connectorType, storageType, dpdkey, conncectorName, dbConfig,executecommand,inMemory,rlbckcnfg,rlbckflg,rexecmd,rqry
+      nodeVersion = customConfig.nodeVersion
+      inMemory = customConfig.inMemory
+      if (!nodeVersion)
+        throw new CustomException('nodeVersion not found', 404);
+
+      if (inMemory == 'true')
+        throw new CustomException('inMemory is active', 403)
+
+      if (nodeVersion.toLowerCase() == 'v1') {
+        dbType = customConfig?.data?.pro?.dbType.value;
+        connectorType = customConfig?.data?.pro?.connector?.value;
+        storageType = customConfig?.data?.pro?.connector?._selection?._selection?.value;
+        dpdkey = customConfig?.data?.pro?.connector?._selection?.value;
+        conncectorName = customConfig?.data?.pro?.connector?._selection?.subSelection?.value;
+        procedurequery = customConfig?.data?.pro?.code.value;
+        params = customConfig?.data?.pro?.params.items;
+        executecommand = customConfig?.data?.pro?.executecommand?.value
+        rlbckcnfg = customConfig?.data?.pro?.enableRollback
+        rlbckflg = rlbckcnfg?.value
+        if(rlbckflg){
+          rqry = rlbckcnfg?.subSelection.code.value
+          rexecmd = rlbckcnfg?.subSelection.executecommand.value
+        }
+      }
+      // else if (nodeVersion.toLowerCase() == 'v2') {
+
+      // }
+      let dbUrl: any
+      if (storageType?.toLowerCase() == 'external') {
+        if (!dpdkey) throw new CustomException('DPD key not found', 404);
+        let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+        let nodedata = Object.keys(extdata)[0];
+        let configConnectors = extdata[nodedata].data['externalConnectors-DB']?.items;
+        if (configConnectors?.length > 0) {
+          for (let i = 0; i < configConnectors.length; i++) {
+            if (configConnectors[i].connectorName == conncectorName) {
+              dbConfig = configConnectors[i]?.credentials;
+            }
+          }
+        }
+        if (!dbConfig?.host) {
+          throw new CustomException(`Invalid DB credentials`, 404);
+        }
+        if (dbType == 'postgres') {
+          if (dbConfig?.port && dbConfig?.username && dbConfig?.password && dbConfig?.database && dbConfig?.schema)
+            dbUrl = `postgresql://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/${dbConfig?.database}?schema=${dbConfig?.schema}`
+          else
+            dbUrl = dbConfig?.host
+        }
+        else if (dbType == 'mysql') {
+          if (dbConfig?.port && dbConfig?.username && dbConfig?.password && dbConfig?.database && dbConfig?.schema)
+            dbUrl = `mysql://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/${dbConfig?.database}?schema=${dbConfig?.schema}`
+          else
+            dbUrl = dbConfig?.host
+        }
+        else if (dbType == 'oracle') {
+          // dbUrl = `oracle://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/${dbConfig?.sid}`;
+          // or
+          if (dbConfig?.port && dbConfig?.username && dbConfig?.password && dbConfig?.database && dbConfig?.schema && dbConfig?.serviceName)
+            dbUrl = `oracle://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/?serviceName=${dbConfig?.serviceName}`;
+          else
+            dbUrl = dbConfig?.host
+        }
+
+      } else {
+        dbUrl = process.env.DATABASE_URL;
+      }
+      let client
+      if (dbType == 'postgres') {
+        const { Client } = pg;
+         client = new Client({
+          connectionString: dbUrl,
+        });
+
+      } else if (dbType == 'mysql') {
+        const mysql = require('mysql2/promise');
+         client = await mysql.createConnection({
+          connectionString: dbUrl,
+        });
+      } else if (dbType == 'oracle') {
+        const oracledb = require('oracledb');
+         client = await oracledb.createConnection({
+          connectionString: dbUrl,
+        });
+      }
+       if(rlbckflg)
+          return {dbType,dbUrl,rqry,rexecmd,client}
+      else
+         return{procedurequery,params,executecommand,client}
+    } catch (error) {
+      throw error
+    }
+  } 
     
 }

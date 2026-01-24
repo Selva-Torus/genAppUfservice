@@ -59,6 +59,7 @@
     "ioredis": "^5.4.1",
     "json-to-json-schema": "^0.0.4",
     "jsonata": "^2.0.6",
+     "kafkajs": "^2.2.4",
     "mime-types": "^3.0.1",   
     "mongodb": "^6.13.0",
     "node-rsa": "^1.1.1",
@@ -68,14 +69,17 @@
     "papaparse": "^5.5.3",
     "pg": "^8.13.1",
     "prisma": "^6.15.0",
+    "p-queue": "^6.6.2",
     "recast": "^0.23.11",
     "redlock": "^5.0.0-beta.2",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
+    "uuid": "^9.0.1",
     "valibot": "^1.0.0-beta.9",
     "xid-js": "^1.0.1",
     "xml-js": "^1.6.11",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "cron": "^4.4.0"
   },
   "devDependencies": {
     "@babel/generator": "^7.28.0",

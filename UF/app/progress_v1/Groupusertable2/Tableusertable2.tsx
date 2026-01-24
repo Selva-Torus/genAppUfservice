@@ -844,6 +844,7 @@ const colurIndicator = (keyValue:any=[], comingValue:any) => {
               wordWrap={true}
               loading={loading}
               onRowClick={onButtonSecurityHandle}
+              isRowclick={false}
             />
             </div>
             {paginationData?.page != null && paginationData?.pageSize != null && paginationData?.total != null && Array.isArray(allDataObject) && allDataObject.length>0 ?

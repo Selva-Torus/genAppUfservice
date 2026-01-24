@@ -2,7 +2,6 @@
 
 import React from "react";
 import { useGlobal } from "@/context/GlobalContext";
-import { Tooltip } from "./Tooltip";
 import { ProgressTheme, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
@@ -32,7 +31,7 @@ export const Progress: React.FC<ProgressProps> = ({
 }) => {
   const { theme, direction, branding } = useGlobal();
 
-  const getProgressColor = () => {
+  const getProgressColor = (): string => {
     switch (progressTheme) {
       case "default":
         return branding.brandColor;
@@ -46,14 +45,21 @@ export const Progress: React.FC<ProgressProps> = ({
         return "#EF4444";
       case "misc":
         return "#8B5CF6";
+      default:
+        return branding.brandColor;
     }
   };
 
   // Helper to convert hex to rgba for hover effect
-  const hexToRgba = (hex: string, alpha: number) => {
-    const r = parseInt(hex?.slice(1, 3), 16);
-    const g = parseInt(hex?.slice(3, 5), 16);
-    const b = parseInt(hex?.slice(5, 7), 16);
+  const hexToRgba = (hex: string, alpha: number): string => {
+    if (!/^#([0-9a-fA-F]{6})$/.test(hex)) {
+      return `rgba(0, 0, 0, ${alpha})`;
+    }
+
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
@@ -96,15 +102,15 @@ export const Progress: React.FC<ProgressProps> = ({
   );
 
 
-   return (
-       <CommonHeaderAndTooltip
-         needTooltip={needTooltip}
-         tooltipProps={tooltipProps}
-         headerText={headerText}
-         headerPosition={headerPosition}
-         className={className} 
-       >
-         {progressElement}
-       </CommonHeaderAndTooltip>
-     )
+  return (
+    <CommonHeaderAndTooltip
+      needTooltip={needTooltip}
+      tooltipProps={tooltipProps}
+      headerText={headerText}
+      headerPosition={headerPosition}
+      className={className}
+    >
+      {progressElement}
+    </CommonHeaderAndTooltip>
+  )
 };

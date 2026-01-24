@@ -54,7 +54,8 @@ export const Checkbox: React.FC<CheckboxProps> = ({
     if (disabled) {
       styles.backgroundColor = isDark ? "#374151" : "#E5E7EB";
       styles.borderColor = isDark ? "#4B5563" : "#D1D5DB";
-      styles.color = isDark ? "#6B7280" : "#9CA3AF";
+      // Only show checkmark if it's actually checked
+      styles.color = checked ? (isDark ? "#6B7280" : "#9CA3AF") : "transparent";
     } else if (checked) {
       styles.backgroundColor = "var(--selection-color)";
       styles.borderColor = "var(--selection-color)";
@@ -161,22 +162,6 @@ export const Checkbox: React.FC<CheckboxProps> = ({
       )}
     </label>
   );
-
-  const renderWithTitle = (element: React.ReactNode) => {
-    if (!title) return element;
-
-    const titleClasses = `${fontSizeClass} font-semibold mb-2 ${
-      theme === "dark" || theme === "dark-hc" ? "text-gray-200" : "text-gray-800"
-    } ${className}`;
-
-    return (
-      <div className="flex flex-col">
-        <div className={titleClasses}>{title}</div>
-        {element}
-      </div>
-    );
-  };
-
   return (
     <CommonHeaderAndTooltip
       needTooltip={needTooltip}

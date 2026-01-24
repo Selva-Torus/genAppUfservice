@@ -5,6 +5,7 @@
   "appGroupDesc": "appgroup",
   "logType": "mongodb",
   "appDesc": "application",
+  "appLogo": "torus/9.1/CT309/resources/images/lg-b44d8cea7df3575abf83e2bcb765f68779.jpg",
   "isOld": true,
   "clientCode": "CT309",
   "loginDetails": {
@@ -27,7 +28,7 @@
       "isneedTouring": false,
       "touringData": {}
     },
-    "lastActive": "2026-01-12T04:08:28.292Z",
+    "lastActive": "2026-01-24T06:22:59.007Z",
     "client": "CT309"
   }
 } */

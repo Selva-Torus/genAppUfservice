@@ -18,6 +18,7 @@ import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import QrCodeqrcode  from "./QrCodeqrcode";
 import Progressprogress1  from "./Progressprogress1";
 import Sliderslider2  from "./Sliderslider2";
+import Buttongggg  from "./Buttongggg";
 import TreeViewertreeviewer  from "./TreeViewertreeviewer";
 import Signaturesignature  from "./Signaturesignature";
 import PinInputpininput  from "./PinInputpininput";
@@ -63,6 +64,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
       "qrcode",
       "progress1",
       "slider2",
+      "gggg",
       "treeviewer",
       "signature",
       "pininput",
@@ -89,6 +91,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
       "qrcode",
       "progress1",
       "slider2",
+      "gggg",
       "treeviewer",
       "signature",
       "pininput",
@@ -128,6 +131,7 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
   const {qrcode1c711, setqrcode1c711}= useContext(TotalContext) as TotalContextProps;
   const {progress1c37ec, setprogress1c37ec}= useContext(TotalContext) as TotalContextProps;
   const {slider2edf6a, setslider2edf6a}= useContext(TotalContext) as TotalContextProps;
+  const {gggg071dc, setgggg071dc}= useContext(TotalContext) as TotalContextProps;
   const {treeviewer4d8cf, settreeviewer4d8cf}= useContext(TotalContext) as TotalContextProps;
   const {signatureb24c1, setsignatureb24c1}= useContext(TotalContext) as TotalContextProps;
   const {pininputd19b1, setpininputd19b1}= useContext(TotalContext) as TotalContextProps;
@@ -169,6 +173,9 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
     }
     if(orchestrationData?.data?.readableControls.includes("slider2")){
       setslider2edf6a({...slider2edf6a,isDisabled:true});
+    }
+    if(orchestrationData?.data?.readableControls.includes("gggg")){
+      setgggg071dc({...gggg071dc,isDisabled:true});
     }
     if(orchestrationData?.data?.readableControls.includes("treeviewer")){
       settreeviewer4d8cf({...treeviewer4d8cf,isDisabled:true});
@@ -264,11 +271,13 @@ const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimary
         backgroundClip: '',
         backgroundBlendMode: ''
       }}
-      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'text-white' : 'text-black'}`}
     >
         {allowedControls.includes("qrcode") ?<QrCodeqrcode   /* 1c711 */checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
         {allowedControls.includes("progress1")?<Progressprogress1  /* c37ec */ isDynamic={false } index={idx} item={item} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
           {allowedControls.includes("slider2") ?<Sliderslider2   /* edf6a */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
+        {        (("gggg" in ButtonGoRuleData)?ButtonGoRuleData["gggg"]:true) && 
+          allowedControls.includes("gggg")  ?            <Buttongggg lockedData={lockedData} setLockedData={setLockedData} primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData} checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData}/>: <div></div>} 
         {allowedControls.includes("treeviewer")?<TreeViewertreeviewer /* 4d8cf */ encryptionFlagCompData={encryptionFlagCompData}  />: <div></div>}
           {allowedControls.includes("signature") ?<Signaturesignature   /* b24c1 */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
         {allowedControls.includes("pininput") ?<PinInputpininput   /* d19b1 */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}

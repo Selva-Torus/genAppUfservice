@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useGlobal } from '@/context/GlobalContext'
 import { useEventBus } from '@/context/EventBusContext'
 import { Tooltip } from './Tooltip'
@@ -25,10 +25,8 @@ interface TextInputProps {
   pin?: TextAreaPin
   placeholder?: string
   type?: TextInputType
-  leftContent?: string
-  rightContent?: string
-  startContent?: React.ReactNode
-  endContent?: React.ReactNode
+  leftContent?: React.ReactNode | string
+  rightContent?: React.ReactNode | string
   topContent?: boolean
   readOnly?: boolean
   view?: TextInputView
@@ -61,8 +59,6 @@ export const TextInput: React.FC<TextInputProps> = ({
   type = 'text',
   leftContent,
   rightContent,
-  startContent,
-  endContent,
   topContent = false,
   readOnly = false,
   view = 'normal',
@@ -90,6 +86,20 @@ export const TextInput: React.FC<TextInputProps> = ({
   const [internalValue, setInternalValue] = useState(value)
   const [isDisabled, setIsDisabled] = useState(disabled)
   const [isVisible, setIsVisible] = useState(true)
+  const [leftWidth, setLeftWidth] = useState(0)
+  const [rightWidth, setRightWidth] = useState(0)
+  const leftContentRef = useRef<HTMLDivElement>(null)
+  const rightContentRef = useRef<HTMLDivElement>(null)
+
+  // Measure left and right content widths
+  useEffect(() => {
+    if (leftContentRef.current) {
+      setLeftWidth(leftContentRef.current.offsetWidth)
+    }
+    if (rightContentRef.current) {
+      setRightWidth(rightContentRef.current.offsetWidth)
+    }
+  }, [leftContent, rightContent, hasClear, internalValue])
 
   // Sync internal value with prop value
   useEffect(() => {
@@ -269,13 +279,14 @@ export const TextInput: React.FC<TextInputProps> = ({
           fillContainer ? 'h-full' : ''
         }`}
       >
-        {(startContent || leftContent) && (
+        {leftContent && (
           <div
+            ref={leftContentRef}
             className={`absolute ${
               direction === 'RTL' ? 'right-3' : 'left-3'
             } ${isDark ? 'text-gray-400' : 'text-gray-500'} flex items-center`}
           >
-            {startContent || leftContent}
+            {leftContent}
           </div>
         )}
 
@@ -293,27 +304,13 @@ export const TextInput: React.FC<TextInputProps> = ({
             ${getFillClasses()}
             ${getPinClasses()}
             ${getTextAlignClasses()}
-            ${isDark ? 'bg-gray-800' : 'bg-gray-100'} 
+            ${isDark ? 'bg-gray-800' : 'bg-gray-100'}
             ${
               view === 'normal'
                 ? 'border-2'
                 : view === 'clear'
                 ? 'border-2 border-transparent'
                 : 'border-0 border-b-2'
-            }
-            ${
-              startContent || leftContent
-                ? direction === 'RTL'
-                  ? 'pr-10'
-                  : 'pl-10'
-                : ''
-            }
-            ${
-              endContent || rightContent || hasClear
-                ? direction === 'RTL'
-                  ? 'pl-10'
-                  : 'pr-10'
-                : ''
             }
             ${disabled ? 'cursor-not-allowed opacity-50' : ''}
             ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}
@@ -323,7 +320,17 @@ export const TextInput: React.FC<TextInputProps> = ({
           `}
           style={{
             fontFamily: 'var(--font-body)',
-            ...getInputStyles()
+            ...getInputStyles(),
+            ...(leftContent
+              ? direction === 'RTL'
+                ? { paddingRight: leftWidth + 20 }
+                : { paddingLeft: leftWidth + 20 }
+              : {}),
+            ...(rightContent || (hasClear && internalValue)
+              ? direction === 'RTL'
+                ? { paddingLeft: rightWidth + 20 }
+                : { paddingRight: rightWidth + 20 }
+              : {})
           }}
           onMouseEnter={e => {
             if (!disabled && !errorMessage && !validationState && document.activeElement !== e.currentTarget) {
@@ -363,8 +370,9 @@ export const TextInput: React.FC<TextInputProps> = ({
           }}
         />
 
-        {(endContent || rightContent || (hasClear && internalValue)) && (
+        {(rightContent || (hasClear && internalValue)) && (
           <div
+            ref={rightContentRef}
             className={`absolute ${
               direction === 'RTL' ? 'left-3' : 'right-3'
             } flex items-center gap-2`}
@@ -388,16 +396,7 @@ export const TextInput: React.FC<TextInputProps> = ({
                 <RiCloseCircleLine size={16} />
               </button>
             )}
-            {endContent && (
-              <div
-                className={`flex items-center ${
-                  isDark ? 'text-gray-400' : 'text-gray-500'
-                }`}
-              >
-                {endContent}
-              </div>
-            )}
-            {!endContent && rightContent && (
+            {rightContent && (
               <span className={isDark ? 'text-gray-400' : 'text-gray-500'}>
                 {rightContent}
               </span>

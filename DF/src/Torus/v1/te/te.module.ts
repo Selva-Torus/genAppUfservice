@@ -14,6 +14,8 @@ import { MongoService } from "src/mongoService";
 import { ConfigService } from "@nestjs/config";
 import { BullModule } from "@nestjs/bullmq";
 import { EventEmitterProcessor } from "./event-emitter.processor";
+import { ListenerService } from "./listener.service";
+import { DynamicFlowService } from "./dynamicFlow.service";
 
 @Module({
     imports: [      
@@ -26,8 +28,8 @@ import { EventEmitterProcessor } from "./event-emitter.processor";
       ])    
     ],
     controllers: [TeController],
-    providers: [TeService, RedisService, CommonService,SecurityService,RuleService,JwtService,CodeService,LockService,MongoService,ConfigService,EventEmitterProcessor],
-    exports:[TeService]
+    providers: [TeService, RedisService, CommonService,SecurityService,RuleService,JwtService,CodeService,LockService,MongoService,ConfigService,EventEmitterProcessor,ListenerService,DynamicFlowService],
+    exports:[DynamicFlowService]
 })
   export class TeModule implements NestModule 
   {

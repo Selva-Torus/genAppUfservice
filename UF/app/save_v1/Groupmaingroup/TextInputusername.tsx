@@ -87,6 +87,7 @@ const TextInputusername = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encrypti
   const {maingroup7f4e1Props, setmaingroup7f4e1Props}= useContext(TotalContext) as TotalContextProps;
   const {save8d5a7, setsave8d5a7}= useContext(TotalContext) as TotalContextProps;
   const {username57f7f, setusername57f7f}= useContext(TotalContext) as TotalContextProps;
+  const {checkboxebbe6, setcheckboxebbe6}= useContext(TotalContext) as TotalContextProps;
   const {date419b1, setdate419b1}= useContext(TotalContext) as TotalContextProps;
   const {userable8d616, setuserable8d616}= useContext(TotalContext) as TotalContextProps;
   const {userable8d616Props, setuserable8d616Props}= useContext(TotalContext) as TotalContextProps;

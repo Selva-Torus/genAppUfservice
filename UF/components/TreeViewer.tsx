@@ -36,6 +36,8 @@ function createData(
       .split('/')
       .filter((key: any) => key !== '')
 
+    if (keys.length === 0) return false // can't change root
+
     let current = obj
     for (let i = 0; i < keys.length - 1; i++) {
       const key = keys[i]
@@ -65,7 +67,7 @@ function createData(
       current[finalKey] = value
     }
 
-    setData({ ...obj })
+    setData(JSON.parse(JSON.stringify(obj)))
   }
 
   const handleDelete = (path: string) => {
@@ -100,7 +102,7 @@ function createData(
       delete current[finalKey]
     }
 
-    setData({ ...obj })
+    setData(JSON.parse(JSON.stringify(obj)))
   }
 
   const isUrl = (str: string): boolean => {
@@ -401,7 +403,7 @@ const NestedObject = ({
       delete current[finalKey]
     }
 
-    setData({ ...mainObject })
+    setData(JSON.parse(JSON.stringify(mainObject)))
   }
 
   return (
@@ -569,16 +571,23 @@ export const TreeViewer = ({
       .split('/')
       .filter((key: any) => key !== '')
 
-    let current: any = data
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i]
-      const index = Number(key)
-      if (!isNaN(index) && Number.isInteger(index) && Array.isArray(current)) {
-        current = current[index]
-      } else {
-        current = current[key]
+    let current: any = mainData
+
+    // Navigate to the target location
+    if (keys.length === 0) {
+      // Adding to root level
+      current = mainData
+    } else {
+      for (let i = 0; i < keys.length; i++) {
+        const key = keys[i]
+        const index = Number(key)
+        if (!isNaN(index) && Number.isInteger(index) && Array.isArray(current)) {
+          current = current[index]
+        } else {
+          current = current[key]
+        }
+        if (current === undefined) return false
       }
-      if (current === undefined) return false
     }
 
     if (Array.isArray(current)) {
@@ -588,7 +597,7 @@ export const TreeViewer = ({
       current[keyName] = parsedValue
     }
 
-    setData({ ...data })
+    setData(JSON.parse(JSON.stringify(mainData)))
     setIsModalOpen(false)
     setModalValue('')
     setModalKey('')

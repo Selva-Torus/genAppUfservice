@@ -1,4 +1,5 @@
 import { getData } from "../redis/utils/redisFunction";
+import evaluateDecisionTable from './evaluateDecisionTable'
 
 /**
  * Retrieves schema values from dynamic input data based on user context
@@ -15,10 +16,41 @@ import { getData } from "../redis/utils/redisFunction";
  */
 export async function getSchemaByKeyAndCondition(
   userContext: UserContext,
-  data: any
+  data: any,
+  goruleData:any = {},
+  groupData:any = {}
 ): Promise<Record<string, any> | null> {
+ let mainRuleKey: any = ''
+  if (
+    goruleData != null &&
+    Object.keys(goruleData).length !== 0 &&
+    goruleData?.nodes
+  ) {
+    let isCheckedByGorule: any =
+      evaluateDecisionTable(goruleData?.nodes, groupData, userContext) || false
+    if (
+      'output' in isCheckedByGorule &&
+      isCheckedByGorule['output'].includes(':NDP')
+    ) {
+      mainRuleKey = isCheckedByGorule['output']
+    }
+  }
   // Validate input
-  let res;
+  let res
+
+  if (mainRuleKey != '') {
+    // Fetch data from Redis using the schemaValue as key
+    const redisData = await getData(mainRuleKey, 'ReJSON-RL')
+    let pfRuleData: any = {}
+    Object.keys(redisData)?.map(eachKey => {
+      if (redisData[eachKey]?.dataset) {
+        pfRuleData = redisData[eachKey]?.dataset
+      }
+    })
+
+    return pfRuleData || {}
+  }
+
   if (!userContext || typeof userContext !== 'object') {
     console.error('User context is required and must be an object');
     return null;

@@ -18,6 +18,7 @@ import clsx from "clsx";
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import Buttonsave  from "./Buttonsave";
 import TextInputusername  from "./TextInputusername";
+import Checkboxcheckbox  from "./Checkboxcheckbox";
 import DatePickerdate  from "./DatePickerdate";
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { getCookie } from "@/app/components/cookieMgment";
@@ -52,56 +53,64 @@ const Groupmaingroup = ({lockedData={},setLockedData,primaryTableData={}, setPri
     "allowedControls": [
       "save",
       "username",
-      "date"
+      "checkbox"
     ],
     "allowedGroups": [
       "canvas",
       "maingroup",
       "userable"
     ],
-    "blockedControls": [],
+    "blockedControls": [
+      "date"
+    ],
     "readOnlyControls": []
   },
   "Template 2": {
     "allowedControls": [
       "save",
       "username",
-      "date"
+      "checkbox"
     ],
     "allowedGroups": [
       "canvas",
       "maingroup",
       "userable"
     ],
-    "blockedControls": [],
+    "blockedControls": [
+      "date"
+    ],
     "readOnlyControls": []
   },
   "Template 3": {
     "allowedControls": [
       "save",
       "username",
-      "date"
+      "checkbox"
     ],
     "allowedGroups": [
       "canvas",
       "maingroup",
       "userable"
     ],
-    "blockedControls": [],
+    "blockedControls": [
+      "date"
+    ],
     "readOnlyControls": []
   },
   "User": {
     "allowedControls": [
       "save",
       "username",
-      "date"
+      "checkbox"
     ],
     "allowedGroups": [
       "canvas",
       "maingroup",
       "userable"
     ],
-    "blockedControls": [],
+    "blockedControls": [
+      "date"
+    ],
     "readOnlyControls": []
   }
 };
@@ -121,6 +130,7 @@ const Groupmaingroup = ({lockedData={},setLockedData,primaryTableData={}, setPri
   const {maingroup7f4e1Props, setmaingroup7f4e1Props}= useContext(TotalContext) as TotalContextProps;
   const {save8d5a7, setsave8d5a7}= useContext(TotalContext) as TotalContextProps;
   const {username57f7f, setusername57f7f}= useContext(TotalContext) as TotalContextProps;
+  const {checkboxebbe6, setcheckboxebbe6}= useContext(TotalContext) as TotalContextProps;
   const {date419b1, setdate419b1}= useContext(TotalContext) as TotalContextProps;
   const {userable8d616, setuserable8d616}= useContext(TotalContext) as TotalContextProps;
   const {userable8d616Props, setuserable8d616Props}= useContext(TotalContext) as TotalContextProps;
@@ -147,6 +157,9 @@ const Groupmaingroup = ({lockedData={},setLockedData,primaryTableData={}, setPri
     }
     if(orchestrationData?.data?.readableControls.includes("username")){
       setusername57f7f({...username57f7f,isDisabled:true});
+    }
+    if(orchestrationData?.data?.readableControls.includes("checkbox")){
+      setcheckboxebbe6({...checkboxebbe6,isDisabled:true});
     }
     if(orchestrationData?.data?.readableControls.includes("date")){
       setdate419b1({...date419b1,isDisabled:true});
@@ -213,7 +226,7 @@ const Groupmaingroup = ({lockedData={},setLockedData,primaryTableData={}, setPri
         backgroundClip: '',
         backgroundBlendMode: ''
       }}
-      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'text-white' : 'text-black'}`}
     >
         {allowedComponent.includes("userable")  &&<Groupuserable  
           lockedData={lockedData} 
@@ -231,6 +244,7 @@ const Groupmaingroup = ({lockedData={},setLockedData,primaryTableData={}, setPri
         {        (("save" in ButtonGoRuleData)?ButtonGoRuleData["save"]:true) && 
           allowedControls.includes("save")  ?            <Buttonsave lockedData={lockedData} setLockedData={setLockedData} primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData} checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData}/>: <div></div>} 
         {allowedControls.includes("username") ?<TextInputusername   /* 57f7f */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
+        {allowedControls.includes("checkbox") ?<Checkboxcheckbox   /* ebbe6 */checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
         {allowedControls.includes("date") ?<DatePickerdate   /* 419b1 */checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
     </div>
  )

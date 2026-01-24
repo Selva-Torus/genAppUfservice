@@ -20,7 +20,8 @@ import { Text } from '@/components/Text';
 import { Icon } from '@/components/Icon';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
-import { evaluateDecisionTableBooleanResult } from '@/app/utils/evaluateDecisionTable';
+import evaluateDecisionTable  from '@/app/utils/evaluateDecisionTable';
+import { getGridPositionFromOrder } from '@/app/utils/getGridPositionFromOrder';
 import { XMLParser } from 'fast-xml-parser'
 
 
@@ -79,6 +80,7 @@ const Buttonb = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableDat
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData.method;
   let actionLockData = {"lockMode":"","name":"","ttl":""}
   const [allCode,setAllCode]=useState<any>("");
+  const [gridPosition, setGridPosition] = useState<any>({ gridColumn: '1 / 3', gridRow: '1 / 12' });
     
  /////////////
    //another screen
@@ -135,9 +137,17 @@ const Buttonb = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableDat
       }
       setAllCode(orchestrationData?.data?.code);
       if(orchestrationData?.data?.rule.nodes.length > 0){
-        let schemaFlag:any = evaluateDecisionTableBooleanResult(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
+        let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
         // schemaFlag =schemaFlag.output;
-        if (schemaFlag === false) {
+        let order:any = Number(schemaFlag.order);
+
+        // Update grid position based on order number
+        if (order && typeof order === 'number') {
+          const position = getGridPositionFromOrder(order);
+          setGridPosition(position);
+        } 
+
+        if (schemaFlag.output !== "true") {
           setShowFlag(false);
         }else{
           setShowFlag(true)
@@ -218,8 +228,9 @@ const Buttonb = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableDat
   }
  
   return (
-    <div 
-      style={{gridColumn: ` / `,gridRow: ` / `, gap:``, height: `100%`, overflow: 'auto'}} >
+    <div
+      style={{gridColumn: ` / `,gridRow: ` / `, gap:``, height: `100%`, overflow: 'auto'}} 
+      >
         {showFlag && <Button 
           ref={buttonRef}
           className=""

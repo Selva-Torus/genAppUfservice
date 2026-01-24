@@ -20,7 +20,7 @@ interface DropdownProps {
   dynamicProps?: string;
   needTooltip?: boolean;
   tooltipProps?: TooltipPropsType;
-  headerText?: string
+  headerText?: any
   headerPosition?: HeaderPosition;
   onChange?: (selected: string | string[]) => void;
   className?: string;

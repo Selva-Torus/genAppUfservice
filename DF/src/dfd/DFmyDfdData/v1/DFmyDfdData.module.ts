@@ -1,3 +1,4 @@
+
 import { Module } from "@nestjs/common";
 //import { DFmyDfdDataService } from "./DFmyDfdData.service";
 import { DFmyDfdDataController } from "./DFmyDfdData.controller";
@@ -14,6 +15,6 @@ import { TeModule } from "src/Torus/v1/te/te.module";
 @Module({
     imports: [TeModule],
     controllers: [DFmyDfdDataController],
-    providers: [RedisService,CommonService,RuleService,CodeService,JwtService,MongoService,ConfigService, LockService],
+    providers: [RedisService,CommonService,RuleService,CodeService,JwtService,ConfigService, LockService,MongoService],
 })
 export class DFmyDfdDataModule {}

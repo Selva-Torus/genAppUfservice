@@ -6,8 +6,6 @@ import { ApiProperty } from '@nestjs/swagger';
 export class  CreateuserableDto {
         @ApiProperty()
         name?: string;
-        @ApiProperty()
-        trs_creator_email?: string;
         @ApiProperty({
             type: `string`,
             format: `date-time`,
@@ -46,5 +44,22 @@ export class  CreateuserableDto {
         trs_sub_org_grp_code?: string;
         @ApiProperty()
         trs_sub_org_code?: string;
+        
+        @ApiProperty()
+        xCdcaRole: string;
+
+        @ApiProperty()
+        xCdcaUsername: string;
+
+        @ApiProperty()
+        xCdcaRemarks: string;
+
+        @ApiProperty()
+        xCdcaApprovalStatus: string;
+
+        @ApiProperty()
+        xCdcaApprovalID: string;
+
+        
 }
 

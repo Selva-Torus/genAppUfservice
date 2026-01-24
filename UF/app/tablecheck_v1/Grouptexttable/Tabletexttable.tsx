@@ -28,6 +28,9 @@ import { getFilterProps, getRouteScreenDetails } from '@/app/utils/assemblerKeys
 import i18n from '@/app/components/i18n';
 import decodeToken from '@/app/components/decodeToken';
 
+// page import
+import PageBindranscreenpage from '@/app/bindranscreen_v1/bindranscreen_v1page';
+
 
 let colourIndicatorCols:any= [
   "id",
@@ -92,6 +95,8 @@ const Tabletexttable = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps
   const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
+  const {bindranscreen_v1Props, setbindranscreen_v1Props}= useContext(TotalContext) as TotalContextProps; 
+  //////////////////
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps
   const [translatedColumns,setTranslatedColumns]= useState<any>([])
   const securityData:any={
@@ -106,6 +111,26 @@ const Tabletexttable = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
     "readOnlyControls": []
   },
   "Template 2": {
+    "allowedControls": [
+      "id",
+      "names",
+      "a",
+      "b"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
+  },
+  "Template 3": {
+    "allowedControls": [
+      "id",
+      "names",
+      "a",
+      "b"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
+  },
+  "User": {
     "allowedControls": [
       "id",
       "names",
@@ -141,6 +166,10 @@ const Tabletexttable = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
   const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
   const [searchFilterFlag, setSearchFilterFlag] = useState(false);
   const keyset:any=i18n.keyset("language") 
+    const [needLockingAndRule, setNeedLockingAndRule] = useState<any>({
+      lockMode: 'Single',
+      ttl: ''
+    })
   const [DFkeyAndRule, setDFkeyAndRule] = React.useState({
     isRulePresent:false,
     dfKey:"",
@@ -290,6 +319,13 @@ const Tabletexttable = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
         dfKey = orchestrationData?.data?.dfKey
         dfdType = orchestrationData?.data?.dfdNodeType
     
+    // for locking data ttl ,mode and rule
+    setNeedLockingAndRule((pre: any) => ({
+      ...pre,
+          lockMode:orchestrationData?.data?.action?.lock?.lockMode || "",
+          ttl :orchestrationData?.data?.action?.lock?.ttl || ""
+    }))
+    
         fetchData(orchestrationData?.data?.action?.pagination?.page,orchestrationData?.data?.action?.pagination?.count,{},{dfKey,dfdType},Object.keys(orchestrationData?.data?.rule).length!=0 && orchestrationData?.data?.rule?.nodes?.length!=0 && orchestrationData?.data?.rule?.edges?.length!=0  ? true:false)
   }
     } 
@@ -297,7 +333,82 @@ const Tabletexttable = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
   const [SearchParams,setSearchParams] = useState<any>({})
 
     const setLockMode=async(ids:any)=>{
-      ///////////////////////////
+    /// settexttablebadf1Props
+    let postIds: any = []
+    let processIds: any = []
+    let selectedData:any=[]
+    if(needLockingAndRule.lockMode=='Single'){
+      // its for ui level selected list show for single select
+      if (ids.length == 0) {
+        let keys:any
+        settexttablebadf1Props((pre:any)=>({...pre, selectedIds:[]}))
+        setLockedData((pre:any)=>({...pre,data:[]}))
+        return
+      }
+
+      texttablebadf1.filter((item:any,id:number)=>{
+        if (ids[ids.length - 1] == id.toString()){
+          selectedData?.push(allData[id])
+          postIds.push(item.ids)
+          processIds.push(item?.trs_process_id)
+        }
+      })
+
+      //////////
+      //////////
+      settexttablebadf1Props((pre:any)=>({...pre, selectedIds:[ids[ids.length-1]]}))      
+    }
+    else if(needLockingAndRule.lockMode==='Multi'){
+      // its for ui level selected list show for multi select
+      texttablebadf1.filter((item:any,id:number)=>{
+        if (ids.includes(id.toString())){
+          selectedData?.push(allData[id])
+          postIds.push(item.ids) 
+          processIds.push(item?.trs_process_id)
+        } 
+      })
+      settexttablebadf1Props((pre:any)=>({...pre, selectedIds:ids}))
+    }
+    let checkedData: any = selectedPaginationData
+    if (checkedData.length) {
+      let itsAlreadyThere: boolean = false
+      selectedPaginationData.map((item: any) => {
+        if (item.page == paginationData.page) {
+          itsAlreadyThere = true
+        }
+      })
+      if (itsAlreadyThere) {
+        for (let i = 0; i < checkedData.length; i++) {
+          if (checkedData[i].page == paginationData.page) {
+            checkedData[i].data = ids
+            break
+          }
+        }
+      } else {
+        checkedData = [
+          ...checkedData,
+          {
+            page: paginationData.page,
+            data: ids
+          }
+        ]
+      }
+    } else {
+      checkedData.push({
+        page: paginationData.page,
+        data: ids
+      })
+    }
+    setSelectedPaginationData(checkedData)
+
+    setLockedData({
+      ...lockedData,
+      processIds: processIds,
+      data:selectedData,
+      primaryKeys: postIds,
+      lockMode: needLockingAndRule,
+      ttl: needLockingAndRule.ttl
+    })
 
   }
   const [selectedPaginationData, setSelectedPaginationData] = useState<any[]>(
@@ -320,6 +431,8 @@ const Tabletexttable = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
   }
   const [filterValue, setFilterValue] = useState('')
   const [filterColumn, setFilterColumn] = useState(columns[0]?.id)
+  async function onRowClick(e:any) {
+    }
 
   async function fetchData(page:any = 1, pageSize:any = 10, searchParams = {},dfKey:any,isRulePresent:any=false,isOnLoad = false,filterProps?:any) {
     if(isRulePresent==undefined)
@@ -702,6 +815,19 @@ const colurIndicator = (keyValue:any=[], comingValue:any) => {
   }, [texttablebadf1Props?.selectedIds])
 
 
+      async function handleConfirmOnRowClick(){
+      } 
+  const handleOnRowClick=async(data:any)=>{
+    onButtonSecurityHandle(data)
+    const result = allData.find(item => item["ids"] === data["ids"]);
+  setShowProfileAsModalOpen(true)
+    let filterProps:any =  [];
+    let filterData = await getFilterProps(filterProps,lockedData);
+    setbindranscreen_v1Props([...filterData ]);
+
+
+
+  }
    function searchModal() {
     return (
       <div>
@@ -859,6 +985,13 @@ const colurIndicator = (keyValue:any=[], comingValue:any) => {
   }
   return(
     <div className='w-full h-full'>
+      <Modal 
+      open={showProfileAsModalOpen} 
+      onClose={() => setShowProfileAsModalOpen(false)} 
+      //title={"bindranscreen"}
+      className='w-[] h-[] bg-gray-50 mx-auto rounded-lg shadow-xl p-5 overflow-auto'>
+        <PageBindranscreenpage/>
+      </Modal>
               {searchModal()}
           <div className=' w-full flex flex-row h-[80%]'>
             <Table
@@ -866,11 +999,14 @@ const colurIndicator = (keyValue:any=[], comingValue:any) => {
               data={Array.isArray(allDataObject) && translatedColumns?.length ? allDataObject : []}
               columns={translatedColumns}
               edgePadding={true}
+              tableSelection={true}
               selectedIds={texttablebadf1Props?.selectedIds}  
               onSelectionChange={setLockMode} 
+              selectionMode={needLockingAndRule?.lockMode}
               wordWrap={true}
               loading={loading}
-              onRowClick={onButtonSecurityHandle}
+              onRowClick={handleOnRowClick}
+              isRowclick={true}
             />
             </div>
             {paginationData?.page != null && paginationData?.pageSize != null && paginationData?.total != null && Array.isArray(allDataObject) && allDataObject.length>0 ?

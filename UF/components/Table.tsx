@@ -14,6 +14,19 @@ interface RenderRowActionsProps {
   nodeName:string
 }
 
+interface ColumnType {
+  id: string;
+  nodeid?: string;
+  name: string;
+  meta?: { sort?: boolean };
+  className?: string;
+  hide?: boolean;
+  isSearch?: boolean;
+  colourIndicator?: unknown[];
+  type?: string;
+  controlType?: string;
+}
+
 interface TableProps {
   search?: boolean;
   tableActions?: boolean;
@@ -22,8 +35,8 @@ interface TableProps {
   tableSorting?: boolean;
   isHyperLink?: boolean;
   emptyMessage?:string | React.ReactNode;
-  data?: any[];
-  columns?: any[];
+  data?: Record<string, string | number | boolean | null>[];
+  columns?: ColumnType[];
   onRowClick?: (row: any) => void;
   className?: string;
   renderRowActions?: (props: RenderRowActionsProps) => React.ReactNode;
@@ -34,8 +47,9 @@ interface TableProps {
   edgePadding?: boolean;
   wordWrap?: boolean;
   loading?: boolean;
+  isRowclick?: boolean;
 }
-
+        
 export const Table: React.FC<TableProps> = ({
 
   search = false,
@@ -44,7 +58,7 @@ export const Table: React.FC<TableProps> = ({
   tableSettings = false,
   tableSorting = false,
   isHyperLink = false,
-
+  isRowclick = false,
   emptyMessage = "No Data Available",
   data = [],
   columns = [],
@@ -67,11 +81,11 @@ export const Table: React.FC<TableProps> = ({
   const [showColumnModal, setShowColumnModal] = useState(false);
 
   // Normalize columns to handle both string[] and object[] formats
-  let normalizedColumns = columns.map((col: any) =>
+  let normalizedColumns = columns.map((col: ColumnType) =>
     typeof col === 'string' ? { id: col, name: col } : col
   );
   normalizedColumns = normalizedColumns.filter((ele)=>(ele?.hide!=true))
-  const [visibleColumns, setVisibleColumns] = useState<any[]>([]);
+  const [visibleColumns, setVisibleColumns] = useState<ColumnType[]>([]);
 
   // Update visible columns when columns prop changes - default to all columns selected
   useEffect(() => {
@@ -121,10 +135,12 @@ export const Table: React.FC<TableProps> = ({
   };
 
   const handleColumnToggle = (columnId: string) => {
-    setVisibleColumns((prev) =>
-      prev.some((col) => col.id === columnId)
-        ? prev.filter((col) => col.id !== columnId)
-        : [...prev, normalizedColumns.find((col) => col.id === columnId)]
+    setVisibleColumns((prev) => {
+      const foundColumn = normalizedColumns.find((col) => col.id === columnId);
+        return prev.some((col) => col.id === columnId)
+          ? prev.filter((col) => col.id !== columnId)
+          : foundColumn ? [...prev, foundColumn] : prev;
+      }
     );
   };
 
@@ -144,14 +160,20 @@ export const Table: React.FC<TableProps> = ({
       )
     : data;
 
-  const sortedData = sortColumn
-    ? [...filteredData].sort((a, b) => {
-        const aVal = a[sortColumn];
-        const bVal = b[sortColumn];
-        const comparison = aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
-        return sortDirection === "asc" ? comparison : -comparison;
-      })
-    : filteredData;
+const sortedData = sortColumn
+  ? [...filteredData].sort((a, b) => {
+      const aVal = a[sortColumn];
+      const bVal = b[sortColumn];
+      
+      // Handle null/undefined values
+      if (aVal == null && bVal == null) return 0;
+      if (aVal == null) return 1;  // Push nulls to end
+      if (bVal == null) return -1;
+      
+      const comparison = aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
+      return sortDirection === "asc" ? comparison : -comparison;
+    })
+  : filteredData;
 
   // Use all sorted data without pagination
   const displayData = sortedData;
@@ -529,15 +551,17 @@ export const Table: React.FC<TableProps> = ({
                 <tr
                   key={rowId}
                   onClick={() => {
-                    handleRowSelection(row, index);
-                    onRowClick?.(row);
+                    if(isRowclick){
+                      onRowClick?.(row);
+                      handleRowSelection(row, index);
+                    }
                   }}
                   className={`
                     border-t
                     ${isDark ? "border-gray-700" : "border-gray-200"}
                     ${isSelected ? "bg-opacity-20" : ""}
                     transition-all duration-200
-                    cursor-pointer
+                    ${isRowclick ? "cursor-pointer" : ""}
                   `}
                   style={{
                     backgroundColor: isSelected ? hexToRgba(branding.selectionColor, 0.15) : undefined,
@@ -571,10 +595,12 @@ export const Table: React.FC<TableProps> = ({
                                     {
                     (visibleColumns.find((cols:any)=>(cols?.type=='__ActionDetails__'))&&tableActions==true && renderRowActions)&&
                     (
-                      <td 
+                      <td
                       className="w-[10%]"
-                      
-                      >{renderRowActions({ item: row, index,nodeName:`${"ss"}`})}</td>
+                      onClick={(e) => e.stopPropagation()}
+                      >
+                        {renderRowActions({ item: row, index,nodeName:`${"ss"}`})}
+                      </td>
                     )
                   }
                   {visibleColumns.map((column) =>
@@ -585,6 +611,7 @@ export const Table: React.FC<TableProps> = ({
                         <td
                         className="w-[10%]"
                           key={column.id}
+                          onClick={(e) => e.stopPropagation()}
                           >
                           {renderRowActions({ item: row, index,nodeName:`${column?.controlType+column?.id}`})}
                           </td>

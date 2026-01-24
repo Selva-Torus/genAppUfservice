@@ -66,6 +66,28 @@ const Grouptablegroup = ({lockedData={},setLockedData,primaryTableData={}, setPr
     ],
     "blockedControls": [],
     "readOnlyControls": []
+  },
+  "Template 3": {
+    "allowedControls": [],
+    "allowedGroups": [
+      "canvas",
+      "usertable",
+      "tablegroup",
+      "texttable"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
+  },
+  "User": {
+    "allowedControls": [],
+    "allowedGroups": [
+      "canvas",
+      "usertable",
+      "tablegroup",
+      "texttable"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
   }
 };
   const prevRefreshRef = useRef(false);
@@ -168,7 +190,7 @@ const Grouptablegroup = ({lockedData={},setLockedData,primaryTableData={}, setPr
         backgroundClip: '',
         backgroundBlendMode: ''
       }}
-      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'text-white' : 'text-black'}`}
     >
         {allowedComponent.includes("texttable")  &&<Grouptexttable  
           lockedData={lockedData} 

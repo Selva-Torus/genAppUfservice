@@ -89,11 +89,10 @@ export class userableController {
     description: 'Read all the records from the userable table',
   })
   
-  async findAll(@Headers() authHeader: string,@Req() req: any,@Query("trs_creator_email") trs_creator_email?: string,@Query("trs_created_date") trs_created_date?: Date,@Query("trs_created_by") trs_created_by?: string,@Query("trs_modified_date") trs_modified_date?: Date,@Query("trs_modified_by") trs_modified_by?: string,@Query("trs_next_status") trs_next_status?: string,@Query("trs_status") trs_status?: string,@Query("trs_process_id") trs_process_id?: string,@Query("trs_access_profile") trs_access_profile?: string,@Query("trs_org_grp_code") trs_org_grp_code?: string,@Query("trs_org_code") trs_org_code?: string,@Query("trs_role_grp_code") trs_role_grp_code?: string,@Query("trs_role_code") trs_role_code?: string,@Query("trs_ps_grp_code") trs_ps_grp_code?: string,@Query("trs_ps_code") trs_ps_code?: string,@Query("trs_sub_org_grp_code") trs_sub_org_grp_code?: string,@Query("trs_sub_org_code") trs_sub_org_code?: string,@Query() query?: Record<string, any>) {
+  async findAll(@Headers() authHeader: string,@Req() req: any,@Query("trs_created_date") trs_created_date?: Date,@Query("trs_created_by") trs_created_by?: string,@Query("trs_modified_date") trs_modified_date?: Date,@Query("trs_modified_by") trs_modified_by?: string,@Query("trs_next_status") trs_next_status?: string,@Query("trs_status") trs_status?: string,@Query("trs_process_id") trs_process_id?: string,@Query("trs_access_profile") trs_access_profile?: string,@Query("trs_org_grp_code") trs_org_grp_code?: string,@Query("trs_org_code") trs_org_code?: string,@Query("trs_role_grp_code") trs_role_grp_code?: string,@Query("trs_role_code") trs_role_code?: string,@Query("trs_ps_grp_code") trs_ps_grp_code?: string,@Query("trs_ps_code") trs_ps_code?: string,@Query("trs_sub_org_grp_code") trs_sub_org_grp_code?: string,@Query("trs_sub_org_code") trs_sub_org_code?: string,@Query() query?: Record<string, any>) {
     const token = req.headers?.authorization?.split(' ')[1];
     //await this.ufservice.introspectToken(authHeader,"",token);
     let presentQueryKeys:any=[
-      "trs_creator_email",
       "trs_created_date",
       "trs_created_by",
       "trs_modified_date",
@@ -131,7 +130,7 @@ export class userableController {
     if (req.originalUrl.includes('?') && req.originalUrl.split('?')[1].includes('/') || isComingQuerysAreValid==false) {
       throw new NotFoundException('Invalid query parameter structure.');
     }
-    const result = this.userableService.findAll(token,trs_creator_email,trs_created_date,trs_created_by,trs_modified_date,trs_modified_by,trs_next_status,trs_status,trs_process_id,trs_access_profile,trs_org_grp_code,trs_org_code,trs_role_grp_code,trs_role_code,trs_ps_grp_code,trs_ps_code,trs_sub_org_grp_code,trs_sub_org_code,);
+    const result = this.userableService.findAll(token,trs_created_date,trs_created_by,trs_modified_date,trs_modified_by,trs_next_status,trs_status,trs_process_id,trs_access_profile,trs_org_grp_code,trs_org_code,trs_role_grp_code,trs_role_code,trs_ps_grp_code,trs_ps_code,trs_sub_org_grp_code,trs_sub_org_code,);
     return plainToInstance(userableEntity, result);
   } 
 
@@ -144,9 +143,25 @@ export class userableController {
     description: 'Create the record for the userable table',
   })
   
-  async create(@Headers() authHeader: string,@Body() createuserableDto: Prisma.userableCreateInput,@Req() req: any) {
+  async create(
+    @Headers('xCdcaRole') mcRole: string,
+    @Headers('xCdcaUsername') mcUsername: string,
+    @Headers('xCdcaRemarks') mcRemarks: string,
+    @Headers('xCdcaApprovalStatus') mcApprovalStatus: string,
+    @Headers('xCdcaApprovalID') mcApprovalID: string,
+    @Headers() authHeader: string,
+    @Body() createuserableDto: Prisma.userableCreateInput,
+    @Req() req: any) {
     const token = req.headers?.authorization?.split(' ')[1];
     //await this.ufservice.introspectToken(authHeader,"",token);
+
+    // Flag-driven routing: if maker-checker headers are present, use createMaster
+    if (mcRole && mcUsername) {
+      const makerInfo = { role: mcRole, username: mcUsername, remarks: mcRemarks, approvalStatus: mcApprovalStatus,approvalId:mcApprovalID };
+      const result = await this.userableService.createMaster(createuserableDto, makerInfo, token);
+      return result;
+    }
+
     const result = this.userableService.create(createuserableDto,token);
     return plainToInstance(userableEntity, result);
   }
@@ -161,11 +176,25 @@ export class userableController {
     description: 'Update the record for the userable table',
   })
     
-  async update(@Headers() authHeader: string,@Param('id') id:number,
+  async update(
+    @Headers('xCdcaRole') mcRole: string,
+    @Headers('xCdcaUsername') mcUsername: string,
+    @Headers('xCdcaRemarks') mcRemarks: string,
+    @Headers('xCdcaApprovalStatus') mcApprovalStatus: string,
+    @Headers() authHeader: string,
+@Param('id') id:number,
     @Body() updateuserableDto: Prisma.userableUpdateInput,
     @Req() req: any) {
     const token = req.headers?.authorization?.split(' ')[1];
     //await this.ufservice.introspectToken(authHeader,"",token);
+
+    // Flag-driven routing: if maker-checker headers are present, use updateMaster
+    if (mcRole && mcUsername) {
+      const makerInfo = { role: mcRole, username: mcUsername, remarks: mcRemarks,approvalStatus: mcApprovalStatus };
+      const result = await this.userableService.updateMaster(+id,updateuserableDto,makerInfo,token);
+      return result;
+    }
+
     const result = this.userableService.update(+id,updateuserableDto,token);
     return plainToInstance(userableEntity, result);
   }
@@ -179,9 +208,24 @@ export class userableController {
     description: 'Delete the record for the userable table',
   })
   
-  async remove(@Headers() authHeader: string,@Param('id') id:number,@Req() req: any) {
+  async remove(
+    @Headers('xCdcaRole') mcRole: string,
+    @Headers('xCdcaUsername') mcUsername: string,
+    @Headers('xCdcaRemarks') mcRemarks: string,
+    @Headers('xCdcaApprovalStatus') mcApprovalStatus: string,
+    @Headers() authHeader: string,
+@Param('id') id:number,
+    @Req() req: any) {
     const token = req.headers?.authorization?.split(' ')[1];
     //await this.ufservice.introspectToken(authHeader,"",token);
+
+    // Flag-driven routing: if maker-checker headers are present, use deleteMaster
+    if (mcRole && mcUsername) {
+      const makerInfo = { role: mcRole, username: mcUsername, remarks: mcRemarks,approvalStatus: mcApprovalStatus };
+      const result = await this.userableService.deleteMaster(+id,makerInfo,token);
+      return result;
+    }
+
     const result =  this.userableService.remove(+id,token);
     return plainToInstance(userableEntity, result);
   }  

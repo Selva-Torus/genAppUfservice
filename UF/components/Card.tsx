@@ -72,6 +72,8 @@ export const Card: React.FC<CardProps> = ({
         return { bg: isDark ? "#991B1B" : "#FEE2E2", border: "#EF4444", text: isDark ? "#FECACA" : "#991B1B" };
       case "utility":
         return { bg: isDark ? "#374151" : "#F3F4F6", border: "#6B7280", text: isDark ? "#D1D5DB" : "#374151" };
+      case "normal":
+        return { bg: "#f2f2f2", text: isDark ? "#D1D5DB" : "#374151"}
       case "brand":
         return { bg: "var(--brand-color)", border: "var(--brand-color)", text: isDark ? "#F9FAFB" : "#111827" };
       default:
@@ -122,7 +124,7 @@ export const Card: React.FC<CardProps> = ({
       onClick={disabled ? undefined : onClick}
       className={`
         flex flex-col justify-around
-        ${view === "outlined" ? "border-2" : view === "raised" ? "shadow-lg" : view === "filled" ? "border" : ""}
+        ${view === "outlined" ? "border-2" : view === "filled" ? "border" : ""}
         ${selected ? "ring-2 ring-offset-2" : ""}
         ${disabled ? "opacity-50 cursor-not-allowed" : onClick ? "cursor-pointer hover:shadow-md" : ""}
         ${type === "selection" && selected ? "border-2" : ""}
@@ -141,6 +143,7 @@ export const Card: React.FC<CardProps> = ({
         boxSizing: "border-box",
         padding: "min(12px, 3%)",
         gap: "min(12px, 2%)",
+        ...(view === "raised"? {boxShadow:"inset 0 -2px 4px rgba(0, 0, 0, 0.2), inset 0 2px 4px rgba(255, 255, 255, 0.25), 0 2px 4px rgba(0, 0, 0, 0.2)",}: {}),
         ...(selected ? { '--tw-ring-color': 'var(--selection-color)' } as any : {}),
         ...style,
       }}

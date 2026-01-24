@@ -1,3 +1,4 @@
+
 import { Module } from "@nestjs/common";
 //import { pfsaveService } from "./pfsave.service";
 import { pfsaveController } from "./pfsave.controller";
@@ -14,6 +15,6 @@ import { TeModule } from "src/Torus/v1/te/te.module";
 @Module({
     imports: [TeModule],
     controllers: [pfsaveController],
-    providers: [RedisService,CommonService,RuleService,CodeService,JwtService,MongoService,ConfigService, LockService],
+    providers: [RedisService,CommonService,RuleService,CodeService,JwtService,ConfigService, LockService,MongoService],
 })
 export class pfsaveModule {}

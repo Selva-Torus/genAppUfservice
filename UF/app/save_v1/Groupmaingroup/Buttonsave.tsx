@@ -20,7 +20,8 @@ import { Text } from '@/components/Text';
 import { Icon } from '@/components/Icon';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
-import { evaluateDecisionTableBooleanResult } from '@/app/utils/evaluateDecisionTable';
+import evaluateDecisionTable  from '@/app/utils/evaluateDecisionTable';
+import { getGridPositionFromOrder } from '@/app/utils/getGridPositionFromOrder';
 import { XMLParser } from 'fast-xml-parser'
 
 
@@ -79,6 +80,7 @@ const Buttonsave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData.method;
   let actionLockData = {"lockMode":"","name":"","ttl":""}
   const [allCode,setAllCode]=useState<any>("");
+  const [gridPosition, setGridPosition] = useState<any>({ gridColumn: '1 / 3', gridRow: '1 / 12' });
     
  /////////////
    //another screen
@@ -86,6 +88,7 @@ const Buttonsave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   const {maingroup7f4e1Props, setmaingroup7f4e1Props}= useContext(TotalContext) as TotalContextProps;
   const {save8d5a7, setsave8d5a7}= useContext(TotalContext) as TotalContextProps;
   const {username57f7f, setusername57f7f}= useContext(TotalContext) as TotalContextProps;
+  const {checkboxebbe6, setcheckboxebbe6}= useContext(TotalContext) as TotalContextProps;
   const {date419b1, setdate419b1}= useContext(TotalContext) as TotalContextProps;
   const {userable8d616, setuserable8d616}= useContext(TotalContext) as TotalContextProps;
   const {userable8d616Props, setuserable8d616Props}= useContext(TotalContext) as TotalContextProps;
@@ -130,9 +133,17 @@ const Buttonsave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
       }
       setAllCode(orchestrationData?.data?.code);
       if(orchestrationData?.data?.rule.nodes.length > 0){
-        let schemaFlag:any = evaluateDecisionTableBooleanResult(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
+        let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
         // schemaFlag =schemaFlag.output;
-        if (schemaFlag === false) {
+        let order:any = Number(schemaFlag.order);
+
+        // Update grid position based on order number
+        if (order && typeof order === 'number') {
+          const position = getGridPositionFromOrder(order);
+          setGridPosition(position);
+        } 
+
+        if (schemaFlag.output !== "true") {
           setShowFlag(false);
         }else{
           setShowFlag(true)
@@ -215,7 +226,153 @@ const Buttonsave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
           "type": "handlerNode",
           "name": "saveHandler",
           "sequence": "1.1.1",
-          "children": [],
+          "children": [
+            {
+              "id": "437428db823a4960833589a094c8d5a7.1.1.1.1",
+              "type": "responseNode",
+              "name": "success",
+              "sequence": "1.1.1.1",
+              "children": [
+                {
+                  "id": "437428db823a4960833589a094c8d5a7.1.1.1.1.1",
+                  "eventContext": "rise",
+                  "value": "",
+                  "type": "handlerNode",
+                  "name": "infoMsg",
+                  "sequence": "1.1.1.1.1",
+                  "children": [
+                    {
+                      "id": "437428db823a4960833589a094c8d5a7.1.1.1.1.1.1",
+                      "eventContext": "riseListen",
+                      "value": "",
+                      "type": "handlerNode",
+                      "name": "refreshElement",
+                      "sequence": "1.1.1.1.1.1",
+                      "children": [
+                        {
+                          "id": "756be105166e442fb083156eebe8d616.1.1.1.1.1.1.1",
+                          "value": "",
+                          "type": "screen",
+                          "name": "savescreen.v1|userable",
+                          "label": "userable",
+                          "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:savescreen:AFVK:v1|userable",
+                          "elementType": "group",
+                          "sequence": "1.1.1.1.1.1.1",
+                          "children": []
+                        },
+                        {
+                          "id": "437428db823a4960833589a094c8d5a7.1.1.1.1.1.1.2",
+                          "eventContext": "rise",
+                          "value": "",
+                          "type": "handlerNode",
+                          "name": "refreshScreen",
+                          "sequence": "1.1.1.1.1.1.2",
+                          "children": []
+                        }
+                      ],
+                      "hlr": {}
+                    }
+                  ],
+                  "hlr": {
+                    "params": [
+                      {
+                        "name": "message",
+                        "_type": "string",
+                        "selectionList": [],
+                        "value": "Data saved successfully",
+                        "enabled": true
+                      },
+                      {
+                        "name": "type",
+                        "_type": "select",
+                        "selectionList": [
+                          "none",
+                          "info",
+                          "success",
+                          "warning",
+                          "danger",
+                          "utility"
+                        ],
+                        "value": "success",
+                        "enabled": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "id": "437428db823a4960833589a094c8d5a7.1.1.1.2",
+              "type": "responseNode",
+              "name": "fail",
+              "sequence": "1.1.1.2",
+              "children": [
+                {
+                  "id": "437428db823a4960833589a094c8d5a7.1.1.1.2.1",
+                  "eventContext": "rise",
+                  "value": "",
+                  "type": "handlerNode",
+                  "name": "infoMsg",
+                  "sequence": "1.1.1.2.1",
+                  "children": [],
+                  "hlr": {
+                    "params": [
+                      {
+                        "name": "message",
+                        "_type": "string",
+                        "selectionList": [],
+                        "value": "Data saved failed",
+                        "enabled": true
+                      },
+                      {
+                        "name": "type",
+                        "_type": "select",
+                        "selectionList": [
+                          "none",
+                          "info",
+                          "success",
+                          "warning",
+                          "danger",
+                          "utility"
+                        ],
+                        "value": "danger",
+                        "enabled": true
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "hlr": {
+            "params": [
+              {
+                "name": "primaryKey",
+                "_type": "string",
+                "selectionList": [],
+                "value": "",
+                "enabled": true
+              },
+              {
+                "name": "relationScope",
+                "_type": "select",
+                "selectionList": [
+                  "PARENT_ONLY",
+                  "PARENT_AND_CHILDREN",
+                  "PARENT_AND_ALL_DESCENDANTS"
+                ],
+                "value": "",
+                "enabled": true
+              },
+              {
+                "name": "needClearValue",
+                "_type": "boolean",
+                "selectionList": [],
+                "value": true,
+                "enabled": true
+              }
+            ]
+          },
           "targetKey": [
             "CK:CT309:FNGK:AF:FNK:PF-PFD:CATK:AG001:AFGK:A001:AFK:pfsave:AFVK:v1|a6a598866e644f57989544f4561e4073"
           ]
@@ -343,7 +500,7 @@ const Buttonsave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
             formData.append("dpdKey" ,encryptionDpd);
             formData.append("method" ,encryptionMethod);
           } 
-          if (fileBody[0]?.DbType == 'DB') {
+          if (fileBody[0]?.DbType == 'mongodb') {
           const res=await AxiosService.post( "/UF/upload",formData,
             {
               headers: {
@@ -359,7 +516,7 @@ const Buttonsave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
             }
           )
           reworkedObject[reworkKeys[i]] = res.data.file.fileId
-        } else if (fileBody[0]?.DbType == 'DFS') {
+        } else if (fileBody[0]?.DbType == 'dfs') {
 
             const basePath = process.env.NEXT_PUBLIC_DFS_PATH || "dfs-uploads";
             const bucketFolderame = process.env.NEXT_PUBLIC_DFS_BUCKETNAME || 'uploadfile';
@@ -497,6 +654,12 @@ const Buttonsave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
            }
          )
     ///////////////////////
+    toast('Data saved successfully', 'success');
+    // refreshElement
+    // for group
+    setuserable8d616Props((pre:any)=>({...pre,refresh:!pre?.refresh}));
+    // refreshScreen
+    window.location.reload();
     }
     catch(err:any)
     {
@@ -505,9 +668,28 @@ const Buttonsave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
         toast(err, 'danger');
       else
         toast(err?.response?.data?.message, 'danger');
+    toast('Data saved failed', 'danger');
 
       return
     }
+      if(Array.isArray(maingroup7f4e1)){
+        setRefetch((pre: any) => !pre)    
+        // needClearValue
+        let keys: any = {};
+        maingroup7f4e1.map((item: any) => {
+          keys[item] = '';
+        })
+        setmaingroup7f4e1(keys);
+        setLockedData({...lockedData,data:{}});
+      }else{
+        setRefetch((pre: any) => !pre);
+        // needClearValue
+        let keys: any = {};
+        Object.keys(maingroup7f4e1).map((item: any) => {
+          keys[item] = '';
+        })
+        setmaingroup7f4e1(keys);
+      }
   }
   const handleClick=async()=>{
     if(maingroup7f4e1Props?.validation==true && maingroup7f4e1Props?.required==true || maingroup7f4e1Props?.required==true)
@@ -561,8 +743,9 @@ const Buttonsave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   }
  
   return (
-    <div 
-      style={{gridColumn: `14 / 20`,gridRow: `34 / 44`, gap:``, height: `100%`, overflow: 'auto'}} >
+    <div
+      style={{gridColumn: `14 / 20`,gridRow: `34 / 44`, gap:``, height: `100%`, overflow: 'auto'}} 
+      >
         {showFlag && <Button 
           ref={buttonRef}
           className=""

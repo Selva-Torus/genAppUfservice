@@ -1,3 +1,4 @@
+
 import { Module } from '@nestjs/common';
 import { UfService } from './uf.service';
 import { UfController } from './uf.controller';
@@ -16,7 +17,7 @@ import { ConfigService } from '@nestjs/config';
     signOptions: { expiresIn: '1d' },
   }),],
   controllers: [UfController],
-  providers: [UfService, JwtModule,JwtServices,RedisService,CommonService,RuleService,CodeService,MongoService,ConfigService],
+  providers: [UfService, JwtModule,JwtServices,RedisService,CommonService,RuleService,CodeService,ConfigService,MongoService],
   exports: [UfService]
 })
 export class UfModule {}

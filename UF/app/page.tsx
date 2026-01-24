@@ -17,11 +17,6 @@ export default function HomePage() {
   const toast = useInfoMsg()
   let screenDetails: any = [
   {
-    "screenName": "tabs",
-    "screensName": "tabs-v1",
-    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:newTab:AFVK:v1"
-  },
-  {
     "screenName": "progress",
     "screensName": "progress-v1",
     "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1"
@@ -32,14 +27,14 @@ export default function HomePage() {
     "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1"
   },
   {
-    "screenName": "dynamicforms",
-    "screensName": "dynamicforms-v1",
-    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:dynamicforms:AFVK:v1"
-  },
-  {
     "screenName": "save",
     "screensName": "save-v1",
     "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:savescreen:AFVK:v1"
+  },
+  {
+    "screenName": "menu",
+    "screensName": "menu-v1",
+    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:dynamicforms:AFVK:v1"
   }
 ]
   const securityCheck = async () => {
@@ -113,7 +108,7 @@ export default function HomePage() {
 
   return (
     <>
-      <LoginForm logo=""  image=""/>
+      <LoginForm logo="torus/9.1/CT309/resources/images/lg-b44d8cea7df3575abf83e2bcb765f68779.jpg"  image=""/>
     </>
   )
 }

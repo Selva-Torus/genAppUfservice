@@ -1,13 +1,11 @@
 
 import React, { useEffect,useState } from 'react';
-
 import { FiVolume2 } from 'react-icons/fi';
-import { Tooltip } from './Tooltip';
 import { HeaderPosition, TooltipProps as TooltipPropsType } from '@/types/global';
 import { useGlobal } from '@/context/GlobalContext';
 import { getFontSizeClass } from '@/app/utils/branding';
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip';
-
+import {  Branding } from "@/types/global";
 interface TextAreaWithEndContentProps {
   value?: string;
   rows?: number;
@@ -20,7 +18,7 @@ interface TextAreaWithEndContentProps {
   [key: string]: any;
 }
 
-function TextAreaWithEndContent({ endContent, placeholder, branding, isDark, ...props }: TextAreaWithEndContentProps & { branding: any; isDark: boolean }) {
+function TextAreaWithEndContent({ endContent, placeholder, branding, isDark, ...props }: TextAreaWithEndContentProps & { branding: Branding; isDark: boolean }) {
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex?.slice(1, 3), 16);

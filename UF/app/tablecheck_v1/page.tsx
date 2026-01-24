@@ -37,6 +37,22 @@ export default function PageTablecheckV1() {
       "tablegroup",
       "texttable"
     ]
+  },
+  "Template 3": {
+    "allowedGroups": [
+      "canvas",
+      "usertable",
+      "tablegroup",
+      "texttable"
+    ]
+  },
+  "User": {
+    "allowedGroups": [
+      "canvas",
+      "usertable",
+      "tablegroup",
+      "texttable"
+    ]
   }
 };
   let code:any="";

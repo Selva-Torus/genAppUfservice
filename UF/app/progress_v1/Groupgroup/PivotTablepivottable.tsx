@@ -23,6 +23,7 @@ import { CommonHeaderAndTooltip } from "@/components/CommonHeaderAndTooltip";
 import clsx from "clsx";
 
 
+
 let mappedColumns:any[] = [
   {
     "id": "id"
@@ -35,6 +36,7 @@ let presentCols:any[] = [
   "id",
   "name"
 ];
+
 
 interface Expense {
   id: any
@@ -75,6 +77,7 @@ export default function PivotTablepivottable({encryptionFlagCompData}:any) {
   const {qrcode1c711, setqrcode1c711}= useContext(TotalContext) as TotalContextProps;
   const {progress1c37ec, setprogress1c37ec}= useContext(TotalContext) as TotalContextProps;
   const {slider2edf6a, setslider2edf6a}= useContext(TotalContext) as TotalContextProps;
+  const {gggg071dc, setgggg071dc}= useContext(TotalContext) as TotalContextProps;
   const {treeviewer4d8cf, settreeviewer4d8cf}= useContext(TotalContext) as TotalContextProps;
   const {signatureb24c1, setsignatureb24c1}= useContext(TotalContext) as TotalContextProps;
   const {pininputd19b1, setpininputd19b1}= useContext(TotalContext) as TotalContextProps;
@@ -313,11 +316,11 @@ export default function PivotTablepivottable({encryptionFlagCompData}:any) {
         <div className='flex justify-end p-2'>
           <Button
             onClick={addRow}
-            className="!w-[10%] !h-[30px]"
-            
-          >
-           <Icon data="FaPlus" size={18} />
-          </Button>
+            fillContainer= {false}
+            icon="MdAdd"
+            iconDisplay="Icon only"
+            className="h-6"
+          />
         </div>
         <div className='relative w-full h-full rounded-md border border-gray-200'>
           <table className='min-w-full bg-white'>
@@ -375,9 +378,13 @@ export default function PivotTablepivottable({encryptionFlagCompData}:any) {
                         </td>
                       ))}
                       <td className='px-6 py-3 text-left'>
-                        <Button onClick={() => deleteRow(index)}>
-                          <Icon data="FaRegTimesCircle" size={18} />
-                        </Button>
+                        <Button 
+                          onClick={() => deleteRow(index)}
+                          fillContainer={true}
+                          icon="MdCancel"
+                          iconDisplay="Icon only"
+                          className="h-6 p-0.5"
+                        />
                       </td>
                     </tr>
                   )

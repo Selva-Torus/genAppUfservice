@@ -1,3 +1,4 @@
+
 import { BadGatewayException, HttpStatus, Injectable } from '@nestjs/common';
 import { CommonService } from 'src/common.Service';
 import { RedisService } from 'src/redisService';
@@ -24,7 +25,7 @@ import { table } from 'console';
 import axios, { AxiosRequestConfig } from 'axios';
 import * as FormData from 'form-data'; // Use this
 import { Readable } from 'stream';
-import { v4 as uuidv4 } from 'uuid';
+//import { v4 as uuidv4 } from 'uuid';
 import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet } from 'src/fusionAuth.api';
 // import { RuleService } from 'src/ruleService';
 const transporter = nodemailer.createTransport({
@@ -1051,15 +1052,55 @@ export class UfService {
                     //   DS_Object['data'] = [];
                     // }
                   }
-                  object = {
-                    action: mappedData[i].objElements[j]?.action,
-                    code: mappedData[i].objElements[j]?.code,
-                    rule: mappedData[i].objElements[j]?.rule,
-                    events: mappedData[i].objElements[j]?.events,
-                    mapper: mappedData[i].objElements[j]?.mapper,
-                    // dstData: DS_Object?.data || [],
-                    schemaData,
-                  };
+
+                  if(mappedData[i].objElements[j]?.elementType == "dynamicjsonform")
+                  {
+                    let ruleKey:string =''
+                    let pfRuleData:any={}
+                    let NDPData =await this.commonService.readAPI(
+                                  key + ':NDP',
+                                  process.env.CLIENTCODE,
+                                  token,
+                                );
+                    if(controlId in NDPData)
+                    {
+                      ruleKey= NDPData[controlId]?.apiKey || ''
+                      let temp:any  =await this.commonService.readAPI(
+                                  ruleKey,
+                                  process.env.CLIENTCODE,
+                                  token,
+                                );
+                      Object.keys(temp)?.map((eachKey)=>{
+                        if(temp[eachKey]?.rule)
+                        {
+                          pfRuleData = temp[eachKey]?.rule;
+                        }
+                      })
+
+                    }
+                    object = {
+                              action: mappedData[i].objElements[j]?.action,
+                              code: mappedData[i].objElements[j]?.code,
+                              pfRuleData:pfRuleData,
+                              rule: mappedData[i].objElements[j]?.rule,
+                              events: mappedData[i].objElements[j]?.events,
+                              mapper: mappedData[i].objElements[j]?.mapper,
+                              // dstData: DS_Object?.data || [],
+                              schemaData,
+                            };
+                  }
+                  else
+                  {
+                    object = {
+                      action: mappedData[i].objElements[j]?.action,
+                      code: mappedData[i].objElements[j]?.code,
+                      rule: mappedData[i].objElements[j]?.rule,
+                      events: mappedData[i].objElements[j]?.events,
+                      mapper: mappedData[i].objElements[j]?.mapper,
+                      // dstData: DS_Object?.data || [],
+                      schemaData,
+                    };
+                  }
                   if(mappedData[i].objElements[j]?.elementType== "editor")
                   {
                     let editorMapper:any=[]
@@ -5144,7 +5185,7 @@ export class UfService {
         if (endPointCategory && endPointCategory.length > 0) {
           let typeCheck = 0;
           for (let i = 0; i < endPointCategory.length; i++) {
-            let uniqueNodeid = uuidv4().replace(/-/g, '');
+            let uniqueNodeid = uuid().replace(/-/g, '');
             let endPoint = endPointCategory[i].endPoint;
             let methodName = endPointCategory[i].method;
             var contentType = endPointCategory[i].contentType;
@@ -6932,7 +6973,7 @@ export class UfService {
       if (isExistingUser) {
         return isExistingUser;
       } else {
-        let tempId:string = uuidv4()
+        let tempId:string = uuid()
         user['userUniqueId']=tempId
         await this.postTenantUser(user)
         const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
@@ -7044,7 +7085,7 @@ export class UfService {
         if (Array.isArray(data)) {
           for (let i = 0; i < data.length; i++) {
             if (!('roleUniqueId' in data[i])) {
-              const newId = uuidv4();
+              const newId = uuid();
               data[i]['roleUniqueId'] = newId;
               newData.push(data[i]);
             }

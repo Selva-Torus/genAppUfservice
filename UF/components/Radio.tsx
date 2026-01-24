@@ -2,7 +2,6 @@
 
 import React from 'react'
 import { useGlobal } from '@/context/GlobalContext'
-import { Tooltip } from './Tooltip'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 import {
   HeaderPosition,
@@ -49,11 +48,11 @@ export const Radio: React.FC<RadioProps> = ({
 }) => {
   const { theme, direction, branding } = useGlobal()
   const isDark = theme === 'dark' || theme === 'dark-hc'
-  const getFillClasses = () => {
+  const getFillClasses = (): string => {
     if (!fillContainer) return ''
     return 'w-full h-full'
   }
-  const getContentAlignClasses = () => {
+  const getContentAlignClasses = (): string => {
     switch (contentAlign) {
       case 'left':
         return 'justify-start'

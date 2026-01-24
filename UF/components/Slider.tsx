@@ -87,6 +87,7 @@ export const Slider: React.FC<SliderProps> = ({
   const sliderElement = (
     <div
       className={`w-full h-full flex flex-col relative ${direction === "RTL" ? "rtl" : ""}`}
+      style={{ paddingTop: tooltipDisplay === "on" || (tooltipDisplay === "auto" && showTooltip) ? "40px" : "0px" }}
       onMouseEnter={() => {
         if (!disabled) {
           setIsHovered(true);
@@ -111,21 +112,21 @@ export const Slider: React.FC<SliderProps> = ({
             <div
               className={`
                 absolute
-                top-0
-                px-2 py-1
+           
                 ${getBorderRadiusClass(branding.borderRadius)}
                 text-xs
-                z-20
                 pointer-events-none
                 whitespace-nowrap
                 ${isDark ? "bg-gray-900 text-white" : "bg-gray-800 text-white"}
               `}
               style={{
                 left: `${Math.min(Math.max(((sliderValue - min) / (max - min)) * 100, 5), 95)}%`,
-                transform: "translate(-50%, -100%)",
-                marginTop: "-8px",
+                transform: "translate(-50%, -50%)",
+                top: "12px",
+                zIndex: 9999,
                 borderRadius: "var(--border-radius)",
                 fontFamily: "var(--font-body)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
               }}
             >
               {sliderValue}
@@ -137,21 +138,21 @@ export const Slider: React.FC<SliderProps> = ({
             <div
               className={`
                 absolute
-                top-0
                 px-2 py-1
                 ${getBorderRadiusClass(branding.borderRadius)}
                 text-xs
-                z-20
                 pointer-events-none
                 whitespace-nowrap
                 ${isDark ? "bg-gray-900 text-white" : "bg-gray-800 text-white"}
               `}
               style={{
                 left: `${Math.min(Math.max(((sliderValue - min) / (max - min)) * 100, 5), 95)}%`,
-                transform: "translate(-50%, -100%)",
-                marginTop: "-8px",
+                transform: "translate(-50%, -50%)",
+                top: "0",
+                zIndex: 9999,
                 borderRadius: "var(--border-radius)",
                 fontFamily: "var(--font-body)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
               }}
             >
               {sliderValue}

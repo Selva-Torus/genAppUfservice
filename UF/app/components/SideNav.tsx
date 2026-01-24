@@ -223,7 +223,7 @@ const SideNav = ({
   const getGridStyle: (sectionName: string) => React.CSSProperties = (
     sectionName: string
   ) => {
-    if (!navBarItemsOrder) return {}
+    if (!navBarItemsOrder?.length) return {}
 
     const item = navBarItemsOrder.find(
       order => order.name.toLowerCase() === sectionName.toLowerCase()

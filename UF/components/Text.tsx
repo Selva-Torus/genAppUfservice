@@ -4,7 +4,6 @@ import React from 'react'
 import { useGlobal } from '@/context/GlobalContext'
 import { Icon } from './Icon'
 import { Tooltip } from './Tooltip'
-import { GravityIcon } from '@/types/icons'
 import { TooltipProps as TooltipPropsType } from '@/types/global'
 import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
 type TextVariant =
@@ -105,7 +104,7 @@ export const Text: React.FC<TextProps> = ({
 }) => {
   const { theme, branding, direction } = useGlobal()
 
-  const getVariantClasses = () => {
+  const getVariantClasses = (): string => {
     if (!variant) {
       return getFontSizeClass(branding.fontSize)
     }
@@ -154,7 +153,7 @@ export const Text: React.FC<TextProps> = ({
     }
   }
 
-  const getColorStyle = () => {
+  const getColorStyle = (): string => {
     const isDark = theme === 'dark' || theme === 'dark-hc'
 
     const colorMap: Record<TextColor, string> = {
@@ -197,15 +196,27 @@ export const Text: React.FC<TextProps> = ({
 
   const displayContent = content || children
 
-  const renderContent = () => {
+  const renderContent = (): React.ReactNode => {
     if (iconDisplay === 'Icon only' && icon) {
-      return <Icon fillContainer={false} data={icon} size={iconSize} className={`flex items-center justify-center ${className}`} />
+      return (
+        <Icon
+          fillContainer={false}
+          data={icon}
+          size={iconSize}
+          className={`flex items-center justify-center ${className}`}
+        />
+      )
     }
 
     if (iconDisplay === 'Start with Icon' && icon) {
       return (
         <>
-          <Icon fillContainer={false} data={icon} size={iconSize} className={`flex items-center justify-center ${className}`}/>
+          <Icon
+            fillContainer={false}
+            data={icon}
+            size={iconSize}
+            className={`flex items-center justify-center ${className}`}
+          />
           <span>{displayContent}</span>
         </>
       )
@@ -215,19 +226,24 @@ export const Text: React.FC<TextProps> = ({
       return (
         <>
           <span>{displayContent}</span>
-          <Icon fillContainer={false} data={icon} size={iconSize} className={`flex items-center justify-center ${className}`}/>
+          <Icon
+            fillContainer={false}
+            data={icon}
+            size={iconSize}
+            className={`flex items-center justify-center ${className}`}
+          />
         </>
       )
     }
 
     return displayContent
   }
-  const getFillClasses = () => {
+  const getFillClasses = (): string => {
     if (!fillContainer) return ''
     return 'w-full h-full'
   }
 
-  const getContentAlignClasses = () => {
+  const getContentAlignClasses = (): string => {
     switch (contentAlign) {
       case 'left':
         return 'text-left justify-start'
@@ -261,11 +277,7 @@ export const Text: React.FC<TextProps> = ({
             ? 'whitespace-break-spaces'
             : ''
         }
-        ${
-          iconDisplay && icon
-            ? `inline-flex items-center`
-            : ''
-        }
+        ${iconDisplay && icon ? `inline-flex items-center` : ''}
         ${className}
       `}
       dir={direction}

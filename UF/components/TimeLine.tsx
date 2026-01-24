@@ -1,7 +1,6 @@
 import { Text } from './Text'
 import { Icon } from './Icon'
 import { Modal } from './Modal'
-import { Tooltip } from './Tooltip'
 import { useState } from 'react'
 import { useGlobal } from '@/context/GlobalContext'
 import {
@@ -13,7 +12,7 @@ import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 
 interface TimeLineProps {
   steps: Array<Record<string, any>>
-  statusMap?: Record<string, { icon: any; color: string }>
+  statusMap?: Record<string, { icon: string; color: string }>
   title: string
   status: string
   date: string

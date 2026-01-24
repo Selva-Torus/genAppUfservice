@@ -2,8 +2,8 @@
 
 import React, { useEffect } from "react";
 import { Icon } from "./Icon";
-import { Button } from "./Button";
 import clsx from "clsx";
+import { useGlobal } from "@/context/GlobalContext";
 export interface PaginationProps {
   /**
    * Current page number (1-based)
@@ -46,6 +46,8 @@ export const Pagination: React.FC<PaginationProps> = ({
   className = "",
   showPageSize=false
 }) => {
+  const { theme, branding } = useGlobal();
+
   // Calculate total pages
   const pageCount = Math.ceil(total / pageSize);
   // Calculate visible page numbers
@@ -162,18 +164,26 @@ export const Pagination: React.FC<PaginationProps> = ({
         )} */}
 
         {/* Previous Page */}
-        <div style={{ width: paginationHeight, height: paginationHeight }}>
-          <Button
+        <div style={{ width: paginationHeight, height: paginationHeight,paddingTop:"0.5rem" }}>
+          <button
             onClick={() => handlePageChange(page - 1)}
             disabled={page <= 1}
-            view='outlined'
-            pin='brick-brick'
-            className="!w-full !h-full flex items-center justify-center !p-0"
-            fillContainer={false}
+            className="w-full h-full flex items-center justify-center p-0 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            style={{ color: "var(--brand-color)" }}
             aria-label="Previous page"
+            onMouseEnter={(e) => {
+              if (page > 1) {
+                e.currentTarget.style.backgroundColor = "var(--hover-color)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (page > 1) {
+                e.currentTarget.style.backgroundColor = "";
+              }
+            }}
           >
             <Icon data="FaStepBackward" size={paginationHeight ? paginationHeight * 0.5 : 16}/>
-          </Button>
+          </button>
         </div>
 
         {/* Page Numbers */}
@@ -193,35 +203,56 @@ export const Pagination: React.FC<PaginationProps> = ({
           const isActive = pageNum === page;
 
           return (
-            <div key={pageNum} style={{ width: paginationHeight, height: paginationHeight }}>
-              <Button
-                view={isActive ? 'action' : 'outlined'}
-                pin='brick-brick'
-                className="!w-full !h-full flex items-center justify-center !p-0"
-                fillContainer={false}
+            <div key={pageNum} style={{ width: paginationHeight, height: paginationHeight,paddingTop:"0.5rem" }}>
+              <button
+                className={clsx(
+                  "w-full h-full flex items-center justify-center p-0 rounded transition-colors",
+                  isActive
+                    ? "text-white"
+                    : "border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                )}
+                style={isActive ? { backgroundColor: "var(--brand-color)" } : undefined}
                 onClick={() => handlePageChange(pageNum)}
                 aria-label={`Page ${pageNum}`}
                 aria-current={isActive ? "page" : undefined}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "var(--hover-color)";
+                }}
+                onMouseLeave={(e) => {
+                  if (isActive) {
+                    e.currentTarget.style.backgroundColor = "var(--brand-color)";
+                  } else {
+                    e.currentTarget.style.backgroundColor = "";
+                  }
+                }}
               >
                 {pageNum}
-              </Button>
+              </button>
             </div>
           );
         })}
 
         {/* Next Page */}
-        <div style={{ width: paginationHeight, height: paginationHeight }}>
-          <Button
-            view='outlined'
-            pin='brick-brick'
-            className="!w-full !h-full flex items-center justify-center !p-0"
-            fillContainer={false}
+        <div style={{ width: paginationHeight, height: paginationHeight,paddingTop:"0.5rem" }}>
+          <button
+            className="w-full h-full flex items-center justify-center p-0 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 rounded disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            style={{ color: "var(--brand-color)" }}
             onClick={() => handlePageChange(page + 1)}
             disabled={page >= pageCount}
             aria-label="Next page"
+            onMouseEnter={(e) => {
+              if (page < pageCount) {
+                e.currentTarget.style.backgroundColor = "var(--hover-color)";
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (page < pageCount) {
+                e.currentTarget.style.backgroundColor = "";
+              }
+            }}
           >
             <Icon data="FaStepForward" size={paginationHeight ? paginationHeight * 0.5 : 16} />
-          </Button>
+          </button>
         </div>
 
         {/* Last Page */}

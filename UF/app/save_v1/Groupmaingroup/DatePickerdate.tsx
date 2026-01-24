@@ -43,6 +43,7 @@ const DatePickerdate = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionF
   const {maingroup7f4e1Props, setmaingroup7f4e1Props}= useContext(TotalContext) as TotalContextProps  
   const {save8d5a7, setsave8d5a7}= useContext(TotalContext) as TotalContextProps  
   const {username57f7f, setusername57f7f}= useContext(TotalContext) as TotalContextProps  
+  const {checkboxebbe6, setcheckboxebbe6}= useContext(TotalContext) as TotalContextProps  
   const {date419b1, setdate419b1}= useContext(TotalContext) as TotalContextProps  
   const {userable8d616, setuserable8d616}= useContext(TotalContext) as TotalContextProps  
   const {userable8d616Props, setuserable8d616Props}= useContext(TotalContext) as TotalContextProps  
@@ -112,7 +113,7 @@ if (date419b1?.isHidden) {
 }
 return (
   <div 
-  style={{gridColumn: `13 / 20`,gridRow: `87 / 97`, gap:``, height: `100%`, overflow: 'auto'}} >
+  style={{gridColumn: `5 / 12`,gridRow: `58 / 68`, gap:``, height: `100%`, overflow: 'auto'}} >
     <DatePicker
       className=""
       //label={keyset("date")}

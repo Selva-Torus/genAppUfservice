@@ -180,7 +180,7 @@ const Groupuserable = ({lockedData={},setLockedData,primaryTableData={}, setPrim
     <div 
       style={{          
         gridColumn: '1 / 25',
-        gridRow: '168 / 288',
+        gridRow: '88 / 288',
       
         //rowGap: '0px',
         overflow: 'visible',
@@ -193,7 +193,7 @@ const Groupuserable = ({lockedData={},setLockedData,primaryTableData={}, setPrim
         backgroundClip: '',
         backgroundBlendMode: ''
       }}
-      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'text-white' : 'text-black'}`}
     >
         <CommonHeaderAndTooltip
         >

@@ -213,12 +213,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
         return isDark ? "text-white" : "text-white";
       case "action":
         return isDark
-          ? "bg-green-600 text-white hover:bg-green-700"
-          : "bg-green-500 text-white hover:bg-green-600";
+          ? "text-white"
+          : "text-white";
       case "outlined":
         return isDark
-          ? "border-2 text-blue-400 hover:bg-blue-900"
-          : "border-2 text-blue-500 hover:bg-blue-50";
+          ? "border-2 text-white"
+          : "border-2 text-white";
       case "outlined-info":
         return isDark
           ? "border-2 border-cyan-500 text-cyan-400 hover:bg-cyan-900"
@@ -237,8 +237,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
           : "border-2 border-red-500 text-red-600 hover:bg-red-50";
       case "outlined-utility":
         return isDark
-          ? "border-2 border-gray-500 text-gray-400 hover:bg-gray-800"
-          : "border-2 border-gray-500 text-gray-600 hover:bg-gray-50";
+          ? "border-2 border-violet-500 text-violet-400 hover:bg-violet-900"
+          : "border-2 border-violet-500 text-violet-600 hover:bg-violet-50";
       case "outlined-action":
         return isDark
           ? "border-2 border-green-500 text-green-400 hover:bg-green-900"
@@ -249,8 +249,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
           : "bg-white text-gray-900 shadow-lg hover:bg-gray-100";
       case "flat":
         return isDark
-          ? "bg-transparent hover:bg-gray-800"
-          : "bg-transparent hover:bg-gray-100";
+          ? "bg-transparent text-white hover:bg-gray-800"
+          : "bg-transparent text-white hover:bg-gray-100";
       case "flat-secondary":
         return isDark
           ? "bg-transparent text-gray-400 hover:bg-gray-800"
@@ -273,18 +273,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
           : "bg-transparent text-red-600 hover:bg-red-50";
       case "flat-utility":
         return isDark
-          ? "bg-transparent text-gray-400 hover:bg-gray-800"
-          : "bg-transparent text-gray-600 hover:bg-gray-100";
+          ? "bg-transparent text-violet-400 hover:bg-violet-900"
+          : "bg-transparent text-violet-600 hover:bg-violet-50";
       case "flat-action":
         return isDark
           ? "bg-transparent text-green-400 hover:bg-green-900"
           : "bg-transparent text-green-600 hover:bg-green-50";
       case "normal-contrast":
-        return isHighContrast
-          ? "bg-black text-white border-2 border-white hover:bg-gray-900"
-          : isDark
-          ? "bg-white text-black hover:bg-gray-200"
-          : "bg-black text-white hover:bg-gray-800";
+        return "text-black";
       case "outlined-contrast":
         return isHighContrast
           ? "border-4 border-black text-black hover:bg-gray-100"
@@ -297,6 +293,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
           : isDark
           ? "bg-transparent text-white hover:bg-gray-800"
           : "bg-transparent text-black hover:bg-gray-100";
+      default:
+        return "";
     }
   };
 
@@ -316,6 +314,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
         ? "rounded-l-none"
         : left === "circle"
         ? "rounded-l-full"
+        : left === "clear"
+        ? "rounded-l-none"
         : `rounded-l${baseRadius.replace("rounded", "")}`;
     const rightRadius =
       right === "round"
@@ -324,6 +324,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
         ? "rounded-r-none"
         : right === "circle"
         ? "rounded-r-full"
+        : right === "clear"
+        ? "rounded-r-none"
         : `rounded-r${baseRadius.replace("rounded", "")}`;
 
     if (pin === "clear-clear") {
@@ -338,19 +340,37 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
 
     // Apply brand color for normal and flat views
     if (view === "normal") {
-      styles.backgroundColor = "var(--brand-color)";
+      styles.backgroundColor = "#d1d5db"; // light grey color
       if (!disabled) {
         styles.transition = "all 0.2s ease";
       }
+    } else if (view === "action") {
+      styles.borderColor = "var(--brand-color)";
+      styles.backgroundColor = "var(--brand-color)";
     } else if (view === "outlined") {
+      styles.borderColor = "#d1d5db";
+      styles.color = "#d1d5db";
+    } else if (view === "outlined-action") {
       styles.borderColor = "var(--brand-color)";
       styles.color = "var(--brand-color)";
-    } else if (view === "flat") {
+    }else if (view === "flat") {
+      styles.color = "#d1d5db";
+    }else if (view === "flat-action") {
       styles.color = "var(--brand-color)";
-    }else if (view === "action") {
-      styles.backgroundColor = `var(--brand-color)`;
-    }else if (view === "normal-contrast") {
-      styles.backgroundColor = "var(--brand-color)";
+    } else if (view === "normal-contrast") {
+      styles.backgroundColor = "#FAFAFA";
+      if (!disabled) {
+        styles.transition = "all 0.2s ease";
+      }
+    }
+
+    // Handle clear pin sides - remove border on that side
+    const [left, right] = pin.split("-");
+    if (left === "clear") {
+      styles.borderLeftWidth = "0";
+    }
+    if (right === "clear") {
+      styles.borderRightWidth = "0";
     }
 
     return styles;
@@ -362,7 +382,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     if (view === "normal") {
       return "transition-all hover:opacity-90";
     } else if (view === "outlined" || view === "flat") {
-      return "transition-all";
+      return "transition-all ";
     }
 
     return "";
@@ -385,6 +405,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
             return 38;
           case "text-xl":
             return 46;
+          default: 
+            return 24;
         }
       }
     };
@@ -486,13 +508,23 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
       dir={direction}
       onMouseEnter={(e) => {
         if (!disabled) {
-          e.currentTarget.style.backgroundColor = "var(--hover-color)";
+          // Use appropriate hover color based on view type
+          if (view === "outlined-utility" || view === "flat-utility") {
+            const isDark = theme === "dark" || theme === "dark-hc";
+            e.currentTarget.style.backgroundColor = isDark ? "rgb(76 29 149)" : "rgb(245 243 255)"; // violet-900 : violet-50
+          } else {
+            e.currentTarget.style.backgroundColor = "var(--hover-color)";
+          }
         }
       }}
       onMouseLeave={(e) => {
           if (!disabled && (view.startsWith("outlined") || view.startsWith( "flat") || view === "raised")) {
             e.currentTarget.style.backgroundColor = "transparent";
-          } else if (view.startsWith("normal") || view === "action") {
+          } else if (view === "normal") {
+            e.currentTarget.style.backgroundColor = "#d1d5db"; // light grey color
+          } else if (view === "normal-contrast") {
+            e.currentTarget.style.backgroundColor = "#FAFAFA";
+          } else if (view === "action") {
             e.currentTarget.style.backgroundColor = "var(--brand-color)";
           }
       }}

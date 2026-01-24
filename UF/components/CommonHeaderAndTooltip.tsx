@@ -31,7 +31,7 @@ export const CommonHeaderAndTooltip: React.FC<CommonHeaderAndTooltip> = ({
   const fontSizeClass = getFontSizeClass(branding.fontSize);
   const isDark = theme === "dark" || theme === "dark-hc";
   const tabsElement = (
-    <div className="w-full h-full">{children}</div>
+    <div className={fillContainer ? "w-full h-full" : ""}>{children}</div>
   );
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
@@ -112,12 +112,12 @@ export const CommonHeaderAndTooltip: React.FC<CommonHeaderAndTooltip> = ({
 
   if (needTooltip && tooltipProps) {
     return (
-      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement} triggerClassName="h-full w-full">
-        <div className={`h-full w-full ${className}`}>{finalElement}</div>
+      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement} triggerClassName={fillContainer ? "h-full w-full" : ""}>
+        <div className={`${fillContainer ? 'h-full w-full' : ''} ${className}`}>{finalElement}</div>
       </Tooltip>
     );
   }
 
-  return <div className={`h-full w-full ${className}`}>{finalElement}</div>;
+  return <div className={`${fillContainer ? 'h-full w-full' : ''} ${className}`}>{finalElement}</div>;
 };
  

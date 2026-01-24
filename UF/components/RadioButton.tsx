@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react'
 import { useGlobal } from '@/context/GlobalContext'
-import { Tooltip } from './Tooltip'
 import {
   ComponentSize,
   HeaderPosition,
@@ -60,11 +59,11 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
     }
   }
 
-  const getFillClasses = () => {
+  const getFillClasses = (): string => {
     if (!fillContainer) return ''
     return 'w-full h-full'
   }
-  const getContentAlignClasses = () => {
+  const getContentAlignClasses = (): string => {
     switch (contentAlign) {
       case 'left':
         return 'justify-start'

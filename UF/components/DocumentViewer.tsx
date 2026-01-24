@@ -8,7 +8,7 @@ import {
   TooltipProps as TooltipPropsType
 } from '@/types/global'
 import { Text } from './Text'
-import { FiMaximize2 } from 'react-icons/fi'
+import { FiMaximize2, FiDownload } from 'react-icons/fi'
 import { getFontSizeClass } from '@/app/utils/branding'
 import { useGlobal } from '@/context/GlobalContext'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
@@ -25,8 +25,7 @@ interface DocViewerProps {
 
 /* ---------- helpers ---------- */
 const isImage = (url?: string) =>
-  !!url &&
-  (url.startsWith('blob:') || /\.(png|jpe?g|gif|webp|bmp|svg|jfif)$/i.test(url))
+  !!url && /\.(png|jpe?g|gif|webp|bmp|svg|jfif)$/i.test(url)
 
 const isPdf = (url?: string) => !!url && /\.pdf$/i.test(url)
 const isText = (url?: string) => !!url && /\.(txt|xml|json|csv)$/i.test(url)
@@ -48,6 +47,16 @@ const DocViewer: React.FC<DocViewerProps> = ({
   const openFullscreen = () => {
     if (!url) return
     window.open(url, '_blank', 'noopener,noreferrer')
+  }
+
+  const downloadFile = () => {
+    if (!url) return
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'document'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
   }
 
   const renderContent = () => {
@@ -99,13 +108,22 @@ const DocViewer: React.FC<DocViewerProps> = ({
       {/* Fullscreen button */}
 
       {url && (
-        <button
-          onClick={openFullscreen}
-          className='absolute right-2 top-2 z-10 overflow-hidden rounded bg-black/60 object-contain p-2 text-white hover:bg-black'
-          title='Open fullscreen'
-        >
-          <FiMaximize2 size={16} />
-        </button>
+        <div className='absolute right-2 top-2 z-10 flex gap-2'>
+          <button
+            onClick={downloadFile}
+            className='overflow-hidden rounded bg-black/60 object-contain p-2 text-white hover:bg-black'
+            title='Download'
+          >
+            <FiDownload size={16} />
+          </button>
+          <button
+            onClick={openFullscreen}
+            className='overflow-hidden rounded bg-black/60 object-contain p-2 text-white hover:bg-black'
+            title='Open fullscreen'
+          >
+            <FiMaximize2 size={16} />
+          </button>
+        </div>
       )}
 
       {renderContent()}

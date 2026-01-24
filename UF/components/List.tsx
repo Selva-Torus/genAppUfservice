@@ -14,7 +14,7 @@ interface ListItem {
 interface ListProps {
   sortable: boolean;
   items: string[] | ListItem[];
-  selecteditemindex?: number;
+  selectedItemIndex?: number;
   dynamic?: boolean;
   filterable?: boolean;
   needTooltip?: boolean;
@@ -30,7 +30,7 @@ type ContentAlign = "left" | "center" | "right";
 export const List: React.FC<ListProps> = ({
   sortable,
   items: initialItems,
-  selecteditemindex,
+  selectedItemIndex,
   dynamic = false,
   filterable = false,
   needTooltip = false,
@@ -44,7 +44,7 @@ export const List: React.FC<ListProps> = ({
 }) => {
   const { theme } = useGlobal();
   const [items, setItems] = useState(initialItems);
-  const [selectedIndex, setSelectedIndex] = useState(selecteditemindex);
+  const [selectedIndex, setSelectedIndex] = useState(selectedItemIndex);
   const [searchQuery, setSearchQuery] = useState("");
   
   const isListItem = (item: string | ListItem): item is ListItem => {

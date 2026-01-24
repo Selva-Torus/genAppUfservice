@@ -6,13 +6,14 @@ const logger = new Logger('MongoDB');
 
 
 const client = new MongoClient(process.env.MONGODB_URL,{
-      maxPoolSize: 10,
-      minPoolSize: 5,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      connectTimeoutMS: 10000,
+      maxPoolSize: 100,              //  Increased to handle 100 concurrent operations
+      minPoolSize: 10,               //  Keep 10 connections ready
+      maxIdleTimeMS: 60000,          //  Keep idle connections for 60s
+      serverSelectionTimeoutMS: 30000, //  Increased to 30s
+      socketTimeoutMS: 60000,        //  Increased to 60s to prevent timeouts
+      connectTimeoutMS: 30000,       //  Increased to 30s
       retryWrites: true,
-      retryReads: true   
+      retryReads: true
     });
 let db: Db;
 let redis //: Redis
@@ -53,7 +54,7 @@ export const connectToMongo = async (attemptCount = 0): Promise<Db> => {
     await client.connect();
     db = client.db(process.env.MONGODB_NAME);
     
-    logger.log('MongoDB connected successfully');
+    //logger.log('MongoDB connected successfully');
 
     // Setup event listeners for connection monitoring
     setupConnectionListeners();
@@ -120,17 +121,43 @@ const handleReconnection = async () => {
 
 
 export const connectToRedis = async () => {
-   
+
   if (!redis) {
     redis = new Redis({
       host: process.env.HOST,
-      port: parseInt(process.env.PORT),      
+      port: parseInt(process.env.PORT),
+      // ✅ Connection pool and reliability settings
+      maxRetriesPerRequest: 3,        // Retry failed commands 3 times
+      enableReadyCheck: true,          // Check connection before commands
+      retryStrategy(times) {           // Exponential backoff retry
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      },
+      reconnectOnError(err) {          // Reconnect on specific errors
+        const targetError = 'READONLY';
+        if (err.message.includes(targetError)) {
+          return true; // Reconnect
+        }
+        return false;
+      },
+      lazyConnect: false,              // Connect immediately
+      enableOfflineQueue: true,        // Queue commands when disconnected
+      connectTimeout: 30000,           // 30s connection timeout
+      keepAlive: 30000,                // Keep connection alive
+      family: 4,                       // Use IPv4
     }).on('error', (err) => {
       console.log('Redis Client Error', err);
-      throw err;
+      // Don't throw, let retry logic handle it
+    }).on('ready', () => {
+      console.log('✅ Redis connected successfully');
+    }).on('reconnecting', () => {
+      console.log('🔄 Redis reconnecting...');
     });
   }
 };
+
+let lastHealthCheck = Date.now();
+const HEALTH_CHECK_INTERVAL = 30000; // Only ping every 30 seconds
 
 export const getDb = async (): Promise<Db> => {
   if (!db || !client) {
@@ -138,14 +165,19 @@ export const getDb = async (): Promise<Db> => {
     return await connectToMongo();
   }
 
-  try {
-    // Verify connection is still alive
-    await client.db('admin').admin().ping();
-    return db;
-  } catch (error) {
-    logger.warn('Connection lost, reconnecting...');
-    return await connectToMongo();
+  // Only verify connection periodically to reduce overhead
+  const now = Date.now();
+  if (now - lastHealthCheck > HEALTH_CHECK_INTERVAL) {
+    try {
+      await client.db('admin').admin().ping();
+      lastHealthCheck = now;
+    } catch (error) {
+      logger.warn('Connection lost, reconnecting...');
+      return await connectToMongo();
+    }
   }
+
+  return db;
 };
 
 // export const getDb = (): Db => {

@@ -76,12 +76,13 @@ export class MongoService {
 
   async insertDocument(collectionName: any,key:string,insertValue: any) {
     const collection = db.collection(collectionName);
+    let result; 
     if(key){      
       let customIdAndValue:any = { _id:key}
       customIdAndValue.value = insertValue     
-      var result = await collection.insertOne(customIdAndValue)
+       result = await collection.insertOne(customIdAndValue)
     }else{     
-      var result = await collection.insertOne(insertValue)     
+      result = await collection.insertOne(insertValue)     
     }
     if (result) {
       return result

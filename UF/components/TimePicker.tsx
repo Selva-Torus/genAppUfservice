@@ -158,7 +158,9 @@ const TimePicker: React.FC<TimePickerProps> = ({
           }}
         >
           <select
-            className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()}`}
+            className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()} ${
+              readOnly ? 'pointer-events-none' : ''
+            }`}
             onChange={handleHourChange}
             disabled={disabled}
             value={hour}
@@ -191,7 +193,9 @@ const TimePicker: React.FC<TimePickerProps> = ({
           }}
         >
           <select
-            className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()}`}
+            className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()} ${
+              readOnly ? 'pointer-events-none' : ''
+            }`}
             value={minute}
             onChange={handleMinuteChange}
             disabled={disabled}
@@ -226,7 +230,9 @@ const TimePicker: React.FC<TimePickerProps> = ({
             }}
           >
             <select
-              className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()}`}
+              className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()} ${
+              readOnly ? 'pointer-events-none' : ''
+            }`}
               value={second}
               onChange={handleSecChange}
               disabled={disabled}
@@ -262,7 +268,9 @@ const TimePicker: React.FC<TimePickerProps> = ({
             }}
           >
             <select
-              className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()}`}
+              className={`h-full w-full appearance-none border-none bg-transparent px-2 pr-6 text-sm focus:outline-none ${getTextAlignClasses()} ${
+              readOnly ? 'pointer-events-none' : ''
+            }`}
               value={period}
               onChange={handlePeriodChange}
               disabled={disabled}

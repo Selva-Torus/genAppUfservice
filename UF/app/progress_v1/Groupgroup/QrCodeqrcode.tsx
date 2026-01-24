@@ -15,6 +15,7 @@ const QrCodeqrcode =  ({checkToAdd,setCheckToAdd}:any) => {
   const {qrcode1c711, setqrcode1c711}= useContext(TotalContext) as TotalContextProps;
   const {progress1c37ec, setprogress1c37ec}= useContext(TotalContext) as TotalContextProps;
   const {slider2edf6a, setslider2edf6a}= useContext(TotalContext) as TotalContextProps;
+  const {gggg071dc, setgggg071dc}= useContext(TotalContext) as TotalContextProps;
   const {treeviewer4d8cf, settreeviewer4d8cf}= useContext(TotalContext) as TotalContextProps;
   const {signatureb24c1, setsignatureb24c1}= useContext(TotalContext) as TotalContextProps;
   const {pininputd19b1, setpininputd19b1}= useContext(TotalContext) as TotalContextProps;

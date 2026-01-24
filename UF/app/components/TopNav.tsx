@@ -131,7 +131,6 @@ const TopNav = ({
     deleteAllCookies()
     window.location.href = '/ct309/ag001/a001/v1'
   }
-
   const hasMatchingName = (obj: any, input: string): boolean => {
     if (typeof obj !== 'object' || obj === null) return false
 
@@ -169,7 +168,7 @@ const TopNav = ({
   const getGridStyle: (sectionName: string) => React.CSSProperties = (
     sectionName: string
   ) => {
-    if (!navBarItemsOrder) return {}
+    if (!navBarItemsOrder?.length) return {}
 
     const item = navBarItemsOrder.find(
       order => order.name.toLowerCase() === sectionName.toLowerCase()
@@ -179,7 +178,7 @@ const TopNav = ({
 
     return {
       gridColumn: item['gridColumn'],
-      gridRow: '1'
+      gridRow:  '1'
     }
   }
 
@@ -203,7 +202,7 @@ const TopNav = ({
     </div>
   )
 
-  const AppLogoSection = () => (
+      const AppLogoSection = () => (
     <div className='flex items-center gap-1' style={getGridStyle('app logo')}>
       {appLogo && (
         <img
@@ -461,7 +460,7 @@ const TopNav = ({
   )
 
   // Default layout (without grid)
-  if (
+    if (
     !navBarItemsOrder ||
     navBarItemsOrder?.length === 0 ||
     navigationStyles === 'vertical'
@@ -475,13 +474,13 @@ const TopNav = ({
           }`
         )}
       >
-        {appLogo ? (
+          {appLogo ? (
           <div className='flex items-center gap-3 w-full'>
             <LogoSection />
             <AppLogoSection />
           </div>
         ) : (
-          <LogoSection />
+        <LogoSection />
         )}
         {listMenuItems && (
           <>

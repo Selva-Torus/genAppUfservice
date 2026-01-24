@@ -22,7 +22,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 @Module({
   imports: [ScheduleModule.forRoot(),UfModule,TeModule,DFmyDfdDataModule,pfsaveModule,ErdModule], 
   controllers: [AppController],
-  providers: [AppService,CommonService,RuleService,CodeService,JwtService,RedisService,MongoService,ConfigService, {
+  providers: [AppService,CommonService,RuleService,CodeService,JwtService,RedisService,ConfigService,MongoService,{
       provide: APP_INTERCEPTOR,
       useClass: EncryptInterceptor,
     }],

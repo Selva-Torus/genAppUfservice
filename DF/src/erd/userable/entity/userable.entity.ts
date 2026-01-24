@@ -9,8 +9,6 @@ export class  userableEntity implements  userable {
     id:number;
     @ApiProperty({example:"string"})
     name:string;
-    @ApiProperty({example:"string"})
-    trs_creator_email: string;
     @Transform(({ value }) => value?.toISOString())
     @ApiProperty({example:"datetime"})
     trs_created_date: Date;
@@ -52,8 +50,6 @@ export class  userable_OnlyParentEntity {
     id:number;
     @ApiProperty({example:"string"})
     name:string;
-    @ApiProperty({example:"string"})
-    trs_creator_email: string;
     @Transform(({ value }) => value?.toISOString())
     @ApiProperty({example:"datetime"})
     trs_created_date: Date;

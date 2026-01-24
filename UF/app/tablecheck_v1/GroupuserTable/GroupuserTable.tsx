@@ -70,6 +70,32 @@ const GroupuserTable = ({lockedData={},setLockedData,primaryTableData={}, setPri
     ],
     "blockedControls": [],
     "readOnlyControls": []
+  },
+  "Template 3": {
+    "allowedControls": [
+      "name"
+    ],
+    "allowedGroups": [
+      "canvas",
+      "usertable",
+      "tablegroup",
+      "texttable"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
+  },
+  "User": {
+    "allowedControls": [
+      "name"
+    ],
+    "allowedGroups": [
+      "canvas",
+      "usertable",
+      "tablegroup",
+      "texttable"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
   }
 };
   const prevRefreshRef = useRef(false);
@@ -156,7 +182,7 @@ const GroupuserTable = ({lockedData={},setLockedData,primaryTableData={}, setPri
         backgroundClip: '',
         backgroundBlendMode: ''
       }}
-      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'text-white' : 'text-black'}`}
     >
         <CommonHeaderAndTooltip
           headerPosition='top'

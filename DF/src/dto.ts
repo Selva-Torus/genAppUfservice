@@ -132,7 +132,7 @@ export class readAPIDTO {
       @IsNotEmpty()
       @IsString()
       key: string      
-      upId: string    
+      upId: any    
       event: string      
       data: any
       token:string    

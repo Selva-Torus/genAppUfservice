@@ -15,6 +15,8 @@ import { Modal } from '@/components/Modal';
 import { eventBus } from '@/app/eventBus';
 import clsx from "clsx";
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
+// page import
+import PageBindranscreenpage from '@/app/bindranscreen_v1/bindranscreen_v1page';
 import Tabletexttable  from './Tabletexttable';  
 import Buttona  from "./Buttona";
 import Buttonb  from "./Buttonb";
@@ -64,6 +66,38 @@ const Grouptexttable = ({lockedData={},setLockedData,primaryTableData={}, setPri
     "readOnlyControls": []
   },
   "Template 2": {
+    "allowedControls": [
+      "id",
+      "names",
+      "a",
+      "b"
+    ],
+    "allowedGroups": [
+      "canvas",
+      "usertable",
+      "tablegroup",
+      "texttable"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
+  },
+  "Template 3": {
+    "allowedControls": [
+      "id",
+      "names",
+      "a",
+      "b"
+    ],
+    "allowedGroups": [
+      "canvas",
+      "usertable",
+      "tablegroup",
+      "texttable"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
+  },
+  "User": {
     "allowedControls": [
       "id",
       "names",
@@ -176,8 +210,15 @@ const Grouptexttable = ({lockedData={},setLockedData,primaryTableData={}, setPri
         backgroundClip: '',
         backgroundBlendMode: ''
       }}
-      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}
+      className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'text-white' : 'text-black'}`}
     >
+      <Modal 
+      open={showProfileAsModalOpen} 
+      onClose={() => setShowProfileAsModalOpen(false)} 
+      title={"bindranscreen"}
+      className='w-[] h-[] bg-gray-50 mx-auto rounded-lg shadow-xl p-5 overflow-auto'>
+        <PageBindranscreenpage/>
+      </Modal>
         <CommonHeaderAndTooltip
         >
         <div className='flex flex-col h-full'>

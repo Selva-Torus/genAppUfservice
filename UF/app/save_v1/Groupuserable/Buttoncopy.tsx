@@ -20,7 +20,8 @@ import { Text } from '@/components/Text';
 import { Icon } from '@/components/Icon';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
-import { evaluateDecisionTableBooleanResult } from '@/app/utils/evaluateDecisionTable';
+import evaluateDecisionTable  from '@/app/utils/evaluateDecisionTable';
+import { getGridPositionFromOrder } from '@/app/utils/getGridPositionFromOrder';
 import { XMLParser } from 'fast-xml-parser'
 
 
@@ -79,6 +80,7 @@ const Buttoncopy = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData.method;
   let actionLockData = {"lockMode":"","name":"","ttl":""}
   const [allCode,setAllCode]=useState<any>("");
+  const [gridPosition, setGridPosition] = useState<any>({ gridColumn: '1 / 3', gridRow: '1 / 12' });
     
  /////////////
    //another screen
@@ -130,9 +132,17 @@ const Buttoncopy = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
       }
       setAllCode(orchestrationData?.data?.code);
       if(orchestrationData?.data?.rule.nodes.length > 0){
-        let schemaFlag:any = evaluateDecisionTableBooleanResult(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
+        let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
         // schemaFlag =schemaFlag.output;
-        if (schemaFlag === false) {
+        let order:any = Number(schemaFlag.order);
+
+        // Update grid position based on order number
+        if (order && typeof order === 'number') {
+          const position = getGridPositionFromOrder(order);
+          setGridPosition(position);
+        } 
+
+        if (schemaFlag.output !== "true") {
           setShowFlag(false);
         }else{
           setShowFlag(true)
@@ -190,9 +200,9 @@ const Buttoncopy = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
         lock: {}
       }
       let primaryKey:any;
-      let tagetKey:any=""
+      let tagetKey:any="CK:CT309:FNGK:AF:FNK:PF-PFD:CATK:AG001:AFGK:A001:AFK:pfsave:AFVK:v1|a6a598866e644f57989544f4561e4073"
       let uf_getPFDetails:any={
-        key: ""
+        key: "CK:CT309:FNGK:AF:FNK:PF-PFD:CATK:AG001:AFGK:A001:AFK:pfsave:AFVK:v1|a6a598866e644f57989544f4561e4073"
       };
       let uf_ifo:any;
       let lockedKeysLength:number;
@@ -218,22 +228,65 @@ const Buttoncopy = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
           "children": [
             {
               "id": "fdd291f18a58470c9592c686698ffc78.1.1.1.1",
-              "eventContext": "riseListen",
-              "value": "",
-              "type": "handlerNode",
-              "name": "refreshElement",
+              "type": "responseNode",
+              "name": "success",
               "sequence": "1.1.1.1",
               "children": [
                 {
-                  "id": "756be105166e442fb083156eebe8d616.1.1.1.1.1",
+                  "id": "fdd291f18a58470c9592c686698ffc78.1.1.1.1.1",
+                  "eventContext": "rise",
                   "value": "",
-                  "type": "screen",
-                  "name": "savescreen.v1|userable",
-                  "label": "userable",
-                  "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:savescreen:AFVK:v1|userable",
-                  "elementType": "group",
+                  "type": "handlerNode",
+                  "name": "infoMsg",
                   "sequence": "1.1.1.1.1",
-                  "children": []
+                  "children": [
+                    {
+                      "id": "fdd291f18a58470c9592c686698ffc78.1.1.1.1.1.1",
+                      "eventContext": "riseListen",
+                      "value": "",
+                      "type": "handlerNode",
+                      "name": "refreshElement",
+                      "sequence": "1.1.1.1.1.1",
+                      "children": [
+                        {
+                          "id": "756be105166e442fb083156eebe8d616.1.1.1.1.1.1.1",
+                          "value": "",
+                          "type": "screen",
+                          "name": "savescreen.v1|userable",
+                          "label": "userable",
+                          "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:savescreen:AFVK:v1|userable",
+                          "elementType": "group",
+                          "sequence": "1.1.1.1.1.1.1",
+                          "children": []
+                        }
+                      ]
+                    }
+                  ],
+                  "hlr": {
+                    "params": [
+                      {
+                        "name": "message",
+                        "_type": "string",
+                        "selectionList": [],
+                        "value": "Data copied successfully",
+                        "enabled": true
+                      },
+                      {
+                        "name": "type",
+                        "_type": "select",
+                        "selectionList": [
+                          "none",
+                          "info",
+                          "success",
+                          "warning",
+                          "danger",
+                          "utility"
+                        ],
+                        "value": "success",
+                        "enabled": true
+                      }
+                    ]
+                  }
                 }
               ]
             }
@@ -266,7 +319,10 @@ const Buttoncopy = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
                 "enabled": true
               }
             ]
-          }
+          },
+          "targetKey": [
+            "CK:CT309:FNGK:AF:FNK:PF-PFD:CATK:AG001:AFGK:A001:AFK:pfsave:AFVK:v1|a6a598866e644f57989544f4561e4073"
+          ]
         }
       ]
     }
@@ -391,7 +447,7 @@ const Buttoncopy = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
             formData.append("dpdKey" ,encryptionDpd);
             formData.append("method" ,encryptionMethod);
           } 
-          if (fileBody[0]?.DbType == 'DB') {
+          if (fileBody[0]?.DbType == 'mongodb') {
           const res=await AxiosService.post( "/UF/upload",formData,
             {
               headers: {
@@ -407,7 +463,7 @@ const Buttoncopy = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
             }
           )
           reworkedObject[reworkKeys[i]] = res.data.file.fileId
-        } else if (fileBody[0]?.DbType == 'DFS') {
+        } else if (fileBody[0]?.DbType == 'dfs') {
 
             const basePath = process.env.NEXT_PUBLIC_DFS_PATH || "dfs-uploads";
             const bucketFolderame = process.env.NEXT_PUBLIC_DFS_BUCKETNAME || 'uploadfile';
@@ -545,6 +601,7 @@ const Buttoncopy = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
            }
          )
     ///////////////////////
+    toast('Data copied successfully', 'success');
     // refreshElement
     // for group
     setuserable8d616Props((pre:any)=>({...pre,refresh:!pre?.refresh}));
@@ -612,8 +669,9 @@ const Buttoncopy = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   }
  
   return (
-    <div 
-      style={{gridColumn: ` / `,gridRow: ` / `, gap:``, height: `100%`, overflow: 'auto'}} >
+    <div
+      style={{gridColumn: ` / `,gridRow: ` / `, gap:``, height: `100%`, overflow: 'auto'}} 
+      >
         {showFlag && <Button 
           ref={buttonRef}
           className=""

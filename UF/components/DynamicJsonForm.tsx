@@ -13,7 +13,7 @@ type FieldValue = string | number | boolean | null;
 type FieldValues = { [key: string]: FieldValue | FieldValues };
 
 interface FieldMetadata {
-  type: "text" | "number" | "boolean" | "date" | "dropdown" | "textarea";
+  type: "text" | "number" | "boolean" | "date" | "dropdown" | "textarea" | "password";
   label: string;
   defaultValue: FieldValue;
   options?: readonly string[];
@@ -263,6 +263,19 @@ export default function DynamicContentFields({
               </option>
             ))}
           </select>
+        );
+
+      case "password":
+        return (
+          <input
+            id={inputId}
+            type="password"
+            value={String(value)}
+            onChange={(e) => handleChange(e.target.value)}
+            placeholder={fieldConfig.placeholder || "Value"}
+            className={inputClassName}
+            {...commonHandlers}
+          />
         );
 
       default: // text
