@@ -237,7 +237,7 @@ const SideNav = ({
   }
 
   // Menu Items section - with conditional overflow handling
-  const MenuItemsSection = () => (
+  const MenuItemsSection = useCallback(() => (
     <div
       className={clsx('scrollbar-none flex w-full flex-col gap-2 overflow-x-hidden pt-2', {
         'max-h-[80vh] overflow-y-scroll': !navBarItemsOrder,
@@ -555,10 +555,10 @@ const SideNav = ({
           }
         })}
     </div>
-  )
+  ), [navData, fullView, brandColor, hoverColor, pathname, isDark])
 
   // OPR Matrix section
-  const OPRMatrixSection = () => (
+  const OPRMatrixSection = useCallback(() => (
     <div
       className={clsx('px-0 overflow-x-hidden', {
         hidden: !tp_ps,
@@ -573,10 +573,10 @@ const SideNav = ({
         fullView={fullView}
       />
     </div>
-  )
+  ), [fullView, tp_ps, selectedAccessProfile])
 
   // Profile section
-  const ProfileSection = () => (
+  const ProfileSection = useCallback(() => (
     <div 
       style={getGridStyle('profile')}
       className='flex items-center justify-center'
@@ -600,7 +600,7 @@ const SideNav = ({
         />
       )}
     </div>
-  )
+  ), [fullView, brandColor, logout, user, userDetails, selectedAccessProfile])
 
   // Default layout (without grid)
   if (!navBarItemsOrder || navBarItemsOrder?.length === 0) {

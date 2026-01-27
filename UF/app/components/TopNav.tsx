@@ -183,7 +183,7 @@ const TopNav = ({
   }
 
   // Logo section
-  const LogoSection = () => (
+  const LogoSection = useCallback(() => (
     <div className='flex items-center gap-1' style={getGridStyle('logo')}>
       {logo ? (
         <img
@@ -200,9 +200,9 @@ const TopNav = ({
         {appName}
       </Text>
     </div>
-  )
+  ) , [logo, appName])
 
-      const AppLogoSection = () => (
+      const AppLogoSection = useCallback(() => (
     <div className='flex items-center gap-1' style={getGridStyle('app logo')}>
       {appLogo && (
         <img
@@ -214,10 +214,10 @@ const TopNav = ({
         />
       )}
     </div>
-  )
+  ), [appLogo])
 
   // Menu Items section
-  const MenuItemsSection = () => (
+  const MenuItemsSection = useCallback(() => (
     <div
       className='flex w-full justify-start gap-1 pl-4'
       style={getGridStyle('menu items')}
@@ -301,10 +301,10 @@ const TopNav = ({
         )}
       </div>
     </div>
-  )
+  ) , [visibleItems , hiddenItems])
 
   // OPR Matrix section
-  const OPRMatrixSection = () => (
+  const OPRMatrixSection = useCallback(() => (
     <div
       className={clsx('flex w-full justify-end gap-2', {
         hidden: !tp_ps
@@ -316,10 +316,10 @@ const TopNav = ({
         fullView
       />
     </div>
-  )
+  ), [selectedAccessProfile])
 
   // Profile section
-  const ProfileSection = () => (
+  const ProfileSection = useCallback(() => (
     <div style={getGridStyle('profile')}>
       <div
         onClick={() => setIsPopoverOpen(prev => !prev)}
@@ -457,7 +457,7 @@ const TopNav = ({
         </Popup>
       </div>
     </div>
-  )
+  ) , [userDetails])
 
   // Default layout (without grid)
     if (
