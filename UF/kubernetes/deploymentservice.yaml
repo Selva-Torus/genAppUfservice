@@ -1,10 +1,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: ct309-a001-uf-generator
-  namespace: ct309-a001-uf-v1
+  name: ci001-a001-uf-generator
+  namespace: ci001-a001-uf-v1
   labels:
-    app: ct309-a001-uf-generator
+    app: ci001-a001-uf-generator
 spec:
   replicas: 1
   strategy:
@@ -17,15 +17,15 @@ spec:
       - setWeight: 100  # 100% Canary (Stable)
   selector:
     matchLabels:
-      app: ct309-a001-uf-generator
+      app: ci001-a001-uf-generator
   template:
     metadata:
       labels:
-        app: ct309-a001-uf-generator
+        app: ci001-a001-uf-generator
     spec:
       containers:
-      - name: ct309-a001-uf-generator-frontend-container
-        image: 192.168.2.164:5000/ct309-a001-uf-v1:docker_tag
+      - name: ci001-a001-uf-generator-frontend-container
+        image: 192.168.2.164:5000/ci001-a001-uf-v1:docker_tag
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -35,13 +35,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ct309-a001-uf-generator
-  namespace: ct309-a001-uf-v1
+  name: ci001-a001-uf-generator
+  namespace: ci001-a001-uf-v1
   labels:
-    app: ct309-a001-uf-generator
+    app: ci001-a001-uf-generator
 spec:
   selector:
-    app: ct309-a001-uf-generator
+    app: ci001-a001-uf-generator
   ports:
     - name: http
       protocol: TCP

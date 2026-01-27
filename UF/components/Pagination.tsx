@@ -211,7 +211,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                     ? "text-white"
                     : "border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
                 )}
-                style={isActive ? { backgroundColor: "var(--brand-color)" } : undefined}
+                style={isActive ? { backgroundColor: "var(--selection-color)" } : undefined}
                 onClick={() => handlePageChange(pageNum)}
                 aria-label={`Page ${pageNum}`}
                 aria-current={isActive ? "page" : undefined}
@@ -220,7 +220,7 @@ export const Pagination: React.FC<PaginationProps> = ({
                 }}
                 onMouseLeave={(e) => {
                   if (isActive) {
-                    e.currentTarget.style.backgroundColor = "var(--brand-color)";
+                    e.currentTarget.style.backgroundColor = "var(--selection-color)";
                   } else {
                     e.currentTarget.style.backgroundColor = "";
                   }

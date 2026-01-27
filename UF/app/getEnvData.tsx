@@ -1,5 +1,5 @@
 let data:any ={
-  "mydpd": {
+  "defaultDPD": {
     "encryptionType": {
       "name": "encryptionType",
       "_type": "select",

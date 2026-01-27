@@ -20,8 +20,8 @@ export default function RootLayout({
       <div className=' relative h-[100vh] w-[100vw]  overflow-hidden'>
         <ThemeWrapper>
           <LayoutDecider
-            mode='fluid' 
-            navigationStyles='horizontal' 
+            mode='detached' 
+            navigationStyles='vertical' 
           >
             <main className ="h-full w-full">{children}</main>
             <ToastContainer />

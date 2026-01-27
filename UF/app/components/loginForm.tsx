@@ -42,7 +42,7 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
   const { branding } = useGlobal()
   const { brandColor } = branding
   const { bgColor, borderColor, textColor } = useTheme()
-  const onBoardingKey : string = "User Screen"
+  const onBoardingKey : string = "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:newAG:AFGK:ACH:AFK:test2:AFVK:v1"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
@@ -60,13 +60,13 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
       if (tenant && formData.email && formData.password) {
         setLoading(true)
 
-        setCookie('cfg_theme','dark')
+        setCookie('cfg_theme','light')
 
         const api_signinBody: api_signinDto = {
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT309:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
           ufClientType: 'UFW'
         }
         const api_signin = await axios.post(
@@ -96,24 +96,14 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
           let screenDetails: any = {
             keys:[
   {
-    "screenName": "progress",
-    "screensName": "progress-v1",
-    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1"
+    "screenName": "app1",
+    "screensName": "app1-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
   },
   {
-    "screenName": "tablecheck",
-    "screensName": "tablecheck-v1",
-    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1"
-  },
-  {
-    "screenName": "save",
-    "screensName": "save-v1",
-    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:savescreen:AFVK:v1"
-  },
-  {
-    "screenName": "menu",
-    "screensName": "menu-v1",
-    "ufKey": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:dynamicforms:AFVK:v1"
+    "screenName": "menu item 3",
+    "screensName": "menu_item_3-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:newAG:AFGK:ACH:AFK:test2:AFVK:v1"
   }
 ]
           }

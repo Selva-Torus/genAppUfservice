@@ -1,19 +1,18 @@
 
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT309:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
-  "deploymentArtifactKey": "CK:CT309:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:mydpd:AFVK:v1",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+  "deploymentArtifactKey": "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
   "appGroupDesc": "appgroup",
   "logType": "mongodb",
   "appDesc": "application",
-  "appLogo": "torus/9.1/CT309/resources/images/lg-b44d8cea7df3575abf83e2bcb765f68779.jpg",
   "isOld": true,
-  "clientCode": "CT309",
+  "clientCode": "CI001",
   "loginDetails": {
-    "loginId": "game",
-    "firstName": "game",
-    "lastName": "changer",
-    "email": "harin@torus.tech",
-    "mobile": "1111111111",
+    "loginId": "selva",
+    "firstName": "selva",
+    "lastName": "g",
+    "email": "selvakumarg+a@torus.tech",
+    "mobile": "6369726232",
     "2FAFlag": "N",
     "scope": "client_admin",
     "status": "active",
@@ -21,15 +20,27 @@
       "admin"
     ],
     "accessExpires": "",
-    "dateAdded": "2025-12-26T12:31:04.570Z",
+    "dateAdded": "2026-01-23T13:29:31.878Z",
     "isRestricted": false,
-    "userUniqueId": "ed36774d-6089-4386-9d6f-e278b0b55ee5",
+    "userUniqueId": "399bb002-571a-4f60-8242-67a2d5d03a4b",
     "touring": {
       "isneedTouring": false,
-      "touringData": {}
+      "touringData": {
+        "/control-center/storage-configuration": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/tenant": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        }
+      }
     },
-    "lastActive": "2026-01-24T06:22:59.007Z",
-    "client": "CT309"
+    "client": "CI001"
   }
 } */
 import { NestFactory } from '@nestjs/core';
@@ -96,7 +107,7 @@ async function bootstrap() {
     { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 
     'JWT-auth',
     )
-    .addServer('http://192.168.2.86:3108','Production Server')
+    .addServer('http://192.168.2.110:3108','Production Server')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger.json', JSON.stringify(document, null, 2));

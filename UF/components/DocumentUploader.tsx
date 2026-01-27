@@ -86,7 +86,7 @@ const DocumentUploader = ({
   headerPosition = "top",
   tooltipProps,
   needTooltip = false,
-  fillContainer = true,
+  fillContainer = false,
   contentAlign = "center"
 }: any) => {
   const [files, setFiles] = React.useState<Drag_file>(value)
@@ -391,16 +391,16 @@ const removeFile = async (
           ${getFillClasses()} ${fillContainer ? "overflow-hidden" : ""}`}>
 
         <div
-          className={`flex ${fillContainer ? "w-full h-full" : ""}`}
+          className={`flex  w-full ${fillContainer ? "w-full h-full" : ""}`}
           {...getRootProps()}
         >
           {viewType=='modal'?
-          <div className={`flex ${fillContainer ? "w-full h-full" : "justify-start"} ${className}`}>
+          <div className={`flex  w-full ${fillContainer ? "w-full h-full" : "justify-start"} ${className}`}>
             <Button
               pin='round-round'
               fillContainer={fillContainer}
               contentAlign={`${getContentAlignClasses()}`}
-              className={`${fontSizeClass} ${className}`}
+              className={` w-full ${fontSizeClass} ${className}`}
               startContent={
                 <span className='flex  items-center justify-center'>
                   <Icon className='flex items-center justify-center bg-transparent px-[0.15vw] py-[0.25vh]' data='FaCloudUploadAlt'
@@ -419,6 +419,7 @@ const removeFile = async (
         </div>
          {viewType=='modal'?<Modal
           open={open}
+          className='p-4'
           title={
             <div className={`${getBorderRadiusClass(branding.borderRadius)} flex items-center gap-3 px-1 py-1`}>
               <div className={`p-2 rounded-lg ${theme === 'dark' || theme === 'dark-hc' ? 'bg-blue-900/30' : 'bg-blue-50'}`}>

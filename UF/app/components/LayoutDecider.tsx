@@ -40,15 +40,15 @@ const LayoutDecider = ({
   const {borderColor , bgColor} = useTheme()
   const { brandColor, hoverColor, selectionColor } = branding;
   const encryptionFlagApp: boolean = false;    
-  const encryptionDpd: string = "CK:CT309:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:mydpd:AFVK:v1";
+  const encryptionDpd: string = "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1";
   const encryptionMethod: string = "";
-  const logo = "torus/9.1/CT309/resources/images/images.png"
-  const appLogo = "torus/9.1/CT309/resources/images/lg-b44d8cea7df3575abf83e2bcb765f68779.jpg"
+  const logo = ""
+  const appLogo = ""
   const appName = "application"
   const toast = useInfoMsg()
   const [loading, setLoading] = useState(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
-  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT309:AFGK:AG001:AFK:A001:AFVK:v1:bldc"
+  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc"
   const [rawNavData, setRawNavData] = useState<MenuItem[] | null>(null);
   const navData: MenuItem[] = [
   {
@@ -76,68 +76,24 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
-    "menuGroupLabel": "progress",
+    "menuGroupLabel": "app1",
     "screenDetails": [
       {
-        "name": "progress",
-        "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:progress:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1",
-          "Template 2"
-        ],
+        "name": "app1",
+        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1",
+        "allowedAccessProfile": [],
         "static": false
       }
     ],
     "items": []
   },
   {
-    "menuGroupLabel": "tablecheck",
+    "menuGroupLabel": "Menu Item 3",
     "screenDetails": [
       {
-        "name": "tablecheck",
-        "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:tablecheck:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1",
-          "Template 2",
-          "Template 3",
-          "User"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "save",
-    "screenDetails": [
-      {
-        "name": "save",
-        "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:savescreen:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1",
-          "Template 2",
-          "Template 3",
-          "User"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "Menu",
-    "screenDetails": [
-      {
-        "name": "menu",
-        "key": "CK:CT309:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:dynamicforms:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1",
-          "Template 2",
-          "User",
-          "Template 4",
-          "Test1",
-          "Test2"
-        ],
+        "name": "menu item 3",
+        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:newAG:AFGK:ACH:AFK:test2:AFVK:v1",
+        "allowedAccessProfile": [],
         "static": false
       }
     ],
@@ -418,19 +374,16 @@ const LayoutDecider = ({
     'gridRow'?: string
   }[] =[
   {
-    "name": "opr matrix",
-    "gridRow": "4/7",
-    "gridColumn": "9/12"
+    "name": "menu items",
+    "gridRow": "1/6"
   },
   {
-    "name": "menu items",
-    "gridRow": "8/13",
-    "gridColumn": "1/6"
+    "name": "opr matrix",
+    "gridRow": "9/12"
   },
   {
     "name": "profile",
-    "gridRow": "2/3",
-    "gridColumn": "12/13"
+    "gridRow": "12/13"
   }
 ]
 
