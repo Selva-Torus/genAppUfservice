@@ -13,24 +13,24 @@ export interface TotalContextProps {
   setgroupff998: React.Dispatch<React.SetStateAction<any>>
   groupff998Props: any 
   setgroupff998Props: React.Dispatch<React.SetStateAction<any>>
-  group2c43da: any 
-  setgroup2c43da: React.Dispatch<React.SetStateAction<any>>
-  group2c43daProps: any 
-  setgroup2c43daProps: React.Dispatch<React.SetStateAction<any>>
+  testgrp21c521: any 
+  settestgrp21c521: React.Dispatch<React.SetStateAction<any>>
+  testgrp21c521Props: any 
+  settestgrp21c521Props: React.Dispatch<React.SetStateAction<any>>
   button71874: any,
   setbutton71874:React.Dispatch<React.SetStateAction<any>>
   button71874Props: any 
   setbutton71874Props: React.Dispatch<React.SetStateAction<any>>
-  button2839a5: any,
-  setbutton2839a5:React.Dispatch<React.SetStateAction<any>>
-  button2839a5Props: any 
-  setbutton2839a5Props: React.Dispatch<React.SetStateAction<any>>
+  testbtn27dc73: any,
+  settestbtn27dc73:React.Dispatch<React.SetStateAction<any>>
+  testbtn27dc73Props: any 
+  settestbtn27dc73Props: React.Dispatch<React.SetStateAction<any>>
 
 ////// screen states 
   defaultapp_v1Props: any 
   setdefaultapp_v1Props: React.Dispatch<React.SetStateAction<any>>
-  test2_v1Props: any 
-  settest2_v1Props: React.Dispatch<React.SetStateAction<any>>
+  artifact2_v1Props: any 
+  setartifact2_v1Props: React.Dispatch<React.SetStateAction<any>>
 
 ///////// dfd
 
@@ -88,8 +88,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       isHidden: false,
       selectedIds:[]
       }) 
-        const [group2c43da, setgroup2c43da ] = React.useState<any>({}) 
-    const [group2c43daProps, setgroup2c43daProps ] = React.useState<any>({
+        const [testgrp21c521, settestgrp21c521 ] = React.useState<any>({}) 
+    const [testgrp21c521Props, settestgrp21c521Props ] = React.useState<any>({
       validation:false,
       required:false,
       refetch:false,
@@ -106,7 +106,7 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refetch:false,
     refresh:false,
     }) 
-   const [button2839a5,setbutton2839a5] = React.useState<any>({
+   const [testbtn27dc73,settestbtn27dc73] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
@@ -115,14 +115,14 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     }) 
     ///////////
     const [refresh, setRefresh] = React.useState<any>({       buttonbutton71874:false,
-       buttonbutton2839a5:false,
+       buttontestbtn27dc73:false,
        groupgroupff998:false,
-       groupgroup2c43da:false,
+       grouptestGrp21c521:false,
       })
 
   ////// screen states 
    const [defaultapp_v1Props,setdefaultapp_v1Props] = React.useState<any>([])
-   const [test2_v1Props,settest2_v1Props] = React.useState<any>([])
+   const [artifact2_v1Props,setartifact2_v1Props] = React.useState<any>([])
 
 ///////// dfd
     const [searchParam , setSearchParam] = React.useState<string>("")
@@ -159,19 +159,19 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         setgroupff998,
         groupff998Props, 
         setgroupff998Props,
-        group2c43da, 
-        setgroup2c43da,
-        group2c43daProps, 
-        setgroup2c43daProps,
+        testgrp21c521, 
+        settestgrp21c521,
+        testgrp21c521Props, 
+        settestgrp21c521Props,
         button71874,
         setbutton71874, 
-        button2839a5,
-        setbutton2839a5, 
+        testbtn27dc73,
+        settestbtn27dc73, 
         ////// screen states 
           defaultapp_v1Props,
           setdefaultapp_v1Props,
-          test2_v1Props,
-          settest2_v1Props,
+          artifact2_v1Props,
+          setartifact2_v1Props,
         //////////
 
         ///////// dfd

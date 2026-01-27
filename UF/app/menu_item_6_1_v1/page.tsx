@@ -17,10 +17,17 @@ import clsx from "clsx";
 import Groupgroup  from "./Groupgroup/Groupgroup";
 
 
-export default function PageApp1V1() {
+export default function PageMenuItem61V1() {
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const [initialLoad, setInitialLoad] = useState(false);
-  const securityData:any={};
+  const securityData:any={
+  "Template 1": {
+    "allowedGroups": [
+      "canvas",
+      "group"
+    ]
+  }
+};
   let code:any="";
   //const language=useLanguage();
   const routes = useRouter();
@@ -30,7 +37,7 @@ export default function PageApp1V1() {
   const [dropdownData, setDropdownData] = useState<any>({});
   const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token);
-  const screenName:string = "app1";
+  const screenName:string = "menu item 6_1";
   const user = decodedTokenObj?.selectedAccessProfile;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {refetch, setRefetch} = useContext(TotalContext) as TotalContextProps;
@@ -57,7 +64,7 @@ export default function PageApp1V1() {
     });
 
   async function securityCheck() {
-    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1",accessProfile:[user],from:"pageApp1V1"},{
+    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1",accessProfile:[user],from:"pageMenuItem61V1"},{
       headers: {
         Authorization: `Bearer ${token}`
       }});

@@ -15,14 +15,14 @@ import { Modal } from '@/components/Modal';
 import { eventBus } from '@/app/eventBus';
 import clsx from "clsx";
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
-import Buttonbutton2  from "./Buttonbutton2";
+import Buttonbutton  from "./Buttonbutton";
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { getCookie } from "@/app/components/cookieMgment";
 import { TotalContext, TotalContextProps } from '@/app/globalContext';
 import { useTheme } from '@/hooks/useTheme';
 
 
-const Groupgroup2 = ({lockedData={},setLockedData,primaryTableData={}, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,dropdownData,setDropdownData,encryptionFlagPageData, nodeData, setNodeData,paginationDetails,isFormOpen=false}:any)=> {
+const Groupgroup = ({lockedData={},setLockedData,primaryTableData={}, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,dropdownData,setDropdownData,encryptionFlagPageData, nodeData, setNodeData,paginationDetails,isFormOpen=false}:any)=> {
   const token:string = getCookie('token'); 
   const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
@@ -43,7 +43,19 @@ const Groupgroup2 = ({lockedData={},setLockedData,primaryTableData={}, setPrimar
     "dpd":encryptionDpd,
     "method":encryptionMethod
   };
-  const securityData:any={};
+  const securityData:any={
+  "Template 1": {
+    "allowedControls": [
+      "button"
+    ],
+    "allowedGroups": [
+      "canvas",
+      "group"
+    ],
+    "blockedControls": [],
+    "readOnlyControls": []
+  }
+};
   const prevRefreshRef = useRef(false);
   const [allowedComponent,setAllowedComponent]=useState<any>("");
   const [allowedControls,setAllowedControls]=useState<any>("");
@@ -56,13 +68,13 @@ const Groupgroup2 = ({lockedData={},setLockedData,primaryTableData={}, setPrimar
   const [ButtonGoRuleData,setButtonGoRuleData]=useState<any>({})
  /////////////
    //another screen
-  const {group2c43da, setgroup2c43da}= useContext(TotalContext) as TotalContextProps;
-  const {group2c43daProps, setgroup2c43daProps}= useContext(TotalContext) as TotalContextProps;
-  const {button2839a5, setbutton2839a5}= useContext(TotalContext) as TotalContextProps;
+  const {groupff998, setgroupff998}= useContext(TotalContext) as TotalContextProps;
+  const {groupff998Props, setgroupff998Props}= useContext(TotalContext) as TotalContextProps;
+  const {button71874, setbutton71874}= useContext(TotalContext) as TotalContextProps;
   //////////////
   const [open, setOpen] = React.useState(false);
   async function securityCheck() {
-  const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:newAG:AFGK:ACH:AFK:test2:AFVK:v1",componentId:"63b5fcffc6fb4066baf8adf1bf8c43da",from:"GroupGroup2",accessProfile:accessProfile},{
+  const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1",componentId:"2b798fc9c7774ec0b640c43f8d2ff998",from:"GroupGroup",accessProfile:accessProfile},{
     headers: {
       Authorization: `Bearer ${token}`
     }})
@@ -77,14 +89,14 @@ const Groupgroup2 = ({lockedData={},setLockedData,primaryTableData={}, setPrimar
   setAllowedComponent(allowedGroups) 
     
   /////////////
-    if(orchestrationData?.data?.readableControls.includes("button2")){
-      setbutton2839a5({...button2839a5,isDisabled:true});
+    if(orchestrationData?.data?.readableControls.includes("button")){
+      setbutton71874({...button71874,isDisabled:true});
     }
   //////////////
     if (code != '') {
       let codeStates: any = {};
-      codeStates['group2']  = group2c43da,
-      codeStates['setgroup2'] = setgroup2c43da,
+      codeStates['group']  = groupff998,
+      codeStates['setgroup'] = setgroupff998,
 
     codeExecution(code,codeStates);
     } 
@@ -96,29 +108,29 @@ const Groupgroup2 = ({lockedData={},setLockedData,primaryTableData={}, setPrimar
   const handleOnChange=()=>{
 
   }
-  const group2c43daRef = useRef<any>(null);
+  const groupff998Ref = useRef<any>(null);
   const handleClearSearch = () => {
-    group2c43daRef.current?.setSearchParams();
-    group2c43daRef.current?.handleSearch({});
+    groupff998Ref.current?.setSearchParams();
+    groupff998Ref.current?.handleSearch({});
   };
 
   useEffect(() => {    
     securityCheck()   
     handleOnload()
     if (prevRefreshRef.current) {
-      if(!Array.isArray(group2c43da) && Object.keys(group2c43da)?.length>0)
+      if(!Array.isArray(groupff998) && Object.keys(groupff998)?.length>0)
       {
-        setgroup2c43da({})
+        setgroupff998({})
       }
     }else 
       prevRefreshRef.current= true
-  }, [group2c43daProps?.refresh])
+  }, [groupff998Props?.refresh])
 
   return (
     <div 
       style={{          
-        gridColumn: '1 / 18',
-        gridRow: '8 / 119',
+        gridColumn: '8 / 23',
+        gridRow: '35 / 156',
       
         //rowGap: '0px',
         display: 'grid',
@@ -139,10 +151,10 @@ const Groupgroup2 = ({lockedData={},setLockedData,primaryTableData={}, setPrimar
       }}
       className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'text-white' : 'text-black'}`}
     >
-        {        (("button2" in ButtonGoRuleData)?ButtonGoRuleData["button2"]:true) && 
-          allowedControls.includes("button2")  ?            <Buttonbutton2 lockedData={lockedData} setLockedData={setLockedData} primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData} checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData}/>: <div></div>} 
+        {        (("button" in ButtonGoRuleData)?ButtonGoRuleData["button"]:true) && 
+          allowedControls.includes("button")  ?            <Buttonbutton lockedData={lockedData} setLockedData={setLockedData} primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData} checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData}/>: <div></div>} 
     </div>
  )
 }
 
-export default Groupgroup2
+export default Groupgroup

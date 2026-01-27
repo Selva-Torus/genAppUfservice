@@ -14,13 +14,20 @@ import { Text } from "@/components/Text";
 import { useRouter } from 'next/navigation';
 import { useTheme } from '@/hooks/useTheme';
 import clsx from "clsx";
-import Groupgroup2  from "./Groupgroup2/Groupgroup2";
+import GrouptestGrp2  from "./GrouptestGrp2/GrouptestGrp2";
 
 
-export default function PageMenuItem3V1() {
+export default function PageMenuItem62V1() {
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const [initialLoad, setInitialLoad] = useState(false);
-  const securityData:any={};
+  const securityData:any={
+  "Template 1": {
+    "allowedGroups": [
+      "canvas",
+      "testgrp2"
+    ]
+  }
+};
   let code:any="";
   //const language=useLanguage();
   const routes = useRouter();
@@ -30,7 +37,7 @@ export default function PageMenuItem3V1() {
   const [dropdownData, setDropdownData] = useState<any>({});
   const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token);
-  const screenName:string = "menu item 3";
+  const screenName:string = "menu item 6_2";
   const user = decodedTokenObj?.selectedAccessProfile;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {refetch, setRefetch} = useContext(TotalContext) as TotalContextProps;
@@ -39,9 +46,9 @@ export default function PageMenuItem3V1() {
   const {paginationDetails, setpaginationDetails} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
-  const {test2_v1Props, settest2_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const [checkgroup2,setCheckgroup2,]=useState(false);
-  const {group2c43da, setgroup2c43da} = useContext(TotalContext) as TotalContextProps;
+  const {artifact2_v1Props, setartifact2_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const [checktestgrp2,setChecktestgrp2,]=useState(false);
+  const {testgrp21c521, settestgrp21c521} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagPage: boolean = false|| encAppFalg.flag;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encAppFalg.dpd;
@@ -57,7 +64,7 @@ export default function PageMenuItem3V1() {
     });
 
   async function securityCheck() {
-    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:newAG:AFGK:ACH:AFK:test2:AFVK:v1",accessProfile:[user],from:"pageMenuItem3V1"},{
+    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",accessProfile:[user],from:"pageMenuItem62V1"},{
       headers: {
         Authorization: `Bearer ${token}`
       }});
@@ -82,7 +89,7 @@ export default function PageMenuItem3V1() {
             params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:newAG:AFGK:ACH:AFK:test2:AFVK:v1"
+              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
             }
           }) 
         }else{
@@ -91,7 +98,7 @@ export default function PageMenuItem3V1() {
               Authorization: `Bearer ${token}`
              },
             params: {
-              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:newAG:AFGK:ACH:AFK:test2:AFVK:v1"  
+              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"  
             }
           })          
         }
@@ -116,7 +123,7 @@ export default function PageMenuItem3V1() {
           params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:newAG:AFGK:ACH:AFK:test2:AFVK:v1"
+              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
             }
         }) 
         }else{
@@ -125,7 +132,7 @@ export default function PageMenuItem3V1() {
              Authorization: `Bearer ${token}`
            },
             params: {
-              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:newAG:AFGK:ACH:AFK:test2:AFVK:v1"
+              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
             }
          })          
         }
@@ -158,9 +165,9 @@ export default function PageMenuItem3V1() {
         try{
           if (security == 'AA') {
           allowedGroup.map((nodes:any)=>{
-            if(nodes?.groupName == 'group2' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
+            if(nodes?.groupName == 'testGrp2' && (nodes?.security== 'AA' || nodes?.security == 'ATO'))
             {
-              setCheckgroup2(true)
+              setChecktestgrp2(true)
             }
           })
           }
@@ -175,8 +182,8 @@ export default function PageMenuItem3V1() {
         //Code Execution
         if (code !="" ) {
           let codeStates: any = {}
-          codeStates['group2'] = group2c43da;
-          codeStates['setgroup2'] = setgroup2c43da;
+          codeStates['testgrp2'] = testgrp21c521;
+          codeStates['settestgrp2'] = settestgrp21c521;
           codeExecution(code,codeStates);
         }   
         setInitialLoad(true);        
@@ -234,7 +241,7 @@ export default function PageMenuItem3V1() {
           borderWidth: '2px'
       })
       }}>
-        {checkgroup2 && initialLoad &&<Groupgroup2  
+        {checktestgrp2 && initialLoad &&<GrouptestGrp2  
           lockedData={lockedData} 
           setLockedData={setLockedData} 
           primaryTableData={primaryTableData}

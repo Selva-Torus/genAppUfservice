@@ -81,7 +81,9 @@ const LayoutDecider = ({
       {
         "name": "app1",
         "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1",
-        "allowedAccessProfile": [],
+        "allowedAccessProfile": [
+          "Template 1"
+        ],
         "static": false
       }
     ],
@@ -92,8 +94,63 @@ const LayoutDecider = ({
     "screenDetails": [
       {
         "name": "menu item 3",
-        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:newAG:AFGK:ACH:AFK:test2:AFVK:v1",
-        "allowedAccessProfile": [],
+        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroupLabel": "Menu Item 4",
+    "screenDetails": [
+      {
+        "name": "menu item 4",
+        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroupLabel": "Menu Item 5",
+    "screenDetails": [
+      {
+        "name": "menu item 5",
+        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroup": "menu grp 6",
+    "menuGroupLabel": "Menu Grp 6",
+    "screenDetails": [
+      {
+        "name": "menu item 6_1",
+        "label": "Menu Item 6_1",
+        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1"
+        ],
+        "static": false
+      },
+      {
+        "name": "menu item 6_2",
+        "label": "Menu Item 6_2",
+        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1"
+        ],
         "static": false
       }
     ],

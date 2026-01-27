@@ -221,47 +221,6 @@ const sortedData = sortColumn
 
   const tableElement = (
     <div className={`w-full h-full flex flex-col ${edgePadding ? "" : ""} ${className}`}>
-      {search && (
-        <div className="flex mb-4 flex-shrink-0">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className={`
-                w-full
-                px-4 py-2
-                ${getBorderRadiusClass(branding.borderRadius)}
-                ${getFontSizeClass(branding.fontSize)}
-                border-2
-                ${isDark ? "bg-gray-800 text-white border-gray-600" : "bg-white text-gray-900 border-gray-300"}
-                transition-all duration-200
-                focus:outline-none
-              `}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = branding.selectionColor;
-                e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(branding.selectionColor, 0.2)}`;
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-              onMouseEnter={(e) => {
-                if (document.activeElement !== e.currentTarget) {
-                  e.currentTarget.style.borderColor = branding.hoverColor;
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (document.activeElement !== e.currentTarget) {
-                  e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB';
-                }
-              }}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Column Visibility Modal */}
       {showColumnModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

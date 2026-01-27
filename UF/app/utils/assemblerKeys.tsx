@@ -8,7 +8,27 @@ export function getRouteScreenDetails(key: string, artfactName: string): string 
   {
     "screenName": "menu item 3",
     "screensName": "menu_item_3-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:newAG:AFGK:ACH:AFK:test2:AFVK:v1"
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
+  },
+  {
+    "screenName": "menu item 4",
+    "screensName": "menu_item_4-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
+  },
+  {
+    "screenName": "menu item 5",
+    "screensName": "menu_item_5-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
+  },
+  {
+    "screenName": "menu item 6_1",
+    "screensName": "menu_item_6_1-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
+  },
+  {
+    "screenName": "menu item 6_2",
+    "screensName": "menu_item_6_2-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
   }
 ]
 

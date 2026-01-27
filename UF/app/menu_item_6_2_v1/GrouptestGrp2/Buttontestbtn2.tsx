@@ -47,7 +47,7 @@ function objectToQueryString(obj: any) {
 }
  
 
-const Buttonbutton2 = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}: { lockedData:any,setLockedData:any,checkToAdd:any,setCheckToAdd:any,refetch:any,setRefetch:any,primaryTableData:any,setPrimaryTableData:any,encryptionFlagCompData:any,}) => {
+const Buttontestbtn2 = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}: { lockedData:any,setLockedData:any,checkToAdd:any,setCheckToAdd:any,refetch:any,setRefetch:any,primaryTableData:any,setPrimaryTableData:any,encryptionFlagCompData:any,}) => {
   const token:string = getCookie('token');
   const {currentToken, setCurrentToken} = useContext(TotalContext) as TotalContextProps;
   const decodedTokenObj:any = decodeToken(token);
@@ -84,9 +84,9 @@ const Buttonbutton2 = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
     
  /////////////
    //another screen
-  const {group2c43da, setgroup2c43da}= useContext(TotalContext) as TotalContextProps;
-  const {group2c43daProps, setgroup2c43daProps}= useContext(TotalContext) as TotalContextProps;
-  const {button2839a5, setbutton2839a5}= useContext(TotalContext) as TotalContextProps;
+  const {testgrp21c521, settestgrp21c521}= useContext(TotalContext) as TotalContextProps;
+  const {testgrp21c521Props, settestgrp21c521Props}= useContext(TotalContext) as TotalContextProps;
+  const {testbtn27dc73, settestbtn27dc73}= useContext(TotalContext) as TotalContextProps;
   //////////////
 
 
@@ -96,8 +96,8 @@ const Buttonbutton2 = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
     code = allCode ||""
     if (code != '') {
       let codeStates: any = {};
-      codeStates['group2']  = group2c43da,
-      codeStates['setgroup2'] = setgroup2c43da,
+      codeStates['testgrp2']  = testgrp21c521,
+      codeStates['settestgrp2'] = settestgrp21c521,
       codeStates['response']  = savedData.current,
       customCode = codeExecution(code,codeStates);
       return customCode;
@@ -108,11 +108,11 @@ const Buttonbutton2 = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
       const orchestrationData: any = await AxiosService.post(
         '/UF/Orchestration',
         {
-          key: "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:newAG:AFGK:ACH:AFK:test2:AFVK:v1",
-          componentId: "63b5fcffc6fb4066baf8adf1bf8c43da",
-          controlId: "124234e96e2e4ccf867a60dbddb839a5",
+          key: "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",
+          componentId: "46b53fdb1b814e429a6568b82941c521",
+          controlId: "5c65605798a0421dac3d4025af47dc73",
           isTable: false,
-          from:"Buttontest button 2",
+          from:"Buttontest button",
           accessProfile:accessProfile
         },
         {
@@ -150,11 +150,11 @@ const Buttonbutton2 = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
   useEffect(()=>{
     handleMapper();
     eventBus.on("triggerButton", (id:any) => {
-      if (id === "button2839a5") {
+      if (id === "testbtn27dc73") {
         handleClick();
       }
     });
-  },[button2839a5?.refresh,currentToken])
+  },[testbtn27dc73?.refresh,currentToken])
 
   function SourceIdFilter(eventProperty:any,matchingSequence?:string){
     let ans=[]
@@ -181,7 +181,7 @@ const Buttonbutton2 = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
   }
 
   const handleClick=async()=>{
-    if(group2c43daProps?.validation==true && group2c43daProps?.required==true || group2c43daProps?.required==true)
+    if(testgrp21c521Props?.validation==true && testgrp21c521Props?.required==true || testgrp21c521Props?.required==true)
     {
       if(validateRefetch.init==0)
       {
@@ -212,29 +212,29 @@ const Buttonbutton2 = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
   }
 
 
- if (button2839a5?.isHidden) {
+ if (testbtn27dc73?.isHidden) {
     return <></>
   }
  
   return (
     <div
-      style={{gridColumn: `19 / 25`,gridRow: `77 / 112`, gap:``, height: `100%`, overflow: 'auto'}} 
+      style={{gridColumn: `1 / 3`,gridRow: `3 / 13`, gap:``, height: `100%`, overflow: 'auto'}} 
       >
         {showFlag && <Button 
           ref={buttonRef}
           className=""
           onClick={handleClick}
           view='action'
-          disabled= {button2839a5?.isDisabled ? true : false}
+          disabled= {testbtn27dc73?.isDisabled ? true : false}
           pin='circle-circle'
           contentAlign={"center"}
         >
-          {keyset("test button 2")}
+          {keyset("test button")}
         </Button>}
       </div>
     
   )
 }
 
-export default Buttonbutton2
+export default Buttontestbtn2
 

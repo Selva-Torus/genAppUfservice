@@ -968,7 +968,9 @@ export class TeService{
           if (poNode.events[e].eventType == 'UEH') {
             let ufkey = (poNode.events[e].sourceId).split('|')[0]
             let keyname = ufkey.split(':')
-            ufname = ((keyname[1] + keyname[5] + keyname[7] + keyname[9] + keyname[11] + keyname[13]).replace(/[-_]/g, '')).replace(/\s+/g, '');
+            let PFkey = (pfdto.key).split(':')
+            let pfname = ((PFkey[1] + PFkey[5] + PFkey[7] + PFkey[9] + PFkey[11] + PFkey[13]).replace(/[-_]/g, '')).replace(/\s+/g, '');
+            ufname = ((keyname[1] + keyname[5] + keyname[7] + keyname[9] + keyname[11] + keyname[13]+pfname).replace(/[-_]/g, '')).replace(/\s+/g, '');
             let sourceid = ((poNode.events[e].sourceId).split('|')[2])
             if (sourceid.includes('/')) {
               handlerId = ((sourceid.split('/'))[sourceid.split('/').length - 1]).replaceAll('.', '')
