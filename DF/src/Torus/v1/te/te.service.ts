@@ -928,32 +928,55 @@ export class TeService{
   } 
 
 
-  // pfPreProcessor
-  async pfPreProcessor(processedKey, pfjson, upId, fabric) {   
-    //this.logger.log(`Pf PreProcessor started for upId: ${upId}`);
+     // pfPreProcessor
+  // async pfPreProcessor(processedKey, pfjson, upId, fabric) {   
+  //   //this.logger.log(`Pf PreProcessor started for upId: ${upId}`);
+  //   try {
+  //     let client = process.env.CLIENTCODE;
+
+  //     // ✅ PERFORMANCE FIX: Use Redis Pipeline for batch operations
+  //     // Collect all operations into batch format
+  //     const operations = pfjson
+  //       .filter(node => node.nodeType !== 'startnode' && node.nodeType !== 'endnode')
+  //       .map(node => {
+  //         // Determine placeholder based on fabric
+  //         const placeholder = fabric === 'DF-DFD'
+  //           ? { request: {}, response: {}, exception: {}, event: {}, customResponse: {} }
+  //           : { request: {}, response: {}, exception: {}, event: {}, ifo: {}, code: {} };
+
+  //         return {
+  //           key: processedKey + upId + ':NPV:' + node.nodeName + '.PRO',
+  //           value: JSON.stringify(placeholder)
+  //         };
+  //       });
+
+  //     // Execute all operations in a single Redis pipeline (100-200x faster!)     
+  //     await this.redisService.setJsonDataBatch(operations, client);     
+  //     return 'Success';
+  //   } catch (error) {      
+  //     throw error;
+  //   }
+  // }
+
+  async pfPreProcessor(processedKey, pfjson, upId, fabric) {
+    this.logger.log('Pf PreProcessor started!');
     try {
+      let placeholder;
       let client = process.env.CLIENTCODE;
-
-      // ✅ PERFORMANCE FIX: Use Redis Pipeline for batch operations
-      // Collect all operations into batch format
-      const operations = pfjson
-        .filter(node => node.nodeType !== 'startnode' && node.nodeType !== 'endnode')
-        .map(node => {
-          // Determine placeholder based on fabric
-          const placeholder = fabric === 'DF-DFD'
-            ? { request: {}, response: {}, exception: {}, event: {}, customResponse: {} }
-            : { request: {}, response: {}, exception: {}, event: {}, ifo: {}, code: {} };
-
-          return {
-            key: processedKey + upId + ':NPV:' + node.nodeName + '.PRO',
-            value: JSON.stringify(placeholder)
-          };
-        });
-
-      // Execute all operations in a single Redis pipeline (100-200x faster!)     
-      await this.redisService.setJsonDataBatch(operations, client);     
+      for (var i = 0; i < pfjson.length; i++) {
+        if ( pfjson[i].nodeType != 'startnode' && pfjson[i].nodeType != 'endnode') {
+          //set npc, ipc placeholders         
+          if (fabric == 'DF-DFD') {
+            placeholder = { request: {},response: {}, exception: {}, event: {}, customResponse: {}};            
+          } else {
+            placeholder = {request: {}, response: {}, exception: {}, event: {}, ifo: {}, code: {}};
+          }          
+          await this.redisService.setJsonData(processedKey + upId + ':NPV:' + pfjson[i].nodeName + '.PRO',JSON.stringify(placeholder), client);
+        }
+      }
+      this.logger.log('pf Preprocessor completed');
       return 'Success';
-    } catch (error) {      
+    }  catch (error) {
       throw error;
     }
   }

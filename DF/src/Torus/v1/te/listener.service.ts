@@ -13,6 +13,8 @@ import { TeService } from "./te.service";
 import { AxiosRequestConfig } from "axios";
 import Redis from "ioredis";
 import { Kafka, Producer, Consumer, CompressionTypes, EachMessagePayload } from 'kafkajs';
+import * as pg from "pg";
+import { MongoClient } from "mongodb";
 
 @Injectable()
 export class ListenerService implements OnModuleInit, OnModuleDestroy{ 
@@ -91,7 +93,7 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
 
     let keyarr = []
         
-    let artifactToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnQiOiJDSTAwMSIsImxvZ2luSWQiOiJzZWx2YSIsInNpZCI6IjJjOGQ5YzBlLTA2Y2MtNDllMC1iOTdkLWZjNzU5NWUwZDQ3YSIsImxvZ1R5cGUiOiJtb25nb2RiIiwidHlwZSI6ImMiLCJpYXQiOjE3Njk0OTY1MjcsImV4cCI6MTc2OTQ5NzcyN30.LJkPg8vCRNy568aUgAByVG7pkQABTHiNwcdA_Vx7qFE';  
+    let artifactToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoic2VsdmEiLCJjbGllbnQiOiJDSTAwMSIsInR5cGUiOiJjIiwibG9nVHlwZSI6Im1vbmdvZGIiLCJzaWQiOiI3ZGM1MzFlZi03MjhlLTQ5NjktODg3NC02NmZiOTQ0ODM1YjciLCJpYXQiOjE3Njk2MDEwNTksImV4cCI6MTc2OTYwMjI1OX0.oz1Qm9MbdI9zbbWh1yKQiV3Xs3XlHA2wkmBw1xxnLFY';  
     for (const key of keyarr) {
       this.listenToKey(key,artifactToken); // fire & forget
     }  
@@ -640,7 +642,7 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
         SessionInfo['subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME || '';        
         SessionInfo['subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME || '';
         
-        let sourceStatus,srcQueue,targetStatus,targetQueue,failureQueue,failureTargetStatus,suspiciousStatus,suspiciousQueue,errorStatus,errorQueue;
+        let sourceStatus,srcQueue,targetStatus,targetQueue,failureQueue,failureTargetStatus,suspiciousStatus,suspiciousQueue,errorStatus,errorQueue,dfoSchema;
         for (var j = 0; j < poNode.length; j++) {
           if (poNode[j].nodeId == nodeId) {
             if (currentFabric == 'DF-DFD') {
@@ -1424,6 +1426,911 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
               console.log('error',error)
               this.logger.error('Kafka Stream first node Failed', error);
               throw error;
+            }
+          }
+
+           //db Node
+          if (nodeType == 'dbnode' && poNode[j].nodeId == nodeId) {
+            try {
+              this.logger.log('first DB node Started');
+              let dbres: any, qryres: any;
+              let customConfig = ndp[poNode[j].nodeId]
+              let nodeVersion = customConfig?.nodeVersion;
+              if (!nodeVersion)
+                throw new CustomException('Node version not found', 404);
+              let oprname, oprkey, tablename, sessionParams, selcol, filterParams, connectorType, storageType, dpdkey, conncectorName, manualQuery, insertParams;
+              if (nodeVersion.toLowerCase() == 'v1') {
+                connectorType = customConfig?.data?.pro?.connector?.value;
+                storageType = customConfig?.data?.pro?.connector?._selection?._selection?.value;
+                dpdkey = customConfig?.data?.pro?.connector?._selection?.value;
+                conncectorName = customConfig?.data?.pro?.connector?._selection?.subSelection?.value;
+                oprname = customConfig.data?.pro?.operationName?.value;
+                oprkey = Object.keys(customConfig.data.pro);
+                tablename = customConfig.data?.pro?.tableName;
+                sessionParams = customConfig.data?.pro?.filterParams
+                if (oprname == 'select') {
+                  selcol = customConfig.data?.pro[oprname]?.selectColumns.items;
+                  filterParams = customConfig.data?.pro[oprname]?.filterParams?.items;
+                }
+                manualQuery = customConfig.data?.pro?.manualQuery;
+                if (oprname == 'insert') {
+                  insertParams = customConfig.data?.pro[oprname]?.insertParams?.items;
+                }
+              }
+              //else if (nodeVersion.toLowerCase() == 'v2') {
+
+              //}
+              let dbUrl, schemaname, dbConfig, Querystr, qry;
+              if (customConfig) {
+                if (currentFabric == 'PF-SCDL' && !semarc) {
+                  if (storageType?.toLowerCase() == 'external') {
+                    if (!dpdkey) throw new CustomException('DPD key not found', 404);
+                    let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+                    let nodedata = Object.keys(extdata)[0];
+                    let configConnectors = extdata[nodedata].data['externalConnectors-DB']?.items;
+                    if (configConnectors?.length > 0) {
+                      for (let i = 0; i < configConnectors.length; i++) {
+                        if (configConnectors[i].connectorName == conncectorName) {
+                          dbConfig = configConnectors[i]?.credentials;
+                        }
+                      }
+                    }
+                    if (!dbConfig?.host) {
+                      throw new CustomException(`Invalid DB credentials`, 404);
+                    }
+                    if (dbConfig?.port && dbConfig?.username && dbConfig?.password && dbConfig?.database && dbConfig?.schema)
+                      dbUrl = `postgresql://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/${dbConfig?.database}?schema=${dbConfig?.schema}`
+                    else
+                      dbUrl = dbConfig?.host
+                    schemaname = dbConfig?.schema
+                  } else {
+                    dbUrl = process.env.DATABASE_URL;
+                    schemaname = process.env.DATABASE_URL.split('schema=')[1];
+                  }
+
+                  if (!dbUrl) throw new CustomException('DB url not found', 404);
+                  const { Client } = pg;
+                  const client = new Client({
+                    connectionString: dbUrl,
+                  });
+                  if (!oprname) {
+                    oprname = 'select';
+                  }
+                  let str = [];
+                  if (sessionParams?.length > 0) {
+                    for (let i = 0; i < sessionParams.length; i++) {
+                      var filcol = sessionParams[i].name;
+                      var filval = sessionParams[i].value;
+                      if (filval) {
+                        if ((Object.keys(sobj)).includes(filval)) {
+                          let strobj = ` ${filcol} = '${sobj[filval]}' `
+                          str.push(strobj);
+                        }
+                      }
+                    }
+                  }
+
+                  if (filterParams?.length > 0) {
+                    for (let i = 0; i < filterParams.length; i++) {
+                      var filcol = filterParams[i].key;
+                      var filval = filterParams[i].value.value;
+                      if (filval && filval.includes('session.') && filcol)
+                        str.push(` ${filcol} = '${sobj[filval]}' `);
+                      else if (filcol && filval)
+                        str.push(` ${filcol} = '${filval}' `);
+
+                    }
+                  }                
+
+                  if (manualQuery) {
+                    qry = manualQuery;                      
+                      if (qry.endsWith(';')) {
+                        qry = qry.slice(0, -1);
+                      }
+                      if (page && count) {
+                        const cleanedQuery = qry.trim();
+                        if (/limit\s+\d+/i.test(cleanedQuery)) {
+                          throw new Error('LIMIT clause detected. Please do not include it.');
+                        }
+                        qry = `${cleanedQuery} LIMIT ${count} OFFSET ${offset}`;
+                      }
+
+                      let formKey: any = ``;
+                      let removedVal
+                      if (filterData && filterData.length) {
+                        for (let f = 0; f < filterData.length; f++) {
+                          if (filterData[f].nodeId && filterData[f].nodeId == poNode[j].nodeId) {
+                            const { nodeId, ...filterParamsObj } = filterData[f];
+                            const filterParamsObjKey = Object.keys(filterParamsObj);
+                            const filterParamsObjvalues =
+                              Object.values(filterParamsObj);
+                            for (let p = 0; p < filterParamsObjKey.length; p++) {
+                              const key = filterParamsObjKey[p];
+                              if (key.includes('.')) {
+                                let s_item = key.split('.');
+                                removedVal = s_item.filter((item) => !statickeyword.includes(item)).join('.');
+                                if (removedVal.includes('.') && removedVal.startsWith('items.')) {
+                                  removedVal = removedVal.replace('items.', '');
+                                }
+                              } else {
+                                removedVal = key
+                              }
+                              const value = filterParamsObjvalues[p];
+                              if (typeof value == 'number') {
+                                formKey = formKey + ` ${removedVal} = ${value} AND`;
+                              } else if (typeof value == 'string') {
+                                formKey = formKey + ` ${removedVal} = '${value}' AND`;
+                              } else if (Array.isArray(value) && value.length > 0) {
+                                let s = ''
+                                for (let item of value) {
+                                  s = s + `'${item}',`
+                                }
+                                if (s.endsWith(',')) {
+                                  s = s.slice(0, -1);
+                                }
+                                formKey = formKey + ` ${removedVal}  IN (${s}) AND`;
+                              }
+                            }
+                          }
+
+                        }
+                        if (formKey.endsWith(' AND')) {
+                          formKey = formKey.slice(0, -4);
+                        }
+                      }
+                      if (formKey) str.push(formKey)
+                      if (str.length > 0) {
+                        Querystr = str.join('AND');
+                        qry = await this.CommonService.appendWhereClause(qry, Querystr);
+                      }                 
+                  }
+                  await client.connect();
+                  if (qry) qryres = await client.query(qry);
+                  if (qryres) dbres = qryres.rows;
+                  await client.end();
+                } else if (semarc) {
+                  if (flag != 'N' && inputparam?.length == 0) {
+                    await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: qry, response: inputparam } }));
+                    await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, qry, dfoSchema);
+                    return { status: 200, targetStatus: targetStatus, data: inputparam };
+                  } else if (oprname == 'select' && inputparam?.length == 0) {
+                    throw new CustomException('No Records Found', 404);
+                  }
+
+                  let RCMresult, zenresult, customcoderesult, codeObj = {};
+                  RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                  if (RCMresult) {
+                    zenresult = RCMresult.rule;
+                    customcoderesult = RCMresult.code;
+                  }
+                  if (customcoderesult != undefined) {
+                    if (customcoderesult && Object.keys(customcoderesult).length > 0) {
+                      for (let item in customcoderesult) {
+                        codeObj[item.toLowerCase()] = customcoderesult[item];
+                      }
+                    }
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(codeObj), collectionName, 'code',);
+
+                    if (Array.isArray(inputparam) && inputparam?.length > 0) {
+                      for (let i = 0; i < inputparam.length; i++) {
+                        inputparam[i] = Object.assign(inputparam[i], codeObj)
+                      }
+                    } else if (typeof inputparam == 'object')
+                      inputparam = Object.assign(inputparam, codeObj)
+                  }
+                  if (upId) {
+                    await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: qry, response: inputparam } }));
+                    await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, qry, inputparam);
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(qry), collectionName, 'request');
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(inputparam), collectionName, 'response');
+                  }
+                }
+                this.logger.log('first DB Node execution completed');
+                if (semarc)
+                  return { status: 200, targetStatus: targetStatus, data: { [nodeName]: inputparam } }
+                else
+                  return { status: 200, targetStatus: targetStatus, data: dbres };
+              }
+            } catch (error) {
+              throw error
+            }
+          }
+
+          //mongodb Node
+          if (nodeType == 'mongo-dbnode' && poNode[j].nodeId == nodeId) {
+            try {
+              this.logger.log(`first ${poNode[j].nodeName},Mongo DB Node started`);
+              let customConfig = ndp[poNode[j].nodeId]
+              let collnName, manualQryType, manualQry, sessionfilterParams, connectorType, storageType, dpdkey, conncectorName, filterParams;
+              let nodeVersion = customConfig?.nodeVersion;
+              if (!nodeVersion) throw 'Node version not found';
+              if (nodeVersion.toLowerCase() == 'v1') {
+                connectorType = customConfig?.data?.pro?.connector?.value;
+                storageType = customConfig?.data?.pro?.connector?._selection?._selection?.value;
+                dpdkey = customConfig?.data?.pro?.connector?._selection?.value;
+                conncectorName = customConfig?.data?.pro?.connector?._selection?.subSelection?.value;
+                collnName = customConfig?.data?.pro?.collectionName;
+                manualQryType = customConfig?.data?.pro?.manualQueryType?.value;
+                manualQry = customConfig?.data?.pro?.manualQueryType?.manualQuery;
+                sessionfilterParams = customConfig?.data?.pro?.filterParams
+                filterParams = customConfig.data?.pro['select']?.filterParams?.items;
+              }
+              if (customConfig) {
+                let mongoQry, mongoDbarr, mongodbConfig, mongodbUrl;
+                if (currentFabric == 'PF-SCDL' && !semarc) {
+                  if (storageType?.toLowerCase() == 'external') {
+                    if (!dpdkey) throw new CustomException('DPD key not found', 404);
+                    let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+                    if (!extdata) throw new CustomException('DPD value not found', 404);
+                    let nodedata = Object.keys(extdata)[0];
+                    let configConnectors = extdata[nodedata].data['externalConnectors-DB']?.items;
+                    if (configConnectors?.length > 0) {
+                      for (let i = 0; i < configConnectors.length; i++) {
+                        if (configConnectors[i].connectorName == conncectorName) {
+                          mongodbConfig = configConnectors[i]?.credentials;
+                        }
+                      }
+                    }
+                    if (!mongodbConfig?.host) {
+                      throw new CustomException(`Invalid MongoDB credentials`, 404);
+                    }
+
+                    if (mongodbConfig.password?.includes('@'))
+                      mongodbConfig.password = mongodbConfig.password.replaceAll('@', '%40');
+                    if (mongodbConfig?.port && mongodbConfig?.username && mongodbConfig?.password && mongodbConfig?.database)
+                      mongodbUrl = `mongodb://${mongodbConfig?.username}:${mongodbConfig?.password}@${mongodbConfig?.host}:${mongodbConfig?.port}/${mongodbConfig?.database}?directConnection=true&authSource=admin`;
+                    else
+                      mongodbUrl = mongodbConfig?.host
+                  } else {
+                    mongodbUrl = process.env.DATABASE_URL
+                  }
+                  if (!mongodbUrl)
+                    throw new CustomException('Mongo DB url not found', 404);
+
+                  const client = new MongoClient(mongodbUrl);
+                  client.connect()
+                    .then(() => {
+                      console.log('Connected to the database successfully!');
+                    })
+                    .catch((err) => {
+                      console.error('Error connecting to the database:', err);
+                    });
+
+                  let db = client.db();
+                  let staticFilter = {};
+                  if (filterParams) {
+                    for (let item of filterParams) {
+                      if (item.key && item?.value?.value && (item.value.value).includes('session.')) {
+                        staticFilter[item.key] = sobj[item.value.value]
+                      } else if (item.key && item?.value?.value) {
+                        staticFilter[item.key] = item?.value?.value
+                      }
+                    }
+                  }
+                  this.logger.log('CollectionName', collnName);
+                  if (manualQry) {
+                    if (!collnName || !manualQryType)
+                      throw 'Collection Name/Manual Query Type not found';                   
+
+                    let sessionFilter = {}
+                    if (sessionfilterParams) {
+                      for (let item of sessionfilterParams) {
+                        if (item.value) {
+                          sessionFilter[item.name] = sobj[item.value]
+                        }
+                      }
+                    }
+                    const FormatFn = new Function(`return ${manualQry}`);
+                    let result = FormatFn();
+                    manualQry = Array.isArray(result) ? result : [result];
+
+                    if (manualQryType == 'aggregate') {
+                      if (!Array.isArray(manualQry))
+                        throw new CustomException('Invalid aggregation format', 400);
+
+                      if (Object.keys(sessionFilter).length > 0)
+                        manualQry.push({ $match: sessionFilter })
+
+                      if (page && count) {
+                        mongoDbarr = await db.collection(collnName).aggregate(manualQry).skip(offset).limit(count).toArray();
+                      } else {
+                        mongoDbarr = await db.collection(collnName).aggregate(manualQry).toArray();
+                      }
+                    } else {
+                      if (Object.keys(sessionFilter).length > 0)
+                        manualQry = Object.assign(manualQry, sessionFilter)
+                      var execResponse = await db.collection(collnName)[manualQryType](manualQry);
+
+                      if (execResponse) {
+                        if (page && count) {
+                          mongoDbarr = typeof execResponse.toArray === 'function' ? await execResponse.skip(offset).limit(count).toArray() : execResponse;
+                        } else {
+                          mongoDbarr = typeof execResponse.toArray === 'function' ? await execResponse.toArray() : execResponse;
+                        }
+                      }
+                    }
+
+                    this.logger.log('QueryResponse', mongoDbarr);                    
+                  }
+                } else if (semarc) {
+                  if (flag != 'N' && (inputparam?.length == 0 || Object.keys(inputparam).length == 0)) {
+                    await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: manualQry, response: inputparam } }),);
+                    await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, mongoQry, inputparam,);
+                    return { status: 200, targetStatus: targetStatus, data: inputparam };
+                  } else if (!inputparam || inputparam?.length == 0 || Object.keys(inputparam).length == 0) {
+                    await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: manualQry, response: inputparam } }),
+                    );
+                    throw new CustomException('No Records Found', 404);
+                  }
+                  let RCMresult, zenresult, customcoderesult, codeObj = {};
+                  RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+
+                  if (RCMresult) {
+                    zenresult = RCMresult.rule;
+                    customcoderesult = RCMresult.code;
+                  }
+                  if (customcoderesult != undefined) {
+                    if (customcoderesult && Object.keys(customcoderesult).length > 0) {
+                      for (let item in customcoderesult) {
+                        codeObj[item.toLowerCase()] = customcoderesult[item];
+                      }
+                    }
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(codeObj), collectionName, 'code',);
+
+                    if (Array.isArray(inputparam) && inputparam?.length > 0) {
+                      for (let i = 0; i < inputparam.length; i++) {
+                        inputparam[i] = Object.assign(inputparam[i], codeObj)
+                      }
+                    } else if (typeof inputparam == 'object')
+                      inputparam = Object.assign(inputparam, codeObj)
+                  }
+                  if (upId) {
+                    await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: manualQry, response: inputparam } }));
+                    await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, manualQry, inputparam,);
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(manualQry), collectionName, 'request');
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(inputparam), collectionName, 'response',);
+                  }
+                }
+                this.logger.log('first Mongo DB Node execution completed');
+                if (semarc)
+                  return { status: 200, targetStatus: targetStatus, data: { [nodeName]: inputparam } };
+                else
+                  return { status: 200, targetStatus: targetStatus, data: mongoDbarr };
+              }
+            } catch (error) {
+              throw error
+            }
+          }
+
+          //file Node
+          if (nodeType == 'filenode' && poNode[j].nodeId == nodeId) {
+            try {
+              this.logger.log(`first File node Execution Started ${poNode[j].nodeName}`);
+              let customConfig = ndp[poNode[j].nodeId]
+              let nodeVersion = customConfig?.nodeVersion;
+              let connectorType, storageType, dpdkey, conncectorName, oprname, oprkey, encryptionFlag, fileFolderPath, fileType, fileName, ndpPro, apikey, responseNodeName, fullPath;
+
+              if (!nodeVersion)
+                throw new CustomException('nodeVersion not found', 404);
+
+              if (customConfig) {
+                let fileres, url, userName, password;
+                if (nodeVersion.toLowerCase() == 'v1') {
+                  connectorType = customConfig?.data?.pro?.connector?.value;
+                  storageType = customConfig?.data?.pro?.connector?._selection?._selection?.value;
+                  dpdkey = customConfig?.data?.pro?.connector?._selection?.value;
+                  conncectorName = customConfig?.data?.pro?.connector?._selection?.subSelection?.value;
+                  ndpPro = customConfig.data?.pro;
+                  oprname = ndpPro?.operationName.value;
+                  oprkey = Object.keys(ndpPro);
+                  encryptionFlag = ndpPro?.encryptionFlag;
+                  apikey = customConfig?.data?.apiKey
+                  responseNodeName = customConfig?.outputDataNodes;
+                }
+                //else if (nodeVersion.toLowerCase() == 'v2') {
+
+                //}
+                if (currentFabric == 'PF-SCDL' && !semarc) {
+                  if (storageType.toLowerCase() == 'external') {
+                    if (!dpdkey) throw new CustomException('DPD key not found', 404);
+                    let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+                    if (extdata && Object.keys(extdata).length > 0) {
+                      let nodedata = Object.keys(extdata)[0];
+                      let configConnectors = extdata[nodedata].data['externalConnectors-FILE']?.items;
+                      if (configConnectors?.length > 0) {
+                        for (let i = 0; i < configConnectors.length; i++) {
+                          if (configConnectors[i].connectorName == conncectorName) {
+                            url = configConnectors[i]?.credentials.host;
+                            userName = configConnectors[i]?.credentials.username;
+                            password = configConnectors[i]?.credentials.password;
+                          }
+                        }
+                      }
+                    }
+                  } else {
+                    url = process.env.SEAWEED_OUTPUT_HOST
+                    userName = process.env.SEAWEED_USERNAME
+                    password = process.env.SEAWEED_PASSWORD
+                  }
+
+                  const seaWeedConfig = {
+                    url: url,
+                    username: userName,
+                    password: password,
+                  };
+
+                  if (pfjson?.length > 0 && responseNodeName?.length > 0 && !apikey) {
+                    for (let p = 0; p < pfjson.length; p++) {
+                      if (responseNodeName.includes(pfjson[p].nodeId)) {
+                        var connectedNodeName = pfjson[p].nodeName;
+                      }
+                    }
+                  }
+
+                  if (!fileName || !oprname)
+                    throw new CustomException('Invalid Credentials', 422);
+                  fullPath = fileType ? fileFolderPath + '/' + fileName + '.' + fileType : fileFolderPath + '/' + fileName
+
+                  if (oprname === 'read') {
+                    if (fileFolderPath && fileName) {
+                      let encCredentials = await this.CommonService.checkEncryption(poNode[j]);
+                      if (encCredentials?.selectedDpd && encCredentials?.encryptionMethod) {
+                        let url = seaWeedConfig.url + '/' + fullPath
+                        fileres = await this.CommonService.downloadAndDecryptFile(seaWeedConfig, url);
+                      } else {
+                        fileres = await this.CommonService.setfileKeys(seaWeedConfig, oprname, fileFolderPath, fileName, fileType);
+                      }
+                    }
+                    if (!fileres || (Array.isArray(fileres) && fileres.length == 0) || (typeof fileres == 'object' && Object.keys(fileres).length == 0)) {
+                      throw new CustomException('Data not found', 404);
+                    }
+                  }
+                } else if (semarc) {
+                  let internalMappingNodes = poJson?.internalMappingNodes;
+                  let internalMappedObj = {};
+                  for (let n = 0; n < internalMappingNodes.length; n++) {
+                    if (internalMappingNodes[n].nodeId == poNode[j].nodeId && internalMappingNodes[n].ifo?.length > 0) {
+                      for (let f = 0; f < internalMappingNodes[n].ifo.length; f++) {
+                        if (internalMappingNodes[n].ifo[f].value) {
+                          internalMappedObj[internalMappingNodes[n].ifo[f].key] = internalMappingNodes[n].ifo[f].value;
+                        } else {
+                          internalMappedObj[internalMappingNodes[n].ifo[f].key] = '';
+                        }
+                      }
+                    }
+                  }
+
+                  let ifoObj = {};
+                  if (internalMappedObj && Object.keys(internalMappedObj).length > 0) {
+                    for (let item in internalMappedObj) {
+                      ifoObj[item.toLowerCase()] = internalMappedObj[item];
+                    }
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
+                  }
+
+                  let RCMresult, zenresult, customcoderesult, codeObj = {};
+                  RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                  if (RCMresult) {
+                    zenresult = RCMresult.rule;
+                    customcoderesult = RCMresult.code;
+                  }
+                  if (customcoderesult != undefined) {
+                    if (customcoderesult && Object.keys(customcoderesult).length > 0) {
+                      for (let item in customcoderesult) {
+                        codeObj[item.toLowerCase()] = customcoderesult[item];
+                      }
+                    }
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(codeObj), collectionName, 'code',);
+
+                    if (Array.isArray(inputparam) && inputparam?.length > 0) {
+                      for (let i = 0; i < inputparam.length; i++) {
+                        inputparam[i] = Object.assign(inputparam[i], codeObj)
+                      }
+                    } else if (typeof inputparam == 'object')
+                      inputparam = Object.assign(inputparam, codeObj)
+                  }
+                  if (upId) {
+                    await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus }));
+                    await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, fullPath, inputparam);
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(fullPath), collectionName, 'request');
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(inputparam), collectionName, 'response');
+                  }
+                }
+                this.logger.log('first File Node execution completed');
+                if (semarc)
+                  return { status: 200, targetStatus: targetStatus, data: { [nodeName]: inputparam } };
+                else
+                  return { status: 200, targetStatus: targetStatus, data: fileres };
+              }
+            } catch (error) {
+              throw error
+            }
+          }
+
+          //function Node
+          if (nodeType == 'function_node' && poNode[j].nodeId == nodeId) {
+            try {
+              this.logger.log(`first ${poNode[j].nodeName} functionnode Started`)
+              let mapobj = {}, status, params, customConfig, procedurequery, nodeVersion, dbType, connectorType, storageType, dpdkey, conncectorName, dbConfig, executecommand, inMemory, filterParams
+              customConfig = ndp[poNode[j].nodeId]
+              nodeVersion = customConfig.nodeVersion
+              inMemory = customConfig.inMemory
+              if (!nodeVersion)
+                throw new CustomException('nodeVersion not found', 404);
+
+              if (inMemory == 'true')
+                throw new CustomException('inMemory is active', 403)
+
+              if (nodeVersion.toLowerCase() == 'v1') {
+                dbType = customConfig?.data?.pro?.dbType.value;
+                connectorType = customConfig?.data?.pro?.connector?.value;
+                storageType = customConfig?.data?.pro?.connector?._selection?._selection?.value;
+                dpdkey = customConfig?.data?.pro?.connector?._selection?.value;
+                conncectorName = customConfig?.data?.pro?.connector?._selection?.subSelection?.value;
+                procedurequery = customConfig?.data?.pro?.code.value;
+                params = customConfig?.data?.pro?.params.items;
+                //filterParams = customConfig?.data?.pro?.filterParams.items;
+                executecommand = customConfig?.data?.pro?.executecommand?.value
+              }
+              // else if (nodeVersion.toLowerCase() == 'v2') {
+
+              // }
+              let dbUrl: any
+              if (currentFabric == 'PF-SCDL' && !semarc) {
+                if (storageType?.toLowerCase() == 'external') {
+                  if (!dpdkey) throw new CustomException('DPD key not found', 404);
+                  let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+                  let nodedata = Object.keys(extdata)[0];
+                  let configConnectors = extdata[nodedata].data['externalConnectors-DB']?.items;
+                  if (configConnectors?.length > 0) {
+                    for (let i = 0; i < configConnectors.length; i++) {
+                      if (configConnectors[i].connectorName == conncectorName) {
+                        dbConfig = configConnectors[i]?.credentials;
+                      }
+                    }
+                  }
+                  if (!dbConfig?.host) {
+                    throw new CustomException(`Invalid DB credentials`, 404);
+                  }
+                  if (dbType == 'postgres') {
+                    if (dbConfig?.port && dbConfig?.username && dbConfig?.password && dbConfig?.database && dbConfig?.schema)
+                      dbUrl = `postgresql://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/${dbConfig?.database}?schema=${dbConfig?.schema}`
+                    else
+                      dbUrl = dbConfig?.host
+                  }
+                  else if (dbType == 'mysql') {
+                    if (dbConfig?.port && dbConfig?.username && dbConfig?.password && dbConfig?.database && dbConfig?.schema)
+                      dbUrl = `mysql://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/${dbConfig?.database}?schema=${dbConfig?.schema}`
+                    else
+                      dbUrl = dbConfig?.host
+                  }
+                  else if (dbType == 'oracle') {
+                    // dbUrl = `oracle://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/${dbConfig?.sid}`;
+                    // or
+                    if (dbConfig?.port && dbConfig?.username && dbConfig?.password && dbConfig?.database && dbConfig?.schema && dbConfig?.serviceName)
+                      dbUrl = `oracle://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/?serviceName=${dbConfig?.serviceName}`;
+                    else
+                      dbUrl = dbConfig?.host
+                  }
+                } else {
+                  dbUrl = process.env.DATABASE_URL;
+                }
+                if (params?.length > 0) {
+                  for (let a = 0; a < params.length; a++) {
+                    let key = params[a]?.key?.value
+                    let value = params[a]?.value?.value
+                    if (value?.includes("session.")) {
+                      value = sobj[value]
+                    }
+                    if (key && value)
+                      mapobj[key] = value
+                  }
+                }
+                if (mapobj && Object.keys(mapobj).length > 0) {
+                  Object.keys(mapobj).forEach(key => {
+                    const regex = new RegExp(`\\$\\$${key}`, 'g');
+                    const value = typeof mapobj[key] === 'string' ? `'${mapobj[key]}'` : mapobj[key];
+                    executecommand = executecommand.replace(regex, value);
+                  });
+                }
+                if (executecommand.endsWith(';')) {
+                  executecommand = executecommand.slice(0, -1);
+                }
+                let formKey: any = ``;
+                if (filterData && Array.isArray(filterData) && filterData.length > 0) {
+                  filterData.forEach((filterObj) => {
+                    if (filterObj.nodeId == poNode[j].nodeId) {
+                      const entries = Object.entries(filterObj).filter(([key]) => key !== 'nodeId',);
+                      // console.log('entries', entries);
+
+                      entries.forEach(([key, value]) => {
+                        let removedVal;
+                        if (key.includes('.')) {
+                          let s_item = key.split('.');
+
+                          removedVal = s_item.filter((item) => !statickeyword.includes(item)).join('.');
+                          // console.log("removedVal",removedVal);
+
+                          if (removedVal.includes('.') && removedVal.startsWith('items.')) {
+                            removedVal = removedVal.replace('items.', '');
+                          }
+                        } else {
+                          removedVal = key
+                        }
+
+                        if (value && typeof value == 'number') {
+                          formKey = formKey + ` ${removedVal} = ${value} AND`;
+                        } else if (value && typeof value == 'string' && value != '') {
+                          formKey = formKey + ` ${removedVal} = '${value}' AND`;
+                        } else if (Array.isArray(value) && value.length > 0) {
+                          let s = ''
+                          for (let item of value) {
+                            s = s + `'${item}',`
+                          }
+                          if (s.endsWith(',')) {
+                            s = s.slice(0, -1);
+                          }
+                          formKey = formKey + ` ${removedVal}  IN (${s}) AND`;
+                        }
+
+                      });
+                    }
+                  });
+
+                  if (formKey.endsWith(' AND')) {
+                    formKey = formKey.slice(0, -4);
+                  }
+
+                  if (formKey)
+                    executecommand = await this.CommonService.appendWhereClause(executecommand, formKey);
+
+                }
+                if (executecommand.includes('$$$') || executecommand.includes('$$'))
+                  executecommand = executecommand.replace(/\${2,3}[a-zA-Z0-9_]+/g, 'NULL');
+                if (dbType == 'postgres') {
+                  const { Client } = pg;
+                  const client = new Client({
+                    connectionString: dbUrl,
+                  });
+
+                  await client.connect();
+                  await client.query(procedurequery)
+                  const result = await client.query(`${executecommand}`);
+                  await client.end();
+                  if ((result.rows)?.length > 0) {
+                    status = result.rows
+                  } else if (result && currentFabric == 'PF-PFD' || currentFabric == 'PF-SCDL') {
+                    status = 'Success'
+                  } else {
+                    status = result.rows
+                  }
+                } else if (dbType == 'mysql') {
+                  const mysql = require('mysql2/promise');
+                  const connection = await mysql.createConnection({
+                    connectionString: dbUrl,
+                  });
+                  await connection.connect()
+                  const result = await connection.query(`${executecommand}`);
+                  await connection.end();
+                  if ((result.rows)?.length > 0) {
+                    status = result.rows
+                  } else if (result && currentFabric == 'PF-PFD' || currentFabric == 'PF-SCDL') {
+                    status = 'Success'
+                  } else {
+                    status = result.rows
+                  }
+                } else if (dbType == 'oracle') {
+                  const oracledb = require('oracledb');
+                  const connection = await oracledb.createConnection({
+                    connectionString: dbUrl,
+                  });
+                  await connection.connect()
+                  const result = await connection.query(`${executecommand}`);
+                  await connection.close();
+                  if ((result.rows)?.length > 0) {
+                    status = result.rows
+                  } else if (result && currentFabric == 'PF-PFD' || currentFabric == 'PF-SCDL') {
+                    status = 'Success'
+                  } else {
+                    status = result.rows
+                  }
+                }
+              } else if (semarc) {
+                await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(inputparam), collectionName, 'response')
+                await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam)
+                //await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: status } }))
+              }
+              this.logger.log('first functionnode node completed')
+              if (semarc)
+                return { status: 200, targetStatus: targetStatus, data: { [nodeName]: inputparam } }
+              else
+                return { status: 200, targetStatus: targetStatus, data: status }
+            } catch (error) {
+              throw error
+            }
+          }
+
+          //Procedure Execution node
+          if (nodeType == 'procedureexecutionnode' && poNode[j].nodeId == nodeId) {
+            try {
+              this.logger.log(`first ${poNode[j].nodeName} procedureexecutionnode Started`)
+              let mapobj = {}, status, params, customConfig, procedurequery, nodeVersion, dbType, connectorType, storageType, dpdkey, conncectorName, dbConfig, executecommand, inMemory
+              customConfig = ndp[poNode[j].nodeId]
+              nodeVersion = customConfig.nodeVersion
+              inMemory = customConfig.inMemory
+              if (!nodeVersion)
+                throw new CustomException('nodeVersion not found', 404);
+
+              if (inMemory == 'true')
+                throw new CustomException('inMemory is active', 403)
+
+              if (nodeVersion.toLowerCase() == 'v1') {
+                dbType = customConfig?.data?.pro?.dbType.value;
+                connectorType = customConfig?.data?.pro?.connector?.value;
+                storageType = customConfig?.data?.pro?.connector?._selection?._selection?.value;
+                dpdkey = customConfig?.data?.pro?.connector?._selection?.value;
+                conncectorName = customConfig?.data?.pro?.connector?._selection?.subSelection?.value;
+                procedurequery = customConfig?.data?.pro?.code.value;
+                params = customConfig?.data?.pro?.params.items;
+                executecommand = customConfig?.data?.pro?.executecommand?.value
+              }
+              // else if (nodeVersion.toLowerCase() == 'v2') {
+
+              // }
+              let dbUrl: any
+              if (currentFabric == 'PF-SCDL' && !semarc) {
+                if (storageType?.toLowerCase() == 'external') {
+                  if (!dpdkey) throw new CustomException('DPD key not found', 404);
+                  let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+                  let nodedata = Object.keys(extdata)[0];
+                  let configConnectors = extdata[nodedata].data['externalConnectors-DB']?.items;
+                  if (configConnectors?.length > 0) {
+                    for (let i = 0; i < configConnectors.length; i++) {
+                      if (configConnectors[i].connectorName == conncectorName) {
+                        dbConfig = configConnectors[i]?.credentials;
+                      }
+                    }
+                  }
+                  if (!dbConfig?.host) {
+                    throw new CustomException(`Invalid DB credentials`, 404);
+                  }
+                  if (dbType == 'postgres') {
+                    if (dbConfig?.port && dbConfig?.username && dbConfig?.password && dbConfig?.database && dbConfig?.schema)
+                      dbUrl = `postgresql://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/${dbConfig?.database}?schema=${dbConfig?.schema}`
+                    else
+                      dbUrl = dbConfig?.host
+                  }
+                  else if (dbType == 'mysql') {
+                    if (dbConfig?.port && dbConfig?.username && dbConfig?.password && dbConfig?.database && dbConfig?.schema)
+                      dbUrl = `mysql://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/${dbConfig?.database}?schema=${dbConfig?.schema}`
+                    else
+                      dbUrl = dbConfig?.host
+                  }
+                  else if (dbType == 'oracle') {
+                    // dbUrl = `oracle://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/${dbConfig?.sid}`;
+                    // or
+                    if (dbConfig?.port && dbConfig?.username && dbConfig?.password && dbConfig?.database && dbConfig?.schema && dbConfig?.serviceName)
+                      dbUrl = `oracle://${dbConfig?.username}:${dbConfig?.password}@${dbConfig?.host}:${dbConfig?.port}/?serviceName=${dbConfig?.serviceName}`;
+                    else
+                      dbUrl = dbConfig?.host
+                  }
+
+                } else {
+                  dbUrl = process.env.DATABASE_URL;
+                }
+
+                if (params?.length > 0) {
+                  for (let a = 0; a < params.length; a++) {
+                    let key = params[a]?.key?.value
+                    let value = params[a]?.value?.value
+                    if (value?.includes("session.")) {
+                      value = sobj[value]
+                    }
+                    if (key && value)
+                      mapobj[key] = value
+                  }
+                }
+
+                if (mapobj && Object.keys(mapobj).length > 0) {
+                  Object.keys(mapobj).forEach(key => {
+                    const regex = new RegExp(`\\$\\$${key}`, 'g');
+                    const value = typeof mapobj[key] === 'string' ? `'${mapobj[key]}'` : mapobj[key];
+                    executecommand = executecommand.replace(regex, value);
+                  });
+                }
+                if (filterData && Array.isArray(filterData) && filterData.length > 0) {
+                  filterData.forEach((filterObj) => {
+                    if (filterObj.nodeId == poNode[j].nodeId) {
+                      const entries = Object.entries(filterObj).filter(([key]) => key !== 'nodeId',);
+                      // console.log('entries', entries);
+
+                      entries.forEach(([key, value]) => {
+                        let removedVal;
+                        if (key.includes('.')) {
+                          let s_item = key.split('.');
+
+                          removedVal = s_item.filter((item) => !statickeyword.includes(item)).join('.');
+                          // console.log("removedVal",removedVal);
+
+                          if (removedVal.includes('.') && removedVal.startsWith('items.')) {
+                            removedVal = removedVal.replace('items.', '');
+                          }
+                        } else {
+                          removedVal = key
+                        }
+
+                        const regex = new RegExp(`\\$\\$\\$${removedVal}`, 'g');
+                        if (typeof value == 'number')
+                          executecommand = executecommand.replace(regex, `${value}`);
+                        else if (typeof value == 'string')
+                          executecommand = executecommand.replace(regex, `'${value}'`);
+
+                      });
+                    }
+                  });
+                }
+                if (executecommand.includes('$$$') || executecommand.includes('$$'))
+                  executecommand = executecommand.replace(/\${2,3}[a-zA-Z0-9_]+/g, 'NULL');
+                if (dbType == 'postgres') {
+                  const { Client } = pg;
+                  const client = new Client({
+                    connectionString: dbUrl,
+                  });
+                  await client.connect();
+                  await client.query(procedurequery)
+
+                  const result = await client.query(`${executecommand}`);
+                  await client.end();
+                  if ((result.rows)?.length > 0) {
+                    status = result.rows
+                  } else if (result && currentFabric == 'PF-PFD' || currentFabric == 'PF-SCDL') {
+                    status = 'Success'
+                  } else {
+                    status = result.rows
+                  }
+                } else if (dbType == 'mysql') {
+                  const mysql = require('mysql2/promise');
+                  const connection = await mysql.createConnection({
+                    connectionString: dbUrl,
+                  });
+                  await connection.connect()
+                  const result = await connection.query(`${executecommand}`);
+                  await connection.end();
+                  if ((result.rows)?.length > 0) {
+                    status = result.rows
+                  } else if (result && currentFabric == 'PF-PFD' || currentFabric == 'PF-SCDL') {
+                    status = 'Success'
+                  } else {
+                    status = result.rows
+                  }
+                } else if (dbType == 'oracle') {
+                  const oracledb = require('oracledb');
+                  const connection = await oracledb.createConnection({
+                    connectionString: dbUrl,
+                  });
+                  await connection.connect()
+                  const result = await connection.query(`${executecommand}`);
+                  await connection.close();
+                  if ((result.rows)?.length > 0) {
+                    status = result.rows
+                  } else if (result && currentFabric == 'PF-PFD' || currentFabric == 'PF-SCDL') {
+                    status = 'Success'
+                  } else {
+                    status = result.rows
+                  }
+                }
+              } else if (semarc) {
+                await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(status), collectionName, 'response')
+                await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam)
+                // await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: status } }))
+              }
+              this.logger.log('first procedureExecution node completed')
+              if (semarc)
+                return { status: 200, targetStatus: targetStatus, data: { [nodeName]: inputparam } }
+              else
+                return { status: 200, targetStatus: targetStatus, data: status }
+            } catch (error) {
+              throw error
             }
           }
         

@@ -330,7 +330,7 @@ export class DynamicFlowService {
                             let rulecheck:any = await this.CommonService.getRuleCodeMapper(rulejson, inputparam, processedKey + upId, currentFabric, SessionInfo);
                             headerRole = rulecheck?.rule
                            }
-                            encCredentials = await this.checkEncryption(poNode[j]);
+                            encCredentials = await this.CommonService.checkEncryption(poNode[j]);
                             ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId)
                             if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL') {
                                 RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
@@ -1114,7 +1114,7 @@ export class DynamicFlowService {
                             if (formKey) str.push(formKey)
                             if (str.length > 0) {
                                 Querystr = str.join('AND');
-                                qry = await this.appendWhereClause(qry, Querystr);
+                                qry = await this.CommonService.appendWhereClause(qry, Querystr);
                             }
                         }
                     }
@@ -2202,19 +2202,19 @@ export class DynamicFlowService {
                         let fullPath = fileType ? fileFolderPath + '/' + fileName + '.' + fileType : fileFolderPath + '/' + fileName
                         if (oprname === 'read') {
                             if (fileFolderPath && fileName) {
-                                let encCredentials = await this.checkEncryption(poNode[j]);
+                                let encCredentials = await this.CommonService.checkEncryption(poNode[j]);
                                 if (encCredentials?.selectedDpd && encCredentials?.encryptionMethod) {
                                     let url = seaWeedConfig.url + '/' + fullPath
-                                    fileres = await this.downloadAndDecryptFile(seaWeedConfig, url);
+                                    fileres = await this.CommonService.downloadAndDecryptFile(seaWeedConfig, url);
                                 } else {
-                                    fileres = await this.setfileKeys(seaWeedConfig, oprname, fileFolderPath, fileName, fileType);
+                                    fileres = await this.CommonService.setfileKeys(seaWeedConfig, oprname, fileFolderPath, fileName, fileType);
                                 }
                             }
 
                             if (!fileres || (Array.isArray(fileres) && fileres.length == 0) || (typeof fileres == 'object' && Object.keys(fileres).length == 0)) {
                                 throw new CustomException('Data not found', 404);
                             }
-                            // let encCredentials = await this.checkEncryption(poNode[j]);
+                            // let encCredentials = await this.CommonService.checkEncryption(poNode[j]);
                             // console.log('encCredentials', encCredentials);
 
                             // if (encCredentials?.selectedDpd && encCredentials?.encryptionMethod) {                     
@@ -2226,17 +2226,17 @@ export class DynamicFlowService {
                             // }
                         } else if (oprname === 'write') {
                             if (rollback) {
-                                let existData = await this.setfileKeys(seaWeedConfig, 'read', fileFolderPath, fileName, fileType);
+                                let existData = await this.CommonService.setfileKeys(seaWeedConfig, 'read', fileFolderPath, fileName, fileType);
                                 if (existData) {
                                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(existData), collectionName, 'rollback');
                                 }
                             }
                             if (fileName + '.' + fileType && childInsertArr?.length > 0 && !textobj) {
                                 for (let a = 0; a < childInsertArr.length; a++) {
-                                    fileres = await this.setfileKeys(seaWeedConfig, oprname, fileFolderPath, fileName, fileType, childInsertArr[a]);
+                                    fileres = await this.CommonService.setfileKeys(seaWeedConfig, oprname, fileFolderPath, fileName, fileType, childInsertArr[a]);
                                 }
                             } else if (textobj && fileName + '.' + fileType) {
-                                fileres = await this.setfileKeys(seaWeedConfig, oprname, fileFolderPath, fileName, fileType, textobj);
+                                fileres = await this.CommonService.setfileKeys(seaWeedConfig, oprname, fileFolderPath, fileName, fileType, textobj);
                             }
                             if (!fileres || fileres?.status != 201) {
                                 throw new CustomException('write operation failed', 500);
@@ -2807,7 +2807,7 @@ export class DynamicFlowService {
                             }
                             logReq = inputData;
                             if (fileName + '.' + fileType && inputData) {
-                                OPFileRes = await this.setfileKeys(seaWeedConfig, 'write', folderPath, fileName, fileType, inputData);
+                                OPFileRes = await this.CommonService.setfileKeys(seaWeedConfig, 'write', folderPath, fileName, fileType, inputData);
                                 if (!OPFileRes || OPFileRes?.status != 201) {
                                     throw new CustomException('write operation failed ', 500);
                                 }
@@ -3090,26 +3090,48 @@ export class DynamicFlowService {
                             } else if (Object.keys(inputparam).length > 0) {
                                 demo = JSON.parse(await this.transformData(edges, [inputparam]));
                             }
-                            if (currentFabric == 'DF-DFD') {
-                                let dsSchema = JSON.parse(await this.redisService.getJsonData(key + 'DS_Schema', collectionName));
-                                if (!dsSchema) throw new CustomException('DS_Schema doesnot exist', 404)
-                                if (demo?.length > 0) {
-                                    for (let item1 of demo) {
-                                        item1 = this.transformBySchema(dsSchema, item1)
-                                        datamappingarr.push(item1)
-                                    }
-                                }
-                            } else {
-                                datamappingarr = demo
-                            }
 
+                            let beforevalidateData:any
+                            let rootPathFlg = false
                             if (rootpatharr) {
+                                beforevalidateData = {}
                                 if (rootpatharr.includes('[0]')) {
                                     rootpatharr = rootpatharr.replaceAll('[0]', '');
+                                    beforevalidateData[rootpatharr] = demo;
+                                    rootPathFlg = true
+                                }else{
+                                     beforevalidateData = []
+                                    if(Array.isArray(demo)){
+                                      for (let item1 of demo) {
+                                        beforevalidateData.push({[rootpatharr] : item1})
+                                   }  
+                                    }else{
+                                        beforevalidateData[rootpatharr] = demo;
+                                    }
                                 }
-                                finalRes[rootpatharr] = datamappingarr;
+
+                                
+                            } else {                               
+                                beforevalidateData = demo;
+                            }                           
+                            
+                             if (currentFabric == 'DF-DFD') {
+                                let dsSchema = JSON.parse(await this.redisService.getJsonData(key + 'DS_Schema', collectionName));
+                                if (!dsSchema) throw new CustomException('DS_Schema doesnot exist', 404)
+                                if(Array.isArray(beforevalidateData)){
+                                    if (beforevalidateData?.length > 0) {
+                                    for (let item1 of beforevalidateData) { 
+                                        item1 = this.transformBySchema(dsSchema, item1)
+                                        datamappingarr.push(item1)
+                                   }
+                                   finalRes = datamappingarr
+                                }
+                                }else{
+                                finalRes = this.transformBySchema(dsSchema, beforevalidateData)
+                                }
+                               
                             } else {
-                                finalRes = datamappingarr;
+                                finalRes = beforevalidateData
                             }
 
                             if (schemaRes && Object.keys(schemaRes).length > 0) {
@@ -3138,7 +3160,7 @@ export class DynamicFlowService {
 
                             this.logger.log('DataSetSchema Node Completed');
                             if (currentFabric == 'DF-DFD') {
-                                let datasetSchemaRes = rootpatharr ? [finalRes] : finalRes
+                                let datasetSchemaRes = rootpatharr && rootPathFlg ? [finalRes] : finalRes
                                 if (filterData && filterData.length > 0) {
                                     let currentFilterData;
                                     for (let f = 0; f < filterData.length; f++) {
@@ -4894,7 +4916,7 @@ export class DynamicFlowService {
                             formKey = formKey.slice(0, -4);
                         }
                         if (formKey)
-                            executecommand = await this.appendWhereClause(executecommand, formKey);
+                            executecommand = await this.CommonService.appendWhereClause(executecommand, formKey);
 
                     }
                     if (executecommand.includes('$$$') || executecommand.includes('$$'))
@@ -5009,7 +5031,7 @@ export class DynamicFlowService {
         SessionInfo['subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME || '';
         SessionInfo['subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME || '';
 
-        return {sobj,SessionInfo}
+        return {sobj,SessionInfo,SessionToken}
     } catch (error) {
     throw error
     }
@@ -5211,34 +5233,6 @@ export class DynamicFlowService {
         return result.data;
     }
 
-    async downloadAndDecryptFile(seaWeedConfig, url: string): Promise<any> {
-        try {
-            const response = await axios.get(
-                url,
-                {
-                    responseType: 'arraybuffer',
-                    auth: {
-                        username: seaWeedConfig.username, //process.env.SEAWEED_USERNAME,
-                        password: seaWeedConfig.password //process.env.SEAWEED_PASSWORD,
-                    }
-                }
-            );
-            const encryptedFile = response.data;
-            const decryptedFile = this.decryptFile(encryptedFile);
-            return decryptedFile;
-
-        } catch (error) {
-            console.error('Error downloading or decrypting file:', error);
-            throw new Error('Failed to download or decrypt file');
-        }
-    }
-
-    private decryptFile(encryptedData: Buffer): Buffer {
-        const decipher = crypto.createDecipheriv('aes-256-ctr', Buffer.from(process.env.AES_KEY!, 'base64'), Buffer.from(process.env.AES_IV!, 'base64'));
-        const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
-        // console.log('decrypted',decrypted);      
-        return decrypted;
-    }
 
     async parseXlsx(xlsxString: any): Promise<any[]> {
         try {
@@ -5308,101 +5302,7 @@ export class DynamicFlowService {
             }
         }
         return result;
-    }
-
-    async setfileKeys(config: any, operationName: string, folderPath: string, fileName: string, fileType?: string, insertData?: any) {
-        try {
-            let fileUrl, existing
-            if (fileType) {
-                if (folderPath) fileUrl = `${config.url}/${folderPath}/${fileName}.${fileType}`;
-                else fileUrl = `${config.url}/${fileName}.${fileType}`;
-            } else {
-                if (folderPath) fileUrl = `${config.url}/${folderPath}/${fileName}`;
-                else fileUrl = `${config.url}/${fileName}`;
-                fileType = fileName.split('.').pop();
-            }
-            let auth = {
-                username: config.username,
-                password: config.password
-            }
-            // console.log("insertData",insertData);
-
-            if (operationName == 'read') {
-                if (fileType == 'xlsx') {
-                    existing = await axios.get<ArrayBuffer>(fileUrl, { auth, responseType: 'arraybuffer' });
-                } else
-                    existing = await axios.get(fileUrl, { auth });
-                if (existing?.data) return existing?.data
-            } else if (operationName == 'write' && insertData) {
-                const buffer = Buffer.from(insertData, 'utf-8');
-                const form = new FormData();
-                form.append('file', Readable.from(buffer), {
-                    filename: fileName + '.' + fileType,
-                    contentType: `application/${fileType}`,
-                });
-
-                const response = await axios.post(fileUrl, form, {
-                    headers: { ...form.getHeaders() },
-                    auth,
-                    maxContentLength: Infinity,
-                    maxBodyLength: Infinity,
-                });
-                return {
-                    status: response.status,
-                    fileName: fileName
-                };
-
-            }
-
-
-        } catch (error) {
-            console.log(error);
-            throw error
-        }
-    }
-
-    async appendWhereClause(baseQuery: string, condition: string,) {
-        const query = baseQuery.trim();
-        const lower = query.toLowerCase();
-        const keywords = [' order by ', ' group by ', ' limit '];
-        let firstKeywordIndex = -1;
-        let keywordFound = '';
-        for (const keyword of keywords) {
-            const index = lower.lastIndexOf(keyword);
-            if (index !== -1 && (firstKeywordIndex === -1 || index < firstKeywordIndex)) {
-                firstKeywordIndex = index;
-                keywordFound = keyword;
-            }
-        }
-        let modifiedQuery
-        const mainQuery =
-            firstKeywordIndex !== -1 ? query.substring(0, firstKeywordIndex) : query;
-        const trailingQuery =
-            firstKeywordIndex !== -1 ? query.substring(firstKeywordIndex) : '';
-        if (mainQuery.toLowerCase().includes(' where ')) {
-            let str = mainQuery.toLowerCase().split('where')
-            let flg: any = str.includes(')') ? true : false
-            modifiedQuery = flg == 'flase' ? `${mainQuery} AND ${condition}`
-                : `${mainQuery} WHERE ${condition}`;
-        } else {
-            modifiedQuery = `${mainQuery} WHERE ${condition}`;
-        }
-
-        return `${modifiedQuery}${trailingQuery}`;
-    }
-
-    async checkEncryption(nodeInfo) {
-        try {
-            if (nodeInfo?.action?.encryption) {
-                let isEncrypted: any = nodeInfo?.action?.encryption
-                if (isEncrypted?.isEnabled) {
-                    return { selectedDpd: isEncrypted.selectedDpd, encryptionMethod: isEncrypted.encryptionMethod }
-                }
-            }
-        } catch (error) {
-            throw error
-        }
-    }
+    }   
 
     keysToLowerCaseOnly(obj: any): any {
         if (Array.isArray(obj)) {

@@ -16,7 +16,7 @@ import { BullModule } from "@nestjs/bullmq";
 import { EventEmitterProcessor } from "./event-emitter.processor";
 import { ListenerService } from "./listener.service";
 import { DynamicFlowService } from "./dynamicFlow.service";
-
+ 
 @Module({
     imports: [      
       ClientsModule.register([
@@ -28,10 +28,10 @@ import { DynamicFlowService } from "./dynamicFlow.service";
       ])    
     ],
     controllers: [TeController],
-    providers: [TeService, RedisService, CommonService,SecurityService,RuleService,JwtService,CodeService,LockService,MongoService,ConfigService,EventEmitterProcessor,ListenerService,DynamicFlowService],
+    providers: [TeService, RedisService, CommonService,SecurityService,RuleService,JwtService,CodeService,LockService,ConfigService,EventEmitterProcessor,ListenerService,DynamicFlowService,MongoService],
     exports:[DynamicFlowService]
 })
-  export class TeModule implements NestModule 
+  export class TeModule implements NestModule
   {
     configure() {}  
   }

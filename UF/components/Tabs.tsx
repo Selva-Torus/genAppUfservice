@@ -95,12 +95,20 @@ export const Tabs: React.FC<TabsProps> = ({
           flex-shrink-0
           flex
           ${direction === "vertical" ? "flex-col" : "flex-row"}
-          ${getBorderRadiusClass(branding.borderRadius)}
-          p-1
           ${direction === "vertical" ? "w-auto" : "w-full"}
           ${getJustifyClass()}
         `}
       >
+        <div
+          className={`
+            flex
+            ${direction === "vertical" ? "flex-col" : "flex-row"}
+            ${getBorderRadiusClass(branding.borderRadius)}
+            p-1
+            bg-white
+            ${headerAlignment === 'full' ? 'w-full' : 'w-fit'}
+          `}
+        >
         {items.map((item) => {
           const isActive = activeTab === item.id;
           return (
@@ -149,6 +157,7 @@ export const Tabs: React.FC<TabsProps> = ({
             </button>
           );
         })}
+        </div>
       </div>
 
       {activeContent && (
@@ -165,7 +174,7 @@ export const Tabs: React.FC<TabsProps> = ({
          headerText={headerText}
          headerPosition={headerPosition}
          className={className}
-      
+
   
        >
          {tabsElement}

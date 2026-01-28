@@ -2036,5 +2036,128 @@ export class CommonService{
       throw error
     }
   } 
+
+   async appendWhereClause(baseQuery: string, condition: string,) {
+    const query = baseQuery.trim();
+    const lower = query.toLowerCase();
+    const keywords = [' order by ', ' group by ', ' limit '];
+    let firstKeywordIndex = -1;
+    let keywordFound = '';
+    for (const keyword of keywords) {
+      const index = lower.lastIndexOf(keyword);
+      if (index !== -1 && (firstKeywordIndex === -1 || index < firstKeywordIndex)) {
+        firstKeywordIndex = index;
+        keywordFound = keyword;
+      }
+    }
+    let modifiedQuery
+    const mainQuery =
+      firstKeywordIndex !== -1 ? query.substring(0, firstKeywordIndex) : query;
+    const trailingQuery =
+      firstKeywordIndex !== -1 ? query.substring(firstKeywordIndex) : '';
+    if (mainQuery.toLowerCase().includes(' where ')) {
+      let str = mainQuery.toLowerCase().split('where')
+      let flg: any = str.includes(')') ? true : false
+      modifiedQuery = flg == 'flase' ? `${mainQuery} AND ${condition}`
+        : `${mainQuery} WHERE ${condition}`;
+    } else {
+      modifiedQuery = `${mainQuery} WHERE ${condition}`;
+    }
+
+    return `${modifiedQuery}${trailingQuery}`;
+  }
+
+  async checkEncryption(nodeInfo) {
+    try {
+      if (nodeInfo?.action?.encryption) {
+        let isEncrypted: any = nodeInfo?.action?.encryption
+        if (isEncrypted?.isEnabled) {
+          return { selectedDpd: isEncrypted.selectedDpd, encryptionMethod: isEncrypted.encryptionMethod }
+        }
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async downloadAndDecryptFile(seaWeedConfig, url: string): Promise<any> {
+    try {
+      const response = await axios.get(
+        url,
+        {
+          responseType: 'arraybuffer',
+          auth: {
+            username: seaWeedConfig.username, //process.env.SEAWEED_USERNAME,
+            password: seaWeedConfig.password //process.env.SEAWEED_PASSWORD,
+          }
+        }
+      );
+      const encryptedFile = response.data;
+      const decryptedFile = this.DecryptFile(encryptedFile);
+      return decryptedFile;
+
+    } catch (error) {
+      console.error('Error downloading or decrypting file:', error);
+      throw new Error('Failed to download or decrypt file');
+    }
+  }
+
+  private DecryptFile(encryptedData: Buffer): Buffer {
+    const decipher = crypto.createDecipheriv('aes-256-ctr', Buffer.from(process.env.AES_KEY!, 'base64'), Buffer.from(process.env.AES_IV!, 'base64'));
+    const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
+    // console.log('decrypted',decrypted);      
+    return decrypted;
+  }
+
+  async setfileKeys(config: any, operationName: string, folderPath: string, fileName: string, fileType?: string, insertData?: any) {
+    try {
+      let fileUrl, existing
+      if (fileType) {
+        if (folderPath) fileUrl = `${config.url}/${folderPath}/${fileName}.${fileType}`;
+        else fileUrl = `${config.url}/${fileName}.${fileType}`;
+      } else {
+        if (folderPath) fileUrl = `${config.url}/${folderPath}/${fileName}`;
+        else fileUrl = `${config.url}/${fileName}`;
+        fileType = fileName.split('.').pop();
+      }
+      let auth = {
+        username: config.username,
+        password: config.password
+      }
+      // console.log("insertData",insertData);
+
+      if (operationName == 'read') {
+        if (fileType == 'xlsx') {
+          existing = await axios.get<ArrayBuffer>(fileUrl, { auth, responseType: 'arraybuffer' });
+        } else
+          existing = await axios.get(fileUrl, { auth });
+        if (existing?.data) return existing?.data
+      } else if (operationName == 'write' && insertData) {
+        const buffer = Buffer.from(insertData, 'utf-8');
+        const form = new FormData();
+        form.append('file', Readable.from(buffer), {
+          filename: fileName + '.' + fileType,
+          contentType: `application/${fileType}`,
+        });
+
+        const response = await axios.post(fileUrl, form, {
+          headers: { ...form.getHeaders() },
+          auth,
+          maxContentLength: Infinity,
+          maxBodyLength: Infinity,
+        });
+        return {
+          status: response.status,
+          fileName: fileName
+        };
+
+      }
+
+
+    } catch (error) {
+      console.log(error);
+      throw error
+    }
+  }
     
 }

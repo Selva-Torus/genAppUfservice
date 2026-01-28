@@ -54,7 +54,7 @@ const ContextSelector = () => {
   const [selectedRole, setSelectedRole] = useState<Record<string, string>>({})
   const [orgGrpData, setOrgGrpData] = useState<any>([])
   const [isPending, startTransition] = useTransition();  
-  let landingScreen:string = 'CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1';
+  let landingScreen:string = 'User Screen';
   let screenDetails: any = {
            keys:[
   {

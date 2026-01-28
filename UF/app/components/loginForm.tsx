@@ -42,7 +42,7 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
   const { branding } = useGlobal()
   const { brandColor } = branding
   const { bgColor, borderColor, textColor } = useTheme()
-  const onBoardingKey : string = "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
+  const onBoardingKey : string = "User Screen"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,

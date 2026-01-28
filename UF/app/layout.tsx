@@ -265,7 +265,7 @@
         }
       ]
     },
-    "landingScreen": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
+    "landingScreen": "User Screen"
   },
   "allKeyswithScreenNames": [
     {

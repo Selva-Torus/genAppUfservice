@@ -16,7 +16,7 @@ function page() {
   const token = getCookie('token')
   const decodedToken = decodeToken(token)
   const router = useRouter()
-  let landingScreen: string = 'CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1'
+  let landingScreen: string = 'User Screen'
   const encryptionFlagApp: boolean = false;    
   const securityCheck = async () => {
     try {

@@ -4,7 +4,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value
   const path = request.nextUrl.pathname
   const isAuthRoute = ["/" , "/forgot-password"].includes(path);
-   let screenName:string = 'CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1';
+   let screenName:string = 'User Screen';
     let screenDetails: any = {
         keys:[
   {
@@ -54,7 +54,7 @@ export function middleware(request: NextRequest) {
         });
         screenName =screenName.split('-')[0]+'_'+screenName.split('-').at(-1)
     }
-  const landingScreen = `/user`
+  const landingScreen = `/${screenName}`
 
   if (!token && !isAuthRoute)
     return NextResponse.redirect(
