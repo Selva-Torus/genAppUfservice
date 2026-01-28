@@ -457,7 +457,7 @@ const TopNav = ({
         </Popup>
       </div>
     </div>
-  ) , [userDetails , isPopoverOpen])
+  ) , [userDetails, isPopoverOpen])
 
   // Default layout (without grid)
     if (
@@ -518,10 +518,10 @@ const TopNav = ({
           <ProfileSection />
         </>
       )}
-       {
-          pathname === '/select-context' &&
-          ( <ProfileSection />)
-        }
+      {
+        pathname === '/select-context' &&
+        ( <ProfileSection />)
+      }
     </div>
   )
 }

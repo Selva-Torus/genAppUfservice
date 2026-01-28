@@ -143,18 +143,26 @@ const LayoutDecider = ({
           "Template 1"
         ],
         "static": false
-      },
-      {
-        "name": "menu item 6_2",
-        "label": "Menu Item 6_2",
-        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1"
-        ],
-        "static": false
       }
     ],
-    "items": []
+    "items": [
+      {
+        "menuGroup": "menu grp 6_2",
+        "menuGroupLabel": "Menu Grp 6_2",
+        "screenDetails": [
+          {
+            "name": "menu item 7_1",
+            "label": "Menu Item 7_1",
+            "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",
+            "allowedAccessProfile": [
+              "Template 1"
+            ],
+            "static": false
+          }
+        ],
+        "items": []
+      }
+    ]
   }
 ]
   const token:string = getCookie('token'); 

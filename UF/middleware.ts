@@ -33,8 +33,8 @@ export function middleware(request: NextRequest) {
     "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
   },
   {
-    "screenName": "menu item 6_2",
-    "screensName": "menu_item_6_2-v1",
+    "screenName": "menu item 7_1",
+    "screensName": "menu_item_7_1-v1",
     "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
   }
 ]

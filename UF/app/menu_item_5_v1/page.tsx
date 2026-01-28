@@ -17,7 +17,7 @@ import clsx from "clsx";
 import GrouptestGrp2  from "./GrouptestGrp2/GrouptestGrp2";
 
 
-export default function PageMenuItem62V1() {
+export default function PageMenuItem5V1() {
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const [initialLoad, setInitialLoad] = useState(false);
   const securityData:any={
@@ -37,7 +37,7 @@ export default function PageMenuItem62V1() {
   const [dropdownData, setDropdownData] = useState<any>({});
   const token:string = getCookie('token'); 
   const decodedTokenObj: any = decodeToken(token);
-  const screenName:string = "menu item 6_2";
+  const screenName:string = "menu item 7_1";
   const user = decodedTokenObj?.selectedAccessProfile;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {refetch, setRefetch} = useContext(TotalContext) as TotalContextProps;
@@ -64,7 +64,7 @@ export default function PageMenuItem62V1() {
     });
 
   async function securityCheck() {
-    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",accessProfile:[user],from:"pageMenuItem62V1"},{
+    const orchestrationData = await AxiosService.post("/UF/Orchestration",{key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",accessProfile:[user],from:"pageMenuItem5V1"},{
       headers: {
         Authorization: `Bearer ${token}`
       }});

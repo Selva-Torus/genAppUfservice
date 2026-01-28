@@ -96,18 +96,26 @@
             "Template 1"
           ],
           "static": false
-        },
-        {
-          "name": "menu item 6_2",
-          "label": "Menu Item 6_2",
-          "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",
-          "allowedAccessProfile": [
-            "Template 1"
-          ],
-          "static": false
         }
       ],
-      "items": []
+      "items": [
+        {
+          "menuGroup": "menu grp 6_2",
+          "menuGroupLabel": "Menu Grp 6_2",
+          "screenDetails": [
+            {
+              "name": "menu item 7_1",
+              "label": "Menu Item 7_1",
+              "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",
+              "allowedAccessProfile": [
+                "Template 1"
+              ],
+              "static": false
+            }
+          ],
+          "items": []
+        }
+      ]
     }
   ],
   "setupData": {
@@ -294,8 +302,8 @@
       "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
     },
     {
-      "screenName": "menu item 6_2",
-      "screensName": "menu_item_6_2-v1",
+      "screenName": "menu item 7_1",
+      "screensName": "menu_item_7_1-v1",
       "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
     }
   ],
