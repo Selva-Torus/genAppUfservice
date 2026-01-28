@@ -544,9 +544,9 @@ const SideNav = ({
                       />
                     )}
                     {fullView && (
-                      <button className='w-[100px] truncate' key={index}>
+                      <div className='w-[100px] truncate' key={index}>
                         {menu.menuGroupLabel}
-                      </button>
+                      </div>
                     )}
                   </div>
                 </button>

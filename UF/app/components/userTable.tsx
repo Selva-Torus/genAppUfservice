@@ -370,7 +370,7 @@ const UserTable: React.FC<{
       </div>
       <div className='h-[73vh] mt-4'>
         <CustomTable
-          data={rowOfCurrentGrps}
+          data={rowOfCurrentGrps as any}
           columns={columns as any}
           // emptyMessage='No data available'
         />

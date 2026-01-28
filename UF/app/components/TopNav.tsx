@@ -184,7 +184,7 @@ const TopNav = ({
 
   // Logo section
   const LogoSection = useCallback(() => (
-    <div className='flex items-center gap-1' style={getGridStyle('logo')}>
+    <div className='flex items-center gap-1' style={navigationStyles == 'vertical' ? undefined : getGridStyle('logo')}>
       {logo ? (
         <img
           className='h-[50px] w-[50px]'
@@ -203,7 +203,7 @@ const TopNav = ({
   ) , [logo, appName])
 
       const AppLogoSection = useCallback(() => (
-    <div className='flex items-center gap-1' style={getGridStyle('app logo')}>
+    <div className='flex items-center gap-1' style={navigationStyles == 'vertical' ? undefined : getGridStyle('app logo')}>
       {appLogo && (
         <img
           className='h-[60px] w-[60px]'
@@ -457,7 +457,7 @@ const TopNav = ({
         </Popup>
       </div>
     </div>
-  ) , [userDetails])
+  ) , [userDetails , isPopoverOpen])
 
   // Default layout (without grid)
     if (
@@ -489,6 +489,10 @@ const TopNav = ({
             <ProfileSection />
           </>
         )}
+        {
+          pathname === '/select-context' &&
+          ( <ProfileSection />)
+        }
       </div>
     )
   }
@@ -514,6 +518,10 @@ const TopNav = ({
           <ProfileSection />
         </>
       )}
+       {
+          pathname === '/select-context' &&
+          ( <ProfileSection />)
+        }
     </div>
   )
 }

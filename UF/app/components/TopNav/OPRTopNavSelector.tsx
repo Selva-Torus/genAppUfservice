@@ -1043,7 +1043,7 @@ const OPRTopNavSelector = ({
               'max-w-36': fullView
             }
           )}
-          title={selectedOrg?.orgName ?? 'Select Organization'}
+          title={selectedOrg?.orgName  ? `Organization: \n${selectedOrg?.orgName}`: 'Select Organization'}
         >
           {fullView ? (
             <>
@@ -1092,7 +1092,7 @@ const OPRTopNavSelector = ({
               'max-w-36': fullView
             }
           )}
-          title={selectedProd?.psName ?? 'Select Product'}
+          title={selectedProd?.psName  ? `Product: \n${selectedProd?.psName}`: 'Select Product'}
         >
           {fullView ? (
             <>
@@ -1138,10 +1138,10 @@ const OPRTopNavSelector = ({
             {
               'bg-[var(--selection-color)]': activeStage == 'role',
               'w-[unset]': !fullView,
-              'max-w-36': fullView
+              'max-w-36 min-w-36': fullView
             }
           )}
-          title={selectedRole?.roleName ?? 'Select Product'}
+          title={selectedRole?.roleName  ? `Role: \n${selectedRole?.roleName}`: 'Select Role'}
         >
           {fullView ? (
             <>
