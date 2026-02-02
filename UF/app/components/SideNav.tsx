@@ -239,7 +239,7 @@ const SideNav = ({
   // Menu Items section - with conditional overflow handling
   const MenuItemsSection = useCallback(() => (
     <div
-      className={clsx('scrollbar-none flex w-full flex-col gap-2 overflow-x-hidden pt-2', {
+      className={clsx('scrollbar-none col-span-full flex w-full flex-col gap-2 overflow-x-hidden pt-2', {
         'max-h-[80vh] overflow-y-scroll': !navBarItemsOrder,
         'overflow-y-auto min-h-0': navBarItemsOrder
       })}
@@ -560,9 +560,9 @@ const SideNav = ({
   // OPR Matrix section
   const OPRMatrixSection = useCallback(() => (
     <div
-      className={clsx('px-0 overflow-x-hidden', {
+      className={clsx('px-0 col-span-full overflow-x-hidden', {
         hidden: !tp_ps,
-        'scale-90 2xl:scale-100': fullView
+        '': fullView
       })}
       style={getGridStyle('opr matrix')}
     >
@@ -577,9 +577,9 @@ const SideNav = ({
 
   // Profile section
   const ProfileSection = useCallback(() => (
-    <div 
+    <div
       style={getGridStyle('profile')}
-      className='flex items-center justify-center'
+      className='flex col-span-full items-center justify-center'
     >
       {fullView ? (
         <FullViewAvatar
@@ -625,7 +625,7 @@ const SideNav = ({
       className={`grid h-full w-full px-2 py-2 text-center overflow-hidden`}
       style={{
         gridTemplateRows: 'repeat(12, minmax(0, 1fr))',
-        gridTemplateColumns: '1fr',
+        gridTemplateColumns: `repeat(${sidebarStyle == "compact" ? 6 : sidebarStyle === "hoverView" && fullView ? 12 : 6}, minmax(0, 1fr))`,
         gap: '0.5rem'
       }}
       onMouseEnter={() => sidebarStyle == 'hoverView' && setFullView(true)}
@@ -666,16 +666,16 @@ const FullViewAvatar = ({
   const token: string = getCookie('token')
   const decodedTokenObj: any = decodeToken(token)
   return (
-    <div>
+    <>
       <div
         onClick={() => setIsPopoverOpen(prev => !prev)}
         ref={popoverButtonElement}
         className={twMerge(
-          'flex w-40 items-center gap-2 rounded-lg border px-2 py-3',
+          'flex items-center gap-2 rounded-lg border px-1 py-1.5',
           borderColor
         )}
       >
-        <div className='h-11 w-12 cursor-pointer rounded-full justify-self-center'>
+        <div className='h-9 w-10 cursor-pointer rounded-full justify-self-center'>
           <Avatar
             theme='brand'
             view='filled'
@@ -683,9 +683,9 @@ const FullViewAvatar = ({
             icon='FaRegUser'
           />
         </div>
-        <div>
+        <div className='flex flex-col gap-[0.15rem] justify-center items-start ' >
           <Text contentAlign='left'>{user}</Text>
-          <Text contentAlign='left'>{userDetails.accessProfile[0]}</Text>
+          <Text className='whitespace-nowrap text-xs' contentAlign='left'>{userDetails.accessProfile[0]}</Text>
         </div>
       </div>
       <div>
@@ -810,7 +810,7 @@ const FullViewAvatar = ({
           </div>
         </Popup>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -837,11 +837,11 @@ const PartialViewAvatar = ({
   const decodedTokenObj: any = decodeToken(token)
 
   return (
-    <div>
+    <>
       <div
         onClick={() => setIsPopoverOpen(prev => !prev)}
         ref={popoverButtonElement}
-        className='h-11 w-12 cursor-pointer rounded-full justify-self-center'
+        className='h-9 w-10 cursor-pointer rounded-full justify-self-center'
       >
         <Avatar
           theme='brand'
@@ -972,6 +972,6 @@ const PartialViewAvatar = ({
           </div>
         </Popup>
       </div>
-    </div>
+    </>
   )
 }

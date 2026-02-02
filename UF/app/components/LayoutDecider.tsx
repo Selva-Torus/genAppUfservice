@@ -178,7 +178,7 @@ const LayoutDecider = ({
       return 'hidden'
     }
 
-    const widthClass = fullView ? 'w-[10%]' : 'w-[5%]'
+    const widthClass = fullView ? 'w-[10vw] ' : 'w-[5%]'
     const baseClass = 'flex-shrink-0'
     const marginClass = mode === 'detached' ? 'm-2' : ''
     const extraClass = mode === 'detached' ? 'rounded-md shadow-md' : ''
@@ -440,7 +440,7 @@ const LayoutDecider = ({
   }[] =[
   {
     "name": "menu items",
-    "gridRow": "1/6"
+    "gridRow": "1/6",
   },
   {
     "name": "opr matrix",

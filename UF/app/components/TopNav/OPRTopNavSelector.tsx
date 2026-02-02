@@ -1026,8 +1026,8 @@ const OPRTopNavSelector = ({
   }
 
   return (
-    <div className={clsx('flex gap-2 px-4', className)}>
-      <div>
+    <div className={clsx(`h-full flex gap-2 px-4 ${fullView ? "justify-evenly" : "justify-around"} `, className)}>
+      <>
         <button
           ref={orgPopupRef}
           onClick={() => {
@@ -1075,8 +1075,8 @@ const OPRTopNavSelector = ({
             </div>
           )}
         </button>
-      </div>
-      <div>
+      </>
+      <>
         <button
           ref={prodPopupRef}
           onClick={() => {
@@ -1124,8 +1124,8 @@ const OPRTopNavSelector = ({
             </div>
           )}
         </button>
-      </div>
-      <div>
+      </>
+      <>
         <button
           ref={rolePopupRef}
           onClick={() => {
@@ -1173,7 +1173,7 @@ const OPRTopNavSelector = ({
             </div>
           )}
         </button>
-      </div>
+      </>
       {selectedProd?.psLogo && (
         <div>
           <img
@@ -1209,27 +1209,27 @@ const OPRTopNavSelector = ({
         autoClose={false}
       >
         {activeStage === 'role' && (
-          <div>
+          <>
             <RenderRole
               roleGrpData={roles}
               selectedRole={selectedRole}
               onSelectRole={handleSelectRole}
               closeModal={() => setActiveStage(null)}
             />
-          </div>
+          </>
         )}
         {activeStage === 'prod' && (
-          <div>
+          <>
             <RenderProd
               prodGrpData={products}
               selectedProd={selectedProd}
               onSelectProd={handleSelectProd}
               closeModal={() => setActiveStage(null)}
             />
-          </div>
+          </>
         )}
         {activeStage === 'org' && (
-          <div>
+          <>
             <RenderOrg
               orgGrpData={assignOriginalIndex(
                 (matchedAccessProfileData as any)?.orgGrp ?? []
@@ -1240,7 +1240,7 @@ const OPRTopNavSelector = ({
               onSelectSubOrg={handleSelectSubOrg}
               closeModal={() => setActiveStage(null)}
             />
-          </div>
+          </>
         )}
       </Popup>
     </div>
