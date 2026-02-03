@@ -534,7 +534,8 @@ const RenderProd = ({
                           psGrpCode: prodGrp.psGrpCode,
                           psGrpName: prodGrp.psGrpName,
                           psCode: prod.psCode,
-                          psName: prod.psName
+                          psName: prod.psName,
+                          psLogo: prod?.psLogo ?? "",
                         },
                         prod
                       )
@@ -1050,7 +1051,7 @@ const OPRTopNavSelector = ({
               <div className='w-[90%]'>
                 <div className='flex items-center gap-1'>
                   <OrgStructure />
-                  <Text variant='body-1' contentAlign='left'>
+                  <Text variant='caption-2' contentAlign='left'>
                     Organization
                   </Text>
                 </div>
@@ -1099,7 +1100,7 @@ const OPRTopNavSelector = ({
               <div className='w-[90%]'>
                 <div className='flex items-center gap-1'>
                   <ProdStructure />
-                  <Text variant='body-1' contentAlign='left'>
+                  <Text variant='caption-2' contentAlign='left'>
                     Products
                   </Text>
                 </div>
@@ -1148,7 +1149,7 @@ const OPRTopNavSelector = ({
               <div className='w-[90%]'>
                 <div className='flex items-center gap-1'>
                   <RoleStructure />
-                  <Text variant='body-1' contentAlign='left'>
+                  <Text variant='caption-2' contentAlign='left'>
                     Roles
                   </Text>
                 </div>
@@ -1175,15 +1176,13 @@ const OPRTopNavSelector = ({
         </button>
       </>
       {selectedProd?.psLogo && (
-        <div>
           <img
-            className='h-[50px] w-[50px]'
+            className='h-[50px] min-w-[100px] px-2 border-l'
             width={100}
             height={100}
             src={getCdnImage(selectedProd?.psLogo)}
             alt='appLogo'
           />
-        </div>
       )}
       <Popup
         anchorRef={

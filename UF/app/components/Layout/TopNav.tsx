@@ -75,7 +75,7 @@ const TopNav = ({
         testElement.textContent = menu.menuGroup || menu.screenDetails[0]?.name
         document.body.appendChild(testElement)
 
-        const itemWidth = testElement.clientWidth + 100 // Add padding/margin
+        const itemWidth = testElement.clientWidth + 120 // Add padding/margin
         document.body.removeChild(testElement)
 
         if (totalWidth + itemWidth < containerWidth) {
@@ -184,7 +184,7 @@ const TopNav = ({
 
   // Logo section
   const LogoSection = useCallback(() => (
-    <div className='flex items-center gap-1' style={navigationStyles == 'vertical' ? undefined : getGridStyle('logo')}>
+    <div className='flex items-center gap-1 min-w-[100px]' style={navigationStyles == 'vertical' ? undefined : getGridStyle('logo')}>
       {logo ? (
         <img
           className='h-[50px] w-[50px]'
@@ -196,8 +196,10 @@ const TopNav = ({
       ) : (
         <Logo />
       )}
-      <Text className='text-nowrap text-start font-bold' contentAlign='left'>
+      <Text className='text-nowrap text-start font-bold w-full truncate' contentAlign='left'>
+        <span title={appName}>
         {appName}
+        </span>
       </Text>
     </div>
   ) , [logo, appName])
@@ -223,7 +225,7 @@ const TopNav = ({
       style={getGridStyle('menu items')}
       ref={menuRef}
     >
-      <div className='flex max-w-[62%] items-center gap-2'>
+      <div className='flex max-w-[62%] items-center gap-1'>
         {navData &&
           visibleItems.map((menu, index) => {
             if (menu.menuGroup) {
@@ -238,7 +240,7 @@ const TopNav = ({
                             ? 'action'
                             : 'raised'
                         }
-                        className='px-2 py-0.5'
+                        className='px-3 py-1'
                       >
                         {menu.menuGroupLabel}
                       </Button>
@@ -257,7 +259,7 @@ const TopNav = ({
               return (
                 <Button
                   view={routingName == pathname ? 'action' : 'raised'}
-                  className='px-2 py-0.5'
+                  className='px-3 py-1'
                   key={index}
                   onClick={() => router.push(routingName)}
                 >
@@ -320,7 +322,7 @@ const TopNav = ({
 
   // Profile section
   const ProfileSection = useCallback(() => (
-    <div style={getGridStyle('profile')}>
+    <div style={{...getGridStyle('profile') , justifySelf : 'end'}}>
       <div
         onClick={() => setIsPopoverOpen(prev => !prev)}
         ref={popoverButtonElement}
