@@ -93,7 +93,7 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
 
     let keyarr = []
         
-    let artifactToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoic2VsdmEiLCJjbGllbnQiOiJDSTAwMSIsInR5cGUiOiJjIiwibG9nVHlwZSI6Im1vbmdvZGIiLCJzaWQiOiI3ZGM1MzFlZi03MjhlLTQ5NjktODg3NC02NmZiOTQ0ODM1YjciLCJpYXQiOjE3Njk2MDEwNTksImV4cCI6MTc2OTYwMjI1OX0.oz1Qm9MbdI9zbbWh1yKQiV3Xs3XlHA2wkmBw1xxnLFY';  
+    let artifactToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnQiOiJDVDAwNSIsImxvZ2luSWQiOiJndXJ1Iiwic2lkIjoiZDBkMTEyNDUtYmJmYS00ZDZiLWJjM2EtYTE4NzIxYTI2YTU1IiwibG9nVHlwZSI6Im1vbmdvZGIiLCJ0eXBlIjoiYyIsImlhdCI6MTc3MDEwMjYwMywiZXhwIjoxNzcwMTAzODAzfQ.tdDr8U8Folr_qpSGmH5Qtj1gIMJY_WdvFgdPd-ekN0k';  
     for (const key of keyarr) {
       this.listenToKey(key,artifactToken); // fire & forget
     }  
@@ -210,143 +210,20 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
     this.logger.log(`Interval: ${interval}`); 
     let temp = pfdto       
     const job:any = new CronJob(interval, async () => {
-      try {    
-        pfdto = temp   
-       let artifactKey = pfdto.key
-       let artifactToken = token
-       let  sourceStatus, refflag, sourceId, currentFabric,processedKey; 
-       currentFabric = await this.CommonService.splitcommonkey(pfdto.key, 'FNK');
-       let fngkKey = await this.CommonService.splitcommonkey(pfdto.key, 'FNGK');
-       if (pfdto.key.includes(fngkKey)) {
-         processedKey = pfdto.key.replace(fngkKey, fngkKey + 'P');
-       }
-       let client = process.env.CLIENTCODE;
-       if (!client) throw new CustomException('client not found', 404);
-       if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SCDL') {
-        sourceId = pfdto?.sourceId
-       }      
-       
-       let tokenDecode = this.jwtService.decode(pfdto.token, { json: true })
-       if (!tokenDecode || !tokenDecode.loginId)
-         throw new CustomException('Invalid token', 401);
-     
-      
-      
-      //if(logicCenter || currentFabric == 'PF-PFD')
-      // let afi = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'AFI', client));
-      //  node = await this.securityService.getSecurityTemplate(pfdto.key + 'PO', pfdto.token);
-      //  pfjson = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'PFS', client));
-      //  poJson = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'PO', client));
-      //  pfo = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'PFO', client));
-      //  Ndp = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'NDP', client));   
-       
-       let [afi, pfjson, poJson, pfo, Ndp] = await Promise.all([
-        this.redisService.getJsonData(pfdto.key + 'AFI', client).then(JSON.parse),        
-        this.redisService.getJsonData(pfdto.key + 'PFS', client).then(JSON.parse),
-        this.redisService.getJsonData(pfdto.key + 'PO', client).then(JSON.parse),
-        this.redisService.getJsonData(pfdto.key + 'PFO', client).then(JSON.parse),
-        this.redisService.getJsonData(pfdto.key + 'NDP', client).then(JSON.parse)
-      ]);
+      let tokenDecode = this.jwtService.decode(pfdto.token, { json: true })
+        if (!tokenDecode || !tokenDecode.loginId)
+          throw new CustomException('Invalid token', 401);
 
-      let logicCenter
-        if (afi && afi.hasOwnProperty('logicCenter')) {
-        if(currentFabric == 'DF-DFD')
-        logicCenter = afi?.logicCenter
-      }else{
-        logicCenter = true
-      }
-      
-       refflag =  'N';
-       let ponode = poJson?.mappedData?.artifact?.node;      
+      const lockKey = `scheduler:${tokenDecode.loginId}:${name}`;
+      const lockTTL = interval - 10 // slightly less than minimum cron interval
 
-       if (!ponode || ponode.length == 0)
-         throw new CustomException('Nodes not found', 404);
-
-        if(ponode[1].events.length>0){
-          for(let a=0;a< ponode[1].events.length;a++){
-              sourceStatus = ponode[1].events[a].source.status
-          }
-        }  
-
-       // let upId =  Xid.next();
-        pfdto['key'] = artifactKey
-        //pfdto['upId'] = upId
-        pfdto['token'] = artifactToken
-        pfdto['nodeId'] = ponode[1].nodeId
-        pfdto['nodeName'] = ponode[1].nodeName
-        pfdto['nodeType'] = ponode[1].nodeType 
-        pfdto['event']  = sourceStatus    
-        pfdto['data'] = {}    
-
-       // await this.pfPreProcessor(processedKey, pfjson, upId, currentFabric);
-       
-        let pfProcessorResponse:any = await this.firstProcessor(pfdto, sourceStatus, pfjson ,poJson,pfo, Ndp,currentFabric, refflag, undefined, undefined, undefined, undefined,undefined,logicCenter,false)
-       
-        
-        if (!pfProcessorResponse?.status && pfProcessorResponse?.status != 200 ) {
-          throw pfProcessorResponse;
-        }
-       
-        if(pfProcessorResponse?.data){
-          let pfResponseData = pfProcessorResponse.data
-          
-          if(pfResponseData){            
-            pfdto = {}
-           // for (let p = 0; p < pfResponseData.length; p++) {
-              pfdto['key'] = artifactKey
-               pfdto['token'] = artifactToken
-               pfdto['event'] = sourceStatus
-              // pfdto['upId'] = upId
-               pfdto['data'] = pfResponseData
-              pfdto['nodeId'] = ponode[1].nodeId
-              pfdto['nodeName'] = ponode[1].nodeName
-              pfdto['nodeType'] = ponode[1].nodeType
-              this.logger.log(`Running dynamic job with data: ${JSON.stringify(pfdto)}`);
-              // await this.redisService.setJsonData(processedKey + upId + ':NPV:' + ponode[1].nodeName + '.PRO', JSON.stringify(pfResponseData[p]), client, 'response',);
-             
-              // cronResponse = await this.EventEmitter(pfdto);
-                await this.addEventEmitterJob(name,pfdto,name,processedKey,pfjson,currentFabric); 
-              //  if (cronResponse?.message === 'Success' && cronResponse?.statusCode === 201) {
-              //    pfdto = {}
-              //    pfdto['nodeId'] = ponode[2].nodeId
-              //    pfdto['nodeName'] = ponode[2].nodeName
-              //    pfdto['nodeType'] = ponode[2].nodeType
-              //  }
-            // }           
-          }          
-         
-            }  
-      } catch (error) {
-        
-        this.logger.error(`Error in cron job '${JSON.stringify(error)}'`);
-        //pfdto = {}; 
-        let sourceStatus
-          let ponode = JSON.parse(await this.redisService.getJsonDataWithPath(pfdto.key + 'PO','.mappedData.artifact.node',client))
-          if(ponode[1].events.length>0){
-            for(let a=0;a< ponode[1].events.length;a++){
-               sourceStatus = ponode[1].events[a].source.status
-            }
-          }                    
-          pfdto['nodeId'] = ponode[1].nodeId
-          pfdto['nodeName'] = ponode[1].nodeName
-          pfdto['nodeType'] = ponode[1].nodeType
-          pfdto['event'] = sourceStatus        
-      }
-    });   
-    await this.schedulerRegistry.addCronJob(name, job);
-    job.start();   
-    this.logger.log(`Started job: ${name}`); 
-  }
-
-  async startInterval(jobname,interval,pfdto,client,token) {
-    this.logger.log(`Interval Step`); 
-    let temp = pfdto 
-    const intervalId = setInterval(async () => {
-      try {    
-        pfdto = temp   
+      const acquired = await this.redisService.setIfNotExist(lockKey,'locked',lockTTL)
+      if (acquired) {
+        try {    
+          pfdto = temp   
         let artifactKey = pfdto.key
         let artifactToken = token
-        let  sourceStatus, refflag,sourceId, currentFabric,processedKey; 
+        let  sourceStatus, refflag, sourceId, currentFabric,processedKey; 
         currentFabric = await this.CommonService.splitcommonkey(pfdto.key, 'FNK');
         let fngkKey = await this.CommonService.splitcommonkey(pfdto.key, 'FNGK');
         if (pfdto.key.includes(fngkKey)) {
@@ -356,37 +233,24 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
         if (!client) throw new CustomException('client not found', 404);
         if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SCDL') {
           sourceId = pfdto?.sourceId
-        }      
-        
-        let tokenDecode = this.jwtService.decode(pfdto.token, { json: true })
-        if (!tokenDecode || !tokenDecode.loginId)
-          throw new CustomException('Invalid token', 401);
-      
-        
-        
-        //if(logicCenter || currentFabric == 'PF-PFD')
-        // let afi = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'AFI', client));
-        // node = await this.securityService.getSecurityTemplate(pfdto.key + 'PO', pfdto.token);
-        // pfjson = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'PFS', client));
-        // poJson = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'PO', client));
-        // pfo = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'PFO', client));
-        // Ndp = JSON.parse(await this.redisService.getJsonData(pfdto.key + 'NDP', client));   
+        }           
         
         let [afi, pfjson, poJson, pfo, Ndp] = await Promise.all([
-        this.redisService.getJsonData(pfdto.key + 'AFI', client).then(JSON.parse),       
-        this.redisService.getJsonData(pfdto.key + 'PFS', client).then(JSON.parse),
-        this.redisService.getJsonData(pfdto.key + 'PO', client).then(JSON.parse),
-        this.redisService.getJsonData(pfdto.key + 'PFO', client).then(JSON.parse),
-        this.redisService.getJsonData(pfdto.key + 'NDP', client).then(JSON.parse)
-      ]);
+          this.redisService.getJsonData(pfdto.key + 'AFI', client).then(JSON.parse),        
+          this.redisService.getJsonData(pfdto.key + 'PFS', client).then(JSON.parse),
+          this.redisService.getJsonData(pfdto.key + 'PO', client).then(JSON.parse),
+          this.redisService.getJsonData(pfdto.key + 'PFO', client).then(JSON.parse),
+          this.redisService.getJsonData(pfdto.key + 'NDP', client).then(JSON.parse)
+        ]);
 
         let logicCenter
-        if (afi && afi.hasOwnProperty('logicCenter')) {
+          if (afi && afi.hasOwnProperty('logicCenter')) {
           if(currentFabric == 'DF-DFD')
           logicCenter = afi?.logicCenter
         }else{
           logicCenter = true
         }
+        
         refflag =  'N';
         let ponode = poJson?.mappedData?.artifact?.node;      
 
@@ -399,56 +263,188 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
             }
           }  
 
-         // let upId =  Xid.next();
+        // let upId =  Xid.next();
           pfdto['key'] = artifactKey
-         // pfdto['upId'] = upId
+          //pfdto['upId'] = upId
           pfdto['token'] = artifactToken
           pfdto['nodeId'] = ponode[1].nodeId
           pfdto['nodeName'] = ponode[1].nodeName
-          pfdto['nodeType'] = ponode[1].nodeType  
-          pfdto['event'] = sourceStatus    
+          pfdto['nodeType'] = ponode[1].nodeType 
+          pfdto['event']  = sourceStatus    
           pfdto['data'] = {}    
 
-        // let res = await this.pfPreProcessor(processedKey, pfjson, upId, currentFabric);
-         // if(res == 'Success'){
-         let preData = 'Y'
-            let pfProcessorResponse:any = await this.firstProcessor(pfdto, sourceStatus, pfjson ,poJson,pfo, Ndp,currentFabric, refflag, undefined, undefined, undefined, undefined,undefined,logicCenter,false)
-                            
+        // await this.pfPreProcessor(processedKey, pfjson, upId, currentFabric);
+        
+          let pfProcessorResponse:any = await this.firstProcessor(pfdto, sourceStatus, pfjson ,poJson,pfo, Ndp,currentFabric, refflag, undefined, undefined, undefined, undefined,undefined,logicCenter,false)
+        
+          
           if (!pfProcessorResponse?.status && pfProcessorResponse?.status != 200 ) {
             throw pfProcessorResponse;
           }
         
           if(pfProcessorResponse?.data){
-            let pfResponseData = pfProcessorResponse.data           
-            if(pfResponseData && Object.keys(pfResponseData).length>0){              
-                pfdto = {}             
+            let pfResponseData = pfProcessorResponse.data
+            
+            if(pfResponseData){            
+              pfdto = {}
+            // for (let p = 0; p < pfResponseData.length; p++) {
                 pfdto['key'] = artifactKey
                 pfdto['token'] = artifactToken
-                pfdto['event'] = sourceStatus               
+                pfdto['event'] = sourceStatus
+                // pfdto['upId'] = upId
                 pfdto['data'] = pfResponseData
                 pfdto['nodeId'] = ponode[1].nodeId
                 pfdto['nodeName'] = ponode[1].nodeName
-                pfdto['nodeType'] = ponode[1].nodeType               
-                await this.addEventEmitterJob(jobname,pfdto,jobname,processedKey,pfjson,currentFabric);             
-            }                     
-          } 
-         // }
+                pfdto['nodeType'] = ponode[1].nodeType
+                this.logger.log(`Running dynamic job with data: ${JSON.stringify(pfdto)}`);
+                // await this.redisService.setJsonData(processedKey + upId + ':NPV:' + ponode[1].nodeName + '.PRO', JSON.stringify(pfResponseData[p]), client, 'response',);
+              
+                // cronResponse = await this.EventEmitter(pfdto);
+                  await this.addEventEmitterJob(name,pfdto,name,processedKey,pfjson,currentFabric); 
+                //  if (cronResponse?.message === 'Success' && cronResponse?.statusCode === 201) {
+                //    pfdto = {}
+                //    pfdto['nodeId'] = ponode[2].nodeId
+                //    pfdto['nodeName'] = ponode[2].nodeName
+                //    pfdto['nodeType'] = ponode[2].nodeType
+                //  }
+              // }           
+            }          
           
+              }  
+        } catch (error) {
           
-      } catch (error) {        
-        this.logger.error(`Error in cron job '${JSON.stringify(error)}'`);
-        //pfdto = {}; 
-        let sourceStatus
-          let ponode = JSON.parse(await this.redisService.getJsonDataWithPath(pfdto.key + 'PO','.mappedData.artifact.node',client))
-          if(ponode[1].events.length>0){
-            for(let a=0;a< ponode[1].events.length;a++){
-              sourceStatus = ponode[1].events[a].source.status
+          this.logger.error(`Error in cron job '${JSON.stringify(error)}'`);
+          //pfdto = {}; 
+          let sourceStatus
+            let ponode = JSON.parse(await this.redisService.getJsonDataWithPath(pfdto.key + 'PO','.mappedData.artifact.node',client))
+            if(ponode[1].events.length>0){
+              for(let a=0;a< ponode[1].events.length;a++){
+                sourceStatus = ponode[1].events[a].source.status
+              }
+            }                    
+            pfdto['nodeId'] = ponode[1].nodeId
+            pfdto['nodeName'] = ponode[1].nodeName
+            pfdto['nodeType'] = ponode[1].nodeType
+            pfdto['event'] = sourceStatus        
+        }
+      }else{
+        this.logger.log(`Skipping cron ${name} - another instance is processing`);          
+      }
+    });   
+    await this.schedulerRegistry.addCronJob(name, job);
+    job.start();   
+    this.logger.log(`Started job: ${name}`); 
+  }
+
+  async startInterval(jobname,interval,pfdto,client,token) {
+    this.logger.log(`Interval Step`); 
+    let temp = pfdto 
+    const intervalId = setInterval(async () => {
+      let tokenDecode = this.jwtService.decode(pfdto.token, { json: true })
+        if (!tokenDecode || !tokenDecode.loginId)
+          throw new CustomException('Invalid token', 401);
+
+      const lockKey = `scheduler:${tokenDecode.loginId}:${jobname}`;
+      const lockTTL = interval - 10 // slightly less than minimum cron interval
+
+      const acquired = await this.redisService.setIfNotExist(lockKey,'locked',lockTTL)
+      if (acquired) {
+        try {    
+          pfdto = temp   
+          let artifactKey = pfdto.key
+          let artifactToken = token
+          let  sourceStatus, refflag,sourceId, currentFabric,processedKey; 
+          currentFabric = await this.CommonService.splitcommonkey(pfdto.key, 'FNK');
+          let fngkKey = await this.CommonService.splitcommonkey(pfdto.key, 'FNGK');
+          if (pfdto.key.includes(fngkKey)) {
+            processedKey = pfdto.key.replace(fngkKey, fngkKey + 'P');
+          }
+          let client = process.env.CLIENTCODE;
+          if (!client) throw new CustomException('client not found', 404);
+          if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SCDL') {
+            sourceId = pfdto?.sourceId
+          }   
+          
+          let [afi, pfjson, poJson, pfo, Ndp] = await Promise.all([
+          this.redisService.getJsonData(pfdto.key + 'AFI', client).then(JSON.parse),       
+          this.redisService.getJsonData(pfdto.key + 'PFS', client).then(JSON.parse),
+          this.redisService.getJsonData(pfdto.key + 'PO', client).then(JSON.parse),
+          this.redisService.getJsonData(pfdto.key + 'PFO', client).then(JSON.parse),
+          this.redisService.getJsonData(pfdto.key + 'NDP', client).then(JSON.parse)
+        ]);
+
+          let logicCenter
+          if (afi && afi.hasOwnProperty('logicCenter')) {
+            if(currentFabric == 'DF-DFD')
+            logicCenter = afi?.logicCenter
+          }else{
+            logicCenter = true
+          }
+          refflag =  'N';
+          let ponode = poJson?.mappedData?.artifact?.node;      
+
+          if (!ponode || ponode.length == 0)
+            throw new CustomException('Nodes not found', 404);
+
+            if(ponode[1].events.length>0){
+              for(let a=0;a< ponode[1].events.length;a++){
+                  sourceStatus = ponode[1].events[a].source.status
+              }
+            }  
+
+          // let upId =  Xid.next();
+            pfdto['key'] = artifactKey
+          // pfdto['upId'] = upId
+            pfdto['token'] = artifactToken
+            pfdto['nodeId'] = ponode[1].nodeId
+            pfdto['nodeName'] = ponode[1].nodeName
+            pfdto['nodeType'] = ponode[1].nodeType  
+            pfdto['event'] = sourceStatus    
+            pfdto['data'] = {}    
+
+          // let res = await this.pfPreProcessor(processedKey, pfjson, upId, currentFabric);
+          // if(res == 'Success'){
+          let preData = 'Y'
+              let pfProcessorResponse:any = await this.firstProcessor(pfdto, sourceStatus, pfjson ,poJson,pfo, Ndp,currentFabric, refflag, undefined, undefined, undefined, undefined,undefined,logicCenter,false)
+                              
+            if (!pfProcessorResponse?.status && pfProcessorResponse?.status != 200 ) {
+              throw pfProcessorResponse;
             }
-          }                    
-          pfdto['nodeId'] = ponode[1].nodeId
-          pfdto['nodeName'] = ponode[1].nodeName
-          pfdto['nodeType'] = ponode[1].nodeType
-          pfdto['event'] = sourceStatus        
+          
+            if(pfProcessorResponse?.data){
+              let pfResponseData = pfProcessorResponse.data           
+              if(pfResponseData && Object.keys(pfResponseData).length>0){              
+                  pfdto = {}             
+                  pfdto['key'] = artifactKey
+                  pfdto['token'] = artifactToken
+                  pfdto['event'] = sourceStatus               
+                  pfdto['data'] = pfResponseData
+                  pfdto['nodeId'] = ponode[1].nodeId
+                  pfdto['nodeName'] = ponode[1].nodeName
+                  pfdto['nodeType'] = ponode[1].nodeType               
+                  await this.addEventEmitterJob(jobname,pfdto,jobname,processedKey,pfjson,currentFabric);             
+              }                     
+            } 
+          // }
+            
+            
+        } catch (error) {        
+          this.logger.error(`Error in cron job '${JSON.stringify(error)}'`);
+          //pfdto = {}; 
+          let sourceStatus
+            let ponode = JSON.parse(await this.redisService.getJsonDataWithPath(pfdto.key + 'PO','.mappedData.artifact.node',client))
+            if(ponode[1].events.length>0){
+              for(let a=0;a< ponode[1].events.length;a++){
+                sourceStatus = ponode[1].events[a].source.status
+              }
+            }                    
+            pfdto['nodeId'] = ponode[1].nodeId
+            pfdto['nodeName'] = ponode[1].nodeName
+            pfdto['nodeType'] = ponode[1].nodeType
+            pfdto['event'] = sourceStatus        
+        }
+      }else{
+        this.logger.log(`Skipping cron ${jobname} - another instance is processing`);          
       }
     },interval);
     this.intervalJobs.set(jobname, intervalId);

@@ -16,6 +16,8 @@ interface SwitchProps {
   checked: boolean
   disabled?: boolean
   content?: string
+  checkedContent?: string
+  uncheckedContent?: string
   needTooltip?: boolean
   tooltipProps?: TooltipPropsType
   headerText?: string
@@ -30,6 +32,8 @@ export const Switch: React.FC<SwitchProps> = ({
   checked,
   disabled = false,
   content,
+  checkedContent,
+  uncheckedContent,
   needTooltip = false,
   tooltipProps,
   headerText,
@@ -102,7 +106,7 @@ export const Switch: React.FC<SwitchProps> = ({
           className={`absolute top-0.5 aspect-square h-[calc(100%-4px)] transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${getTranslateClass()}`}
         />
       </div>
-      {content && (
+      {(content || checkedContent || uncheckedContent) && (
         <span
           className={`${direction === 'RTL' ? 'mr-3' : 'ml-3'} ${
             theme === 'dark' || theme === 'dark-hc'
@@ -115,7 +119,11 @@ export const Switch: React.FC<SwitchProps> = ({
           }`}
           style={{ fontSize: 'var(--font-size)' }}
         >
-          {content}
+            {checkedContent || uncheckedContent
+            ? checked
+              ? checkedContent
+              : uncheckedContent
+            : content}
         </span>
       )}
     </label>

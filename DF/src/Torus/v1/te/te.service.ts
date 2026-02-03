@@ -631,7 +631,7 @@ export class TeService{
                                       this.redisService.deleteKey(key, client)
                                     ));
                                   }
-                                  this.redisService.sethash(obj['data'],dstkey+ tokenDecode.loginId + '_DS_Object')
+                                  await this.redisService.sethash(obj['data'],dstkey+ tokenDecode.loginId + '_DS_Object')
                                 }                                
                                
                                 if(obj['data'] == 'logicCenter' && !logicCenter)

@@ -1,0 +1,1321 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas = ["ct005_v001", "ct005_vgph001"]
+}
+
+generator client {
+provider = "prisma-client-js"
+previewFeatures = ["multiSchema"]
+}
+
+model vgph_system_setup {
+vgphssid  Int @id @default(autoincrement())
+setup_code  String  @db.VarChar(length: 128)
+product_code  String  @db.VarChar(length: 32)
+interface_product  String?  @db.VarChar(length: 32)
+category  String?  @db.VarChar(length: 128)
+sub_category  String?  @db.VarChar(length: 128)
+purpose  String?  @db.VarChar(length: 1028)
+setup_value  Json? 
+tenant_id  String?  @db.VarChar(length: 16)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+
+@@schema("ct005_v001")  
+}
+
+
+model vgph_interface {
+vgphi_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 32)
+type  String  @db.VarChar(length: 64)
+code  String  @db.VarChar(length: 128)
+param  Json? 
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+
+@@schema("ct005_v001")  
+}
+
+
+model vgph_handler {
+vgphh_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 32)
+type  String  @db.VarChar(length: 64)
+code  String  @db.VarChar(length: 128)
+param  Json? 
+queue_name  String?  @db.VarChar(length: 128)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+
+@@schema("ct005_v001")  
+}
+
+
+model vgph_process {
+vgphp_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 32)
+category  String  @db.VarChar(length: 64)
+code  String  @db.VarChar(length: 128)
+description  String  @db.VarChar(length: 256)
+type  String  @db.VarChar(length: 64)
+mode  String?  @db.VarChar(length: 64)
+handler_code  String  @db.VarChar(length: 128)
+routing_rule  String?  @db.VarChar(length: 128)
+decision_rule  String?  @db.VarChar(length: 128)
+override_rule  String?  @db.VarChar(length: 128)
+failure_process_code  String?  @db.VarChar(length: 128)
+suspicious_process_code  String?  @db.VarChar(length: 128)
+error_process_code  String?  @db.VarChar(length: 128)
+param  Json? 
+version  String?  @db.VarChar(length: 16)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+
+@@schema("ct005_v001")  
+}
+
+
+model vgph_flow {
+vgphf_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 32)
+type  String  @db.VarChar(length: 64)
+code  String  @db.VarChar(length: 128)
+description  String  @db.VarChar(length: 256)
+version  String?  @db.VarChar(length: 16)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+
+@@schema("ct005_v001")  
+}
+
+
+model vgph_step {
+vgphs_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 32)
+flow_code  String  @db.VarChar(length: 128)
+code  String  @db.VarChar(length: 128)
+sequence  Float 
+description  String  @db.VarChar(length: 256)
+source_process_code  String?  @db.VarChar(length: 128)
+result  String  @db.VarChar(length: 32)
+destination_process_code  String?  @db.VarChar(length: 128)
+need_process_log  String?  @db.VarChar(length: 1)
+need_exception_log  String?  @db.VarChar(length: 1)
+is_final_step  String?  @db.VarChar(length: 1)
+param  Json? 
+version  String?  @db.VarChar(length: 14)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+
+@@schema("ct005_v001")  
+}
+
+
+model vgph_source_main {
+vgphsm_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_source_main
+process_type  process_type_vgph_source_main
+tran_category  tran_category_vgph_source_main
+source_category  source_category_vgph_source_main?
+source_reference  String?  @db.VarChar(length: 32)
+source_name  String?  @db.VarChar(length: 64)
+channel_name  String?  @db.VarChar(length: 16)
+channel_reference  String?  @db.VarChar(length: 16)
+product_basic  Json? 
+product_additional  Json? 
+request_data  Json? 
+response_data  Json? 
+total_count  Int? 
+total_amount  Float? 
+currency  String?  @db.VarChar(length: 3)
+uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgph_source_tran_main   vgph_source_tran_main[]    
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_source_main{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_source_main{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_source_main{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+enum source_category_vgph_source_main{
+    API
+    FILE
+
+@@schema("ct005_v001")  
+}
+
+model vgph_source_tran_main {
+vgphstm_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+parent_vgphstm_uuid  String?  @db.VarChar(length: 64)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_source_tran_main
+process_type  process_type_vgph_source_tran_main
+tran_category  tran_category_vgph_source_tran_main
+message_code  String?  @db.VarChar(length: 16)
+channel_name  String?  @db.VarChar(length: 16)
+channel_reference  String?  @db.VarChar(length: 16)
+tran_date  DateTime 
+tran_reference  String?  @db.VarChar(length: 16)
+tran_seq_no  String  @db.VarChar(length: 16)
+value_date  DateTime 
+settlement_date  DateTime? 
+dr_account  String?  @db.VarChar(length: 32)
+dr_bank_code_type  dr_bank_code_type_vgph_source_tran_main?
+dr_bank_code  String?  @db.VarChar(length: 32)
+dr_name  String?  @db.VarChar(length: 64)
+dr_amount  Float? 
+dr_currency  String?  @db.VarChar(length: 3)
+cr_account  String?  @db.VarChar(length: 32)
+cr_bank_code_type  cr_bank_code_type_vgph_source_tran_main?
+cr_bank_code  String?  @db.VarChar(length: 32)
+cr_name  String?  @db.VarChar(length: 64)
+cr_amount  Float? 
+cr_currency  String?  @db.VarChar(length: 3)
+remittance_info  String?  @db.VarChar(length: 512)
+product_basic  Json? 
+product_additional  Json? 
+charge_type  charge_type_vgph_source_tran_main?
+uuid  String  @db.VarChar(length: 64)
+vgphsm_uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgphsm_id Int? 
+vgph_source_main   vgph_source_main?  @relation(fields: [vgphsm_id], references: [vgphsm_id])  
+vgph_destination_tran_main   vgph_destination_tran_main[]    
+vgph_tran_dtl_main   vgph_tran_dtl_main[]    
+vgph_tran_log_main   vgph_tran_log_main[]    
+vgph_tran_error_log_main   vgph_tran_error_log_main[]    
+prctm_id Int? 
+prc_tokens_main   prc_tokens_main?  @relation(fields: [prctm_id], references: [prctm_id])  
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_source_tran_main{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_source_tran_main{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_source_tran_main{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+enum dr_bank_code_type_vgph_source_tran_main{
+    IFSC
+    BIC
+    IBAN
+
+@@schema("ct005_v001")  
+}
+enum cr_bank_code_type_vgph_source_tran_main{
+    IFSC
+    BIC
+    IBAN
+
+@@schema("ct005_v001")  
+}
+enum charge_type_vgph_source_tran_main{
+    SHA
+    OUR
+    BEN
+
+@@schema("ct005_v001")  
+}
+
+model vgph_tran_dtl_main {
+vgphtdm_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_tran_dtl_main
+process_type  process_type_vgph_tran_dtl_main
+tran_category  tran_category_vgph_tran_dtl_main
+process_code  String  @db.VarChar(length: 32)
+flow_code  String  @db.VarChar(length: 32)
+step_code  String  @db.VarChar(length: 32)
+product_basic  Json? 
+product_additional  Json? 
+process_data  Json? 
+vgphstm_uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgphstm_id Int? 
+vgph_source_tran_main   vgph_source_tran_main?  @relation(fields: [vgphstm_id], references: [vgphstm_id])  
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_tran_dtl_main{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_tran_dtl_main{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_tran_dtl_main{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+
+model vgph_tran_log_main {
+vgphtlm_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_tran_log_main
+process_type  process_type_vgph_tran_log_main
+tran_category  tran_category_vgph_tran_log_main
+process_category  String  @db.VarChar(length: 32)
+processing_system  String  @db.VarChar(length: 32)
+message_code  String?  @db.VarChar(length: 16)
+process_code  String  @db.VarChar(length: 32)
+previous_process_code  String?  @db.VarChar(length: 32)
+next_process_code  String?  @db.VarChar(length: 32)
+flow_code  String?  @db.VarChar(length: 32)
+step_code  String?  @db.VarChar(length: 32)
+task_start_time  DateTime 
+task_end_time  DateTime 
+source_data  Json? 
+request_data  Json? 
+response_data  Json? 
+message_data  Json? 
+process_start_time  DateTime 
+process_end_time  DateTime 
+retry_flag  String?  @db.VarChar(length: 1)
+retry_count  Int? 
+manual_context  String?  @db.VarChar(length: 32)
+action_context  String?  @db.VarChar(length: 32)
+status  String?  @db.VarChar(length: 16)
+action  String?  @db.VarChar(length: 32)
+version  String?  @db.VarChar(length: 16)
+vgphstm_uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgphstm_id Int? 
+vgph_source_tran_main   vgph_source_tran_main?  @relation(fields: [vgphstm_id], references: [vgphstm_id])  
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_tran_log_main{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_tran_log_main{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_tran_log_main{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+
+model vgph_tran_error_log_main {
+vgphtelm_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_tran_error_log_main
+process_type  process_type_vgph_tran_error_log_main
+tran_category  tran_category_vgph_tran_error_log_main
+process_code  String?  @db.VarChar(length: 32)
+error_cateogry  error_cateogry_vgph_tran_error_log_main?
+error_code  String?  @db.VarChar(length: 16)
+error_desc  String?  @db.VarChar(length: 32)
+error_data  Json? 
+vgphstm_uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgphstm_id Int? 
+vgph_source_tran_main   vgph_source_tran_main?  @relation(fields: [vgphstm_id], references: [vgphstm_id])  
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_tran_error_log_main{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_tran_error_log_main{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_tran_error_log_main{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+enum error_cateogry_vgph_tran_error_log_main{
+    VALIDATION
+    CBS
+    OTHER
+
+@@schema("ct005_v001")  
+}
+
+model vgph_destination_main {
+vgphdm_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_destination_main
+process_type  process_type_vgph_destination_main
+tran_category  tran_category_vgph_destination_main
+message_code  String?  @db.VarChar(length: 16)
+destination_category  destination_category_vgph_destination_main?
+destination_reference  String?  @db.VarChar(length: 32)
+destination_name  String?  @db.VarChar(length: 32)
+destination_parent_name  String?  @db.VarChar(length: 32)
+destionation_status  String?  @db.VarChar(length: 16)
+uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgph_destination_tran_main   vgph_destination_tran_main[]    
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_destination_main{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_destination_main{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_destination_main{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+enum destination_category_vgph_destination_main{
+    QUEUE
+    API
+    FILE
+
+@@schema("ct005_v001")  
+}
+
+model vgph_destination_tran_main {
+vgphdtm_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_destination_tran_main
+process_type  process_type_vgph_destination_tran_main
+tran_category  tran_category_vgph_destination_tran_main
+vgphdm_uuid  String  @db.VarChar(length: 64)
+vgphstm_uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgphstm_id Int? 
+vgph_source_tran_main   vgph_source_tran_main?  @relation(fields: [vgphstm_id], references: [vgphstm_id])  
+vgphdm_id Int? 
+vgph_destination_main   vgph_destination_main?  @relation(fields: [vgphdm_id], references: [vgphdm_id])  
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_destination_tran_main{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_destination_tran_main{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_destination_tran_main{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+
+model prc_tokens_main {
+prctm_id  Int @id @default(autoincrement())
+process_name  String?  @db.VarChar(length: 128)
+version  String?  @db.VarChar(length: 16)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgph_source_tran_main   vgph_source_tran_main[]    
+
+@@schema("ct005_v001")  
+}
+
+
+model vgph_source_transactions {
+vgphst_id  Int @id @default(autoincrement())
+tenant_id  String? 
+parent_vgphst_id  String? 
+product_code  String? 
+direction  direction_vgph_source_transactions?
+process_type  process_type_vgph_source_transactions?
+tran_category  tran_category_vgph_source_transactions?
+message_code  String? 
+channel_name  String? 
+channel_reference  String? 
+tran_date  DateTime? 
+tran_reference  String? 
+tran_seq_no  String? 
+value_date  DateTime? 
+settlement_date  DateTime? 
+dr_account  String? 
+dr_bank_code_type  dr_bank_code_type_vgph_source_transactions?
+dr_bank_code  String? 
+dr_name  String? 
+dr_amount  Float? 
+dr_currency  String? 
+cr_account  String? 
+cr_bank_code_type  cr_bank_code_type_vgph_source_transactions?
+cr_bank_code  String? 
+cr_name  String? 
+cr_amount  Float? 
+cr_currency  String? 
+remittance_info  String? 
+product_basic  Json? 
+product_additional  Json? 
+charge_type  charge_type_vgph_source_transactions?
+uuid  String? 
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+
+@@schema("ct005_vgph001")
+}
+
+enum direction_vgph_source_transactions{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_vgph001")
+}
+enum process_type_vgph_source_transactions{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_vgph001")
+}
+enum tran_category_vgph_source_transactions{
+    Financial
+    Non_Financial
+
+@@schema("ct005_vgph001")
+}
+enum dr_bank_code_type_vgph_source_transactions{
+    IFSC
+    BIC
+    IBAN
+
+@@schema("ct005_vgph001")
+}
+enum cr_bank_code_type_vgph_source_transactions{
+    IFSC
+    BIC
+    IBAN
+
+@@schema("ct005_vgph001")
+}
+enum charge_type_vgph_source_transactions{
+    SHA
+    OUR
+    BEN
+
+@@schema("ct005_vgph001")
+}
+
+model vgph_source_staging {
+vgphss_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_source_staging
+process_type  process_type_vgph_source_staging
+tran_category  tran_category_vgph_source_staging
+source_category  source_category_vgph_source_staging?
+source_reference  String?  @db.VarChar(length: 32)
+source_name  String?  @db.VarChar(length: 64)
+channel_name  String?  @db.VarChar(length: 16)
+channel_reference  String?  @db.VarChar(length: 16)
+product_basic  Json? 
+product_additional  Json? 
+request_data  Json? 
+response_data  Json? 
+total_count  Int? 
+total_amount  Float? 
+currency  String?  @db.VarChar(length: 3)
+uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgph_source_tran_staging   vgph_source_tran_staging[]    
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_source_staging{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_source_staging{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_source_staging{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+enum source_category_vgph_source_staging{
+    API
+    FILE
+
+@@schema("ct005_v001")  
+}
+
+model vgph_source_tran_staging {
+vgphsts_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+parent_vgphsts_uuid  String?  @db.VarChar(length: 64)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_source_tran_staging
+process_type  process_type_vgph_source_tran_staging
+tran_category  tran_category_vgph_source_tran_staging
+message_code  String?  @db.VarChar(length: 16)
+channel_name  String?  @db.VarChar(length: 16)
+channel_reference  String?  @db.VarChar(length: 16)
+tran_date  DateTime 
+tran_reference  String?  @db.VarChar(length: 16)
+tran_seq_no  String  @db.VarChar(length: 16)
+value_date  DateTime 
+settlement_date  DateTime? 
+dr_account  String?  @db.VarChar(length: 32)
+dr_bank_code_type  dr_bank_code_type_vgph_source_tran_staging?
+dr_bank_code  String?  @db.VarChar(length: 32)
+dr_name  String?  @db.VarChar(length: 64)
+dr_amount  Float? 
+dr_currency  String?  @db.VarChar(length: 3)
+cr_account  String?  @db.VarChar(length: 32)
+cr_bank_code_type  cr_bank_code_type_vgph_source_tran_staging?
+cr_bank_code  String?  @db.VarChar(length: 32)
+cr_name  String?  @db.VarChar(length: 64)
+cr_amount  Float? 
+cr_currency  String?  @db.VarChar(length: 3)
+remittance_info  String?  @db.VarChar(length: 512)
+product_basic  Json? 
+product_additional  Json? 
+charge_type  charge_type_vgph_source_tran_staging?
+uuid  String  @db.VarChar(length: 64)
+vgphss_uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgphss_id Int? 
+vgph_source_staging   vgph_source_staging?  @relation(fields: [vgphss_id], references: [vgphss_id])  
+vgph_destination_tran_staging   vgph_destination_tran_staging[]    
+vgph_tran_dtl_staging   vgph_tran_dtl_staging[]    
+vgph_tran_log_staging   vgph_tran_log_staging[]    
+prcts_id Int? 
+prc_tokens_staging   prc_tokens_staging?  @relation(fields: [prcts_id], references: [prcts_id])  
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_source_tran_staging{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_source_tran_staging{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_source_tran_staging{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+enum dr_bank_code_type_vgph_source_tran_staging{
+    IFSC
+    BIC
+    IBAN
+
+@@schema("ct005_v001")  
+}
+enum cr_bank_code_type_vgph_source_tran_staging{
+    IFSC
+    BIC
+    IBAN
+
+@@schema("ct005_v001")  
+}
+enum charge_type_vgph_source_tran_staging{
+    SHA
+    OUR
+    BEN
+
+@@schema("ct005_v001")  
+}
+
+model vgph_tran_dtl_staging {
+vgphtds_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_tran_dtl_staging
+process_type  process_type_vgph_tran_dtl_staging
+tran_category  tran_category_vgph_tran_dtl_staging
+process_code  String  @db.VarChar(length: 32)
+flow_code  String  @db.VarChar(length: 32)
+step_code  String  @db.VarChar(length: 32)
+product_basic  Json? 
+product_additional  Json? 
+process_data  Json? 
+vgphss_uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgphsts_id Int? 
+vgph_source_tran_staging   vgph_source_tran_staging?  @relation(fields: [vgphsts_id], references: [vgphsts_id])  
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_tran_dtl_staging{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_tran_dtl_staging{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_tran_dtl_staging{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+
+model vgph_tran_log_staging {
+vgphtls_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_tran_log_staging
+process_type  process_type_vgph_tran_log_staging
+tran_category  tran_category_vgph_tran_log_staging
+process_category  String  @db.VarChar(length: 32)
+processing_system  String  @db.VarChar(length: 32)
+message_code  String?  @db.VarChar(length: 16)
+process_code  String  @db.VarChar(length: 32)
+previous_process_code  String?  @db.VarChar(length: 32)
+next_process_code  String?  @db.VarChar(length: 32)
+flow_code  String?  @db.VarChar(length: 32)
+step_code  String?  @db.VarChar(length: 32)
+task_start_time  DateTime 
+task_end_time  DateTime 
+source_data  Json? 
+request_data  Json? 
+response_data  Json? 
+message_data  Json? 
+process_start_time  DateTime 
+process_end_time  DateTime 
+retry_flag  String?  @db.VarChar(length: 1)
+retry_count  Int? 
+manual_context  String?  @db.VarChar(length: 32)
+action_context  String?  @db.VarChar(length: 32)
+status  String?  @db.VarChar(length: 16)
+action  String?  @db.VarChar(length: 32)
+version  String?  @db.VarChar(length: 16)
+vgphsts_uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgphsts_id Int? 
+vgph_source_tran_staging   vgph_source_tran_staging?  @relation(fields: [vgphsts_id], references: [vgphsts_id])  
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_tran_log_staging{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_tran_log_staging{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_tran_log_staging{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+
+model vgph_tran_error_log_staging {
+vgphtels_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_tran_error_log_staging
+process_type  process_type_vgph_tran_error_log_staging
+tran_category  tran_category_vgph_tran_error_log_staging
+process_code  String?  @db.VarChar(length: 32)
+error_cateogry  error_cateogry_vgph_tran_error_log_staging?
+error_code  String?  @db.VarChar(length: 16)
+error_desc  String?  @db.VarChar(length: 32)
+error_data  Json? 
+vgphsts_uuid  String?  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_tran_error_log_staging{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_tran_error_log_staging{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_tran_error_log_staging{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+enum error_cateogry_vgph_tran_error_log_staging{
+    VALIDATION
+    CBS
+    OTHER
+
+@@schema("ct005_v001")  
+}
+
+model vgph_destination_staging {
+vgphds_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_destination_staging
+process_type  process_type_vgph_destination_staging
+tran_category  tran_category_vgph_destination_staging
+message_code  String?  @db.VarChar(length: 16)
+destination_category  destination_category_vgph_destination_staging?
+destination_reference  String?  @db.VarChar(length: 32)
+destination_name  String?  @db.VarChar(length: 32)
+destination_parent_name  String?  @db.VarChar(length: 32)
+destionation_status  String?  @db.VarChar(length: 16)
+uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgph_destination_tran_staging   vgph_destination_tran_staging[]    
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_destination_staging{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_destination_staging{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_destination_staging{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+enum destination_category_vgph_destination_staging{
+    QUEUE
+    API
+    FILE
+
+@@schema("ct005_v001")  
+}
+
+model vgph_destination_tran_staging {
+vgphdts_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_destination_tran_staging
+process_type  process_type_vgph_destination_tran_staging
+tran_category  tran_category_vgph_destination_tran_staging
+vgphds_uuid  String  @db.VarChar(length: 64)
+vgphsts_uuid  String  @db.VarChar(length: 64)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgphsts_id Int? 
+vgph_source_tran_staging   vgph_source_tran_staging?  @relation(fields: [vgphsts_id], references: [vgphsts_id])  
+vgphds_id Int? 
+vgph_destination_staging   vgph_destination_staging?  @relation(fields: [vgphds_id], references: [vgphds_id])  
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_destination_tran_staging{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_destination_tran_staging{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+enum tran_category_vgph_destination_tran_staging{
+    Financial
+    Non_Financial
+
+@@schema("ct005_v001")  
+}
+
+model prc_tokens_staging {
+prcts_id  Int @id @default(autoincrement())
+process_name  String?  @db.VarChar(length: 128)
+version  String?  @db.VarChar(length: 16)
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+vgph_source_tran_staging   vgph_source_tran_staging[]    
+
+@@schema("ct005_v001")  
+}
+
+
+
+
+
+
+
+
+

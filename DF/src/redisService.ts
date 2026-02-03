@@ -1,11 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 const Redis = require('ioredis');
 import 'dotenv/config';
 import { Db, MongoClient } from 'mongodb';
 const _ = require("lodash")
 import { connectToMongo, connectToRedis, getDb, getRedis } from './mongoClient';
 import { queueMongoOperation } from './mongoQueue-dynamic';
-// import { queueMongoOperation } from './mongoQueue';
 
 let db: Db;
 let redis
@@ -27,7 +28,12 @@ let redis
 
 @Injectable()
 export class RedisService {
-  private readonly BATCH_SIZE = 10000 
+  private readonly BATCH_SIZE = 10000
+
+  constructor(
+    @Inject(CACHE_MANAGER) private cacheManager: Cache
+  ) {}
+
   //Retrieves JSON data from Redis
    /**
    * Retrieves JSON data from Redis.
@@ -47,23 +53,33 @@ export class RedisService {
             throw new Error(`Invalid Redis key`);
           }
         });
-        let redisResult = await redis.call('JSON.GET', key);
-        if (redisResult) {
-          returnValue = redisResult;
-        } else {
-          // Queue MongoDB operation to prevent connection exhaustion
-          var mongoResult:any = await queueMongoOperation(
-            () => this.getDocument(collectionName, key),
-            `getDocument:${key}`
-          );
 
-          if(mongoResult?.length>0 && mongoResult[0]?.value){
-
-            await redis.call('JSON.SET', key, '$', JSON.stringify(mongoResult[0]?.value));
-
-            returnValue = JSON.stringify(mongoResult[0]?.value);
+      
+        // Use CACHE_MANAGER to get cached data
+        let cachedResult = await this.cacheManager.get<string>(key);
+       
+        if (cachedResult) {
+          returnValue = cachedResult;
+        } else {         
+          let redisResult = await redis.call('JSON.GET', key);         
+          if (redisResult) {
+            returnValue = redisResult;
           }else{
-            returnValue = null
+            // Queue MongoDB operation to prevent connection exhaustion
+            var mongoResult:any = await queueMongoOperation(
+              () => this.getDocument(collectionName, key),
+              `getDocument:${key}`
+            );
+  
+            if(mongoResult?.length>0 && mongoResult[0]?.value){
+              const jsonValue = JSON.stringify(mongoResult[0]?.value);
+              // Use CACHE_MANAGER to set cached data
+              await this.cacheManager.set(key, jsonValue);
+  
+              returnValue = jsonValue;
+            }else{
+              returnValue = null
+            }
           }
         }
       }else{
@@ -85,27 +101,56 @@ export class RedisService {
 +   */
   async getJsonDataWithPath(key: string, path:any,collectionName: string) {
     try {
-      const parts = key.split(":");
-      const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
-      requiredMarkers.forEach(marker => {
-        const idx = parts.indexOf(marker);
-        if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === "undefined" || parts.length <= 14) {
-          throw new Error(`Invalid Redis key`);
+      let returnValue: any;
+      if(collectionName){
+        const parts = key.split(":");
+        const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+        requiredMarkers.forEach(marker => {
+          const idx = parts.indexOf(marker);
+          if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === "undefined" || parts.length <= 14) {
+            throw new Error(`Invalid Redis key`);
+          }
+        });
+
+        // Use CACHE_MANAGER to get cached data first
+        let cachedResult = await this.cacheManager.get<string>(key);
+        if (cachedResult) {
+          const parsedCache = JSON.parse(cachedResult);
+          const cleanPath = path.replace('$.', '').replace('$', '');
+          const pathValue = cleanPath ? _.get(parsedCache, cleanPath) : parsedCache;
+          if (pathValue !== undefined) {
+            returnValue = JSON.stringify(pathValue);
+          }
         }
-      });
-      return await redis.call('JSON.GET', key, path);
-    } catch (error) {
-      //console.log('ERROR',error.message);
-      // Queue MongoDB operation
-      let mongoResult = await queueMongoOperation(
-        () => this.getDocument(collectionName, key, path),
-        `getDocumentWithPath:${key}`
-      );
-      if(mongoResult && mongoResult?.length>0){
-        return mongoResult
-      }else{
-        throw error;
+
+        if (!returnValue) {
+          let redisResult = await redis.call('JSON.GET', key, path);
+          if (redisResult) {
+            returnValue = redisResult;
+          } else {
+            // Queue MongoDB operation
+            let mongoResult = await queueMongoOperation(
+              () => this.getDocument(collectionName, key, path),
+              `getDocumentWithPath:${key}`
+            );
+            if(mongoResult && mongoResult?.length>0){
+              // Store in cache for future use
+              if(mongoResult[0]?.value){
+                const jsonValue = JSON.stringify(mongoResult[0]?.value);
+                await this.cacheManager.set(key, jsonValue);
+              }
+              returnValue = mongoResult;
+            } else {
+              returnValue = null;
+            }
+          }
+        }
+      } else {
+        throw 'client not found';
       }
+      return returnValue;
+    } catch (error) {
+      throw error;
     }
   }
 
@@ -118,6 +163,22 @@ export class RedisService {
       }
 
       if(request){
+        // Update CACHE_MANAGER - append to cached array
+        let cachedResult = await this.cacheManager.get<string>(key);
+        if (cachedResult) {
+          let parsedValue = JSON.parse(cachedResult);
+          if (path) {
+            let existingArr = _.get(parsedValue, path) || [];
+            existingArr.push(JSON.parse(value));
+            _.set(parsedValue, path, existingArr);
+          } else {
+            if (Array.isArray(parsedValue)) {
+              parsedValue.push(JSON.parse(value));
+            }
+          }
+          await this.cacheManager.set(key, JSON.stringify(parsedValue));
+        }
+
         // Queue MongoDB operation
         await queueMongoOperation(
           () => this.appendDocumentData(collectionName, key, JSON.parse(value)),
@@ -154,26 +215,45 @@ export class RedisService {
           }
         });
 
-        const defpath = path ? `.${path}` : "$";
-        await this.exist(key,collectionName)
-        let redisResult = await redis.call('JSON.SET', key, defpath, value);
+        // await this.exist(key,collectionName)
 
-        if(redisResult == 'OK') {
+        // Use CACHE_MANAGER to set cached data
+        if (path) {
+          // For path-based updates, get existing value, update path, and set back
+          let existingValue = await this.cacheManager.get<string>(key);
+          let parsedValue = existingValue ? JSON.parse(existingValue) : {};
+          _.set(parsedValue, path, JSON.parse(value));
+          await this.cacheManager.set(key, JSON.stringify(parsedValue));
+        } else {
+          await this.cacheManager.set(key, value);
+        }
+
+        const defpath = path ? `.${path}` : "$";
+        let redisResult = await redis.call("JSON.SET", key, defpath, value); 
+        if(redisResult == 'OK'){  
           // Queue MongoDB operation to prevent connection pool exhaustion
           var mongoResult:any = await queueMongoOperation(
             () => this.setDocument(collectionName, key, JSON.parse(value), path),
             `setDocument:${key}`
           );
-        }
 
-        if(mongoResult?.value)
-          return 'Value Stored';
+          if(mongoResult?.value)
+            return 'Value Stored';
+        }
 
     } catch (error) {
       throw error;
     }
   }
 
+  async setIfNotExist(key:string,value:any,ttl:any){
+    try {
+      return await redis.set(key, value, 'PX', ttl, 'NX');
+    } catch (error) {
+      throw error;
+    }
+  }
+  
   async setJsonDataBatch(
     operations: Array<{ key: string; value: any; path?: string }>,
     collectionName: string
@@ -192,6 +272,18 @@ export class RedisService {
             throw new Error(`Invalid Redis key: ${op.key}`);
           }
         });
+      }
+
+      // Update CACHE_MANAGER for all operations
+      for (const op of operations) {
+        if (op.path) {
+          let existingValue = await this.cacheManager.get<string>(op.key);
+          let parsedValue = existingValue ? JSON.parse(existingValue) : {};
+          _.set(parsedValue, op.path, JSON.parse(op.value));
+          await this.cacheManager.set(op.key, JSON.stringify(parsedValue));
+        } else {
+          await this.cacheManager.set(op.key, op.value);
+        }
       }
 
       // Create Redis pipeline
@@ -290,6 +382,11 @@ export class RedisService {
   async exist(key,collectionName: string) {
     try {
       if(collectionName){
+        // Check CACHE_MANAGER first
+        let cachedResult = await this.cacheManager.get<string>(key);
+        if (cachedResult) {
+          return 1;
+        }
 
         let redisResult = await redis.call('EXISTS', key);
         if(redisResult){
@@ -306,9 +403,11 @@ export class RedisService {
               `getDocument:${key}`
             );
             if(doc?.length>0 && doc[0]?.value){
-
-            await redis.call('JSON.SET', key, '$', JSON.stringify(doc[0]?.value));}
-            //await redis.call('JSON.SET', key, '$', JSON.stringify(doc));
+              const jsonValue = JSON.stringify(doc[0]?.value);
+              // Update CACHE_MANAGER
+              await this.cacheManager.set(key, jsonValue);
+              await redis.call('JSON.SET', key, '$', jsonValue);
+            }
             return 1
           }else{
           return mongoResult
@@ -563,7 +662,16 @@ export class RedisService {
           }
         });
 
+        // Use CACHE_MANAGER to get cached keys list
+        const cacheKey = `keys:${redisKey}`;
+        let cachedKeys = await this.cacheManager.get<string>(cacheKey);
+        if (cachedKeys) {
+          return JSON.parse(cachedKeys);
+        }
+
         let keys = await redis.keys(redisKey);
+        // let keys = await this.scanKeys(redisKey);
+
         if(keys?.length == 0) {
           const arrID: string[] = [];
           const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
@@ -573,7 +681,7 @@ export class RedisService {
               let isValid = true;
               for (const marker of requiredMarkers) {
                 const idx = parts.indexOf(marker);
-  
+
                 const next = parts[idx + 1];
                 if (idx === -1 ||next === undefined ||next === null ||next.trim?.() === "" ||next.toLowerCase?.() === "undefined" || parts.length <= 14) {
                   isValid = false;
@@ -590,7 +698,15 @@ export class RedisService {
           keys = await queueMongoOperation(
             () => this.getDocumentKeys(collectionName, key),
             `getDocumentKeys:${key}`
-          );   
+          );
+
+          // Store keys in cache if found from MongoDB
+          if (keys && keys.length > 0) {
+            await this.cacheManager.set(cacheKey, JSON.stringify(keys));
+          }
+        } else {
+          // Store keys in cache if found from Redis
+          await this.cacheManager.set(cacheKey, JSON.stringify(keys));
         }
         return keys;
       }else{
@@ -598,6 +714,23 @@ export class RedisService {
       }
     } catch (error) {
       throw error;
+    }
+  }
+
+  async scanKeys(pattern) {
+    try {    
+      let cursor = '0';
+      const allKeys = [];
+    
+      do {
+        const [nextCursor, keys] = await redis.scan(cursor,'MATCH',pattern,'COUNT',100);     
+        cursor = nextCursor;
+        allKeys.push(...keys);
+      } while (cursor !== '0');
+    
+      return allKeys;
+    } catch (error) {
+      throw error
     }
   }
   
@@ -609,8 +742,11 @@ export class RedisService {
    */
   async deleteKey(key: any,collectionName: string) {
     try {
-      var response = await redis.del(key); 
-      //await this.deleteDocument(collectionName,key)     
+      // Delete from CACHE_MANAGER
+      await this.cacheManager.del(key);
+
+      var response = await redis.del(key);
+      //await this.deleteDocument(collectionName,key)
       return response
     } catch (error) {
       throw error;
@@ -637,6 +773,13 @@ export class RedisService {
 
   async renameKey(oldKey, newKey,client) {
     try {
+      // Update CACHE_MANAGER - move cached value from old key to new key
+      let cachedResult = await this.cacheManager.get<string>(oldKey);
+      if (cachedResult) {
+        await this.cacheManager.set(newKey, cachedResult);
+        await this.cacheManager.del(oldKey);
+      }
+
       var result = await redis.call('RENAME', oldKey, newKey);
       // Queue MongoDB operations
       let mongoResult = await queueMongoOperation(
@@ -1138,3 +1281,5 @@ async deleteDocument(collectionName:string,key:any){
 }
   
 }
+
+

@@ -20,7 +20,7 @@ import { twMerge } from 'tailwind-merge'
 import { useTheme } from '@/hooks/useTheme'
 import { useGlobal } from '@/context/GlobalContext'
 import i18n from '../i18n'
-import { hasMatchingSubOrg, highlightText } from '../AccessTemplateTable/SearchHelpers'
+import { hasMatchingSubOrg, highlightText } from '@/app/user/components/AccessTemplateTable/SearchHelpers'
 
 interface RenderSubOrgProps {
   subOrgGrp: any

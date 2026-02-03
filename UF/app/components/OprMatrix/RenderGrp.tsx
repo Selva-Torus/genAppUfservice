@@ -11,7 +11,7 @@ import { Modal } from '@/components/Modal'
 import { useGlobal } from '@/context/GlobalContext'
 import { useTheme } from '@/hooks/useTheme'
 import Popup from '@/components/Popup'
-import { highlightText } from '../AccessTemplateTable/SearchHelpers'
+import { highlightText } from '@/app/user/components/AccessTemplateTable/SearchHelpers'
 
 // ============= RENDER GROUP (REUSABLE) =============
 const RenderGroup = ({

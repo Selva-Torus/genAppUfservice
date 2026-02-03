@@ -48,9 +48,9 @@ export const TimeLine: React.FC<TimeLineProps> = ({
 
   const timelineElement = (
     <div
-      className={`overflow-hidden rounded-xl border  ${
+      className={`overflow-hidden rounded-xl  ${
         isDark ? 'bg-gray-800' : 'bg-white'
-      } p-4 shadow-lg ${className}`}
+      } p-4 ${className}`}
     >
       <ol
         className={
@@ -111,6 +111,7 @@ export const TimeLine: React.FC<TimeLineProps> = ({
 
                   <div className='flex flex-col gap-1 text-center'>
                     <Text
+                      fillContainer={false}
                       className={`text-lg sm:text-sm ${
                         isDark ? 'text-gray-200' : 'text-gray-600'
                       }`}
@@ -118,6 +119,7 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                       {step[title]}
                     </Text>
                     <Text
+                      fillContainer={false}
                       className={`text-lg sm:text-sm ${
                         isDark ? 'text-gray-200' : 'text-gray-600'
                       }`}
@@ -166,8 +168,8 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                       isDark ? 'text-gray-200' : 'text-gray-700'
                     }`}
                   >
-                    <Text className='text-lg sm:text-sm'>{step[title]}</Text>
-                    <Text className='text-lg sm:text-sm'>{step[status]}</Text>
+                    <Text fillContainer={false} className='text-lg sm:text-sm'>{step[title]}</Text>
+                    <Text fillContainer={false} className='text-lg sm:text-sm'>{step[status]}</Text>
                   </div>
                 </>
               )}

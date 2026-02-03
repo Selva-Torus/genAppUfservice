@@ -4,6 +4,105 @@ export type Direction = "LTR" | "RTL";
 export type FontSize = "Small" | "Medium" | "Large" | "Extra Large";
 export type BorderRadiusSize = "xs" | "s" | "m" | "l" | "xl" | "none";
 
+export interface ActionDetails {
+  lock: {
+    lockMode: string;
+    name: string;
+    ttl: string;
+  };
+  stateTransition: {
+    sourceQueue: string;
+    sourceStatus: string;
+    targetQueue: string;
+    targetStatus: string;
+  };
+  pagination: {
+    page: string;
+    count: string;
+  };
+  encryption: {
+    isEnabled: boolean;
+    selectedDpd: string;
+    encryptionMethod: string;
+  };
+  events: Record<string, unknown>;
+}
+
+export interface AllowedGroupNode {
+  groupName: string;
+  security: string;
+}
+
+
+export interface PaginationData {
+  count: number;
+  page: number;
+}
+
+export interface EncryptionFlagPageData {
+  flag: boolean;
+  dpd: string;
+  method: string;
+}
+
+export interface PrimaryTableData {
+  primaryKey: string;
+  value: string;
+  compName: string;
+}
+
+export interface SecurityDataRole {
+  allowedGroups: string[];
+}
+
+export interface SecurityData {
+  [key: string]: SecurityDataRole;
+}
+
+export interface ScreenDetail {
+  screenName:string;
+  ufKey: string;
+  screensName: string;
+}
+
+export interface DecodedToken {
+  loginId: string;
+  isAppAdmin: boolean;
+  client: string;
+  type: string;
+  ag: string;
+  app: string;
+  userCode: string;
+
+  orgGrpCode: string;
+  orgGrpName: string;
+
+  selectedAccessProfile: string;
+  dap: string;
+
+  orgCode: string;
+  orgName: string;
+
+  subOrgGrpCode: string;
+  subOrgGrpName: string;
+  subOrgCode: string;
+  subOrgName: string;
+
+  psGrpCode: string;
+  psGrpName: string;
+  psCode: string;
+  psName: string;
+
+  roleGrpCode: string;
+  roleGrpName: string;
+  roleCode: string;
+  roleName: string;
+
+  sid: string;
+  iat: number;
+  exp: number;
+}
+
 export interface Typography {
   bodyFont: string;
   headerFont: string;

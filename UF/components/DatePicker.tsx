@@ -119,7 +119,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         readOnly={readOnly}
         className={`
           w-full flex-1 min-h-0
-          border-2
+          border-2 pl-2 pr-2
           ${disabled ? "opacity-50 cursor-not-allowed" : ""}
           ${readOnly ? "cursor-default" : ""}
           ${validationState === "invalid" ? "border-red-500" : isDark ? "border-gray-600" : "border-gray-300"}

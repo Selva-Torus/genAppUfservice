@@ -31,6 +31,7 @@ interface TabsProps {
   defaultActiveId?: string;
   onChange?: (id: any) => void;
   className?: string;
+  tabHeaders?: TabItem[];
 }
 
 export const Tabs: React.FC<TabsProps> = ({
@@ -45,6 +46,7 @@ export const Tabs: React.FC<TabsProps> = ({
   defaultActiveId,
   onChange=()=>{},
   className = "",
+  tabHeaders=[],
 }) => {
   const { theme, branding } = useGlobal();
   const [activeTab, setActiveTab] = useState(defaultActiveId || items[0]?.id || "");
@@ -158,6 +160,23 @@ export const Tabs: React.FC<TabsProps> = ({
           );
         })}
         </div>
+        {tabHeaders && tabHeaders.length > 0 && (
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(24, 1fr)',
+              gridTemplateRows: 'repeat(auto-fill, minmax(8px, 1fr))',
+              columnGap: '8px',
+              flex: 1
+            }}
+          >
+            {tabHeaders.map((header) => (
+              <React.Fragment key={header.id}>
+                {header.content}
+              </React.Fragment>
+            ))}
+          </div>
+        )}
       </div>
 
       {activeContent && (
@@ -180,5 +199,4 @@ export const Tabs: React.FC<TabsProps> = ({
          {tabsElement}
        </CommonHeaderAndTooltip>
      )
-};
- 
+}; 

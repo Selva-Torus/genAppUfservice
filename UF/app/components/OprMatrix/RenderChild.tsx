@@ -11,7 +11,7 @@ import { Text } from '@/components/Text'
 import { Modal } from '@/components/Modal'
 import Popup from '@/components/Popup'
 import { useOPRMatrix } from '.'
-import { highlightText } from '../AccessTemplateTable/SearchHelpers'
+import { highlightText } from '@/app/user/components/AccessTemplateTable/SearchHelpers'
 
 const RenderChild = ({
   item,

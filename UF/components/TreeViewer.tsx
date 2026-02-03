@@ -18,6 +18,7 @@ import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 function createData(
   mainObject: any,
   data: any,
+  mainkey:any,
   handleClick: (val: any, path: string) => void = () => {},
   isDynamic: boolean = false,
   path: string = '',
@@ -35,8 +36,6 @@ function createData(
       .replace(/^\//, '')
       .split('/')
       .filter((key: any) => key !== '')
-
-    if (keys.length === 0) return false // can't change root
 
     let current = obj
     for (let i = 0; i < keys.length - 1; i++) {
@@ -64,10 +63,10 @@ function createData(
     ) {
       current[finalIndex] = value
     } else {
-      current[finalKey] = value
+      current[finalKey] = value || " "
     }
 
-    setData(JSON.parse(JSON.stringify(obj)))
+    setData({ ...mainObject,[mainkey]:obj[mainkey]})
   }
 
   const handleDelete = (path: string) => {
@@ -102,7 +101,7 @@ function createData(
       delete current[finalKey]
     }
 
-    setData(JSON.parse(JSON.stringify(obj)))
+    setData({ ...obj })
   }
 
   const isUrl = (str: string): boolean => {
@@ -121,13 +120,15 @@ function createData(
 
       return isUrl(content) ? (
         <div className='flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 p-1.5 transition-colors hover:bg-blue-100'>
-          <Button
-            onClick={() => handleClick(content, path + '/' + content)}
-            className='cursor-pointer rounded-full p-1 text-blue-600 transition-colors hover:bg-blue-200'
-            view={'flat-success'}
-            
-            icon={'FaSourcetree'}
-          ></Button>
+          <div className='w-[80px]'>
+            <Button
+              onClick={() => handleClick(content, path + '/' + content)}
+              className='cursor-pointer rounded-full p-1 text-blue-600 transition-colors hover:bg-blue-200'
+              view={'flat-success'}
+              
+              icon={'FaSourcetree'}
+            ></Button>
+          </div>
           <div className='flex-1'>
             <div className='mb-1 text-xs font-medium text-blue-600'>🔗 URL</div>
             <a
@@ -139,9 +140,9 @@ function createData(
               {isDynamic ? (
                 <TextInput
                   value={content || ''}
-                  onChange={(e: any) => handleChange(e, path)}
+                  onChange={(e: any) => handleChange(e.target.value, path)}
                   className='w-full  text-black'
-                 
+                  
                 />
               ) : (
                 <Text className='rounded border  px-2 py-1 text-black' variant={'body-1'} >
@@ -152,18 +153,18 @@ function createData(
           </div>
           {isDynamic && (
             <div className='w-[80px]'>
-              <Button
-                onClick={() => handleDelete(path)}
-                view={'normal'}
-             
-                icon={'FaRegTimesCircle'}
-                iconDisplay='Icon only'
-              ></Button>
+            <Button
+              onClick={() => handleDelete(path)}
+              view={'normal'}
+              
+              icon={'FaRegTimesCircle'}
+              iconDisplay='Icon only'
+            ></Button>
             </div>
           )}
         </div>
       ) : (
-        <div className='flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1.5 transition-colors hover:bg-gray-100'>    
+        <div className='flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 p-1.5 transition-colors hover:bg-gray-100'>
           <div className='w-[80px]'>
           <Button
             onClick={() => handleClick(content, path + '/' + content)}
@@ -185,7 +186,7 @@ function createData(
             {isDynamic ? (
               <TextInput
                 value={content || ''}
-                onChange={(e: any) => handleChange(e, path)}
+                onChange={(e: any) => handleChange(e.target.value, path)}
                 className='w-full  text-black'
                 
               />
@@ -197,13 +198,13 @@ function createData(
           </div>
           {isDynamic && (
             <div className='w-[80px]'>
-              <Button
-                onClick={() => handleDelete(path)}
-                view={'normal'}
-                
-                icon={'FaRegTimesCircle'}
-                iconDisplay='Icon only'
-              ></Button>
+            <Button
+              onClick={() => handleDelete(path)}
+              view={'normal'}
+              
+              icon={'FaRegTimesCircle'}
+              iconDisplay='Icon only'
+            ></Button>
             </div>
           )}
         </div>
@@ -256,7 +257,7 @@ function createData(
                     </span>
                     <Button
                       onClick={() => handleClick(item, path + '/' + idx)}
-                      view={'flat-success'}
+                     view={'flat-success'}
                       
                       icon={'FaSourcetree'}
                       iconDisplay='Icon only'
@@ -279,6 +280,7 @@ function createData(
                   {createData(
                     mainObject,
                     item,
+                    mainkey,
                     handleClick,
                     isDynamic,
                     path + '/' + idx,
@@ -305,6 +307,7 @@ function createData(
           <NestedObject
             mainObject={mainObject}
             data={data}
+            mainkey={mainkey}
             handleClick={handleClick}
             isDynamic={isDynamic}
             path={path}
@@ -327,6 +330,7 @@ function createData(
 const NestedObject = ({
   mainObject,
   data,
+  mainkey,
   handleClick,
   isDynamic = false,
   path,
@@ -339,7 +343,8 @@ const NestedObject = ({
   viewtype = 'collapsed'
 }: {
   mainObject: any
-  data: any
+  data: any,
+  mainkey:any,
   handleClick: (val: any, path: string) => void
   isDynamic?: boolean
   path: string
@@ -403,7 +408,7 @@ const NestedObject = ({
       delete current[finalKey]
     }
 
-    setData(JSON.parse(JSON.stringify(mainObject)))
+    setData({ ...mainObject })
   }
 
   return (
@@ -476,13 +481,13 @@ const NestedObject = ({
                   </div>
                   {isDynamic && (
                     <div className='w-[80px]'>
-                      <Button
-                        onClick={() => handleDelete(path + '/' + key)}
-                        view={'normal'}
-                        
+                    <Button
+                      onClick={() => handleDelete(path + '/' + key)}
+                      view={'normal'}
+                      
                         icon={'FaRegTimesCircle'}
-                        iconDisplay='Icon only'
-                      ></Button>
+                      iconDisplay='Icon only'
+                    ></Button>
                     </div>
                   )}
                 </div>
@@ -492,6 +497,7 @@ const NestedObject = ({
                   {createData(
                     mainObject,
                     data[key],
+                    mainkey,
                     handleClick,
                     isDynamic,
                     path + '/' + key,
@@ -519,6 +525,7 @@ interface TreeViewerProps {
   handleClick?: (val: any, path: string) => void
   isEditable?: boolean
   path?: string
+  mainkey?: string
   viewtype?: 'collapsed' | 'expanded'
   setData?: any
   className?: string
@@ -532,8 +539,9 @@ export const TreeViewer = ({
   mainData,
   data,
   handleClick,
-  isEditable=false,
+  isEditable,
   path,
+  mainkey="",
   viewtype = 'expanded',
   setData,
   className = '',
@@ -571,23 +579,16 @@ export const TreeViewer = ({
       .split('/')
       .filter((key: any) => key !== '')
 
-    let current: any = mainData
-
-    // Navigate to the target location
-    if (keys.length === 0) {
-      // Adding to root level
-      current = mainData
-    } else {
-      for (let i = 0; i < keys.length; i++) {
-        const key = keys[i]
-        const index = Number(key)
-        if (!isNaN(index) && Number.isInteger(index) && Array.isArray(current)) {
-          current = current[index]
-        } else {
-          current = current[key]
-        }
-        if (current === undefined) return false
+    let current: any = data
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i]
+      const index = Number(key)
+      if (!isNaN(index) && Number.isInteger(index) && Array.isArray(current)) {
+        current = current[index]
+      } else {
+        current = current[key]
       }
+      if (current === undefined) return false
     }
 
     if (Array.isArray(current)) {
@@ -597,7 +598,7 @@ export const TreeViewer = ({
       current[keyName] = parsedValue
     }
 
-    setData(JSON.parse(JSON.stringify(mainData)))
+    setData({ ...data })
     setIsModalOpen(false)
     setModalValue('')
     setModalKey('')
@@ -628,26 +629,27 @@ export const TreeViewer = ({
         >
           {/* Fixed Header */}
           <div className='flex-shrink-0 rounded-t-lg border-b border-gray-200 bg-gray-50 px-6 py-4'>
-            <h2 className='flex items-center gap-1 text-lg font-semibold text-gray-800'>
-              🌳 Tree View
-            </h2>
-          </div>
+              <h2 className='flex items-center gap-1 text-lg font-semibold text-gray-800'>
+                🌳 Tree View
+              </h2>
+            </div>
           {/* Scrollable Body */}
-          <div className='flex-1 overflow-y-auto p-6'>
-            {createData(
-              mainData,
-              data,
-              handleClick,
-              isEditable,
-              path,
-              setData,
-              setModalPath,
-              setModalValue,
-              setIsModalOpen,
-              setModalKey,
+            <div className='flex-1 overflow-y-auto p-6'>
+              {createData(
+                mainData,
+                data[mainkey],
+                mainkey,
+                handleClick,
+                isEditable,
+                mainkey ? `${path}/${mainkey}` : path,
+                setData,
+                setModalPath,
+                setModalValue,
+                setIsModalOpen,
+                setModalKey,
               setModalTargetType,
               viewtype
-            )}
+              )}
           </div>
         </div>
       </div>
@@ -679,7 +681,7 @@ export const TreeViewer = ({
                 onChange={(e: any) => setModalKey(e.target.value)}
                 placeholder='e.g., "username", "age", "settings"'
                 className='w-full'
-
+                
               />
             </div>
           )}
@@ -725,7 +727,7 @@ export const TreeViewer = ({
             <Button
               onClick={() => setIsModalOpen(false)}
               view='outlined'
-
+              
             >
               Cancel
             </Button>
@@ -749,7 +751,7 @@ export const TreeViewer = ({
      >
        {treeViewerElement}
      </CommonHeaderAndTooltip>
-   )
+  )
 }
 
 

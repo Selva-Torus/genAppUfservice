@@ -1,55 +1,42 @@
 
 'use client'
-import LoginForm from './components/loginForm'
-import { AxiosService } from './components/axiosService'
-import { deleteAllCookies, deleteCookie, getCookie } from './components/cookieMgment'
-import { useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import decodeToken from './components/decodeToken'
-import { useInfoMsg } from './components/infoMsgHandler'
+import LoginForm from './components/LoginForm';
+import { AxiosService } from './components/axiosService';
+import { deleteAllCookies, deleteCookie, getCookie } from './components/cookieMgment';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import decodeToken from './components/decodeToken';
+import { useInfoMsg } from './components/infoMsgHandler';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { DecodedToken,ScreenDetail } from '@/types/global';
 
 export default function HomePage() {
-  const router = useRouter()
-  const token = getCookie('token');
-  const decodedToken = decodeToken(token)
+  const router : AppRouterInstance = useRouter();
+  const token :string | undefined = getCookie('token');
+  const decodedToken : DecodedToken = decodeToken(token);
   const encryptionFlagApp: boolean = false;    
-  let landingScreen:string = 'User Screen';
-  const toast = useInfoMsg()
-  let screenDetails: any = [
+  let landingScreen:string = 'CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1';
+  const toast : Function = useInfoMsg();
+  let screenDetails : ScreenDetail[] = [
   {
-    "screenName": "app1",
-    "screensName": "app1-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
+    "screenName": "transaction",
+    "screensName": "transaction-v1",
+    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
   },
   {
-    "screenName": "menu item 3",
-    "screensName": "menu_item_3-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
+    "screenName": "system setup",
+    "screensName": "system_setup-v1",
+    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"
   },
   {
-    "screenName": "menu item 4",
-    "screensName": "menu_item_4-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 5",
-    "screensName": "menu_item_5-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 6_1",
-    "screensName": "menu_item_6_1-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 7_1",
-    "screensName": "menu_item_7_1-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
+    "screenName": "checkerapproval",
+    "screensName": "checkerapproval-v1",
+    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1"
   }
 ]
-  const securityCheck = async () => {
+  const securityCheck = async () : Promise<void> => {
     try {
-      const encryptionDpd: string = "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1";
+      const encryptionDpd: string = "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:V001:AFGK:VGPH001:AFK:VGPH_DPD:AFVK:v1";
       const encryptionMethod: string = "";
       let introspect:any;
       if(encryptionFlagApp){
@@ -60,7 +47,7 @@ export default function HomePage() {
           params: {
             dpdKey: encryptionDpd,
             method: encryptionMethod,
-            key:"Logs Screen"
+            key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
           }
         })        
       }else{
@@ -69,7 +56,7 @@ export default function HomePage() {
             Authorization: `Bearer ${token}`
           },
           params: {
-            key:"Logs Screen"  
+            key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"  
           }
         })
       }
@@ -84,7 +71,7 @@ export default function HomePage() {
           router.push('/logs')
         }
         else {
-          let defaultScreen:any="";
+          let defaultScreen : string = "";
             screenDetails.map((screen: any) => {
               if (landingScreen === screen.ufKey) {
                 defaultScreen = screen.screensName
@@ -118,7 +105,7 @@ export default function HomePage() {
 
   return (
     <>
-      <LoginForm logo=""  image=""/>
+      <LoginForm logo=""   loginType="standard"   image=""/>
     </>
   )
 }

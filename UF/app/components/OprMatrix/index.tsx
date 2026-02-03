@@ -11,7 +11,7 @@ import RenderSubOrg from './SubOrg'
 import { LuBuilding2 } from 'react-icons/lu'
 import { BiPackage } from 'react-icons/bi'
 import { RiUserShared2Fill } from 'react-icons/ri'
-import { SetupScreenContext, SetupScreenContextType } from '../setup'
+import { SetupScreenContext, SetupScreenContextType } from '@/app/user/components'
 import { Text } from '@/components/Text'
 import { useGlobal } from '@/context/GlobalContext'
 import { useTheme } from '@/hooks/useTheme'
@@ -24,7 +24,7 @@ import {
   hasMatchingOrgOrSubOrg,
   hasMatchingPsGrpOrPs,
   hasMatchingRoleGrpOrRole
-} from '../AccessTemplateTable/SearchHelpers'
+} from '@/app/user/components/AccessTemplateTable/SearchHelpers'
 
 interface OprMatrixContextType {
   isSearchOpen: string

@@ -3,8 +3,8 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 import { api_signinDto } from '../interfaces/interfaces'
-import { useInfoMsg } from '../components/infoMsgHandler'
-import { setCookie } from '../components/cookieMgment'
+import { useInfoMsg } from './infoMsgHandler'
+import { setCookie } from './cookieMgment'
 import { useRouter } from 'next/navigation'
 import { DefaultLoginImage, FusionAuth } from '../utils/svgApplications'
 import { BsEyeFill, BsEyeSlash } from 'react-icons/bs'
@@ -29,7 +29,7 @@ interface LoginProps {
   image?: string
 }
 
-const LoginForm = ({ logo, appName = "application", loginType = "standard", image }: LoginProps) => {
+const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: LoginProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     password: ''
@@ -42,7 +42,7 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
   const { branding } = useGlobal()
   const { brandColor } = branding
   const { bgColor, borderColor, textColor } = useTheme()
-  const onBoardingKey : string = "User Screen"
+  const onBoardingKey : string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
@@ -66,7 +66,7 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT005:AFGK:V001:AFK:VGPH001:AFVK:v1:bldc",
           ufClientType: 'UFW'
         }
         const api_signin = await axios.post(
@@ -96,34 +96,19 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
           let screenDetails: any = {
             keys:[
   {
-    "screenName": "app1",
-    "screensName": "app1-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
+    "screenName": "transaction",
+    "screensName": "transaction-v1",
+    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
   },
   {
-    "screenName": "menu item 3",
-    "screensName": "menu_item_3-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
+    "screenName": "system setup",
+    "screensName": "system_setup-v1",
+    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"
   },
   {
-    "screenName": "menu item 4",
-    "screensName": "menu_item_4-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 5",
-    "screensName": "menu_item_5-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 6_1",
-    "screensName": "menu_item_6_1-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 7_1",
-    "screensName": "menu_item_7_1-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
+    "screenName": "checkerapproval",
+    "screensName": "checkerapproval-v1",
+    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1"
   }
 ]
           }

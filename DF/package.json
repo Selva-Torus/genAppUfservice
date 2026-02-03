@@ -1,5 +1,5 @@
 {
-  "name": "ci001_ag001_a001_v1_engine",
+  "name": "ct005_v001_vgph001_v1_engine",
   "version": "0.0.1",
   "description": "",
   "author": "",
@@ -32,6 +32,7 @@
     "@fastify/static": "^8.2.0",
     "@gorules/zen-engine": "^0.37.2",
     "@nestjs/bullmq": "^11.0.4",
+    "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.1.6",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
@@ -50,6 +51,7 @@
     "basic": "^2.0.3",
     "basic-ftp": "^5.0.5",
     "bullmq": "^5.66.4",
+    "cache-manager": "^7.2.8",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "date-fns": "^4.1.0",

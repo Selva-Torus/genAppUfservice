@@ -208,33 +208,33 @@ export const Text: React.FC<TextProps> = ({
       )
     }
 
-    if (iconDisplay === 'Start with Icon' && icon) {
-      return (
-        <>
-          <Icon
-            fillContainer={false}
-            data={icon}
-            size={iconSize}
-            className={`flex items-center justify-center ${className}`}
-          />
-          <span>{displayContent}</span>
-        </>
-      )
-    }
+if (iconDisplay === 'Start with Icon' && icon) {
+  return (
+    <span className="inline-flex items-center gap-1 leading-none">
+      <Icon
+        fillContainer={false}
+        data={icon}
+        size={iconSize}
+        className="flex-shrink-0"
+      />
+      <span className="leading-none">{displayContent}</span>
+    </span>
+  )
+}
 
-    if (iconDisplay === 'End with Icon' && icon) {
-      return (
-        <>
-          <span>{displayContent}</span>
-          <Icon
-            fillContainer={false}
-            data={icon}
-            size={iconSize}
-            className={`flex items-center justify-center ${className}`}
-          />
-        </>
-      )
-    }
+if (iconDisplay === 'End with Icon' && icon) {
+  return (
+    <span className="inline-flex items-center gap-1 leading-none">
+      <span className="leading-none">{displayContent}</span>
+      <Icon
+        fillContainer={false}
+        data={icon}
+        size={iconSize}
+        className="flex-shrink-0"
+      />
+    </span>
+  )
+}
 
     return displayContent
   }

@@ -304,7 +304,7 @@ export const TextInput: React.FC<TextInputProps> = ({
             ${getFillClasses()}
             ${getPinClasses()}
             ${getTextAlignClasses()}
-            ${isDark ? 'bg-gray-800' : 'bg-gray-100'}
+            
             ${
               view === 'normal'
                 ? 'border-2'

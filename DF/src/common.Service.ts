@@ -94,7 +94,7 @@ export class CommonService{
 
   async onModuleInit() {
     const collection = client.db("UploadFile")
-    this.bucket = new GridFSBucket(collection, { bucketName: 'CI001/AG001/A001/v1' });
+    this.bucket = new GridFSBucket(collection, { bucketName: 'CT005/V001/VGPH001/v1' });
   }
   private readonly logger = new Logger(CommonService.name) 
 
@@ -844,10 +844,24 @@ export class CommonService{
     }
 
     //RollBack Check
-    async checkRollBack(Ndp,collectionName,action,currentNode?){
-      try {
-        for (let item in Ndp) {
-          if (Ndp[item]?.rollback == "true") {
+     async checkRollBack(Ndp,collectionName,action,currentNode?){
+      try {  
+        let pfs = currentNode?.pfs
+        let ifoflg = []
+        if (pfs && pfs.length > 0) {
+          for (var j = 0; j < pfs.length; j++) {
+            if (pfs[j].nodeId != currentNode?.['nodeid']) {
+             // ifoflg++;
+             ifoflg.push(pfs[j].nodeId)
+            } else {
+              break;
+            }
+          }
+        } 
+       
+        for (let item in Ndp) {         
+           if(ifoflg.includes(item)){
+            if (Ndp[item]?.rollback == "true") {
             if (action == 'check') {
               if (Ndp[item]?.savePoint) {
                 if (Ndp[item].nodeType == 'apinode') {
@@ -874,8 +888,8 @@ export class CommonService{
               if (!insertedData || (Object.keys(insertedData).length == 0) || insertedData.length == 0) {
                 insertedData = currentNode.data
               }
-              if (Ndp[item]?.savePoint == currentNode.savepoint) {
-                if (Ndp[item].nodeType == 'apinode') {
+              if (Ndp[item]?.savePoint == currentNode.savepoint) {              
+                if (Ndp[item].nodeType == 'apinode') {                  
                   // let insertedData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO', '.response', collectionName));
                   if (!insertedData || (Object.keys(insertedData).length == 0) || insertedData.length == 0) {
                     insertedData = currentNode.data
@@ -889,24 +903,24 @@ export class CommonService{
                     headers: {
                       Authorization: `Bearer ${currentNode.token}`,
                     },
-                  };
-                  if (insertedData) {
+                  };                 
+                   if (insertedData) {
                     let deleteRes;
-                    if (method == 'post') {
+                    if (method == 'post') { 
                       if (Array.isArray(insertedData) && insertedData.length > 0) {
-                        for (let i = 0; i < insertedData.length; i++) {
+                        for (let i = 0; i < insertedData.length; i++) {                       
+                          
                           if (insertedData[i][primaryKey]) {
                             let rollBackurl = serverUrl + endPoint + '/' + insertedData[i][primaryKey]
                             deleteRes = await this.deleteCall(rollBackurl, requestConfig)
                           }
                         }
-                      } else if (Object.keys(insertedData).length > 0) {
-                        for (let item of insertedData) {
-                          if (item[primaryKey]) {
-                            let rollBackurl = serverUrl + endPoint + '/' + item[primaryKey]
-                            deleteRes = await this.deleteCall(rollBackurl, requestConfig)
+                      } else if (Object.keys(insertedData).length > 0) { 
+                          if (insertedData[primaryKey]) {
+                            let rollBackurl = serverUrl + endPoint + '/' + insertedData[primaryKey]
+                            deleteRes = await this.deleteCall(rollBackurl, requestConfig) 
                           }
-                        }
+
                       }
                     } else if (method == 'patch') {
                       let rollbackData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO', '.rollback', collectionName));
@@ -1031,6 +1045,8 @@ export class CommonService{
               }
             }
           }
+           }
+          
         }
         // return rollBackArr
       } catch (error) {
@@ -1279,8 +1295,8 @@ export class CommonService{
         
         if(typeof key != 'string')
         key = 'commonError'
-        tenant=tenant || "CI001"
-        app=app ||  "A001"
+        tenant=tenant || "CT005"
+        app=app ||  "VGPH001"
         await this.redisService.setStreamData(tenant+'-'+app+'-TSL',key,JSON.stringify(logs))    
         return logs
 

@@ -1,5 +1,5 @@
 import React from 'react'
-import ContextSelector from './contextSelector'
+import ContextSelector from './components/ContextSelector'
 
 const page = async() => {
   return (

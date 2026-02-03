@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import DashBoard from "../utils/Image.png";
-import LoginForm from "./loginForm";
+import LoginForm from "./LoginForm";
 import { ArrowForward } from "../utils/svgApplications";
 
 const Login = () => {

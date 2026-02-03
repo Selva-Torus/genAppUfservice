@@ -730,7 +730,7 @@ export class DynamicFlowService {
                                                                 await this.redisService.setJsonData(processedKey + 'lock', JSON.stringify(obj), collectionName)
                                                             }
                                                             try {
-                                                                if (rollback) {
+                                                                if (rollback && rollback == 'true') {
                                                                     let beforeUpdate = await this.executeApiCall(methodName, serverUrl + tempEndpoint, requestConfig)
                                                                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(beforeUpdate), collectionName, 'rollback')
                                                                 }
@@ -759,7 +759,7 @@ export class DynamicFlowService {
 
                                                                 apiResult = JSON.parse(DecapiResult);
                                                             } else {
-                                                                if (rollback) {
+                                                                if (rollback && rollback == 'true') {
                                                                     let beforeUpdate = await this.executeApiCall(methodName, serverUrl + tempEndpoint, requestConfig)
                                                                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(beforeUpdate), collectionName, 'rollback')
                                                                 }
@@ -911,7 +911,8 @@ export class DynamicFlowService {
                         nodeid: rollbackConfig.nodeId,
                         nodename: rollbackConfig.nodeName,
                         savepoint: rollbackConfig.savePoint,
-                        data: apichildResult
+                        data: apichildResult,
+                        pfs:pfjson
                     }
                     );
                     await this.exceptionhandler(failureQueue, suspiciousQueue, errorQueue, error, upId, nodeId, failureTargetStatus, inputparam)
@@ -2225,7 +2226,7 @@ export class DynamicFlowService {
                             //   // apiResult = JSON.parse(DecapiResult);
                             // }
                         } else if (oprname === 'write') {
-                            if (rollback) {
+                            if (rollback && rollback == 'true') {
                                 let existData = await this.CommonService.setfileKeys(seaWeedConfig, 'read', fileFolderPath, fileName, fileType);
                                 if (existData) {
                                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(existData), collectionName, 'rollback');
@@ -5043,6 +5044,7 @@ export class DynamicFlowService {
             if (typeof apiResult == 'string' || typeof apiResult == 'number' || typeof apiResult == 'boolean') {
                 apichildResult = apiResult;
             } else if (apiResult && Array.isArray(apiResult) && apiResult.length > 0) {
+                 apichildResult = []
                 for (let a = 0; a < apiResult.length; a++) {
                     if (codeObj && Object.keys(codeObj).length > 0)
                         apiResult[a] = Object.assign(apiResult[a], codeObj);
