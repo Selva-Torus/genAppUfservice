@@ -114,13 +114,13 @@ export class  Updatevgph_tran_log_stagingDto {
 
 
 
-
-
         @ApiProperty({
             type: `integer`,
             format: `int32`,
         })
         vgphsts_id: number;
+
+
 
 
 

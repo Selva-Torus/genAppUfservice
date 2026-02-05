@@ -8,7 +8,7 @@ export interface TotalContextProps {
   currentToken: any 
   setCurrentToken: React.Dispatch<React.SetStateAction<any>>
   matchedAccessProfileData: any;
-  setMatchedAccessProfileData: React.Dispatch<any>
+  setMatchedAccessProfileData: React.Dispatch<React.SetStateAction<any>>
   transaction_groupcc5ac: any 
   settransaction_groupcc5ac: React.Dispatch<React.SetStateAction<any>>
   transaction_groupcc5acProps: any 
@@ -41,6 +41,14 @@ export interface TotalContextProps {
   setsearchgroupc4337: React.Dispatch<React.SetStateAction<any>>
   searchgroupc4337Props: any 
   setsearchgroupc4337Props: React.Dispatch<React.SetStateAction<any>>
+  tran_journey_groupbe7ae: any 
+  settran_journey_groupbe7ae: React.Dispatch<React.SetStateAction<any>>
+  tran_journey_groupbe7aeProps: any 
+  settran_journey_groupbe7aeProps: React.Dispatch<React.SetStateAction<any>>
+  tran_journey_dtl_group6545a: any 
+  settran_journey_dtl_group6545a: React.Dispatch<React.SetStateAction<any>>
+  tran_journey_dtl_group6545aProps: any 
+  settran_journey_dtl_group6545aProps: React.Dispatch<React.SetStateAction<any>>
   system_setup_group2af15: any 
   setsystem_setup_group2af15: React.Dispatch<React.SetStateAction<any>>
   system_setup_group2af15Props: any 
@@ -237,10 +245,10 @@ export interface TotalContextProps {
   setclearf69d6:React.Dispatch<React.SetStateAction<any>>
   clearf69d6Props: any 
   setclearf69d6Props: React.Dispatch<React.SetStateAction<any>>
-  dymanic_search_input05b50: any,
-  setdymanic_search_input05b50:React.Dispatch<React.SetStateAction<any>>
-  dymanic_search_input05b50Props: any 
-  setdymanic_search_input05b50Props: React.Dispatch<React.SetStateAction<any>>
+  dymanic_search_inputfa005: any,
+  setdymanic_search_inputfa005:React.Dispatch<React.SetStateAction<any>>
+  dymanic_search_inputfa005Props: any 
+  setdymanic_search_inputfa005Props: React.Dispatch<React.SetStateAction<any>>
   clearf63e8: any,
   setclearf63e8:React.Dispatch<React.SetStateAction<any>>
   clearf63e8Props: any 
@@ -249,6 +257,42 @@ export interface TotalContextProps {
   setsearch65fd7:React.Dispatch<React.SetStateAction<any>>
   search65fd7Props: any 
   setsearch65fd7Props: React.Dispatch<React.SetStateAction<any>>
+  tran_journey47044: any,
+  settran_journey47044:React.Dispatch<React.SetStateAction<any>>
+  tran_journey47044Props: any 
+  settran_journey47044Props: React.Dispatch<React.SetStateAction<any>>
+  tran_date_and_timebba58: any,
+  settran_date_and_timebba58:React.Dispatch<React.SetStateAction<any>>
+  tran_date_and_timebba58Props: any 
+  settran_date_and_timebba58Props: React.Dispatch<React.SetStateAction<any>>
+  tran_status9b4c1: any,
+  settran_status9b4c1:React.Dispatch<React.SetStateAction<any>>
+  tran_status9b4c1Props: any 
+  settran_status9b4c1Props: React.Dispatch<React.SetStateAction<any>>
+  tra_created_date34aa7: any,
+  settra_created_date34aa7:React.Dispatch<React.SetStateAction<any>>
+  tra_created_date34aa7Props: any 
+  settra_created_date34aa7Props: React.Dispatch<React.SetStateAction<any>>
+  failuer_process_code981ea: any,
+  setfailuer_process_code981ea:React.Dispatch<React.SetStateAction<any>>
+  failuer_process_code981eaProps: any 
+  setfailuer_process_code981eaProps: React.Dispatch<React.SetStateAction<any>>
+  tran_process55ab3: any,
+  settran_process55ab3:React.Dispatch<React.SetStateAction<any>>
+  tran_process55ab3Props: any 
+  settran_process55ab3Props: React.Dispatch<React.SetStateAction<any>>
+  product_code36b37: any,
+  setproduct_code36b37:React.Dispatch<React.SetStateAction<any>>
+  product_code36b37Props: any 
+  setproduct_code36b37Props: React.Dispatch<React.SetStateAction<any>>
+  view_msg_data387c6: any,
+  setview_msg_data387c6:React.Dispatch<React.SetStateAction<any>>
+  view_msg_data387c6Props: any 
+  setview_msg_data387c6Props: React.Dispatch<React.SetStateAction<any>>
+  view_tran_log83071: any,
+  setview_tran_log83071:React.Dispatch<React.SetStateAction<any>>
+  view_tran_log83071Props: any 
+  setview_tran_log83071Props: React.Dispatch<React.SetStateAction<any>>
   product_code523b7: any,
   setproduct_code523b7:React.Dispatch<React.SetStateAction<any>>
   product_code523b7Props: any 
@@ -349,6 +393,10 @@ export interface TotalContextProps {
   setadd_new_payment_v1Props: React.Dispatch<React.SetStateAction<any>>
   view_all_search_screen_v1Props: any 
   setview_all_search_screen_v1Props: React.Dispatch<React.SetStateAction<any>>
+  tran_journey_v1Props: any 
+  settran_journey_v1Props: React.Dispatch<React.SetStateAction<any>>
+  tran_journey_dtl_v1Props: any 
+  settran_journey_dtl_v1Props: React.Dispatch<React.SetStateAction<any>>
   master_system_setup_v1Props: any 
   setmaster_system_setup_v1Props: React.Dispatch<React.SetStateAction<any>>
   cdc_checker_action_screen_v1Props: any 
@@ -357,6 +405,10 @@ export interface TotalContextProps {
 ///////// dfd
   dfd_get_transaction_dfd_v1Props: any 
   setdfd_get_transaction_dfd_v1Props: React.Dispatch<React.SetStateAction<any>>
+  dfd_tran_journey_dtl_v1Props: any 
+  setdfd_tran_journey_dtl_v1Props: React.Dispatch<React.SetStateAction<any>>
+  dfd_tran_journey_db_query_v1Props: any 
+  setdfd_tran_journey_db_query_v1Props: React.Dispatch<React.SetStateAction<any>>
   dfd_master_system_setup_dfd_v1Props: any 
   setdfd_master_system_setup_dfd_v1Props: React.Dispatch<React.SetStateAction<any>>
   dfd_cdc_checker_action_dfd_v1Props: any 
@@ -366,36 +418,35 @@ export interface TotalContextProps {
   setRefetch: React.Dispatch<React.SetStateAction<any>>
   searchParam: string,
   setSearchParam: React.Dispatch<React.SetStateAction<string>>
-  disableParam: any,
-  setDisableParam: React.Dispatch<React.SetStateAction<any>>
-  globalState: any,
-  setGlobalState: React.Dispatch<React.SetStateAction<any>>
+  disableParam: Record<string, boolean>,
+  setDisableParam: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  globalState: Record<string, any>,
+  setGlobalState: React.Dispatch<React.SetStateAction<Record<string, any>>>
   // for all textInput validation
-  validate: any,
-  setValidate: React.Dispatch<React.SetStateAction<any>>
+  validate: Record<string, any>,
+  setValidate: React.Dispatch<React.SetStateAction<Record<string, any>>>
 
   //its used for validate once again on button click
-  validateRefetch: any,
-  setValidateRefetch: React.Dispatch<React.SetStateAction<any>>
+  validateRefetch: { value: boolean; init: number },
+  setValidateRefetch: React.Dispatch<React.SetStateAction<{ value: boolean; init: number }>>
   accessProfile:any,
-  setAccessProfile:React.Dispatch<React.SetStateAction<any>>
-  memoryVariables:any
-  setMemoryVariables:React.Dispatch<React.SetStateAction<any>>
-  property:any
-  setProperty:React.Dispatch<React.SetStateAction<any>>
-  triggerRefresh: () => void,
-  refresh: any ,
-  setRefresh: React.Dispatch<React.SetStateAction<any>>
-  lockedData: any,
-  setLockedData: React.Dispatch<React.SetStateAction<any>>
-  paginationDetails: any,
-  setpaginationDetails: React.Dispatch<React.SetStateAction<any>>
-  eventEmitterData:any,
-  setEventEmitterData:React.Dispatch<React.SetStateAction<any>>
-  userDetails:any,
-  setUserDetails:React.Dispatch<React.SetStateAction<any>>
-  encAppFalg:any,
-  setEncAppFalg:React.Dispatch<React.SetStateAction<any>>
+  setAccessProfile: React.Dispatch<React.SetStateAction<any>>
+  memoryVariables: Record<string, string>
+  setMemoryVariables: React.Dispatch<React.SetStateAction<Record<string, string>>>
+  property: Record<string, any>
+  setProperty: React.Dispatch<React.SetStateAction<Record<string, any>>>
+  refresh: Record<string, boolean>,
+  setRefresh: React.Dispatch<React.SetStateAction<Record<string, boolean>>>
+  lockedData: Record<string, any>,
+  setLockedData: React.Dispatch<React.SetStateAction<Record<string, any>>>
+  paginationDetails: Record<string, any>,
+  setpaginationDetails: React.Dispatch<React.SetStateAction<Record<string, any>>>
+  eventEmitterData: any[],
+  setEventEmitterData: React.Dispatch<React.SetStateAction<any[]>>
+  userDetails: Record<string, any>,
+  setUserDetails: React.Dispatch<React.SetStateAction<Record<string, any>>>
+  encAppFalg: Record<string, any>,
+  setEncAppFalg: React.Dispatch<React.SetStateAction<Record<string, any>>>
 }
 
 export const TotalContext = React.createContext<TotalContextProps | {}>({})
@@ -486,6 +537,28 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       }) 
         const [searchgroupc4337, setsearchgroupc4337 ] = React.useState<any>({}) 
     const [searchgroupc4337Props, setsearchgroupc4337Props ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
+        const [tran_journey_groupbe7ae, settran_journey_groupbe7ae ] = React.useState<any>({}) 
+    const [tran_journey_groupbe7aeProps, settran_journey_groupbe7aeProps ] = React.useState<any>({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[]
+      }) 
+        const [tran_journey_dtl_group6545a, settran_journey_dtl_group6545a ] = React.useState<any>({}) 
+    const [tran_journey_dtl_group6545aProps, settran_journey_dtl_group6545aProps ] = React.useState<any>({
       validation:false,
       required:false,
       refetch:false,
@@ -859,7 +932,7 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refetch:false,
     refresh:false,
     }) 
-   const [dymanic_search_input05b50,setdymanic_search_input05b50] = React.useState<any>({
+   const [dymanic_search_inputfa005,setdymanic_search_inputfa005] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
@@ -874,6 +947,69 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refresh:false,
     }) 
    const [search65fd7,setsearch65fd7] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [tran_journey47044,settran_journey47044] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [tran_date_and_timebba58,settran_date_and_timebba58] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [tran_status9b4c1,settran_status9b4c1] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [tra_created_date34aa7,settra_created_date34aa7] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [failuer_process_code981ea,setfailuer_process_code981ea] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [tran_process55ab3,settran_process55ab3] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [product_code36b37,setproduct_code36b37] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [view_msg_data387c6,setview_msg_data387c6] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [view_tran_log83071,setview_tran_log83071] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
@@ -1042,7 +1178,7 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refresh:false,
     }) 
     ///////////
-    const [refresh, setRefresh] = React.useState<any>({       buttonview_all_logs50c05:false,
+    const [refresh, setRefresh] = React.useState<Record<string, boolean>>({       buttonview_all_logs50c05:false,
        buttonview_all_button56968:false,
        columnproduct_code27e26:false,
        columnuuidb02c5:false,
@@ -1086,9 +1222,18 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
        dynamicjsonformproduct_code_json46315:false,
        buttonSaveb6b99:false,
        buttonClearf69d6:false,
-       dynamicjsonformdymanic_search_input05b50:false,
+       dynamicjsonformdymanic_search_inputfa005:false,
        buttonClearf63e8:false,
        buttonsearch65fd7:false,
+       timelinetran_journey47044:false,
+       texttran_date_and_timebba58:false,
+       texttran_status9b4c1:false,
+       texttra_created_date34aa7:false,
+       textfailuer_process_code981ea:false,
+       texttran_process55ab3:false,
+       textproduct_code36b37:false,
+       buttonview_msg_data387c6:false,
+       buttonview_tran_log83071:false,
        dropdownproduct_code523b7:false,
        textinputsetup_code88cd6:false,
        textinputinterface_productd9133:false,
@@ -1120,6 +1265,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
        tablefailure_queue_table449a9:false,
        grouppayment_group1c8a5:false,
        groupsearchgroupc4337:false,
+       grouptran_journey_groupbe7ae:false,
+       grouptran_journey_dtl_group6545a:false,
        groupsystem_setup_group2af15:false,
        groupcdc_group2e1e4:false,
        groupdetails_group46bbe:false,
@@ -1131,19 +1278,23 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
    const [transaction_v1Props,settransaction_v1Props] = React.useState<any>([])
    const [add_new_payment_v1Props,setadd_new_payment_v1Props] = React.useState<any>([])
    const [view_all_search_screen_v1Props,setview_all_search_screen_v1Props] = React.useState<any>([])
+   const [tran_journey_v1Props,settran_journey_v1Props] = React.useState<any>([])
+   const [tran_journey_dtl_v1Props,settran_journey_dtl_v1Props] = React.useState<any>([])
    const [master_system_setup_v1Props,setmaster_system_setup_v1Props] = React.useState<any>([])
    const [cdc_checker_action_screen_v1Props,setcdc_checker_action_screen_v1Props] = React.useState<any>([])
 
 ///////// dfd
   const [dfd_get_transaction_dfd_v1Props,setdfd_get_transaction_dfd_v1Props] = React.useState<any>([])
+  const [dfd_tran_journey_dtl_v1Props,setdfd_tran_journey_dtl_v1Props] = React.useState<any>([])
+  const [dfd_tran_journey_db_query_v1Props,setdfd_tran_journey_db_query_v1Props] = React.useState<any>([])
   const [dfd_master_system_setup_dfd_v1Props,setdfd_master_system_setup_dfd_v1Props] = React.useState<any>([])
   const [dfd_cdc_checker_action_dfd_v1Props,setdfd_cdc_checker_action_dfd_v1Props] = React.useState<any>([])
     const [searchParam , setSearchParam] = React.useState<string>("")
-    const [disableParam , setDisableParam] = React.useState<any>({})
-    const [globalState , setGlobalState] = React.useState<any>({})
+    const [disableParam , setDisableParam] = React.useState<Record<string, boolean>>({})
+    const [globalState , setGlobalState] = React.useState<Record<string, any>>({})
     const [refetch, setRefetch] = React.useState<any>(false)
-    const [validate, setValidate] = React.useState<any>({});
-    const [validateRefetch, setValidateRefetch] = React.useState<any>({
+    const [validate, setValidate] = React.useState<Record<string, any>>({});
+    const [validateRefetch, setValidateRefetch] = React.useState<{ value: boolean; init: number }>({
       value:false,
       init:0
     })
@@ -1200,6 +1351,14 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         setsearchgroupc4337,
         searchgroupc4337Props, 
         setsearchgroupc4337Props,
+        tran_journey_groupbe7ae, 
+        settran_journey_groupbe7ae,
+        tran_journey_groupbe7aeProps, 
+        settran_journey_groupbe7aeProps,
+        tran_journey_dtl_group6545a, 
+        settran_journey_dtl_group6545a,
+        tran_journey_dtl_group6545aProps, 
+        settran_journey_dtl_group6545aProps,
         system_setup_group2af15, 
         setsystem_setup_group2af15,
         system_setup_group2af15Props, 
@@ -1308,12 +1467,30 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         setsaveb6b99, 
         clearf69d6,
         setclearf69d6, 
-        dymanic_search_input05b50,
-        setdymanic_search_input05b50, 
+        dymanic_search_inputfa005,
+        setdymanic_search_inputfa005, 
         clearf63e8,
         setclearf63e8, 
         search65fd7,
         setsearch65fd7, 
+        tran_journey47044,
+        settran_journey47044, 
+        tran_date_and_timebba58,
+        settran_date_and_timebba58, 
+        tran_status9b4c1,
+        settran_status9b4c1, 
+        tra_created_date34aa7,
+        settra_created_date34aa7, 
+        failuer_process_code981ea,
+        setfailuer_process_code981ea, 
+        tran_process55ab3,
+        settran_process55ab3, 
+        product_code36b37,
+        setproduct_code36b37, 
+        view_msg_data387c6,
+        setview_msg_data387c6, 
+        view_tran_log83071,
+        setview_tran_log83071, 
         product_code523b7,
         setproduct_code523b7, 
         setup_code88cd6,
@@ -1367,6 +1544,10 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
           setadd_new_payment_v1Props,
           view_all_search_screen_v1Props,
           setview_all_search_screen_v1Props,
+          tran_journey_v1Props,
+          settran_journey_v1Props,
+          tran_journey_dtl_v1Props,
+          settran_journey_dtl_v1Props,
           master_system_setup_v1Props,
           setmaster_system_setup_v1Props,
           cdc_checker_action_screen_v1Props,
@@ -1376,6 +1557,10 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         ///////// dfd
         dfd_get_transaction_dfd_v1Props,
         setdfd_get_transaction_dfd_v1Props,
+        dfd_tran_journey_dtl_v1Props,
+        setdfd_tran_journey_dtl_v1Props,
+        dfd_tran_journey_db_query_v1Props,
+        setdfd_tran_journey_db_query_v1Props,
         dfd_master_system_setup_dfd_v1Props,
         setdfd_master_system_setup_dfd_v1Props,
         dfd_cdc_checker_action_dfd_v1Props,

@@ -14,6 +14,8 @@ import { ConfigService } from "@nestjs/config";
 import { ScheduleModule } from '@nestjs/schedule';
 import { ErdModule } from './erd/erd.module';
 import { DFGet_Transaction_DFDModule } from './dfd/DFGet_Transaction_DFD/v1/DFGet_Transaction_DFD.module';    
+import { DFTran_Journey_DtlModule } from './dfd/DFTran_Journey_Dtl/v1/DFTran_Journey_Dtl.module';    
+import { DFTran_Journey_DB_QueryModule } from './dfd/DFTran_Journey_DB_Query/v1/DFTran_Journey_DB_Query.module';    
 import { DFMaster_System_Setup_DFDModule } from './dfd/DFMaster_System_Setup_DFD/v1/DFMaster_System_Setup_DFD.module';    
 import { DFCDC_Checker_Action_DFDModule } from './dfd/DFCDC_Checker_Action_DFD/v1/DFCDC_Checker_Action_DFD.module';    
 import { Payment_InitiationModule } from './pfd/Payment_Initiation/v1/Payment_Initiation.module';    
@@ -27,7 +29,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 @Module({
   imports: [
   CacheModule.register({isGlobal:true}),
-  ScheduleModule.forRoot(),UfModule,TeModule,DFGet_Transaction_DFDModule,DFMaster_System_Setup_DFDModule,DFCDC_Checker_Action_DFDModule,Payment_InitiationModule,Master_System_Setup_FlowModule,CDC_Checker_FlowModule,ErdModule], 
+  ScheduleModule.forRoot(),UfModule,TeModule,DFGet_Transaction_DFDModule,DFTran_Journey_DtlModule,DFTran_Journey_DB_QueryModule,DFMaster_System_Setup_DFDModule,DFCDC_Checker_Action_DFDModule,Payment_InitiationModule,Master_System_Setup_FlowModule,CDC_Checker_FlowModule,ErdModule], 
   controllers: [AppController],
   providers: [AppService,CommonService,RuleService,CodeService,JwtService,RedisService,ConfigService,MongoService,{
       provide: APP_INTERCEPTOR,

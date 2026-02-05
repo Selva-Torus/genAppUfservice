@@ -137,10 +137,312 @@ const DynamicJsonFormdymanic_search_input = ({checkToAdd,setCheckToAdd,refetch,s
     "contentType": "application/vnd.gorules.decision"
   },
   "rule": {},
-  "events": {},
+  "events": {
+    "NDS": [
+      {
+        "id": "ae79016e850649caabba4bbe37efa005",
+        "type": "controlNode",
+        "position": {
+          "x": -35.386416588806114,
+          "y": -65.4695751361696
+        },
+        "data": {
+          "nodeId": "ae79016e850649caabba4bbe37efa005",
+          "nodeName": "dymanic_search_input",
+          "nodeType": "dynamicjsonform",
+          "events": [
+            {
+              "name": "onSubmit",
+              "rise": [
+                {
+                  "key": "refreshScreen",
+                  "label": "refreshScreen",
+                  "listenerType": "type1"
+                },
+                {
+                  "key": "setValueToMemory",
+                  "label": "setValueToMemory",
+                  "listenerType": "type1"
+                },
+                {
+                  "key": "copyFormData",
+                  "label": "copyFormData",
+                  "listenerType": "type1"
+                },
+                {
+                  "key": "confirmMsg",
+                  "label": "confirmMsg",
+                  "listenerType": "type1"
+                },
+                {
+                  "key": "refreshElement",
+                  "label": "refreshElement",
+                  "listenerType": "type2"
+                },
+                {
+                  "key": "clearHandler",
+                  "label": "clearHandler",
+                  "listenerType": "type1"
+                },
+                {
+                  "key": "eventEmitter",
+                  "label": "eventEmitter",
+                  "listenerType": "type1"
+                },
+                {
+                  "key": "infoMsg",
+                  "label": "infoMsg",
+                  "listenerType": "type1"
+                },
+                {
+                  "key": "saveHandler",
+                  "label": "saveHandler",
+                  "listenerType": "type1"
+                },
+                {
+                  "key": "pushToRedisHandler",
+                  "label": "pushToRedisHandler",
+                  "listenerType": "type1"
+                }
+              ],
+              "riseListen": [
+                {
+                  "key": "triggerButtonClick",
+                  "label": "triggerButtonClick",
+                  "listenerType": "type1"
+                },
+                {
+                  "key": "showComponentAsPopup",
+                  "label": "showComponentAsPopup",
+                  "listenerType": "type2"
+                },
+                {
+                  "key": "copyFormData",
+                  "label": "copyFormData",
+                  "listenerType": "type2"
+                },
+                {
+                  "key": "selectFirstRecord",
+                  "label": "selectFirstRecord",
+                  "listenerType": "type1"
+                },
+                {
+                  "key": "resetSelection",
+                  "label": "resetSelection",
+                  "listenerType": "type1"
+                },
+                {
+                  "key": "hideElement",
+                  "label": "hideElement",
+                  "listenerType": "type2"
+                },
+                {
+                  "key": "showElement",
+                  "label": "showElement",
+                  "listenerType": "type2"
+                },
+                {
+                  "key": "refreshElement",
+                  "label": "refreshElement",
+                  "listenerType": "type2"
+                },
+                {
+                  "key": "disableElement",
+                  "label": "disableElement",
+                  "listenerType": "type2"
+                },
+                {
+                  "key": "enableElement",
+                  "label": "enableElement",
+                  "listenerType": "type2"
+                },
+                {
+                  "key": "showArtifactAsModal",
+                  "label": "showArtifactAsModal",
+                  "listenerType": "type2"
+                },
+                {
+                  "key": "showArtifact",
+                  "label": "showArtifact",
+                  "listenerType": "type2"
+                },
+                {
+                  "key": "clearHandler",
+                  "label": "clearHandler",
+                  "listenerType": "type2"
+                },
+                {
+                  "key": "bindFileHandler",
+                  "label": "bindFileHandler",
+                  "listenerType": "type2"
+                },
+                {
+                  "key": "getFormData",
+                  "label": "getFormData",
+                  "listenerType": "type2"
+                }
+              ],
+              "self": [],
+              "enabled": true
+            }
+          ],
+          "label": "dymanic_search_input",
+          "children": [
+            "ae79016e850649caabba4bbe37efa005.1.1"
+          ],
+          "sequence": 1,
+          "nodeProperty": {}
+        },
+        "width": 65,
+        "height": 25,
+        "positionAbsolute": {
+          "x": -35.386351616103774,
+          "y": -65.47002406823803
+        }
+      },
+      {
+        "id": "ae79016e850649caabba4bbe37efa005.1.1.1",
+        "type": "handlerNode",
+        "label": "getFormData",
+        "eventContext": "riseListen",
+        "position": {
+          "x": 48.02324157339935,
+          "y": -28.346479117144707
+        },
+        "data": {
+          "label": "getFormData",
+          "eventContext": "riseListen",
+          "value": "",
+          "sequence": "1.1.1",
+          "parentId": "ae79016e850649caabba4bbe37efa005.1.1",
+          "children": [
+            "e7a2fc97bd954c2794c6346b05b05125.1.1.1.1"
+          ]
+        },
+        "width": 54,
+        "height": 45,
+        "positionAbsolute": {
+          "x": 48.02232979299915,
+          "y": -28.345739110245376
+        }
+      },
+      {
+        "id": "e7a2fc97bd954c2794c6346b05b05125.1.1.1.1",
+        "type": "screen",
+        "elementType": "tab_group",
+        "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1|tab_group",
+        "position": {
+          "x": 41.90168333561939,
+          "y": 65.00339355310949
+        },
+        "data": {
+          "label": "Transaction.v1|tab_group",
+          "sequence": "1.1.1.1",
+          "parent": "ae79016e850649caabba4bbe37efa005",
+          "children": [],
+          "nodeProperty": {},
+          "nodeLabel": "",
+          "parentId": "ae79016e850649caabba4bbe37efa005.1.1.1"
+        },
+        "width": 55,
+        "height": 50,
+        "positionAbsolute": {
+          "x": 41.90288862433227,
+          "y": 65.00363160268476
+        }
+      },
+      {
+        "id": "ae79016e850649caabba4bbe37efa005.1.1",
+        "type": "eventNode",
+        "position": {
+          "x": -53.825826145534776,
+          "y": 30.9157517134904
+        },
+        "data": {
+          "label": "onSubmit",
+          "sequence": "1.1",
+          "parent": "ae79016e850649caabba4bbe37efa005",
+          "children": [
+            "ae79016e850649caabba4bbe37efa005.1.1.1"
+          ],
+          "nodeProperty": {}
+        },
+        "className": "_node_1qffi_1",
+        "width": 100,
+        "height": 100,
+        "positionAbsolute": {
+          "x": -53.82600146108942,
+          "y": 30.91551052366269
+        },
+        "selected": true,
+        "dragging": false
+      }
+    ],
+    "NDE": [
+      {
+        "style": {
+          "stroke": "#a9a9a9"
+        },
+        "id": "ae79016e850649caabba4bbe37efa005->ae79016e850649caabba4bbe37efa005.1.1",
+        "source": "ae79016e850649caabba4bbe37efa005",
+        "type": "straight",
+        "target": "ae79016e850649caabba4bbe37efa005.1.1",
+        "animated": true
+      },
+      {
+        "id": "ae79016e850649caabba4bbe37efa005.1.1.1->e7a2fc97bd954c2794c6346b05b05125.1.1.1.1",
+        "source": "ae79016e850649caabba4bbe37efa005.1.1.1",
+        "type": "straight",
+        "target": "e7a2fc97bd954c2794c6346b05b05125.1.1.1.1"
+      },
+      {
+        "id": "ae79016e850649caabba4bbe37efa005.1.1->ae79016e850649caabba4bbe37efa005.1.1.1",
+        "source": "ae79016e850649caabba4bbe37efa005.1.1",
+        "type": "straight",
+        "target": "ae79016e850649caabba4bbe37efa005.1.1.1"
+      }
+    ],
+    "NDP": {},
+    "eventSummary": {
+      "id": "ae79016e850649caabba4bbe37efa005",
+      "type": "dynamicjsonform",
+      "name": "dymanic_search_input",
+      "sequence": 1,
+      "children": [
+        {
+          "id": "ae79016e850649caabba4bbe37efa005.1.1",
+          "type": "eventNode",
+          "name": "onSubmit",
+          "sequence": "1.1",
+          "children": [
+            {
+              "id": "ae79016e850649caabba4bbe37efa005.1.1.1",
+              "eventContext": "riseListen",
+              "value": "",
+              "type": "handlerNode",
+              "name": "getFormData",
+              "sequence": "1.1.1",
+              "children": [
+                {
+                  "id": "e7a2fc97bd954c2794c6346b05b05125.1.1.1.1",
+                  "type": "screen",
+                  "name": "Transaction.v1|tab_group",
+                  "label": "",
+                  "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1|tab_group",
+                  "elementType": "tab_group",
+                  "sequence": "1.1.1.1",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
   "mapper": []
 }
-  const [goruleData,setGoruleData]=useState<any>({})
+    const [goruleData,setGoruleData]=useState<any>(actionDetails?.pfRuleData ||{})
   const [isRequredData,setIsRequredData]=useState(false)
   const toast:any=useInfoMsg()
   const keyset:any=i18n.keyset("language"); 
@@ -159,9 +461,11 @@ const DynamicJsonFormdymanic_search_input = ({checkToAdd,setCheckToAdd,refetch,s
    //another screen
   const {searchgroupc4337, setsearchgroupc4337}= useContext(TotalContext) as TotalContextProps;
   const {searchgroupc4337Props, setsearchgroupc4337Props}= useContext(TotalContext) as TotalContextProps;
-  const {dymanic_search_input05b50, setdymanic_search_input05b50}= useContext(TotalContext) as TotalContextProps;
+  const {dymanic_search_inputfa005, setdymanic_search_inputfa005}= useContext(TotalContext) as TotalContextProps;
   const {clearf63e8, setclearf63e8}= useContext(TotalContext) as TotalContextProps;
   const {search65fd7, setsearch65fd7}= useContext(TotalContext) as TotalContextProps;
+  const {tab_group05125, settab_group05125}= useContext(TotalContext) as TotalContextProps;
+  const {tab_group05125Props, settab_group05125Props}= useContext(TotalContext) as TotalContextProps;
   //////////////
   
   const allData = {
@@ -372,6 +676,9 @@ const DynamicJsonFormdymanic_search_input = ({checkToAdd,setCheckToAdd,refetch,s
   };
   useEffect(() => {
     let forGetFormDataPointedData = {
+        //for group element
+        ...tab_group05125,
+
       };
 
     if (prevRefreshRef.current) {
@@ -410,14 +717,30 @@ const DynamicJsonFormdymanic_search_input = ({checkToAdd,setCheckToAdd,refetch,s
   // Validation  
     const [error, setError] = useState<string>('');
   schemaArray = [] ;
+  function getLeafValues(obj:any) {
+    let result:any = {};
+    for (const key in obj) {
+      if (
+        typeof obj[key] === "object" &&
+        obj[key] !== null &&
+        !Array.isArray(obj[key])
+      ) {
+        result = { ...result, ...getLeafValues(obj[key]) };
+      } else {
+        result[key] = obj[key];
+      }
+    }
+    return result;
+  }
   const handleChange = async(values: FieldValues) => {
     setError('')
+    let flatentedValues:any=getLeafValues(values)||{}
     setValidate((pre:any)=>({...pre,dymanic_search_input:{}}))
     if(dynamicStateandType.type=="number"){
-    setsearchgroupc4337((prev: any) => ({ ...prev, dymanic_search_input: +values }))
+      setsearchgroupc4337((prev: any) => ({ ...prev, dymanic_search_input: +values,...flatentedValues }))
     }
     else{
-    setsearchgroupc4337((prev: any) => ({ ...prev, dymanic_search_input: values }))
+      setsearchgroupc4337((prev: any) => ({ ...prev, dymanic_search_input: values,...flatentedValues }))
     }
   }
   const handleBlur=async () => {
@@ -436,7 +759,7 @@ const DynamicJsonFormdymanic_search_input = ({checkToAdd,setCheckToAdd,refetch,s
         {
           key: "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:view_all_search_screen:AFVK:v1",
           componentId: "d05d849cc0b74600a2b86ad30e5c4337",
-          controlId: "b5e136e5e3e64ecdbca6d6449a005b50",
+          controlId: "ae79016e850649caabba4bbe37efa005",
           isTable: false,
           from:"TextInputdymanic_search_input",
           accessProfile:accessProfile
@@ -452,9 +775,8 @@ const DynamicJsonFormdymanic_search_input = ({checkToAdd,setCheckToAdd,refetch,s
         return
       }
       setAllCode(orchestrationData?.data?.code)
-      setGoruleData(orchestrationData?.data?.pfRuleData ||{})
-      fetchSchema(orchestrationData?.data?.pfRuleData ||{})
-      if(orchestrationData?.data?.schemaData[0].nodeType=='apinode'){
+     
+      if(orchestrationData?.data?.schemaData?.at(0)?.nodeType=='apinode'){
       if(orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties){
         let type:any={name:'dymanic_search_input',type:'text'}
         type={
@@ -463,7 +785,7 @@ const DynamicJsonFormdymanic_search_input = ({checkToAdd,setCheckToAdd,refetch,s
         }
         setDynamicStateandType(type)
       }
-      }else if(orchestrationData?.data?.schemaData[0].nodeType=='dbnode'){
+      }else if(orchestrationData?.data?.schemaData?.at(0)?.nodeType=='dbnode'){
         if(orchestrationData?.data?.schemaData[0].schema.properties){
         let type:any={name:'dymanic_search_input',type:'text'}
         type={
@@ -484,14 +806,19 @@ const DynamicJsonFormdymanic_search_input = ({checkToAdd,setCheckToAdd,refetch,s
   useEffect(()=>{
       handleMapperValue()
       handleBlur()
+    setsearchgroupc4337Props((prev: any) => ({ ...prev, needToSpread:["dymanic_search_input"] }))
   },[validateRefetch.value])
 
+          //for group element
+    useEffect(() => {
+      fetchSchema(goruleData,tab_group05125);
+         }, [])
 
-  if (dymanic_search_input05b50?.isHidden) {
+  if (dymanic_search_inputfa005?.isHidden) {
     return <></>
   }
    if (isLoading) {
-    return  <div style={{gridColumn: `5 / 21`,gridRow: `9 / 85`, gap:``, height: `100%`, overflow: 'auto'}} >
+    return  <div style={{gridColumn: `4 / 22`,gridRow: `6 / 87`, gap:``, height: `100%`, overflow: 'auto'}} >
       Loading schema...</div>
   }
 
@@ -500,7 +827,7 @@ const DynamicJsonFormdymanic_search_input = ({checkToAdd,setCheckToAdd,refetch,s
   }
   return (   
     <div  
-      style={{gridColumn: `5 / 21`,gridRow: `9 / 85`, gap:``, height: `100%`, overflow: 'auto'}} >
+      style={{gridColumn: `4 / 22`,gridRow: `6 / 87`, gap:``, height: `100%`, overflow: 'auto'}} >
         {isRequredData && <span style={{ color: 'red' }}>*</span>}
       <DynamicJsonForm
         metadata={renderData}

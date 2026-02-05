@@ -323,9 +323,9 @@ trs_sub_org_code    String?
 vgphsm_id Int? 
 vgph_source_main   vgph_source_main?  @relation(fields: [vgphsm_id], references: [vgphsm_id])  
 vgph_destination_tran_main   vgph_destination_tran_main[]    
-vgph_tran_dtl_main   vgph_tran_dtl_main[]    
 vgph_tran_log_main   vgph_tran_log_main[]    
 vgph_tran_error_log_main   vgph_tran_error_log_main[]    
+vgph_tran_dtl_main   vgph_tran_dtl_main[]    
 prctm_id Int? 
 prc_tokens_main   prc_tokens_main?  @relation(fields: [prctm_id], references: [prctm_id])  
 
@@ -370,6 +370,7 @@ enum charge_type_vgph_source_tran_main{
     SHA
     OUR
     BEN
+    SLEV
 
 @@schema("ct005_v001")  
 }
@@ -711,6 +712,50 @@ vgph_source_tran_main   vgph_source_tran_main[]
 }
 
 
+model vgph_message_template_main {
+vgphmtm_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_message_template_main
+process_type  process_type_vgph_message_template_main
+type  String?  @db.VarChar(length: 16)
+message_code  String?  @db.VarChar(length: 16)
+template_name  Json? 
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_message_template_main{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_message_template_main{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
+
 model vgph_source_transactions {
 vgphst_id  Int @id @default(autoincrement())
 tenant_id  String? 
@@ -927,8 +972,8 @@ trs_sub_org_code    String?
 vgphss_id Int? 
 vgph_source_staging   vgph_source_staging?  @relation(fields: [vgphss_id], references: [vgphss_id])  
 vgph_destination_tran_staging   vgph_destination_tran_staging[]    
-vgph_tran_dtl_staging   vgph_tran_dtl_staging[]    
 vgph_tran_log_staging   vgph_tran_log_staging[]    
+vgph_tran_dtl_staging   vgph_tran_dtl_staging[]    
 prcts_id Int? 
 prc_tokens_staging   prc_tokens_staging?  @relation(fields: [prcts_id], references: [prcts_id])  
 
@@ -973,6 +1018,7 @@ enum charge_type_vgph_source_tran_staging{
     SHA
     OUR
     BEN
+    SLEV
 
 @@schema("ct005_v001")  
 }
@@ -990,7 +1036,7 @@ step_code  String  @db.VarChar(length: 32)
 product_basic  Json? 
 product_additional  Json? 
 process_data  Json? 
-vgphss_uuid  String  @db.VarChar(length: 64)
+vgphsts_uuid  String  @db.VarChar(length: 64)
 trs_created_date    DateTime     @default(now())  
 trs_created_by    String?       
 trs_modified_date    DateTime     @updatedAt  
@@ -1311,6 +1357,50 @@ vgph_source_tran_staging   vgph_source_tran_staging[]
 @@schema("ct005_v001")  
 }
 
+
+model vgph_message_template_staging {
+vgphmts_id  Int @id @default(autoincrement())
+tenant_id  String  @db.VarChar(length: 16)
+product_code  String  @db.VarChar(length: 16)
+direction  direction_vgph_message_template_staging
+process_type  process_type_vgph_message_template_staging
+type  String?  @db.VarChar(length: 16)
+message_code  String?  @db.VarChar(length: 16)
+template_name  Json? 
+trs_created_date    DateTime     @default(now())  
+trs_created_by    String?       
+trs_modified_date    DateTime     @updatedAt  
+trs_modified_by    String?       
+trs_status    String?    
+trs_next_status    String?    
+trs_process_id    String? 
+trs_access_profile    String?
+trs_org_grp_code    String?
+trs_org_code    String?
+trs_role_grp_code    String?
+trs_role_code    String?
+trs_ps_grp_code    String?
+trs_ps_code    String?  
+trs_sub_org_grp_code    String?
+trs_sub_org_code    String?
+
+@@schema("ct005_v001")  
+}
+
+enum direction_vgph_message_template_staging{
+    OUTBOUND
+    INBOUND
+
+@@schema("ct005_v001")  
+}
+enum process_type_vgph_message_template_staging{
+    OP
+    IR
+    IP
+    OR
+
+@@schema("ct005_v001")  
+}
 
 
 

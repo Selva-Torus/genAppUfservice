@@ -15,7 +15,7 @@ export default function HomePage() {
   const token :string | undefined = getCookie('token');
   const decodedToken : DecodedToken = decodeToken(token);
   const encryptionFlagApp: boolean = false;    
-  let landingScreen:string = 'CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1';
+  let landingScreen:string = 'CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1';
   const toast : Function = useInfoMsg();
   let screenDetails : ScreenDetail[] = [
   {
@@ -105,7 +105,7 @@ export default function HomePage() {
 
   return (
     <>
-      <LoginForm logo=""   loginType="standard"   image=""/>
+      <LoginForm logo=""  image=""/>
     </>
   )
 }

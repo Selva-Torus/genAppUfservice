@@ -18,7 +18,7 @@ export interface ActionDetails {
   };
   pagination: {
     page: string;
-    count: string;
+    count: number | string;
   };
   encryption: {
     isEnabled: boolean;

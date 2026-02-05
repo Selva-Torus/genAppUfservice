@@ -34,6 +34,7 @@ const Groupfailure_queue_table = ({lockedData={},setLockedData,primaryTableData=
   let item = "";
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const {dfd_get_transaction_dfd_v1Props, setdfd_get_transaction_dfd_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const {dfd_tran_journey_db_query_v1Props, setdfd_tran_journey_db_query_v1Props} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagComp: boolean = encryptionFlagPageData?.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagPageData?.dpd;

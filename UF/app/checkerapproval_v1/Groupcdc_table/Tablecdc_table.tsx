@@ -693,8 +693,15 @@ const Tablecdc_table = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
       //   }
       // )
       if (uf_paginationDataFilter.data.length >= 0&&Array.isArray(uf_paginationDataFilter.data)) {
-        let filtertedData:any=structuredClone(uf_paginationDataFilter.data)||[]
-        setcdc_table8e54d(uf_paginationDataFilter.data||[])
+        let filtertedData:any;
+      // CopyFromData (Parent table): use presetValues if present, else use pagination-filtered data
+        
+        if ( cdc_table8e54dProps?.presetValues&&Object.keys(cdc_table8e54dProps?.presetValues).length > 0) {
+          filtertedData = [cdc_table8e54dProps?.presetValues];
+        }else {
+          filtertedData = structuredClone(uf_paginationDataFilter.data)||[]
+          setcdc_table8e54d(uf_paginationDataFilter.data||[])
+        }
         defaultColumns.map((items:any)=>{
           if(items?.isColourIndicator==true)
           {
@@ -888,17 +895,16 @@ const colurIndicator = (keyValue:any=[], comingValue:any,ColourIndicatorType:any
               loading={loading}
               onRowClick={onButtonSecurityHandle}
               isRowclick={false}
+              showPagination={paginationData?.page != null && paginationData?.pageSize != null && paginationData?.total != null && Array.isArray(allDataObject) && allDataObject.length>0}
+              pagination={{
+                page : paginationData.page,
+                pageSize : paginationData.pageSize,
+                pageSizeOptions : [5, 10, 20, 50, 100],
+                total:paginationData.total,
+                onUpdate:(e:any)=>handleUpdate(e.page,e.pageSize)
+              }}
             />
             </div>
-            {paginationData?.page != null && paginationData?.pageSize != null && paginationData?.total != null && Array.isArray(allDataObject) && allDataObject.length>0 ?
-              <Pagination
-              //className='flex w-full items-center justify-center'
-              page={paginationData.page}
-              pageSize={paginationData.pageSize}
-              pageSizeOptions={[5, 10, 20, 50, 100]}
-              total={paginationData.total}
-              onUpdate={(e:any)=>handleUpdate(e.page,e.pageSize)}
-            />:null}
     </div>
   )
 }

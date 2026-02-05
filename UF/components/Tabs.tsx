@@ -98,14 +98,15 @@ export const Tabs: React.FC<TabsProps> = ({
           flex
           ${direction === "vertical" ? "flex-col" : "flex-row"}
           ${direction === "vertical" ? "w-auto" : "w-full"}
+          p-1
           ${getJustifyClass()}
         `}
       >
         <div
           className={`
             flex
-            ${direction === "vertical" ? "flex-col" : "flex-row"}
-            ${getBorderRadiusClass(branding.borderRadius)}
+            ${direction === "vertical" ? "flex-col" : "flex-row"}            
+            rounded-full
             p-1
             bg-white
             ${headerAlignment === 'full' ? 'w-full' : 'w-fit'}
@@ -120,7 +121,7 @@ export const Tabs: React.FC<TabsProps> = ({
               disabled={disabled}
               className={`
                 ${getSizeClasses()}
-                rounded-lg
+                rounded-full
                 flex items-center justify-center gap-2
                 font-medium
                 whitespace-nowrap

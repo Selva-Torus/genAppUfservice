@@ -44,7 +44,7 @@ export class  Createvgph_tran_dtl_stagingDto {
         @ApiProperty()
         process_data?: Prisma.InputJsonValue;
         @ApiProperty()
-        vgphss_uuid: string;
+        vgphsts_uuid: string;
         @ApiProperty({
             type: `integer`,
             format: `int32`,

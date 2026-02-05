@@ -44,7 +44,7 @@ export class  vgph_tran_dtl_stagingEntity implements  vgph_tran_dtl_staging {
     @ApiProperty({example:"any"})
     process_data:any;
     @ApiProperty({example:"string"})
-    vgphss_uuid:string;
+    vgphsts_uuid:string;
     @ApiProperty()
     vgphsts_id: number;
     @Transform(({ value }) => value?.toISOString())
@@ -109,7 +109,7 @@ export class  vgph_tran_dtl_staging_OnlyParentEntity {
     @ApiProperty({example:"any"})
     process_data:any;
     @ApiProperty({example:"string"})
-    vgphss_uuid:string;
+    vgphsts_uuid:string;
     @Transform(({ value }) => value?.toISOString())
     @ApiProperty({example:"datetime"})
     trs_created_date: Date;

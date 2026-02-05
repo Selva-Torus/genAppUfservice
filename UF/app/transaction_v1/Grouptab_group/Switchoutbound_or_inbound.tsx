@@ -9,6 +9,8 @@ import { Text } from '@/components/Text'
 import { AxiosService } from "@/app/components/axiosService";
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { useRouter } from 'next/navigation'
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
+import { DecodedToken,PrimaryTableData,SecurityData,EncryptionFlagPageData,PaginationData,AllowedGroupNode,ActionDetails } from "@/types/global";
 import { eventBus } from '@/app/eventBus';
 import { te_refreshDto } from '@/app/interfaces/interfaces';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
@@ -30,13 +32,13 @@ const Switchoutbound_or_inbound = ({checkToAdd,setCheckToAdd,encryptionFlagCompD
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagCompData.dpd;
   let encryptionMethod: string = "";
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData.method;
-  const [allCode,setAllCode]=useState<any>("");
-  const [ruleCode,setRuleCode]=useState<any>("");
-  const toast:any=useInfoMsg();
-  const routes = useRouter();
-  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState(false);
-  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
-  const prevRefreshRef = useRef(false);
+  const [allCode,setAllCode] = useState<string>("");
+  const [ruleCode,setRuleCode] = useState<any>("");
+  const toast : Function = useInfoMsg();
+  const routes : AppRouterInstance = useRouter();
+  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState<boolean>(false);
+  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState<boolean>(false);
+  const prevRefreshRef = useRef<any>(false);
  /////////////
    //another screen
   const {transaction_groupcc5ac, settransaction_groupcc5ac}= useContext(TotalContext) as TotalContextProps;
@@ -91,10 +93,10 @@ const Switchoutbound_or_inbound = ({checkToAdd,setCheckToAdd,encryptionFlagCompD
 
 
   const handleChange = async (checked: boolean) => {
-    settab_group05125((prev: any) => ({ ...prev, outbound_or_inbound: checked }))
-    let code:any= allCode
+    settab_group05125((prev: any) => ({ ...prev, outbound_or_inbound: checked }));
+    let code:string= allCode;
     if (code != '') {
-      let codeStates: any = {}
+      let codeStates: any = {};
             codeStates['transaction_group']  = transaction_groupcc5ac,
             codeStates['settransaction_group'] = settransaction_groupcc5ac,
             codeStates['view_all_table']  = view_all_table648c4,

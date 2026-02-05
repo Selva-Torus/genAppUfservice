@@ -13,6 +13,7 @@ import { MenuItem } from '../../interfaces/interfaces'
 import decodeToken from '../decodeToken'
 import axios from 'axios'
 import { useGlobal } from '@/context/GlobalContext'
+import { DecodedToken, Branding } from '@/types/global'
 import { useTheme } from '@/hooks/useTheme'
 import { twMerge } from 'tailwind-merge'
 const LayoutDecider = ({
@@ -32,21 +33,21 @@ const LayoutDecider = ({
     | 'hidden'
   children: React.ReactNode
 }) => {
-  const [fullView, setFullView] = useState(
+  const [fullView, setFullView] = useState<boolean>(
     sidebarStyle == 'default' || sidebarStyle == 'condensed' ? true : false
   )
   const {userDetails, setUserDetails } = useContext(TotalContext) as TotalContextProps
-  const { branding,  } = useGlobal();
-  const {borderColor , bgColor} = useTheme()
-  const { brandColor, hoverColor, selectionColor } = branding;
+  const { branding } : { branding: Branding } = useGlobal();
+  const { borderColor, bgColor } : { borderColor: string; bgColor: string } = useTheme()
+  const { brandColor, hoverColor, selectionColor } : { brandColor: string; hoverColor: string; selectionColor: string } = branding;
   const encryptionFlagApp: boolean = false;    
   const encryptionDpd: string = "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:V001:AFGK:VGPH001:AFK:VGPH_DPD:AFVK:v1";
   const encryptionMethod: string = "";
-  const logo = "torus/9.1/CT005/resources/images/VGPH_Logo-removebg-preview.png"
-  const appLogo = ""
-  const appName = "VGPH"
-  const toast = useInfoMsg()
-  const [loading, setLoading] = useState(true)
+  const logo: string = "torus/9.1/CT005/resources/images/vgph-final-logo-fw@4x.png"
+  const appLogo: string = ""
+  const appName: string = "VGPH"
+  const toast: Function = useInfoMsg()
+  const [loading, setLoading] = useState<boolean>(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
   const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT005:AFGK:V001:AFK:VGPH001:AFVK:v1:bldc"
   const [rawNavData, setRawNavData] = useState<MenuItem[] | null>(null);
@@ -62,10 +63,12 @@ const LayoutDecider = ({
           "Checker",
           "Admin"
         ],
-        "static": false
+        "static": false,
+        "icon": "/torus/9.1/resources/icons/home-4-svgrepo-com.svg"
       }
     ],
-    "items": []
+    "items": [],
+    "icon": "/torus/9.1/resources/icons/home-4-svgrepo-com.svg"
   },
   {
     "menuGroup": "mastersetup",
@@ -83,7 +86,8 @@ const LayoutDecider = ({
         "static": false
       }
     ],
-    "items": []
+    "items": [],
+    "icon": "/torus/9.1/CT005/resources/images/Master Setup.png"
   },
   {
     "menuGroupLabel": "CheckerApproval",
@@ -96,10 +100,12 @@ const LayoutDecider = ({
           "Checker",
           "Admin"
         ],
-        "static": false
+        "static": false,
+        "icon": "/torus/9.1/CT005/resources/images/Checker approval.png"
       }
     ],
-    "items": []
+    "items": [],
+    "icon": "/torus/9.1/CT005/resources/images/Checker approval.png"
   },
   {
     "menuGroup": "admin",
@@ -127,8 +133,8 @@ const LayoutDecider = ({
   }
 ]
   const token:string = getCookie('token'); 
-  const decodedTokenObj: any = decodeToken(token)
-  const user = decodedTokenObj?.selectedAccessProfile
+  const decodedTokenObj: DecodedToken = decodeToken(token)
+  const user: string | undefined = decodedTokenObj?.selectedAccessProfile
   const getSideNavClassName = useMemo(() => {
     if (
       navigationStyles === 'horizontal' ||
@@ -139,18 +145,18 @@ const LayoutDecider = ({
       return 'hidden'
     }
 
-    const widthClass = fullView ? 'w-[10vw] ' : 'w-[5%]'
-    const baseClass = 'flex-shrink-0'
-    const marginClass = mode === 'detached' ? 'm-2' : ''
-    const extraClass = mode === 'detached' ? 'rounded-md shadow-md' : ''
-    const detachedBorder = mode === 'detached' ? 'border' : ''
+    const widthClass: string = fullView ? 'w-[10vw] ' : 'w-[5%]'
+    const baseClass: string = 'flex-shrink-0'
+    const marginClass: string = mode === 'detached' ? 'm-2' : ''
+    const extraClass: string = mode === 'detached' ? 'rounded-md shadow-md' : ''
+    const detachedBorder: string = mode === 'detached' ? 'border' : ''
 
     if (['condensed', 'hoverView'].includes(sidebarStyle)) {
       return `${marginClass} ${widthClass} ${baseClass} ${detachedBorder}  ${extraClass}`.trim()
     }
 
     if (['default', 'compact'].includes(sidebarStyle)) {
-      const compactWidth = sidebarStyle === 'compact' ? 'w-[5%]' : 'w-[10%]'
+      const compactWidth: string = sidebarStyle === 'compact' ? 'w-[5%]' : 'w-[10%]'
       return `${marginClass} ${compactWidth} ${baseClass}  ${detachedBorder} ${extraClass}`.trim()
     }
 
@@ -169,9 +175,9 @@ const LayoutDecider = ({
     ) {
       return 'm-2 p-0 b rounded-md shadow-md'
     }
-    const marginClass =
+    const marginClass: string =
       mode === 'detached' || mode === 'closed' ? 'm-2 p-2' : 'm-3 p-3'
-    const extraClass =
+    const extraClass: string =
       mode === 'detached' ? 'rounded-md shadow-md' : 'rounded-md shadow-md'
 
     if (mode === 'closed') {
@@ -193,7 +199,7 @@ const LayoutDecider = ({
     return ''
   }, [navigationStyles, mode, sidebarStyle])
 
-  async function logout() {
+  async function logout(): Promise<void> {
     localStorage.clear()
     sessionStorage.clear()
     deleteAllCookies()
@@ -208,15 +214,15 @@ const LayoutDecider = ({
   ): Promise<MenuItem[]> => {
     const updatedItems: MenuItem[] = []
     for (const item of items) {
-      let newItem = { ...item } // Copy item
+      let newItem: MenuItem = { ...item } // Copy item
 
       if (newItem.screenDetails && Array.isArray(newItem.screenDetails)) {
-        const validScreens = []
+        const validScreens: any[] = []
 
         for (const screen of newItem.screenDetails) {
           if (screen.static) validScreens.push(screen)
           if (screen.key && !screen.static) {
-            const isValid = screen.allowedAccessProfile.includes(user) ? true : false
+            const isValid: boolean = screen.allowedAccessProfile.includes(user) ? true : false
             if (isValid) validScreens.push(screen)
           }
         }
@@ -241,7 +247,7 @@ const LayoutDecider = ({
     )
   }
 
-    const getNavData = async() => {
+    const getNavData = async(): Promise<void> => {
     try {
       const res = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/getNavbarData`,
@@ -257,7 +263,7 @@ const LayoutDecider = ({
     }
   }
 
-  async function checkAccessProfile(token: string, navData: MenuItem[]) {
+  async function checkAccessProfile(token: string, navData: MenuItem[]): Promise<void> {
     try {
    let myAccount:any;
       if (encryptionFlagApp) {
@@ -285,7 +291,7 @@ const LayoutDecider = ({
    if (
    user != "" && user != null
    ) {
-        const processedMenuItems = await processMenuItems(
+        const processedMenuItems: MenuItem[] = await processMenuItems(
           navData, // Use the passed-in navData
           [user],
           token
@@ -305,7 +311,7 @@ const LayoutDecider = ({
 
   useEffect(() => {
     if (typeof window !== undefined) {
-      const currentToken = getCookie('token')
+      const currentToken: string = getCookie('token')
       if (currentToken) {
         // 4a. Initial fetch of raw navigation data
         getNavData()
@@ -319,7 +325,7 @@ const LayoutDecider = ({
 
   useEffect(() => {
     if (rawNavData) {
-      const currentToken = getCookie('token')
+      const currentToken: string = getCookie('token')
       if (currentToken) {
         checkAccessProfile(currentToken, rawNavData)
       }
@@ -382,7 +388,7 @@ const LayoutDecider = ({
     }
   }, []) */
 
-  const listMenuItems = () => {
+  const listMenuItems = (): boolean => {
     if (navigationStyles == 'horizontal' || mode == 'closed') {
       return true
     } else if (
@@ -398,31 +404,7 @@ const LayoutDecider = ({
     name: string
     'gridColumn'?: string
     'gridRow'?: string
-  }[] =[
-  {
-    "name": "app logo",
-    "gridColumn": "2/3"
-  },
-  {
-    "name": "menu items",
-    "gridColumn": "3/9",
-    "gridRow": "1/6"
-  },
-  {
-    "name": "opr matrix",
-    "gridColumn": "9/12",
-    "gridRow": "6/9"
-  },
-  {
-    "name": "logo",
-    "gridColumn": "1/2"
-  },
-  {
-    "name": "profile",
-    "gridColumn": "12/13",
-    "gridRow": "12/13"
-  }
-]
+  }[] =[]
 
    if (loading == true){
     return (<div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><span>Loading...</span></div>);

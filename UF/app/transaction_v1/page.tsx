@@ -62,8 +62,8 @@ export default function PageTransactionV1() {
   const routes : AppRouterInstance = useRouter();
   const toast : Function = useInfoMsg();
   const [primaryTableData, setPrimaryTableData] = useState<PrimaryTableData>({primaryKey:"",value:"",compName:""});
-  const [checkToAdd, setCheckToAdd] = useState<any>({});
-  const [dropdownData, setDropdownData] = useState<any>({});
+  const [checkToAdd, setCheckToAdd] = useState<Record<string, any>>({});
+  const [dropdownData, setDropdownData] = useState<Record<string, any>>({});
   const token:string = getCookie('token'); 
   const decodedTokenObj: DecodedToken = decodeToken(token);
   const screenName:string = "transaction";
@@ -83,6 +83,7 @@ export default function PageTransactionV1() {
   const {view_all_table648c4, setview_all_table648c4} = useContext(TotalContext) as TotalContextProps;
   const {failure_queue_table449a9, setfailure_queue_table449a9} = useContext(TotalContext) as TotalContextProps;
   const {dfd_get_transaction_dfd_v1Props, setdfd_get_transaction_dfd_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const {dfd_tran_journey_db_query_v1Props, setdfd_tran_journey_db_query_v1Props} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagPage: boolean = false|| encAppFalg.flag;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encAppFalg.dpd;
@@ -94,8 +95,9 @@ export default function PageTransactionV1() {
     "method":encryptionMethod
   }
   const [paginationData,setPaginationData]=useState<PaginationData>({count:10,page:1})
-    const prevRefreshRef = useRef<Record<string, boolean>>({
+    const prevRefreshRef = useRef<any>({
       get_transaction_dfd_v1:false,
+      tran_journey_db_query_v1:false,
     });
     async function get_transaction_dfd_v1(pagination:any): Promise<void>{
         let get_transaction_dfd_v1Body:te_refreshDto={
@@ -163,6 +165,72 @@ export default function PageTransactionV1() {
     }else 
       prevRefreshRef.current.get_transaction_dfd_v1= true
   },[refetch?.get_transaction_dfd_v1])
+    async function tran_journey_db_query_v1(pagination:any): Promise<void>{
+        let tran_journey_db_query_v1Body:te_refreshDto={
+          key: "CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_DB_Query:AFVK:v1"+":",
+          refreshFlag: "Y",
+          count:parseInt(pagination?.count) || 10,
+          page:parseInt(pagination?.page) || 1
+        }
+        if (encryptionFlagPage) {          
+          tran_journey_db_query_v1Body["dpdKey"] = encryptionDpd;
+          tran_journey_db_query_v1Body["method"] = encryptionMethod;
+        }
+        if(transaction_v1Props.length > 0){
+          let filterData :any[] =[];
+          for(let i=0;i< transaction_v1Props.length;i++){
+            if(transaction_v1Props[i].DFDkey == "CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_DB_Query:AFVK:v1"){
+              delete transaction_v1Props[i].DFDkey;
+              filterData.push(transaction_v1Props[i])
+            }           
+          }
+          tran_journey_db_query_v1Body['filterData'] = filterData;
+        }
+        const tran_journey_db_query_v1Data:any=await AxiosService.post("/te/eventEmitter",tran_journey_db_query_v1Body,{
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        })
+
+        if (tran_journey_db_query_v1Data?.data?.dataset) {
+          setdfd_tran_journey_db_query_v1Props(tran_journey_db_query_v1Data?.data?.dataset?.data || []);
+        }else{
+         //////////////
+        let dstKey:string=tran_journey_db_query_v1Body?.key || ""
+        dstKey=dstKey.replace(":AFC:",":AFCP:").replace(":AF:",":AFP:").replace(":DF-DFD:",":DF-DST:");
+
+        const api_paginationBody: api_paginationDto = {
+          key: dstKey,
+          count:parseInt(pagination?.count) || 10,
+          page:parseInt(pagination?.page) || 1
+        }
+        // if(encryptionFlagCont) {
+        // api_paginationBody["dpdKey"] = encryptionDpd
+        // api_paginationBody["method"] = encryptionMethod
+        // }
+        const api_paginationData:any = await AxiosService.post(
+          '/UF/pagination',
+          api_paginationBody,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            }
+          }
+        )
+        if (api_paginationData?.data?.error == true) {
+          toast(api_paginationData?.data?.errorDetails?.message, 'danger')
+          return
+        }
+        setdfd_tran_journey_db_query_v1Props(api_paginationData?.data?.records || []);
+        }
+      }
+  useEffect(()=>{
+    if (prevRefreshRef?.current?.tran_journey_db_query_v1) {
+      tran_journey_db_query_v1(paginationData)
+    }else 
+      prevRefreshRef.current.tran_journey_db_query_v1= true
+  },[refetch?.tran_journey_db_query_v1])
 
   async function securityCheck(): Promise<void> {
     const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1",accessProfile:[user],from:"pageTransactionV1"},{
@@ -264,6 +332,7 @@ export default function PageTransactionV1() {
 };
         try{
     await get_transaction_dfd_v1(pagination)
+    await tran_journey_db_query_v1(pagination)
           if (security == 'AA') {
           allowedGroup.map((nodes:AllowedGroupNode)=>{
             if(nodes?.groupName == 'transaction_group' && (nodes?.security== 'AA' || nodes?.security == 'ATO' || nodes?.security == 'RA'))
@@ -290,7 +359,7 @@ export default function PageTransactionV1() {
         /////////
         //Code Execution
         if (code !="" ) {
-          let codeStates: any = {}
+          let codeStates: Record<string, any> = {}
           codeStates['transaction_group'] = transaction_groupcc5ac;
           codeStates['settransaction_group'] = settransaction_groupcc5ac;
           codeStates['view_all_table'] = view_all_table648c4;
@@ -308,14 +377,14 @@ export default function PageTransactionV1() {
       toast('token not found','danger');
     }    
   }
-  const handleClick = () => {
+  const handleClick = (): void => {
     routes.push("/");
   }
-  const handleOnload=()=>{
+  const handleOnload = (): void => {
   }
 
   useEffect(() => {    
-    setMemoryVariables((prev: any) => ({
+    setMemoryVariables((prev: Record<string, string>) => ({
       ...prev,
       screenName: screenName,    
     }))
@@ -354,7 +423,7 @@ export default function PageTransactionV1() {
           borderWidth: '2px'
       })
       }}>
-        {checktransaction_group && initialLoad &&<Grouptransaction_group  
+        {checktransaction_group && initialLoad &&<Grouptransaction_group
           lockedData={lockedData} 
           setLockedData={setLockedData} 
           primaryTableData={primaryTableData}

@@ -8,6 +8,21 @@ import { Button } from "./Button";
 import { ComponentSize, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 
+type ModalPosition =
+  | "center"
+  | "top"
+  | "bottom"
+  | "left"
+  | "right"
+  | "top-left"
+  | "top-right"
+  | "bottom-left"
+  | "bottom-right"
+  | "center-left"
+  | "center-right";
+
+type ModalSize = "xs" | "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "full" | "auto";
+
 interface ModalProps {
   open: boolean;
   onClose: () => void;
@@ -22,6 +37,8 @@ interface ModalProps {
   headerText?: string;
   headerPosition?: HeaderPosition;
   className?: string;
+  position?: ModalPosition;
+  showOverlay?: boolean;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -39,6 +56,8 @@ export const Modal: React.FC<ModalProps> = ({
   headerText,
   headerPosition = "top",
   className = "",
+  position = "center",
+  showOverlay = true,
 }) => {
   const { isDark, isHighContrast, branding } = useTheme();
 
@@ -77,14 +96,46 @@ export const Modal: React.FC<ModalProps> = ({
     }
   };
 
-  const modalElement = (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fadeIn rounded-lg"
-      style={{
+  const getPositionClasses = (): string => {
+    switch (position) {
+      case "top":
+        return "items-start justify-center pt-8";
+      case "bottom":
+        return "items-end justify-center pb-8";
+      case "left":
+        return "items-center justify-start pl-8";
+      case "right":
+        return "items-center justify-end pr-8";
+      case "top-left":
+        return "items-start justify-start pt-8 pl-8";
+      case "top-right":
+        return "items-start justify-end pt-8 pr-8";
+      case "bottom-left":
+        return "items-end justify-start pb-8 pl-8";
+      case "bottom-right":
+        return "items-end justify-end pb-8 pr-8";
+      case "center-left":
+        return "items-center justify-start pl-8";
+      case "center-right":
+        return "items-center justify-end pr-8";
+      case "center":
+      default:
+        return "items-center justify-center";
+    }
+  };
+
+  const overlayStyles: React.CSSProperties = showOverlay
+    ? {
         backgroundColor: "rgba(0, 0, 0, 0.6)",
         backdropFilter: "blur(2px)",
         WebkitBackdropFilter: "blur(2px)",
-      }}
+      }
+    : {};
+
+  const modalElement = (
+    <div
+      className={`fixed inset-0 z-50 flex rounded-lg ${getPositionClasses()}`}
+      style={overlayStyles}
       onClick={handleOverlayClick}
     >
       <div
@@ -104,9 +155,6 @@ export const Modal: React.FC<ModalProps> = ({
           borderColor: isDark ? "#4B5563" : "#E5E7EB",
           color: isDark ? "#F9FAFB" : "#111827",
           maxHeight: "90vh",
-          boxShadow: isDark
-            ? "0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)"
-            : "0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.05)",
         }}
         onClick={(e) => e.stopPropagation()}
       >

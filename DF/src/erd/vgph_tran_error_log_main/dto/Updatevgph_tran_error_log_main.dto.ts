@@ -57,13 +57,13 @@ export class  Updatevgph_tran_error_log_mainDto {
 
 
 
-
-
         @ApiProperty({
             type: `integer`,
             format: `int32`,
         })
         vgphstm_id: number;
+
+
 
 
 

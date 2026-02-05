@@ -13,9 +13,11 @@ import { codeExecution } from '@/app/utils/codeExecution';
 import { AxiosService } from '@/app/components/axiosService';
 import { getCookie } from '@/app/components/cookieMgment';
 import { useRouter } from 'next/navigation';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { eventBus } from '@/app/eventBus';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
+import { DecodedToken,PrimaryTableData,SecurityData,EncryptionFlagPageData,PaginationData,AllowedGroupNode,ActionDetails } from "@/types/global";
 import * as v from 'valibot';
 
 const TextInputhttp_method = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}:any) => {  
@@ -27,7 +29,7 @@ const TextInputhttp_method = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
   const handleDfdRefresh = useHandleDfdRefresh();
-  const actionDetails :any = {
+  const actionDetails : any = {
   "action": {
     "lock": {
       "lockMode": "",
@@ -67,15 +69,15 @@ const TextInputhttp_method = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
   }
 }
   const {dfd_cdc_checker_action_dfd_v1Props, setdfd_cdc_checker_action_dfd_v1Props} = useContext(TotalContext) as TotalContextProps; 
-  const [isRequredData,setIsRequredData]=useState(false)
-  const toast:any=useInfoMsg()
-  const keyset:any=i18n.keyset("language"); 
-  const [allCode,setAllCode]=useState<any>("");
-  let schemaArray :any =[];  
-  const [dynamicStateandType,setDynamicStateandType]=useState<any>({name:'httpmethod',type:"text"})
-  const routes = useRouter()
-  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState(false);
-  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
+  const [isRequredData,setIsRequredData]=useState<boolean>(false)
+  const toast : Function = useInfoMsg()
+  const keyset : Function = i18n.keyset("language");
+  const [allCode,setAllCode]=useState<string>("");
+  let schemaArray :string[] =[];
+  const [dynamicStateandType,setDynamicStateandType]=useState<Record<string, any>>({name:'httpmethod',type:"text"})
+  const routes: AppRouterInstance = useRouter()
+  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState<boolean>(false);
+  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState<boolean>(false);
   const encryptionFlagCont: boolean = encryptionFlagCompData?.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagCompData?.dpd;
@@ -111,9 +113,9 @@ const TextInputhttp_method = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
   schemaArray = [] ;
   const handleChange = async(e: any) => {
     const newInputValue = dynamicStateandType.type=="number" ? +e.target.value : e.target.value;
-    let code:any=allCode
+    let code:string=allCode;
      if (code != '') {
-      let codeStates: any = {}
+      let codeStates: any = {};
       codeStates['cdc_group']  = {...cdc_group2e1e4,httpmethod:newInputValue},
       codeStates['setcdc_group'] = setcdc_group2e1e4,
       codeStates['details_group']  = {...details_group46bbe,httpmethod:newInputValue},
@@ -122,15 +124,15 @@ const TextInputhttp_method = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
       codeStates['settable_group'] = settable_group05951,
       codeStates['cdc_table']  = {...cdc_table8e54d,httpmethod:newInputValue},
       codeStates['setcdc_table'] = setcdc_table8e54d,
-    codeExecution(code,codeStates)
+    codeExecution(code,codeStates);
     }  
-    setError('')
-    setValidate((pre:any)=>({...pre,httpmethod:undefined}))
+    setError('');
+    setValidate((pre:any)=>({...pre,httpmethod:undefined}));
     if(dynamicStateandType.type=="number"){
-    setdetails_group46bbe((prev: any) => ({ ...prev, httpmethod: +e.target.value }))
+    setdetails_group46bbe((prev: any) => ({ ...prev, httpmethod: +e.target.value }));
     }
     else{
-    setdetails_group46bbe((prev: any) => ({ ...prev, httpmethod: e.target.value }))
+    setdetails_group46bbe((prev: any) => ({ ...prev, httpmethod: e.target.value }));
     }
   }
   const handleBlur=async () => {
@@ -158,24 +160,24 @@ const TextInputhttp_method = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
        
         return
       }
-      setAllCode(orchestrationData?.data?.code)
+      setAllCode(orchestrationData?.data?.code);
       if(orchestrationData?.data?.schemaData[0].nodeType=='apinode'){
       if(orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties){
-        let type:any={name:'httpmethod',type:'text'}
+        let type:any={name:'httpmethod',type:'text'};
         type={
           name:'httpmethod',
           type: orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties.httpmethod.type == 'string' ? 'text' : orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties.httpmethod.type =='integer' ? 'number' : orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties.httpmethod.type
         }
-        setDynamicStateandType(type)
+        setDynamicStateandType(type);
       }
       }else if(orchestrationData?.data?.schemaData[0].nodeType=='dbnode'){
         if(orchestrationData?.data?.schemaData[0].schema.properties){
-        let type:any={name:'httpmethod',type:'text'}
+        let type:any={name:'httpmethod',type:'text'};
         type={
           name:'httpmethod',
           type: orchestrationData?.data?.schemaData[0].schema.properties.httpmethod.type == 'string' ? 'text' : orchestrationData?.data?.schemaData[0].schema.properties.httpmethod.type =='integer' ? 'number' : orchestrationData?.data?.schemaData[0].schema.properties.httpmethod.type
         }
-        setDynamicStateandType(type)
+        setDynamicStateandType(type);
       }
       }
       if(Array.isArray(orchestrationData?.data?.dstData))
@@ -188,13 +190,13 @@ const TextInputhttp_method = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
     }
     catch(err)
     {
-      console.log(err)
+      console.log(err);
     }
   }
 
   useEffect(()=>{
-      handleMapperValue()
-      handleBlur()
+      handleMapperValue();
+      handleBlur();
   },[validateRefetch.value])
   useEffect(() => {
   if(dfd_cdc_checker_action_dfd_v1Props?.setSearchFilters && dfd_cdc_checker_action_dfd_v1Props?.data)

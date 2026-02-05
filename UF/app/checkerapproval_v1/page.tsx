@@ -56,8 +56,8 @@ export default function PageCheckerapprovalV1() {
   const routes : AppRouterInstance = useRouter();
   const toast : Function = useInfoMsg();
   const [primaryTableData, setPrimaryTableData] = useState<PrimaryTableData>({primaryKey:"",value:"",compName:""});
-  const [checkToAdd, setCheckToAdd] = useState<any>({});
-  const [dropdownData, setDropdownData] = useState<any>({});
+  const [checkToAdd, setCheckToAdd] = useState<Record<string, any>>({});
+  const [dropdownData, setDropdownData] = useState<Record<string, any>>({});
   const token:string = getCookie('token'); 
   const decodedTokenObj: DecodedToken = decodeToken(token);
   const screenName:string = "checkerapproval";
@@ -90,7 +90,7 @@ export default function PageCheckerapprovalV1() {
     "method":encryptionMethod
   }
   const [paginationData,setPaginationData]=useState<PaginationData>({count:10,page:1})
-    const prevRefreshRef = useRef<Record<string, boolean>>({
+    const prevRefreshRef = useRef<any>({
       cdc_checker_action_dfd_v1:false,
     });
     async function cdc_checker_action_dfd_v1(pagination:any): Promise<void>{
@@ -290,7 +290,7 @@ export default function PageCheckerapprovalV1() {
         /////////
         //Code Execution
         if (code !="" ) {
-          let codeStates: any = {}
+          let codeStates: Record<string, any> = {}
           codeStates['cdc_group'] = cdc_group2e1e4;
           codeStates['setcdc_group'] = setcdc_group2e1e4;
           codeStates['details_group'] = details_group46bbe;
@@ -310,14 +310,14 @@ export default function PageCheckerapprovalV1() {
       toast('token not found','danger');
     }    
   }
-  const handleClick = () => {
+  const handleClick = (): void => {
     routes.push("/");
   }
-  const handleOnload=()=>{
+  const handleOnload = (): void => {
   }
 
   useEffect(() => {    
-    setMemoryVariables((prev: any) => ({
+    setMemoryVariables((prev: Record<string, string>) => ({
       ...prev,
       screenName: screenName,    
     }))
@@ -356,7 +356,7 @@ export default function PageCheckerapprovalV1() {
           borderWidth: '2px'
       })
       }}>
-        {checkcdc_group && initialLoad &&<Groupcdc_group  
+        {checkcdc_group && initialLoad &&<Groupcdc_group
           lockedData={lockedData} 
           setLockedData={setLockedData} 
           primaryTableData={primaryTableData}

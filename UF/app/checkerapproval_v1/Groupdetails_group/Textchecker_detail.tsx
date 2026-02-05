@@ -1,12 +1,13 @@
 'use client'
 
 
-import React, { useContext,useEffect } from 'react' 
+import React, { useContext,useEffect } from 'react';
 import { Text } from '@/components/Text';
 import { TotalContext, TotalContextProps } from '@/app/globalContext';
 import { AxiosService } from "@/app/components/axiosService";
 import { codeExecution } from '@/app/utils/codeExecution';
-import { deleteAllCookies,getCookie } from '@/app/components/cookieMgment'
+import { deleteAllCookies,getCookie } from '@/app/components/cookieMgment';
+import { DecodedToken,PrimaryTableData,SecurityData,EncryptionFlagPageData,PaginationData,AllowedGroupNode,ActionDetails } from "@/types/global";
 
 const Textchecker_detail = ({encryptionFlagCompData,isDynamic,item,index}:any) => {
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;

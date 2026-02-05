@@ -33,17 +33,17 @@ export class vgph_tran_error_log_mainService {
       "dataType": "childtable"
     },
     {
-      "column": "vgph_tran_dtl_main",
-      "isRequired": true,
-      "dataType": "childtable"
-    },
-    {
       "column": "vgph_tran_log_main",
       "isRequired": true,
       "dataType": "childtable"
     },
     {
       "column": "vgph_tran_error_log_main",
+      "isRequired": true,
+      "dataType": "childtable"
+    },
+    {
+      "column": "vgph_tran_dtl_main",
       "isRequired": true,
       "dataType": "childtable"
     }
@@ -66,6 +66,7 @@ export class vgph_tran_error_log_mainService {
       "dataType": "childtable"
     }
   ],
+  "vgph_message_template_main": [],
   "vgph_source_transactions": [],
   "vgph_source_staging": [
     {
@@ -81,12 +82,12 @@ export class vgph_tran_error_log_mainService {
       "dataType": "childtable"
     },
     {
-      "column": "vgph_tran_dtl_staging",
+      "column": "vgph_tran_log_staging",
       "isRequired": true,
       "dataType": "childtable"
     },
     {
-      "column": "vgph_tran_log_staging",
+      "column": "vgph_tran_dtl_staging",
       "isRequired": true,
       "dataType": "childtable"
     }
@@ -108,7 +109,8 @@ export class vgph_tran_error_log_mainService {
       "isRequired": true,
       "dataType": "childtable"
     }
-  ]
+  ],
+  "vgph_message_template_staging": []
 }
 
   async encryptData(data: any, tableName: string, method) {

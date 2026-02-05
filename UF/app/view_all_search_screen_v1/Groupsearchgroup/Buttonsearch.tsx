@@ -18,6 +18,8 @@ import {Modal} from '@/components/Modal';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { Icon } from '@/components/Icon';
+import { DecodedToken,PrimaryTableData,SecurityData,EncryptionFlagPageData,PaginationData,AllowedGroupNode,ActionDetails } from "@/types/global";
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import evaluateDecisionTable  from '@/app/utils/evaluateDecisionTable';
@@ -51,7 +53,7 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   const token:string = getCookie('token');
   const {currentToken, setCurrentToken} = useContext(TotalContext) as TotalContextProps;
   const decodedTokenObj:any = decodeToken(token);
-  const createdBy:string =decodedTokenObj.users;
+  const createdBy : string = decodedTokenObj.users;
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
   const {validate , setValidate} = useContext(TotalContext) as TotalContextProps;
   const {validateRefetch , setValidateRefetch} = useContext(TotalContext) as TotalContextProps;
@@ -60,35 +62,40 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
   const handleDfdRefresh = useHandleDfdRefresh();
-  let code:any = "";
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const savedData=useRef({})
+
+  
+  let code:string = "";
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const savedData=useRef<Record<string, any>>({})
   const keyset:any=i18n.keyset("language");
   const confirmMsgFlag: boolean = false; 
-  const toast:any=useInfoMsg();
+  const toast : Function=useInfoMsg();
   let dfKey: string | any;
-  const [showFlag, setShowFlag] = React.useState(true);
+  const [showFlag, setShowFlag] = React.useState<boolean>(true);
   const lockMode:any = lockedData.lockMode;
-  const [loading, setLoading] = useState(false);
-  const routes = useRouter();
-  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState(false);
-  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const routes : AppRouterInstance = useRouter();
+  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState<boolean>(false);
+  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState<boolean>(false);
   const encryptionFlagCont: boolean = encryptionFlagCompData.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagCompData.dpd;
   let encryptionMethod: string = "";
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData.method;
-  let actionLockData = {"lockMode":"","name":"","ttl":""}
-  const [allCode,setAllCode]=useState<any>("");
+  let actionLockData : any = {"lockMode":"","name":"","ttl":""}
+  const [allCode,setAllCode]=useState<string>("");
   const [gridPosition, setGridPosition] = useState<any>({ gridColumn: '1 / 3', gridRow: '1 / 12' });
     
  /////////////
    //another screen
+
   const {searchgroupc4337, setsearchgroupc4337}= useContext(TotalContext) as TotalContextProps;
   const {searchgroupc4337Props, setsearchgroupc4337Props}= useContext(TotalContext) as TotalContextProps;
-  const {dymanic_search_input05b50, setdymanic_search_input05b50}= useContext(TotalContext) as TotalContextProps;
+  const {dymanic_search_inputfa005, setdymanic_search_inputfa005}= useContext(TotalContext) as TotalContextProps;
   const {clearf63e8, setclearf63e8}= useContext(TotalContext) as TotalContextProps;
   const {search65fd7, setsearch65fd7}= useContext(TotalContext) as TotalContextProps;
+  const {view_all_table648c4, setview_all_table648c4}= useContext(TotalContext) as TotalContextProps;
+  const {view_all_table648c4Props, setview_all_table648c4Props}= useContext(TotalContext) as TotalContextProps;
   //////////////
 
 
@@ -97,10 +104,10 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   const handleCustomCode=async () => {
     code = allCode ||""
     if (code != '') {
-      let codeStates: any = {};
+      let codeStates: Record<string, any> = {};
       codeStates['searchgroup']  = searchgroupc4337,
       codeStates['setsearchgroup'] = setsearchgroupc4337,
-      codeStates['response']  = savedData.current,
+      codeStates['response']  = savedData.current;
       customCode = codeExecution(code,codeStates);
       return customCode;
     }
@@ -127,14 +134,14 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
         return
       }
       setAllCode(orchestrationData?.data?.code);
-      if(orchestrationData?.data?.rule.nodes.length > 0){
+      if(orchestrationData?.data?.rule?.nodes?.length > 0){
         let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
         // schemaFlag =schemaFlag.output;
-        let order:any = Number(schemaFlag.order);
+        let order:number = Number(schemaFlag.order);
 
         // Update grid position based on order number
         if (order && typeof order === 'number') {
-          const position = getGridPositionFromOrder(order);
+          const position : any = getGridPositionFromOrder(order);
           setGridPosition(position);
         } 
 
@@ -159,8 +166,8 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   },[search65fd7?.refresh,currentToken])
 
   function SourceIdFilter(eventProperty:any,matchingSequence?:string){
-    let ans=[]
-    let id=""
+    let ans : any[] = [];
+    let id : string = "";
     if(eventProperty.name=='saveHandler' && eventProperty.sequence == matchingSequence)
     {
       return [eventProperty.id]
@@ -182,6 +189,99 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
     return ans
   }
 
+///////////////////
+async function handleSearch0() {
+  let mainData: any =  nullFilter(structuredClone(searchgroupc4337));
+  let temp: any = {}
+  searchgroupc4337Props?.needToSpread?.map((keys:any)=>{
+    delete mainData?.[keys]
+  })
+  Object.keys(mainData)?.forEach(key => {
+    temp[key] = key
+  })
+  let filterProps:any=[]
+   let spreadedValues:any = [ 
+      {
+        "key": "CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Get_Transaction_DFD:AFVK:v1",
+        nodeBasedData: [                          {
+                            "nodeId":"5bc8f410f27248d88fc91b7fe01fb9c0",
+                            "object":{
+                              ...temp
+                            }
+                          },
+                    ]
+      },
+  ]
+  let originalFiltervalues:any =  [
+  {
+    "key": "CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Get_Transaction_DFD:AFVK:v1",
+    "nodeBasedData": [
+      {
+        "nodeId": "5bc8f410f27248d88fc91b7fe01fb9c0",
+        "object": {}
+      }
+    ]
+  }
+];
+  if(searchgroupc4337Props?.needToSpread?.length)
+  {
+    filterProps = spreadedValues
+  }else{
+    filterProps = originalFiltervalues
+  }
+  let filterData = await getFilterProps(filterProps, mainData)
+  if(Object.keys(mainData).length>0) { 
+    filterData = filterData.map((item:any) => {
+      const { DFDkey, ...rest } = item;
+      return rest;
+    });
+  } else {
+    filterData = [];
+  }
+  filterData=nullFilter(filterData)
+  let te_refreshBody: te_refreshDto = {
+    key: filterProps[0].key + ":",
+    upId: '',
+    refreshFlag: 'Y',
+    count: 10,
+    page: 1,
+    filterData: filterData
+  }
+  if (encryptionFlagCont) {
+    te_refreshBody['dpdKey'] = encryptionDpd
+    te_refreshBody['method'] = encryptionMethod
+  }
+  const te_refresh: any = await AxiosService.post(
+    '/te/eventEmitter',
+    te_refreshBody,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      }
+    }
+  )
+setview_all_table648c4Props((prev: any) => {
+  const existingFilters = prev.filterProps ?? [];
+  const mergedFilters: any[] = [];
+  
+  const allFilters : any[] = [...existingFilters, ...filterData];
+  const groupedByNodeId : any = allFilters.reduce((acc: any, item: any) => {
+    const nodeId = item.nodeId;
+    if (!acc[nodeId]) {
+      acc[nodeId] = {};
+    }
+    Object.assign(acc[nodeId], item);
+    return acc;
+  }, {});
+  
+   const mergedData : any = Object.values(groupedByNodeId);
+
+    return { ...prev, filterProps: filterData };
+
+});
+  }
+  ///////////////
   const handleClick=async()=>{
     if(searchgroupc4337Props?.validation==true && searchgroupc4337Props?.required==true || searchgroupc4337Props?.required==true)
     {
@@ -202,7 +302,14 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
       return
     }
     try{  
-      await delay(1000);
+      await  handleSearch0();
+    // clearHandler riseListen
+    // for group
+    Object.keys(searchgroupc4337).map((keys:any)=>{         
+      searchgroupc4337[keys]="";
+    })
+    setsearchgroupc4337({...searchgroupc4337});
+          await delay(1000);
       await handleCustomCode();
     }catch (err: any) {
       if(typeof err == 'string')
@@ -210,6 +317,20 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
       else
         toast(err?.response?.data?.errorDetails?.message, 'danger');
       setLoading(false);
+    }
+  }
+  async function handleConfirmOnClick(){
+    try{
+    }catch(err){
+      toast(err, 'danger');
+    }
+  } 
+
+
+  async function handleConfirmOnCancel(){
+     try{
+    }catch(err){
+      toast(err, 'danger');
     }
   }
 

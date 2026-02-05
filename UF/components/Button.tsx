@@ -503,6 +503,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
         ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
         ${isRecordLevel ? "relative overflow-hidden" : ""}
         ${fontSizeClass}
+        gap-x-1
         ${className}
       `}
       dir={direction}

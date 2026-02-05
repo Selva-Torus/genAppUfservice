@@ -27,6 +27,9 @@ import { eventBus } from '@/app/eventBus';
 import { getFilterProps, getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import i18n from '@/app/components/i18n';
 import decodeToken from '@/app/components/decodeToken';
+
+// page import
+import PageTranJourneypage from '@/app/tran_journey_v1/tran_journey_v1page';
 import Buttonview_all_logs  from './Buttonview_all_logs'
 import Buttonview_all_button  from './Buttonview_all_button'
 
@@ -248,6 +251,8 @@ const Tableview_all_table = ({ lockedData,setLockedData,primaryTableData, setPri
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps
   const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
+  const {tran_journey_v1Props, settran_journey_v1Props}= useContext(TotalContext) as TotalContextProps; 
+  //////////////////
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps
   const [translatedColumns,setTranslatedColumns]= useState<any>([])
   const securityData:any={
@@ -331,6 +336,10 @@ const Tableview_all_table = ({ lockedData,setLockedData,primaryTableData, setPri
   const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
   const [searchFilterFlag, setSearchFilterFlag] = useState(false);
   const keyset:any=i18n.keyset("language") 
+    const [needLockingAndRule, setNeedLockingAndRule] = useState<any>({
+      lockMode: 'Single',
+      ttl: ''
+    })
   const [DFkeyAndRule, setDFkeyAndRule] = React.useState({
     isRulePresent:false,
     dfKey:"",
@@ -362,6 +371,8 @@ const Tableview_all_table = ({ lockedData,setLockedData,primaryTableData, setPri
   const {failure_queue_tab11090Props, setfailure_queue_tab11090Props}= useContext(TotalContext) as TotalContextProps  
   const {failure_queue_table449a9, setfailure_queue_table449a9}= useContext(TotalContext) as TotalContextProps  
   const {failure_queue_table449a9Props, setfailure_queue_table449a9Props}= useContext(TotalContext) as TotalContextProps  
+  const {tran_journey_groupbe7ae, settran_journey_groupbe7ae}= useContext(TotalContext) as TotalContextProps  
+  const {tran_journey_groupbe7aeProps, settran_journey_groupbe7aeProps}= useContext(TotalContext) as TotalContextProps  
   //////////////
   const [goruleData,setGoruleData]=useState<any>({})
   function getValueByPath(obj: any, path: string): any {
@@ -494,6 +505,13 @@ const Tableview_all_table = ({ lockedData,setLockedData,primaryTableData, setPri
         dfKey = orchestrationData?.data?.dfKey
         dfdType = orchestrationData?.data?.dfdNodeType
     
+    // for locking data ttl ,mode and rule
+    setNeedLockingAndRule((pre: any) => ({
+      ...pre,
+          lockMode:orchestrationData?.data?.action?.lock?.lockMode || "",
+          ttl :orchestrationData?.data?.action?.lock?.ttl || ""
+    }))
+    
         fetchData(orchestrationData?.data?.action?.pagination?.page,orchestrationData?.data?.action?.pagination?.count,{},{dfKey,dfdType},Object.keys(orchestrationData?.data?.rule).length!=0 && orchestrationData?.data?.rule?.nodes?.length!=0 && orchestrationData?.data?.rule?.edges?.length!=0  ? true:false)
   }
     } 
@@ -501,7 +519,102 @@ const Tableview_all_table = ({ lockedData,setLockedData,primaryTableData, setPri
   const [SearchParams,setSearchParams] = useState<any>({})
 
     const setLockMode=async(ids:any)=>{
-      ///////////////////////////
+    /// setview_all_table648c4Props
+    let postIds: any = []
+    let processIds: any = []
+    let selectedData:any=[]
+    if(needLockingAndRule.lockMode=='Single'){
+      // its for ui level selected list show for single select
+      if (ids.length == 0) {
+        let keys:any
+        keys={}       
+        Object.keys(tran_journey_groupbe7ae).map((item: any) => {
+          keys[item] = null
+        }) 
+        settran_journey_groupbe7ae(keys)
+        keys={}       
+        Object.keys(tran_journey_groupbe7aeProps?.presetValues).map((item: any) => {
+          keys[item] = null
+        }) 
+        settran_journey_groupbe7aeProps((pre:any)=>({...pre.presetValues,...keys}))
+        setview_all_table648c4Props((pre:any)=>({...pre, selectedIds:[]}))
+        settran_journey_groupbe7ae({})
+        settran_journey_groupbe7aeProps({...tran_journey_groupbe7aeProps,presetValues:{}})
+        setLockedData((pre:any)=>({...pre,data:[]}))
+        return
+      }
+
+      view_all_table648c4.filter((item:any,id:number)=>{
+        if (ids[ids.length - 1] == id.toString()){
+          selectedData?.push(allData[id])
+          postIds.push(item.vgphst_id)
+          processIds.push(item?.trs_process_id)
+        }
+      })
+
+      //////////
+        settran_journey_groupbe7ae(allData[ids])
+        settran_journey_groupbe7aeProps({...tran_journey_groupbe7aeProps,presetValues:{}})
+      //////////
+      setview_all_table648c4Props((pre:any)=>({...pre, selectedIds:[ids[ids.length-1]]}))      
+    }
+    else if(needLockingAndRule.lockMode==='Multi'){
+      // its for ui level selected list show for multi select
+      view_all_table648c4.filter((item:any,id:number)=>{
+        if (ids.includes(id.toString())){
+          selectedData?.push(allData[id])
+          postIds.push(item.vgphst_id) 
+          processIds.push(item?.trs_process_id)
+        } 
+      })
+      setview_all_table648c4Props((pre:any)=>({...pre, selectedIds:ids}))
+    }
+      settran_journey_groupbe7ae(selectedData[0]||{})
+      settran_journey_groupbe7aeProps({...tran_journey_groupbe7aeProps,presetValues:selectedData[0]||{}})
+    let checkedData: any = selectedPaginationData
+    if (checkedData.length) {
+      let itsAlreadyThere: boolean = false
+      selectedPaginationData.map((item: any) => {
+        if (item.page == paginationData.page) {
+          itsAlreadyThere = true
+        }
+      })
+      if (itsAlreadyThere) {
+        for (let i = 0; i < checkedData.length; i++) {
+          if (checkedData[i].page == paginationData.page) {
+            checkedData[i].data = ids
+            break
+          }
+        }
+      } else {
+        checkedData = [
+          ...checkedData,
+          {
+            page: paginationData.page,
+            data: ids
+          }
+        ]
+      }
+    } else {
+      checkedData.push({
+        page: paginationData.page,
+        data: ids
+      })
+    }
+    setSelectedPaginationData(checkedData)
+    let filterProps:any =  [];
+    let filterData = await getFilterProps(filterProps,lockedData);
+    settran_journey_v1Props([...filterData ]);
+        setShowProfileAsModalOpen(true)
+
+    setLockedData({
+      ...lockedData,
+      processIds: processIds,
+      data:selectedData,
+      primaryKeys: postIds,
+      lockMode: needLockingAndRule,
+      ttl: needLockingAndRule.ttl
+    })
 
   }
   const [selectedPaginationData, setSelectedPaginationData] = useState<any[]>(
@@ -522,6 +635,8 @@ const Tableview_all_table = ({ lockedData,setLockedData,primaryTableData, setPri
     setPaginationData(prevState => ({ ...prevState, page, pageSize }))
     fetchData(page, pageSize,searchParams,DFkeyAndRule,DFkeyAndRule?.isRulePresent,false)
   }
+  async function onSelectionChange(e:any) {
+    }
 
   async function fetchData(page:any = 1, pageSize:any = 10, searchParams = {},dfKey:any,isRulePresent:any=false,isOnLoad = false,filterProps?:any) {
     if(isRulePresent==undefined)
@@ -744,8 +859,15 @@ const Tableview_all_table = ({ lockedData,setLockedData,primaryTableData, setPri
       //   }
       // )
       if (uf_paginationDataFilter.data.length >= 0&&Array.isArray(uf_paginationDataFilter.data)) {
-        let filtertedData:any=structuredClone(uf_paginationDataFilter.data)||[]
-        setview_all_table648c4(uf_paginationDataFilter.data||[])
+        let filtertedData:any;
+      // CopyFromData (Parent table): use presetValues if present, else use pagination-filtered data
+        
+        if ( view_all_table648c4Props?.presetValues&&Object.keys(view_all_table648c4Props?.presetValues).length > 0) {
+          filtertedData = [view_all_table648c4Props?.presetValues];
+        }else {
+          filtertedData = structuredClone(uf_paginationDataFilter.data)||[]
+          setview_all_table648c4(uf_paginationDataFilter.data||[])
+        }
         defaultColumns.map((items:any)=>{
           if(items?.isColourIndicator==true)
           {
@@ -901,6 +1023,8 @@ const colurIndicator = (keyValue:any=[], comingValue:any,ColourIndicatorType:any
   }, [view_all_table648c4Props?.selectedIds])
 
 
+  async function handleConfirmOnSelectionChange(){
+  } 
 
   function onButtonSecurityHandle(data: any) {
     let nodes = Object.keys(goruleData) || []
@@ -926,6 +1050,13 @@ const colurIndicator = (keyValue:any=[], comingValue:any,ColourIndicatorType:any
   }
   return(
     <div className='w-full h-full'>
+      <Modal 
+      open={showProfileAsModalOpen} 
+      onClose={() => setShowProfileAsModalOpen(false)} 
+      //title={"Tran_Journey"}
+      className='w-[] h-[] bg-gray-50 mx-auto rounded-lg shadow-xl p-5 overflow-auto'>
+        <PageTranJourneypage/>
+      </Modal>
           <div className=' w-full flex flex-row h-[80%]'>
             <Table
               className=""
@@ -933,24 +1064,25 @@ const colurIndicator = (keyValue:any=[], comingValue:any,ColourIndicatorType:any
               columns={translatedColumns}
               edgePadding={true}
               tableActions={true}
+              tableSelection={true}
               selectedIds={view_all_table648c4Props?.selectedIds}  
               onSelectionChange={setLockMode} 
+              selectionMode={needLockingAndRule?.lockMode}
               renderRowActions={RowAction}
               wordWrap={true}
               loading={loading}
               onRowClick={onButtonSecurityHandle}
               isRowclick={false}
+              showPagination={paginationData?.page != null && paginationData?.pageSize != null && paginationData?.total != null && Array.isArray(allDataObject) && allDataObject.length>0}
+              pagination={{
+                page : paginationData.page,
+                pageSize : paginationData.pageSize,
+                pageSizeOptions : [5, 10, 20, 50, 100],
+                total:paginationData.total,
+                onUpdate:(e:any)=>handleUpdate(e.page,e.pageSize)
+              }}
             />
             </div>
-            {paginationData?.page != null && paginationData?.pageSize != null && paginationData?.total != null && Array.isArray(allDataObject) && allDataObject.length>0 ?
-              <Pagination
-              //className='flex w-full items-center justify-center'
-              page={paginationData.page}
-              pageSize={paginationData.pageSize}
-              pageSizeOptions={[5, 10, 20, 50, 100]}
-              total={paginationData.total}
-              onUpdate={(e:any)=>handleUpdate(e.page,e.pageSize)}
-            />:null}
     </div>
   )
 }

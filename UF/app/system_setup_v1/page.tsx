@@ -47,8 +47,8 @@ export default function PageSystemSetupV1() {
   const routes : AppRouterInstance = useRouter();
   const toast : Function = useInfoMsg();
   const [primaryTableData, setPrimaryTableData] = useState<PrimaryTableData>({primaryKey:"",value:"",compName:""});
-  const [checkToAdd, setCheckToAdd] = useState<any>({});
-  const [dropdownData, setDropdownData] = useState<any>({});
+  const [checkToAdd, setCheckToAdd] = useState<Record<string, any>>({});
+  const [dropdownData, setDropdownData] = useState<Record<string, any>>({});
   const token:string = getCookie('token'); 
   const decodedTokenObj: DecodedToken = decodeToken(token);
   const screenName:string = "system setup";
@@ -75,7 +75,7 @@ export default function PageSystemSetupV1() {
     "method":encryptionMethod
   }
   const [paginationData,setPaginationData]=useState<PaginationData>({count:10,page:1})
-    const prevRefreshRef = useRef<Record<string, boolean>>({
+    const prevRefreshRef = useRef<any>({
       master_system_setup_dfd_v1:false,
     });
     async function master_system_setup_dfd_v1(pagination:any): Promise<void>{
@@ -263,7 +263,7 @@ export default function PageSystemSetupV1() {
         /////////
         //Code Execution
         if (code !="" ) {
-          let codeStates: any = {}
+          let codeStates: Record<string, any> = {}
           codeStates['system_setup_group'] = system_setup_group2af15;
           codeStates['setsystem_setup_group'] = setsystem_setup_group2af15;
           codeExecution(code,codeStates);
@@ -277,14 +277,14 @@ export default function PageSystemSetupV1() {
       toast('token not found','danger');
     }    
   }
-  const handleClick = () => {
+  const handleClick = (): void => {
     routes.push("/");
   }
-  const handleOnload=()=>{
+  const handleOnload = (): void => {
   }
 
   useEffect(() => {    
-    setMemoryVariables((prev: any) => ({
+    setMemoryVariables((prev: Record<string, string>) => ({
       ...prev,
       screenName: screenName,    
     }))
@@ -323,7 +323,7 @@ export default function PageSystemSetupV1() {
           borderWidth: '2px'
       })
       }}>
-        {checksystem_setup_group && initialLoad &&<Groupsystem_setup_group  
+        {checksystem_setup_group && initialLoad &&<Groupsystem_setup_group
           lockedData={lockedData} 
           setLockedData={setLockedData} 
           primaryTableData={primaryTableData}

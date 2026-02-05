@@ -18,6 +18,8 @@ import {Modal} from '@/components/Modal';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { Icon } from '@/components/Icon';
+import { DecodedToken,PrimaryTableData,SecurityData,EncryptionFlagPageData,PaginationData,AllowedGroupNode,ActionDetails } from "@/types/global";
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import evaluateDecisionTable  from '@/app/utils/evaluateDecisionTable';
@@ -52,7 +54,7 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   const token:string = getCookie('token');
   const {currentToken, setCurrentToken} = useContext(TotalContext) as TotalContextProps;
   const decodedTokenObj:any = decodeToken(token);
-  const createdBy:string =decodedTokenObj.users;
+  const createdBy : string = decodedTokenObj.users;
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
   const {validate , setValidate} = useContext(TotalContext) as TotalContextProps;
   const {validateRefetch , setValidateRefetch} = useContext(TotalContext) as TotalContextProps;
@@ -61,30 +63,33 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
   const handleDfdRefresh = useHandleDfdRefresh();
-  let code:any = "";
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const savedData=useRef({})
+
+  
+  let code:string = "";
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const savedData=useRef<Record<string, any>>({})
   const keyset:any=i18n.keyset("language");
   const confirmMsgFlag: boolean = false; 
-  const toast:any=useInfoMsg();
+  const toast : Function=useInfoMsg();
   let dfKey: string | any;
-  const [showFlag, setShowFlag] = React.useState(true);
+  const [showFlag, setShowFlag] = React.useState<boolean>(true);
   const lockMode:any = lockedData.lockMode;
-  const [loading, setLoading] = useState(false);
-  const routes = useRouter();
-  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState(false);
-  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const routes : AppRouterInstance = useRouter();
+  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState<boolean>(false);
+  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState<boolean>(false);
   const encryptionFlagCont: boolean = encryptionFlagCompData.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagCompData.dpd;
   let encryptionMethod: string = "";
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData.method;
-  let actionLockData = {"lockMode":"","name":"","ttl":""}
-  const [allCode,setAllCode]=useState<any>("");
+  let actionLockData : any = {"lockMode":"","name":"","ttl":""}
+  const [allCode,setAllCode]=useState<string>("");
   const [gridPosition, setGridPosition] = useState<any>({ gridColumn: '1 / 3', gridRow: '1 / 12' });
     
  /////////////
    //another screen
+
   const {transaction_groupcc5ac, settransaction_groupcc5ac}= useContext(TotalContext) as TotalContextProps;
   const {transaction_groupcc5acProps, settransaction_groupcc5acProps}= useContext(TotalContext) as TotalContextProps;
   const {tab_group05125, settab_group05125}= useContext(TotalContext) as TotalContextProps;
@@ -110,14 +115,14 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   const handleCustomCode=async () => {
     code = allCode ||""
     if (code != '') {
-      let codeStates: any = {};
+      let codeStates: Record<string, any> = {};
       codeStates['transaction_group']  = transaction_groupcc5ac,
       codeStates['settransaction_group'] = settransaction_groupcc5ac,
       codeStates['view_all_table']  = view_all_table648c4,
       codeStates['setview_all_table'] = setview_all_table648c4,
       codeStates['failure_queue_table']  = failure_queue_table449a9,
       codeStates['setfailure_queue_table'] = setfailure_queue_table449a9,
-      codeStates['response']  = savedData.current,
+      codeStates['response']  = savedData.current;
       customCode = codeExecution(code,codeStates);
       return customCode;
     }
@@ -144,14 +149,14 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
         return
       }
       setAllCode(orchestrationData?.data?.code);
-      if(orchestrationData?.data?.rule.nodes.length > 0){
+      if(orchestrationData?.data?.rule?.nodes?.length > 0){
         let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
         // schemaFlag =schemaFlag.output;
-        let order:any = Number(schemaFlag.order);
+        let order:number = Number(schemaFlag.order);
 
         // Update grid position based on order number
         if (order && typeof order === 'number') {
-          const position = getGridPositionFromOrder(order);
+          const position : any = getGridPositionFromOrder(order);
           setGridPosition(position);
         } 
 
@@ -176,8 +181,8 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   },[searchfdc03?.refresh,currentToken])
 
   function SourceIdFilter(eventProperty:any,matchingSequence?:string){
-    let ans=[]
-    let id=""
+    let ans : any[] = [];
+    let id : string = "";
     if(eventProperty.name=='saveHandler' && eventProperty.sequence == matchingSequence)
     {
       return [eventProperty.id]
@@ -221,7 +226,7 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
     try{  
     // showComponentAsPopup
     setShowElementAsPopupOpen(true);
-      await delay(1000);
+          await delay(1000);
       await handleCustomCode();
     }catch (err: any) {
       if(typeof err == 'string')

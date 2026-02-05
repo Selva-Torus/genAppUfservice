@@ -42,7 +42,7 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
   const { branding } = useGlobal()
   const { brandColor } = branding
   const { bgColor, borderColor, textColor } = useTheme()
-  const onBoardingKey : string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"
+  const onBoardingKey : string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,

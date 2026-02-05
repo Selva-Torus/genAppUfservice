@@ -33,17 +33,17 @@ export class vgph_source_tran_mainService {
       "dataType": "childtable"
     },
     {
-      "column": "vgph_tran_dtl_main",
-      "isRequired": true,
-      "dataType": "childtable"
-    },
-    {
       "column": "vgph_tran_log_main",
       "isRequired": true,
       "dataType": "childtable"
     },
     {
       "column": "vgph_tran_error_log_main",
+      "isRequired": true,
+      "dataType": "childtable"
+    },
+    {
+      "column": "vgph_tran_dtl_main",
       "isRequired": true,
       "dataType": "childtable"
     }
@@ -66,6 +66,7 @@ export class vgph_source_tran_mainService {
       "dataType": "childtable"
     }
   ],
+  "vgph_message_template_main": [],
   "vgph_source_transactions": [],
   "vgph_source_staging": [
     {
@@ -81,12 +82,12 @@ export class vgph_source_tran_mainService {
       "dataType": "childtable"
     },
     {
-      "column": "vgph_tran_dtl_staging",
+      "column": "vgph_tran_log_staging",
       "isRequired": true,
       "dataType": "childtable"
     },
     {
-      "column": "vgph_tran_log_staging",
+      "column": "vgph_tran_dtl_staging",
       "isRequired": true,
       "dataType": "childtable"
     }
@@ -108,7 +109,8 @@ export class vgph_source_tran_mainService {
       "isRequired": true,
       "dataType": "childtable"
     }
-  ]
+  ],
+  "vgph_message_template_staging": []
 }
 
   async encryptData(data: any, tableName: string, method) {
@@ -582,27 +584,6 @@ export class vgph_source_tran_mainService {
           trs_sub_org_grp_code:true
               }
             },
-            vgph_tran_dtl_main:{
-              select:{
-              vgphtdm_id:true,              tenant_id:true,              product_code:true,              direction:true,              process_type:true,              tran_category:true,              process_code:true,              flow_code:true,              step_code:true,              product_basic:true,              product_additional:true,              process_data:true,              vgphstm_uuid:true            ,
-          trs_created_date:true,
-          trs_created_by:true,
-          trs_modified_date:true,
-          trs_modified_by:true,
-          trs_next_status:true,
-          trs_status:true,
-          trs_process_id:true,
-          trs_access_profile:true,
-          trs_org_grp_code:true,
-          trs_org_code:true,
-          trs_role_grp_code:true,
-          trs_role_code:true,
-          trs_ps_grp_code:true,
-          trs_ps_code:true,
-          trs_sub_org_code:true,
-          trs_sub_org_grp_code:true
-              }
-            },
             vgph_tran_log_main:{
               select:{
               vgphtlm_id:true,              tenant_id:true,              product_code:true,              direction:true,              process_type:true,              tran_category:true,              process_category:true,              processing_system:true,              message_code:true,              process_code:true,              previous_process_code:true,              next_process_code:true,              flow_code:true,              step_code:true,              task_start_time:true,              task_end_time:true,              source_data:true,              request_data:true,              response_data:true,              message_data:true,              process_start_time:true,              process_end_time:true,              retry_flag:true,              retry_count:true,              manual_context:true,              action_context:true,              status:true,              action:true,              version:true,              vgphstm_uuid:true            ,
@@ -627,6 +608,27 @@ export class vgph_source_tran_mainService {
             vgph_tran_error_log_main:{
               select:{
               vgphtelm_id:true,              tenant_id:true,              product_code:true,              direction:true,              process_type:true,              tran_category:true,              process_code:true,              error_cateogry:true,              error_code:true,              error_desc:true,              error_data:true,              vgphstm_uuid:true            ,
+          trs_created_date:true,
+          trs_created_by:true,
+          trs_modified_date:true,
+          trs_modified_by:true,
+          trs_next_status:true,
+          trs_status:true,
+          trs_process_id:true,
+          trs_access_profile:true,
+          trs_org_grp_code:true,
+          trs_org_code:true,
+          trs_role_grp_code:true,
+          trs_role_code:true,
+          trs_ps_grp_code:true,
+          trs_ps_code:true,
+          trs_sub_org_code:true,
+          trs_sub_org_grp_code:true
+              }
+            },
+            vgph_tran_dtl_main:{
+              select:{
+              vgphtdm_id:true,              tenant_id:true,              product_code:true,              direction:true,              process_type:true,              tran_category:true,              process_code:true,              flow_code:true,              step_code:true,              product_basic:true,              product_additional:true,              process_data:true,              vgphstm_uuid:true            ,
           trs_created_date:true,
           trs_created_by:true,
           trs_modified_date:true,
@@ -758,27 +760,6 @@ prctm_id :true,        trs_created_date:true,
           trs_sub_org_grp_code:true
               }
             },
-          vgph_tran_dtl_main:{
-              select:{
-              vgphtdm_id:true,              tenant_id:true,              product_code:true,              direction:true,              process_type:true,              tran_category:true,              process_code:true,              flow_code:true,              step_code:true,              product_basic:true,              product_additional:true,              process_data:true,              vgphstm_uuid:true            ,
-          trs_created_date:true,
-          trs_created_by:true,
-          trs_modified_date:true,
-          trs_modified_by:true,
-          trs_next_status:true,
-          trs_status:true,
-          trs_process_id:true,
-          trs_access_profile:true,
-          trs_org_grp_code:true,
-          trs_org_code:true,
-          trs_role_grp_code:true,
-          trs_role_code:true,
-          trs_ps_grp_code:true,
-          trs_ps_code:true,
-          trs_sub_org_code:true,
-          trs_sub_org_grp_code:true
-              }
-            },
           vgph_tran_log_main:{
               select:{
               vgphtlm_id:true,              tenant_id:true,              product_code:true,              direction:true,              process_type:true,              tran_category:true,              process_category:true,              processing_system:true,              message_code:true,              process_code:true,              previous_process_code:true,              next_process_code:true,              flow_code:true,              step_code:true,              task_start_time:true,              task_end_time:true,              source_data:true,              request_data:true,              response_data:true,              message_data:true,              process_start_time:true,              process_end_time:true,              retry_flag:true,              retry_count:true,              manual_context:true,              action_context:true,              status:true,              action:true,              version:true,              vgphstm_uuid:true            ,
@@ -803,6 +784,27 @@ prctm_id :true,        trs_created_date:true,
           vgph_tran_error_log_main:{
               select:{
               vgphtelm_id:true,              tenant_id:true,              product_code:true,              direction:true,              process_type:true,              tran_category:true,              process_code:true,              error_cateogry:true,              error_code:true,              error_desc:true,              error_data:true,              vgphstm_uuid:true            ,
+          trs_created_date:true,
+          trs_created_by:true,
+          trs_modified_date:true,
+          trs_modified_by:true,
+          trs_next_status:true,
+          trs_status:true,
+          trs_process_id:true,
+          trs_access_profile:true,
+          trs_org_grp_code:true,
+          trs_org_code:true,
+          trs_role_grp_code:true,
+          trs_role_code:true,
+          trs_ps_grp_code:true,
+          trs_ps_code:true,
+          trs_sub_org_code:true,
+          trs_sub_org_grp_code:true
+              }
+            },
+          vgph_tran_dtl_main:{
+              select:{
+              vgphtdm_id:true,              tenant_id:true,              product_code:true,              direction:true,              process_type:true,              tran_category:true,              process_code:true,              flow_code:true,              step_code:true,              product_basic:true,              product_additional:true,              process_data:true,              vgphstm_uuid:true            ,
           trs_created_date:true,
           trs_created_by:true,
           trs_modified_date:true,
@@ -892,6 +894,7 @@ prctm_id :true,        trs_created_date:true,
         SHA="SHA",
         OUR="OUR",
         BEN="BEN",
+        SLEV="SLEV",
       }
       const dataSchema:any =  v.object({
             tenant_id :v.pipe(v.string(),v.maxLength(16 )) , 
@@ -968,7 +971,7 @@ prctm_id :true,        trs_created_date:true,
         
       const res = await this.prismaService.vgph_source_tran_main.create({ 
       data: await this.encryptData(createvgph_source_tran_mainDto,'vgph_source_tran_main','create'),
-      select:{vgphstm_id:true,tenant_id:true,parent_vgphstm_uuid:true,product_code:true,direction:true,process_type:true,tran_category:true,message_code:true,channel_name:true,channel_reference:true,tran_date:true,tran_reference:true,tran_seq_no:true,value_date:true,settlement_date:true,dr_account:true,dr_bank_code_type:true,dr_bank_code:true,dr_name:true,dr_amount:true,dr_currency:true,cr_account:true,cr_bank_code_type:true,cr_bank_code:true,cr_name:true,cr_amount:true,cr_currency:true,remittance_info:true,product_basic:true,product_additional:true,charge_type:true,uuid:true,vgphsm_uuid:true,vgphsm_id :true,vgph_destination_tran_main:true,vgph_tran_dtl_main:true,vgph_tran_log_main:true,vgph_tran_error_log_main:true,prctm_id :true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true}
+      select:{vgphstm_id:true,tenant_id:true,parent_vgphstm_uuid:true,product_code:true,direction:true,process_type:true,tran_category:true,message_code:true,channel_name:true,channel_reference:true,tran_date:true,tran_reference:true,tran_seq_no:true,value_date:true,settlement_date:true,dr_account:true,dr_bank_code_type:true,dr_bank_code:true,dr_name:true,dr_amount:true,dr_currency:true,cr_account:true,cr_bank_code_type:true,cr_bank_code:true,cr_name:true,cr_amount:true,cr_currency:true,remittance_info:true,product_basic:true,product_additional:true,charge_type:true,uuid:true,vgphsm_uuid:true,vgphsm_id :true,vgph_destination_tran_main:true,vgph_tran_log_main:true,vgph_tran_error_log_main:true,vgph_tran_dtl_main:true,prctm_id :true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true}
           
     })
     return await this.decryptData(res, 'vgph_source_tran_main');
@@ -1122,6 +1125,7 @@ prctm_id :true,        trs_created_date:true,
         SHA="SHA",
         OUR="OUR",
         BEN="BEN",
+        SLEV="SLEV",
       }
       const dataSchema:any =  v.object({
             tenant_id :v.pipe(v.string(),v.maxLength(16 )) , 
@@ -1293,6 +1297,7 @@ prctm_id :true,        trs_created_date:true,
         SHA="SHA",
         OUR="OUR",
         BEN="BEN",
+        SLEV="SLEV",
       }
       const dataSchema:any =  v.object({
           tenant_id :  v.optional(v.pipe(v.string(),v.maxLength(16 ))), 
@@ -1369,7 +1374,7 @@ prctm_id :true,        trs_created_date:true,
       const res = await this.prismaService.vgph_source_tran_main.update({
       where: {vgphstm_id},
       data: await this.encryptData(updatevgph_source_tran_mainDto,'vgph_source_tran_main','update'),
-      select: {vgphstm_id:true,tenant_id:true,parent_vgphstm_uuid:true,product_code:true,direction:true,process_type:true,tran_category:true,message_code:true,channel_name:true,channel_reference:true,tran_date:true,tran_reference:true,tran_seq_no:true,value_date:true,settlement_date:true,dr_account:true,dr_bank_code_type:true,dr_bank_code:true,dr_name:true,dr_amount:true,dr_currency:true,cr_account:true,cr_bank_code_type:true,cr_bank_code:true,cr_name:true,cr_amount:true,cr_currency:true,remittance_info:true,product_basic:true,product_additional:true,charge_type:true,uuid:true,vgphsm_uuid:true,vgphsm_id :true,vgph_destination_tran_main:true,vgph_tran_dtl_main:true,vgph_tran_log_main:true,vgph_tran_error_log_main:true,prctm_id :true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true}
+      select: {vgphstm_id:true,tenant_id:true,parent_vgphstm_uuid:true,product_code:true,direction:true,process_type:true,tran_category:true,message_code:true,channel_name:true,channel_reference:true,tran_date:true,tran_reference:true,tran_seq_no:true,value_date:true,settlement_date:true,dr_account:true,dr_bank_code_type:true,dr_bank_code:true,dr_name:true,dr_amount:true,dr_currency:true,cr_account:true,cr_bank_code_type:true,cr_bank_code:true,cr_name:true,cr_amount:true,cr_currency:true,remittance_info:true,product_basic:true,product_additional:true,charge_type:true,uuid:true,vgphsm_uuid:true,vgphsm_id :true,vgph_destination_tran_main:true,vgph_tran_log_main:true,vgph_tran_error_log_main:true,vgph_tran_dtl_main:true,prctm_id :true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true}
     });
     return await this.decryptData(res, 'vgph_source_tran_main');
     } catch (error) {
@@ -1523,6 +1528,7 @@ vgphstm_id:number,
         SHA="SHA",
         OUR="OUR",
         BEN="BEN",
+        SLEV="SLEV",
       }
       const dataSchema:any =  v.object({
           tenant_id :  v.optional(v.pipe(v.string(),v.maxLength(16 ))), 
@@ -1669,7 +1675,7 @@ vgphstm_id:number,
     try{
       const res = await this.prismaService.vgph_source_tran_main.delete({
       where: {vgphstm_id },
-      select: {vgphstm_id:true,tenant_id:true,parent_vgphstm_uuid:true,product_code:true,direction:true,process_type:true,tran_category:true,message_code:true,channel_name:true,channel_reference:true,tran_date:true,tran_reference:true,tran_seq_no:true,value_date:true,settlement_date:true,dr_account:true,dr_bank_code_type:true,dr_bank_code:true,dr_name:true,dr_amount:true,dr_currency:true,cr_account:true,cr_bank_code_type:true,cr_bank_code:true,cr_name:true,cr_amount:true,cr_currency:true,remittance_info:true,product_basic:true,product_additional:true,charge_type:true,uuid:true,vgphsm_uuid:true,vgphsm_id :true,vgph_destination_tran_main:true,vgph_tran_dtl_main:true,vgph_tran_log_main:true,vgph_tran_error_log_main:true,prctm_id :true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true}
+      select: {vgphstm_id:true,tenant_id:true,parent_vgphstm_uuid:true,product_code:true,direction:true,process_type:true,tran_category:true,message_code:true,channel_name:true,channel_reference:true,tran_date:true,tran_reference:true,tran_seq_no:true,value_date:true,settlement_date:true,dr_account:true,dr_bank_code_type:true,dr_bank_code:true,dr_name:true,dr_amount:true,dr_currency:true,cr_account:true,cr_bank_code_type:true,cr_bank_code:true,cr_name:true,cr_amount:true,cr_currency:true,remittance_info:true,product_basic:true,product_additional:true,charge_type:true,uuid:true,vgphsm_uuid:true,vgphsm_id :true,vgph_destination_tran_main:true,vgph_tran_log_main:true,vgph_tran_error_log_main:true,vgph_tran_dtl_main:true,prctm_id :true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true}
     });
     return res;
   } catch (error) {

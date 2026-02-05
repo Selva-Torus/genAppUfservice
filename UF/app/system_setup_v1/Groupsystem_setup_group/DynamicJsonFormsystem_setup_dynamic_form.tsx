@@ -1043,7 +1043,7 @@ const DynamicJsonFormsystem_setup_dynamic_form = ({checkToAdd,setCheckToAdd,refe
     "required": []
   }
 }
-  const [goruleData,setGoruleData]=useState<any>({})
+    const [goruleData,setGoruleData]=useState<any>({})
   const [isRequredData,setIsRequredData]=useState(false)
   const toast:any=useInfoMsg()
   const keyset:any=i18n.keyset("language"); 
@@ -1322,14 +1322,30 @@ const DynamicJsonFormsystem_setup_dynamic_form = ({checkToAdd,setCheckToAdd,refe
   // Validation  
     const [error, setError] = useState<string>('');
   schemaArray = [] ;
+  function getLeafValues(obj:any) {
+    let result:any = {};
+    for (const key in obj) {
+      if (
+        typeof obj[key] === "object" &&
+        obj[key] !== null &&
+        !Array.isArray(obj[key])
+      ) {
+        result = { ...result, ...getLeafValues(obj[key]) };
+      } else {
+        result[key] = obj[key];
+      }
+    }
+    return result;
+  }
   const handleChange = async(values: FieldValues) => {
     setError('')
+    let flatentedValues:any=getLeafValues(values)||{}
     setValidate((pre:any)=>({...pre,setup_value:{}}))
     if(dynamicStateandType.type=="number"){
-    setsystem_setup_group2af15((prev: any) => ({ ...prev, setup_value: +values }))
+      setsystem_setup_group2af15((prev: any) => ({ ...prev, setup_value: +values }))
     }
     else{
-    setsystem_setup_group2af15((prev: any) => ({ ...prev, setup_value: values }))
+      setsystem_setup_group2af15((prev: any) => ({ ...prev, setup_value: values }))
     }
   }
   const handleBlur=async () => {
@@ -1364,9 +1380,10 @@ const DynamicJsonFormsystem_setup_dynamic_form = ({checkToAdd,setCheckToAdd,refe
         return
       }
       setAllCode(orchestrationData?.data?.code)
-      setGoruleData(orchestrationData?.data?.pfRuleData ||{})
+     
+       setGoruleData(orchestrationData?.data?.pfRuleData ||{})
       fetchSchema(orchestrationData?.data?.pfRuleData ||{})
-      if(orchestrationData?.data?.schemaData[0].nodeType=='apinode'){
+      if(orchestrationData?.data?.schemaData?.at(0)?.nodeType=='apinode'){
       if(orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties){
         let type:any={name:'setup_value',type:'text'}
         type={
@@ -1375,7 +1392,7 @@ const DynamicJsonFormsystem_setup_dynamic_form = ({checkToAdd,setCheckToAdd,refe
         }
         setDynamicStateandType(type)
       }
-      }else if(orchestrationData?.data?.schemaData[0].nodeType=='dbnode'){
+      }else if(orchestrationData?.data?.schemaData?.at(0)?.nodeType=='dbnode'){
         if(orchestrationData?.data?.schemaData[0].schema.properties){
         let type:any={name:'setup_value',type:'text'}
         type={
@@ -1398,10 +1415,9 @@ const DynamicJsonFormsystem_setup_dynamic_form = ({checkToAdd,setCheckToAdd,refe
       handleBlur()
   },[validateRefetch.value])
 
-          //for controller element
     useEffect(() => {
       fetchSchema(goruleData,{setup_code:system_setup_group2af15?.setup_code});
-    }, [system_setup_group2af15?.setup_code])
+         }, [system_setup_group2af15?.setup_code])
 
   if (system_setup_dynamic_formf3526?.isHidden) {
     return <></>

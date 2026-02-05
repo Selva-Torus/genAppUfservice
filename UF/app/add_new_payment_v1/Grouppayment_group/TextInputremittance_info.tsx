@@ -13,9 +13,11 @@ import { codeExecution } from '@/app/utils/codeExecution';
 import { AxiosService } from '@/app/components/axiosService';
 import { getCookie } from '@/app/components/cookieMgment';
 import { useRouter } from 'next/navigation';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { eventBus } from '@/app/eventBus';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
+import { DecodedToken,PrimaryTableData,SecurityData,EncryptionFlagPageData,PaginationData,AllowedGroupNode,ActionDetails } from "@/types/global";
 import * as v from 'valibot';
 
 const TextInputremittance_info = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}:any) => {  
@@ -27,7 +29,7 @@ const TextInputremittance_info = ({checkToAdd,setCheckToAdd,refetch,setRefetch,e
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
   const handleDfdRefresh = useHandleDfdRefresh();
-  const actionDetails :any = {
+  const actionDetails : any = {
   "action": {
     "lock": {
       "lockMode": "",
@@ -67,15 +69,15 @@ const TextInputremittance_info = ({checkToAdd,setCheckToAdd,refetch,setRefetch,e
   }
 }
   const {dfd_get_transaction_dfd_v1Props, setdfd_get_transaction_dfd_v1Props} = useContext(TotalContext) as TotalContextProps; 
-  const [isRequredData,setIsRequredData]=useState(false)
-  const toast:any=useInfoMsg()
-  const keyset:any=i18n.keyset("language"); 
-  const [allCode,setAllCode]=useState<any>("");
-  let schemaArray :any =[];  
-  const [dynamicStateandType,setDynamicStateandType]=useState<any>({name:'remittance_info',type:"text"})
-  const routes = useRouter()
-  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState(false);
-  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
+  const [isRequredData,setIsRequredData]=useState<boolean>(false)
+  const toast : Function = useInfoMsg()
+  const keyset : Function = i18n.keyset("language");
+  const [allCode,setAllCode]=useState<string>("");
+  let schemaArray :string[] =[];
+  const [dynamicStateandType,setDynamicStateandType]=useState<Record<string, any>>({name:'remittance_info',type:"text"})
+  const routes: AppRouterInstance = useRouter()
+  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState<boolean>(false);
+  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState<boolean>(false);
   const encryptionFlagCont: boolean = encryptionFlagCompData?.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagCompData?.dpd;
@@ -113,20 +115,20 @@ const TextInputremittance_info = ({checkToAdd,setCheckToAdd,refetch,setRefetch,e
   schemaArray = [] ;
   const handleChange = async(e: any) => {
     const newInputValue = dynamicStateandType.type=="number" ? +e.target.value : e.target.value;
-    let code:any=allCode
+    let code:string=allCode;
      if (code != '') {
-      let codeStates: any = {}
+      let codeStates: any = {};
       codeStates['payment_group']  = {...payment_group1c8a5,remittance_info:newInputValue},
       codeStates['setpayment_group'] = setpayment_group1c8a5,
-    codeExecution(code,codeStates)
+    codeExecution(code,codeStates);
     }  
-    setError('')
-    setValidate((pre:any)=>({...pre,remittance_info:undefined}))
+    setError('');
+    setValidate((pre:any)=>({...pre,remittance_info:undefined}));
     if(dynamicStateandType.type=="number"){
-    setpayment_group1c8a5((prev: any) => ({ ...prev, remittance_info: +e.target.value }))
+    setpayment_group1c8a5((prev: any) => ({ ...prev, remittance_info: +e.target.value }));
     }
     else{
-    setpayment_group1c8a5((prev: any) => ({ ...prev, remittance_info: e.target.value }))
+    setpayment_group1c8a5((prev: any) => ({ ...prev, remittance_info: e.target.value }));
     }
   }
   const handleBlur=async () => {
@@ -154,24 +156,24 @@ const TextInputremittance_info = ({checkToAdd,setCheckToAdd,refetch,setRefetch,e
        
         return
       }
-      setAllCode(orchestrationData?.data?.code)
+      setAllCode(orchestrationData?.data?.code);
       if(orchestrationData?.data?.schemaData[0].nodeType=='apinode'){
       if(orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties){
-        let type:any={name:'remittance_info',type:'text'}
+        let type:any={name:'remittance_info',type:'text'};
         type={
           name:'remittance_info',
           type: orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties.remittance_info.type == 'string' ? 'text' : orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties.remittance_info.type =='integer' ? 'number' : orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties.remittance_info.type
         }
-        setDynamicStateandType(type)
+        setDynamicStateandType(type);
       }
       }else if(orchestrationData?.data?.schemaData[0].nodeType=='dbnode'){
         if(orchestrationData?.data?.schemaData[0].schema.properties){
-        let type:any={name:'remittance_info',type:'text'}
+        let type:any={name:'remittance_info',type:'text'};
         type={
           name:'remittance_info',
           type: orchestrationData?.data?.schemaData[0].schema.properties.remittance_info.type == 'string' ? 'text' : orchestrationData?.data?.schemaData[0].schema.properties.remittance_info.type =='integer' ? 'number' : orchestrationData?.data?.schemaData[0].schema.properties.remittance_info.type
         }
-        setDynamicStateandType(type)
+        setDynamicStateandType(type);
       }
       }
       if(Array.isArray(orchestrationData?.data?.dstData))
@@ -184,13 +186,13 @@ const TextInputremittance_info = ({checkToAdd,setCheckToAdd,refetch,setRefetch,e
     }
     catch(err)
     {
-      console.log(err)
+      console.log(err);
     }
   }
 
   useEffect(()=>{
-      handleMapperValue()
-      handleBlur()
+      handleMapperValue();
+      handleBlur();
   },[validateRefetch.value])
   useEffect(() => {
   if(dfd_get_transaction_dfd_v1Props?.setSearchFilters && dfd_get_transaction_dfd_v1Props?.data)

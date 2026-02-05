@@ -4,7 +4,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('token')?.value
   const path = request.nextUrl.pathname
   const isAuthRoute = ["/" , "/forgot-password"].includes(path);
-   let screenName:string = 'CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1';
+   let screenName:string = 'CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1';
     let screenDetails: any = {
         keys:[
   {

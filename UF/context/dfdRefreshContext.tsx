@@ -127,6 +127,8 @@ export function useHandleDfdRefresh(){
 
 
     const {dfd_get_transaction_dfd_v1Props,setdfd_get_transaction_dfd_v1Props} = useContext(TotalContext) as TotalContextProps;
+    const {dfd_tran_journey_db_query_v1Props,setdfd_tran_journey_db_query_v1Props} = useContext(TotalContext) as TotalContextProps;
+    const {dfd_tran_journey_dtl_v1Props,setdfd_tran_journey_dtl_v1Props} = useContext(TotalContext) as TotalContextProps;
     const {dfd_master_system_setup_dfd_v1Props,setdfd_master_system_setup_dfd_v1Props} = useContext(TotalContext) as TotalContextProps;
     const {dfd_cdc_checker_action_dfd_v1Props,setdfd_cdc_checker_action_dfd_v1Props} = useContext(TotalContext) as TotalContextProps;
     const toast=useInfoMsg();
@@ -228,6 +230,18 @@ export function useHandleDfdRefresh(){
             }
             if("remittance_info57b4b"==nodename){
                 dfdRefreshContext("CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Get_Transaction_DFD:AFVK:v1",setdfd_get_transaction_dfd_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("tran_journey47044"==nodename){
+                dfdRefreshContext("CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_DB_Query:AFVK:v1",setdfd_tran_journey_db_query_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("tra_created_date34aa7"==nodename){
+                dfdRefreshContext("CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1",setdfd_tran_journey_dtl_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("failuer_process_code981ea"==nodename){
+                dfdRefreshContext("CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1",setdfd_tran_journey_dtl_v1Props,page,count,dpdEncryption,toast,token);
+            }
+            if("product_code36b37"==nodename){
+                dfdRefreshContext("CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1",setdfd_tran_journey_dtl_v1Props,page,count,dpdEncryption,toast,token);
             }
             if("product_code523b7"==nodename){
                 dfdRefreshContext("CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup_DFD:AFVK:v1",setdfd_master_system_setup_dfd_v1Props,page,count,dpdEncryption,toast,token);

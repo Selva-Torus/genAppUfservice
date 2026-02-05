@@ -15,10 +15,12 @@
             "Checker",
             "Admin"
           ],
-          "static": false
+          "static": false,
+          "icon": "/torus/9.1/resources/icons/home-4-svgrepo-com.svg"
         }
       ],
-      "items": []
+      "items": [],
+      "icon": "/torus/9.1/resources/icons/home-4-svgrepo-com.svg"
     },
     {
       "menuGroup": "mastersetup",
@@ -36,7 +38,8 @@
           "static": false
         }
       ],
-      "items": []
+      "items": [],
+      "icon": "/torus/9.1/CT005/resources/images/Master Setup.png"
     },
     {
       "menuGroupLabel": "CheckerApproval",
@@ -49,10 +52,12 @@
             "Checker",
             "Admin"
           ],
-          "static": false
+          "static": false,
+          "icon": "/torus/9.1/CT005/resources/images/Checker approval.png"
         }
       ],
-      "items": []
+      "items": [],
+      "icon": "/torus/9.1/CT005/resources/images/Checker approval.png"
     },
     {
       "menuGroup": "admin",
@@ -89,9 +94,9 @@
       },
       "applicationUniqueId": "0c70f27e-6eae-4f9d-b2c2-d3b912d71e0b",
       "lastBuildVersion": "v1",
-      "lastBuildOn": "2026-01-30T11:36:56.765Z",
+      "lastBuildOn": "2026-02-03T10:37:54.462Z",
       "accessUrl": "https://tgadev.toruslowcode.com/ct005/v001/vgph001/v1",
-      "logo": "torus/9.1/CT005/resources/images/VGPH_Logo-removebg-preview.png",
+      "logo": "torus/9.1/CT005/resources/images/vgph-final-logo-fw@4x.png",
       "appGrpName": "VGPH",
       "appGrpCode": "V001",
       "fusionAuthAppClientSecret": "PxMTdZPDtGXPZ5TPGmIZYTqllCujW4xNpm-wBCKNnFY"
@@ -214,7 +219,7 @@
         }
       }
     },
-    "lastActive": "2026-02-03T06:34:24.847Z",
+    "lastActive": "2026-02-05T05:42:31.874Z",
     "client": "CT005",
     "users": "guruGuru Krishnan",
     "profile": "",
@@ -223,14 +228,19 @@
   },
   "webOnBoarding": {
     "navBarStyle": {
-      "activeItems": [
+      "activeItems": [],
+      "deletedItems": [
+        {
+          "name": "logo",
+          "gridColumn": "1/2"
+        },
         {
           "name": "app logo",
-          "gridColumn": "2/3"
+          "gridColumn": "2/4"
         },
         {
           "name": "menu items",
-          "gridColumn": "3/9",
+          "gridColumn": "4/9",
           "gridRow": "1/6"
         },
         {
@@ -239,19 +249,13 @@
           "gridRow": "6/9"
         },
         {
-          "name": "logo",
-          "gridColumn": "1/2"
-        },
-        {
           "name": "profile",
           "gridColumn": "12/13",
           "gridRow": "12/13"
         }
-      ],
-      "deletedItems": []
+      ]
     },
-    "loginType": "standard",
-    "landingScreen": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"
+    "landingScreen": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
   },
   "allKeyswithScreenNames": [
     {

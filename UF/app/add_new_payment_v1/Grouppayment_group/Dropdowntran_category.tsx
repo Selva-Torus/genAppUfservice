@@ -8,6 +8,7 @@ import { AxiosService } from "@/app/components/axiosService";
 import { getMapperDetailsDto, te_refreshDto } from "@/app/interfaces/interfaces";
 import { useInfoMsg } from '@/app/components/infoMsgHandler';
 import { useRouter } from 'next/navigation';
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { getCookie } from '@/app/components/cookieMgment';
 import { getDropdownDetailsNew } from '@/app/utils/getMapperDetails';
 import { codeExecution } from '@/app/utils/codeExecution';
@@ -20,9 +21,10 @@ import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys'
 import * as v from 'valibot';
 import evaluateDecisionTable from '@/app/utils/evaluateDecisionTable';
 import decodeToken from '@/app/components/decodeToken';
+import { DecodedToken,PrimaryTableData,SecurityData,EncryptionFlagPageData,PaginationData,AllowedGroupNode,ActionDetails } from "@/types/global";
 
 
-let getMapperDetailsBindValues:any ={} ;
+let getMapperDetailsBindValues:Record<string, any> ={} ;
 const Dropdowntran_category = ({lockedData,setLockedData,checkToAdd,setCheckToAdd,refetch,setRefetch,dropdownData,setDropdownData,encryptionFlagCompData}: any) => {
   const token: string = getCookie('token');
   const decodedTokenObj: any = decodeToken(token);
@@ -31,23 +33,23 @@ const Dropdowntran_category = ({lockedData,setLockedData,checkToAdd,setCheckToAd
   const { validate, setValidate } = useContext(
     TotalContext
   ) as TotalContextProps
-  const [isRequredData,setIsRequredData]=useState(false)
+  const [isRequredData,setIsRequredData]=useState<boolean>(false)
   const [error, setError] = useState<string>('')
-  const keyset:any=i18n.keyset("language");
-  const [initialCount,setInitialCount]=useState(0)
-  let getMapperDetails:any;
-  let getMapperDetailsValues:any;
-  const toast=useInfoMsg();
-  const routes = useRouter();
+  const keyset:Function=i18n.keyset("language");
+  const [initialCount,setInitialCount]=useState<number>(0)
+  let getMapperDetails:string[];
+  let getMapperDetailsValues:string[];
+  const toast:Function=useInfoMsg();
+  const routes: AppRouterInstance = useRouter();
   const encryptionFlagCont: boolean = encryptionFlagCompData.flag || false ;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagCompData.dpd;
   let encryptionMethod: string = "";
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData.method;
-  const prevRefreshRef = useRef(false);
-  let customecode:any="";
-  const [allCode,setAllCode]=useState<any>("");
-  const [ruleCode,setRuleCode]=useState<any>("");
+  const prevRefreshRef = useRef<any>(false);
+  let customecode:string="";
+  const [allCode,setAllCode]=useState<string>("");
+  const [ruleCode,setRuleCode]=useState<string>("");
  /////////////
    //another screen
   const {payment_group1c8a5, setpayment_group1c8a5}= useContext(TotalContext) as TotalContextProps;

@@ -15,6 +15,8 @@ import { Modal } from '@/components/Modal';
 import { eventBus } from '@/app/eventBus';
 import clsx from "clsx";
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
+// page import
+import PageTranJourneypage from '@/app/tran_journey_v1/tran_journey_v1page';
 import Tableview_all_table  from './Tableview_all_table';  
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { getCookie } from "@/app/components/cookieMgment";
@@ -34,6 +36,7 @@ const Groupview_all_table = ({lockedData={},setLockedData,primaryTableData={}, s
   let item = "";
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const {dfd_get_transaction_dfd_v1Props, setdfd_get_transaction_dfd_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const {dfd_tran_journey_db_query_v1Props, setdfd_tran_journey_db_query_v1Props} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagComp: boolean = encryptionFlagPageData?.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagPageData?.dpd;
@@ -163,6 +166,8 @@ const Groupview_all_table = ({lockedData={},setLockedData,primaryTableData={}, s
   const {failure_queue_tab11090Props, setfailure_queue_tab11090Props}= useContext(TotalContext) as TotalContextProps;
   const {failure_queue_table449a9, setfailure_queue_table449a9}= useContext(TotalContext) as TotalContextProps;
   const {failure_queue_table449a9Props, setfailure_queue_table449a9Props}= useContext(TotalContext) as TotalContextProps;
+  const {tran_journey_groupbe7ae, settran_journey_groupbe7ae}= useContext(TotalContext) as TotalContextProps;
+  const {tran_journey_groupbe7aeProps, settran_journey_groupbe7aeProps}= useContext(TotalContext) as TotalContextProps;
   //////////////
   const [open, setOpen] = React.useState(false);
   async function securityCheck() {
@@ -263,6 +268,13 @@ const Groupview_all_table = ({lockedData={},setLockedData,primaryTableData={}, s
       }}
       className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'text-white' : 'text-black'}`}
     >
+      <Modal 
+      open={showProfileAsModalOpen} 
+      onClose={() => setShowProfileAsModalOpen(false)} 
+      title={"Tran_Journey"}
+      className='w-[] h-[] bg-gray-50 mx-auto rounded-lg shadow-xl p-5 overflow-auto'>
+        <PageTranJourneypage/>
+      </Modal>
         <CommonHeaderAndTooltip
         >
         <div className='flex flex-col h-full'>

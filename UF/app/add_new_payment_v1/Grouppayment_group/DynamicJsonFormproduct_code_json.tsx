@@ -439,7 +439,7 @@ const DynamicJsonFormproduct_code_json = ({checkToAdd,setCheckToAdd,refetch,setR
   },
   "mapper": []
 }
-  const [goruleData,setGoruleData]=useState<any>({})
+    const [goruleData,setGoruleData]=useState<any>(actionDetails?.pfRuleData ||{})
   const [isRequredData,setIsRequredData]=useState(false)
   const toast:any=useInfoMsg()
   const keyset:any=i18n.keyset("language"); 
@@ -725,14 +725,30 @@ const DynamicJsonFormproduct_code_json = ({checkToAdd,setCheckToAdd,refetch,setR
   // Validation  
     const [error, setError] = useState<string>('');
   schemaArray = [] ;
+  function getLeafValues(obj:any) {
+    let result:any = {};
+    for (const key in obj) {
+      if (
+        typeof obj[key] === "object" &&
+        obj[key] !== null &&
+        !Array.isArray(obj[key])
+      ) {
+        result = { ...result, ...getLeafValues(obj[key]) };
+      } else {
+        result[key] = obj[key];
+      }
+    }
+    return result;
+  }
   const handleChange = async(values: FieldValues) => {
     setError('')
+    let flatentedValues:any=getLeafValues(values)||{}
     setValidate((pre:any)=>({...pre,product_code_json:{}}))
     if(dynamicStateandType.type=="number"){
-    setpayment_group1c8a5((prev: any) => ({ ...prev, product_code_json: +values }))
+      setpayment_group1c8a5((prev: any) => ({ ...prev, product_code_json: +values }))
     }
     else{
-    setpayment_group1c8a5((prev: any) => ({ ...prev, product_code_json: values }))
+      setpayment_group1c8a5((prev: any) => ({ ...prev, product_code_json: values }))
     }
   }
   const handleBlur=async () => {
@@ -767,9 +783,8 @@ const DynamicJsonFormproduct_code_json = ({checkToAdd,setCheckToAdd,refetch,setR
         return
       }
       setAllCode(orchestrationData?.data?.code)
-      setGoruleData(orchestrationData?.data?.pfRuleData ||{})
-      fetchSchema(orchestrationData?.data?.pfRuleData ||{})
-      if(orchestrationData?.data?.schemaData[0].nodeType=='apinode'){
+     
+      if(orchestrationData?.data?.schemaData?.at(0)?.nodeType=='apinode'){
       if(orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties){
         let type:any={name:'product_code_json',type:'text'}
         type={
@@ -778,7 +793,7 @@ const DynamicJsonFormproduct_code_json = ({checkToAdd,setCheckToAdd,refetch,setR
         }
         setDynamicStateandType(type)
       }
-      }else if(orchestrationData?.data?.schemaData[0].nodeType=='dbnode'){
+      }else if(orchestrationData?.data?.schemaData?.at(0)?.nodeType=='dbnode'){
         if(orchestrationData?.data?.schemaData[0].schema.properties){
         let type:any={name:'product_code_json',type:'text'}
         type={
@@ -801,10 +816,9 @@ const DynamicJsonFormproduct_code_json = ({checkToAdd,setCheckToAdd,refetch,setR
       handleBlur()
   },[validateRefetch.value])
 
-          //for controller element
     useEffect(() => {
       fetchSchema(goruleData,{product_code:payment_group1c8a5?.product_code});
-    }, [payment_group1c8a5?.product_code])
+         }, [])
 
   if (product_code_json46315?.isHidden) {
     return <></>

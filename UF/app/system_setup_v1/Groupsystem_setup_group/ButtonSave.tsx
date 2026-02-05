@@ -18,6 +18,8 @@ import {Modal} from '@/components/Modal';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { Icon } from '@/components/Icon';
+import { DecodedToken,PrimaryTableData,SecurityData,EncryptionFlagPageData,PaginationData,AllowedGroupNode,ActionDetails } from "@/types/global";
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import evaluateDecisionTable  from '@/app/utils/evaluateDecisionTable';
@@ -51,7 +53,7 @@ const ButtonSave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   const token:string = getCookie('token');
   const {currentToken, setCurrentToken} = useContext(TotalContext) as TotalContextProps;
   const decodedTokenObj:any = decodeToken(token);
-  const createdBy:string =decodedTokenObj.users;
+  const createdBy : string = decodedTokenObj.users;
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
   const {validate , setValidate} = useContext(TotalContext) as TotalContextProps;
   const {validateRefetch , setValidateRefetch} = useContext(TotalContext) as TotalContextProps;
@@ -60,30 +62,33 @@ const ButtonSave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
   const handleDfdRefresh = useHandleDfdRefresh();
-  let code:any = "";
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const savedData=useRef({})
+
+  
+  let code:string = "";
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const savedData=useRef<Record<string, any>>({})
   const keyset:any=i18n.keyset("language");
   const confirmMsgFlag: boolean = false; 
-  const toast:any=useInfoMsg();
+  const toast : Function=useInfoMsg();
   let dfKey: string | any;
-  const [showFlag, setShowFlag] = React.useState(true);
+  const [showFlag, setShowFlag] = React.useState<boolean>(true);
   const lockMode:any = lockedData.lockMode;
-  const [loading, setLoading] = useState(false);
-  const routes = useRouter();
-  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState(false);
-  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const routes : AppRouterInstance = useRouter();
+  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState<boolean>(false);
+  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState<boolean>(false);
   const encryptionFlagCont: boolean = encryptionFlagCompData.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagCompData.dpd;
   let encryptionMethod: string = "";
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData.method;
-  let actionLockData = {"lockMode":"","name":"","ttl":""}
-  const [allCode,setAllCode]=useState<any>("");
+  let actionLockData : any = {"lockMode":"","name":"","ttl":""}
+  const [allCode,setAllCode]=useState<string>("");
   const [gridPosition, setGridPosition] = useState<any>({ gridColumn: '1 / 3', gridRow: '1 / 12' });
     
  /////////////
    //another screen
+
   const {system_setup_group2af15, setsystem_setup_group2af15}= useContext(TotalContext) as TotalContextProps;
   const {system_setup_group2af15Props, setsystem_setup_group2af15Props}= useContext(TotalContext) as TotalContextProps;
   const {product_code523b7, setproduct_code523b7}= useContext(TotalContext) as TotalContextProps;
@@ -103,10 +108,10 @@ const ButtonSave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   const handleCustomCode=async () => {
     code = allCode ||""
     if (code != '') {
-      let codeStates: any = {};
+      let codeStates: Record<string, any> = {};
       codeStates['system_setup_group']  = system_setup_group2af15,
       codeStates['setsystem_setup_group'] = setsystem_setup_group2af15,
-      codeStates['response']  = savedData.current,
+      codeStates['response']  = savedData.current;
       customCode = codeExecution(code,codeStates);
       return customCode;
     }
@@ -133,14 +138,14 @@ const ButtonSave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
         return
       }
       setAllCode(orchestrationData?.data?.code);
-      if(orchestrationData?.data?.rule.nodes.length > 0){
+      if(orchestrationData?.data?.rule?.nodes?.length > 0){
         let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
         // schemaFlag =schemaFlag.output;
-        let order:any = Number(schemaFlag.order);
+        let order:number = Number(schemaFlag.order);
 
         // Update grid position based on order number
         if (order && typeof order === 'number') {
-          const position = getGridPositionFromOrder(order);
+          const position : any = getGridPositionFromOrder(order);
           setGridPosition(position);
         } 
 
@@ -165,8 +170,8 @@ const ButtonSave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
   },[save3a1b8?.refresh,currentToken])
 
   function SourceIdFilter(eventProperty:any,matchingSequence?:string){
-    let ans=[]
-    let id=""
+    let ans : any[] = [];
+    let id : string = "";
     if(eventProperty.name=='saveHandler' && eventProperty.sequence == matchingSequence)
     {
       return [eventProperty.id]
@@ -201,14 +206,14 @@ const ButtonSave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
         data: {},
         lock: {}
       }
-      let primaryKey:any;
-      let tagetKey:any="CK:CT005:FNGK:AF:FNK:PF-PFD:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup_Flow:AFVK:v1|5824296c38644a15a4f69443b13625ac"
+      let primaryKey:string;
+      let tagetKey:string="CK:CT005:FNGK:AF:FNK:PF-PFD:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup_Flow:AFVK:v1|5824296c38644a15a4f69443b13625ac"
       let uf_getPFDetails:any={
         key: "CK:CT005:FNGK:AF:FNK:PF-PFD:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup_Flow:AFVK:v1|5824296c38644a15a4f69443b13625ac"
       };
       let uf_ifo:any;
       let lockedKeysLength:number;
-      let eventProperty = {
+      let eventProperty :any = {
   "id": "517606443a2e4bb0a946018c1ca3a1b8",
   "type": "button",
   "name": "Save",
@@ -320,12 +325,12 @@ const ButtonSave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
     }
   ]
 };
-      let eventDetails: any = await eventFunction(eventProperty);
+      let eventDetails : any = await eventFunction(eventProperty);
       let eventDetailsArray = eventDetails[0];
-      let sourceId:string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1";
+      let sourceId : string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1";
       sourceId+= "|"+"723ad64155fe45adba8c526f1ce2af15";
       let pathIds = SourceIdFilter(eventProperty,"1.1.1");
-      let sourceIdNewPath="CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"+"|"+"723ad64155fe45adba8c526f1ce2af15"+"|"+eventProperty.id
+      let sourceIdNewPath : string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"+"|"+"723ad64155fe45adba8c526f1ce2af15"+"|"+eventProperty.id;
       pathIds.map((ele:any,id:number)=>{
         if(id!=pathIds.length-1)
         {
@@ -417,7 +422,7 @@ const ButtonSave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
       modified_by:createdBy
     }
     let reworkedObject:any=nullFilter(system_setup_group2af15);
-    let reworkKeys:any=[];
+    let reworkKeys:any[]=[];
       Object.keys(reworkedObject).map((item:any)=>{
         if(typeof system_setup_group2af15[item]=='object' && Array.isArray( system_setup_group2af15[item]) &&  system_setup_group2af15[item].length && typeof system_setup_group2af15[item][0] !="string" ){
           if( system_setup_group2af15[item].length>0 && !Object.keys(system_setup_group2af15[item][0]).includes('_isSelected_'))
@@ -440,7 +445,7 @@ const ButtonSave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
             formData.append("method" ,encryptionMethod);
           } 
           if (fileBody[0]?.DbType == 'mongodb') {
-          const res=await AxiosService.post( "/UF/upload",formData,
+          const res :any = await AxiosService.post( "/UF/upload",formData,
             {
               headers: {
                 'Content-Type': 'multipart/form-data',
@@ -456,16 +461,15 @@ const ButtonSave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
           )
           reworkedObject[reworkKeys[i]] = res.data.file.fileId
         } else if (fileBody[0]?.DbType == 'dfs') {
-
-            const basePath = process.env.NEXT_PUBLIC_DFS_PATH || "dfs-uploads";
-            const bucketFolderame = process.env.NEXT_PUBLIC_DFS_BUCKETNAME || 'uploadfile';
+            const basePath : string = process.env.NEXT_PUBLIC_DFS_PATH || "dfs-uploads";
+            const bucketFolderame : string = process.env.NEXT_PUBLIC_DFS_BUCKETNAME || 'uploadfile';
             const data = new FormData();
             data.append('file', fileBody[0]);
             data.append('bucketFolderame', bucketFolderame.toLowerCase());
             data.append('folderPath', basePath);
             data.append('enableEncryption', fileBody[0]?.enableEncryption);
 
-            const res = await AxiosService.post(
+            const res : any = await AxiosService.post(
               `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/uploadimg`,
               data,
               {
@@ -505,7 +509,7 @@ const ButtonSave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
 
       if (uf_getPFDetails.key != undefined) {
         let formData:any={};
-        let ifoResponse:any=[];
+        let ifoResponse:any[]=[];
         if(Array.isArray(system_setup_group2af15))
         {
           formData=lockedData?.data || {};
@@ -633,7 +637,7 @@ const ButtonSave = ({ lockedData,setLockedData,primaryTableData, setPrimaryTable
     }
     try{  
       await handleSavea1b8_1_1_1();
-      await delay(1000);
+          await delay(1000);
       await handleCustomCode();
     }catch (err: any) {
       if(typeof err == 'string')

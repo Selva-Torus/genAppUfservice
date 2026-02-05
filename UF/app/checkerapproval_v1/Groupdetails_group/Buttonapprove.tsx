@@ -18,6 +18,8 @@ import {Modal} from '@/components/Modal';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { Icon } from '@/components/Icon';
+import { DecodedToken,PrimaryTableData,SecurityData,EncryptionFlagPageData,PaginationData,AllowedGroupNode,ActionDetails } from "@/types/global";
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import evaluateDecisionTable  from '@/app/utils/evaluateDecisionTable';
@@ -51,7 +53,7 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
   const token:string = getCookie('token');
   const {currentToken, setCurrentToken} = useContext(TotalContext) as TotalContextProps;
   const decodedTokenObj:any = decodeToken(token);
-  const createdBy:string =decodedTokenObj.users;
+  const createdBy : string = decodedTokenObj.users;
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
   const {validate , setValidate} = useContext(TotalContext) as TotalContextProps;
   const {validateRefetch , setValidateRefetch} = useContext(TotalContext) as TotalContextProps;
@@ -60,30 +62,33 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
   const handleDfdRefresh = useHandleDfdRefresh();
-  let code:any = "";
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const savedData=useRef({})
+
+  
+  let code:string = "";
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const savedData=useRef<Record<string, any>>({})
   const keyset:any=i18n.keyset("language");
   const confirmMsgFlag: boolean = false; 
-  const toast:any=useInfoMsg();
+  const toast : Function=useInfoMsg();
   let dfKey: string | any;
-  const [showFlag, setShowFlag] = React.useState(true);
+  const [showFlag, setShowFlag] = React.useState<boolean>(true);
   const lockMode:any = lockedData.lockMode;
-  const [loading, setLoading] = useState(false);
-  const routes = useRouter();
-  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState(false);
-  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const routes : AppRouterInstance = useRouter();
+  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState<boolean>(false);
+  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState<boolean>(false);
   const encryptionFlagCont: boolean = encryptionFlagCompData.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagCompData.dpd;
   let encryptionMethod: string = "";
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData.method;
-  let actionLockData = {"lockMode":"Single","name":"","ttl":30000}
-  const [allCode,setAllCode]=useState<any>("");
+  let actionLockData : any = {"lockMode":"Single","name":"","ttl":30000}
+  const [allCode,setAllCode]=useState<string>("");
   const [gridPosition, setGridPosition] = useState<any>({ gridColumn: '1 / 3', gridRow: '1 / 12' });
     
  /////////////
    //another screen
+
   const {cdc_group2e1e4, setcdc_group2e1e4}= useContext(TotalContext) as TotalContextProps;
   const {cdc_group2e1e4Props, setcdc_group2e1e4Props}= useContext(TotalContext) as TotalContextProps;
   const {details_group46bbe, setdetails_group46bbe}= useContext(TotalContext) as TotalContextProps;
@@ -108,7 +113,7 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
   const handleCustomCode=async () => {
     code = allCode ||""
     if (code != '') {
-      let codeStates: any = {};
+      let codeStates: Record<string, any> = {};
       codeStates['cdc_group']  = cdc_group2e1e4,
       codeStates['setcdc_group'] = setcdc_group2e1e4,
       codeStates['details_group']  = details_group46bbe,
@@ -117,7 +122,7 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
       codeStates['settable_group'] = settable_group05951,
       codeStates['cdc_table']  = cdc_table8e54d,
       codeStates['setcdc_table'] = setcdc_table8e54d,
-      codeStates['response']  = savedData.current,
+      codeStates['response']  = savedData.current;
       customCode = codeExecution(code,codeStates);
       return customCode;
     }
@@ -144,14 +149,14 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
         return
       }
       setAllCode(orchestrationData?.data?.code);
-      if(orchestrationData?.data?.rule.nodes.length > 0){
+      if(orchestrationData?.data?.rule?.nodes?.length > 0){
         let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
         // schemaFlag =schemaFlag.output;
-        let order:any = Number(schemaFlag.order);
+        let order:number = Number(schemaFlag.order);
 
         // Update grid position based on order number
         if (order && typeof order === 'number') {
-          const position = getGridPositionFromOrder(order);
+          const position : any = getGridPositionFromOrder(order);
           setGridPosition(position);
         } 
 
@@ -176,8 +181,8 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
   },[approve20de7?.refresh,currentToken])
 
   function SourceIdFilter(eventProperty:any,matchingSequence?:string){
-    let ans=[]
-    let id=""
+    let ans : any[] = [];
+    let id : string = "";
     if(eventProperty.name=='saveHandler' && eventProperty.sequence == matchingSequence)
     {
       return [eventProperty.id]
@@ -212,14 +217,14 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
         data: {},
         lock: {}
       }
-      let primaryKey:any;
-      let tagetKey:any="CK:CT005:FNGK:AF:FNK:PF-PFD:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Flow:AFVK:v1|43e06cf79f2948a981fb19214b4ca20a"
+      let primaryKey:string;
+      let tagetKey:string="CK:CT005:FNGK:AF:FNK:PF-PFD:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Flow:AFVK:v1|43e06cf79f2948a981fb19214b4ca20a"
       let uf_getPFDetails:any={
         key: "CK:CT005:FNGK:AF:FNK:PF-PFD:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Flow:AFVK:v1|43e06cf79f2948a981fb19214b4ca20a"
       };
       let uf_ifo:any;
       let lockedKeysLength:number;
-      let eventProperty = {
+      let eventProperty :any = {
   "id": "007faf10bb62496abe3a472376820de7",
   "type": "button",
   "name": "approve",
@@ -311,12 +316,12 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
     }
   ]
 };
-      let eventDetails: any = await eventFunction(eventProperty);
+      let eventDetails : any = await eventFunction(eventProperty);
       let eventDetailsArray = eventDetails[0];
-      let sourceId:string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1";
+      let sourceId : string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1";
       sourceId+= "|"+"2eff021532cd4b80834bce1263346bbe";
       let pathIds = SourceIdFilter(eventProperty,"1.1.1");
-      let sourceIdNewPath="CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1"+"|"+"2eff021532cd4b80834bce1263346bbe"+"|"+eventProperty.id
+      let sourceIdNewPath : string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1"+"|"+"2eff021532cd4b80834bce1263346bbe"+"|"+eventProperty.id;
       pathIds.map((ele:any,id:number)=>{
         if(id!=pathIds.length-1)
         {
@@ -408,7 +413,7 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
       modified_by:createdBy
     }
     let reworkedObject:any=nullFilter(details_group46bbe);
-    let reworkKeys:any=[];
+    let reworkKeys:any[]=[];
       Object.keys(reworkedObject).map((item:any)=>{
         if(typeof details_group46bbe[item]=='object' && Array.isArray( details_group46bbe[item]) &&  details_group46bbe[item].length && typeof details_group46bbe[item][0] !="string" ){
           if( details_group46bbe[item].length>0 && !Object.keys(details_group46bbe[item][0]).includes('_isSelected_'))
@@ -431,7 +436,7 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
             formData.append("method" ,encryptionMethod);
           } 
           if (fileBody[0]?.DbType == 'mongodb') {
-          const res=await AxiosService.post( "/UF/upload",formData,
+          const res :any = await AxiosService.post( "/UF/upload",formData,
             {
               headers: {
                 'Content-Type': 'multipart/form-data',
@@ -447,16 +452,15 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
           )
           reworkedObject[reworkKeys[i]] = res.data.file.fileId
         } else if (fileBody[0]?.DbType == 'dfs') {
-
-            const basePath = process.env.NEXT_PUBLIC_DFS_PATH || "dfs-uploads";
-            const bucketFolderame = process.env.NEXT_PUBLIC_DFS_BUCKETNAME || 'uploadfile';
+            const basePath : string = process.env.NEXT_PUBLIC_DFS_PATH || "dfs-uploads";
+            const bucketFolderame : string = process.env.NEXT_PUBLIC_DFS_BUCKETNAME || 'uploadfile';
             const data = new FormData();
             data.append('file', fileBody[0]);
             data.append('bucketFolderame', bucketFolderame.toLowerCase());
             data.append('folderPath', basePath);
             data.append('enableEncryption', fileBody[0]?.enableEncryption);
 
-            const res = await AxiosService.post(
+            const res : any = await AxiosService.post(
               `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/uploadimg`,
               data,
               {
@@ -496,7 +500,7 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
 
       if (uf_getPFDetails.key != undefined) {
         let formData:any={};
-        let ifoResponse:any=[];
+        let ifoResponse:any[]=[];
         if(Array.isArray(details_group46bbe))
         {
           formData=lockedData?.data || {};
@@ -636,7 +640,7 @@ const Buttonapprove = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
     }
     try{  
       await handleSave0de7_1_1_1();
-      await delay(1000);
+          await delay(1000);
       await handleCustomCode();
     }catch (err: any) {
       if(typeof err == 'string')

@@ -30,6 +30,7 @@ export enum charge_type_vgph_source_tran_staging{
   SHA="SHA",
   OUR="OUR",
   BEN="BEN",
+  SLEV="SLEV",
 }
 
 export class  Createvgph_source_tran_stagingDto {

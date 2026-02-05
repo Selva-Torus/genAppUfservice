@@ -101,7 +101,7 @@ const Groupsearchgroup = ({lockedData={},setLockedData,primaryTableData={}, setP
    //another screen
   const {searchgroupc4337, setsearchgroupc4337}= useContext(TotalContext) as TotalContextProps;
   const {searchgroupc4337Props, setsearchgroupc4337Props}= useContext(TotalContext) as TotalContextProps;
-  const {dymanic_search_input05b50, setdymanic_search_input05b50}= useContext(TotalContext) as TotalContextProps;
+  const {dymanic_search_inputfa005, setdymanic_search_inputfa005}= useContext(TotalContext) as TotalContextProps;
   const {clearf63e8, setclearf63e8}= useContext(TotalContext) as TotalContextProps;
   const {search65fd7, setsearch65fd7}= useContext(TotalContext) as TotalContextProps;
   //////////////
@@ -123,7 +123,7 @@ const Groupsearchgroup = ({lockedData={},setLockedData,primaryTableData={}, setP
     
   /////////////
     if(orchestrationData?.data?.readableControls.includes("dymanic_search_input")){
-      setdymanic_search_input05b50({...dymanic_search_input05b50,isDisabled:true});
+      setdymanic_search_inputfa005({...dymanic_search_inputfa005,isDisabled:true});
     }
     if(orchestrationData?.data?.readableControls.includes("clear")){
       setclearf63e8({...clearf63e8,isDisabled:true});
@@ -190,7 +190,7 @@ const Groupsearchgroup = ({lockedData={},setLockedData,primaryTableData={}, setP
       }}
       className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'text-white' : 'text-black'}`}
     >
-        {allowedControls.includes("dymanic_search_input") ?<DynamicJsonFormdymanic_search_input   /* 05b50 */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
+        {allowedControls.includes("dymanic_search_input") ?<DynamicJsonFormdymanic_search_input   /* fa005 */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} />: <div></div>}
         {        (("clear" in ButtonGoRuleData)?ButtonGoRuleData["clear"]:true) && 
           allowedControls.includes("clear")  ?            <ButtonClear lockedData={lockedData} setLockedData={setLockedData} primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData} checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData}/>: <div></div>} 
         {        (("search" in ButtonGoRuleData)?ButtonGoRuleData["search"]:true) && 

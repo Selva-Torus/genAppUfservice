@@ -1,7 +1,5 @@
 import { Text } from './Text'
 import { Icon } from './Icon'
-import { Modal } from './Modal'
-import { useState } from 'react'
 import { useGlobal } from '@/context/GlobalContext'
 import {
   HeaderPosition,
@@ -22,6 +20,7 @@ interface TimeLineProps {
   headerText?: string
   headerPosition?: HeaderPosition
   className?: string
+  onStepClick?: (step: Record<string, any>, index: number) => void
 }
 
 export const TimeLine: React.FC<TimeLineProps> = ({
@@ -35,13 +34,10 @@ export const TimeLine: React.FC<TimeLineProps> = ({
   tooltipProps,
   headerText,
   headerPosition = 'top',
-  className = ''
+  className = '',
+  onStepClick
 }) => {
-  const { theme, branding } = useGlobal()
-  const [activeStepIndex, setActiveStepIndex] = useState<number | null>(null)
-  const [expandedSteps, setExpandedSteps] = useState<Record<number, boolean>>(
-    {}
-  )
+  const { theme } = useGlobal()
 
   const isDark = theme === 'dark' || theme === 'dark-hc'
   const isHorizontal = view === 'horizontal'
@@ -50,7 +46,7 @@ export const TimeLine: React.FC<TimeLineProps> = ({
     <div
       className={`overflow-hidden rounded-xl  ${
         isDark ? 'bg-gray-800' : 'bg-white'
-      } p-4 ${className}`}
+      } ${className}`}
     >
       <ol
         className={
@@ -71,10 +67,10 @@ export const TimeLine: React.FC<TimeLineProps> = ({
               key={idx}
               className={
                 isHorizontal
-                  ? 'hover:color-gray-50 relative flex min-w-[200px] cursor-pointer flex-col items-center rounded p-4 transition-all duration-200'
+                  ? 'hover:color-gray-50 relative flex min-w-[200px] cursor-pointer flex-col items-center rounded transition-all duration-200'
                   : 'relative mb-12 flex w-full flex-row justify-center'
               }
-              onClick={() => setActiveStepIndex(idx)}
+              onClick={() => onStepClick?.(step, idx)}
             >
               {isHorizontal ? (
                 <>
@@ -177,32 +173,6 @@ export const TimeLine: React.FC<TimeLineProps> = ({
           )
         })}
       </ol>
-
-      <Modal
-        open={activeStepIndex !== null}
-        onClose={() => setActiveStepIndex(null)}
-      >
-        {activeStepIndex !== null && (
-          <div className='p-6'>
-            <h3 className='mb-2 text-lg font-semibold'>
-              {steps[activeStepIndex][title]}
-            </h3>
-            <p className='mb-4 text-sm text-gray-500'>
-              {new Date(steps[activeStepIndex][date]).toLocaleString()}
-            </p>
-            {steps[activeStepIndex] && (
-              <div className='mb-3 grid grid-cols-2 gap-2 text-sm'>
-                {Object.entries(steps[activeStepIndex]).map(([key, value]) => (
-                  <div key={key}>
-                    <span className='font-medium text-gray-500'>{key}:</span>{' '}
-                    {String(value)}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </Modal>
     </div>
   )
 

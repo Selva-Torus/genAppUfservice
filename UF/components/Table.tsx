@@ -7,6 +7,7 @@ import { getFontSizeClass, getBorderRadiusClass } from"@/app/utils/branding";
 import { BiSort } from "react-icons/bi";
 import { twMerge } from "tailwind-merge";
 import { useTheme } from "@/hooks/useTheme";
+import { Pagination } from "./Pagination";
 
 interface RenderRowActionsProps {
   item: any;
@@ -48,6 +49,15 @@ interface TableProps {
   wordWrap?: boolean;
   loading?: boolean;
   isRowclick?: boolean;
+  // Pagination props
+  pagination?: {
+    page: number;
+    pageSize: number;
+    total: number;
+    pageSizeOptions?: number[];
+    onUpdate: (data: { page: number; pageSize: number }) => void;
+  };
+  showPagination?: boolean;
 }
         
 export const Table: React.FC<TableProps> = ({
@@ -72,6 +82,8 @@ export const Table: React.FC<TableProps> = ({
   edgePadding = true,
   wordWrap = false,
   loading = false,
+  pagination,
+  showPagination = false,
 }) => {
   const { theme, branding } = useGlobal();
   const { borderColor } = useTheme()
@@ -345,8 +357,8 @@ const sortedData = sortColumn
         </div>
       )}
 
-      <div className={twMerge("border rounded-lg flex-1 flex flex-col overflow-hidden", borderColor)}>
-        <div className="overflow-auto flex-1 min-h-0">
+      <div className={twMerge("border rounded-lg flex flex-col overflow-hidden max-h-full", borderColor)}>
+        <div className="overflow-auto min-h-0">
           <table
             className={`
               w-full
@@ -602,6 +614,21 @@ const sortedData = sortColumn
           </tbody>
         </table>
         </div>
+
+        {/* Pagination */}
+        {showPagination && pagination && pagination.total > 0 && (
+          <div className={`border-t ${isDark ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"} px-4 py-4`}>
+            <Pagination
+              page={pagination.page}
+              pageSize={pagination.pageSize}
+              total={pagination.total}
+              pageSizeOptions={pagination.pageSizeOptions || [5, 10, 20, 50, 100]}
+              onUpdate={pagination.onUpdate}
+              alignment="middle"
+              showButtonText={true}
+            />
+          </div>
+        )}
       </div>
 
     </div>
