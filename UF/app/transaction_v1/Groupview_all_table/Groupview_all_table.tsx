@@ -36,7 +36,6 @@ const Groupview_all_table = ({lockedData={},setLockedData,primaryTableData={}, s
   let item = "";
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const {dfd_get_transaction_dfd_v1Props, setdfd_get_transaction_dfd_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const {dfd_tran_journey_db_query_v1Props, setdfd_tran_journey_db_query_v1Props} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagComp: boolean = encryptionFlagPageData?.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagPageData?.dpd;
@@ -48,7 +47,7 @@ const Groupview_all_table = ({lockedData={},setLockedData,primaryTableData={}, s
     "method":encryptionMethod
   };
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [
       "view_all_logs",
       "view_all_button",
@@ -75,7 +74,7 @@ const Groupview_all_table = ({lockedData={},setLockedData,primaryTableData={}, s
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [
       "view_all_logs",
       "view_all_button",
@@ -102,7 +101,7 @@ const Groupview_all_table = ({lockedData={},setLockedData,primaryTableData={}, s
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [
       "view_all_logs",
       "view_all_button",
@@ -253,7 +252,7 @@ const Groupview_all_table = ({lockedData={},setLockedData,primaryTableData={}, s
     <div 
       style={{          
         gridColumn: '1 / 25',
-        gridRow: '1 / 90',
+        gridRow: '1 / 92',
       
         //rowGap: '0px',
         overflow: 'visible',

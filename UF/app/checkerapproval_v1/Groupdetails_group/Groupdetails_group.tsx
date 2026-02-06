@@ -52,7 +52,7 @@ const Groupdetails_group = ({lockedData={},setLockedData,primaryTableData={}, se
     "method":encryptionMethod
   };
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [
       "checker_detail",
       "api_endpoint",
@@ -73,7 +73,7 @@ const Groupdetails_group = ({lockedData={},setLockedData,primaryTableData={}, se
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [
       "checker_detail",
       "api_endpoint",
@@ -94,7 +94,7 @@ const Groupdetails_group = ({lockedData={},setLockedData,primaryTableData={}, se
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [
       "checker_detail",
       "api_endpoint",

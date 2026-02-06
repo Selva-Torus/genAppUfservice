@@ -66,6 +66,11 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   
   let code:string = "";
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [paginationData, setPaginationData] = React.useState({
+    page: 0,
+    pageSize: 0,
+    total: 0,
+  })
   const savedData=useRef<Record<string, any>>({})
   const keyset:any=i18n.keyset("language");
   const confirmMsgFlag: boolean = false; 
@@ -134,6 +139,11 @@ const Buttonsearch = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
         return
       }
       setAllCode(orchestrationData?.data?.code);
+      setPaginationData((pre: any) => ({
+      ...pre,
+          page: +orchestrationData?.data?.action?.pagination?.page || 1,
+          pageSize: +orchestrationData?.data?.action?.pagination?.count || 1000
+    }))
       if(orchestrationData?.data?.rule?.nodes?.length > 0){
         let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
         // schemaFlag =schemaFlag.output;
@@ -243,9 +253,9 @@ async function handleSearch0() {
     key: filterProps[0].key + ":",
     upId: '',
     refreshFlag: 'Y',
-    count: 10,
-    page: 1,
-    filterData: filterData
+    filterData: filterData,
+    count:paginationData.pageSize,
+    page:paginationData.page
   }
   if (encryptionFlagCont) {
     te_refreshBody['dpdKey'] = encryptionDpd

@@ -23,19 +23,19 @@ export default function PageAddNewPaymentV1() {
   const { isDark, isHighContrast, bgStyle, textStyle } : { isDark: boolean; isHighContrast: boolean; bgStyle: string; textStyle: string } = useTheme();
   const [initialLoad, setInitialLoad] = useState<boolean>(false);
   const securityData : SecurityData = {
-  "Maker": {
+  "Operation Team": {
     "allowedGroups": [
       "canvas",
       "payment_group"
     ]
   },
-  "Checker": {
+  "Business Team": {
     "allowedGroups": [
       "canvas",
       "payment_group"
     ]
   },
-  "Admin": {
+  "IT Team": {
     "allowedGroups": [
       "canvas",
       "payment_group"
@@ -234,7 +234,7 @@ export default function PageAddNewPaymentV1() {
   },
   "pagination": {
     "page": "1",
-    "count": "10"
+    "count": 100
   },
   "encryption": {
     "isEnabled": false,
@@ -245,7 +245,7 @@ export default function PageAddNewPaymentV1() {
 };
         try{
     await get_transaction_dfd_v1(pagination)
-          if (security == 'AA') {
+          if (security == 'AA' || security == 'RA') {
           allowedGroup.map((nodes:AllowedGroupNode)=>{
             if(nodes?.groupName == 'payment_group' && (nodes?.security== 'AA' || nodes?.security == 'ATO' || nodes?.security == 'RA'))
             {

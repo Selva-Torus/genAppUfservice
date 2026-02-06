@@ -16,32 +16,13 @@ import { useTheme } from '@/hooks/useTheme';
 import { DecodedToken,PrimaryTableData,SecurityData,EncryptionFlagPageData,PaginationData,AllowedGroupNode,ActionDetails } from "@/types/global";
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import clsx from "clsx";
-import Grouptran_journey_dtl_group  from "./Grouptran_journey_dtl_group/Grouptran_journey_dtl_group";
+import Grouptran_journey_error_dtl_group  from "./Grouptran_journey_error_dtl_group/Grouptran_journey_error_dtl_group";
 
 
-export default function PageTranJourneyDtlV1() {
+export default function PageTranJourneyErrorDtlV1() {
   const { isDark, isHighContrast, bgStyle, textStyle } : { isDark: boolean; isHighContrast: boolean; bgStyle: string; textStyle: string } = useTheme();
   const [initialLoad, setInitialLoad] = useState<boolean>(false);
-  const securityData : SecurityData = {
-  "Maker": {
-    "allowedGroups": [
-      "canvas",
-      "tran_journey_dtl_group"
-    ]
-  },
-  "Checker": {
-    "allowedGroups": [
-      "canvas",
-      "tran_journey_dtl_group"
-    ]
-  },
-  "Admin": {
-    "allowedGroups": [
-      "canvas",
-      "tran_journey_dtl_group"
-    ]
-  }
-};
+  const securityData : SecurityData = {};
   let code : string = "";
   //const language=useLanguage();
   const routes : AppRouterInstance = useRouter();
@@ -60,9 +41,9 @@ export default function PageTranJourneyDtlV1() {
   const {paginationDetails, setpaginationDetails} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
-  const {tran_journey_dtl_v1Props, settran_journey_dtl_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const [checktran_journey_dtl_group,setChecktran_journey_dtl_group,]=useState<boolean>(false);
-  const {tran_journey_dtl_group6545a, settran_journey_dtl_group6545a} = useContext(TotalContext) as TotalContextProps;
+  const {tran_journey_error_dtl_v1Props, settran_journey_error_dtl_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const [checktran_journey_error_dtl_group,setChecktran_journey_error_dtl_group,]=useState<boolean>(false);
+  const {tran_journey_error_dtl_grouped0e7, settran_journey_error_dtl_grouped0e7} = useContext(TotalContext) as TotalContextProps;
   const {dfd_tran_journey_dtl_v1Props, setdfd_tran_journey_dtl_v1Props} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagPage: boolean = false|| encAppFalg.flag;
   let encryptionDpd: string = "";
@@ -89,12 +70,12 @@ export default function PageTranJourneyDtlV1() {
           tran_journey_dtl_v1Body["dpdKey"] = encryptionDpd;
           tran_journey_dtl_v1Body["method"] = encryptionMethod;
         }
-        if(tran_journey_dtl_v1Props.length > 0){
+        if(tran_journey_error_dtl_v1Props.length > 0){
           let filterData :any[] =[];
-          for(let i=0;i< tran_journey_dtl_v1Props.length;i++){
-            if(tran_journey_dtl_v1Props[i].DFDkey == "CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1"){
-              delete tran_journey_dtl_v1Props[i].DFDkey;
-              filterData.push(tran_journey_dtl_v1Props[i])
+          for(let i=0;i< tran_journey_error_dtl_v1Props.length;i++){
+            if(tran_journey_error_dtl_v1Props[i].DFDkey == "CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1"){
+              delete tran_journey_error_dtl_v1Props[i].DFDkey;
+              filterData.push(tran_journey_error_dtl_v1Props[i])
             }           
           }
           tran_journey_dtl_v1Body['filterData'] = filterData;
@@ -146,7 +127,7 @@ export default function PageTranJourneyDtlV1() {
   },[refetch?.tran_journey_dtl_v1])
 
   async function securityCheck(): Promise<void> {
-    const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1",accessProfile:[user],from:"pageTranJourneyDtlV1"},{
+    const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Error_Dtl:AFVK:v1",accessProfile:[user],from:"pageTranJourneyErrorDtlV1"},{
       headers: {
         Authorization: `Bearer ${token}`
       }});
@@ -170,7 +151,7 @@ export default function PageTranJourneyDtlV1() {
             params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1"
+              key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Error_Dtl:AFVK:v1"
             }
           }) 
         }else{
@@ -179,7 +160,7 @@ export default function PageTranJourneyDtlV1() {
               Authorization: `Bearer ${token}`
              },
             params: {
-              key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1"  
+              key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Error_Dtl:AFVK:v1"  
             }
           })          
         }
@@ -204,7 +185,7 @@ export default function PageTranJourneyDtlV1() {
           params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1"
+              key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Error_Dtl:AFVK:v1"
             }
         }) 
         }else{
@@ -213,7 +194,7 @@ export default function PageTranJourneyDtlV1() {
              Authorization: `Bearer ${token}`
            },
             params: {
-              key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1"
+              key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Error_Dtl:AFVK:v1"
             }
          })          
         }
@@ -245,11 +226,11 @@ export default function PageTranJourneyDtlV1() {
 };
         try{
     await tran_journey_dtl_v1(pagination)
-          if (security == 'AA') {
+          if (security == 'AA' || security == 'RA') {
           allowedGroup.map((nodes:AllowedGroupNode)=>{
-            if(nodes?.groupName == 'tran_journey_dtl_group' && (nodes?.security== 'AA' || nodes?.security == 'ATO' || nodes?.security == 'RA'))
+            if(nodes?.groupName == 'tran_journey_error_dtl_group' && (nodes?.security== 'AA' || nodes?.security == 'ATO' || nodes?.security == 'RA'))
             {
-              setChecktran_journey_dtl_group(true)
+              setChecktran_journey_error_dtl_group(true)
             }
           })
           }
@@ -264,8 +245,8 @@ export default function PageTranJourneyDtlV1() {
         //Code Execution
         if (code !="" ) {
           let codeStates: Record<string, any> = {}
-          codeStates['tran_journey_dtl_group'] = tran_journey_dtl_group6545a;
-          codeStates['settran_journey_dtl_group'] = settran_journey_dtl_group6545a;
+          codeStates['tran_journey_error_dtl_group'] = tran_journey_error_dtl_grouped0e7;
+          codeStates['settran_journey_error_dtl_group'] = settran_journey_error_dtl_grouped0e7;
           codeExecution(code,codeStates);
         }   
         setInitialLoad(true);        
@@ -323,7 +304,7 @@ export default function PageTranJourneyDtlV1() {
           borderWidth: '2px'
       })
       }}>
-        {checktran_journey_dtl_group && initialLoad &&<Grouptran_journey_dtl_group
+        {checktran_journey_error_dtl_group && initialLoad &&<Grouptran_journey_error_dtl_group
           lockedData={lockedData} 
           setLockedData={setLockedData} 
           primaryTableData={primaryTableData}

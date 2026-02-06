@@ -5,6 +5,7 @@
   "appGroupDesc": "VGPH",
   "logType": "mongodb",
   "appDesc": "VGPH",
+  "appLogo": "torus/9.1/CT005/resources/images/veraciousLogo.png",
   "isOld": true,
   "clientCode": "CT005",
   "loginDetails": {
@@ -46,7 +47,7 @@
         }
       }
     },
-    "lastActive": "2026-02-05T05:42:31.874Z",
+    "lastActive": "2026-02-06T04:34:29.830Z",
     "client": "CT005",
     "users": "guruGuru Krishnan",
     "profile": "",

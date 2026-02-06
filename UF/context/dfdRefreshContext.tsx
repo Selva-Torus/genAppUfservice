@@ -234,13 +234,13 @@ export function useHandleDfdRefresh(){
             if("tran_journey47044"==nodename){
                 dfdRefreshContext("CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_DB_Query:AFVK:v1",setdfd_tran_journey_db_query_v1Props,page,count,dpdEncryption,toast,token);
             }
-            if("tra_created_date34aa7"==nodename){
+            if("trs_created_datee861b"==nodename){
                 dfdRefreshContext("CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1",setdfd_tran_journey_dtl_v1Props,page,count,dpdEncryption,toast,token);
             }
-            if("failuer_process_code981ea"==nodename){
+            if("failuer_process_codee5490"==nodename){
                 dfdRefreshContext("CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1",setdfd_tran_journey_dtl_v1Props,page,count,dpdEncryption,toast,token);
             }
-            if("product_code36b37"==nodename){
+            if("product_code6692d"==nodename){
                 dfdRefreshContext("CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1",setdfd_tran_journey_dtl_v1Props,page,count,dpdEncryption,toast,token);
             }
             if("product_code523b7"==nodename){

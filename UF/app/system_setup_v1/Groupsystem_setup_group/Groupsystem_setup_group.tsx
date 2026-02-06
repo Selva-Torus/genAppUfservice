@@ -53,7 +53,7 @@ const Groupsystem_setup_group = ({lockedData={},setLockedData,primaryTableData={
     "method":encryptionMethod
   };
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [
       "product_code",
       "setup_code",
@@ -72,7 +72,7 @@ const Groupsystem_setup_group = ({lockedData={},setLockedData,primaryTableData={
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [
       "product_code",
       "setup_code",
@@ -91,7 +91,7 @@ const Groupsystem_setup_group = ({lockedData={},setLockedData,primaryTableData={
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [
       "product_code",
       "setup_code",

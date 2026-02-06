@@ -11,9 +11,9 @@
           "name": "transaction",
           "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1",
           "allowedAccessProfile": [
-            "Maker",
-            "Checker",
-            "Admin"
+            "Operation Team",
+            "Business Team",
+            "IT Team"
           ],
           "static": false,
           "icon": "/torus/9.1/resources/icons/home-4-svgrepo-com.svg"
@@ -31,9 +31,9 @@
           "label": "System Setup",
           "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1",
           "allowedAccessProfile": [
-            "Maker",
-            "Checker",
-            "Admin"
+            "Operation Team",
+            "Business Team",
+            "IT Team"
           ],
           "static": false
         }
@@ -48,9 +48,9 @@
           "name": "checkerapproval",
           "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1",
           "allowedAccessProfile": [
-            "Maker",
-            "Checker",
-            "Admin"
+            "Operation Team",
+            "Business Team",
+            "IT Team"
           ],
           "static": false,
           "icon": "/torus/9.1/CT005/resources/images/Checker approval.png"
@@ -94,9 +94,10 @@
       },
       "applicationUniqueId": "0c70f27e-6eae-4f9d-b2c2-d3b912d71e0b",
       "lastBuildVersion": "v1",
-      "lastBuildOn": "2026-02-03T10:37:54.462Z",
+      "lastBuildOn": "2026-02-05T11:59:31.860Z",
       "accessUrl": "https://tgadev.toruslowcode.com/ct005/v001/vgph001/v1",
       "logo": "torus/9.1/CT005/resources/images/vgph-final-logo-fw@4x.png",
+      "appLogo": "torus/9.1/CT005/resources/images/veraciousLogo.png",
       "appGrpName": "VGPH",
       "appGrpCode": "V001",
       "fusionAuthAppClientSecret": "PxMTdZPDtGXPZ5TPGmIZYTqllCujW4xNpm-wBCKNnFY"
@@ -219,7 +220,7 @@
         }
       }
     },
-    "lastActive": "2026-02-05T05:42:31.874Z",
+    "lastActive": "2026-02-06T04:34:29.830Z",
     "client": "CT005",
     "users": "guruGuru Krishnan",
     "profile": "",
@@ -228,19 +229,14 @@
   },
   "webOnBoarding": {
     "navBarStyle": {
-      "activeItems": [],
-      "deletedItems": [
+      "activeItems": [
         {
-          "name": "logo",
+          "name": "app logo",
           "gridColumn": "1/2"
         },
         {
-          "name": "app logo",
-          "gridColumn": "2/4"
-        },
-        {
           "name": "menu items",
-          "gridColumn": "4/9",
+          "gridColumn": "2/7",
           "gridRow": "1/6"
         },
         {
@@ -252,6 +248,12 @@
           "name": "profile",
           "gridColumn": "12/13",
           "gridRow": "12/13"
+        }
+      ],
+      "deletedItems": [
+        {
+          "name": "logo",
+          "gridColumn": "1/2"
         }
       ]
     },
@@ -278,6 +280,7 @@
   "appGroupDesc": "VGPH",
   "logType": "mongodb",
   "appDesc": "VGPH",
+  "appLogo": "torus/9.1/CT005/resources/images/veraciousLogo.png",
   "isOld": true,
   "clientCode": "CT005"
 } */

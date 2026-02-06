@@ -60,7 +60,7 @@ const Grouppayment_group = ({lockedData={},setLockedData,primaryTableData={}, se
     "method":encryptionMethod
   };
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [
       "channel_name",
       "product_code",
@@ -86,7 +86,7 @@ const Grouppayment_group = ({lockedData={},setLockedData,primaryTableData={}, se
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [
       "channel_name",
       "product_code",
@@ -112,7 +112,7 @@ const Grouppayment_group = ({lockedData={},setLockedData,primaryTableData={}, se
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [
       "channel_name",
       "product_code",

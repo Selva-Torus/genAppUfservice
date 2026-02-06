@@ -123,6 +123,24 @@ const Switchoutbound_or_inbound = ({checkToAdd,setCheckToAdd,encryptionFlagCompD
       ...filterProps2[0].nodeBasedData[0],
       ...filterPropsEvaluateDecisionTable2 // NEW values
     }]})) 
+    let filterPropsEvaluateDecisionTable4:any = evaluateDecisionTable(ruleCode?.nodes,{outbound_or_inbound: checked},{...decodedTokenObj,...memoryVariables}) 
+    let filterProps4:any =  [
+  {
+    "key": "CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:V001:AFGK:VGPH001:AFK:Get_Transaction_DFD:AFVK:v1",
+    "nodeBasedData": [
+      {
+        "nodeId": "5bc8f410f27248d88fc91b7fe01fb9c0",
+        "object": {}
+      }
+    ]
+  }
+]
+    delete filterProps4[0].nodeBasedData[0].object
+    setfailure_queue_table449a9Props((prev: any) => ({...prev,filterProps: [{
+      ...(prev.filterProps?.[0] ?? {}),
+      ...filterProps4[0].nodeBasedData[0],
+      ...filterPropsEvaluateDecisionTable4 // NEW values
+    }]})) 
   }
 
   async function handleConfirmOnChange(){

@@ -29,8 +29,8 @@ export class  vgph_message_template_stagingEntity implements  vgph_message_templ
     type:string;
     @ApiProperty({example:"string"})
     message_code:string;
-    @ApiProperty({example:"any"})
-    template_name:any;
+    @ApiProperty({example:"string"})
+    template_value:string;
     @Transform(({ value }) => value?.toISOString())
     @ApiProperty({example:"datetime"})
     trs_created_date: Date;
@@ -82,8 +82,8 @@ export class  vgph_message_template_staging_OnlyParentEntity {
     type:string;
     @ApiProperty({example:"string"})
     message_code:string;
-    @ApiProperty({example:"any"})
-    template_name:any;
+    @ApiProperty({example:"string"})
+    template_value:string;
     @Transform(({ value }) => value?.toISOString())
     @ApiProperty({example:"datetime"})
     trs_created_date: Date;

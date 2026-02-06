@@ -256,7 +256,7 @@ const Tableview_all_table = ({ lockedData,setLockedData,primaryTableData, setPri
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps
   const [translatedColumns,setTranslatedColumns]= useState<any>([])
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [
       "view_all_logs",
       "view_all_button",
@@ -274,7 +274,7 @@ const Tableview_all_table = ({ lockedData,setLockedData,primaryTableData, setPri
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [
       "view_all_logs",
       "view_all_button",
@@ -292,7 +292,7 @@ const Tableview_all_table = ({ lockedData,setLockedData,primaryTableData, setPri
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [
       "view_all_logs",
       "view_all_button",
@@ -1053,8 +1053,10 @@ const colurIndicator = (keyValue:any=[], comingValue:any,ColourIndicatorType:any
       <Modal 
       open={showProfileAsModalOpen} 
       onClose={() => setShowProfileAsModalOpen(false)} 
-      //title={"Tran_Journey"}
-      className='w-[] h-[] bg-gray-50 mx-auto rounded-lg shadow-xl p-5 overflow-auto'>
+        showOverlay = {false}
+        position = {"right"}
+        className='w-[] h-[] bg-gray-50 rounded-lg shadow-xl overflow-auto'
+      >
         <PageTranJourneypage/>
       </Modal>
           <div className=' w-full flex flex-row h-[80%]'>

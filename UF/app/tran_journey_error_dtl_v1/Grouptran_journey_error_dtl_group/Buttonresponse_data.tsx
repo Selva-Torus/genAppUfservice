@@ -49,7 +49,7 @@ function objectToQueryString(obj: any) {
 }
  
 
-const ButtonCancel = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}: { lockedData:any,setLockedData:any,checkToAdd:any,setCheckToAdd:any,refetch:any,setRefetch:any,primaryTableData:any,setPrimaryTableData:any,encryptionFlagCompData:any,}) => {
+const Buttonresponse_data = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}: { lockedData:any,setLockedData:any,checkToAdd:any,setCheckToAdd:any,refetch:any,setRefetch:any,primaryTableData:any,setPrimaryTableData:any,encryptionFlagCompData:any,}) => {
   const token:string = getCookie('token');
   const {currentToken, setCurrentToken} = useContext(TotalContext) as TotalContextProps;
   const decodedTokenObj:any = decodeToken(token);
@@ -94,17 +94,18 @@ const ButtonCancel = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
  /////////////
    //another screen
 
-  const {system_setup_group2af15, setsystem_setup_group2af15}= useContext(TotalContext) as TotalContextProps;
-  const {system_setup_group2af15Props, setsystem_setup_group2af15Props}= useContext(TotalContext) as TotalContextProps;
-  const {product_code523b7, setproduct_code523b7}= useContext(TotalContext) as TotalContextProps;
-  const {setup_code88cd6, setsetup_code88cd6}= useContext(TotalContext) as TotalContextProps;
-  const {interface_productd9133, setinterface_productd9133}= useContext(TotalContext) as TotalContextProps;
-  const {category80c2f, setcategory80c2f}= useContext(TotalContext) as TotalContextProps;
-  const {sub_categoryd81c5, setsub_categoryd81c5}= useContext(TotalContext) as TotalContextProps;
-  const {purpose3b7f4, setpurpose3b7f4}= useContext(TotalContext) as TotalContextProps;
-  const {system_setup_dynamic_formf3526, setsystem_setup_dynamic_formf3526}= useContext(TotalContext) as TotalContextProps;
-  const {cancelad32e, setcancelad32e}= useContext(TotalContext) as TotalContextProps;
-  const {save3a1b8, setsave3a1b8}= useContext(TotalContext) as TotalContextProps;
+  const {tran_journey_error_dtl_grouped0e7, settran_journey_error_dtl_grouped0e7}= useContext(TotalContext) as TotalContextProps;
+  const {tran_journey_error_dtl_grouped0e7Props, settran_journey_error_dtl_grouped0e7Props}= useContext(TotalContext) as TotalContextProps;
+  const {tran_date_and_timec7376, settran_date_and_timec7376}= useContext(TotalContext) as TotalContextProps;
+  const {tran_status9ed8a, settran_status9ed8a}= useContext(TotalContext) as TotalContextProps;
+  const {trs_created_datee861b, settrs_created_datee861b}= useContext(TotalContext) as TotalContextProps;
+  const {failuer_process_codee5490, setfailuer_process_codee5490}= useContext(TotalContext) as TotalContextProps;
+  const {tran_process92d9c, settran_process92d9c}= useContext(TotalContext) as TotalContextProps;
+  const {product_code6692d, setproduct_code6692d}= useContext(TotalContext) as TotalContextProps;
+  const {view_msg_data9b55f, setview_msg_data9b55f}= useContext(TotalContext) as TotalContextProps;
+  const {request_data9aa32, setrequest_data9aa32}= useContext(TotalContext) as TotalContextProps;
+  const {response_data39796, setresponse_data39796}= useContext(TotalContext) as TotalContextProps;
+  const {tran_log_data1b428, settran_log_data1b428}= useContext(TotalContext) as TotalContextProps;
   //////////////
 
 
@@ -114,8 +115,8 @@ const ButtonCancel = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
     code = allCode ||""
     if (code != '') {
       let codeStates: Record<string, any> = {};
-      codeStates['system_setup_group']  = system_setup_group2af15,
-      codeStates['setsystem_setup_group'] = setsystem_setup_group2af15,
+      codeStates['tran_journey_error_dtl_group']  = tran_journey_error_dtl_grouped0e7,
+      codeStates['settran_journey_error_dtl_group'] = settran_journey_error_dtl_grouped0e7,
       codeStates['response']  = savedData.current;
       customCode = codeExecution(code,codeStates);
       return customCode;
@@ -126,11 +127,11 @@ const ButtonCancel = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
       const orchestrationData: any = await AxiosService.post(
         '/UF/Orchestration',
         {
-          key: "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1",
-          componentId: "723ad64155fe45adba8c526f1ce2af15",
-          controlId: "f8367e90813e4dadb26ac7093aead32e",
+          key: "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Error_Dtl:AFVK:v1",
+          componentId: "4c3c71908836485abc8f9dac45ded0e7",
+          controlId: "ebef766d18ae4e818bf9043254039796",
           isTable: false,
-          from:"ButtonClear",
+          from:"ButtonView Response Data",
           accessProfile:accessProfile
         },
         {
@@ -173,11 +174,11 @@ const ButtonCancel = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   useEffect(()=>{
     handleMapper();
     eventBus.on("triggerButton", (id:any) => {
-      if (id === "cancelad32e") {
+      if (id === "response_data39796") {
         handleClick();
       }
     });
-  },[cancelad32e?.refresh,currentToken])
+  },[response_data39796?.refresh,currentToken])
 
   function SourceIdFilter(eventProperty:any,matchingSequence?:string){
     let ans : any[] = [];
@@ -204,7 +205,7 @@ const ButtonCancel = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   }
 
   const handleClick=async()=>{
-    if(system_setup_group2af15Props?.validation==true && system_setup_group2af15Props?.required==true || system_setup_group2af15Props?.required==true)
+    if(tran_journey_error_dtl_grouped0e7Props?.validation==true && tran_journey_error_dtl_grouped0e7Props?.required==true || tran_journey_error_dtl_grouped0e7Props?.required==true)
     {
       if(validateRefetch.init==0)
       {
@@ -223,12 +224,6 @@ const ButtonCancel = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
       return
     }
     try{  
-    // clearHandler riseListen
-    // for group
-    Object.keys(system_setup_group2af15).map((keys:any)=>{         
-      system_setup_group2af15[keys]="";
-    })
-    setsystem_setup_group2af15({...system_setup_group2af15});
           await delay(1000);
       await handleCustomCode();
     }catch (err: any) {
@@ -239,45 +234,31 @@ const ButtonCancel = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
       setLoading(false);
     }
   }
-  async function handleConfirmOnClick(){
-    try{
-    }catch(err){
-      toast(err, 'danger');
-    }
-  } 
 
 
-  async function handleConfirmOnCancel(){
-     try{
-    }catch(err){
-      toast(err, 'danger');
-    }
-  }
-
-
- if (cancelad32e?.isHidden) {
+ if (response_data39796?.isHidden) {
     return <></>
   }
  
   return (
     <div
-      style={{gridColumn: `20 / 22`,gridRow: `122 / 132`, gap:``, height: `100%`, overflow: 'auto'}} 
+      style={{gridColumn: `13 / 17`,gridRow: `106 / 121`, gap:``, height: `100%`, overflow: 'auto'}} 
       >
         {showFlag && <Button 
           ref={buttonRef}
           className=""
           onClick={handleClick}
-          view='outlined-danger'
-          disabled= {cancelad32e?.isDisabled ? true : false}
-          pin='brick-brick'
+          view='outlined-info'
+          disabled= {response_data39796?.isDisabled ? true : false}
+          pin='circle-circle'
           contentAlign={"center"}
         >
-          {keyset("Clear")}
+          {keyset("View Response Data")}
         </Button>}
       </div>
     
   )
 }
 
-export default ButtonCancel
+export default Buttonresponse_data
 

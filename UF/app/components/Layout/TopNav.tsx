@@ -182,7 +182,7 @@ const TopNav = ({
     }
   }
 
-  // Logo section
+   // Logo section
   const LogoSection = useCallback(() => (
     <div className='flex items-center gap-1 min-w-[100px]' style={navigationStyles == 'vertical' ? undefined : getGridStyle('logo')}>
       {logo ? (
@@ -208,7 +208,7 @@ const TopNav = ({
     <div className='flex items-center gap-1' style={navigationStyles == 'vertical' ? undefined : getGridStyle('app logo')}>
       {appLogo && (
         <img
-          className='h-[60px] w-[60px]'
+          className='h-[60px] w-auto'
           width={100}
           height={100}
           src={getCdnImage(appLogo)}

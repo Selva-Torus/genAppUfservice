@@ -23,19 +23,19 @@ export default function PageViewAllSearchScreenV1() {
   const { isDark, isHighContrast, bgStyle, textStyle } : { isDark: boolean; isHighContrast: boolean; bgStyle: string; textStyle: string } = useTheme();
   const [initialLoad, setInitialLoad] = useState<boolean>(false);
   const securityData : SecurityData = {
-  "Maker": {
+  "Operation Team": {
     "allowedGroups": [
       "canvas",
       "searchgroup"
     ]
   },
-  "Checker": {
+  "Business Team": {
     "allowedGroups": [
       "canvas",
       "searchgroup"
     ]
   },
-  "Admin": {
+  "IT Team": {
     "allowedGroups": [
       "canvas",
       "searchgroup"
@@ -234,7 +234,7 @@ export default function PageViewAllSearchScreenV1() {
   },
   "pagination": {
     "page": "1",
-    "count": "10"
+    "count": 1000
   },
   "encryption": {
     "isEnabled": false,
@@ -245,7 +245,7 @@ export default function PageViewAllSearchScreenV1() {
 };
         try{
     await get_transaction_dfd_v1(pagination)
-          if (security == 'AA') {
+          if (security == 'AA' || security == 'RA') {
           allowedGroup.map((nodes:AllowedGroupNode)=>{
             if(nodes?.groupName == 'searchgroup' && (nodes?.security== 'AA' || nodes?.security == 'ATO' || nodes?.security == 'RA'))
             {

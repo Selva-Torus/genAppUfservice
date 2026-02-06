@@ -45,10 +45,10 @@ export interface TotalContextProps {
   settran_journey_groupbe7ae: React.Dispatch<React.SetStateAction<any>>
   tran_journey_groupbe7aeProps: any 
   settran_journey_groupbe7aeProps: React.Dispatch<React.SetStateAction<any>>
-  tran_journey_dtl_group6545a: any 
-  settran_journey_dtl_group6545a: React.Dispatch<React.SetStateAction<any>>
-  tran_journey_dtl_group6545aProps: any 
-  settran_journey_dtl_group6545aProps: React.Dispatch<React.SetStateAction<any>>
+  tran_journey_error_dtl_grouped0e7: any 
+  settran_journey_error_dtl_grouped0e7: React.Dispatch<React.SetStateAction<any>>
+  tran_journey_error_dtl_grouped0e7Props: any 
+  settran_journey_error_dtl_grouped0e7Props: React.Dispatch<React.SetStateAction<any>>
   system_setup_group2af15: any 
   setsystem_setup_group2af15: React.Dispatch<React.SetStateAction<any>>
   system_setup_group2af15Props: any 
@@ -261,38 +261,46 @@ export interface TotalContextProps {
   settran_journey47044:React.Dispatch<React.SetStateAction<any>>
   tran_journey47044Props: any 
   settran_journey47044Props: React.Dispatch<React.SetStateAction<any>>
-  tran_date_and_timebba58: any,
-  settran_date_and_timebba58:React.Dispatch<React.SetStateAction<any>>
-  tran_date_and_timebba58Props: any 
-  settran_date_and_timebba58Props: React.Dispatch<React.SetStateAction<any>>
-  tran_status9b4c1: any,
-  settran_status9b4c1:React.Dispatch<React.SetStateAction<any>>
-  tran_status9b4c1Props: any 
-  settran_status9b4c1Props: React.Dispatch<React.SetStateAction<any>>
-  tra_created_date34aa7: any,
-  settra_created_date34aa7:React.Dispatch<React.SetStateAction<any>>
-  tra_created_date34aa7Props: any 
-  settra_created_date34aa7Props: React.Dispatch<React.SetStateAction<any>>
-  failuer_process_code981ea: any,
-  setfailuer_process_code981ea:React.Dispatch<React.SetStateAction<any>>
-  failuer_process_code981eaProps: any 
-  setfailuer_process_code981eaProps: React.Dispatch<React.SetStateAction<any>>
-  tran_process55ab3: any,
-  settran_process55ab3:React.Dispatch<React.SetStateAction<any>>
-  tran_process55ab3Props: any 
-  settran_process55ab3Props: React.Dispatch<React.SetStateAction<any>>
-  product_code36b37: any,
-  setproduct_code36b37:React.Dispatch<React.SetStateAction<any>>
-  product_code36b37Props: any 
-  setproduct_code36b37Props: React.Dispatch<React.SetStateAction<any>>
-  view_msg_data387c6: any,
-  setview_msg_data387c6:React.Dispatch<React.SetStateAction<any>>
-  view_msg_data387c6Props: any 
-  setview_msg_data387c6Props: React.Dispatch<React.SetStateAction<any>>
-  view_tran_log83071: any,
-  setview_tran_log83071:React.Dispatch<React.SetStateAction<any>>
-  view_tran_log83071Props: any 
-  setview_tran_log83071Props: React.Dispatch<React.SetStateAction<any>>
+  tran_date_and_timec7376: any,
+  settran_date_and_timec7376:React.Dispatch<React.SetStateAction<any>>
+  tran_date_and_timec7376Props: any 
+  settran_date_and_timec7376Props: React.Dispatch<React.SetStateAction<any>>
+  tran_status9ed8a: any,
+  settran_status9ed8a:React.Dispatch<React.SetStateAction<any>>
+  tran_status9ed8aProps: any 
+  settran_status9ed8aProps: React.Dispatch<React.SetStateAction<any>>
+  trs_created_datee861b: any,
+  settrs_created_datee861b:React.Dispatch<React.SetStateAction<any>>
+  trs_created_datee861bProps: any 
+  settrs_created_datee861bProps: React.Dispatch<React.SetStateAction<any>>
+  failuer_process_codee5490: any,
+  setfailuer_process_codee5490:React.Dispatch<React.SetStateAction<any>>
+  failuer_process_codee5490Props: any 
+  setfailuer_process_codee5490Props: React.Dispatch<React.SetStateAction<any>>
+  tran_process92d9c: any,
+  settran_process92d9c:React.Dispatch<React.SetStateAction<any>>
+  tran_process92d9cProps: any 
+  settran_process92d9cProps: React.Dispatch<React.SetStateAction<any>>
+  product_code6692d: any,
+  setproduct_code6692d:React.Dispatch<React.SetStateAction<any>>
+  product_code6692dProps: any 
+  setproduct_code6692dProps: React.Dispatch<React.SetStateAction<any>>
+  view_msg_data9b55f: any,
+  setview_msg_data9b55f:React.Dispatch<React.SetStateAction<any>>
+  view_msg_data9b55fProps: any 
+  setview_msg_data9b55fProps: React.Dispatch<React.SetStateAction<any>>
+  request_data9aa32: any,
+  setrequest_data9aa32:React.Dispatch<React.SetStateAction<any>>
+  request_data9aa32Props: any 
+  setrequest_data9aa32Props: React.Dispatch<React.SetStateAction<any>>
+  response_data39796: any,
+  setresponse_data39796:React.Dispatch<React.SetStateAction<any>>
+  response_data39796Props: any 
+  setresponse_data39796Props: React.Dispatch<React.SetStateAction<any>>
+  tran_log_data1b428: any,
+  settran_log_data1b428:React.Dispatch<React.SetStateAction<any>>
+  tran_log_data1b428Props: any 
+  settran_log_data1b428Props: React.Dispatch<React.SetStateAction<any>>
   product_code523b7: any,
   setproduct_code523b7:React.Dispatch<React.SetStateAction<any>>
   product_code523b7Props: any 
@@ -395,8 +403,8 @@ export interface TotalContextProps {
   setview_all_search_screen_v1Props: React.Dispatch<React.SetStateAction<any>>
   tran_journey_v1Props: any 
   settran_journey_v1Props: React.Dispatch<React.SetStateAction<any>>
-  tran_journey_dtl_v1Props: any 
-  settran_journey_dtl_v1Props: React.Dispatch<React.SetStateAction<any>>
+  tran_journey_error_dtl_v1Props: any 
+  settran_journey_error_dtl_v1Props: React.Dispatch<React.SetStateAction<any>>
   master_system_setup_v1Props: any 
   setmaster_system_setup_v1Props: React.Dispatch<React.SetStateAction<any>>
   cdc_checker_action_screen_v1Props: any 
@@ -557,8 +565,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       isHidden: false,
       selectedIds:[]
       }) 
-        const [tran_journey_dtl_group6545a, settran_journey_dtl_group6545a ] = React.useState<any>({}) 
-    const [tran_journey_dtl_group6545aProps, settran_journey_dtl_group6545aProps ] = React.useState<any>({
+        const [tran_journey_error_dtl_grouped0e7, settran_journey_error_dtl_grouped0e7 ] = React.useState<any>({}) 
+    const [tran_journey_error_dtl_grouped0e7Props, settran_journey_error_dtl_grouped0e7Props ] = React.useState<any>({
       validation:false,
       required:false,
       refetch:false,
@@ -960,56 +968,70 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refetch:false,
     refresh:false,
     }) 
-   const [tran_date_and_timebba58,settran_date_and_timebba58] = React.useState<any>({
+   const [tran_date_and_timec7376,settran_date_and_timec7376] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [tran_status9b4c1,settran_status9b4c1] = React.useState<any>({
+   const [tran_status9ed8a,settran_status9ed8a] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [tra_created_date34aa7,settra_created_date34aa7] = React.useState<any>({
+   const [trs_created_datee861b,settrs_created_datee861b] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [failuer_process_code981ea,setfailuer_process_code981ea] = React.useState<any>({
+   const [failuer_process_codee5490,setfailuer_process_codee5490] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [tran_process55ab3,settran_process55ab3] = React.useState<any>({
+   const [tran_process92d9c,settran_process92d9c] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [product_code36b37,setproduct_code36b37] = React.useState<any>({
+   const [product_code6692d,setproduct_code6692d] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [view_msg_data387c6,setview_msg_data387c6] = React.useState<any>({
+   const [view_msg_data9b55f,setview_msg_data9b55f] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
     }) 
-   const [view_tran_log83071,setview_tran_log83071] = React.useState<any>({
+   const [request_data9aa32,setrequest_data9aa32] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [response_data39796,setresponse_data39796] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    }) 
+   const [tran_log_data1b428,settran_log_data1b428] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
@@ -1226,14 +1248,16 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
        buttonClearf63e8:false,
        buttonsearch65fd7:false,
        timelinetran_journey47044:false,
-       texttran_date_and_timebba58:false,
-       texttran_status9b4c1:false,
-       texttra_created_date34aa7:false,
-       textfailuer_process_code981ea:false,
-       texttran_process55ab3:false,
-       textproduct_code36b37:false,
-       buttonview_msg_data387c6:false,
-       buttonview_tran_log83071:false,
+       texttran_date_and_timec7376:false,
+       texttran_status9ed8a:false,
+       texttrs_created_datee861b:false,
+       textfailuer_process_codee5490:false,
+       texttran_process92d9c:false,
+       textproduct_code6692d:false,
+       buttonview_msg_data9b55f:false,
+       buttonrequest_data9aa32:false,
+       buttonresponse_data39796:false,
+       buttontran_log_data1b428:false,
        dropdownproduct_code523b7:false,
        textinputsetup_code88cd6:false,
        textinputinterface_productd9133:false,
@@ -1266,7 +1290,7 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
        grouppayment_group1c8a5:false,
        groupsearchgroupc4337:false,
        grouptran_journey_groupbe7ae:false,
-       grouptran_journey_dtl_group6545a:false,
+       grouptran_journey_error_dtl_grouped0e7:false,
        groupsystem_setup_group2af15:false,
        groupcdc_group2e1e4:false,
        groupdetails_group46bbe:false,
@@ -1279,7 +1303,7 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
    const [add_new_payment_v1Props,setadd_new_payment_v1Props] = React.useState<any>([])
    const [view_all_search_screen_v1Props,setview_all_search_screen_v1Props] = React.useState<any>([])
    const [tran_journey_v1Props,settran_journey_v1Props] = React.useState<any>([])
-   const [tran_journey_dtl_v1Props,settran_journey_dtl_v1Props] = React.useState<any>([])
+   const [tran_journey_error_dtl_v1Props,settran_journey_error_dtl_v1Props] = React.useState<any>([])
    const [master_system_setup_v1Props,setmaster_system_setup_v1Props] = React.useState<any>([])
    const [cdc_checker_action_screen_v1Props,setcdc_checker_action_screen_v1Props] = React.useState<any>([])
 
@@ -1355,10 +1379,10 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         settran_journey_groupbe7ae,
         tran_journey_groupbe7aeProps, 
         settran_journey_groupbe7aeProps,
-        tran_journey_dtl_group6545a, 
-        settran_journey_dtl_group6545a,
-        tran_journey_dtl_group6545aProps, 
-        settran_journey_dtl_group6545aProps,
+        tran_journey_error_dtl_grouped0e7, 
+        settran_journey_error_dtl_grouped0e7,
+        tran_journey_error_dtl_grouped0e7Props, 
+        settran_journey_error_dtl_grouped0e7Props,
         system_setup_group2af15, 
         setsystem_setup_group2af15,
         system_setup_group2af15Props, 
@@ -1475,22 +1499,26 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         setsearch65fd7, 
         tran_journey47044,
         settran_journey47044, 
-        tran_date_and_timebba58,
-        settran_date_and_timebba58, 
-        tran_status9b4c1,
-        settran_status9b4c1, 
-        tra_created_date34aa7,
-        settra_created_date34aa7, 
-        failuer_process_code981ea,
-        setfailuer_process_code981ea, 
-        tran_process55ab3,
-        settran_process55ab3, 
-        product_code36b37,
-        setproduct_code36b37, 
-        view_msg_data387c6,
-        setview_msg_data387c6, 
-        view_tran_log83071,
-        setview_tran_log83071, 
+        tran_date_and_timec7376,
+        settran_date_and_timec7376, 
+        tran_status9ed8a,
+        settran_status9ed8a, 
+        trs_created_datee861b,
+        settrs_created_datee861b, 
+        failuer_process_codee5490,
+        setfailuer_process_codee5490, 
+        tran_process92d9c,
+        settran_process92d9c, 
+        product_code6692d,
+        setproduct_code6692d, 
+        view_msg_data9b55f,
+        setview_msg_data9b55f, 
+        request_data9aa32,
+        setrequest_data9aa32, 
+        response_data39796,
+        setresponse_data39796, 
+        tran_log_data1b428,
+        settran_log_data1b428, 
         product_code523b7,
         setproduct_code523b7, 
         setup_code88cd6,
@@ -1546,8 +1574,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
           setview_all_search_screen_v1Props,
           tran_journey_v1Props,
           settran_journey_v1Props,
-          tran_journey_dtl_v1Props,
-          settran_journey_dtl_v1Props,
+          tran_journey_error_dtl_v1Props,
+          settran_journey_error_dtl_v1Props,
           master_system_setup_v1Props,
           setmaster_system_setup_v1Props,
           cdc_checker_action_screen_v1Props,

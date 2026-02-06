@@ -47,7 +47,7 @@ const Groupsearchgroup = ({lockedData={},setLockedData,primaryTableData={}, setP
     "method":encryptionMethod
   };
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [
       "dymanic_search_input",
       "clear",
@@ -60,7 +60,7 @@ const Groupsearchgroup = ({lockedData={},setLockedData,primaryTableData={}, setP
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [
       "dymanic_search_input",
       "clear",
@@ -73,7 +73,7 @@ const Groupsearchgroup = ({lockedData={},setLockedData,primaryTableData={}, setP
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [
       "dymanic_search_input",
       "clear",

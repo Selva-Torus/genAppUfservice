@@ -67,6 +67,11 @@ const Buttonadd_new_payment = ({ lockedData,setLockedData,primaryTableData, setP
   const {add_new_payment_v1Props, setadd_new_payment_v1Props}= useContext(TotalContext) as TotalContextProps;
   let code:string = "";
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [paginationData, setPaginationData] = React.useState({
+    page: 0,
+    pageSize: 0,
+    total: 0,
+  })
   const savedData=useRef<Record<string, any>>({})
   const keyset:any=i18n.keyset("language");
   const confirmMsgFlag: boolean = false; 
@@ -147,6 +152,11 @@ const Buttonadd_new_payment = ({ lockedData,setLockedData,primaryTableData, setP
         return
       }
       setAllCode(orchestrationData?.data?.code);
+      setPaginationData((pre: any) => ({
+      ...pre,
+          page: +orchestrationData?.data?.action?.pagination?.page || 1,
+          pageSize: +orchestrationData?.data?.action?.pagination?.count || 1000
+    }))
       if(orchestrationData?.data?.rule?.nodes?.length > 0){
         let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
         // schemaFlag =schemaFlag.output;

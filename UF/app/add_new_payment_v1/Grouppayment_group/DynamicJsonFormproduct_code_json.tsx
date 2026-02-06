@@ -439,7 +439,7 @@ const DynamicJsonFormproduct_code_json = ({checkToAdd,setCheckToAdd,refetch,setR
   },
   "mapper": []
 }
-    const [goruleData,setGoruleData]=useState<any>(actionDetails?.pfRuleData ||{})
+    const [goruleData,setGoruleData]=useState<any>({})
   const [isRequredData,setIsRequredData]=useState(false)
   const toast:any=useInfoMsg()
   const keyset:any=i18n.keyset("language"); 
@@ -784,6 +784,8 @@ const DynamicJsonFormproduct_code_json = ({checkToAdd,setCheckToAdd,refetch,setR
       }
       setAllCode(orchestrationData?.data?.code)
      
+       setGoruleData(orchestrationData?.data?.pfRuleData ||{})
+      fetchSchema(orchestrationData?.data?.pfRuleData ||{})
       if(orchestrationData?.data?.schemaData?.at(0)?.nodeType=='apinode'){
       if(orchestrationData?.data?.schemaData[0].schema.responses["200"].content["application/json"].schema.items.properties){
         let type:any={name:'product_code_json',type:'text'}
@@ -818,7 +820,7 @@ const DynamicJsonFormproduct_code_json = ({checkToAdd,setCheckToAdd,refetch,setR
 
     useEffect(() => {
       fetchSchema(goruleData,{product_code:payment_group1c8a5?.product_code});
-         }, [])
+         }, [payment_group1c8a5?.product_code])
 
   if (product_code_json46315?.isHidden) {
     return <></>

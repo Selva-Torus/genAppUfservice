@@ -303,7 +303,7 @@ export class vgph_message_template_mainService {
       process_type:"enum",
       type:"string",
       message_code:"string",
-      template_name:"json",
+      template_value:"string",
       trs_created_date:"Date",
       trs_created_by:"string",
       trs_modified_date:"Date",
@@ -347,7 +347,7 @@ export class vgph_message_template_mainService {
       const { process_type }: {process_type : Date} = queryValue;
       const { type }: {type : string} = queryValue;
       const { message_code }: {message_code : string} = queryValue;
-      const { template_name }: {template_name : any } = queryValue;
+      const { template_value }: {template_value : string} = queryValue;
 
       if(vgphmtm_id){ 
         query.vgphmtm_id = { [queryCondition['vgphmtm_id']]: vgphmtm_id };
@@ -370,8 +370,8 @@ export class vgph_message_template_mainService {
       if(message_code){ 
         query.message_code = { [queryCondition['message_code']]: message_code };
       }
-      if(template_name){ 
-        query.template_name = { [queryCondition['template_name']]: template_name };
+      if(template_value){ 
+        query.template_value = { [queryCondition['template_value']]: template_value };
       }
       const skip = (page - 1) * limit;
       if (Object.keys(query).length > 0) {
@@ -438,7 +438,7 @@ export class vgph_message_template_mainService {
     try{
       const res = await this.prismaService.vgph_message_template_main.findUnique({ 
       where: {vgphmtm_id},
-      select: {vgphmtm_id:true,tenant_id:true,product_code:true,direction:true,process_type:true,type:true,message_code:true,template_name:true,        trs_created_date:true,
+      select: {vgphmtm_id:true,tenant_id:true,product_code:true,direction:true,process_type:true,type:true,message_code:true,template_value:true,        trs_created_date:true,
         trs_created_by:true,
         trs_modified_date:true,
         trs_modified_by:true,
@@ -526,7 +526,7 @@ export class vgph_message_template_mainService {
       }
       const res = await this.prismaService.vgph_message_template_main.findMany({ 
       where: whereClause,
-      select: {vgphmtm_id:true,tenant_id:true,product_code:true,direction:true,process_type:true,type:true,message_code:true,template_name:true,        trs_created_date:true,
+      select: {vgphmtm_id:true,tenant_id:true,product_code:true,direction:true,process_type:true,type:true,message_code:true,template_value:true,        trs_created_date:true,
         trs_created_by:true,
         trs_modified_date:true,
         trs_modified_by:true,
@@ -585,7 +585,7 @@ export class vgph_message_template_mainService {
             process_type :v.enum(process_type_vgph_message_template_main,"Invalid process_type_vgph_message_template_main enum")  , 
             type :  v.optional(v.pipe(v.string(),v.maxLength(16 ))), 
             message_code :  v.optional(v.pipe(v.string(),v.maxLength(16 ))), 
-            template_name :  v.optional(v.any() ), 
+            template_value :  v.optional(v.string()), 
         });
         let validate : any = v.safeParse(dataSchema,createvgph_message_template_mainDto);
         if (!validate.success) {
@@ -610,7 +610,7 @@ export class vgph_message_template_mainService {
         
       const res = await this.prismaService.vgph_message_template_main.create({ 
       data: await this.encryptData(createvgph_message_template_mainDto,'vgph_message_template_main','create'),
-      select:{vgphmtm_id:true,tenant_id:true,product_code:true,direction:true,process_type:true,type:true,message_code:true,template_name:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true}
+      select:{vgphmtm_id:true,tenant_id:true,product_code:true,direction:true,process_type:true,type:true,message_code:true,template_value:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true}
           
     })
     return await this.decryptData(res, 'vgph_message_template_main');
@@ -753,7 +753,7 @@ export class vgph_message_template_mainService {
             process_type :v.enum(process_type_vgph_message_template_main,"Invalid process_type_vgph_message_template_main enum")  , 
             type :  v.optional(v.pipe(v.string(),v.maxLength(16 ))), 
             message_code :  v.optional(v.pipe(v.string(),v.maxLength(16 ))), 
-            template_name :  v.optional(v.any() ), 
+            template_value :  v.optional(v.string()), 
         });
         let validate : any = v.safeParse(dataSchema,createvgph_message_template_mainDto);
         if (!validate.success) {
@@ -862,7 +862,7 @@ export class vgph_message_template_mainService {
           process_type :  v.optional(v.enum(process_type_vgph_message_template_main,"Invalid process_type_vgph_message_template_main enum")), 
           type :  v.optional(v.pipe(v.string(),v.maxLength(16 ))), 
           message_code :  v.optional(v.pipe(v.string(),v.maxLength(16 ))), 
-          template_name :  v.optional(v.any()), 
+          template_value :  v.optional(v.string()), 
       });
       let validate : any = v.safeParse(dataSchema,updatevgph_message_template_mainDto);
       if (!validate.success) {
@@ -887,7 +887,7 @@ export class vgph_message_template_mainService {
       const res = await this.prismaService.vgph_message_template_main.update({
       where: {vgphmtm_id},
       data: await this.encryptData(updatevgph_message_template_mainDto,'vgph_message_template_main','update'),
-      select: {vgphmtm_id:true,tenant_id:true,product_code:true,direction:true,process_type:true,type:true,message_code:true,template_name:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true}
+      select: {vgphmtm_id:true,tenant_id:true,product_code:true,direction:true,process_type:true,type:true,message_code:true,template_value:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true}
     });
     return await this.decryptData(res, 'vgph_message_template_main');
     } catch (error) {
@@ -1030,7 +1030,7 @@ vgphmtm_id:number,
           process_type :  v.optional(v.enum(process_type_vgph_message_template_main,"Invalid process_type_vgph_message_template_main enum")), 
           type :  v.optional(v.pipe(v.string(),v.maxLength(16 ))), 
           message_code :  v.optional(v.pipe(v.string(),v.maxLength(16 ))), 
-          template_name :  v.optional(v.any()), 
+          template_value :  v.optional(v.string()), 
       });
       let validate : any = v.safeParse(dataSchema,updatevgph_message_template_mainDto);
       if (!validate.success) {
@@ -1125,7 +1125,7 @@ vgphmtm_id:number,
     try{
       const res = await this.prismaService.vgph_message_template_main.delete({
       where: {vgphmtm_id },
-      select: {vgphmtm_id:true,tenant_id:true,product_code:true,direction:true,process_type:true,type:true,message_code:true,template_name:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true}
+      select: {vgphmtm_id:true,tenant_id:true,product_code:true,direction:true,process_type:true,type:true,message_code:true,template_value:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_next_status:true,trs_status:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true}
     });
     return res;
   } catch (error) {

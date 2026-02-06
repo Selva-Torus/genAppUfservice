@@ -23,19 +23,19 @@ export default function PageTranJourneyV1() {
   const { isDark, isHighContrast, bgStyle, textStyle } : { isDark: boolean; isHighContrast: boolean; bgStyle: string; textStyle: string } = useTheme();
   const [initialLoad, setInitialLoad] = useState<boolean>(false);
   const securityData : SecurityData = {
-  "Maker": {
+  "Operation Team": {
     "allowedGroups": [
       "canvas",
       "tran_journey_group"
     ]
   },
-  "Checker": {
+  "Business Team": {
     "allowedGroups": [
       "canvas",
       "tran_journey_group"
     ]
   },
-  "Admin": {
+  "IT Team": {
     "allowedGroups": [
       "canvas",
       "tran_journey_group"
@@ -245,7 +245,7 @@ export default function PageTranJourneyV1() {
 };
         try{
     await tran_journey_db_query_v1(pagination)
-          if (security == 'AA') {
+          if (security == 'AA' || security == 'RA') {
           allowedGroup.map((nodes:AllowedGroupNode)=>{
             if(nodes?.groupName == 'tran_journey_group' && (nodes?.security== 'AA' || nodes?.security == 'ATO' || nodes?.security == 'RA'))
             {

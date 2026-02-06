@@ -44,7 +44,7 @@ const LayoutDecider = ({
   const encryptionDpd: string = "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:V001:AFGK:VGPH001:AFK:VGPH_DPD:AFVK:v1";
   const encryptionMethod: string = "";
   const logo: string = "torus/9.1/CT005/resources/images/vgph-final-logo-fw@4x.png"
-  const appLogo: string = ""
+  const appLogo: string = "torus/9.1/CT005/resources/images/veraciousLogo.png"
   const appName: string = "VGPH"
   const toast: Function = useInfoMsg()
   const [loading, setLoading] = useState<boolean>(true)
@@ -59,9 +59,9 @@ const LayoutDecider = ({
         "name": "transaction",
         "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1",
         "allowedAccessProfile": [
-          "Maker",
-          "Checker",
-          "Admin"
+          "Operation Team",
+          "Business Team",
+          "IT Team"
         ],
         "static": false,
         "icon": "/torus/9.1/resources/icons/home-4-svgrepo-com.svg"
@@ -79,9 +79,9 @@ const LayoutDecider = ({
         "label": "System Setup",
         "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1",
         "allowedAccessProfile": [
-          "Maker",
-          "Checker",
-          "Admin"
+          "Operation Team",
+          "Business Team",
+          "IT Team"
         ],
         "static": false
       }
@@ -96,9 +96,9 @@ const LayoutDecider = ({
         "name": "checkerapproval",
         "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1",
         "allowedAccessProfile": [
-          "Maker",
-          "Checker",
-          "Admin"
+          "Operation Team",
+          "Business Team",
+          "IT Team"
         ],
         "static": false,
         "icon": "/torus/9.1/CT005/resources/images/Checker approval.png"
@@ -404,7 +404,27 @@ const LayoutDecider = ({
     name: string
     'gridColumn'?: string
     'gridRow'?: string
-  }[] =[]
+  }[] =[
+  {
+    "name": "app logo",
+    "gridColumn": "1/2"
+  },
+  {
+    "name": "menu items",
+    "gridColumn": "2/7",
+    "gridRow": "1/6"
+  },
+  {
+    "name": "opr matrix",
+    "gridColumn": "9/12",
+    "gridRow": "6/9"
+  },
+  {
+    "name": "profile",
+    "gridColumn": "12/13",
+    "gridRow": "12/13"
+  }
+]
 
    if (loading == true){
     return (<div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><span>Loading...</span></div>);

@@ -720,7 +720,7 @@ direction  direction_vgph_message_template_main
 process_type  process_type_vgph_message_template_main
 type  String?  @db.VarChar(length: 16)
 message_code  String?  @db.VarChar(length: 16)
-template_name  Json? 
+template_value  String? 
 trs_created_date    DateTime     @default(now())  
 trs_created_by    String?       
 trs_modified_date    DateTime     @updatedAt  
@@ -1366,7 +1366,7 @@ direction  direction_vgph_message_template_staging
 process_type  process_type_vgph_message_template_staging
 type  String?  @db.VarChar(length: 16)
 message_code  String?  @db.VarChar(length: 16)
-template_name  Json? 
+template_value  String? 
 trs_created_date    DateTime     @default(now())  
 trs_created_by    String?       
 trs_modified_date    DateTime     @updatedAt  

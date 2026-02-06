@@ -124,7 +124,7 @@ const Tablecdc_table = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps
   const [translatedColumns,setTranslatedColumns]= useState<any>([])
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [
       "setup_cd",
       "api_nm",
@@ -136,7 +136,7 @@ const Tablecdc_table = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [
       "setup_cd",
       "api_nm",
@@ -148,7 +148,7 @@ const Tablecdc_table = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [
       "setup_cd",
       "api_nm",

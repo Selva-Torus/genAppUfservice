@@ -66,6 +66,11 @@ const Buttonview_msg_data = ({ lockedData,setLockedData,primaryTableData, setPri
   
   let code:string = "";
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [paginationData, setPaginationData] = React.useState({
+    page: 0,
+    pageSize: 0,
+    total: 0,
+  })
   const savedData=useRef<Record<string, any>>({})
   const keyset:any=i18n.keyset("language");
   const confirmMsgFlag: boolean = false; 
@@ -89,16 +94,18 @@ const Buttonview_msg_data = ({ lockedData,setLockedData,primaryTableData, setPri
  /////////////
    //another screen
 
-  const {tran_journey_dtl_group6545a, settran_journey_dtl_group6545a}= useContext(TotalContext) as TotalContextProps;
-  const {tran_journey_dtl_group6545aProps, settran_journey_dtl_group6545aProps}= useContext(TotalContext) as TotalContextProps;
-  const {tran_date_and_timebba58, settran_date_and_timebba58}= useContext(TotalContext) as TotalContextProps;
-  const {tran_status9b4c1, settran_status9b4c1}= useContext(TotalContext) as TotalContextProps;
-  const {tra_created_date34aa7, settra_created_date34aa7}= useContext(TotalContext) as TotalContextProps;
-  const {failuer_process_code981ea, setfailuer_process_code981ea}= useContext(TotalContext) as TotalContextProps;
-  const {tran_process55ab3, settran_process55ab3}= useContext(TotalContext) as TotalContextProps;
-  const {product_code36b37, setproduct_code36b37}= useContext(TotalContext) as TotalContextProps;
-  const {view_msg_data387c6, setview_msg_data387c6}= useContext(TotalContext) as TotalContextProps;
-  const {view_tran_log83071, setview_tran_log83071}= useContext(TotalContext) as TotalContextProps;
+  const {tran_journey_error_dtl_grouped0e7, settran_journey_error_dtl_grouped0e7}= useContext(TotalContext) as TotalContextProps;
+  const {tran_journey_error_dtl_grouped0e7Props, settran_journey_error_dtl_grouped0e7Props}= useContext(TotalContext) as TotalContextProps;
+  const {tran_date_and_timec7376, settran_date_and_timec7376}= useContext(TotalContext) as TotalContextProps;
+  const {tran_status9ed8a, settran_status9ed8a}= useContext(TotalContext) as TotalContextProps;
+  const {trs_created_datee861b, settrs_created_datee861b}= useContext(TotalContext) as TotalContextProps;
+  const {failuer_process_codee5490, setfailuer_process_codee5490}= useContext(TotalContext) as TotalContextProps;
+  const {tran_process92d9c, settran_process92d9c}= useContext(TotalContext) as TotalContextProps;
+  const {product_code6692d, setproduct_code6692d}= useContext(TotalContext) as TotalContextProps;
+  const {view_msg_data9b55f, setview_msg_data9b55f}= useContext(TotalContext) as TotalContextProps;
+  const {request_data9aa32, setrequest_data9aa32}= useContext(TotalContext) as TotalContextProps;
+  const {response_data39796, setresponse_data39796}= useContext(TotalContext) as TotalContextProps;
+  const {tran_log_data1b428, settran_log_data1b428}= useContext(TotalContext) as TotalContextProps;
   //////////////
 
 
@@ -108,8 +115,8 @@ const Buttonview_msg_data = ({ lockedData,setLockedData,primaryTableData, setPri
     code = allCode ||""
     if (code != '') {
       let codeStates: Record<string, any> = {};
-      codeStates['tran_journey_dtl_group']  = tran_journey_dtl_group6545a,
-      codeStates['settran_journey_dtl_group'] = settran_journey_dtl_group6545a,
+      codeStates['tran_journey_error_dtl_group']  = tran_journey_error_dtl_grouped0e7,
+      codeStates['settran_journey_error_dtl_group'] = settran_journey_error_dtl_grouped0e7,
       codeStates['response']  = savedData.current;
       customCode = codeExecution(code,codeStates);
       return customCode;
@@ -120,9 +127,9 @@ const Buttonview_msg_data = ({ lockedData,setLockedData,primaryTableData, setPri
       const orchestrationData: any = await AxiosService.post(
         '/UF/Orchestration',
         {
-          key: "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Dtl:AFVK:v1",
-          componentId: "6167c96f57c544618a1d4370f846545a",
-          controlId: "5c56bc8b995c4df4b59dc961d07387c6",
+          key: "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Tran_Journey_Error_Dtl:AFVK:v1",
+          componentId: "4c3c71908836485abc8f9dac45ded0e7",
+          controlId: "a6d699e6cbff4e91935913fe5309b55f",
           isTable: false,
           from:"ButtonView Message Data",
           accessProfile:accessProfile
@@ -137,6 +144,11 @@ const Buttonview_msg_data = ({ lockedData,setLockedData,primaryTableData, setPri
         return
       }
       setAllCode(orchestrationData?.data?.code);
+      setPaginationData((pre: any) => ({
+      ...pre,
+          page: +orchestrationData?.data?.action?.pagination?.page || 1,
+          pageSize: +orchestrationData?.data?.action?.pagination?.count || 1000
+    }))
       if(orchestrationData?.data?.rule?.nodes?.length > 0){
         let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
         // schemaFlag =schemaFlag.output;
@@ -162,11 +174,11 @@ const Buttonview_msg_data = ({ lockedData,setLockedData,primaryTableData, setPri
   useEffect(()=>{
     handleMapper();
     eventBus.on("triggerButton", (id:any) => {
-      if (id === "view_msg_data387c6") {
+      if (id === "view_msg_data9b55f") {
         handleClick();
       }
     });
-  },[view_msg_data387c6?.refresh,currentToken])
+  },[view_msg_data9b55f?.refresh,currentToken])
 
   function SourceIdFilter(eventProperty:any,matchingSequence?:string){
     let ans : any[] = [];
@@ -193,7 +205,7 @@ const Buttonview_msg_data = ({ lockedData,setLockedData,primaryTableData, setPri
   }
 
   const handleClick=async()=>{
-    if(tran_journey_dtl_group6545aProps?.validation==true && tran_journey_dtl_group6545aProps?.required==true || tran_journey_dtl_group6545aProps?.required==true)
+    if(tran_journey_error_dtl_grouped0e7Props?.validation==true && tran_journey_error_dtl_grouped0e7Props?.required==true || tran_journey_error_dtl_grouped0e7Props?.required==true)
     {
       if(validateRefetch.init==0)
       {
@@ -224,20 +236,20 @@ const Buttonview_msg_data = ({ lockedData,setLockedData,primaryTableData, setPri
   }
 
 
- if (view_msg_data387c6?.isHidden) {
+ if (view_msg_data9b55f?.isHidden) {
     return <></>
   }
  
   return (
     <div
-      style={{gridColumn: `2 / 13`,gridRow: `105 / 120`, gap:``, height: `100%`, overflow: 'auto'}} 
+      style={{gridColumn: `3 / 7`,gridRow: `106 / 121`, gap:``, height: `100%`, overflow: 'auto'}} 
       >
         {showFlag && <Button 
           ref={buttonRef}
           className=""
           onClick={handleClick}
           view='normal'
-          disabled= {view_msg_data387c6?.isDisabled ? true : false}
+          disabled= {view_msg_data9b55f?.isDisabled ? true : false}
           pin='circle-circle'
           contentAlign={"center"}
         >

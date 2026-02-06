@@ -45,7 +45,7 @@ const Grouptable_group = ({lockedData={},setLockedData,primaryTableData={}, setP
     "method":encryptionMethod
   };
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [],
     "allowedGroups": [
       "canvas",
@@ -57,7 +57,7 @@ const Grouptable_group = ({lockedData={},setLockedData,primaryTableData={}, setP
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [],
     "allowedGroups": [
       "canvas",
@@ -69,7 +69,7 @@ const Grouptable_group = ({lockedData={},setLockedData,primaryTableData={}, setP
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [],
     "allowedGroups": [
       "canvas",

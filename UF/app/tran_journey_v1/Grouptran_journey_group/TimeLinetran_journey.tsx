@@ -1,12 +1,14 @@
 'use client'
 import React, { useContext, useState, useEffect } from 'react';
 import { AxiosService } from "@/app/components/axiosService";
+import { getFilterProps } from '@/app/utils/assemblerKeys';
 import { TotalContext, TotalContextProps } from '@/app/globalContext';
 import { getCookie } from '@/app/components/cookieMgment';
 import { te_refreshDto,api_paginationDto} from '@/app/interfaces/interfaces';
 import { TimeLine } from '@/components/TimeLine';
 import {Modal} from '@/components/Modal';
-import Grouptran_journey_dtl_group from '@/app/tran_journey_dtl_v1/Grouptran_journey_dtl_group/Grouptran_journey_dtl_group';
+import PageTranJourneyDtlpage from '@/app/tran_journey_dtl_v1/tran_journey_dtl_v1page';
+import PageTranJourneyErrorDtlpage from '@/app/tran_journey_error_dtl_v1/tran_journey_error_dtl_v1page';
 const TimeLinetran_journey = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}:any) => { 
   const token: string = getCookie('token');
   const {dfd_tran_journey_db_query_v1Props, setdfd_tran_journey_db_query_v1Props} = useContext(TotalContext) as TotalContextProps; 
@@ -25,7 +27,7 @@ const TimeLinetran_journey = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
     /////////////
   //another screen
 
-
+  const {tran_journey_error_dtl_v1Props, settran_journey_error_dtl_v1Props}= useContext(TotalContext) as TotalContextProps; 
   const {tran_journey_groupbe7ae, settran_journey_groupbe7ae}= useContext(TotalContext) as TotalContextProps
   const {tran_journey_groupbe7aeProps, settran_journey_groupbe7aeProps}= useContext(TotalContext) as TotalContextProps
   const {tran_journey47044, settran_journey47044}= useContext(TotalContext) as TotalContextProps
@@ -35,10 +37,13 @@ const TimeLinetran_journey = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
 
 const statusMap: Record<string, { icon: any; color: string }> = {
   "SUCCESS": { icon: "", color: "#1aff47" },
+  "FAILURE": { icon: "", color: "#ff0000" },
 }
-  const handleStepClick = (step: Record<string, any>, index: number) => {
-    console.log('Clicked step:', step, 'at index:', index)
-        setShowElementAsPopupOpen(true);
+  const handleStepClick = async (step: Record<string, any>, index: number) => {
+    let filterProps:any =  [];
+    let filterData = await getFilterProps(filterProps,tran_journey_groupbe7ae);
+    settran_journey_error_dtl_v1Props([...filterData ]);
+    setShowProfileAsModalOpen(true)
     // copyFormData
       // copyFormData controller
       settran_journey_dtl_group6545a(step);
@@ -78,7 +83,7 @@ const statusMap: Record<string, { icon: any; color: string }> = {
       te_refreshBody["dpdKey"] = encryptionDpd
       te_refreshBody["method"] = encryptionMethod
     }
-    if(tran_journey_groupbe7ae?.vgphstm_uuid){
+    if(tran_journey_groupbe7ae?.uuid){
       setSteps([])
     }
     let dstKey = orchestrationData.data?.mapper[0].sourceKey[0].split('|')[0] + ':' || ''
@@ -89,7 +94,7 @@ const statusMap: Record<string, { icon: any; color: string }> = {
       key: dstKey,
       page: 1,
       count: count,
-      searchFilter: {"vgphtlm_id":tran_journey_groupbe7ae?.vgphstm_uuid},
+      searchFilter: {"vgphstm_uuid":tran_journey_groupbe7ae?.uuid},
     }
     if (encryptionFlagCont) {
       api_paginationBody['dpdKey'] = encryptionDpd
@@ -110,33 +115,32 @@ const statusMap: Record<string, { icon: any; color: string }> = {
     setSteps(data)
   }
 
-    useEffect(() => {
-    if(Array.isArray(dfd_tran_journey_db_query_v1Props) && dfd_tran_journey_db_query_v1Props.length > 0){
-        settran_journey_groupbe7ae((pre:any)=>({...pre,vgphtlm_id:dfd_tran_journey_db_query_v1Props[0]?.vgphtlm_id}));
-    }
-}, [dfd_tran_journey_db_query_v1Props]);
+  //   useEffect(() => {
+  //  //   if(Array.isArray(dfd_tran_journey_db_query_v1Props) && dfd_tran_journey_db_query_v1Props.length > 0){
+  //       settran_journey_groupbe7ae((pre:any)=>({...pre,vgphstm_uuid:dfd_tran_journey_db_query_v1Props[0]?.vgphstm_uuid}));
+  //   }
+  //// }, [dfd_tran_journey_db_query_v1Props]);
 
   useEffect(() => {
-    getTimelineData(tran_journey_groupbe7ae?.vgphstm_uuid)
-  },[ tran_journey_groupbe7ae?.vgphstm_uuid])
+    getTimelineData(tran_journey_groupbe7ae?.uuid)
+  },[ tran_journey_groupbe7ae?.uuid])
 
   return (
     <div className="" style={{gridColumn: `1 / 25`,gridRow: `1 / 146`, gap:``, height: `100%`, overflow: 'auto'}} >
       <Modal 
-        open={showElementAsPopupOpen}
-        onClose={() => setShowElementAsPopupOpen(false)}
-        title="Tran_Journey_Dtl"
-        showOverlay = {false}
+        open={showProfileAsModalOpen} 
+        onClose={() => setShowProfileAsModalOpen(false)}
+        showOverlay = {true}
         position = {"center"}
-        className='w-[ ] h-[] bg-gray-50 overflow-auto'
-      > 
-        <Grouptran_journey_dtl_group/>
+        className='w-[] h-[] bg-gray-50 overflow-auto'
+      >
+        <PageTranJourneyErrorDtlpage/>
       </Modal>
       <TimeLine
         steps={steps}
         statusMap={statusMap}
         title={""}
-        status={"status"}
+        status={"trs_status"}
         date={"trs_created_date"}
         view={'vertical'}
         className={''}

@@ -105,7 +105,7 @@ export default function HomePage() {
 
   return (
     <>
-      <LoginForm logo=""  image=""/>
+      <LoginForm logo="torus/9.1/CT005/resources/images/veraciousLogo.png"  image=""/>
     </>
   )
 }

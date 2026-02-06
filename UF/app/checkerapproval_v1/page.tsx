@@ -23,7 +23,7 @@ export default function PageCheckerapprovalV1() {
   const { isDark, isHighContrast, bgStyle, textStyle } : { isDark: boolean; isHighContrast: boolean; bgStyle: string; textStyle: string } = useTheme();
   const [initialLoad, setInitialLoad] = useState<boolean>(false);
   const securityData : SecurityData = {
-  "Maker": {
+  "Operation Team": {
     "allowedGroups": [
       "canvas",
       "cdc_group",
@@ -32,7 +32,7 @@ export default function PageCheckerapprovalV1() {
       "cdc_table"
     ]
   },
-  "Checker": {
+  "Business Team": {
     "allowedGroups": [
       "canvas",
       "cdc_group",
@@ -41,7 +41,7 @@ export default function PageCheckerapprovalV1() {
       "cdc_table"
     ]
   },
-  "Admin": {
+  "IT Team": {
     "allowedGroups": [
       "canvas",
       "cdc_group",
@@ -260,7 +260,7 @@ export default function PageCheckerapprovalV1() {
 };
         try{
     await cdc_checker_action_dfd_v1(pagination)
-          if (security == 'AA') {
+          if (security == 'AA' || security == 'RA') {
           allowedGroup.map((nodes:AllowedGroupNode)=>{
             if(nodes?.groupName == 'cdc_group' && (nodes?.security== 'AA' || nodes?.security == 'ATO' || nodes?.security == 'RA'))
             {

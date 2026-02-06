@@ -41,7 +41,6 @@ const Grouptab_group = ({lockedData={},setLockedData,primaryTableData={}, setPri
   let item = "";
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const {dfd_get_transaction_dfd_v1Props, setdfd_get_transaction_dfd_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const {dfd_tran_journey_db_query_v1Props, setdfd_tran_journey_db_query_v1Props} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagComp: boolean = encryptionFlagPageData?.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagPageData?.dpd;
@@ -53,7 +52,7 @@ const Grouptab_group = ({lockedData={},setLockedData,primaryTableData={}, setPri
     "method":encryptionMethod
   };
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [
       "add_new_payment",
       "search",
@@ -73,7 +72,7 @@ const Grouptab_group = ({lockedData={},setLockedData,primaryTableData={}, setPri
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [
       "add_new_payment",
       "search",
@@ -93,7 +92,7 @@ const Grouptab_group = ({lockedData={},setLockedData,primaryTableData={}, setPri
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [
       "add_new_payment",
       "search",
@@ -348,7 +347,7 @@ let tabHeaderItems : any =[
     <div 
       style={{          
         gridColumn: '1 / 25',
-        gridRow: '1 / 205',
+        gridRow: '1 / 201',
         display: 'grid',
         height: '100%',
         overflow: 'auto',

@@ -45,7 +45,7 @@ const Grouptran_journey_group = ({lockedData={},setLockedData,primaryTableData={
     "method":encryptionMethod
   };
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [
       "tran_journey"
     ],
@@ -56,7 +56,7 @@ const Grouptran_journey_group = ({lockedData={},setLockedData,primaryTableData={
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [
       "tran_journey"
     ],
@@ -67,7 +67,7 @@ const Grouptran_journey_group = ({lockedData={},setLockedData,primaryTableData={
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [
       "tran_journey"
     ],

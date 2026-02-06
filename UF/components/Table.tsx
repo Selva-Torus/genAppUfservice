@@ -563,7 +563,8 @@ const sortedData = sortColumn
                       </div>
                     </td>
                   )}
-                                    {
+                  {/* modeller dont change the find visible columns part use your rowAction component */}
+                    {
                     (visibleColumns.find((cols:any)=>(cols?.type=='__ActionDetails__'))&&tableActions==true && renderRowActions)&&
                     (
                       <td
@@ -574,6 +575,7 @@ const sortedData = sortColumn
                       </td>
                     )
                   }
+                  {/* the above visible columns object only */}
                   {visibleColumns.map((column) =>
                   { 
                     if(column.type== '__ActionDetails__'&& tableActions!=true && renderRowActions)

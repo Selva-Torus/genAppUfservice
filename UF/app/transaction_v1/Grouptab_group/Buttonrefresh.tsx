@@ -66,6 +66,11 @@ const Buttonrefresh = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
   
   let code:string = "";
   const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const [paginationData, setPaginationData] = React.useState({
+    page: 0,
+    pageSize: 0,
+    total: 0,
+  })
   const savedData=useRef<Record<string, any>>({})
   const keyset:any=i18n.keyset("language");
   const confirmMsgFlag: boolean = false; 
@@ -104,7 +109,6 @@ const Buttonrefresh = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
   const {refresh59747, setrefresh59747}= useContext(TotalContext) as TotalContextProps;
   const {download53d76, setdownload53d76}= useContext(TotalContext) as TotalContextProps;
   const {outbound_or_inbound5dfa8, setoutbound_or_inbound5dfa8}= useContext(TotalContext) as TotalContextProps;
-  const {outbound_or_inbound7eb1c, setoutbound_or_inbound7eb1c}= useContext(TotalContext) as TotalContextProps;
   //////////////
 
 
@@ -147,6 +151,11 @@ const Buttonrefresh = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
         return
       }
       setAllCode(orchestrationData?.data?.code);
+      setPaginationData((pre: any) => ({
+      ...pre,
+          page: +orchestrationData?.data?.action?.pagination?.page || 1,
+          pageSize: +orchestrationData?.data?.action?.pagination?.count || 1000
+    }))
       if(orchestrationData?.data?.rule?.nodes?.length > 0){
         let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
         // schemaFlag =schemaFlag.output;
@@ -232,20 +241,20 @@ const Buttonrefresh = ({ lockedData,setLockedData,primaryTableData, setPrimaryTa
     // for controller 1
     if(Object.keys(tab_group05125).length>0){
       let temp:any=tab_group05125;
-      delete temp["outbound_or_inbound"];
-      settab_group05125(temp);
-    }
-    setoutbound_or_inbound7eb1c((pre:any)=>({...pre,refresh:!pre?.refresh}));
-    handleDfdRefresh("outbound_or_inbound7eb1c",1,10,encryptionFlagCompData)
-    // refreshElement
-    // for controller 1
-    if(Object.keys(tab_group05125).length>0){
-      let temp:any=tab_group05125;
       delete temp["search"];
       settab_group05125(temp);
     }
     setsearchfdc03((pre:any)=>({...pre,refresh:!pre?.refresh}));
     handleDfdRefresh("searchfdc03",1,10,encryptionFlagCompData)
+    // refreshElement
+    // for controller 1
+    if(Object.keys(tab_group05125).length>0){
+      let temp:any=tab_group05125;
+      delete temp["outbound_or_inbound"];
+      settab_group05125(temp);
+    }
+    setoutbound_or_inbound5dfa8((pre:any)=>({...pre,refresh:!pre?.refresh}));
+    handleDfdRefresh("outbound_or_inbound5dfa8",1,10,encryptionFlagCompData)
           await delay(1000);
       await handleCustomCode();
     }catch (err: any) {

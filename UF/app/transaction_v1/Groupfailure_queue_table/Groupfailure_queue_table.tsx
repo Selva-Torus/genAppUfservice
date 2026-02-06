@@ -34,7 +34,6 @@ const Groupfailure_queue_table = ({lockedData={},setLockedData,primaryTableData=
   let item = "";
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const {dfd_get_transaction_dfd_v1Props, setdfd_get_transaction_dfd_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const {dfd_tran_journey_db_query_v1Props, setdfd_tran_journey_db_query_v1Props} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagComp: boolean = encryptionFlagPageData?.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagPageData?.dpd;
@@ -46,7 +45,7 @@ const Groupfailure_queue_table = ({lockedData={},setLockedData,primaryTableData=
     "method":encryptionMethod
   };
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [
       "logs_failure_queue",
       "view_failure_queue",
@@ -72,7 +71,7 @@ const Groupfailure_queue_table = ({lockedData={},setLockedData,primaryTableData=
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [
       "logs_failure_queue",
       "view_failure_queue",
@@ -98,7 +97,7 @@ const Groupfailure_queue_table = ({lockedData={},setLockedData,primaryTableData=
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [
       "logs_failure_queue",
       "view_failure_queue",
@@ -242,7 +241,7 @@ const Groupfailure_queue_table = ({lockedData={},setLockedData,primaryTableData=
     <div 
       style={{          
         gridColumn: '1 / 25',
-        gridRow: '1 / 151',
+        gridRow: '1 / 90',
       
         //rowGap: '0px',
         overflow: 'visible',

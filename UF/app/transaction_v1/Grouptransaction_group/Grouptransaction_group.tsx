@@ -34,7 +34,6 @@ const Grouptransaction_group = ({lockedData={},setLockedData,primaryTableData={}
   let item = "";
   const { isDark, isHighContrast, bgStyle, textStyle } = useTheme();
   const {dfd_get_transaction_dfd_v1Props, setdfd_get_transaction_dfd_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const {dfd_tran_journey_db_query_v1Props, setdfd_tran_journey_db_query_v1Props} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagComp: boolean = encryptionFlagPageData?.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagPageData?.dpd;
@@ -46,7 +45,7 @@ const Grouptransaction_group = ({lockedData={},setLockedData,primaryTableData={}
     "method":encryptionMethod
   };
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [],
     "allowedGroups": [
       "canvas",
@@ -60,7 +59,7 @@ const Grouptransaction_group = ({lockedData={},setLockedData,primaryTableData={}
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [],
     "allowedGroups": [
       "canvas",
@@ -74,7 +73,7 @@ const Grouptransaction_group = ({lockedData={},setLockedData,primaryTableData={}
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [],
     "allowedGroups": [
       "canvas",
@@ -175,7 +174,7 @@ const Grouptransaction_group = ({lockedData={},setLockedData,primaryTableData={}
     <div 
       style={{          
         gridColumn: '1 / 25',
-        gridRow: '1 / 205',
+        gridRow: '1 / 219',
       
         //rowGap: '0px',
         display: 'grid',

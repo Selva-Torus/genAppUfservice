@@ -29,7 +29,7 @@ export class  Updatevgph_message_template_mainDto {
         @ApiProperty()
         message_code?: string;
         @ApiProperty()
-        template_name?: Prisma.InputJsonValue;
+        template_value?: string;
 
 
 

@@ -238,7 +238,7 @@ const Tablefailure_queue_table = ({ lockedData,setLockedData,primaryTableData, s
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps
   const [translatedColumns,setTranslatedColumns]= useState<any>([])
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [
       "logs_failure_queue",
       "view_failure_queue",
@@ -255,7 +255,7 @@ const Tablefailure_queue_table = ({ lockedData,setLockedData,primaryTableData, s
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [
       "logs_failure_queue",
       "view_failure_queue",
@@ -272,7 +272,7 @@ const Tablefailure_queue_table = ({ lockedData,setLockedData,primaryTableData, s
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [
       "logs_failure_queue",
       "view_failure_queue",

@@ -398,6 +398,7 @@ const removeFile = async (
           <div className={`flex  w-full ${fillContainer ? "w-full h-full" : "justify-start"} ${className}`}>
             <Button
               pin='round-round'
+              disabled={disabled}
               fillContainer={fillContainer}
               contentAlign={`${getContentAlignClasses()}`}
               className={` w-full ${fontSizeClass} ${className}`}

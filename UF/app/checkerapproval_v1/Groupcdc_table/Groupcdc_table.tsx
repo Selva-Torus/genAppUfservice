@@ -45,7 +45,7 @@ const Groupcdc_table = ({lockedData={},setLockedData,primaryTableData={}, setPri
     "method":encryptionMethod
   };
   const securityData:any={
-  "Maker": {
+  "Operation Team": {
     "allowedControls": [
       "setup_cd",
       "api_nm",
@@ -64,7 +64,7 @@ const Groupcdc_table = ({lockedData={},setLockedData,primaryTableData={}, setPri
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Checker": {
+  "Business Team": {
     "allowedControls": [
       "setup_cd",
       "api_nm",
@@ -83,7 +83,7 @@ const Groupcdc_table = ({lockedData={},setLockedData,primaryTableData={}, setPri
     "blockedControls": [],
     "readOnlyControls": []
   },
-  "Admin": {
+  "IT Team": {
     "allowedControls": [
       "setup_cd",
       "api_nm",
