@@ -9,11 +9,11 @@ export class DFmyDfdDataController {
 
         @EventPattern('myDfdData_3e962a03d46f4f08a90ea4ce8b0ac94f_apistart') 
         async myDfdData_3e962a03d46f4f08a90ea4ce8b0ac94f_apistart(input: PoEvent) { 
-           return await this.teService.DynamicFlowProcess(input)
+         //   return await this.teService.DynamicFlowProcess(input)
         }       
            @EventPattern('myDfdData_8261569e8bf64e7d8523f01bc79f8e83_apisuccess') 
         async myDfdData_8261569e8bf64e7d8523f01bc79f8e83_apisuccess(input: PoEvent) { 
-           return await this.teService.DynamicFlowProcess(input)
+         //   return await this.teService.DynamicFlowProcess(input)
         }       
     
 }
