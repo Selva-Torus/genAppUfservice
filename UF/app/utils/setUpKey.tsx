@@ -54,11 +54,11 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
   const [data, setData] = useState<SetupKeyData | null>(null);
   const token:string = getCookie('token'); 
   const encryptionFlagApp: boolean = true;
-  const encryptionDpd: string = "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:V001:AFGK:VGPH001:AFK:VGPH_DPD:AFVK:v1";
+  const encryptionDpd: string = "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1";
   const encryptionMethod: string = "";
   const fetchSetupKey = async () => {
     try {
-      let setUpKeyDto:any = {key:"CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT005:AFGK:V001:AFK:VGPH001:AFVK:v1:appearance"};
+      let setUpKeyDto:any = {key:"CK:TGA:FNGK:SETUP:FNK:SF:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:appearance"};
       if (encryptionFlagApp) {
         setUpKeyDto["dpdKey"] = encryptionDpd;
         setUpKeyDto["method"] = encryptionMethod;
@@ -92,7 +92,7 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
       document.documentElement.style.setProperty('--hover-color', hoverColor);
       document.documentElement.style.setProperty('--border-radius', borderRadius);
       document.documentElement.style.setProperty('--g--font-size', fontSize);
-      document.documentElement.style.setProperty('--app-bg-image', bgImage);  
+      document.documentElement.style.setProperty('--app-bg-image', bgImage);
       // document.documentElement.style.setProperty('--page-bg-color', data['page-bg-color']);
       // document.documentElement.style.setProperty('--group-bg-color', data['group-bg-color']);
 
@@ -144,8 +144,11 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
         borderRadius: data.borderRadius as any || 's',
       });
 
-      // Set background image in global context
-      setAppBackgroundImage(data['appBackgroundImage']);
+      // Set background image in global context (full URL)
+      const fullBgImageUrl = data['appBackgroundImage']
+        ? `${process.env.NEXT_PUBLIC_FTP_OUTPUT_HOST}/${data['appBackgroundImage']}`
+        : undefined;
+      setAppBackgroundImage(fullBgImageUrl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);

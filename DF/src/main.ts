@@ -1,19 +1,18 @@
 
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT005:AFGK:V001:AFK:VGPH001:AFVK:v1:bldc",
-  "deploymentArtifactKey": "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:V001:AFGK:VGPH001:AFK:VGPH_DPD:AFVK:v1",
-  "appGroupDesc": "VGPH",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+  "deploymentArtifactKey": "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
+  "appGroupDesc": "appgroup",
   "logType": "mongodb",
-  "appDesc": "VGPH",
-  "appLogo": "torus/9.1/CT005/resources/images/veraciousLogo.png",
+  "appDesc": "application",
   "isOld": true,
-  "clientCode": "CT005",
+  "clientCode": "CI001",
   "loginDetails": {
-    "loginId": "guru",
-    "firstName": "Guru",
-    "lastName": "Krishnan",
-    "email": "cgkrishnan@gsstvl.com",
-    "mobile": "8190002700",
+    "loginId": "selva",
+    "firstName": "selva",
+    "lastName": "g",
+    "email": "selvakumarg+a@torus.tech",
+    "mobile": "6369726232",
     "2FAFlag": "N",
     "scope": "client_admin",
     "status": "active",
@@ -21,9 +20,9 @@
       "admin"
     ],
     "accessExpires": "",
-    "dateAdded": "2026-01-21T06:18:59.283Z",
+    "dateAdded": "2026-01-23T13:29:31.878Z",
     "isRestricted": false,
-    "userUniqueId": "60c8940f-8aa1-485d-9b53-dc20e43cc584",
+    "userUniqueId": "399bb002-571a-4f60-8242-67a2d5d03a4b",
     "touring": {
       "isneedTouring": false,
       "touringData": {
@@ -33,13 +32,7 @@
           "completed": false,
           "notVisited": []
         },
-        "/home": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "artifactselector": {
+        "/control-center/tenant": {
           "stepIndex": 0,
           "isSkipped": true,
           "completed": false,
@@ -47,12 +40,7 @@
         }
       }
     },
-    "lastActive": "2026-02-06T04:34:29.830Z",
-    "client": "CT005",
-    "users": "guruGuru Krishnan",
-    "profile": "",
-    "edit": "",
-    "noOfProductsService": 0
+    "client": "CI001"
   }
 } */
 import { NestFactory } from '@nestjs/core';
@@ -119,7 +107,7 @@ async function bootstrap() {
     { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 
     'JWT-auth',
     )
-    .addServer('https://tgadev.toruslowcode.com/ct005/v001/vgph001/v1/api','Production Server')
+    .addServer('https://tgadev.toruslowcode.com/&lt;tenantCode&gt;/&lt;AppGroupCode&gt;/&lt;AppCode&gt;/&lt;version&gt;/api','Production Server')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger.json', JSON.stringify(document, null, 2));

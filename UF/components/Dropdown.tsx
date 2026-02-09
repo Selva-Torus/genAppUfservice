@@ -286,7 +286,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 style={{ borderRadius: "var(--border-radius)" }}
                 type="button"
               >
-                <Icon data="FaTimes" size={getIconSize()} />
+                <Icon data="IoIosClose" size={getIconSize()} />
               </button>
             )}
             <button
@@ -295,7 +295,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
               type="button"
               disabled={disabled}
             >
-              <Icon data={isOpen ? "FaAngleUp" : "FaAngleDown"} size={getIconSize()} />
+              <Icon data={isOpen ? "IoIosArrowUp" : "IoIosArrowDown"} size={getIconSize()}  />
             </button>
           </div>
         </div>
@@ -344,10 +344,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
                 style={{ borderRadius: "var(--border-radius)" }}
               >
-                <Icon data="FaTimes" size={getIconSize()} />
+                <Icon data="IoIosClose" size={getIconSize()} />
               </div>
             )}
-            <Icon data={isOpen ? "FaAngleUp" : "FaAngleDown"} size={getIconSize()} />
+            <Icon data={isOpen ? "IoIosArrowUp" : "IoIosArrowDown"} size={getIconSize()}  />
           </div>
         </button>
       )}

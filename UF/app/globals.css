@@ -10,9 +10,9 @@
 :root {
   --g-font-family-sans: "Inter", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
   --g-font-family-Inter:"Inter", sans-serif;
-  --font-body:var(--g-font-family-sans);
-  --font-header:var(--g-font-family-monospace);  
-  --font-display:var(--g-font-family-sans);}
+  --font-body:var(--g-font-family-Inter);
+  --font-header:var(--g-font-family-Inter);  
+  --font-display:var(--g-font-family-Inter);}
 
 
 /* .pc-Grid .container-fluid, .pc-Grid .container {

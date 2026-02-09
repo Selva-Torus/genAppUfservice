@@ -16,12 +16,12 @@ function page() {
   const token = getCookie('token')
   const decodedToken = decodeToken(token)
   const router = useRouter()
-  let landingScreen: string = 'CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1'
+  let landingScreen: string = 'User Screen'
   const encryptionFlagApp: boolean = false;    
   const securityCheck = async () => {
     try {
       const encryptionDpd: string =
-        'CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:V001:AFGK:VGPH001:AFK:VGPH_DPD:AFVK:v1'
+        'CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1'
       const encryptionMethod: string = ''
       let introspect: any
       if (encryptionFlagApp) {
@@ -32,7 +32,7 @@ function page() {
           params: {
             dpdKey: encryptionDpd,
             method: encryptionMethod,
-            key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
+            key:"Logs Screen"
           }
         })
       } else {
@@ -41,7 +41,7 @@ function page() {
             Authorization: `Bearer ${token}`
           },
           params: {
-            key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
+            key:"Logs Screen"
           }
         })
       }

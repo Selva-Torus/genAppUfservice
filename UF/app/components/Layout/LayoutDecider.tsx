@@ -41,72 +41,17 @@ const LayoutDecider = ({
   const { borderColor, bgColor } : { borderColor: string; bgColor: string } = useTheme()
   const { brandColor, hoverColor, selectionColor } : { brandColor: string; hoverColor: string; selectionColor: string } = branding;
   const encryptionFlagApp: boolean = false;    
-  const encryptionDpd: string = "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:V001:AFGK:VGPH001:AFK:VGPH_DPD:AFVK:v1";
+  const encryptionDpd: string = "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1";
   const encryptionMethod: string = "";
-  const logo: string = "torus/9.1/CT005/resources/images/vgph-final-logo-fw@4x.png"
-  const appLogo: string = "torus/9.1/CT005/resources/images/veraciousLogo.png"
-  const appName: string = "VGPH"
+  const logo: string = ""
+  const appLogo: string = ""
+  const appName: string = "application"
   const toast: Function = useInfoMsg()
   const [loading, setLoading] = useState<boolean>(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
-  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT005:AFGK:V001:AFK:VGPH001:AFVK:v1:bldc"
+  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc"
   const [rawNavData, setRawNavData] = useState<MenuItem[] | null>(null);
   const navData: MenuItem[] = [
-  {
-    "menuGroupLabel": "Transaction",
-    "screenDetails": [
-      {
-        "name": "transaction",
-        "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1",
-        "allowedAccessProfile": [
-          "Operation Team",
-          "Business Team",
-          "IT Team"
-        ],
-        "static": false,
-        "icon": "/torus/9.1/resources/icons/home-4-svgrepo-com.svg"
-      }
-    ],
-    "items": [],
-    "icon": "/torus/9.1/resources/icons/home-4-svgrepo-com.svg"
-  },
-  {
-    "menuGroup": "mastersetup",
-    "menuGroupLabel": "MasterSetup",
-    "screenDetails": [
-      {
-        "name": "system setup",
-        "label": "System Setup",
-        "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1",
-        "allowedAccessProfile": [
-          "Operation Team",
-          "Business Team",
-          "IT Team"
-        ],
-        "static": false
-      }
-    ],
-    "items": [],
-    "icon": "/torus/9.1/CT005/resources/images/Master Setup.png"
-  },
-  {
-    "menuGroupLabel": "CheckerApproval",
-    "screenDetails": [
-      {
-        "name": "checkerapproval",
-        "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1",
-        "allowedAccessProfile": [
-          "Operation Team",
-          "Business Team",
-          "IT Team"
-        ],
-        "static": false,
-        "icon": "/torus/9.1/CT005/resources/images/Checker approval.png"
-      }
-    ],
-    "items": [],
-    "icon": "/torus/9.1/CT005/resources/images/Checker approval.png"
-  },
   {
     "menuGroup": "admin",
     "menuGroupLabel": "Admin",
@@ -130,6 +75,34 @@ const LayoutDecider = ({
     ],
     "items": [],
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
+  },
+  {
+    "menuGroupLabel": "app1",
+    "screenDetails": [
+      {
+        "name": "app1",
+        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
+  },
+  {
+    "menuGroupLabel": "Menu Item 3",
+    "screenDetails": [
+      {
+        "name": "menu item 3",
+        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",
+        "allowedAccessProfile": [
+          "Template 1"
+        ],
+        "static": false
+      }
+    ],
+    "items": []
   }
 ]
   const token:string = getCookie('token'); 
@@ -274,7 +247,7 @@ const LayoutDecider = ({
           params: {
             dpdKey: encryptionDpd,
             method: encryptionMethod,
-      key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
+      key:"Logs Screen"
           }
         })
    }else{
@@ -283,7 +256,7 @@ const LayoutDecider = ({
             Authorization: `Bearer ${token}`
           },
           params: {
-      key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
+      key:"Logs Screen"
           }
         })
       }
@@ -344,7 +317,7 @@ const LayoutDecider = ({
           params: {
             dpdKey: encryptionDpd,
             method: encryptionMethod,
-            key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
+            key:"Logs Screen"
           }
         })
       }else{
@@ -353,7 +326,7 @@ const LayoutDecider = ({
             Authorization: `Bearer ${token}`
             },
           params: {
-            key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
+            key:"Logs Screen"
           }
         })
       }
@@ -406,22 +379,15 @@ const LayoutDecider = ({
     'gridRow'?: string
   }[] =[
   {
-    "name": "app logo",
-    "gridColumn": "1/2"
-  },
-  {
     "name": "menu items",
-    "gridColumn": "2/7",
     "gridRow": "1/6"
   },
   {
     "name": "opr matrix",
-    "gridColumn": "9/12",
-    "gridRow": "6/9"
+    "gridRow": "9/12"
   },
   {
     "name": "profile",
-    "gridColumn": "12/13",
     "gridRow": "12/13"
   }
 ]
@@ -430,9 +396,7 @@ const LayoutDecider = ({
     return (<div className='flex w-[100vw] h-[100vh] bg-slate-200 justify-center items-center '><span>Loading...</span></div>);
   }
   return (
-    <div className={`flex h-screen w-screen flex-col overflow-auto  bg-cover bg-center`} 
-      style={{ backgroundImage: 'var(--app-bg-image)' }}
-    >
+    <div className={`flex h-screen w-screen flex-col overflow-auto  bg-cover bg-center`} >
       <div className={`g-root flex-shrink-0`}>
         <TopNav
           navData={updatedNavData}

@@ -86,7 +86,7 @@ const DocumentUploader = ({
   headerPosition = "top",
   tooltipProps,
   needTooltip = false,
-  fillContainer = false,
+  fillContainer = true,
   contentAlign = "center"
 }: any) => {
   const [files, setFiles] = React.useState<Drag_file>(value)
@@ -415,7 +415,7 @@ const removeFile = async (
             >
               Upload
             </Button>
-          </div>:null
+          </div>:viewTypeUI()
           }
         </div>
          {viewType=='modal'?<Modal
@@ -440,7 +440,7 @@ const removeFile = async (
             setOpen(false)
           }}>
           {viewTypeUI()}
-          </Modal>:  viewTypeUI() }
+          </Modal>:  null }
 
         {preview && (
           <Modal

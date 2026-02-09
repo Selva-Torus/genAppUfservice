@@ -186,12 +186,10 @@ export const Modal: React.FC<ModalProps> = ({
               <button
                 onClick={onClose}
                 className={`
-  
+                  p-1
                   ${getBorderRadiusClass(branding.borderRadius)}
                   transition-all duration-200
                   ${isDark ? "hover:bg-gray-700 hover:shadow-lg" : "hover:bg-gray-100 hover:shadow-md"}
-                  hover:scale-110
-                  active:scale-95
                 `}
                 style={{
                   boxShadow: isDark

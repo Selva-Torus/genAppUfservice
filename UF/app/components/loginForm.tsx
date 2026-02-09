@@ -29,7 +29,7 @@ interface LoginProps {
   image?: string
 }
 
-const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: LoginProps) => {
+const LoginForm = ({ logo, appName = "application", loginType = "standard", image }: LoginProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     password: ''
@@ -42,7 +42,7 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
   const { branding } = useGlobal()
   const { brandColor } = branding
   const { bgColor, borderColor, textColor } = useTheme()
-  const onBoardingKey : string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
+  const onBoardingKey : string = "User Screen"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
@@ -66,7 +66,7 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT005:AFGK:V001:AFK:VGPH001:AFVK:v1:bldc",
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
           ufClientType: 'UFW'
         }
         const api_signin = await axios.post(
@@ -96,19 +96,14 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
           let screenDetails: any = {
             keys:[
   {
-    "screenName": "transaction",
-    "screensName": "transaction-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
+    "screenName": "app1",
+    "screensName": "app1-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
   },
   {
-    "screenName": "system setup",
-    "screensName": "system_setup-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"
-  },
-  {
-    "screenName": "checkerapproval",
-    "screensName": "checkerapproval-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1"
+    "screenName": "menu item 3",
+    "screensName": "menu_item_3-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
   }
 ]
           }

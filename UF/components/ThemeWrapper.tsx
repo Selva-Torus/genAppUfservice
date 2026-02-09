@@ -2,6 +2,7 @@
 
 import { useEffect, ReactNode } from "react";
 import { useTheme } from "@/hooks/useTheme";
+import { useGlobal } from "@/context/GlobalContext";
 
 interface ThemeWrapperProps {
   children: ReactNode;
@@ -9,6 +10,7 @@ interface ThemeWrapperProps {
 
 export const ThemeWrapper: React.FC<ThemeWrapperProps> = ({ children }) => {
   const { theme, isDark, isHighContrast, bgStyle, textStyle } = useTheme();
+  const { appBackgroundImage } = useGlobal();
 
   useEffect(() => {
     console.log('ThemeWrapper - Current theme:', theme);
@@ -27,6 +29,18 @@ export const ThemeWrapper: React.FC<ThemeWrapperProps> = ({ children }) => {
     root.style.backgroundColor = bgStyle;
     root.style.color = textStyle;
 
+    if (appBackgroundImage) {
+      console.log('ThemeWrapper - Applying background image:', appBackgroundImage);
+      root.style.setProperty('--app-bg-image', `url(${appBackgroundImage})`);
+      document.body.style.backgroundImage = `url(${appBackgroundImage})`;
+      document.body.style.backgroundSize = 'cover';
+      document.body.style.backgroundPosition = 'center';
+      document.body.style.backgroundAttachment = 'fixed';
+    } else {
+      root.style.setProperty('--app-bg-image', 'none');
+      document.body.style.backgroundImage = 'none';
+    }
+
     // Apply high contrast styles
     if (isHighContrast) {
       root.style.fontWeight = "500";
@@ -34,7 +48,7 @@ export const ThemeWrapper: React.FC<ThemeWrapperProps> = ({ children }) => {
     } else {
       root.style.fontWeight = "normal";
     }
-  }, [theme, isDark, isHighContrast, bgStyle, textStyle]);
+  }, [theme, isDark, isHighContrast, bgStyle, textStyle, appBackgroundImage]);
 
   return <>{children}</>;
 };

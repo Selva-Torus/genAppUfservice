@@ -427,6 +427,22 @@ class DecisionTableEvaluator {
 
 // ============ STANDALONE FUNCTIONS ============
 
+export function eventDecisionTable(
+inputData: any,
+  variableContext: VariableContext = {}
+): boolean {
+  if(inputData?.conditionalKey && inputData?.conditionalValue)
+  {
+    if(variableContext[inputData?.conditionalKey]==inputData?.conditionalValue)
+      return false
+  }else if(!inputData?.conditionalKey && !inputData?.conditionalValue)
+  {
+    return false
+  }
+  return true
+}
+
+
 export default function evaluateDecisionTable(
   ruleConfig: RuleNode[],
   inputData: InputData,

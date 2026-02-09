@@ -17,12 +17,12 @@ const ParentComponent = () => {
   const [nodeData, setNodeData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [app, setApp] = useState({
-    code: 'VGPH001',
-    name: 'VGPH'
+    code: 'A001',
+    name: 'application'
   })
   const [appGroup, setappGroup] = useState({
-    code: 'V001',
-    name: 'VGPH'
+    code: 'AG001',
+    name: 'appgroup'
   })
   const token: string = getCookie('token')
   const decodedToken: any = decodeToken(token)
@@ -47,7 +47,7 @@ const ParentComponent = () => {
   const [ fabrics , setFabrics ] = useState<Array<string>>([])
   const [jsonViewerData, setJsonViewerData] = useState({})
   const router = useRouter()
-  let landingScreen:string = 'CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1';
+  let landingScreen:string = 'User Screen';
   const encryptionFlagApp: boolean = false;    
   const [jsonData, setJsonData] = useState({
     data: [],
@@ -72,7 +72,7 @@ const ParentComponent = () => {
   }
   let payload:any = useMemo(() => {
     return {
-      tenant: 'CT005',
+      tenant: 'CI001',
        fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
             suffixes[prefix]
               ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
@@ -271,7 +271,7 @@ const ParentComponent = () => {
   const securityCheck = async () => {
   try {
     const encryptionDpd: string =
-      'CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:V001:AFGK:VGPH001:AFK:VGPH_DPD:AFVK:v1'
+      'CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1'
     const encryptionMethod: string = ''
     let introspect: any
     if (encryptionFlagApp) {
@@ -282,7 +282,7 @@ const ParentComponent = () => {
         params: {
           dpdKey: encryptionDpd,
           method: encryptionMethod,
-          key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
+          key:"Logs Screen"
         }
       })
     } else {
@@ -291,7 +291,7 @@ const ParentComponent = () => {
           Authorization: `Bearer ${token}`
         },
         params: {
-          key:"CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
+          key:"Logs Screen"
         }
       })
     }

@@ -94,7 +94,7 @@ export class CommonService{
 
   async onModuleInit() {
     const collection = client.db("UploadFile")
-    this.bucket = new GridFSBucket(collection, { bucketName: 'CT005/V001/VGPH001/v1' });
+    this.bucket = new GridFSBucket(collection, { bucketName: 'CI001/AG001/A001/v1' });
   }
   private readonly logger = new Logger(CommonService.name) 
 
@@ -1295,8 +1295,8 @@ export class CommonService{
         
         if(typeof key != 'string')
         key = 'commonError'
-        tenant=tenant || "CT005"
-        app=app ||  "VGPH001"
+        tenant=tenant || "CI001"
+        app=app ||  "A001"
         await this.redisService.setStreamData(tenant+'-'+app+'-TSL',key,JSON.stringify(logs))    
         return logs
 
@@ -1490,19 +1490,18 @@ export class CommonService{
       }
     }
 
-    async structuredPrcLogs(streamName) { //Default Mongo
+     async structuredPrcLogs(streamName) { //Default Mongo
       try {         
         if (await this.redisService.exist(streamName, process.env.CLIENTCODE)) {
           let grpInfo = await this.redisService.getInfoGrp(streamName)
+          // console.log("grpInfo",grpInfo);
           if (grpInfo.length == 0) {
-            await this.redisService.createConsumerGroup(streamName, 'ProcessLog')
-          } else if (!grpInfo[0].includes('ProcessLog')) {
-            await this.redisService.createConsumerGroup(streamName, 'ProcessLog')
+            await this.redisService.createConsumerGroup(streamName, streamName+'ProcessLog')
+          } else if (!grpInfo[0].includes(streamName+'ProcessLog')) {
+            await this.redisService.createConsumerGroup(streamName, streamName+'ProcessLog')
           }
 
-          let streamData: any = await this.redisService.readConsumerGroup(streamName, 'ProcessLog', 'TPL');
-          //console.log(streamData);
-          
+          let streamData: any = await this.redisService.readConsumerGroup(streamName, streamName+'ProcessLog', streamName+'_TPL');
           if (streamData != 'No Data available to read' && streamData.length > 0) {
             var msgid = []
             var strmarr = []
