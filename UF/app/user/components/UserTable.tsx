@@ -49,6 +49,7 @@ const UserTable: React.FC<{
   const userDataPerPage = 11
   const { bgColor, borderColor, textColor, isDark } = useTheme()
   const keyset = i18n.keyset('language')
+  const [isEdit, setIsEdit] = useState(true)
 
   const formatDate = (dateString: string | Date): string => {
     const date = new Date(dateString)
@@ -65,50 +66,77 @@ const UserTable: React.FC<{
     return `${formattedDate} | ${time}`
   }
 
-  const filteredData = Object.entries(data)
-    .filter(([key, value]) => {
-      if (typeof value === 'string') {
-        return (value as string)
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
-      } else if (Array.isArray(value)) {
-        return value.some(role => {
-          return Object.values(role).some(val => {
-            return (
-              typeof val === 'string' &&
-              val.toLowerCase().includes(searchTerm.toLowerCase())
-            )
-          })
-        })
-      } else {
-        return Object.values(value as any).some(val => {
-          if (typeof val === 'string') {
-            return val.toLowerCase().includes(searchTerm.toLowerCase())
-          } else if (Array.isArray(val)) {
-            return val.some(role => {
-              return Object.values(role).some(v => {
-                return (
-                  typeof v === 'string' &&
-                  v.toLowerCase().includes(searchTerm.toLowerCase())
-                )
-              })
-            })
-          }
-        })
-      }
+  // Fixed search functionality
+  const filteredData = useMemo(() => {
+    if (!searchTerm || searchTerm.trim() === '') {
+      return data
+    }
+
+    const searchTermLower = searchTerm.toLowerCase().trim()
+    
+    return data.filter((user) => {
+      // Search in basic string fields
+      const basicFields = [
+        user.firstName,
+        user.lastName,
+        user.email,
+        user.loginId,
+        user.mobile || '',
+      ]
+      
+      // Check if any basic field contains the search term
+      const matchesBasicFields = basicFields.some(field => 
+        field && field.toLowerCase().includes(searchTermLower)
+      )
+      
+      // Search in access profiles array
+      const matchesAccessProfile = user.accessProfile && 
+        user.accessProfile.some(profile => 
+          profile && profile.toLowerCase().includes(searchTermLower)
+        )
+      
+      // Search in formatted dates
+      const formattedLastActive = user.lastActive && user.lastActive !== 'NA' 
+        ? formatDate(user.lastActive).toLowerCase() 
+        : ''
+      const formattedDateAdded = user.dateAdded && user.dateAdded !== 'NA' 
+        ? formatDate(user.dateAdded).toLowerCase() 
+        : ''
+      
+      const matchesDates = formattedLastActive.includes(searchTermLower) || 
+                          formattedDateAdded.includes(searchTermLower)
+      
+      // Search in access expires
+      const matchesAccessExpires = user.accessExpires && 
+        user.accessExpires.toLowerCase().includes(searchTermLower)
+      
+      // Search in number of products/services
+      const matchesProductsService = user.noOfProductsService && 
+        user.noOfProductsService.toString().includes(searchTermLower)
+      
+      return matchesBasicFields || 
+             matchesAccessProfile || 
+             matchesDates || 
+             matchesAccessExpires || 
+             matchesProductsService
     })
-    .map(([key, value], index) => ({ ...(value as any), originalIndex: key }))
+  }, [data, searchTerm])
 
   const currentGroups = useMemo(() => {
     const indexOfLastGroup = currentPage * userDataPerPage
     const indexOfFirstGroup = indexOfLastGroup - userDataPerPage
 
     return filteredData.slice(indexOfFirstGroup, indexOfLastGroup)
-  }, [data, filteredData, setData, currentPage, searchTerm])
+  }, [filteredData, currentPage])
 
   const totalPages = useMemo(() => {
     return Math.ceil(filteredData.length / userDataPerPage)
-  }, [data, filteredData, currentPage, userDataPerPage])
+  }, [filteredData, userDataPerPage])
+
+  // Reset to first page when search term changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
 
   const handledatachange = (
     item: UserData,
@@ -162,7 +190,7 @@ const UserTable: React.FC<{
     }
     if (updatedIndices.length > 0) {
       const selectedEmails = new Set<string>()
-      data.forEach((item, index) => {
+      filteredData.forEach((item, index) => {
         if (updatedIndices.includes(index.toString())) {
           selectedEmails.add(item.email)
         }
@@ -175,7 +203,7 @@ const UserTable: React.FC<{
 
   const getSelectedIds = useMemo(() => {
     const selectedIndicess = new Set<string>()
-    data.forEach((item, index) => {
+    filteredData.forEach((item, index) => {
       if (selectedRows.has(item.email)) {
         if (currentPage == 1) {
           selectedIndicess.add(index.toString())
@@ -186,7 +214,7 @@ const UserTable: React.FC<{
       }
     })
     return Array.from(selectedIndicess)
-  }, [selectedRows, currentPage])
+  }, [selectedRows, currentPage, filteredData])
 
   const columns = [
     {
@@ -220,7 +248,7 @@ const UserTable: React.FC<{
   ]
 
   const rowOfCurrentGrps = useMemo(() => {
-    if (currentGroups) {
+    if (currentGroups && currentGroups.length > 0) {
       return currentGroups.map((item: any, index: number) => ({
         users: (
           <div key={index} className='flex gap-2'>
@@ -283,7 +311,7 @@ const UserTable: React.FC<{
               ? 'No Template Available'
               : item.accessProfile.length > 1
               ? 'Multiple Template'
-              : item.accessProfile}
+              : item.accessProfile.join(', ')}
           </Text>
         ),
         noOfProductsService: (
@@ -331,6 +359,7 @@ const UserTable: React.FC<{
             onClick={() => {
               setEditUserModalOpen(true)
               setUserData(item)
+              setIsEdit(true)
             }}
             view='flat'
             className='!w-fit rounded-md p-2'
@@ -342,10 +371,19 @@ const UserTable: React.FC<{
       }))
     }
     return []
-  }, [])
+  }, [currentGroups, bgColor, borderColor, textColor, accessProfiles])
 
   return (
     <div className={`g-root h-full w-full`}>
+      <button
+        hidden
+        id='tanantUser-creation-btn'
+        onClick={() => {
+          setEditUserModalOpen(true)
+          setUserData({})
+          setIsEdit(false)
+        }}
+      ></button>
       <div>
         <Modal
           className='w-[800px] lg:min-w-[800px]'
@@ -361,18 +399,19 @@ const UserTable: React.FC<{
             accessProfiles={accessProfiles}
             data={data}
             setData={setData}
-            isEdit={true}
+            isEdit={isEdit}
           />
         </Modal>
       </div>
       <div>
-        <Text contentAlign='left' variant='header-1'>{keyset('User Management')}</Text>
+        <Text contentAlign='left' variant='header-1'>
+          {keyset('User Management')}
+        </Text>
       </div>
-      <div className='h-[73vh] mt-4'>
+      <div className='mt-4 w-[82vw] overflow-auto'>
         <CustomTable
           data={rowOfCurrentGrps as any}
           columns={columns as any}
-          // emptyMessage='No data available'
         />
       </div>
       <Pagination
@@ -380,7 +419,9 @@ const UserTable: React.FC<{
         page={currentPage}
         pageSize={userDataPerPage}
         onUpdate={data => setCurrentPage(data.page)}
-        total={data.length}
+        total={filteredData.length}
+        alignment='middle'
+        showButtonText={true}
       />
     </div>
   )

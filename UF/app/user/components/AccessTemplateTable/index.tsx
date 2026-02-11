@@ -110,7 +110,7 @@ const AccessTemplateTable = ({
       <Text contentAlign='left' variant='body-2' className='mb-4 text-xl font-bold'>
         {keyset('Access Template')}
       </Text>
-      <div className='h-[73vh] w-[80vw] 2xl:w-[unset] overflow-x-auto'>
+      <div className='h-[73vh] w-[80vw] sm:w-[75vw] 2xl:w-[unset] overflow-auto'>
         <table className='min-w-full rounded text-left'>
           <thead
             className={twMerge(
@@ -245,6 +245,8 @@ const AccessTemplateTable = ({
         pageSize={accessTemplatePerPage}
         total={securityData.length}
         onUpdate={data => setCurrentPage(data.page)}
+        alignment='middle'
+        showButtonText={true}
       />
     </div>
   )

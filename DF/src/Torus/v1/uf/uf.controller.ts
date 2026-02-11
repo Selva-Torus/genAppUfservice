@@ -1095,4 +1095,10 @@ export class UfController {
     const clientCode: string = process.env.CLIENTCODE;
     return this.appService.getNavbarData(key,clientCode,token)
   }
+
+  @Post('postTenantUser')
+  async postTenantUsers(@Body() body: any) {
+    const { data } = body;
+    return this.appService.setTenantUser(data);
+  }
 }

@@ -26,7 +26,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 import * as FormData from 'form-data'; // Use this
 import { Readable } from 'stream';
 //import { v4 as uuidv4 } from 'uuid';
-import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet } from 'src/fusionAuth.api';
+import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet, FusionAuthUserCreation } from 'src/fusionAuth.api';
 // import { RuleService } from 'src/ruleService';
 const transporter = nodemailer.createTransport({
   host: 'smtp-mail.outlook.com',
@@ -4228,7 +4228,10 @@ export class UfService {
             (data ?? cacheKeyArray[index] == 'appearance') ? {} : [];
         }
       }
-      securityResponse['users'] = await this.getTenantAppUser(tenant, process.env.CLIENTCODE, ag, app);
+      securityResponse['users'] = (await this.getTenantAppUser(tenant, process.env.CLIENTCODE, ag, app)).map(user => {
+        delete user.password;
+        return user;
+      });
       return securityResponse;
     } catch (error) {
       await this.commonService.errorLog(
@@ -4544,103 +4547,6 @@ export class UfService {
           users: 'anonymous user',
         },
       );
-      await this.throwCustomException(error);
-    }
-  }
-
-  async appUserAddition(data: any,isFusionAuth:boolean=false) {
-    try {
-      if (!tenant || !ag || !app || !data) {
-        throw new BadRequestException('Invalid input parameters');
-      }
-      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
-      const clientProfileResourceKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`;
-
-      const userResponse = await this.redisService.getJsonData(
-        userCachekey,
-        process.env.CLIENTCODE,
-      );
-
-      const userList: any[] = userResponse ? JSON.parse(userResponse) : [];
-
-      const clientProfile = JSON.parse(
-        await this.redisService.getJsonData(
-          clientProfileResourceKey,
-          process.env.CLIENTCODE,
-        ),
-      );
-
-      const { email, firstName, lastName, password, loginId } = data;
-      const resForClientUserAddition = await this.redisService.getJsonData(
-        `CK:TRL:FNGK:AFR:FNK:PORTAL:CATK:EMAILTEMPLATE:AFGK:TORUS:AFK:CLIENTUSERADDITION:AFVK:v1:TPI`,
-        process.env.CLIENTCODE,
-      );
-
-      const clientUserAddition = JSON.parse(resForClientUserAddition);
-
-      const updatedSubject = (clientUserAddition.subject as string).replaceAll(
-        '${clientProfile.clientName}',
-        `${clientProfile.Name}`,
-      );
-      const updateclientUserAdditionHtml = (clientUserAddition.html as string)
-        .replaceAll('${clientProfile.clientName}', `${clientProfile.Name}`)
-        .replace('${firstName}', `${firstName}`)
-        .replace('${lastName}', `${lastName}`)
-        .replace('${clientCode}', `${tenant}`)
-        .replace('${username}', `${loginId}`)
-        .replace('${password}', `${password}`);
-
-      const mailOptions = {
-        from: 'support@torus.tech',
-        to: email,
-        subject: updatedSubject,
-        // text: updateclientUserAddition,
-        html: updateclientUserAdditionHtml,
-      };
-
-      transporter.sendMail(mailOptions, async (error, info) => {
-        if (error) {
-          throw new ForbiddenException('There is an issue with sending otp');
-        } else {
-          console.log('Email sent: ' + info.response);
-          // return `Email sent`;
-        }
-      });
-
-      userList.push({
-        ...data,
-        isRestricted: true,
-      });
-      await this.redisService.setJsonData(
-        userCachekey,
-        JSON.stringify(userList),
-        process.env.CLIENTCODE,
-      );
-      const newUserList = structuredClone(userList);
-
-      let result = [];
-
-      for (const user of newUserList) {
-        delete user.password;
-        result.push(user);
-      }
-
-      return result;
-    } catch (error) {
-      await this.commonService.errorLog(
-        'Technical',
-        'AK',
-        'Fatal',
-        'AUTH013',
-        error,
-        'UserScreen',
-        '',
-        {
-          artifact: 'UserScreen',
-          users: 'anonymous user',
-        },
-      );
-      console.log(error, 'error');
       await this.throwCustomException(error);
     }
   }
@@ -7417,4 +7323,140 @@ export class UfService {
       };;
     }
   }
+
+   async setTenantUser(content: any) {
+    try {
+      // got from .env file
+      let tenantCode = tenant;
+      let client = process.env.CLIENTCODE
+      // got from .env file
+      let existUser: any[] = await this.getTenantUser(tenantCode, client);
+   
+      let res;
+      let userUniqueId = uuid();
+      if (existUser == null || existUser?.length == 0) {
+        let postOneUser: any = {
+          ...content,
+          password: await this.hashPassword(content?.password),
+          userUniqueId: userUniqueId,
+        };
+        if (defaultAuth === 'fusionauth' && fusionAuthTenantId) {
+          await FusionAuthUserCreation(
+            fusionAuthTenantId,
+            postOneUser.userUniqueId,
+            postOneUser.firstName,
+            postOneUser.lastName,
+            postOneUser.loginId,
+            postOneUser.email,
+            content?.password,
+            'POST',
+            postOneUser?.mobile,
+          );
+        }
+        // delete postOneUser?.accessProfile;
+        delete postOneUser?.accessExpires;
+
+        let key: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenantCode}:AFK:PROFILE:AFVK:v1:users`;
+        res = await this.redisService.setJsonData(
+          key,
+          JSON.stringify([postOneUser]),
+          client,
+        );
+      } else {
+        let postOneUser: any = {
+          ...content,
+          password: await this.hashPassword(content?.password),
+          userUniqueId: userUniqueId,
+        };
+        delete postOneUser?.accessProfile;
+        delete postOneUser?.accessExpires;
+        existUser.push(postOneUser);
+        if (defaultAuth === 'fusionauth' && fusionAuthTenantId) {
+          await FusionAuthUserCreation(
+            fusionAuthTenantId,
+            postOneUser.userUniqueId,
+            postOneUser.firstName,
+            postOneUser.lastName,
+            postOneUser.loginId,
+            postOneUser.email,
+            content?.password,
+            'POST',
+            postOneUser?.mobile,
+          );
+        }
+
+        ////////////
+        let uniqueData: any[] = existUser?.filter(
+          (obj) => 'userUniqueId' in obj,
+        );
+        ////////////////
+        let key: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenantCode}:AFK:PROFILE:AFVK:v1:users`;
+        res = await this.redisService.setJsonData(
+          key,
+          JSON.stringify(uniqueData), // set JSON.stringify(existUser), this once all app keys have correct object
+          client,
+        );
+      }
+      const resForTenantUserAddition = await this.redisService.getJsonData(
+        `CK:TRL:FNGK:AFR:FNK:PORTAL:CATK:EMAILTEMPLATE:AFGK:TORUS:AFK:CLIENTUSERADDITION:AFVK:v1:TPI`,
+        'TORUS',
+      );
+
+      const tenantUserAddition = JSON.parse(resForTenantUserAddition);
+
+      const { firstName, lastName, email, loginId, password } = content;
+
+      const updatedSubject = (tenantUserAddition.subject as string).replaceAll(
+        '${clientProfile.clientName}',
+        `${tenant}`,
+      );
+      const updateclientUserAdditionHtml = (tenantUserAddition.html as string)
+        .replaceAll('${clientProfile.clientName}', `${tenant}`)
+        .replace('${firstName}', `${firstName}`)
+        .replace('${lastName}', `${lastName}`)
+        .replace('${clientCode}', `${tenantCode}`)
+        .replace('${username}', `${loginId}`)
+        .replace('${password}', `${password}`)
+        .replace(`Client`, `Tenant`);
+
+      const mailOptions = {
+        from: 'support@torus.tech',
+        to: email,
+        subject: updatedSubject,
+        html: updateclientUserAdditionHtml,
+      };
+
+      transporter.sendMail(mailOptions, async (error, info) => {
+        if (error) {
+          throw new ForbiddenException('There is an issue with sending welcome email to the user');
+        } else {
+          console.log('Email sent: ' + info.response);
+          // return `Email sent`;
+        }
+      });
+      await this.postAppUserList({...content, userUniqueId: userUniqueId , password: undefined});
+      const resultUserList =  (await this.getTenantAppUser(tenant, process.env.CLIENTCODE, ag, app))
+      return resultUserList.map(user => {
+        delete user.password;
+        return user;
+      });
+    } catch (err: any) {
+        await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH016',
+        err,
+        'UserScreen',
+        '',
+        {
+          artifact: 'UserScreen',
+          users: 'anonymous user',
+        },
+      );
+      await this.throwCustomException(err);
+    }
+  }
+
+
 }

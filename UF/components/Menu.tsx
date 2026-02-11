@@ -89,7 +89,6 @@ export const Menu: React.FC<MenuProps> & { Item: React.FC<MenuItemProps> } = ({
   }, [nodeId, events, subscribe, subscribeGlobal]);
 
   const getMenuClasses = () => {
-    const borderRadius = getBorderRadiusClass(branding.borderRadius);
     const fontSize = getFontSizeClass(branding.fontSize);
 
     const orientationClasses =
@@ -98,9 +97,7 @@ export const Menu: React.FC<MenuProps> & { Item: React.FC<MenuItemProps> } = ({
         : "flex flex-col";
     return `
       ${orientationClasses}
-      ${borderRadius}
       ${fontSize}
-      ${isHighContrast ? "border-2" : "border"}
       ${className}
     `;
   };

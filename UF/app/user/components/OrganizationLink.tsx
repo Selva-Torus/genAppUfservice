@@ -66,7 +66,8 @@ const OrganizationLink = ({
     orgGrpData: linkedOrgData,
     setOrgGrpData: setLinkedOrgData,
     orgMasterData: orgMaster,
-    setOrgMasterData: setOrgMaster
+    setOrgMasterData: setOrgMaster,
+    searchTerm
   } = React.useContext(SetupScreenContext) as SetupScreenContextType
   const toast = useInfoMsg()
   const dragTypeRef = useRef('')
@@ -409,14 +410,21 @@ const OrganizationLink = ({
           </div>
 
           <div className='flex h-[calc(80vh-5vh)] flex-col gap-[1vh] overflow-y-auto px-[0.5vw] py-[1.5vh]'>
-            {orgMaster.map((orgGrp: any, orgGrpIndex: number) => (
-              <LeftPanelOrgGroup
-                key={orgGrpIndex}
-                orgGrp={orgGrp}
-                orgGrpIndex={orgGrpIndex}
-                srcOrgIds={srcOrgIds}
-              />
-            ))}
+            {orgMaster
+              .filter(
+                (orgGrp: any) =>
+                  orgGrp?.orgGrpName
+                    ?.toLowerCase()
+                    .includes(searchTerm.toLowerCase())
+              )
+              .map((orgGrp: any, orgGrpIndex: number) => (
+                <LeftPanelOrgGroup
+                  key={orgGrpIndex}
+                  orgGrp={orgGrp}
+                  orgGrpIndex={orgGrpIndex}
+                  srcOrgIds={srcOrgIds}
+                />
+              ))}
           </div>
         </div>
 
@@ -491,14 +499,21 @@ const OrganizationLink = ({
                 </p>
               </div>
             ) : (
-              linkedOrgData.map((orgGrp: any, orgGrpIndex: number) => (
-                <RightPanelOrgGroup
-                  key={orgGrpIndex}
-                  orgGrp={orgGrp}
-                  orgGrpIndex={orgGrpIndex}
-                  assignedOPRList={assignedOPRList}
-                />
-              ))
+              linkedOrgData
+                .filter(
+                  (orgGrp: any) =>
+                    orgGrp?.orgGrpName
+                      ?.toLowerCase()
+                      .includes(searchTerm.toLowerCase())
+                )
+                .map((orgGrp: any, orgGrpIndex: number) => (
+                  <RightPanelOrgGroup
+                    key={orgGrpIndex}
+                    orgGrp={orgGrp}
+                    orgGrpIndex={orgGrpIndex}
+                    assignedOPRList={assignedOPRList}
+                  />
+                ))
             )}
           </div>
         </div>
@@ -1168,7 +1183,10 @@ const RightPanelOrg = ({
         )
 
         if (isGroupExist) {
-          toast('Sub-organization group with same code already exists', 'warning')
+          toast(
+            'Sub-organization group with same code already exists',
+            'warning'
+          )
           return
         }
         const newSubOrgGrp = {
