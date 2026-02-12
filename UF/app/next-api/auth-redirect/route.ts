@@ -33,9 +33,15 @@ export async function GET(req: NextRequest) {
         )
       }
       response.cookies.set({
-        name: 'token',
-        value: signinApiResponse.data?.token
-      })
+        name: "tp_ps",
+        value: "",
+        expires: new Date(0),
+      });
+
+      response.cookies.set({
+        name: "token",
+        value: signinApiResponse.data?.token,
+      });
     } else {
       response = NextResponse.redirect(origin)
     }

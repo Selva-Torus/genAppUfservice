@@ -61,12 +61,38 @@ const FilterModal = ({
     { key: 'CDF', label: 'Deployment Fabric' }
   ]
 
+  const formatDate = (d: any) => ({
+    year: d.year,
+    month: String(d.month).padStart(2, "0"),
+    day: String(d.day).padStart(2, "0"),
+  });
+
+  const normalizeRange = (range: any) => ({
+  start: {
+    year: Number(range.start.year),
+    month: Number(range.start.month),
+    day: Number(range.start.day),
+  },
+  end: {
+    year: Number(range.end.year),
+    month: Number(range.end.month),
+    day: Number(range.end.day),
+  },
+});
+
   const handleUpdateFilterInputs = () => {
-    setRange(selectedDateRange)
-    setFabrics(selectedKeys)
-    setUser(selectedUsers)
-    setOpen(false)
-  }
+    const formattedRange = selectedDateRange
+      ? {
+        start: formatDate(selectedDateRange.start),
+        end: formatDate(selectedDateRange.end),
+      }
+      : null;
+
+    setRange(formattedRange);
+    setFabrics(selectedKeys);
+    setUser(selectedUsers);
+    setOpen(false);
+  };
 
   const getOrgAndUserData = async () => {
     setuserList([])
@@ -100,7 +126,9 @@ const FilterModal = ({
   const showDate = (date: any) => {
     if (!date) return ''
     const { year, month, day } = date
-    return `${day}/${month}/${year}`
+    const formttedDay = day < 10 ? `0${day}` : day
+    const formttedMonth = month < 10 ? `0${month}` : month
+    return `${formttedDay}/${formttedMonth}/${year}`
   }
 
   const toggleFabric = (key: string) => {
@@ -164,7 +192,7 @@ const FilterModal = ({
           size='xl'
         >
           <RangeCalendar
-            value={selectedDateRange}
+            value={selectedDateRange ? normalizeRange(selectedDateRange) : undefined}
             onChange={val => setSelectedDateRange(val)}
             maxValue={{
               year: new Date().getFullYear(),

@@ -149,6 +149,17 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
     onUpdateMode?.(newMode);
   };
 
+  const isFutureDate = (date: DateTime): boolean => {
+    const todayDate = new Date();
+    const today = {
+      year: todayDate.getFullYear(),
+      month: todayDate.getMonth() + 1,
+      day: todayDate.getDate()
+    };
+    return compareDates(date, today) > 0;
+  };
+
+
   // Helper function to generate calendar days
   const getDaysInMonth = (year: number, month: number) => {
     return new Date(year, month, 0).getDate();
@@ -344,9 +355,8 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
               <button
                 onClick={() => navigateMonth("prev")}
                 disabled={disabled || readOnly}
-                className={`p-2 ${getBorderRadiusClass(branding.borderRadius)} ${
-                  disabled ? "cursor-not-allowed opacity-50" : "hover:bg-gray-700 dark:hover:bg-gray-600"
-                } transition-colors`}
+                className={`p-2 ${getBorderRadiusClass(branding.borderRadius)} ${disabled ? "cursor-not-allowed opacity-50" : "hover:bg-gray-700 dark:hover:bg-gray-600"
+                  } transition-colors`}
               >
                 ←
               </button>
@@ -359,9 +369,8 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
               <button
                 onClick={() => navigateMonth("next")}
                 disabled={disabled || readOnly}
-                className={`p-2 ${getBorderRadiusClass(branding.borderRadius)} ${
-                  disabled ? "cursor-not-allowed opacity-50" : "hover:bg-gray-700 dark:hover:bg-gray-600"
-                } transition-colors`}
+                className={`p-2 ${getBorderRadiusClass(branding.borderRadius)} ${disabled ? "cursor-not-allowed opacity-50" : "hover:bg-gray-700 dark:hover:bg-gray-600"
+                  } transition-colors`}
               >
                 →
               </button>
@@ -376,9 +385,8 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
                 {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
                   <div
                     key={day}
-                    className={`text-center text-xs font-semibold py-2 ${
-                      isDark ? "text-gray-400" : "text-gray-600"
-                    }`}
+                    className={`text-center text-xs font-semibold py-2 ${isDark ? "text-gray-400" : "text-gray-600"
+                      }`}
                   >
                     {day}
                   </div>
@@ -397,41 +405,44 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
                   const isEnd = selectionType === "end";
                   const isInRange = selectionType === "range";
                   const isTemp = tempStart && compareDates(date, tempStart) === 0;
+                  const futureDate = isFutureDate(date);
 
                   return (
                     <button
                       key={`${date.year}-${date.month}-${date.day}`}
-                      onClick={() => handleDateClick(date)}
-                      disabled={disabled || readOnly}
+                      onClick={() => !futureDate && handleDateClick(date)}
+                      disabled={disabled || readOnly || futureDate}
                       className={`
-                        aspect-square
-                        flex items-center justify-center
-                        ${getFontSizeClass(branding.fontSize)}
-                        ${getBorderRadiusClass(branding.borderRadius)}
-                        transition-all
-                        ${disabled || readOnly ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
-                        ${
-                          isStart || isEnd
-                            ? "text-white font-bold"
-                            : isInRange
+                          aspect-square flex items-center justify-center
+                          ${getFontSizeClass(branding.fontSize)}
+                          ${getBorderRadiusClass(branding.borderRadius)}
+                          transition-all
+                          
+                          ${futureDate ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}
+                          ${disabled || readOnly ? "opacity-50 cursor-not-allowed" : ""}
+
+                          ${isStart || isEnd
+                          ? "text-white font-bold"
+                          : isInRange
                             ? isDark
                               ? "bg-gray-700 text-white"
                               : "bg-gray-200 text-gray-900"
                             : isTemp
-                            ? isDark
-                              ? "bg-gray-600 text-white"
-                              : "bg-gray-300 text-gray-900"
-                            : isDark
-                            ? "text-gray-300 hover:bg-gray-700"
-                            : "text-gray-700 hover:bg-gray-100"
+                              ? isDark
+                                ? "bg-gray-600 text-white"
+                                : "bg-gray-300 text-gray-900"
+                              : isDark
+                                ? "text-gray-300 hover:bg-gray-700"
+                                : "text-gray-700 hover:bg-gray-100"
                         }
-                      `}
+                        `}
                       style={{
-                        backgroundColor: isStart || isEnd ? branding.brandColor : undefined,
+                        backgroundColor: isStart || isEnd ? branding.brandColor : undefined
                       }}
                     >
                       {date.day}
                     </button>
+
                   );
                 })}
               </div>
@@ -458,10 +469,9 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
                     ${getBorderRadiusClass(branding.borderRadius)}
                     ${getFontSizeClass(branding.fontSize)}
                     transition-colors
-                    ${
-                      isDark
-                        ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ${isDark
+                      ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }
                     ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
                   `}
@@ -492,10 +502,9 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
                     ${getBorderRadiusClass(branding.borderRadius)}
                     ${getFontSizeClass(branding.fontSize)}
                     transition-colors
-                    ${
-                      isDark
-                        ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ${isDark
+                      ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }
                     ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
                   `}
@@ -526,10 +535,9 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
                     ${getBorderRadiusClass(branding.borderRadius)}
                     ${getFontSizeClass(branding.fontSize)}
                     transition-colors
-                    ${
-                      isDark
-                        ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    ${isDark
+                      ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }
                     ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
                   `}
@@ -553,9 +561,8 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
-      isDark ? "text-gray-300" : "text-gray-700"
-    }`;
+    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"
+      }`;
 
     switch (headerPosition) {
       case "top":
