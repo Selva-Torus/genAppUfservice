@@ -1,3 +1,4 @@
+
 'use client'
 import React, {
   useContext,
@@ -291,8 +292,30 @@ const ContextSelector = () => {
     return data
   }, [selectedOrg, selectedPs, selectedRole])
 
+  const navBarItemsOrder: {
+    name: string
+    'gridColumn'?: string
+    'gridRow'?: string
+  }[] = [
+  {
+    "name": "menu items",
+    "gridRow": "1/6"
+  },
+  {
+    "name": "opr matrix",
+    "gridRow": "9/12"
+  },
+  {
+    "name": "profile",
+    "gridRow": "12/13"
+  }
+]
+
+  const logo: string = "torus/9.1/CI001/resources/images/images.jfif"
+  const appLogo: string = ""
+
   return (
-    <div className='h-full w-full'>
+    <div className='h-full w-full  bg-cover bg-center' style={{ backgroundImage: 'var(--app-bg-image)' }}>
       <TopNav
         appName={appName}
         navData={[]}
@@ -300,12 +323,15 @@ const ContextSelector = () => {
         brandColor={brandColor}
         mode='closed'
         listMenuItems={false}
+        navBarItemsOrder={navBarItemsOrder}
+        appLogo={appLogo}
+        logo={logo}
       />
 
       <hr className={twMerge('w-full border', borderColor)} />
       <div className='px-5 py-2.5'>
         <div className='flex w-full items-center justify-end gap-5'>
-          <div className='w-[12vw]'>
+          <div title={selectedAccessProfile.length ? selectedAccessProfile[0] : "Select Access Profile"} className='w-[12vw]'>
             <Dropdown
               placeholder='Select Access Profile'
               value={selectedAccessProfile[0]}

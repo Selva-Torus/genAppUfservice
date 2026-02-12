@@ -1,5 +1,6 @@
 'use client'
 
+
 import React, { useState,useEffect,useContext, useRef } from 'react';
 import axios from 'axios';
 import i18n from '@/app/components/i18n';
@@ -7,7 +8,6 @@ import { codeExecution } from '@/app/utils/codeExecution';
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { TotalContext, TotalContextProps } from '@/app/globalContext';
 import { uf_getPFDetailsDto,uf_initiatePfDto,te_eventEmitterDto,uf_ifoDto,te_updateDto, te_refreshDto } from '@/app/interfaces/interfaces';
-import decodeToken from '@/app/components/decodeToken';
 import { AxiosService } from '@/app/components/axiosService';
 import { getCookie } from '@/app/components/cookieMgment';
 import { nullFilter } from '@/app/utils/nullDataFilter';
@@ -23,6 +23,8 @@ import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.share
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
 import evaluateDecisionTable  from '@/app/utils/evaluateDecisionTable';
+import { eventDecisionTable } from '@/app/utils/evaluateDecisionTable';
+import decodeToken from '@/app/components/decodeToken';
 import { getGridPositionFromOrder } from '@/app/utils/getGridPositionFromOrder';
 import { XMLParser } from 'fast-xml-parser'
 
@@ -63,7 +65,6 @@ const Buttontestbtn2 = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
   const handleDfdRefresh = useHandleDfdRefresh();
 
-  
   let code:string = "";
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [paginationData, setPaginationData] = React.useState({
@@ -80,8 +81,6 @@ const Buttontestbtn2 = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
   const lockMode:any = lockedData.lockMode;
   const [loading, setLoading] = useState<boolean>(false);
   const routes : AppRouterInstance = useRouter();
-  const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState<boolean>(false);
-  const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState<boolean>(false);
   const encryptionFlagCont: boolean = encryptionFlagCompData.flag || false;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagCompData.dpd;
@@ -90,6 +89,7 @@ const Buttontestbtn2 = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
   let actionLockData : any = {"lockMode":"","name":"","ttl":""}
   const [allCode,setAllCode]=useState<string>("");
   const [gridPosition, setGridPosition] = useState<any>({ gridColumn: '1 / 3', gridRow: '1 / 12' });
+  ////showComponentAsPopup || showArtifactAsModal
     
  /////////////
    //another screen
@@ -237,7 +237,7 @@ const Buttontestbtn2 = ({ lockedData,setLockedData,primaryTableData, setPrimaryT
       >
         {showFlag && <Button 
           ref={buttonRef}
-          className=""
+          className="   "
           onClick={handleClick}
           view='action'
           disabled= {testbtn27dc73?.isDisabled ? true : false}

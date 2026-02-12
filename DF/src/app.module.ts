@@ -16,11 +16,19 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { EncryptInterceptor } from './encryptInterceptor';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CacheModule } from '@nestjs/cache-manager';
+import { BullModule } from '@nestjs/bullmq';
+import { ImportClientModule } from './import/import.module';
 
 @Module({
   imports: [
+    BullModule.forRoot({
+      connection: {
+        host: process.env.HOST,
+        port: parseInt(process.env.PORT)       
+      },
+    }),
   CacheModule.register({isGlobal:true}),
-  ScheduleModule.forRoot(),UfModule,TeModule,], 
+  ScheduleModule.forRoot(),UfModule,TeModule,ImportClientModule,], 
   controllers: [AppController],
   providers: [AppService,CommonService,RuleService,CodeService,JwtService,RedisService,ConfigService,MongoService,{
       provide: APP_INTERCEPTOR,

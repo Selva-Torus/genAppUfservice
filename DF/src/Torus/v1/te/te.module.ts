@@ -16,9 +16,11 @@ import { BullModule } from "@nestjs/bullmq";
 import { EventEmitterProcessor } from "./event-emitter.processor";
 import { ListenerService } from "./listener.service";
 import { DynamicFlowService } from "./dynamicFlow.service";
+import { SchedulerModule } from "../scheduler/scheduler.module";
  
 @Module({
     imports: [      
+      SchedulerModule,   
       ClientsModule.register([
         {
           name: 'PO',

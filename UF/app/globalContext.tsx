@@ -61,8 +61,8 @@ export interface TotalContextProps {
   setLockedData: React.Dispatch<React.SetStateAction<Record<string, any>>>
   paginationDetails: Record<string, any>,
   setpaginationDetails: React.Dispatch<React.SetStateAction<Record<string, any>>>
-  eventEmitterData: any[],
-  setEventEmitterData: React.Dispatch<React.SetStateAction<any[]>>
+  eventEmitterData: any,
+  setEventEmitterData: React.Dispatch<React.SetStateAction<any>>
   userDetails: Record<string, any>,
   setUserDetails: React.Dispatch<React.SetStateAction<Record<string, any>>>
   encAppFalg: Record<string, any>,

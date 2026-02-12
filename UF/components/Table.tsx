@@ -357,8 +357,8 @@ const sortedData = sortColumn
         </div>
       )}
 
-      <div className={twMerge("border rounded-lg flex flex-col overflow-hidden max-h-full", borderColor)}>
-        <div className="overflow-auto min-h-0">
+      <div className={twMerge("border rounded-lg flex flex-col overflow-hidden flex-1 min-h-0", borderColor)}>
+        <div className="overflow-auto flex-1 min-h-0 p-2">
           <table
             className={`
               w-full
@@ -611,15 +611,12 @@ const sortedData = sortColumn
                 </tr>
               );
             }))}
-
-
           </tbody>
         </table>
         </div>
-
         {/* Pagination */}
         {showPagination && pagination && pagination.total > 0 && (
-          <div className={`border-t ${isDark ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"} px-4 py-4`}>
+          <div className={`border-t ${isDark ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"} px-4 py-3`}>
             <Pagination
               page={pagination.page}
               pageSize={pagination.pageSize}
@@ -632,7 +629,6 @@ const sortedData = sortColumn
           </div>
         )}
       </div>
-
     </div>
   );
 // return <></>

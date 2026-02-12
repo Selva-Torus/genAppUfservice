@@ -257,6 +257,31 @@ const UserCreationModal = ({
             setModalOpen(false)
           }
           return
+        } else {
+          let addedUser: any = newUser
+          addedUser.password = 'Welcome@100'
+          delete addedUser?.edit
+          addedUser.profile = userProfileImg
+          const res = await AxiosService.post(
+            `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/postTenantUser`,
+            {
+              data: {
+                ...addedUser,
+                email : addedUser.email + emailDomain,
+                dateAdded: new Date().toISOString()
+              }
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${getCookie('token')}`
+              }
+            }
+          )
+           if (res.status === 201) {
+            setData(res.data)
+            toast('User Added Successfully', 'success')
+            setModalOpen(false)
+          }
         }
         return
       } catch (error) {
@@ -391,11 +416,12 @@ const UserCreationModal = ({
                           placeholder={keyset(label)}
                           readOnly={readOnly}
                           className='h-12 w-full rounded p-2 text-base'
-                          onChange={handleInputChange}
+                          onChange={(val) =>handleInputChange(val)}
+                          name={name}
                           value={
                             readOnly && name == 'domain'
                               ? emailDomain
-                              : readOnly && name == 'email'
+                              : isEdit && readOnly && name == 'email'
                               ? newUser.email.split('@')[0]
                               : newUser[name]
                           }

@@ -1349,11 +1349,9 @@ export class CommonService{
         if(!tenant) throw 'Invalid Payload'   
        
         let fileName = `${tenant}-${app?.code || ''}`;
-     
         const filter: any = {
           'CK': tenant,
         };
-
         if (user?.length >0 ) {
           filter['USER'] = { $in: user };
         }
@@ -1376,7 +1374,7 @@ export class CommonService{
             ...(ToDate && { $lte: ToDate }),
           };
         }
-
+        // console.log('Filter for MongoDB query:', filter);
         if (searchParam) {
           const regex = { $regex: searchParam, $options: 'i' };
           filter['$or'] = [
@@ -1391,32 +1389,22 @@ export class CommonService{
             { 'DATE': regex },
             { 'UPID': regex },
           ];
-        }
-
-        // console.log('filter', filter);
-        // console.log('fileName', fileName);
-              
+        }      
         const allCollections:any = await this.redisService.listCollections(fileName);
-      
         if(!allCollections || !(Array.isArray(allCollections)) || allCollections?.length == 0) throw `Data not found in ${fileName}${type}`
 
         const targetCollections = allCollections.filter(name => name.endsWith(type));
-
         let sortingNum = (sortOrder === 'newest') ? -1 : (sortOrder === 'oldest') ? 1 : -1;
-
+        
         const countPromises = targetCollections.map(name =>
           this.mongoService.countDocuments(name, filter)
         );
-        console.log("countPromises",countPromises);
         const counts = await Promise.all(countPromises);
         const totalDocuments = counts.reduce((sum, c) => sum + c, 0);
-               
         const documentPromises = targetCollections.map(name =>
           this.mongoService.findDocument(name, filter, { _id: 0},{skip: (page - 1) * limit, limit, sortOrder:{DateAndTime:sortingNum}})//value: 1 
         );
-        
-        const allDocs = (await Promise.all(documentPromises)).flat();       
-
+        const allDocs = (await Promise.all(documentPromises)).flat(); 
         //const paginatedData = allDocs.slice((page - 1) * limit, page * limit)//.map(d => d.value);
 
         this.logger.log('get MongoProcess completed');
@@ -1472,11 +1460,12 @@ export class CommonService{
     }
     
     @Cron(process.env.MY_CRON)
+    
     async prcLog(): Promise<any> { //Default Mongo
       try {       
         //this.logger.log('ProcessLog start Listening')
        
-        let tplstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TPL'
+       let tplstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TPL'
        let tslstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TSL'
        if (await this.redisService.exist(tplstreamName, process.env.CLIENTCODE)){
          await this.structuredPrcLogs(tplstreamName) 
@@ -1490,18 +1479,17 @@ export class CommonService{
       }
     }
 
-     async structuredPrcLogs(streamName) { //Default Mongo
-      try {         
+    async structuredPrcLogs(streamName) { //Default Mongo
+      try {  
         if (await this.redisService.exist(streamName, process.env.CLIENTCODE)) {
           let grpInfo = await this.redisService.getInfoGrp(streamName)
-          // console.log("grpInfo",grpInfo);
           if (grpInfo.length == 0) {
-            await this.redisService.createConsumerGroup(streamName, streamName+'ProcessLog')
-          } else if (!grpInfo[0].includes(streamName+'ProcessLog')) {
-            await this.redisService.createConsumerGroup(streamName, streamName+'ProcessLog')
+            await this.redisService.createConsumerGroup(streamName, streamName+'ProcessLog_' + process.pid)
+          } else if (!grpInfo[0].includes(streamName+'ProcessLog_' + process.pid)) {
+            await this.redisService.createConsumerGroup(streamName, streamName+'ProcessLog_' + process.pid)
           }
 
-          let streamData: any = await this.redisService.readConsumerGroup(streamName, streamName+'ProcessLog', streamName+'_TPL');
+          let streamData: any = await this.redisService.readConsumerGroup(streamName, streamName+'ProcessLog_' + process.pid, streamName+'_TPL');
           if (streamData != 'No Data available to read' && streamData.length > 0) {
             var msgid = []
             var strmarr = []
@@ -1519,7 +1507,7 @@ export class CommonService{
                 var upidsplit = streamKey.split(':');
                 if (upidsplit.length > 14) {
                   var upid = upidsplit[upidsplit.length - 1]
-                  AfskValue = upid
+                  AfskValue = upid?upid:"logInfo"
                 }
               }
     
@@ -1562,18 +1550,18 @@ export class CommonService{
                 if(AfskValue !=  "logInfo"){
                   filter['UPID'] = AfskValue
                 }
-                isDocExist = await this.mongoService.existsDocument(streamName,'',filter)  
+                isDocExist = await this.mongoService.existsDocument(streamName,'',filter) 
                 if(isDocExist && Object.keys(isDocExist).length > 0 && isDocExist._id){
                   let appendRes:any = await this.mongoService.appendFileInToDocument(streamName,isDocExist._id,'AFSK.'+AfskValue,afskvalue);
                             
                   resultFlg++ 
                    if(appendRes.modifiedCount){
-                     await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])   
-                     await this.redisService.deleteWithEntryId(streamName,msgid[s])    
-                     let isStreamExist = await this.redisService.getStreamRange(streamName)
-                     if(!isStreamExist || isStreamExist.length == 0){
-                       await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
-                     }                        
+                      await this.redisService.ackMessage(streamName,streamName+'ProcessLog_' + process.pid,msgid[s])   
+                      await this.redisService.deleteWithEntryId(streamName,msgid[s])    
+                      let isStreamExist = await this.redisService.getStreamRange(streamName)
+                      if(!isStreamExist || isStreamExist.length == 0){
+                        await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
+                      }                        
                    }
                 }else{
                   await db.collection(streamName).createIndex({ "CK": 1, "FNGK": 1, "FNK": 1, "CATK": 1, "AFGK": 1, "AFK": 1, "AFVK": 1, "DATE": 1, "USER": 1 });
@@ -1587,6 +1575,7 @@ export class CommonService{
                     AFVK,
                     UPID:AfskValue,
                     DATE: entryId,
+                    DateAndTime: format(date, 'yyyy-MM-dd HH:mm:ss:SSS'),
                     USER: user,
                     AFSK: 
                       {[AfskValue]:[afskvalue]}
@@ -1595,12 +1584,12 @@ export class CommonService{
                 
                   resultFlg++ 
                    if(insertRes.insertedId) {
-                     await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])    
+                      await this.redisService.ackMessage(streamName,streamName+'ProcessLog_' + process.pid,msgid[s])   
                      await this.redisService.deleteWithEntryId(streamName,msgid[s])   
                      let isStreamExist = await this.redisService.getStreamRange(streamName)
-                     if(!isStreamExist || isStreamExist.length == 0){
-                       await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
-                     }                  
+                      if(!isStreamExist || isStreamExist.length == 0){
+                        await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
+                      }                  
                    }     
                 }
               }else if(streamName.endsWith('-TSL')){              
@@ -1622,17 +1611,17 @@ export class CommonService{
               
                 resultFlg++ 
                  if(insertRes.insertedId) {
-                   await this.redisService.ackMessage(streamName,'ProcessLog',msgid[s])    
+                    await this.redisService.ackMessage(streamName,streamName+'ProcessLog_' + process.pid,msgid[s])    
                    await this.redisService.deleteWithEntryId(streamName,msgid[s])   
                    let isStreamExist = await this.redisService.getStreamRange(streamName)
-                   if(!isStreamExist || isStreamExist.length == 0){
-                     await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
-                   }                  
+                  if(!isStreamExist || isStreamExist.length == 0){
+                    await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
+                    }                  
                  }   
               }                      
             }
           
-            if(resultFlg == msgid.length){           
+            if(resultFlg == msgid.length){ 
               return 'Success'
             }
           }  

@@ -40,7 +40,34 @@
         }
       }
     },
-    "client": "CI001"
+    "client": "CI001",
+    "quickLinks": [
+      {
+        "label": "Tenant Profile",
+        "key": "tenantProfile",
+        "routes": "/control-center/tenant"
+      },
+      {
+        "label": "Appearance",
+        "key": "tenantappearance",
+        "routes": "/tenant-settings?tenant=${tenant}"
+      },
+      {
+        "label": "Company Profile",
+        "key": "PersonalcompanyProfile",
+        "routes": "/control-center/company-profile"
+      },
+      {
+        "label": "Notifications",
+        "key": "tenantnotifications",
+        "routes": "/control-center/notifications"
+      },
+      {
+        "label": "User Management",
+        "key": "usermanagement",
+        "routes": "/control-center/user-management"
+      }
+    ]
   }
 } */
 import { NestFactory } from '@nestjs/core';
@@ -103,6 +130,7 @@ async function bootstrap() {
     .setVersion('0.1')
     .addTag('ERD API')
     .addTag('Torus API')
+    .addTag('Scheduler API')
     .addBearerAuth(
     { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 
     'JWT-auth',

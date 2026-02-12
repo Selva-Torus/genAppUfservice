@@ -445,12 +445,13 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 />
               </div>
               <Pagination
-                className='flex w-full select-none items-center justify-center'
                 page={jsonData?.page}
                 pageSize={jsonData?.limit}
                 pageSizeOptions={[3, 5, 10, 20, 50, 100]}
                 total={jsonData?.totalDocuments}
                 onUpdate={data => handleUpdate(data.page, data.pageSize)}
+                alignment='middle'
+                showButtonText={true}
               />
             </div>
             <div

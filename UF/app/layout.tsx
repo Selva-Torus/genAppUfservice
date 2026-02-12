@@ -59,14 +59,21 @@
   ],
   "setupData": {
     "appInfo": {
-      "appGrpName": "appgroup",
-      "appGrpCode": "AG001",
-      "applicationUniqueId": "05b6e088-8f28-4957-a70c-9fdcd1c3ef24",
-      "fusionAuthAppClientSecret": "ZYvKuWkHAItKzlyrp1ow5S_vOBYkphibGTZNLKPnJvM",
       "name": "application",
       "code": "A001",
       "logType": "mongodb",
-      "deploymentArtifactKey": "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1"
+      "deploymentArtifactKey": "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
+      "applicationUniqueId": "05b6e088-8f28-4957-a70c-9fdcd1c3ef24",
+      "lastBuildVersion": "v1",
+      "lastBuildOn": "2026-02-09T07:38:55.135Z",
+      "accessUrl": "https://tgadev.toruslowcode.com/<tenantCode>/<AppGroupCode>/<AppCode>/<version>",
+      "logo": "torus/9.1/CI001/resources/images/images.jfif",
+      "encryption": {
+        "type": ""
+      },
+      "appGrpName": "appgroup",
+      "appGrpCode": "AG001",
+      "fusionAuthAppClientSecret": "ZYvKuWkHAItKzlyrp1ow5S_vOBYkphibGTZNLKPnJvM"
     },
     "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CI001:AFK:PROFILE:AFVK:v1:appearance",
     "selectedPresetKey": "default",
@@ -179,7 +186,34 @@
         }
       }
     },
-    "client": "CI001"
+    "client": "CI001",
+    "quickLinks": [
+      {
+        "label": "Tenant Profile",
+        "key": "tenantProfile",
+        "routes": "/control-center/tenant"
+      },
+      {
+        "label": "Appearance",
+        "key": "tenantappearance",
+        "routes": "/tenant-settings?tenant=${tenant}"
+      },
+      {
+        "label": "Company Profile",
+        "key": "PersonalcompanyProfile",
+        "routes": "/control-center/company-profile"
+      },
+      {
+        "label": "Notifications",
+        "key": "tenantnotifications",
+        "routes": "/control-center/notifications"
+      },
+      {
+        "label": "User Management",
+        "key": "usermanagement",
+        "routes": "/control-center/user-management"
+      }
+    ]
   },
   "webOnBoarding": {
     "navBarStyle": {

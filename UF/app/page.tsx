@@ -1,6 +1,6 @@
 
 'use client'
-import LoginForm from '@/app/components/loginForm';
+import LoginForm from './components/LoginForm';
 import { AxiosService } from './components/axiosService';
 import { deleteAllCookies, deleteCookie, getCookie } from './components/cookieMgment';
 import { useEffect } from 'react';

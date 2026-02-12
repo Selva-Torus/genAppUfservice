@@ -116,8 +116,7 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
                 url.searchParams.set('origin', origin)
                 url.searchParams.set('token', token)
 
-                // window.open(url.toString(), '_self')
-                window.open(url.toString(), '_blank')
+                window.open(url.toString(), '_self')
               } else {
                 toast('Access URL not found for the selected version', 'danger')
               }

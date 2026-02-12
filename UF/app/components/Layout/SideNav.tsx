@@ -785,7 +785,7 @@ const FullViewAvatar = ({
               </div>
             )}
 
-             {pathname !== '/app-hub' && <div
+            {pathname !== '/app-hub' && <div
                 onClick={() => router.push('/app-hub')}
                 className='flex cursor-pointer items-center gap-2'
               >
@@ -957,7 +957,7 @@ const PartialViewAvatar = ({
               </div>
             )}
 
-           {pathname !== '/app-hub' && <div
+            {pathname !== '/app-hub' && <div
                 onClick={() => router.push('/app-hub')}
                 className='flex cursor-pointer items-center gap-2'
               >

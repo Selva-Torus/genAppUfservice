@@ -382,19 +382,14 @@ export class RedisService {
    * @throws {Error} If there is an error executing the EXISTS command.
    */
 
-  async exist(key,collectionName: string) {
+  async exist(key:string,collectionName: string,isMongo?:boolean) {
     try {
       if(collectionName){
-        // Check CACHE_MANAGER first
-        // let cachedResult = await this.cacheManager.get<string>(key);
-        // if (cachedResult) {
-        //   return 1;
-        // }
 
         let redisResult = await redis.call('EXISTS', key);
         if(redisResult){
           return redisResult;
-        }else{
+        }else if(isMongo){
           // Queue MongoDB operations
           let mongoResult = await queueMongoOperation(
             () => this.existsDocument(collectionName, key),
@@ -406,11 +401,9 @@ export class RedisService {
               `getDocument:${key}`
             );
             if(doc?.length>0 && doc[0]?.value){
-              const jsonValue = JSON.stringify(doc[0]?.value);
-              // Update CACHE_MANAGER
-              // await this.cacheManager.set(key, jsonValue);
-              await redis.call('JSON.SET', key, '$', jsonValue);
-            }
+
+            await redis.call('JSON.SET', key, '$', JSON.stringify(doc[0]?.value));}
+            //await redis.call('JSON.SET', key, '$', JSON.stringify(doc));
             return 1
           }else{
           return mongoResult
@@ -533,11 +526,33 @@ export class RedisService {
    * @returns {Promise<string>} - A promise that resolves to a string indicating the consumer group was created.
    * @throws {Error} - If there is an error creating the consumer group.
   */
-  async createConsumerGroup(streamName, groupName) {
+    async createConsumerGroup(streamName, groupName) {
     try {
-      await redis.xgroup('CREATE', streamName, groupName, '0', 'MKSTREAM');
-      return `consumerGroup was created as ${groupName}`;
+      // Check if the consumer group already exists
+      const grpInfo = await redis.xinfo('GROUPS', streamName).catch(() => []);
+
+      // Check if the group name already exists in any of the groups
+      const groupExists = grpInfo.some((group, index) => {
+        // Group info comes as flat array: [name, value, name, value, ...]
+        // 'name' field is at index 1, 5, 9, etc. for each group
+        if (Array.isArray(group)) {
+          return group.includes(groupName);
+        }
+        // Check if this is the 'name' field with matching value
+        return index % 2 === 1 && group === groupName;
+      });
+
+      if (!groupExists) {
+        await redis.xgroup('CREATE', streamName, groupName, '0', 'MKSTREAM');
+        return `consumerGroup was created as ${groupName}`;
+      }
+
+      return `consumerGroup ${groupName} already exists`;
     } catch (error) {
+      // If error is BUSYGROUP, the group already exists - this is okay
+      if (error.message && error.message.includes('BUSYGROUP')) {
+        return `consumerGroup ${groupName} already exists`;
+      }
       throw error;
     }
   }
@@ -1282,6 +1297,88 @@ async deleteDocument(collectionName:string,key:any){
     throw err;
   }
 }
+
+async select(db: number) {
+    return redis.select(db);
+  }
+
+  async scan(cursor: string, ...args: any[]) {
+    return redis.scan(cursor, ...args);
+  }
+
+  async ttl(key: string) {
+    return redis.ttl(key);
+  }
+
+  async type(key: string) {
+    return redis.type(key);
+  }
+
+  async call(command: string, ...args: any[]) {
+    return redis.call(command, ...args);
+  }
+
+  async get(key: string) {
+    return redis.get(key);
+  }
+
+  async set(key: string, value: any) {
+    return redis.set(key, value);
+  }
+
+  async del(key: string) {
+    return redis.del(key);
+  }
+
+  
+
+  async hgetall(key: string) {
+    return redis.hgetall(key);
+  }
+
+  async lrange(key: string, start: number, stop: number) {
+    return redis.lrange(key, start, stop);
+  }
+
+  async rpush(key: string, ...values: any[]) {
+    return redis.rpush(key, ...values);
+  }
+
+  async smembers(key: string) {
+    return redis.smembers(key);
+  }
+
+  async sadd(key: string, ...members: any[]) {
+    return redis.sadd(key, ...members);
+  }
+
+  async zrange(key: string, start: number, stop: number, ...args: any[]) {
+    return redis.zrange(key, start, stop, ...args);
+  }
+
+  async zadd(key: string, ...args: any[]) {
+    return redis.zadd(key, ...args);
+  }
+
+  async dump(key: string) {
+    return redis.dump(key);
+  }
+
+  async restore(key: string, ttl: number, value: Buffer, ...args: any[]) {
+    return redis.restore(key, ttl, value, ...args);
+  }
+
+  async pexpire(key: string, ms: number) {
+    return redis.pexpire(key, ms);
+  }
+
+  async exists(key: string) {
+    return redis.exists(key);
+  }
+
+  async ping() {
+    return redis.ping();
+  }
   
 }
 

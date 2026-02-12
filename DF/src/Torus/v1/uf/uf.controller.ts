@@ -1107,4 +1107,10 @@ export class UfController {
     const { token , ufClientType } = body;
     return this.appService.sso(token , ufClientType);
   }
+
+  @Post('postTenantUser')
+  async postTenantUsers(@Body() body: any) {
+    const { data } = body;
+    return this.appService.setTenantUser(data);
+  }
 }

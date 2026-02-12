@@ -3,12 +3,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  
   const token = searchParams.get('token')
   const origin = searchParams.get('origin') || '/'
-
   const baseUrl = new URL(process.env.NEXT_PUBLIC_API_BASE_URL!).origin
-
 
   try {
     if (!token) {

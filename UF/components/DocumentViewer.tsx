@@ -22,6 +22,7 @@ import { MdNavigateBefore, MdNavigateNext } from 'react-icons/md'
 
 interface DocViewerProps {
   url?: string | null | string[]
+  fileType?:string
   className?: string
   style?: CSSProperties
   headerText?: string
@@ -37,11 +38,23 @@ const isImage = (url?: string) =>
 const isPdf = (url?: string) => !!url && /\.pdf$/i.test(url)
 const isText = (url?: string) => !!url && /\.(txt|xml|json|csv)$/i.test(url)
 const isOffice = (url?: string) => !!url && /\.(docx?|xlsx?|pptx?)$/i.test(url)
+const isImageType = (type?: string) =>
+  !!type && type.startsWith('image/')
 
+const isPdfType = (type?: string) =>
+  type === 'application/pdf'
+
+const isTextType = (type?: string) =>
+  !!type && type.startsWith('text/')
+
+const isOfficeType = (type?: string) =>
+  !!type &&
+  type.includes('officedocument')
 /* ---------- component ---------- */
 
 const DocViewer: React.FC<DocViewerProps> = ({
   url,
+  fileType,
   className = '',
   style,
   headerText,
@@ -62,7 +75,7 @@ const DocViewer: React.FC<DocViewerProps> = ({
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const contentRef = useRef<HTMLDivElement>(null)
 
-  const MIN_ZOOM = 0.5
+  const MIN_ZOOM = 1
   const MAX_ZOOM = 4
   const ZOOM_STEP = 0.25
 
@@ -111,13 +124,31 @@ const DocViewer: React.FC<DocViewerProps> = ({
         const delta = e.deltaY > 0 ? -ZOOM_STEP : ZOOM_STEP
         setZoom(prev => Math.min(Math.max(prev + delta, MIN_ZOOM), MAX_ZOOM))
       }
+      // Regular wheel = Pan/Scroll when zoomed (shift + wheel for horizontal)
+      else if (zoom > 1) {
+        e.preventDefault()
+        e.stopPropagation()
+        if (e.shiftKey) {
+          // Horizontal scroll
+          setPosition(prev => ({
+            x: prev.x - (e.deltaY > 0 ? 20 : -20),
+            y: prev.y
+          }))
+        } else {
+          // Vertical scroll
+          setPosition(prev => ({
+            x: prev.x,
+            y: prev.y - (e.deltaY > 0 ? 20 : -20)
+          }))
+        }
+      }
     }
 
     element.addEventListener('wheel', handleWheelEvent, { passive: false })
     return () => {
       element.removeEventListener('wheel', handleWheelEvent)
     }
-  }, [])
+  }, [zoom])
 
   // Pan handlers
   const handleMouseDown = useCallback(
@@ -198,15 +229,15 @@ const DocViewer: React.FC<DocViewerProps> = ({
     link.click()
     document.body.removeChild(link)
   }
-
+  
   const renderContent = () => {
     if (urls.length === 0 || !currentUrl) {
       return (
         <div className='flex h-full w-full flex-col justify-center overflow-hidden whitespace-break-spaces rounded-xl border border-red-500 bg-gray-50 p-4 text-center shadow-sm'>
-          <text className='    text-[clamp(0.75rem,1.2vw,1.125rem)] font-semibold leading-tight text-gray-700 '>
+          <text className='text-[clamp(0.75rem,1.2vw,1.125rem)] font-semibold leading-tight text-gray-700'>
             No Document Found
           </text>
-          <p className=' text-sm text-gray-500'>
+          <p className='text-sm text-gray-500'>
             The attachment or document you are looking for is unavailable or not
             uploaded yet.
           </p>
@@ -214,15 +245,15 @@ const DocViewer: React.FC<DocViewerProps> = ({
       )
     }
 
-    const transformStyle = {
-      transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
-      transformOrigin: 'center center',
-      cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
-      transition: isDragging ? 'none' : 'transform 0.2s ease-out'
-    }
+    /* IMAGE → transform zoom with pan */
+    if (isImageType(fileType)) {
+      const transformStyle = {
+        transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+        transformOrigin: 'center center',
+        cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default',
+        transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+      }
 
-    /* IMAGE → NO iframe */
-    if (isImage(currentUrl)) {
       return (
         <div
           ref={contentRef}
@@ -251,12 +282,27 @@ const DocViewer: React.FC<DocViewerProps> = ({
       <div
         ref={contentRef}
         className='h-full w-full overflow-hidden'
+        style={{
+          cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default'
+        }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
-        <div style={{ ...transformStyle, width: '100%', height: '100%' }}>
+        <div
+          style={{
+            transform: `translate(${position.x}px, ${position.y}px) scale(${zoom})`,
+            transformOrigin: 'center center',
+            width: '100%',
+            height: '100%',
+            transition: isDragging ? 'none' : 'transform 0.2s ease-out'
+          }}
+          className="relative h-full w-full overflow-hidden"
+        >
           <iframe
             src={
               isOffice(currentUrl)
@@ -265,8 +311,11 @@ const DocViewer: React.FC<DocViewerProps> = ({
                   )}&embedded=true`
                 : currentUrl
             }
-            className='h-full w-full border-0 object-contain'
-            style={{ pointerEvents: zoom > 1 ? 'none' : 'auto' }}
+            className='h-full w-full border-0'
+            style={{
+              objectFit: 'fill',      // or 'contain', 'fill', etc.
+              pointerEvents: 'auto'
+            }}
           />
         </div>
       </div>
@@ -275,17 +324,14 @@ const DocViewer: React.FC<DocViewerProps> = ({
 
   const viewerElement = (
     <div
-      className={`relative h-full min-h-0 w-full min-w-0 overflow-hidden ${className}`}
+      className={`flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden ${className}`}
       style={style}
     >
-      {/* Fullscreen button */}
-
       {urls.length > 0 && (
         <>
-          {/* Top right controls */}
-          <div className='absolute right-2 top-2 z-10 flex flex-col gap-3'>
+          <div className='flex justify-center gap-3 py-2'>
             {/* Top actions */}
-            <div className='flex flex-col items-center gap-2 rounded-md bg-white p-2 shadow'>
+            <div className='flex flex-row items-center gap-2 rounded-md bg-white p-2 shadow'>
               <button
                 onClick={openFullscreen}
                 className='flex h-7 w-7 items-center justify-center rounded bg-gray-200 text-slate-900 hover:bg-gray-300'
@@ -304,7 +350,7 @@ const DocViewer: React.FC<DocViewerProps> = ({
             </div>
 
             {/* Zoom controls */}
-            <div className='flex flex-col items-center gap-2 rounded-md bg-white p-2 shadow'>
+            <div className='flex flex-row items-center gap-2 rounded-md bg-white p-2 shadow'>
               <button
                 onClick={handleZoomIn}
                 disabled={zoom >= MAX_ZOOM}
@@ -313,7 +359,7 @@ const DocViewer: React.FC<DocViewerProps> = ({
               >
                 <FiZoomIn size={14} />
               </button>
-              <span className='flex h-7 w-7 items-center justify-center rounded bg-gray-200 text-[12px] font-medium text-slate-900'>
+              <span className='flex h-7 w-7 items-center justify-center rounded border border-gray-300 bg-gray-100 text-[12px] font-medium text-slate-900'>
                 {Math.round(zoom * 100)}%
               </span>
 
@@ -325,7 +371,6 @@ const DocViewer: React.FC<DocViewerProps> = ({
               >
                 <FiZoomOut size={14} />
               </button>
-              {/* {(zoom !== 1 || position.x !== 0 || position.y !== 0) && ( */}
               <button
                 onClick={handleResetZoom}
                 className='flex h-7 w-7 items-center justify-center rounded bg-gray-200 text-slate-900 hover:bg-gray-300'
@@ -333,41 +378,43 @@ const DocViewer: React.FC<DocViewerProps> = ({
               >
                 <FiRotateCcw size={14} />
               </button>
-              {/* )} */}
             </div>
           </div>
-
-          {urls.length > 1 && (
-            <div className='absolute bottom-2 right-2 z-10 flex items-center gap-2'>
-              <button
-                onClick={goToPrevious}
-                disabled={isFirst}
-                className={`overflow-hidden rounded bg-black/60 object-contain p-2 text-white ${
-                  isFirst ? 'cursor-not-allowed opacity-50' : 'hover:bg-black'
-                }`}
-                title='Previous'
-              >
-                <MdNavigateBefore size={16} />
-              </button>
-              <span className='rounded bg-black/60 px-2 py-1 text-sm text-white'>
-                {currentIndex + 1} / {urls.length}
-              </span>
-              <button
-                onClick={goToNext}
-                disabled={isLast}
-                className={`overflow-hidden rounded bg-black/60 object-contain p-2 text-white ${
-                  isLast ? 'cursor-not-allowed opacity-50' : 'hover:bg-black'
-                }`}
-                title='Next'
-              >
-                <MdNavigateNext size={16} />
-              </button>
-            </div>
-          )}
         </>
       )}
 
-      {renderContent()}
+      {/* Content area with navigation */}
+      <div className='relative min-h-0 flex-1 overflow-hidden'>
+        {renderContent()}
+
+        {urls.length > 1 && (
+          <div className='absolute bottom-2 right-2 z-10 flex items-center gap-2'>
+            <button
+              onClick={goToPrevious}
+              disabled={isFirst}
+              className={`overflow-hidden rounded bg-black/60 object-contain p-2 text-white ${
+                isFirst ? 'cursor-not-allowed opacity-50' : 'hover:bg-black'
+              }`}
+              title='Previous'
+            >
+              <MdNavigateBefore size={16} />
+            </button>
+            <span className='rounded bg-black/60 px-2 py-1 text-sm text-white'>
+              {currentIndex + 1} / {urls.length}
+            </span>
+            <button
+              onClick={goToNext}
+              disabled={isLast}
+              className={`overflow-hidden rounded bg-black/60 object-contain p-2 text-white ${
+                isLast ? 'cursor-not-allowed opacity-50' : 'hover:bg-black'
+              }`}
+              title='Next'
+            >
+              <MdNavigateNext size={16} />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 

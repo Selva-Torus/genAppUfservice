@@ -969,7 +969,7 @@ export class TeService{
           if (fabric == 'DF-DFD') {
             placeholder = { request: {},response: {}, exception: {}, event: {}, customResponse: {}};            
           } else {
-            placeholder = {request: {}, response: {}, exception: {}, event: {}, ifo: {}, code: {}};
+            placeholder = {request: {}, response: {}, exception: {}, event: {}, ifo: {}, code: {}, rollback:{}};
           }          
           await this.redisService.setJsonData(processedKey + upId + ':NPV:' + pfjson[i].nodeName + '.PRO',JSON.stringify(placeholder), client);
         }

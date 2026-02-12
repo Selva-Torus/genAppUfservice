@@ -417,84 +417,44 @@ const SetupScreen = ({
     return initialProductServiceOptions
   }
 
-  const getAssignedOPRList = async (securityTemplateData: any) => {
-    const assignedOPRList: Set<string> = new Set([])
-    if (
-      typeof securityTemplateData == 'object' &&
-      Array.isArray(securityTemplateData)
-    ) {
-      securityTemplateData.forEach(template => {
+  const getAssignedOPRList = (templateData: any) => {
+    const reservedKeys = [
+      'orgGrpId',
+      'orgId',
+      'subOrgGrpId',
+      'subOrgId',
+      'psGrpId',
+      'psId',
+      'roleGrpId',
+      'roleId'
+    ]
+    const oprList: Set<string> = new Set([])
+
+    const traverse = (node: any) => {
+      if (node && typeof node === 'object') {
+        for (const key in node) {
+          if (reservedKeys.includes(key) && typeof node[key] === 'string') {
+            oprList.add(node[key])
+          } else if (typeof node[key] === 'object') {
+            traverse(node[key])
+          }
+        }
+      }
+    }
+
+    if (typeof templateData === 'object' && Array.isArray(templateData)) {
+      templateData.forEach((template: any) => {
         if (
-          typeof template['orgGrp'] == 'object' &&
+          template &&
+          template['orgGrp'] &&
+          typeof template['orgGrp'] === 'object' &&
           Array.isArray(template['orgGrp'])
         ) {
-          template['orgGrp'].forEach(orgGrp => {
-            if (
-              typeof orgGrp['org'] == 'object' &&
-              Array.isArray(orgGrp['org'])
-            ) {
-              orgGrp['org'].forEach(org => {
-                if (
-                  typeof org['psGrp'] == 'object' &&
-                  Array.isArray(org['psGrp'])
-                ) {
-                  org['psGrp'].forEach(psGrp => {
-                    if (
-                      typeof psGrp['ps'] == 'object' &&
-                      Array.isArray(psGrp['ps'])
-                    ) {
-                      psGrp['ps'].forEach(ps => {
-                        if (
-                          typeof ps['roleGrp'] == 'object' &&
-                          Array.isArray(ps['roleGrp'])
-                        ) {
-                          ps['roleGrp'].forEach(roleGrp => {
-                            if (
-                              typeof roleGrp['roles'] == 'object' &&
-                              Array.isArray(roleGrp['roles'])
-                            ) {
-                              roleGrp['roles'].forEach(role => {
-                                if (
-                                  role?.['roleCode'] &&
-                                  typeof role?.['roleCode'] == 'string'
-                                ) {
-                                  const orgGrpId = orgGrp['orgGrpId']
-                                  const orgId = org['orgId']
-                                  const psGrpId = psGrp['psGrpId']
-                                  const psId = ps['psId']
-                                  const roleGrpId = roleGrp['roleGrpId']
-                                  const roleId = role['roleId']
-                                  if (
-                                    orgGrpId &&
-                                    orgId &&
-                                    psGrpId &&
-                                    psId &&
-                                    roleGrpId &&
-                                    roleId
-                                  ) {
-                                    assignedOPRList.add(orgGrpId)
-                                    assignedOPRList.add(orgId)
-                                    assignedOPRList.add(psGrpId)
-                                    assignedOPRList.add(psId)
-                                    assignedOPRList.add(roleGrpId)
-                                    assignedOPRList.add(roleId)
-                                  }
-                                }
-                              })
-                            }
-                          })
-                        }
-                      })
-                    }
-                  })
-                }
-              })
-            }
-          })
+          traverse(template['orgGrp'])
         }
       })
     }
-    return Array.from(assignedOPRList)
+    return Array.from(oprList)
   }
 
   const getSecurityTemplate = async () => {
@@ -801,9 +761,9 @@ const SetupScreen = ({
                   {/* PLUS BUTTON */}
                   <button
                     hidden={
-                      selectedMenuItem == 'user' ||
-                        selectedMenuItem == 'org' ||
-                        (selectedMenuItem == 'st' && templateToBeUpdated)
+                      // selectedMenuItem == 'user' ||
+                      selectedMenuItem == 'org' ||
+                      (selectedMenuItem == 'st' && templateToBeUpdated)
                         ? true
                         : false
                     }
@@ -827,20 +787,22 @@ const SetupScreen = ({
                   <button
                     hidden={
                       selectedMenuItem == 'user' ||
-                        selectedMenuItem == 'org' ||
-                        (selectedMenuItem == 'st' && templateToBeUpdated)
+                      selectedMenuItem == 'org' ||
+                      (selectedMenuItem == 'st' && templateToBeUpdated)
                         ? true
                         : false
                     }
-                    className={`${selectedMenuItem === 'org' ? 'hidden' : ''
-                      } outline-none ${((selectedMenuItem === 'st' ||
+                    className={`${
+                      selectedMenuItem === 'org' ? 'hidden' : ''
+                    } outline-none ${
+                      ((selectedMenuItem === 'st' ||
                         selectedMenuItem === 'user') &&
                         Array.from(selectedRows).filter(Boolean).length > 0) ||
-                        (Object.keys(selectedItems).length > 0 &&
-                          Object.values(selectedItems).includes(true))
+                      (Object.keys(selectedItems).length > 0 &&
+                        Object.values(selectedItems).includes(true))
                         ? 'bg-[#F14336]'
                         : 'bg-[#F14336]/50'
-                      } rounded-md px-2 py-1.5`}
+                    } rounded-md px-2 py-1.5`}
                     disabled={
                       selectedMenuItem === 'st' || selectedMenuItem === 'user'
                         ? Array.from(selectedRows).filter(Boolean).length > 0
@@ -848,17 +810,17 @@ const SetupScreen = ({
                           : true
                         : Object.keys(selectedItems).length > 0 &&
                           Object.values(selectedItems).includes(true)
-                          ? tenantAccess != 'edit'
-                            ? true
-                            : false
-                          : true
+                        ? tenantAccess != 'edit'
+                          ? true
+                          : false
+                        : true
                     }
                     onClick={() => setDeleteModalOpen(true)}
                   >
                     <DeleteIcon fill='white' height='16' width='16' />
                   </button>
                   <Modal
-                    className='w-[25.5vw] lg:w-[20.5vw]'
+                    // className='w-[25.5vw] lg:w-[20.5vw]'
                     onClose={() => setDeleteModalOpen(false)}
                     showCloseButton={false}
                     open={deleteModalOpen}
@@ -866,55 +828,74 @@ const SetupScreen = ({
                     <div className='flex items-center justify-between'>
                       <Text
                         variant='header-1'
-                        className='flex items-center gap-2 text-[#EB5757]'
+                        contentAlign='left'
+                        className='flex items-center gap-2 text-nowrap text-[#EB5757]'
                       >
                         <DeleteIcon fill='#EB5757' />
                         {selectedMenuItem === 'st'
                           ? keyset('Delete AccessTemplate')
                           : selectedMenuItem === 'user' &&
-                          keyset('Delete User')}
+                            keyset('Delete User')}
                       </Text>
-                      <Button onClick={() => setDeleteModalOpen(false)}>
+                      <Button
+                        className={'!w-fit rounded-md p-1'}
+                        onClick={() => setDeleteModalOpen(false)}
+                      >
                         <Multiply fill={isDark ? 'white' : 'black'} />
                       </Button>
                     </div>
                     <hr className={twMerge('w-full', borderColor)} />
                     <div className='flex w-full flex-col gap-2 p-2'>
-                      <Text variant='body-3'>
+                      <Text
+                        variant='body-3'
+                        className='text-nowrap'
+                        contentAlign='left'
+                      >
                         {selectedMenuItem === 'st'
                           ? keyset(
-                            'Are you sure you want to delete this template?'
-                          )
+                              'Are you sure you want to delete this template?'
+                            )
                           : selectedMenuItem === 'user' &&
-                          keyset(
-                            'Are you sure you want to delete this user?'
-                          )}
+                            keyset(
+                              'Are you sure you want to delete this user?'
+                            )}
                       </Text>
-                      <Text variant='body-1' color='secondary'>
+                      <Text
+                        variant='body-1'
+                        color='secondary'
+                        className='text-nowrap'
+                        contentAlign='left'
+                      >
                         {selectedMenuItem === 'st'
                           ? keyset(
-                            'Deleting the template will remove all associated'
-                          )
+                              'Deleting the template will remove all associated'
+                            )
                           : selectedMenuItem === 'user' &&
-                          keyset(
-                            'Deleting the user will remove all associated'
-                          )}
+                            keyset(
+                              'Deleting the user will remove all associated'
+                            )}
                       </Text>
                     </div>
                     <hr className={twMerge('w-full', borderColor)} />
-                    <div className='flex w-full items-center justify-end gap-2 p-2 pb-0'>
-                      <Button
-                        view='raised'
-                        onClick={() => setDeleteModalOpen(false)}
-                      >
-                        {keyset('Cancel')}
-                      </Button>
-                      <Button
-                        view='normal-contrast'
-                        onClick={handleDeleteButtonClick}
-                      >
-                        {keyset('Delete')}
-                      </Button>
+                    <div className='flex w-full items-center justify-end p-2 pb-0'>
+                      <div>
+                        <Button
+                          view='raised'
+                          onClick={() => setDeleteModalOpen(false)}
+                          className='px-2 py-1'
+                        >
+                          {keyset('Cancel')}
+                        </Button>
+                      </div>
+                      <div>
+                        <Button
+                          view='flat-danger'
+                          onClick={handleDeleteButtonClick}
+                          className='px-2 py-1'
+                        >
+                          {keyset('Delete')}
+                        </Button>
+                      </div>
                     </div>
                   </Modal>
 
@@ -938,7 +919,10 @@ const SetupScreen = ({
                     { id: 'orgsetup', title: 'Organization Setup' },
                     { id: 'oprmatrix', title: 'OPR Matrix' }
                   ]}
-                  onChange={setActiveTab}
+                  onChange={(e) => {
+                    setActiveTab(e)
+                    setSearchTerm('')
+                  }}
                   defaultActiveId='orgsetup'
                   className='!w-[900px]'
                 />
@@ -953,7 +937,6 @@ const SetupScreen = ({
             >
               <div
                 style={{
-                  borderRight: `1px solid ${borderColor}`,
                   minWidth: '200px'
                 }}
                 className={twMerge(`border-r`, borderColor)}
@@ -968,6 +951,7 @@ const SetupScreen = ({
                       onClick={() => {
                         handleMenuClick(item.code as SettingTabs)
                         setIsView(false)
+                        setSearchTerm('')
                       }}
                     >
                       <span title={keyset(item.name)}>{keyset(item.name)}</span>
