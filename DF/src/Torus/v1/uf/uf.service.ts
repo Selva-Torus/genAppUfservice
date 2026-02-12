@@ -7417,4 +7417,158 @@ export class UfService {
       };;
     }
   }
+
+  async getAppList(token: string) {
+    try {
+      const payload = await this.jwt.verifyAsync(token, {
+        secret: auth_secret,
+      });
+      const {
+        client: tenant,
+        loginId,
+        ag,
+        app: currentApp,
+      } = payload;
+      const tenantUserCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
+      const tenantProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`;
+      const tenantUserListResponse = await this.redisService.getJsonData(
+        tenantUserCacheKey,
+        process.env.CLIENTCODE,
+      );
+      const tenantProfileResponse = await this.redisService.getJsonData(
+        tenantProfileCacheKey,
+        process.env.CLIENTCODE,
+      );
+      const tenantProfile = tenantProfileResponse
+        ? JSON.parse(tenantProfileResponse)
+        : {};
+      const tenantUserList = tenantUserListResponse
+        ? JSON.parse(tenantUserListResponse)
+        : [];
+      const foundUser = tenantUserList.find(
+        (user: any) => user?.loginId == loginId,
+      );
+      const appGroupInfo =
+        tenantProfile?.AG?.find((group: any) => group?.code == ag) ?? {};
+      const overAllApplicationList =
+        appGroupInfo?.APPS?.filter((a) => a?.code != currentApp) ||
+        [];
+      let accessibleAppList: any[] = [];
+
+      for (const application of overAllApplicationList) {
+        const userKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${application?.code}:AFVK:v1:users`;
+        const userResponse = await this.redisService.getJsonData(
+          userKey,
+          process.env.CLIENTCODE,
+        );
+        const userList = userResponse ? JSON.parse(userResponse) : [];
+        const isUserExistInApp = userList.find(
+          (user: any) =>
+            user?.userUniqueId == foundUser?.userUniqueId &&
+            user?.accessProfile?.length,
+        );
+        if (!isUserExistInApp) continue;
+        // check the application's build key information along with the accessUrl
+        const appBuildKeyCachePrefix = `CK:TGA:FNGK:BLDC:FNK:DEV:CATK:${tenant}:AFGK:${ag}:AFK:${application?.code}:AFVK:*:bldc`;
+        const appBuildKeyList = await this.redisService.getKeys(
+          appBuildKeyCachePrefix,
+          process.env.CLIENTCODE,
+        );
+        let versionInfo = [];
+        for (let i = 0; i < appBuildKeyList.length; i++) {
+          const buildKey = appBuildKeyList[i];
+          const buildKeyResponse = await this.redisService.getJsonData(
+            buildKey,
+            process.env.CLIENTCODE,
+          );
+          const buildKeyData = buildKeyResponse
+            ? JSON.parse(buildKeyResponse)
+            : {};
+          const { deploymentArtifactKey } = buildKeyData;
+          if (deploymentArtifactKey) {
+            const artifactKeyResponse = await this.redisService.getJsonData(
+              `${deploymentArtifactKey}:NDP`,
+              process.env.CLIENTCODE,
+            );
+            const artifactKeyData = artifactKeyResponse
+              ? JSON.parse(artifactKeyResponse)
+              : {};
+            // skip nodeId and get data
+            const nodeData: any = Object.values(artifactKeyData)[0];
+            const appAccessUrl = nodeData?.data?.api?.release?.HOST?.replace('/api' , '');
+            if (appAccessUrl) {
+              versionInfo.push({
+                version: buildKey.split(':')[13],
+                accessUrl: appAccessUrl,
+              });
+            }
+          }
+        }
+        if (versionInfo.length > 0) {
+          accessibleAppList.push({
+            ...application,
+            versionInfo: versionInfo,
+          });
+        }
+      }
+
+      return accessibleAppList;
+    } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH017',
+        error,
+        'AppHub Screen',
+        '',
+        {
+          artifact: 'AppHub Screen',
+          users: 'anonymous user',
+        },
+      );
+      await this.throwCustomException(error);
+    }
+  }
+
+  async sso(sourceToken: string , ufClientType:string) {
+    try {
+      const payload = await this.jwt.decode(sourceToken);
+      const { client:tenant , loginId } = payload;
+      const tenantUserCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
+      const tenantUserListResponse = await this.redisService.getJsonData(
+        tenantUserCacheKey,
+        process.env.CLIENTCODE,
+      );
+      const tenantUserList = tenantUserListResponse
+        ? JSON.parse(tenantUserListResponse) 
+        : [];
+      const user = tenantUserList.find(
+        (user: any) => user?.loginId == loginId,
+      );
+
+        return await this.signIntoTorus(
+          user?.email,
+          '',
+          ufClientType,
+          true,
+        );
+
+    } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH018',
+        error,
+        'AppHub Screen',
+        '',
+        {
+          artifact: 'AppHub Screen',
+          users: 'anonymous user',
+        },
+      );
+      await this.throwCustomException(error);
+    }
+  }
 }

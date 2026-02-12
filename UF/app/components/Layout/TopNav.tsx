@@ -433,7 +433,19 @@ const TopNav = ({
               </div>
             )}
 
-            {pathname !== '/select-context' && pathname !== '/user' && (
+            {pathname !== '/app-hub' && (
+            <div
+              onClick={() => router.push('/app-hub')}
+              className='flex cursor-pointer items-center gap-2'
+            >
+              <RotateIcon fill={isDark ? 'white' : 'black'} />
+               <div>
+                <Text variant='code-inline-2'>Switch Application</Text>
+               </div>
+               </div>
+               )}
+
+            {pathname !== '/select-context' && pathname !== '/user' && pathname !== '/app-hub' && (
               <div
                 onClick={() => router.push('/user')}
                 className='flex cursor-pointer items-center gap-2'
@@ -492,7 +504,7 @@ const TopNav = ({
           </>
         )}
         {
-          pathname === '/select-context' &&
+          pathname === '/select-context' || pathname == '/app-hub' &&
           ( <ProfileSection />)
         }
       </div>
@@ -521,7 +533,7 @@ const TopNav = ({
         </>
       )}
       {
-        pathname === '/select-context' &&
+        pathname === '/select-context' || pathname == '/app-hub' &&
         ( <ProfileSection />)
       }
     </div>

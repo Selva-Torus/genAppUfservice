@@ -1092,6 +1092,34 @@
         ]
       }
     },
+    "/UF/app-list": {
+      "get": {
+        "operationId": "UfController_getAppList",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
+    "/UF/sso": {
+      "post": {
+        "operationId": "UfController_sso",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "TG"
+        ]
+      }
+    },
     "/te/eventEmitter": {
       "post": {
         "operationId": "TeController_pfEventEmitter",

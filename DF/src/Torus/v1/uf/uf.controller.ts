@@ -1095,4 +1095,16 @@ export class UfController {
     const clientCode: string = process.env.CLIENTCODE;
     return this.appService.getNavbarData(key,clientCode,token)
   }
+
+  @Get('app-list')
+  async getAppList(@Req() req: any) {
+    const token: string = req.headers.authorization.split(' ')[1];
+    return this.appService.getAppList(token);
+  }
+
+  @Post('sso')
+  async sso(@Body() body:any) {
+    const { token , ufClientType } = body;
+    return this.appService.sso(token , ufClientType);
+  }
 }
