@@ -117,7 +117,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
                 )}
                 <Modal
                   showCloseButton={false}
-                  className='w-[400px]'
+                  className='w-[500px]'
                   onClose={() => setOpen(false)}
                   open={open}
                 >
@@ -301,7 +301,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
   }, [selectedPs, refetchGroups])
 
   // ============= ADD CONTENT =============
-  const addContent = (path: string, value: { code: string; name: string }) => {
+  const addContent = (path: string, value: { code: string; name: string; logo?: string }) => {
     const depthOfPath = path.split('.').length
     if (!value.code || !value.name) {
       toast('Please fill all the Data', 'warning')
@@ -374,6 +374,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
         } else {
           valueToBeAdded['psCode'] = `${value.code}`
           valueToBeAdded['psName'] = value.name
+          valueToBeAdded['psLogo'] = value?.logo || ''
           valueToBeAdded['psId'] = uuidv4()
           valueToBeAdded['roleGrp'] = []
         }
@@ -484,7 +485,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
 
   const editContent = (
     path: string,
-    value: { code: string; name: string },
+    value: { code: string; name: string ; logo?: string},
     parentCode: string
   ) => {
     const resource = getResource(path, {})
@@ -493,6 +494,8 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
       Object.keys(resource).forEach(key => {
         if (key.toLowerCase().endsWith('name')) {
           resource[key] = value.name
+        }else if(key.toLowerCase().endsWith('logo')){
+          resource[key] = value.logo || ''
         }
       })
       setResource(path, resource)
@@ -1336,7 +1339,8 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                               resourceField: 'product',
                               resource: {
                                 code: ps.psCode,
-                                name: ps.psName
+                                name: ps.psName,
+                                logo : ps?.psLogo
                               }
                             }}
                             resourceField='product'

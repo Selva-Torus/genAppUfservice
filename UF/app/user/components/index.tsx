@@ -348,15 +348,15 @@ const SetupScreen = ({
   }
 
   const masterSave = async (isDeletion: boolean = false) => {
-    if (!isDeletion && selectedMenuItem === 'org') {
-      if (findPath(orgGrpData, '')) {
-        toast(
-          'Please fill all the fields to save organization matrix',
-          'warning'
-        )
-        return
-      }
-    }
+    // if (!isDeletion && selectedMenuItem === 'org') {
+    //   if (findPath(orgGrpData, '')) {
+    //     toast(
+    //       'Please fill all the fields to save organization matrix',
+    //       'warning'
+    //     )
+    //     return
+    //   }
+    // }
 
     const orgKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:orgMatrix`
     const orgMasterKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:orgMaster`
