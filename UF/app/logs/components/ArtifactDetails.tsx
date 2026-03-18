@@ -13,6 +13,7 @@ import { Button } from '@/components/Button'
 import { Tabs } from '@/components/Tabs'
 import { useTheme } from '@/hooks/useTheme'
 import { useGlobal } from '@/context/GlobalContext'
+import { getFontSizeForSubHeader } from '@/app/utils/branding'
 
 interface Nodedataprops {
   nodeData: {
@@ -98,7 +99,6 @@ const RenderNodesInfo = ({
           >
             <div className='flex flex-col items-start rounded-md'>
               <Text
-                variant='body-1'
                 color={
                   JSON.stringify(selectedNode) === JSON.stringify(item)
                     ? 'brand'
@@ -291,13 +291,13 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                   onClick={() => setNodeData(null)}
                 />
               </span>
-              <Text variant='subheader-1' className='w-full truncate'>
+              <Text variant={getFontSizeForSubHeader(branding.fontSize)} className='w-full truncate'>
                 <span title={artifact.toUpperCase()}>
                   {artifact.toUpperCase()}
                 </span>
               </Text>
             </div>
-            <Text variant='body-1' color='brand' className='rounded-xl px-3 text-end'>
+            <Text color='brand' className='rounded-xl px-3 text-end'>
               {version}
             </Text>
           </div>
@@ -308,7 +308,7 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                 backgroundColor: selectionColor
               }}
             >
-              <Text variant='body-1'>UID: {processId}</Text>
+              <Text>UID: {processId}</Text>
               <Button
                 view='flat'
                 className='!w-4 rounded-md p-1'
@@ -351,13 +351,13 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                 bgColor
               )}
             >
-              <Text variant='body-1' className='text-start'>
+              <Text className='text-start'>
                 Queue Name
               </Text>
-              <Text variant='body-1' className='text-center'>
+              <Text className='text-center'>
                 Processing Time
               </Text>
-              <Text variant='body-1' className='text-end'>
+              <Text className='text-end'>
                 Status
               </Text>
             </div>
@@ -377,11 +377,11 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                 </p>
                 <div className='mt-3 flex flex-col gap-3'>
                   <div className='flex flex-col gap-2'>
-                    <Text variant='body-1' className='text-nowrap text-end'>
+                    <Text className='text-nowrap text-end'>
                       Process started at
                     </Text>
                     <Text
-                      variant='body-1'
+                     
                       color='secondary'
                       className='text-nowrap'
                     >
@@ -389,11 +389,11 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                     </Text>
                   </div>
                   <div className='flex flex-col gap-2 py-2'>
-                    <Text variant='body-1' className='text-nowrap text-end'>
+                    <Text className='text-nowrap text-end'>
                       Finished at
                     </Text>
                     <Text
-                      variant='body-1'
+                     
                       color='secondary'
                       className='text-nowrap'
                     >
@@ -434,12 +434,12 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
 
               <div className='flex w-full justify-between'>
                 <div>
-                  <Text variant='body-2' className='ml-16 text-nowrap'>
+                  <Text className='ml-16 text-nowrap'>
                     {handleGetFinishingTime(selectedNode?.time).processingTime}
                   </Text>
                 </div>
                   <Text
-                    variant='body-1'
+                   
                     className={twMerge(
                       `rounded-full bg-red-500 px-2 py-1 text-white !w-fit !h-fit`,
                      selectedNode && selectedNode.status.toLowerCase() == 'success' && 'bg-green-500'

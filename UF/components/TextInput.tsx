@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useGlobal } from '@/context/GlobalContext'
 import { useEventBus } from '@/context/EventBusContext'
+import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { Tooltip } from './Tooltip'
 import { Icon } from './Icon'
 import {
@@ -90,6 +91,14 @@ export const TextInput: React.FC<TextInputProps> = ({
   const [rightWidth, setRightWidth] = useState(0)
   const leftContentRef = useRef<HTMLDivElement>(null)
   const rightContentRef = useRef<HTMLDivElement>(null)
+    const showToast = useInfoMsg()                                                                                                                                                    
+       const prevValidationState = useRef(validationState)                                                                                                                               
+                                                                                                                                                                                       
+      useEffect(() => {                                                                                                                                                                 
+       if (validationState === 'invalid' && errorMessage ) {                                                                               
+         showToast(errorMessage, 'danger')                                                                                                                                             
+         }                                                                                                                                                                                                                                                                                                              
+       }, [validationState, errorMessage])   
 
   // Measure left and right content widths
   useEffect(() => {
@@ -196,21 +205,25 @@ export const TextInput: React.FC<TextInputProps> = ({
     const baseRadius = getBorderRadiusClass(branding.borderRadius)
 
     if (pin === 'clear-clear') {
-      return baseRadius
+      return 'rounded-lg'
     }
 
     const [left, right] = pin.split('-')
-    const leftRadius =
+    const leftRadius =    
       left === 'round'
-        ? 'rounded-l-full'
+        ? 'rounded-l-3xl'
         : left === 'brick'
         ? 'rounded-l-none'
+        :left === 'clear'
+        ? 'rounded-l-lg'
         : `rounded-l${baseRadius.replace('rounded', '')}`
     const rightRadius =
       right === 'round'
-        ? 'rounded-r-full'
+        ? 'rounded-r-3xl'
         : right === 'brick'
         ? 'rounded-r-none'
+        :right === 'clear'
+        ? 'rounded-r-lg'
         : `rounded-r${baseRadius.replace('rounded', '')}`
 
     return `${leftRadius} ${rightRadius}`
@@ -261,7 +274,7 @@ export const TextInput: React.FC<TextInputProps> = ({
 
   const inputElement = (
     <div
-      className={`${getFillClasses()} ${getFontSizeClass(branding.fontSize)}`}
+      className={`${getFillClasses()} ${getFontSizeClass(branding.fontSize)} relative`}
     >
       {label && topContent && (
         <label
@@ -404,20 +417,6 @@ export const TextInput: React.FC<TextInputProps> = ({
           </div>
         )}
       </div>
-
-      {(note || errorMessage || validationState === 'invalid') && (
-        <div
-          className={`mt-1 text-sm ${
-            validationState === 'invalid' || errorMessage
-              ? 'text-red-500'
-              : isDark
-              ? 'text-gray-400'
-              : 'text-gray-600'
-          }`}
-        >
-          {errorMessage || note}
-        </div>
-      )}
     </div>
   )
 
@@ -429,6 +428,7 @@ export const TextInput: React.FC<TextInputProps> = ({
         headerPosition={headerPosition}
         className={className}
         fillContainer={fillContainer}
+        required={require}
       >
         {inputElement}
       </CommonHeaderAndTooltip>

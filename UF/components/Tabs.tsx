@@ -29,6 +29,7 @@ interface TabsProps {
   headerPosition?: HeaderPosition;
   headerAlignment?: HeaderAlignment;
   defaultActiveId?: string;
+  activeTab?: string;
   onChange?: (id: any) => void;
   className?: string;
   tabHeaders?: TabItem[];
@@ -44,12 +45,15 @@ export const Tabs: React.FC<TabsProps> = ({
   headerPosition = "top",
   headerAlignment = "full",
   defaultActiveId,
+  activeTab: activeTabProp,
   onChange=()=>{},
   className = "",
   tabHeaders=[],
 }) => {
   const { theme, branding } = useGlobal();
   const [activeTab, setActiveTab] = useState(defaultActiveId || items[0]?.id || "");
+
+  const currentActiveTab = activeTabProp ?? activeTab;
 
   const handleTabClick = (id: string) => {
       onChange(id);
@@ -64,7 +68,7 @@ export const Tabs: React.FC<TabsProps> = ({
 
   const isDark = theme === "dark" || theme === "dark-hc";
 
-  const activeContent = items.find(item => item.id === activeTab)?.content;
+  const activeContent = items.find(item => item.id === currentActiveTab)?.content;
 
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
@@ -113,7 +117,7 @@ export const Tabs: React.FC<TabsProps> = ({
           `}
         >
         {items.map((item) => {
-          const isActive = activeTab === item.id;
+          const isActive = currentActiveTab === item.id;
           return (
             <button
               key={item.id}
@@ -166,9 +170,12 @@ export const Tabs: React.FC<TabsProps> = ({
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(24, 1fr)',
-              gridTemplateRows: 'repeat(auto-fill, minmax(8px, 1fr))',
+              gridTemplateRows: 'repeat(auto-fill, 4px)',
               columnGap: '8px',
-              flex: 1
+              flex: 1,
+              placeItems:'stretch',
+              gridAutoRows:'4px',
+              overflow:'hidden'
             }}
           >
             {tabHeaders.map((header) => (

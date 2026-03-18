@@ -7,6 +7,7 @@ import { Icon } from "./Icon";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
+import { useInfoMsg } from "@/app/components/infoMsgHandler";
 
 type ContentAlign = "left" | "center" | "right";
 
@@ -33,6 +34,8 @@ interface DropdownProps {
   errorMessage?: string;
   fillContainer?: boolean;
   contentAlign?: ContentAlign;
+  onLoadMore?: () => void;
+  isLoadingMore?: boolean;
 }
 
 export const Dropdown: React.FC<DropdownProps> = ({
@@ -57,14 +60,40 @@ export const Dropdown: React.FC<DropdownProps> = ({
   validationState = "none",
   errorMessage,
   fillContainer = true,
-  contentAlign = "center"
+  contentAlign = "center",
+  onLoadMore,
+  isLoadingMore = false,
 }) => {
   const isMultiple = multiselect || multiple;
   const { theme, direction,branding } = useGlobal();
+  const showToast = useInfoMsg();
+
+  useEffect(() => {
+    if (validationState === "invalid" && errorMessage) {
+      showToast(errorMessage, "danger");
+    }
+  }, [validationState, errorMessage]);
   const [selectedValues, setSelectedValues] = useState<string[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [filterText, setFilterText] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
+    const listRef = useRef<HTMLDivElement>(null);
+
+  // Infinite scroll: fire onLoadMore only when scrolling DOWN and reaching the bottom
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el || !onLoadMore) return;
+    let prevScrollTop = el.scrollTop;
+    const handleScroll = () => {
+      const isScrollingDown = el.scrollTop > prevScrollTop;
+      prevScrollTop = el.scrollTop;
+      if (isScrollingDown && el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+        onLoadMore();
+      }
+    };
+    el.addEventListener('scroll', handleScroll);
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [isOpen, onLoadMore]);
 
   // Sync internal state with external value prop
   useEffect(() => {
@@ -252,7 +281,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
               border-2
               ${getBorderColor()}
               ${fontSizeClass}
-              ${isDark ? "bg-gray-800 text-white placeholder-gray-400" : "bg-white text-gray-900 placeholder-gray-500"}
+              ${isDark ? "bg-gray-800 text-white placeholder-white" : "bg-white text-black placeholder-black"}
               ${disabled ? "opacity-50 cursor-not-allowed" : ""}
               transition-colors
               focus:outline-none
@@ -309,7 +338,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
             border-2
             ${getBorderColor()}
             flex items-center justify-between
-            ${isDark ? "bg-gray-800 text-white" : "bg-white text-gray-900"}
+            ${isDark ? "bg-gray-800 text-white" : "bg-white text-black"}
             ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
             transition-colors
             ${fontSizeClass}
@@ -354,6 +383,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
       {isOpen && (
         <div
+        ref={listRef}
           className={`
             absolute
             w-full
@@ -394,6 +424,11 @@ export const Dropdown: React.FC<DropdownProps> = ({
               </div>
             );
           })}
+          {isLoadingMore && (
+            <div className={`px-4 py-2 text-center text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              Loading...
+            </div>
+          )}
         </div>
       )}
     </div>

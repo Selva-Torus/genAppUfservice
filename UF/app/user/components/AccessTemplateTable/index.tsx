@@ -11,6 +11,7 @@ import i18n from '../../../components/i18n'
 import { twMerge } from 'tailwind-merge'
 import { Button } from '@/components/Button'
 import ViewSecurityTemplate from './ViewSecurityTemplate'
+import { getFontSizeForHeader } from '@/app/utils/branding'
 
 const AccessTemplateTable = ({
   isView = false,
@@ -107,7 +108,7 @@ const AccessTemplateTable = ({
 
   return (
     <div className={`g-root h-full w-full`}>
-      <Text contentAlign='left' variant='body-2' className='mb-4 text-xl font-bold'>
+      <Text variant={getFontSizeForHeader(branding.fontSize)} contentAlign='left' className='!h-fit mb-4 font-bold'>
         {keyset('Access Template')}
       </Text>
       <div className='h-[73vh] w-[80vw] sm:w-[75vw] 2xl:w-[unset] overflow-auto'>
@@ -135,15 +136,15 @@ const AccessTemplateTable = ({
                   )}
                 />
               </th>
-              <th className='w-[150px] px-4 py-4'>
+              <th style={{ fontSize: branding.fontSize }} className='w-[150px] px-4 py-4'>
                 {keyset('Access Template')}
               </th>
-              <th className='w-[100px] px-4 py-4'>
+              <th style={{ fontSize: branding.fontSize }} className='w-[100px] px-4 py-4'>
                 {keyset('Data Access Privilege')}
               </th>
-              <th className='w-[100px] px-2 py-4'>{keyset('No.ofusers')}</th>
-              <th className='w-[220px] px-4 py-4'>{keyset('Created On')}</th>
-              <th className='w-[250px] px-4 py-4 lg:w-[600px]'></th>
+              <th style={{ fontSize: branding.fontSize }} className='w-[100px] px-2 py-4'>{keyset('No.ofusers')}</th>
+              <th style={{ fontSize: branding.fontSize }} className='w-[220px] px-4 py-4'>{keyset('Created On')}</th>
+              <th style={{ fontSize: branding.fontSize }} className='w-[250px] px-4 py-4 lg:w-[600px]'></th>
             </tr>
           </thead>
           <tbody>
@@ -168,6 +169,7 @@ const AccessTemplateTable = ({
                       `ml-3 w-[12.29vw] cursor-default truncate rounded border p-3`,
                       borderColor
                     )}
+                    style={{ fontSize: branding.fontSize }}
                   >
                     {template?.accessProfile}
                   </div>
@@ -178,6 +180,7 @@ const AccessTemplateTable = ({
                       `ml-3 w-[12.29vw] cursor-default truncate rounded border p-3`,
                       borderColor
                     )}
+                    style={{ fontSize: branding.fontSize }}
                   >
                     {template.dap === 'f'
                       ? 'Full'
@@ -186,10 +189,10 @@ const AccessTemplateTable = ({
                       : 'Select DAP'}
                   </div>
                 </td>
-                <td className='px-1 py-1 text-center'>
+                <td style={{ fontSize: branding.fontSize }} className='px-1 py-1 text-center'>
                   {template['no.ofusers']}
                 </td>
-                <td className='w-[220px] px-4 py-1'>{template.createdOn}</td>
+                <td style={{ fontSize: branding.fontSize }} className='w-[220px] px-4 py-1'>{template.createdOn}</td>
                 <td className='flex w-[250px] items-center justify-end px-1 py-1 xl:w-[600px]'>
                   <div className='flex gap-3 items-center'>
                     <Button

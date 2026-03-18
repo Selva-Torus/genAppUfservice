@@ -9,28 +9,18 @@ export interface TotalContextProps {
   setCurrentToken: React.Dispatch<React.SetStateAction<any>>
   matchedAccessProfileData: any;
   setMatchedAccessProfileData: React.Dispatch<React.SetStateAction<any>>
-  groupff998: any 
-  setgroupff998: React.Dispatch<React.SetStateAction<any>>
-  groupff998Props: any 
-  setgroupff998Props: React.Dispatch<React.SetStateAction<any>>
-  testgrp21c521: any 
-  settestgrp21c521: React.Dispatch<React.SetStateAction<any>>
-  testgrp21c521Props: any 
-  settestgrp21c521Props: React.Dispatch<React.SetStateAction<any>>
-  button71874: any,
-  setbutton71874:React.Dispatch<React.SetStateAction<any>>
-  button71874Props: any 
-  setbutton71874Props: React.Dispatch<React.SetStateAction<any>>
-  testbtn27dc73: any,
-  settestbtn27dc73:React.Dispatch<React.SetStateAction<any>>
-  testbtn27dc73Props: any 
-  settestbtn27dc73Props: React.Dispatch<React.SetStateAction<any>>
+  testgrp35550: any 
+  settestgrp35550: React.Dispatch<React.SetStateAction<any>>
+  testgrp35550Props: any 
+  settestgrp35550Props: React.Dispatch<React.SetStateAction<any>>
+  testbtn54460: any,
+  settestbtn54460:React.Dispatch<React.SetStateAction<any>>
+  testbtn54460Props: any 
+  settestbtn54460Props: React.Dispatch<React.SetStateAction<any>>
 
 ////// screen states 
-  defaultapp_v1Props: any 
-  setdefaultapp_v1Props: React.Dispatch<React.SetStateAction<any>>
-  artifact2_v1Props: any 
-  setartifact2_v1Props: React.Dispatch<React.SetStateAction<any>>
+  test_v1Props: any 
+  settest_v1Props: React.Dispatch<React.SetStateAction<any>>
 
 ///////// dfd
 
@@ -76,8 +66,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     const [matchedAccessProfileData, setMatchedAccessProfileData] =
     React.useState<any>({})
       //////////
-        const [groupff998, setgroupff998 ] = React.useState<any>({}) 
-    const [groupff998Props, setgroupff998Props ] = React.useState<any>({
+        const [testgrp35550, settestgrp35550 ] = React.useState<any>({}) 
+    const [testgrp35550Props, settestgrp35550Props ] = React.useState<any>({
       validation:false,
       required:false,
       refetch:false,
@@ -87,25 +77,7 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       isHidden: false,
       selectedIds:[]
       }) 
-        const [testgrp21c521, settestgrp21c521 ] = React.useState<any>({}) 
-    const [testgrp21c521Props, settestgrp21c521Props ] = React.useState<any>({
-      validation:false,
-      required:false,
-      refetch:false,
-      refresh:false,
-      isDisabled: false,
-      presetValues: '',
-      isHidden: false,
-      selectedIds:[]
-      }) 
-   const [button71874,setbutton71874] = React.useState<any>({
-    isDisabled: false,
-    presetValues: '',
-    isHidden: false,
-    refetch:false,
-    refresh:false,
-    }) 
-   const [testbtn27dc73,settestbtn27dc73] = React.useState<any>({
+   const [testbtn54460,settestbtn54460] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
     isHidden: false,
@@ -113,15 +85,12 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refresh:false,
     }) 
     ///////////
-    const [refresh, setRefresh] = React.useState<Record<string, boolean>>({       buttonbutton71874:false,
-       buttontestbtn27dc73:false,
-       groupgroupff998:false,
-       grouptestGrp21c521:false,
+    const [refresh, setRefresh] = React.useState<Record<string, boolean>>({       buttontestBtn54460:false,
+       grouptestGrp35550:false,
       })
 
   ////// screen states 
-   const [defaultapp_v1Props,setdefaultapp_v1Props] = React.useState<any>([])
-   const [artifact2_v1Props,setartifact2_v1Props] = React.useState<any>([])
+   const [test_v1Props,settest_v1Props] = React.useState<any>([])
 
 ///////// dfd
     const [searchParam , setSearchParam] = React.useState<string>("")
@@ -154,23 +123,15 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         setCurrentToken,
         matchedAccessProfileData,
         setMatchedAccessProfileData,
-        groupff998, 
-        setgroupff998,
-        groupff998Props, 
-        setgroupff998Props,
-        testgrp21c521, 
-        settestgrp21c521,
-        testgrp21c521Props, 
-        settestgrp21c521Props,
-        button71874,
-        setbutton71874, 
-        testbtn27dc73,
-        settestbtn27dc73, 
+        testgrp35550, 
+        settestgrp35550,
+        testgrp35550Props, 
+        settestgrp35550Props,
+        testbtn54460,
+        settestbtn54460, 
         ////// screen states 
-          defaultapp_v1Props,
-          setdefaultapp_v1Props,
-          artifact2_v1Props,
-          setartifact2_v1Props,
+          test_v1Props,
+          settest_v1Props,
         //////////
 
         ///////// dfd

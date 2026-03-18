@@ -18,6 +18,8 @@ import { useTheme } from '@/hooks/useTheme'
 import { twMerge } from 'tailwind-merge'
 import { RangeCalendar } from '@/components/RangeCalendar'
 import { getCdnImage } from '@/app/utils/getAssets'
+import { getFontSizeForSubHeader } from '@/app/utils/branding'
+import { get } from 'lodash'
 
 const FilterModal = ({
   range,
@@ -142,8 +144,8 @@ const FilterModal = ({
       <div className='flex w-full items-center justify-between px-2 py-1'>
         <Text
           contentAlign='left'
-          variant='subheader-2'
-          className='flex !w-fit gap-2'
+          variant={getFontSizeForSubHeader(branding.fontSize)}
+          className='flex !w-fit gap-2 items-center'
         >
           <FilterIcon fill={isDark ? '#fff' : '#000'} /> Filter
         </Text>
@@ -158,7 +160,7 @@ const FilterModal = ({
       <hr className={`w-full ${borderColor}`} />
       {/* Date Range Selection */}
       <div className='flex flex-col gap-3 px-2 py-3'>
-        <Text contentAlign='left' variant='subheader-1'>
+        <Text contentAlign='left' variant={getFontSizeForSubHeader(branding.fontSize)}>
           SORT BY DATE
         </Text>
         <div
@@ -173,12 +175,12 @@ const FilterModal = ({
           )}
         >
           <div className='flex flex-col gap-1'>
-            <Text contentAlign='left' variant='body-2' color='secondary'>
+            <Text contentAlign='left' color='secondary'>
               Select Date{' '}
             </Text>
-            <Text contentAlign='left' variant='body-2'>
-              {showDate(selectedDateRange?.start)} -{' '}
-              {showDate(selectedDateRange?.end)}
+            <Text contentAlign='left'>
+              {showDate(normalizeRange(selectedDateRange).start)} -{' '}
+              {showDate(normalizeRange(selectedDateRange).end)}
             </Text>
           </div>
           <span className='flex self-end'>
@@ -210,7 +212,7 @@ const FilterModal = ({
 
       {/* Fabric Selection */}
       <div className='flex flex-col gap-3 px-2 py-3'>
-        <Text contentAlign='left' variant='subheader-1'>
+        <Text contentAlign='left' variant={getFontSizeForSubHeader(branding.fontSize)}>
           FABRICS
         </Text>
 
@@ -239,7 +241,7 @@ const FilterModal = ({
       {/* if admin User  */}
       {isAdminUser && (
         <div className='flex flex-col gap-3 px-2 py-3'>
-          <Text contentAlign='left' variant='subheader-1'>
+          <Text contentAlign='left' variant={getFontSizeForSubHeader(branding.fontSize)}>
             USERS
           </Text>
           {/* Search section */}
@@ -326,11 +328,10 @@ const FilterModal = ({
                         <Text
                           className='text-nowrap'
                           contentAlign='left'
-                          variant='body-2'
                         >
                           {userObj?.firstName + ' ' + userObj?.lastName}
                         </Text>
-                        <Text contentAlign='left' variant='body-1'>
+                        <Text contentAlign='left'>
                           {userObj?.loginId}
                         </Text>
                       </div>

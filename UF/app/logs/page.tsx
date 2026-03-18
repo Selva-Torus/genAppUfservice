@@ -18,7 +18,7 @@ const ParentComponent = () => {
   const [loading, setLoading] = useState(false)
   const [app, setApp] = useState({
     code: 'A001',
-    name: 'application'
+    name: 'application1'
   })
   const [appGroup, setappGroup] = useState({
     code: 'AG001',
@@ -32,16 +32,18 @@ const ParentComponent = () => {
   // 7 days back
   const past = new Date();
   past.setDate(today.getDate() - 7);
+  const formatTwoDigit = (value: number) => 
+  String(value).padStart(2, "0");
   const [range, setRange] = useState<any>({
     start: {
       year: past.getFullYear(),
-      month: past.getMonth()+1,
-      day: past.getDate()
+      month: formatTwoDigit(past.getMonth()+1),
+      day: formatTwoDigit(past.getDate())
     },
     end: {
       year: today.getFullYear(),
-      month: today.getMonth()+1,
-      day: today.getDate()
+      month: formatTwoDigit(today.getMonth()+1),
+      day: formatTwoDigit(today.getDate())
     }
   });
   const [ fabrics , setFabrics ] = useState<Array<string>>([])
@@ -111,10 +113,9 @@ const ParentComponent = () => {
           const systemLogResult :any  = [];
           
       for (const item of response.data.data) {
-        const { AFK, CATK, AFGK, AFVK, FNK } = item;
+        const { AFK, CATK, AFGK, AFVK, FNK , AFSK } = item;
 
-        for (const log of item.AFSK.logInfo) {
-          const { sessionInfo, errorDetails, DateAndTime } = log;
+          const { sessionInfo, errorDetails, DateAndTime } = AFSK;
 
           systemLogResult.push({
             artifact: AFK,
@@ -129,7 +130,6 @@ const ParentComponent = () => {
             errorDescription: typeof errorDetails.errorDetail === "string" ? errorDetails.errorDetail : "Get More Info",
             errorDetails,
           });
-        }
       }
       if(systemLogResult.length && systemLogResult[0].errorDetails){
         setJsonViewerData(systemLogResult[0].errorDetails)

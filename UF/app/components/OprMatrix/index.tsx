@@ -79,12 +79,12 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
         borderColor
       )}
     >
-      <Text contentAlign='left' variant='body-1' className='font-semibold'>
+      <Text contentAlign='left' className='font-semibold'>
         {title}
       </Text>
       <div>
         {isSearchOpen === searchKey ? (
-          <div className='flex w-[8vw] gap-[.5vw]'>
+          <div className='flex w-[10vw] gap-[.25vw]'>
             <input
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
@@ -93,7 +93,10 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
             />
             <Button
               className={'!w-fit !bg-[unset] p-1 disabled:opacity-50'}
-              onClick={() => setIsSearchOpen('')}
+                onClick={() => {
+                setSearchTerm('')
+                setIsSearchOpen('')
+              }}
             >
               <Multiply height='.7vw' width='.7vw' fill={isDark ? 'white' : 'black'} />
             </Button>
@@ -129,7 +132,10 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
               </>
             )}
             <Button
-              onClick={() => setIsSearchOpen(searchKey)}
+              onClick={() => {
+                setSearchTerm('')
+                setIsSearchOpen(searchKey)
+              }}
               className={'!w-fit !bg-[unset] p-1 disabled:opacity-50'}
               disabled={isAddDisabled && searchKey !== 'org'}
             >
@@ -427,6 +433,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
         } else if (path.includes('psGrp') && path.includes('ps')) {
           valueToBeAdded['psCode'] = `${value.code}`
           valueToBeAdded['psName'] = value.name
+          valueToBeAdded['psLogo'] = value?.logo || ''
           valueToBeAdded['psId'] = uuidv4()
           valueToBeAdded['roleGrp'] = []
         } else {
@@ -458,6 +465,7 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
         } else if (path.endsWith('ps')) {
           valueToBeAdded['psCode'] = `${value.code}`
           valueToBeAdded['psName'] = value.name
+          valueToBeAdded['psLogo'] = value?.logo || ''
           valueToBeAdded['psId'] = uuidv4()
           valueToBeAdded['roleGrp'] = []
         } else if (path.endsWith('roleGrp')) {
@@ -983,19 +991,16 @@ const OPRMatrix = ({ assignedOPRList }: { assignedOPRList: Array<string> }) => {
                 {/* Texts */}
                 <div className='flex w-full flex-col items-center'>
                   <Text
-                    variant='body-1'
                     className={`w-full truncate text-nowrap text-center`}
                   >
                     {block?.group}
                   </Text>
                   <Text
-                    variant='body-2'
                     className='w-full truncate text-nowrap text-center font-semibold'
                   >
                     {block?.title}
                   </Text>
                   <Text
-                    variant='body-1'
                     className='w-full truncate text-nowrap text-center'
                     color='secondary'
                   >

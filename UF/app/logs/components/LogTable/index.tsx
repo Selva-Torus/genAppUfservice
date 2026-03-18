@@ -17,6 +17,7 @@ import { useTheme } from '@/hooks/useTheme'
 import { useGlobal } from '@/context/GlobalContext'
 import { Spin } from '@/components/Spin'
 import i18n from '@/app/components/i18n'
+import { getFontSizeForSubHeader } from '@/app/utils/branding'
 interface TableHeaderProps {
   loading: boolean
   jsonData: {
@@ -109,7 +110,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         return (
           <div className='flex h-full w-full flex-col items-center justify-center gap-1'>
             {(data?.node ?? []).map((item: any, indexOfNode: number) => (
-              <Text key={indexOfNode} variant='body-2' color='secondary'>
+              <Text key={indexOfNode} color='secondary'>
                 {item.name}
               </Text>
             ))}
@@ -119,7 +120,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         return (
           <div className='flex h-full w-full flex-col items-center justify-center gap-1'>
             {(data?.time ?? []).map((item: any, indexOfTime: number) => (
-              <Text key={indexOfTime} variant='body-2' color='secondary'>
+              <Text key={indexOfTime} color='secondary'>
                 {formatTableDate(item)}
               </Text>
             ))}
@@ -129,7 +130,6 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         if (data.status == 'Failed') {
           return (
             <Text
-              variant='body-2'
               className='rounded-full bg-red-500 px-3 py-1 text-center text-white'
             >
               Failed
@@ -138,7 +138,6 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         } else {
           return (
             <Text
-              variant='body-2'
               className={`rounded-full bg-green-500 px-3 py-1 text-center text-white`}
             >
               Success
@@ -168,8 +167,8 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         className='flex w-[40%] flex-col gap-1'
         onClick={() => setNodeData(nodeData)}
       >
-        <Text variant='subheader-2'>{artifact}</Text>
-        <Text variant='body-1' color='secondary'>
+        <Text variant={getFontSizeForSubHeader(branding.fontSize)}>{artifact}</Text>
+        <Text color='secondary'>
           {grpDetails}
         </Text>
         {processId && (
@@ -179,7 +178,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
               backgroundColor: selectionColor
             }}
           >
-            <Text variant='body-2'>UID: {processId}</Text>
+            <Text>UID: {processId}</Text>
             <Button
               view='flat'
               className='!w-4 rounded-md p-1'
@@ -206,25 +205,25 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         return displayArtifactName(item, item)
       case 'version':
         return (
-          <Text variant='body-2' className='block text-center'>
+          <Text className='block text-center'>
             {item.version}
           </Text>
         )
       case 'user':
         return (
-          <Text variant='body-2' className='block text-center'>
+          <Text className='block text-center'>
             {item.user}
           </Text>
         )
       case 'fabric':
         return (
-          <Text variant='body-2' className='block text-center'>
+          <Text className='block text-center'>
             {item.fabric}
           </Text>
         )
       case 'jobType':
         return (
-          <Text variant='body-2' className='block text-center'>
+          <Text className='block text-center'>
             {item.jobType}
           </Text>
         )
@@ -272,12 +271,12 @@ const TableHeader: React.FC<TableHeaderProps> = ({
       <>
         {item?.user ? (
           <div>
-            <Text variant='body-2' className=''>
+            <Text>
               {item?.user}
             </Text>
             {item.accessProfile && Array.isArray(item.accessProfile) ? (
               item.accessProfile.map((profile: string, i: number) => (
-                <Text key={i} color='secondary' variant='caption-2'>
+                <Text key={i} color='secondary'>
                   {profile} {item.accessProfile.length - 1 === i ? '' : ','}
                 </Text>
               ))
@@ -291,17 +290,17 @@ const TableHeader: React.FC<TableHeaderProps> = ({
       </>
     ),
     'Time Stamp': (
-      <Text key={index} variant='body-2' className='block py-1.5 text-center'>
+      <Text key={index} className='block py-1.5 text-center'>
         {item?.timeStamp}
       </Text>
     ),
     'Error Code': (
-      <Text key={index} variant='body-2' className='block text-center'>
+      <Text key={index} className='block text-center'>
         {item?.errorCode}
       </Text>
     ),
     'Error Description': (
-      <Text key={index} variant='body-2' className='block py-1.5 text-center max-w-[300px] text-wrap'>
+      <Text key={index} className='block py-1.5 text-center max-w-[300px] text-wrap'>
         {item?.errorDescription}
       </Text>
     ),
@@ -364,7 +363,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         <div className='flex flex-col rounded-md'>
           <div className='flex w-full items-center justify-between p-2'>
             <div className=' ml-3.5 flex items-center justify-start gap-1.5 '>
-              <LogsHub fill={isDark ? '#fff' : '#000'} width='24' height='24' />
+              <LogsHub fill={isDark ? '#fff' : '#000'} width='23' height='23' />
               <HeaderElementContainer header='Logs Hub' rounded='' />
             </div>
             <div className='flex w-[70%] items-center justify-center gap-2'>
@@ -374,7 +373,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value.trim())}
                 className={twMerge(
-                  'w-[50%] rounded-md border px-2 shadow-md outline-none focus:border xl:py-1 2xl:py-2',
+                  'w-[50%] rounded-md border px-2 shadow-md outline-none focus:border py-1.5 xl:py-1 2xl:py-2',
                   borderColor,
                   textColor,
                   bgColor
@@ -435,6 +434,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                       : (processRow as any)
                   }
                   onRowClick={e => handleRowClick(e)}
+                  isRowclick={true}
                   // width='auto'
                   wordWrap={false}
                   edgePadding={true}
@@ -474,7 +474,7 @@ export default TableHeader
 
 const RowElementContainer = ({ item }: { item: string }) => {
   return (
-    <Text variant='body-2' className='text-start'>
+    <Text className='text-start'>
       {item}
     </Text>
   )
@@ -488,13 +488,15 @@ const HeaderElementContainer = ({
   rounded: string
 }) => {
   const keyset = i18n.keyset('language')
+  const {branding} = useGlobal()
+
   return (
     <div
       className={`h-full w-full px-1 py-1 text-center ${
         rounded ? rounded : 'rounded-none'
       } `}
     >
-      <Text variant='subheader-1'>{keyset(header.toLocaleUpperCase())}</Text>
+      <Text className='text-nowrap font-semibold' variant={getFontSizeForSubHeader(branding.fontSize)}>{keyset(header.toLocaleUpperCase())}</Text>
     </div>
   )
 }
@@ -512,7 +514,7 @@ const LogSwitcher = ({
   return (
     <div>
       <Tabs
-        className={twMerge('rounded-md border', borderColor)}
+        className={twMerge('', borderColor)}
         items={[
           {
             id: 'process',
@@ -532,12 +534,14 @@ const LogSwitcher = ({
 
 const JsonViewer = ({ tabdata }: any) => {
   const keyset = i18n.keyset('language')
+  const {branding} = useGlobal()
+
   return (
     <div
       className={`mt-2
       h-full w-full items-center rounded-lg`}
     >
-      <Text variant='subheader-2' className='p-2'>
+      <Text variant={getFontSizeForSubHeader(branding.fontSize)} className='p-2'>
         {keyset('Error Details')}
       </Text>
       <div className={`ml-2 h-[92%] w-[100%]`}>
@@ -549,7 +553,7 @@ const JsonViewer = ({ tabdata }: any) => {
             className='max-h-[60vh] overflow-y-scroll md:max-h-[80vh]'
           />
         ) : (
-          <Text variant='body-2' className='p-2 text-center'>
+          <Text className='p-2 text-center'>
             {keyset('No Data available')}
           </Text>
         )}

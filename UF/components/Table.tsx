@@ -8,6 +8,12 @@ import { BiSort } from "react-icons/bi";
 import { twMerge } from "tailwind-merge";
 import { useTheme } from "@/hooks/useTheme";
 import { Pagination } from "./Pagination";
+import i18n from "@/app/components/i18n";
+import { Tooltip } from "./Tooltip";
+import {
+  HeaderPosition,
+  TooltipProps as TooltipPropsType,
+} from "@/types/global";
 
 interface RenderRowActionsProps {
   item: any;
@@ -58,6 +64,12 @@ interface TableProps {
     onUpdate: (data: { page: number; pageSize: number }) => void;
   };
   showPagination?: boolean;
+  needTooltip?: boolean;
+  tooltipProps?: TooltipPropsType;
+  headerText?: string;
+  headerPosition?: HeaderPosition;
+  fillContainer?: boolean;
+  headerButtonsRenders?:React.ReactNode
 }
         
 export const Table: React.FC<TableProps> = ({
@@ -84,13 +96,20 @@ export const Table: React.FC<TableProps> = ({
   loading = false,
   pagination,
   showPagination = false,
+  needTooltip = false,
+  tooltipProps,
+  headerText,
+  headerPosition = 'top',
+  fillContainer = true,
+  headerButtonsRenders=<></>
 }) => {
-  const { theme, branding } = useGlobal();
+  const { theme, branding,direction } = useGlobal();
   const { borderColor } = useTheme()
   const [searchTerm, setSearchTerm] = useState("");
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [showColumnModal, setShowColumnModal] = useState(false);
+  const keyset:any=i18n.keyset("language"); 
 
   // Normalize columns to handle both string[] and object[] formats
   let normalizedColumns = columns.map((col: ColumnType) =>
@@ -232,7 +251,7 @@ const sortedData = sortColumn
   };
 
   const tableElement = (
-    <div className={`w-full h-full flex flex-col ${edgePadding ? "" : ""} ${className}`}>
+     <div className={`w-full h-full flex flex-col ${edgePadding ? "" : ""} ${className}`}>
       {/* Column Visibility Modal */}
       {showColumnModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -249,7 +268,7 @@ const sortedData = sortColumn
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className={`text-lg font-semibold ${isDark ? "text-gray-200" : "text-gray-700"}`}>
-                Select Columns
+                {`${keyset("SelectColumn")}`}
               </h3>
               <button
                 onClick={() => setShowColumnModal(false)}
@@ -277,7 +296,7 @@ const sortedData = sortColumn
                   e.currentTarget.style.backgroundColor = isDark ? '#374151' : '#E5E7EB';
                 }}
               >
-                Select All
+                {`${keyset("Select All")}`}
               </button>
               <button
                 onClick={handleDeselectAllColumns}
@@ -296,7 +315,7 @@ const sortedData = sortColumn
                   e.currentTarget.style.backgroundColor = isDark ? '#374151' : '#E5E7EB';
                 }}
               >
-                Deselect All
+                {`${keyset("Deselect All")}`}
               </button>
             </div>
 
@@ -350,7 +369,7 @@ const sortedData = sortColumn
                   e.currentTarget.style.backgroundColor = branding.brandColor;
                 }}
               >
-                Apply
+                {`${keyset("Apply")}`}
               </button>
             </div>
           </div>
@@ -358,7 +377,7 @@ const sortedData = sortColumn
       )}
 
       <div className={twMerge("border rounded-lg flex flex-col overflow-hidden flex-1 min-h-0", borderColor)}>
-        <div className="overflow-auto flex-1 min-h-0 p-2">
+        <div className="overflow-auto flex-1 min-h-0">
           <table
             className={`
               w-full
@@ -616,7 +635,7 @@ const sortedData = sortColumn
         </div>
         {/* Pagination */}
         {showPagination && pagination && pagination.total > 0 && (
-          <div className={`border-t ${isDark ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"} px-4 py-3`}>
+          <div className={`flex-shrink-0 border-t ${isDark ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-white"} px-4 py-3`}>
             <Pagination
               page={pagination.page}
               pageSize={pagination.pageSize}
@@ -631,6 +650,87 @@ const sortedData = sortColumn
       </div>
     </div>
   );
-// return <></>
-  return tableElement;
+  const fontSizeClass = getFontSizeClass(branding.fontSize);
+  const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
+    isDark ? "text-gray-300" : "text-gray-700"
+  }`;
+
+  const renderWithHeader = (element: React.ReactNode) => {
+    if (!headerText) return (
+          <div className={`flex flex-col ${fillContainer ? 'h-full w-full min-h-0' : ''} ${className}`}>
+            <div className={`${headerClasses} flex items-center gap-2 flex-shrink-0`}>
+              <div className="flex-1 min-w-0 overflow-x-auto">{headerButtonsRenders}</div>
+            </div>
+            <div className={fillContainer ? 'min-h-0 flex-1' : ''}>{element}</div>
+          </div>
+          );
+
+    switch (headerPosition) {
+      case 'top':
+        return (
+          <div className={`flex flex-col ${fillContainer ? 'h-full w-full min-h-0' : ''} ${className}`}>
+            <div className={`${headerClasses} flex items-center gap-2 flex-shrink-0`}>
+              <div className="flex-shrink-0 pl-2">{headerText}</div>
+              <div className="flex-1 min-w-0 overflow-x-auto">{headerButtonsRenders}</div>
+            </div>
+            <div className={fillContainer ? 'min-h-0 flex-1' : ''}>{element}</div>
+          </div>
+        );
+      case 'bottom':
+        return (
+          <div className={`flex flex-col ${fillContainer ? 'h-full w-full' : ''} ${className}`}>
+            <div className={fillContainer ? 'min-h-0 flex-1' : ''}>
+              <div className="flex-1 min-w-0 overflow-x-auto">{headerButtonsRenders}</div>
+              {element}
+              </div>
+            <div className={`${headerClasses} mb-0 mt-1`}>{headerText}</div>
+          </div>
+        );
+      case 'left':
+        return (
+          <div className={`flex items-center ${fillContainer ? 'h-full w-full' : ''} ${className}`}>
+            <div className={`${headerClasses} mb-0 flex-shrink-0 ${direction === 'RTL' ? 'ml-2' : 'mr-2'}`}>
+              {headerText}
+            </div>
+            <div className={fillContainer ? 'h-full min-w-0 flex-1' : ''}>
+              <div className="flex-1 min-w-0 overflow-x-auto">{headerButtonsRenders}</div>
+              {element}
+            </div>
+          </div>
+        );
+      case 'right':
+        return (
+          <div className={`flex items-center ${fillContainer ? 'h-full w-full' : ''} ${className}`}>
+            <div className={fillContainer ? 'h-full min-w-0 flex-1' : ''}>
+              <div className="flex-1 min-w-0 overflow-x-auto">{headerButtonsRenders}</div>
+              {element}
+            </div>
+            <div className={`${headerClasses} mb-0 flex-shrink-0 ${direction === 'RTL' ? 'mr-2' : 'ml-2'}`}>
+              {headerText}
+            </div>
+          </div>
+        );
+      default:
+        return (
+          <div>
+            <div className="flex-1 min-w-0 overflow-x-auto">{headerButtonsRenders}</div>
+            {element}
+          </div>
+          );
+    }
+  };
+
+  const wrappedElement = renderWithHeader(
+    <div className={fillContainer ? "w-full h-full min-h-0" : ""}>{tableElement}</div>
+  );
+
+  if (needTooltip && tooltipProps) {
+    return (
+      <Tooltip title={tooltipProps.title} placement={tooltipProps.placement} triggerClassName={fillContainer ? "h-full w-full" : ""}>
+        <div className={`${fillContainer ? 'h-full w-full' : ''} ${className}`}>{wrappedElement}</div>
+      </Tooltip>
+    );
+  }
+
+  return <div className={`${fillContainer ? 'h-full w-full min-h-0' : ''} ${className}`}>{wrappedElement}</div>;
 };

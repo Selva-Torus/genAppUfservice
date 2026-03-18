@@ -45,7 +45,7 @@ const LayoutDecider = ({
   const encryptionMethod: string = "";
   const logo: string = "torus/9.1/CI001/resources/images/images.jfif"
   const appLogo: string = ""
-  const appName: string = "application"
+  const appName: string = "application1"
   const toast: Function = useInfoMsg()
   const [loading, setLoading] = useState<boolean>(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
@@ -77,28 +77,12 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
-    "menuGroupLabel": "app1",
+    "menuGroupLabel": "test",
     "screenDetails": [
       {
-        "name": "app1",
-        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1"
-        ],
-        "static": false
-      }
-    ],
-    "items": []
-  },
-  {
-    "menuGroupLabel": "Menu Item 3",
-    "screenDetails": [
-      {
-        "name": "menu item 3",
-        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",
-        "allowedAccessProfile": [
-          "Template 1"
-        ],
+        "name": "test",
+        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1",
+        "allowedAccessProfile": [],
         "static": false
       }
     ],

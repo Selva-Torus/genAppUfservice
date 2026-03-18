@@ -1,14 +1,9 @@
 export function getRouteScreenDetails(key: string, artfactName: string): string {
   let assemblerKeys: any = [
   {
-    "screenName": "app1",
-    "screensName": "app1-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 3",
-    "screensName": "menu_item_3-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
+    "screenName": "test",
+    "screensName": "test-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   }
 ]
 
@@ -25,11 +20,12 @@ export function getRouteScreenDetails(key: string, artfactName: string): string 
 
 export function getFilterProps(filterProps:any=[],mainData:any={}) {
   let result:any = [];  
-  filterProps.map((dfdData:any)=>{
-    dfdData.nodeBasedData.map((nodes:any)=>{
+  filterProps?.map((dfdData:any)=>{
+    dfdData?.nodeBasedData?.map((nodes:any)=>{
       let filterObj=nodes?.object||{}
-      Object.keys(nodes?.object).map((keys)=>{
-        filterObj[keys]=mainData[filterObj[keys]] || ""
+      Object.keys(nodes?.object).map((keys:any)=>{
+        let keysSplit = keys.split('.').at(-1) ?? keys  // "properties.cr_currency" → "cr_currency"
+        filterObj[keys] = mainData[keysSplit] || ""
       })
       result.push({
       DFDkey:dfdData.key,

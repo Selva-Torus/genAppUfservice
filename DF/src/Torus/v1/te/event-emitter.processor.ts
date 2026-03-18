@@ -48,7 +48,9 @@ export class EventEmitterProcessor implements OnModuleInit {
 
         try {
           // const result = await this.teService.startInterval(job.data, process.env.CLIENTCODE, job.data.token);
-          const result = await this.teService.EventEmitter(job.data);
+            const result = await this.teService.EventEmitter(job.data);
+          
+         
           this.logger.log(`Job ${job.id} - Completed successfully`);
           return result;
         } catch (error) {

@@ -53,8 +53,8 @@ const RenderChild = ({
           onClick={() => existsInContext && onClick()}
         >
           <div className='flex flex-col'>
-            <Text contentAlign='left' variant='body-2'>{displayName}</Text>
-            <Text contentAlign='left' variant='body-short' color='secondary'>
+            <Text contentAlign='left'>{displayName}</Text>
+            <Text contentAlign='left' color='secondary'>
               {displayCode.replace(codePrefix, '')}
             </Text>
           </div>

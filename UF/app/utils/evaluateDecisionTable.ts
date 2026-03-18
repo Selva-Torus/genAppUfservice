@@ -226,6 +226,10 @@ class DecisionTableEvaluator {
         dataValue = this.variableContext[varName];
       } else {
         dataValue = data[input.field];
+        // Fall back to variableContext if field not found in inputData
+        if (dataValue === undefined) {
+          dataValue = this.variableContext[input.field];
+        }
       }
 
       // Empty rule value = wildcard (matches anything)
@@ -433,7 +437,21 @@ inputData: any,
 ): boolean {
   if(inputData?.conditionalKey && inputData?.conditionalValue)
   {
-    if(variableContext[inputData?.conditionalKey]==inputData?.conditionalValue)
+    const actualValue = variableContext[inputData?.conditionalKey];
+    const conditionalValue = inputData?.conditionalValue;
+
+    // Support array or comma-separated values
+    let valuesToCheck: string[];
+    if (Array.isArray(conditionalValue)) {
+      valuesToCheck = conditionalValue;
+    } else if (typeof conditionalValue === 'string' && conditionalValue.includes(',')) {
+      valuesToCheck = conditionalValue.split(',').map((v: string) => v.trim());
+    } else {
+      valuesToCheck = [conditionalValue];
+    }
+
+    // Check if actual value matches any of the conditional values
+    if (valuesToCheck.includes(actualValue))
       return false
   }else if(!inputData?.conditionalKey && !inputData?.conditionalValue)
   {

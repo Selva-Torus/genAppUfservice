@@ -21,12 +21,15 @@ import { RuleService } from 'src/ruleService';
 import { MongoService } from 'src/mongoService';
 const jsonata = require('jsonata');
 import * as fs from 'fs';
+import * as path from 'path';
 import { table } from 'console';
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, { AxiosRequestConfig, Method } from 'axios';
 import * as FormData from 'form-data'; // Use this
 import { Readable } from 'stream';
 //import { v4 as uuidv4 } from 'uuid';
 import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet, FusionAuthUserCreation } from 'src/fusionAuth.api';
+import { EnvData } from 'src/envData/envData.service';
+import { decrypt } from 'src/decrypt';
 // import { RuleService } from 'src/ruleService';
 const transporter = nodemailer.createTransport({
   host: 'smtp-mail.outlook.com',
@@ -36,8 +39,17 @@ const transporter = nodemailer.createTransport({
     pass: 'Welcome@100',
   },
 });
-const auth_secret =
-  process.env.AUTH_SECRET;
+
+interface FusionAuthConfig {
+  fusionAuthBaseUrl: string;
+  fusionAuthApiKey: string;
+  authSecret: string;
+  authAccessTokenExpiryTime: string;
+  authRefreshTokenExpiryTime: string;
+  fusionauthRefreshTokenExpiryTimeinMinutes: string
+}
+
+// const auth_secret = process.env.AUTH_SECRET;
 const tenant = process.env.TENANT;
 const ag = process.env.APPGROUPCODE;
 const app = process.env.APPCODE;
@@ -46,12 +58,11 @@ const version = process.env.VERSION;
 const fusionAuthTenantId = process.env.FUSIONAUTH_TENANTID;
 const fusionAuthApplicationId = process.env.FUSIONAUTH_APPLICATIONID;
 const fusionAuthAppClientSecret = process.env.FUSIONAUTH_APPCLIENTSECRET;
-const fusionAuthBaseUrl = process.env.FUSIONAUTH_BASEURL;
-const fusionAuthApiKey = process.env.FUSIONAUTH_APIKEY;
 const defaultAuth =  process.env.DEFAULT_AUTHENTICATION;
-const accessTokenExpiryTime = process.env.AUTH_ACCESSTOKEN_EXPIRY_TIME;
-const refreshTokenExpiryTime = process.env.AUTH_REFRESHTOKEN_EXPIRY_TIME;
-const fusionauthRefreshTokenExpiryTimeinMinutes = process.env.FUSIONAUTH_REFRESHTOKEN_EXPIRY_TIME_IN_MINUTES
+// const accessTokenExpiryTime = process.env.AUTH_ACCESSTOKEN_EXPIRY_TIME;
+// const refreshTokenExpiryTime = process.env.AUTH_REFRESHTOKEN_EXPIRY_TIME;
+// const fusionauthRefreshTokenExpiryTimeinMinutes = process.env.FUSIONAUTH_REFRESHTOKEN_EXPIRY_TIME_IN_MINUTES
+const torusAppApiBaseUrl = process.env.TOURS_APP_API_BASE_URL
 
 @Injectable()
 export class UfService {
@@ -62,10 +73,22 @@ export class UfService {
     private readonly redisService: RedisService,
     private readonly commonService: CommonService,
     private readonly mongoService: MongoService,
+    private readonly envData: EnvData
   ) {}
 
+getConfig(): FusionAuthConfig {
+  return {
+    fusionAuthBaseUrl: this.envData.getFusionAuthBaseUrl(),
+    fusionAuthApiKey: this.envData.getFusionAuthApiKey(),
+    authSecret: this.envData.getAuthSecret(),
+    authAccessTokenExpiryTime: this.envData.getAuthAccessTokenExpiryTime(),
+    authRefreshTokenExpiryTime: this.envData.getAuthRefreshTokenExpiryTime(),
+    fusionauthRefreshTokenExpiryTimeinMinutes: this.envData.getFusionAuthRefreshTokenExpiryTimeInMinutes()
+  };
+}
+
   async screenRoute(keys: any[], token: string, header: any) {
-    try {
+    try {      
       for (let i = 0; i < keys.length; i++) {
         const UO: any = await this.commonService.readAPI(
           keys[i].ufKey + ':UO',
@@ -115,20 +138,196 @@ export class UfService {
     }
   }
 
-  async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number },context: string, enableEncryption: string): Promise<any> {
+  async insertDocToVgphSourceTranDocMain(category: string, doc_name: string, url: string, size?: number): Promise<any> {
+    try {
+      const insertUrl = 'https://tgadev.toruslowcode.com/ct005/v001/vgph001/v1/api/vgph_source_tran_doc_main';
+      const vgphstm_uuid = uuid();
+      const currentDate = new Date().toISOString().slice(0, 19) + '+00:00';
+
+      const payload = {
+        category: category,
+        vgphstm_uuid: vgphstm_uuid,
+        doc_name: doc_name,
+        doc_size: `${Math.ceil((size ?? 0) / 1024)}`,
+        url: url,
+        trs_created_date: currentDate,
+        trs_modified_date: currentDate
+      };
+
+      const response = await axios.post(insertUrl, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      return response.data.vgphstdm_id;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async getUrlByVgphstdmId(vgphstdm_id: any): Promise<string> {
+    try {
+      const getUrl = `https://tgadev.toruslowcode.com/ct005/v001/vgph001/v1/api/vgph_source_tran_doc_main/${vgphstdm_id}`;
+
+      const response = await axios.get(getUrl, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      return response.data.url;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number }, context: string, enableEncryption: string): Promise<any> {
     try {
       const res = await this.commonService.uploadFile(file, context, enableEncryption);
+
+      // Insert the URL into vgph_source_tran_doc_main
+      const vgphstdm_id = await this.insertDocToVgphSourceTranDocMain("front", file.filename, res.fileId,file.size);
+
+      res.fileId = `${vgphstdm_id}`;
       return res;
     } catch (error) {
       throw new BadGatewayException(error);
     }
   }
 
-  async getFile(id: string, context: string,enableEncryption: Boolean) {
+  async getDFS(fileUrl: string | string[], enableEncryption: boolean): Promise<Buffer | Buffer[]> {
     try {
-      const file = await this.commonService.findFileById(id);
-      const res = await this.commonService.getFile(id, context,enableEncryption);
-      return { res, file };
+      // Normalize to array if single URL provided
+      const urls = Array.isArray(fileUrl) ? fileUrl : [fileUrl];
+      const fullUrls = urls.map(url => `${process.env.FTP_OUTPUT_HOST}/${url}`);
+      // console.log("fileUrl ==> ", fullUrls);
+
+      const fileBuffers: Buffer[] = [];
+
+      // Fetch each file
+      for (const url of fullUrls) {
+        const response = await axios.get(url, {
+          responseType: 'arraybuffer',
+          auth: {
+            username: this.envData.getSeaweedUsername(),
+            password: this.envData.getSeaweedPassword(),
+          },
+          validateStatus: (status) => status < 500,
+        });
+
+        if (response.status !== 200) {
+          throw new Error(`Failed to fetch file from ${url}: ${response.status}`);
+        }
+
+        const ciphertext = Buffer.from(response.data);
+
+        // Decrypt if needed
+        const fileBuffer = enableEncryption
+          ? await this.commonService.aes256ctrDecrypt(ciphertext)
+          : ciphertext;
+
+        fileBuffers.push(fileBuffer);
+      }
+
+      // Return single buffer if single URL was provided, otherwise return array
+      return Array.isArray(fileUrl) ? fileBuffers : fileBuffers[0];
+    } catch (error) {
+      console.error('Error fetching file from DFS:', error);
+      throw error;
+    }
+  }
+
+  async uploadImage(
+    file: { buffer: Buffer; filename: string; mimetype: string; size: number },
+    bucketFoldername?: string,
+    folderPath?: string,
+    filename?: string,
+    enableEncryption?: string
+  ): Promise<string> {
+    try {
+      const fileName = filename || file.filename;
+      const bucket = bucketFoldername || ''; // e.g. 'torus'
+      const subFolder = folderPath || ''; // e.g. 'images'
+
+      const actualBuffer = Buffer.isBuffer(file.buffer)
+        ? file.buffer
+        : Buffer.from((file.buffer as any)?.data || []);
+
+      const shouldEncrypt = enableEncryption === 'true';
+
+      const encryptedBuffer = shouldEncrypt
+        ? await this.commonService.aes256ctrEncrypt(actualBuffer)
+        : actualBuffer;
+
+      const form = new FormData();
+      form.append('file', Readable.from(encryptedBuffer), {
+        filename: fileName,
+        contentType: file.mimetype || 'application/octet-stream',
+      });
+
+      const uploadUrl = `${this.envData.getSeaweedOutputHost()?.replace(
+        /\/$/,
+        ''
+      )}/buckets/${bucket}/${subFolder}/${fileName}`;
+      const res = await axios.post(uploadUrl, form, {
+        headers: {
+          Accept: 'application/json',
+          ...form.getHeaders(),
+        },
+        auth: {
+          username: `${this.envData.getSeaweedUsername()}`,
+          password: `${this.envData.getSeaweedPassword()}`,
+        },
+        validateStatus: (status) => status < 500,
+      });
+
+      if (res.status === 201) {
+        const res = `${bucket}/${subFolder}/${fileName}`;
+        const responce = await this.insertDocToVgphSourceTranDocMain("front",fileName,res,file.size);
+        return `${responce}`;
+      } else {
+        throw new ConflictException(
+          res.data || 'Error occurred while uploading file'
+        );
+      }
+    } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH014',
+        error,
+        'UserScreen',
+        '',
+        {
+          artifact: 'UserScreen',
+          users: 'anonymous user',
+        },
+      );
+      await this.throwCustomException(error);
+    }
+  }
+
+  async getFile(id: string | string[], context: string,enableEncryption: Boolean) {
+    try {
+      const fileMetadata = await this.commonService.findFileById(id);
+      const buffer = await this.commonService.getFile(id, context,enableEncryption);
+
+      // Handle single file
+      if (!Array.isArray(id)) {
+        return {
+          res: buffer,
+          file: fileMetadata
+        };
+      }
+
+      // Handle multiple files
+      return {
+        res: buffer,
+        file: fileMetadata,
+        isMultiple: true
+      };
     } catch (error) {
       throw new BadGatewayException(error);
     }
@@ -332,17 +531,18 @@ export class UfService {
 
       if(!tokenDecode?.loginId) throw 'loginId not found'
       let dsObject,data
-      // let f =0
-      // dsObject = JSON.parse(
-       // await this.redisService.getJsonData(
-         // key + tokenDecode.loginId+'_DS_Object',
-         // process.env.CLIENTCODE,
-       // ),
-     // );
-      //if (!dsObject) {
-      // f=1
-        dsObject = await this.redisService.getAllRecordshash(key + tokenDecode.loginId+'_DS_Object')
-     // }      
+      let afkey = key.replace(':FNGK:AFP:FNK:DF-DST:',':FNGK:AF:FNK:DF-DFD:')
+       let afi = JSON.parse( await this.redisService.getJsonData(afkey+'AFI', process.env.CLIENTCODE))      
+       if(!afi.logicCenter){
+        const requestConfig: AxiosRequestConfig = {
+            headers: {
+                Authorization: `Bearer ${token}`
+            },timeout: 300000 
+            };
+         // if (!(this.envData.getBeUrl())) throw new CustomException('Server Url not found', 404) 
+         await this.commonService.postCall(process.env.BE_URL+ '/te/eventEmitter',{ "key": afkey,count:count,page:page },requestConfig)          
+       }     
+        dsObject = await this.redisService.getAllRecordshash(key + tokenDecode.loginId+'_DS_Object')         
        
       if (!dsObject) {
         await this.commonService.errorLog(
@@ -553,6 +753,12 @@ export class UfService {
     }
   }
 
+  async getValueByPath(obj, path) {
+    return path
+      .split(".")
+      .reduce((acc, key) => acc?.[key], obj);
+  }
+
   async Orchestration(
     key: string,
     componentId: string,
@@ -573,6 +779,7 @@ export class UfService {
       let templateArray: any[] = securityData.accessProfile;
       const decodedToken: any = await this.jwtService.decodeToken(token);
       let object:any = {};
+      let dataType: string;
       let security: any;
       let allowedGroup: any = [];
       let componentNameArray: string[] = [];
@@ -1017,13 +1224,31 @@ export class UfService {
                       mappedData[i].objElements[j].mapper[0].sourceKey[0].split(
                         '|',
                       )[0];
-
+                    let dfdNode: string =
+                      mappedData[i].objElements[j].mapper[0].sourceKey[0].split(
+                        '|',
+                      )[1];
+                    let dfdSource: string =
+                      mappedData[i].objElements[j].mapper[0].sourceKey[0].split(
+                        '|',
+                      )[2].split('.').at(-1);
+                    let dfPath: string =  mappedData[i].objElements[j].mapper[0].sourceKey[0].split(
+                        '|',
+                      )[2];
                     let dfSchemaKey = await this.commonService.readAPI(
                       dfdKey + ':DFO',
                       process.env.CLIENTCODE,
                       token,
                     );
+                    
+                    for (let dfo = 0; dfo < dfSchemaKey.length; dfo++) {
+                      if (dfSchemaKey[dfo].nodeId == dfdNode) {
+                        dataType = await this.getValueByPath(dfSchemaKey[dfo].schema,dfPath+'.type');
+                        console.log("dataType ==> ", dataType);
 
+                      }
+                      
+                    }
                     // return dfSchemaKey
                     try {
                       dfData = dfSchemaKey;
@@ -1065,6 +1290,8 @@ export class UfService {
                     if(controlId in NDPData)
                     {
                       ruleKey= NDPData[controlId]?.apiKey || ''
+                      if(ruleKey)
+                      {
                       let temp:any  =await this.commonService.readAPI(
                                   ruleKey,
                                   process.env.CLIENTCODE,
@@ -1076,7 +1303,7 @@ export class UfService {
                           pfRuleData = temp[eachKey]?.rule;
                         }
                       })
-
+                      }
                     }
                     object = {
                               action: mappedData[i].objElements[j]?.action,
@@ -1099,6 +1326,7 @@ export class UfService {
                       mapper: mappedData[i].objElements[j]?.mapper,
                       // dstData: DS_Object?.data || [],
                       schemaData,
+                      dataType
                     };
                   }
                   if(mappedData[i].objElements[j]?.elementType== "editor")
@@ -2350,10 +2578,6 @@ export class UfService {
             targetKey: primaryKey,
             columnKey: primaryKey,
           });
-          targetKeys.push({
-            targetKey: 'trs_next_status',
-            columnKey: 'trs_next_status',
-          });
           targetKeys.push({ targetKey: 'trs_status', columnKey: 'trs_status' });
           targetKeys.push({
             targetKey: 'trs_process_id',
@@ -2386,6 +2610,42 @@ export class UfService {
           targetKeys.push({
             targetKey: 'trs_ps_code',
             columnKey: 'trs_ps_code',
+          });
+          targetKeys.push({
+            targetKey: 'trs_app_code',
+            columnKey: 'trs_app_code',
+          });
+          targetKeys.push({
+            targetKey: 'trs_locked_by',
+            columnKey: 'trs_locked_by',
+          });
+          targetKeys.push({
+            targetKey: 'trs_locked_time',
+            columnKey: 'trs_locked_time',
+          });
+          targetKeys.push({
+            targetKey: 'trs_process_status',
+            columnKey: 'trs_process_status',
+          });
+          targetKeys.push({
+            targetKey: 'trs_process_status_desc',
+            columnKey: 'trs_process_status_desc',
+          });
+          targetKeys.push({
+            targetKey: 'trs_status_desc',
+            columnKey: 'trs_status_desc',
+          });
+          targetKeys.push({
+            targetKey: 'trs_process_code',
+            columnKey: 'trs_process_code',
+          });
+          targetKeys.push({
+            targetKey: 'trs_previous_process_code',
+            columnKey: 'trs_previous_process_code',
+          });
+          targetKeys.push({
+            targetKey: 'trs_next_process_code',
+            columnKey: 'trs_next_process_code',
           });
 
           //  value = await this.commonService.readAPI(
@@ -3109,6 +3369,10 @@ export class UfService {
     ufClientType: string
   ) {
     try {
+      const config = this.getConfig()
+      const auth_secret = config.authSecret
+      const accessTokenExpiryTime = config.authAccessTokenExpiryTime 
+
       const accessProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`;
       const accessProfileCache = await this.redisService.getJsonData(
         accessProfileCacheKey,
@@ -3363,6 +3627,9 @@ export class UfService {
 
   async fusionAuthVerifyRefreshToken(refreshToken: string): Promise<any> {
     try {
+      const config = this.getConfig();
+      const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+     
       // prepare the tenant id ,application id and secret from the client tpc
       const url = `${fusionAuthBaseUrl}/oauth2/token`;
 
@@ -3442,6 +3709,9 @@ export class UfService {
 
   async checkSession(sessionList: any[]) {
     try {
+      const config = this.getConfig()
+      const refreshTokenExpiryTime = config.authRefreshTokenExpiryTime 
+      const fusionauthRefreshTokenExpiryTimeinMinutes = config.fusionauthRefreshTokenExpiryTimeinMinutes
       const timeNow = Math.ceil(new Date().getTime() / 1000);
       const updatedSessionList = new Map();
       for (let index = 0; index < sessionList.length; index++) {
@@ -3523,6 +3793,10 @@ export class UfService {
 
    async introspectToken(headers: any, key: string, tokens: string) {
     try {
+      const config = this.getConfig()
+      const auth_secret = config.authSecret
+      const accessTokenExpiryTime = config.authAccessTokenExpiryTime 
+
       const { authorization } = headers;
       if (!authorization || typeof authorization !== 'string') {
         await this.commonService.errorLog(
@@ -3752,6 +4026,11 @@ export class UfService {
     fusionAuthLoginResponse?: any | undefined,
   ) {
     try {
+      const config = this.getConfig()
+      const auth_secret = config.authSecret
+      const accessTokenExpiryTime = config.authAccessTokenExpiryTime 
+      const refreshTokenExpiryTime = config.authRefreshTokenExpiryTime 
+
       let tenantUserKey: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
       const appUserKey: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
       const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
@@ -4034,8 +4313,10 @@ export class UfService {
     isOauthUser: boolean = false,
   ) {
     try {
-      const url = `${fusionAuthBaseUrl}/oauth2/token`;
+      const config = this.getConfig();
+      const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
 
+      const url = `${fusionAuthBaseUrl}/oauth2/token`;
       const params = new URLSearchParams();
       params.append('grant_type', 'password');
       params.append('username', username);
@@ -4353,36 +4634,88 @@ export class UfService {
     }
   }
 
-  async postAppUserList(data: any) {
+  async postAppUserList(data: any, token: string) {
+    // this data is a single user record at any case
     try {
-      if (!tenant || !data || !ag || !app || !process.env.CLIENTCODE) {
+      const config = this.getConfig();
+      const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+      const fusionAuthApiKey = config.fusionAuthApiKey;
+      const auth_secret = config.authSecret
+
+      if (
+        !tenant ||
+        !data ||
+        !ag ||
+        !app ||
+        !process.env.CLIENTCODE ||
+        !token
+      ) {
         throw new BadRequestException('Invalid credentials');
       }
+      const payload = await this.jwt.verifyAsync(token, {
+        secret: auth_secret,
+      });
       const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
       const responseFromRedis = JSON.parse(
-        await this.redisService.getJsonData(userCachekey, process.env.CLIENTCODE),
+        await this.redisService.getJsonData(
+          userCachekey,
+          process.env.CLIENTCODE,
+        ) ?? [],
       );
-      // let setupData: any = await this.getFustionAuthDetaiols(tenant, process.env.CLIENTCODE);
 
-      // let applicationUniqueId = '';
-      // let defaultAuthenticationMethod = setupData?.defaultAuthentication || '';
-      // let tenantUniqueId = setupData?.tenantUniqueId || '';
+      const app_user_data = {
+        user_unique_id: data?.userUniqueId ?? '',
+        no_of_products_service: String(data?.['noOfProductsService']) ?? '',
+        access_profile: data?.['accessProfile'] ?? [],
+        is_app_admin:
+          typeof data?.['isAppAdmin'] == 'boolean'
+            ? data?.['isAppAdmin']
+            : false,
+        last_active: data?.['lastActive'] ?? '',
+        access_expires: new Date(data?.['accessExpires']).toISOString() ?? '',
+        tenant_code: tenant,
+        ag_code: ag,
+        app_code: app,
+        // org_tu_id: 0,
+        trs_created_date: data?.['dateAdded'] ?? new Date().toISOString(),
+        trs_created_by: payload?.loginId ?? 'anonymous',
+        trs_modified_date: data?.['dateAdded'] ?? new Date().toISOString(),
+        trs_modified_by: payload?.loginId ?? 'anonymous',
+        trs_status: '',
+        trs_next_status: '',
+        trs_process_id: '',
+        trs_access_profile: payload?.selectedAccessProfile || '',
+        trs_org_grp_code: payload?.orgGrpCode || '',
+        trs_org_code: payload?.orgCode || '',
+        trs_role_grp_code: payload?.roleGrpCode || '',
+        trs_role_code: payload?.roleCode || '',
+        trs_ps_grp_code: payload?.psGrpCode || '',
+        trs_ps_code: payload?.psCode || '',
+        trs_sub_org_grp_code: payload?.subOrgGrpCode || '',
+        trs_sub_org_code: payload?.subOrgCode || '',
+        trs_app_code: payload?.appCode || '',
+      };
 
-      // setupData?.AG.map((AppGrp: any) => {
-      //   if (AppGrp?.code == ag) {
-      //     AppGrp?.APPS.map((App: any) => {
-      //       if (App?.code == app) {
-      //         applicationUniqueId = App?.applicationUniqueId;
-      //       }
-      //     });
-      //   }
-      // });
+      let dataExistOrNot: any = {
+        isNotExist: true,
+      };
 
-      let dataExistOrNot: any = await FusionAuthUserApplicatonGet(
-        fusionAuthTenantId,
-        data?.userUniqueId,
-        fusionAuthApplicationId,
-      );
+      if (
+        defaultAuth === 'fusionauth' &&
+        fusionAuthTenantId &&
+        data?.userUniqueId &&
+        fusionAuthApplicationId
+      ) {
+        dataExistOrNot = await FusionAuthUserApplicatonGet(
+          fusionAuthBaseUrl,
+          fusionAuthApiKey,
+          fusionAuthTenantId,
+          data?.userUniqueId,
+          fusionAuthApplicationId,
+        );
+      }
+
+      let res;
       if (responseFromRedis == null || responseFromRedis?.length == 0) {
         if (
           defaultAuth === 'fusionauth' &&
@@ -4392,6 +4725,8 @@ export class UfService {
         ) {
           if (dataExistOrNot?.isNotExist) {
             await FusionAuthApplicatonAssign(
+              fusionAuthBaseUrl,
+              fusionAuthApiKey,
               fusionAuthTenantId,
               data?.userUniqueId,
               fusionAuthApplicationId,
@@ -4404,9 +4739,21 @@ export class UfService {
             );
           }
         }
-        return await this.redisService.setJsonData(
+        
+        // Torus API OPR Table entry
+        const postAppUserResponse = await this.callTorusAPI('app_user', {
+          method: 'POST',
+          data: app_user_data,
+          token: token,
+        });
+        const org_au_id =
+          postAppUserResponse.status == 201
+            ? postAppUserResponse.data?.org_au_id
+            : undefined;
+
+        res = await this.redisService.setJsonData(
           userCachekey,
-          JSON.stringify([data]),
+          JSON.stringify([{ ...data, org_au_id }]),
           process.env.CLIENTCODE,
         );
       } else {
@@ -4420,7 +4767,6 @@ export class UfService {
           }
         });
         if (userExist) {
-          responseFromRedis[updateIndex] = data;
           if (
             defaultAuth === 'fusionauth' &&
             fusionAuthTenantId &&
@@ -4429,6 +4775,8 @@ export class UfService {
           ) {
             if (dataExistOrNot?.isNotExist) {
               await FusionAuthApplicatonAssign(
+                fusionAuthBaseUrl,
+                fusionAuthApiKey,
                 fusionAuthTenantId,
                 data?.userUniqueId,
                 fusionAuthApplicationId,
@@ -4441,6 +4789,8 @@ export class UfService {
               );
             } else if (dataExistOrNot?.registration) {
               await FusionAuthApplicatonAssign(
+                fusionAuthBaseUrl,
+                fusionAuthApiKey,
                 fusionAuthTenantId,
                 data?.userUniqueId,
                 fusionAuthApplicationId,
@@ -4453,6 +4803,51 @@ export class UfService {
               );
             }
           }
+          
+          // Torus API OPR Table entry
+          let org_au_id = undefined;
+          if (data?.org_au_id) {
+            org_au_id = data?.org_au_id;
+            // handle patch only if field values gets changed
+            const equivalentDataInRedis = responseFromRedis[updateIndex];
+            if (
+              data?.['noOfProductsService'] !==
+                equivalentDataInRedis?.['noOfProductsService'] ||
+              data['isAppAdmin'] !== equivalentDataInRedis['isAppAdmin'] ||
+              JSON.stringify(data['accessProfile']) !==
+                JSON.stringify(equivalentDataInRedis['accessProfile']) ||
+              data['lastActive'] !== equivalentDataInRedis['lastActive'] ||
+              data['accessExpires'] !== equivalentDataInRedis['accessExpires']
+            ) {
+              await this.callTorusAPI('app_user', {
+                method: 'PATCH',
+                data: {
+                  no_of_products_service: data?.['noOfProductsService'] ?? '',
+                  access_profile: data?.['accessProfile'] ?? [],
+                  is_app_admin:
+                    typeof data?.['isAppAdmin'] == 'boolean'
+                      ? data?.['isAppAdmin']
+                      : false,
+                  last_active: data?.['lastActive'] ?? '',
+                  access_expires: data?.['accessExpires'] ?? '',
+                  trs_modified_date: new Date().toISOString(),
+                  trs_modified_by: payload?.loginId ?? 'anonymous',
+                },
+              });
+            }
+          } else {
+            const postAppUserResponse = await this.callTorusAPI('app_user', {
+              method: 'POST',
+              data: app_user_data,
+              token: token,
+            });
+            org_au_id =
+              postAppUserResponse.status == 201
+                ? postAppUserResponse.data?.org_au_id
+                : undefined;
+          }
+
+          responseFromRedis[updateIndex] = { ...data, org_au_id };
           ////////////
           let uniqueData: any[] = responseFromRedis?.filter(
             (obj) => 'userUniqueId' in obj,
@@ -4464,12 +4859,11 @@ export class UfService {
           );
           ////////////
 
-          const res = await this.redisService.setJsonData(
+          res = await this.redisService.setJsonData(
             userCachekey,
             JSON.stringify(uniqueData), // set JSON.stringify(responseFromRedis), this once all app keys have correct object
             process.env.CLIENTCODE,
           );
-          return res;
         } else {
           if (
             defaultAuth === 'fusionauth' &&
@@ -4479,6 +4873,8 @@ export class UfService {
           ) {
             if (dataExistOrNot?.isNotExist) {
               await FusionAuthApplicatonAssign(
+                fusionAuthBaseUrl,
+                fusionAuthApiKey,
                 fusionAuthTenantId,
                 data?.userUniqueId,
                 fusionAuthApplicationId,
@@ -4491,7 +4887,17 @@ export class UfService {
               );
             }
           }
-          responseFromRedis.push(data);
+           // Torus API OPR Table entry
+          const postAppUserResponse = await this.callTorusAPI('app_user', {
+          method: 'POST',
+          data: app_user_data,
+          token: token,
+        });
+        const org_au_id =
+          postAppUserResponse.status == 201
+            ? postAppUserResponse.data?.org_au_id
+            : undefined;
+          responseFromRedis.push({...data , org_au_id});
           //////////
           let uniqueData: any[] = responseFromRedis;
           uniqueData = uniqueData.filter(
@@ -4500,14 +4906,14 @@ export class UfService {
               self.findIndex((t: any) => t.userUniqueId === item.userUniqueId),
           );
           ////////////
-          const res = await this.redisService.setJsonData(
+          res = await this.redisService.setJsonData(
             userCachekey,
             JSON.stringify(uniqueData), // set JSON.stringify(responseFromRedis), this once all app keys have correct object
             process.env.CLIENTCODE,
-          );
-          return res;
+          );          
         }
       }
+      return res;
     } catch (error) {
       await this.commonService.errorLog(
         'Technical',
@@ -4644,106 +5050,6 @@ export class UfService {
         },
       );
       console.log(error, 'error');
-      await this.throwCustomException(error);
-    }
-  }
-  
-  async getDFS(fileUrl: string, enableEncryption: boolean): Promise<Buffer> {
-    try {
-      const url = `${process.env.FTP_OUTPUT_HOST}/${fileUrl}`;
-
-      const response = await axios.get(url, {
-        responseType: 'arraybuffer',
-        auth: {
-          username: process.env.SEAWEED_USERNAME,
-          password: process.env.SEAWEED_PASSWORD,
-        },
-        validateStatus: (status) => status < 500,
-      });
-
-      if (response.status !== 200) {
-        throw new Error(`Failed to fetch file: ${response.status}`);
-      }
-
-      const ciphertext = Buffer.from(response.data);
-
-      // Decrypt if needed
-      const fileBuffer = enableEncryption
-        ? await this.commonService.aes256ctrDecrypt(ciphertext)
-        : ciphertext;
-
-      return fileBuffer;
-    } catch (error) {
-      console.error('Error fetching file from DFS:', error);
-      throw error;
-    }
-  }
-
-  async uploadImage(
-    file: Express.Multer.File,
-    bucketFoldername?: string,
-    folderPath?: string,
-    filename?: string,
-    enableEncryption?: string
-  ): Promise<string> {
-    try {
-      const fileName = filename || file.filename || file.originalname;
-      const bucket = bucketFoldername || ''; // e.g. 'torus'
-      const subFolder = folderPath || ''; // e.g. 'images'
-
-      const actualBuffer = Buffer.isBuffer(file.buffer)
-        ? file.buffer
-        : Buffer.from((file.buffer as any)?.data || []);
-
-      const shouldEncrypt = enableEncryption === 'true';
-
-      const encryptedBuffer = shouldEncrypt
-        ? await this.commonService.aes256ctrEncrypt(actualBuffer)
-        : actualBuffer;
-
-      const form = new FormData();
-      form.append('file', Readable.from(encryptedBuffer), {
-        filename: fileName,
-        contentType: file.mimetype || 'application/octet-stream',
-      });
-
-      const uploadUrl = `${process.env.SEAWEED_OUTPUT_HOST?.replace(
-        /\/$/,
-        ''
-      )}/buckets/${bucket}/${subFolder}/${fileName}`;
-      const res = await axios.post(uploadUrl, form, {
-        headers: {
-          Accept: 'application/json',
-          ...form.getHeaders(),
-        },
-        auth: {
-          username: `${process.env.SEAWEED_USERNAME}`,
-          password: `${process.env.SEAWEED_PASSWORD}`,
-        },
-        validateStatus: (status) => status < 500,
-      });
-
-      if (res.status === 201) {
-        return `${bucket}/${subFolder}/${fileName}`;
-      } else {
-        throw new ConflictException(
-          res.data || 'Error occurred while uploading file'
-        );
-      }
-    } catch (error) {
-      await this.commonService.errorLog(
-        'Technical',
-        'AK',
-        'Fatal',
-        'AUTH014',
-        error,
-        'UserScreen',
-        '',
-        {
-          artifact: 'UserScreen',
-          users: 'anonymous user',
-        },
-      );
       await this.throwCustomException(error);
     }
   }
@@ -4983,11 +5289,15 @@ export class UfService {
     uniqueId: string,
   ) {
     try {
-      const url = `${process.env.FUSIONAUTH_BASEURL}/api/user/${uniqueId}`;
+      const config = this.getConfig();
+      const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+      const fusionAuthApiKey = config.fusionAuthApiKey
+
+      const url = `${fusionAuthBaseUrl}/api/user/${uniqueId}`;
       const res = await fetch(url, {
         method: 'PATCH',
         headers: {
-          Authorization: process.env.FUSIONAUTH_APIKEY, // ✅ FIXED
+          Authorization: fusionAuthApiKey,
           'Content-Type': 'application/json',
           'X-FusionAuth-TenantId': fusionAuthTenantId,
         },
@@ -6958,12 +7268,16 @@ export class UfService {
 
   async oauthSignIn(user: any) {
     try {
+      const config = this.getConfig();
+      const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+      const fusionAuthApiKey = config.fusionAuthApiKey;
+
       if (!user) {
         throw new BadRequestException('Account details not enough to continue');
       }
         if(user?.provider =='fusionauth')
         {
-          const fusionauthUser:any  = await FusionAuthUserGet(user?.providerAccountId)
+          const fusionauthUser:any  = await FusionAuthUserGet(fusionAuthBaseUrl, fusionAuthApiKey, user?.providerAccountId)
         user['email'] = fusionauthUser.user.email;
       }
 
@@ -7039,9 +7353,14 @@ export class UfService {
   
   async AppSecurityTemplateData(
     data: any[],
+    token: string,
   ) {
     try {
       if (tenant && data) {
+        const config = this.getConfig();
+        const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+        const fusionAuthApiKey = config.fusionAuthApiKey;
+        
         const clientCode = process.env.CLIENTCODE
         let defaultAuthenticationMethod = 'nextAuth';
         let applicationUniqueId = '';
@@ -7105,6 +7424,8 @@ export class UfService {
         ) {
           for (const roleObj of deletedRoles) {
             await FusionAutRoleCRUDAlongWithApp(
+              fusionAuthBaseUrl,
+              fusionAuthApiKey,
               applicationUniqueId,
               roleObj?.roleUniqueId,
               roleObj?.accessProfile,
@@ -7115,12 +7436,16 @@ export class UfService {
           for (const roleObj of newData) {
             if (roleObj?.isForEdit) {
               await FusionAutRoleCRUDAlongWithApp(
+                fusionAuthBaseUrl,
+                fusionAuthApiKey,
                 applicationUniqueId,
                 roleObj?.roleUniqueId,
                 roleObj?.accessProfile,
                 'DELETE',
               );
               await FusionAutRoleCRUDAlongWithApp(
+                fusionAuthBaseUrl,
+                fusionAuthApiKey,
                 applicationUniqueId,
                 roleObj?.roleUniqueId,
                 roleObj?.accessProfile,
@@ -7128,6 +7453,8 @@ export class UfService {
               );
             } else {
               await FusionAutRoleCRUDAlongWithApp(
+                fusionAuthBaseUrl,
+                fusionAuthApiKey,
                 applicationUniqueId,
                 roleObj?.roleUniqueId,
                 roleObj?.accessProfile,
@@ -7136,6 +7463,93 @@ export class UfService {
             }
           }
         }
+        
+      const securityTempPrevdataIds = existRoles ? existRoles?.map((item: any) => item?.opr_ap_id).filter((id: any) => id !== undefined) : [];
+      const incomingSecurityDataIds = data?.map((item: any) => item?.opr_ap_id).filter((id: any) => id !== undefined) || [];
+      const securityDataIdsToDelete = securityTempPrevdataIds.filter((id: any) => !incomingSecurityDataIds.includes(id));
+
+      //Torus API OPR Table entry Start
+      let tokenDecode = await this.jwtService.decodeToken(token); 
+      for (const secDataObj of data) {
+         const security_data = {
+            access_profile: secDataObj?.accessProfile,
+            dap: secDataObj?.dap,
+            org_grp: secDataObj?.orgGrp ?? [],
+            users_cnt: secDataObj["no.ofusers"],
+            role_unique_id: secDataObj?.roleUniqueId,
+            tenant_code: tenant,
+            ag_code: ag,
+            app_code: app,
+            // "opr_mx_id": 0,
+            trs_created_date: new Date().toISOString(),
+            trs_created_by: tokenDecode?.loginId || 'anonymous',
+            trs_modified_date: new Date().toISOString(),
+            trs_modified_by: tokenDecode?.loginId || 'anonymous',
+            // "trs_status": "string",
+            // "trs_next_status": "string",
+            // "trs_process_id": "string",
+            trs_access_profile: tokenDecode?.selectedAccessProfile,
+            trs_org_grp_code: tokenDecode?.orgGrpCode,
+            trs_org_code: tokenDecode?.orgCode,
+            trs_role_grp_code: tokenDecode?.roleGrpCode,
+            trs_role_code: tokenDecode?.roleCode,
+            trs_ps_grp_code: tokenDecode?.psGrpCode,
+            trs_ps_code: tokenDecode?.psCode,
+            trs_sub_org_grp_code: tokenDecode?.subOrgGrpCode ?? "",
+            trs_sub_org_code: tokenDecode?.subOrgCode ?? ""
+         }
+
+         if (secDataObj?.opr_ap_id) {
+          const masterDataItemResponse = await this.callTorusAPI(
+            `opr_access_profile/${secDataObj?.opr_ap_id}`,
+            {
+              method: 'GET',
+              token: token,
+            },
+          );
+          if (masterDataItemResponse?.status == 200) {
+            const prevData = masterDataItemResponse.data;
+            if (
+              prevData?.access_profile == security_data.access_profile &&
+              JSON.stringify(prevData ?? {}) ==
+                JSON.stringify(security_data ?? {})
+            ) {
+              continue;
+            } else {
+              // patch this record
+              await this.callTorusAPI(
+                `opr_access_profile/${secDataObj?.opr_ap_id}`,
+                {
+                  method: 'PATCH',
+                  token: token,
+                  data: security_data,
+                },
+              );
+            }
+          }
+          continue;
+        } else {
+          const response = await this.callTorusAPI('opr_access_profile', {
+            method: 'POST',
+            token: token,
+            data: security_data,
+          });
+          if (response?.status == 201) {
+            secDataObj['opr_ap_id'] = response.data?.opr_ap_id;
+          }
+        }
+      }
+
+      // delete records from torus which are deleted from incoming data 
+      for (const masterId of securityDataIdsToDelete) {
+        await this.callTorusAPI(`opr_access_profile/${masterId}`, {
+          method: 'DELETE',
+          token: token,
+        });
+      }
+
+      //Torus API OPR Table entry End
+  
         return await this.redisService.setJsonData(
           `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`,
           JSON.stringify(data),
@@ -7423,6 +7837,9 @@ export class UfService {
 
   async getAppList(token: string) {
     try {
+      const config = this.getConfig()
+      const auth_secret = config.authSecret
+
       const payload = await this.jwt.verifyAsync(token, {
         secret: auth_secret,
       });
@@ -7497,7 +7914,11 @@ export class UfService {
               ? JSON.parse(artifactKeyResponse)
               : {};
             // skip nodeId and get data
-            const nodeData: any = Object.values(artifactKeyData)[0];
+            let nodeData: any = Object.values(artifactKeyData)[0];
+            // for encryption
+            if(typeof nodeData == "string"){
+              nodeData = decrypt(nodeData)
+            }
             const appAccessUrl = nodeData?.data?.api?.release?.HOST?.replace('/api' , '');
             if (appAccessUrl) {
               versionInfo.push({
@@ -7575,9 +7996,14 @@ export class UfService {
     }
   }
 
-  async setTenantUser(content: any) {
+  async setTenantUser(content: any, token: string) {
     try {
+      const config = this.getConfig();
+      const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+      const fusionAuthApiKey = config.fusionAuthApiKey;
+
       // got from .env file
+      let tokenDecode = await this.jwtService.decodeToken(token);
       let tenantCode = tenant;
       let client = process.env.CLIENTCODE
       // got from .env file
@@ -7593,6 +8019,8 @@ export class UfService {
         };
         if (defaultAuth === 'fusionauth' && fusionAuthTenantId) {
           await FusionAuthUserCreation(
+            fusionAuthBaseUrl,
+            fusionAuthApiKey,
             fusionAuthTenantId,
             postOneUser.userUniqueId,
             postOneUser.firstName,
@@ -7624,6 +8052,8 @@ export class UfService {
         existUser.push(postOneUser);
         if (defaultAuth === 'fusionauth' && fusionAuthTenantId) {
           await FusionAuthUserCreation(
+            fusionAuthBaseUrl,
+            fusionAuthApiKey,
             fusionAuthTenantId,
             postOneUser.userUniqueId,
             postOneUser.firstName,
@@ -7640,6 +8070,49 @@ export class UfService {
         let uniqueData: any[] = existUser?.filter(
           (obj) => 'userUniqueId' in obj,
         );
+        
+        //Torus API OPR Table entry Start
+        for (const user of existUser) {
+          if(user.org_tu_id) continue
+          const user_data ={
+            user_unique_id: user.userUniqueId ?? "",
+            email: user.email,
+            password: user.password,
+            first_name: user.firstName ?? "",
+            last_name: user.lastName ?? "",
+            login_id: user.loginId,
+            user_code: user.userCode ?? "",
+            status: user.status ?? "",
+            tenant_code: tenant,
+            trs_created_date: new Date().toISOString(),
+            trs_created_by: tokenDecode?.loginId || 'anonymous',
+            trs_modified_date: new Date().toISOString(),
+            trs_modified_by: tokenDecode?.loginId || 'anonymous',
+            // "trs_status": "string",
+            // "trs_next_status": "string",
+            // "trs_process_id": "string",
+            trs_access_profile: tokenDecode?.selectedAccessProfile,
+            trs_org_grp_code: tokenDecode?.orgGrpCode,
+            trs_org_code: tokenDecode?.orgCode,
+            trs_role_grp_code: tokenDecode?.roleGrpCode,
+            trs_role_code: tokenDecode?.roleCode,
+            trs_ps_grp_code: tokenDecode?.psGrpCode,
+            trs_ps_code: tokenDecode?.psCode,
+            trs_sub_org_grp_code: tokenDecode?.subOrgGrpCode ?? "",
+            trs_sub_org_code: tokenDecode?.subOrgCode ?? ""
+          }
+            const response = await this.callTorusAPI('tenant_user', {
+            method: 'POST',
+            token: token,
+            data: user_data,
+          });
+          if (response?.status == 201) {
+            user['org_tu_id'] = response.data?.org_tu_id;
+          }
+        }
+
+        //Torus API OPR Table entry End
+ 
         ////////////////
         let key: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenantCode}:AFK:PROFILE:AFVK:v1:users`;
         res = await this.redisService.setJsonData(
@@ -7685,7 +8158,7 @@ export class UfService {
           // return `Email sent`;
         }
       });
-      await this.postAppUserList({...content, userUniqueId: userUniqueId , password: undefined});
+      await this.postAppUserList({...content, userUniqueId: userUniqueId , password: undefined} , token);
       const resultUserList =  (await this.getTenantAppUser(tenant, process.env.CLIENTCODE, ag, app))
       return resultUserList.map(user => {
         delete user.password;
@@ -7706,6 +8179,356 @@ export class UfService {
         },
       );
       await this.throwCustomException(err);
+    }
+  }
+
+  async uploadFromLocalPath(
+  localPaths: any[],
+  bucketFoldername?: string,
+  folderPath?: string,
+  enableEncryption?: string,
+): Promise<string[]> {
+  try {
+    const bucket = bucketFoldername || '';
+    const subFolder = folderPath || '';
+    const shouldEncrypt = enableEncryption === 'true';
+    
+    // Normalize to array if single path provided
+    let paths :string[] = [];
+    for(let i=0;i<localPaths.length;i++){
+      paths.push(localPaths[i].filepath);
+    }
+    console.log("localPaths ==> ", paths);
+
+    const uploadedFiles: string[] = [];
+
+    // Process each path
+    for (const localPath of paths) {
+      const stat = await fs.promises.stat(localPath);
+
+      let files: string[] = [];
+
+      // If directory → upload all files
+      if (stat.isDirectory()) {
+        const entries = await fs.promises.readdir(localPath);
+        files = entries.map((f) => path.join(localPath, f));
+      } else {
+        files = [localPath];
+      }
+
+      // Upload each file
+      for (const filePath of files) {
+        const buffer = await fs.promises.readFile(filePath);
+        const fileName = path.basename(filePath);
+
+        const encryptedBuffer = shouldEncrypt
+          ? await this.commonService.aes256ctrEncrypt(buffer)
+          : buffer;
+
+        const form = new FormData();
+        form.append('file', Readable.from(encryptedBuffer), {
+          filename: fileName,
+          contentType: 'application/octet-stream',
+        });
+
+        const uploadUrl = `${this.envData.getSeaweedOutputHost()?.replace(
+          /\/$/,
+          '',
+        )}/buckets/${bucket}/${subFolder}/${fileName}`;
+
+        const res = await axios.post(uploadUrl, form, {
+          headers: {
+            Accept: 'application/json',
+            ...form.getHeaders(),
+          },
+          auth: {
+            username: this.envData.getSeaweedUsername()!,
+            password: this.envData.getSeaweedPassword()!,
+          },
+          validateStatus: (status) => status < 500,
+        });
+
+        if (res.status === 201) {
+          uploadedFiles.push(`${bucket}/${subFolder}/${fileName}`);
+        } else {
+          throw new Error(
+            res.data || 'Error occurred while uploading file',
+          );
+        }
+      }
+    }
+
+    console.log("uploadedFiles ==> ", uploadedFiles);
+    return uploadedFiles;
+  } catch (error) {
+    throw error;
+      }
+}
+
+  async callTorusAPI<T = any>(
+    apiEndpoint: string,
+    options?: {
+      method?: Method;
+      data?: any;
+      token?: string;
+      params?: Record<string, any>;
+      headers?: Record<string, string>;
+    },
+  ): Promise<{ status: number; data: T }> {
+    const { method = 'GET', data, token, params, headers = {} } = options || {};
+
+    try {
+      const response = await axios({
+        url: `${torusAppApiBaseUrl}${apiEndpoint}`,
+        method,
+        data,
+        params,
+        headers: {
+          ...(token && { Authorization: `Bearer ${token}` }),
+          ...headers,
+        },
+        validateStatus: () => true,
+      });
+
+      return {
+        status: response.status,
+        data: response.data,
+      };
+    } catch (error: any) {
+      throw error;
+    }
+  }
+
+  async postOrgData(incomingMasterData: any, incomingMatrixData: any, token: string) {
+    try {
+      const config = this.getConfig()
+      const auth_secret = config.authSecret
+
+      if (!token) throw new BadRequestException('Token is required');
+      const payload = await this.jwt.verifyAsync(token, {
+        secret: auth_secret,
+      });
+      if (!incomingMasterData || !incomingMatrixData)
+        throw new BadRequestException(
+          'Master data and matrix data are required',
+        );
+      const orgMasterKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:orgMaster`;
+      const orgMatrixKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:orgMatrix`;
+      const orgMasterResponse = await this.redisService.getJsonData(
+        orgMasterKey,
+        process.env.CLIENTCODE,
+      );
+      const orgMatrixResponse = await this.redisService.getJsonData(
+        orgMatrixKey,
+        process.env.CLIENTCODE,
+      );
+
+      // To delete records which are deleted from incoming data in torus as well as in redis, 
+      // we need to get the existing record ids from redis and compare with incoming data ids, 
+      // if any id is not present in incoming data then we can delete that record from torus and redis both
+      const orgMasterPrevdataIds = orgMasterResponse ? JSON.parse(orgMasterResponse)?.map((item: any) => item?.opr_om_id).filter((id: any) => id !== undefined) : [];
+      const orgMatrixPrevdataIds = orgMatrixResponse ? JSON.parse(orgMatrixResponse)?.map((item: any) => item?.opr_mx_id).filter((id: any) => id !== undefined) : [];
+      const incomingMasterDataIds = incomingMasterData?.map((item: any) => item?.opr_om_id).filter((id: any) => id !== undefined) || [];
+      const incomingMatrixDataIds = incomingMatrixData?.map((item: any) => item?.opr_mx_id).filter((id: any) => id !== undefined) || [];
+      const masterDataIdsToDelete = orgMasterPrevdataIds.filter((id: any) => !incomingMasterDataIds.includes(id));
+      const matrixDataIdsToDelete = orgMatrixPrevdataIds.filter((id: any) => !incomingMatrixDataIds.includes(id));
+
+
+      // Torus API OPR Table entry start
+      // loop thorugh masterData
+      for (const masterDataItem of incomingMasterData) {
+        // prepare data for opr_org_master table in torus
+        const opr_org_master_data = {
+          org_grp_code: masterDataItem?.orgGrpCode,
+          org_grp_name: masterDataItem?.orgGrpName,
+          org_grp_id: masterDataItem?.orgGrpId,
+          org: masterDataItem?.org,
+          tenant_code: tenant,
+          ag_code: ag,
+          app_code: app,
+          trs_created_date: new Date().toISOString(),
+          trs_created_by: payload?.loginId || 'anonymous',
+          trs_modified_date: new Date().toISOString(),
+          trs_modified_by: payload?.loginId || 'anonymous',
+          trs_status: '',
+          trs_next_status: '',
+          trs_process_id: '',
+          trs_access_profile: payload?.selectedAccessProfile || '',
+          trs_org_grp_code: payload?.orgGrpCode || '',
+          trs_org_code: payload?.orgCode || '',
+          trs_role_grp_code: payload?.roleGrpCode || '',
+          trs_role_code: payload?.roleCode || '',
+          trs_ps_grp_code: payload?.psGrpCode || '',
+          trs_ps_code: payload?.psCode || '',
+          trs_sub_org_grp_code: payload?.subOrgGrpCode || '',
+          trs_sub_org_code: payload?.subOrgCode || '',
+        };
+        // if opr_om_id exist then patch else post
+        if (masterDataItem?.opr_om_id) {
+          const masterDataItemResponse = await this.callTorusAPI(
+            `opr_org_master/${masterDataItem?.opr_om_id}`,
+            {
+              method: 'GET',
+              token: token,
+            },
+          );
+          if (masterDataItemResponse?.status == 200) {
+            const prevData = masterDataItemResponse.data;
+            if (
+              prevData?.org_grp_name == opr_org_master_data.org_grp_name &&
+              JSON.stringify(prevData?.org ?? {}) ==
+                JSON.stringify(opr_org_master_data.org ?? {})
+            ) {
+              continue;
+            } else {
+              // patch this record
+              await this.callTorusAPI(
+                `opr_org_master/${masterDataItem?.opr_om_id}`,
+                {
+                  method: 'PATCH',
+                  token: token,
+                  data: {
+                    org_grp_name: opr_org_master_data.org_grp_name,
+                    org: opr_org_master_data.org,
+                    trs_modified_date: new Date().toISOString(),
+                    trs_modified_by: payload?.loginId || 'anonymous',
+                  },
+                },
+              );
+            }
+          }
+          continue;
+        } else {
+          const response = await this.callTorusAPI('opr_org_master', {
+            method: 'POST',
+            token: token,
+            data: opr_org_master_data,
+          });
+          if (response?.status == 201) {
+            masterDataItem['opr_om_id'] = response.data?.opr_om_id;
+          }
+        }
+      }
+
+      // loop thorugh matrixData
+      for (const matrixDataItem of incomingMatrixData) {
+        // prepare data for opr_org_matrix table in torus
+        const opr_org_matrix_data = {
+          org_grp_code: matrixDataItem?.orgGrpCode,
+          org_grp_name: matrixDataItem?.orgGrpName,
+          org_grp_id: matrixDataItem?.orgGrpId,
+          src_id: matrixDataItem?.srcId,
+          org: matrixDataItem?.org,
+          tenant_code: tenant,
+          ag_code: ag,
+          app_code: app,
+          trs_created_date: new Date().toISOString(),
+          trs_created_by: payload?.loginId || 'anonymous',
+          trs_modified_date: new Date().toISOString(),
+          trs_modified_by: payload?.loginId || 'anonymous',
+          trs_status: '',
+          trs_next_status: '',
+          trs_process_id: '',
+          trs_access_profile: payload?.selectedAccessProfile || '',
+          trs_org_grp_code: payload?.orgGrpCode || '',
+          trs_org_code: payload?.orgCode || '',
+          trs_role_grp_code: payload?.roleGrpCode || '',
+          trs_role_code: payload?.roleCode || '',
+          trs_ps_grp_code: payload?.psGrpCode || '',
+          trs_ps_code: payload?.psCode || '',
+          trs_sub_org_grp_code: payload?.subOrgGrpCode || '',
+          trs_sub_org_code: payload?.subOrgCode || '',
+        };
+        // if opr_mx_id exist then patch else post
+        if (matrixDataItem?.opr_mx_id) {
+          const matrixDataItemResponse = await this.callTorusAPI(
+            `opr_org_matrix/${matrixDataItem?.opr_mx_id}`,
+            {
+              method: 'GET',
+              token: token,
+            },
+          );
+          if (matrixDataItemResponse?.status == 200) {
+            const prevData = matrixDataItemResponse.data;
+            if (
+              prevData?.org_grp_name == opr_org_matrix_data.org_grp_name &&
+              JSON.stringify(prevData?.org ?? {}) ==
+                JSON.stringify(opr_org_matrix_data.org ?? {})
+            ) {
+              continue;
+            } else {
+              // patch this record
+              await this.callTorusAPI(
+                `opr_org_matrix/${matrixDataItem?.opr_mx_id}`,
+                {
+                  method: 'PATCH',
+                  token: token,
+                  data: {
+                    org_grp_name: opr_org_matrix_data.org_grp_name,
+                    org: opr_org_matrix_data.org,
+                    trs_modified_date: new Date().toISOString(),
+                    trs_modified_by: payload?.loginId || 'anonymous',
+                  },
+                },
+              );
+            }
+          }
+          continue;
+        } else {
+          const response = await this.callTorusAPI('opr_org_matrix', {
+            method: 'POST',
+            token: token,
+            data: opr_org_matrix_data,
+          });
+          if (response.status == 201) {
+            matrixDataItem['opr_mx_id'] = response.data?.opr_mx_id;
+          }
+        }
+      }
+      // Torus API OPR Table entry end
+
+      // delete records from torus which are deleted from incoming data 
+      for (const masterId of masterDataIdsToDelete) {
+        await this.callTorusAPI(`opr_org_master/${masterId}`, {
+          method: 'DELETE',
+          token: token,
+        });
+      }
+
+      for (const matrixId of matrixDataIdsToDelete) {
+        await this.callTorusAPI(`opr_org_matrix/${matrixId}`, {
+          method: 'DELETE',
+          token: token,
+        });
+      }
+      // delete records from torus which are deleted from incoming data
+
+      await this.redisService.setJsonData(
+        orgMasterKey,
+        JSON.stringify(incomingMasterData),
+        process.env.CLIENTCODE,
+      );
+      await this.redisService.setJsonData(
+        orgMatrixKey,
+        JSON.stringify(incomingMatrixData),
+        process.env.CLIENTCODE,
+      );
+      return { message: 'Organization data saved successfully' };
+    } catch (error) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'AUTH019',
+        error,
+        'User Screen',
+        '',
+        {
+          artifact: 'User Screen',
+          users: 'anonymous user',
+        },
+      );
+      await this.throwCustomException(error);
     }
   }
 }

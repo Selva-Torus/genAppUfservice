@@ -1,21 +1,29 @@
-import { BadRequestException, Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable, Logger, forwardRef } from '@nestjs/common';
 import axios, { AxiosRequestConfig } from 'axios';
 import * as cronParser from 'cron-parser'; 
 import { InjectQueue } from '@nestjs/bullmq'; 
-import { Queue, RepeatOptions } from 'bullmq'; 
+import { Queue, QueueOptions } from 'bullmq'; 
 import { CronJob } from 'cron';
 import { SchedulerRegistry } from '@nestjs/schedule';
+import { JobProcessor } from './processors/job.processor';
+import { EnvData } from 'src/envData/envData.service';
 const  Xid = require('xid-js');
 
 @Injectable()
 export class SchedulerService {
     private readonly logger = new Logger(SchedulerService.name);
     private activeSchedules = new Map<string, CronJob>();
-    constructor(@InjectQueue('scheduler') private readonly queue: Queue,private schedulerRegistry: SchedulerRegistry) {} 
+    private queues: Map< string, Queue> = new Map();
+
+    constructor(
+        // @InjectQueue(`scheduler`) private readonly queue: Queue,private schedulerRegistry: SchedulerRegistry
+        private readonly envData:EnvData,
+        @Inject(forwardRef(() => JobProcessor)) private readonly processor: JobProcessor
+    ) {} 
    
 
     async startScheduler(input,token) {          
-        let scheduledJobs
+        let scheduledJobs       
         if(input) {
             if(Array.isArray(input) && input.length > 0){
                 scheduledJobs = []
@@ -31,15 +39,15 @@ export class SchedulerService {
         if(scheduledJobs) {
             if(Array.isArray(scheduledJobs) && scheduledJobs.length > 0){                
                 for (const schedule of scheduledJobs) {
-                    await this.checkAndExecute(token,schedule);
+                    await this.checkAndExecute(token,schedule,input.pf_key);
                 }
             }else if(typeof scheduledJobs === 'object' && Object.keys(scheduledJobs).length > 0){
-                await this.checkAndExecute(token,scheduledJobs);
+                await this.checkAndExecute(token,scheduledJobs,input.pf_key);
             }
         }
     }   
 
-    async checkAndExecute(token,Job){
+    async checkAndExecute(token,Job,pf_key){
         this.logger.log('checkAndExecute Started');        
        
         let run_category = Job.scheduler_info.run_category;       
@@ -53,13 +61,13 @@ export class SchedulerService {
             }
             
             let isCurrentTime = await this.checkWindowAndCurrent("current",j_start_date,j_end_date);
-            await this.addBullJob(Job,isRepeat,isCurrentTime.delayMs,token);   
+            await this.addBullJob(Job,isRepeat,isCurrentTime.delayMs,token,pf_key);   
             
         }
        
     }  
 
-    async addBullJob(sch_job_data: any,isRepeat,delayMs,token) {
+    async addBullJob(sch_job_data: any,isRepeat,delayMs,token,pf_key) {
         
         console.log(`Executing schedule: ${sch_job_data.name}`);
         let scheduler_info = sch_job_data.scheduler_info
@@ -82,13 +90,14 @@ export class SchedulerService {
         else if(scheduler_info.delay_time && scheduler_info.delay_type){
             opts.delay = await this.delayToMs(scheduler_info.delay_time,scheduler_info.delay_type);
         }
-        console.log('opts',opts); 
+        //console.log('opts',opts); 
 
         let sch_job_log_res = await this.getDataFromTable(token,'POST',"sch_job_log",{            
             status: "ACTIVE"                      
         }); 
 
-        const bullJob = await this.queue.add( 
+        const queue = this.getQueue(pf_key);
+        const bullJob = await queue.add( 
             sch_job_data.name, 
             {               
                 schjt_id : sch_job_data.schjt_id, 
@@ -104,6 +113,38 @@ export class SchedulerService {
         this.logger.log(`Created scheduled job: ${sch_job_data.name} [${sch_job_data.trs_process_id}]`); 
     } 
    
+    getQueue(queueName: string): Queue {
+        // Check if queue already exists
+        if (this.queues.has(queueName)) {
+            return this.queues.get(queueName);
+        }
+
+        // Create new queue dynamically
+        const queueOptions: QueueOptions = {
+            connection: {
+                host: process.env.HOST,
+                port: parseInt(process.env.PORT),
+            },
+            defaultJobOptions: {
+                attempts: 3,
+                backoff: {
+                    type: 'exponential',
+                    delay: 2000,
+                },
+                removeOnComplete: 100,
+                removeOnFail: false,
+            },
+        };
+
+        const newQueue = new Queue(queueName, queueOptions);
+        this.queues.set(queueName, newQueue);
+        this.logger.log(`Created new queue: ${queueName}`);
+
+        // Create worker for this queue
+        this.processor.createWorker(queueName);
+
+        return newQueue;
+    }
 
     async delayToMs(delay_time: number, delay_type: string) {
         if (delay_time <= 0) return 0;
@@ -217,7 +258,7 @@ export class SchedulerService {
             }   
             let response
             // let url = this.APIURL + tableName //"sch_scheduled_job" //sch_job_template;
-            let url = process.env.BE_URL + '/' +tableName 
+            let url = this.envData.getBeUrl()+ '/' +tableName//process.env.BE_URL + '/' +tableName 
             if(params?.path){
                 url = url + '/' + params.path
             }
@@ -253,17 +294,19 @@ export class SchedulerService {
     }      
 
     async stopBullJob(input) {
-        const results = { removed: [], failed: [] };    
-        const repeatableJobs = await this.queue.getRepeatableJobs();
-        console.log('repeatableJobs',repeatableJobs);
+        const results = { removed: [], failed: [] }; 
+        let queueName = input.pf_key
+        const queue = this.getQueue(queueName);   
+        // const repeatableJobs = await queue.getRepeatableJobs();
+        // console.log('repeatableJobs',repeatableJobs);
            
         // Stop by job name (easiest way for repeatable jobs)
         if (input?.name) {
             try {
-                const repeatableJobs = await this.queue.getRepeatableJobs();
+                const repeatableJobs = await queue.getRepeatableJobs();
                 for (const repJob of repeatableJobs) {
                     if (repJob.name === input.name) {
-                        await this.queue.removeRepeatableByKey(repJob.key);
+                        await queue.removeRepeatableByKey(repJob.key);
                         results.removed.push({ name: repJob.name, key: repJob.key });
                         this.logger.log(`Removed repeatable job by name: ${repJob.name}`);
                     }
@@ -280,10 +323,10 @@ export class SchedulerService {
         // Stop ALL BullMQ jobs if no specific identifier provided
         try {
             // Remove all repeatable jobs
-            const repeatableJobs = await this.queue.getRepeatableJobs();          
+            const repeatableJobs = await queue.getRepeatableJobs();          
             
             for (const repJob of repeatableJobs) {
-                await this.queue.removeRepeatableByKey(repJob.key);
+                await queue.removeRepeatableByKey(repJob.key);
                 results.removed.push({ name: repJob.name, key: repJob.key });
                 // await this.getDataFromTable('PATCH',"sch_job_log",{            
                 //     status: "STOPPED",
@@ -295,7 +338,7 @@ export class SchedulerService {
             }
 
             // Remove all waiting and delayed jobs
-            const pendingJobs = await this.queue.getJobs(['waiting', 'delayed']);
+            const pendingJobs = await queue.getJobs(['waiting', 'delayed']);
             for (const job of pendingJobs) {
                 await job.remove();
                 results.removed.push(job.id);

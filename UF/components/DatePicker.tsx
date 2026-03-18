@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
+import { useInfoMsg } from "@/app/components/infoMsgHandler";
 
 type ContentAlign = "left" | "center" | "right";
 
@@ -27,6 +28,7 @@ interface DatePickerProps {
   errorMessage?: string;
   fillContainer?: boolean;
   contentAlign?: ContentAlign;
+  required?: boolean;
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({
@@ -46,9 +48,19 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   validationState,
   errorMessage,
   fillContainer = true,
-  contentAlign = "center"
+  contentAlign = "center",
+  required = false,
 }) => {
   const { theme, direction,branding } = useGlobal();
+  const showToast = useInfoMsg();
+  const prevValidationState = useRef(validationState);
+
+  React.useEffect(() => {
+    if (validationState === "invalid" && errorMessage && prevValidationState.current !== "invalid") {
+      showToast(errorMessage, "danger");
+    }
+    prevValidationState.current = validationState;
+  }, [validationState, errorMessage]);
 
   // Convert value to string format for input
   const getDateString = (val: string | Date | null): string => {
@@ -157,9 +169,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           onBlur?.(e);
         }}
       />
-      {validationState === "invalid" && errorMessage && (
-        <div className="mt-1 text-sm text-red-500">{errorMessage}</div>
-      )}
     </div>
   );
 
@@ -171,6 +180,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       headerPosition={headerPosition}
       className={className}
       fillContainer={fillContainer}
+      required={required}
     >
       {datePickerElement}
     </CommonHeaderAndTooltip>

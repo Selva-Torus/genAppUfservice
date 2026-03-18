@@ -10,6 +10,8 @@ import { useRouter } from 'next/navigation'
 import { Text } from '@/components/Text'
 import { Button } from '@/components/Button'
 import { useTheme } from '@/hooks/useTheme'
+import { getFontSizeForHeader } from '../utils/branding'
+import { useGlobal } from '@/context/GlobalContext'
 
 interface Props {
   email: string
@@ -28,6 +30,7 @@ const OtpVerification = ({
   const [isOtpVerified, setIsOtpVerified] = useState(false)
   const toast = useInfoMsg()
   const [showPassword, setShowPassword] = useState(false)
+  const { branding } = useGlobal()
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [formData, setFormData] = useState<Record<string, string>>({
     password: '',
@@ -41,7 +44,6 @@ const OtpVerification = ({
     number: false
   })
   const { isDark } = useTheme()
-
 
   const handleVerifyOtp = async () => {
     try {
@@ -149,8 +151,13 @@ const OtpVerification = ({
       {isOtpVerified ? (
         <>
           <div className='flex h-[100px] w-full flex-col items-center justify-center gap-[2px]'>
-            <Text variant='header-1' className='text-3xl font-semibold'>Set New Password</Text>
-            <Text color='secondary' className='w-[300px] text-wrap text-center text-[12px]'>
+            <Text
+              variant={getFontSizeForHeader(branding.fontSize)}
+              className='font-semibold'
+            >
+              Set New Password
+            </Text>
+           <Text color='secondary' className='w-[300px] text-wrap text-center text-[12px]'>
               Your new password must be different from previous used passwords
             </Text>
           </div>
@@ -336,13 +343,13 @@ const OtpVerification = ({
         </>
       ) : (
         <>
-          <div className='flex h-[200px] w-full flex-col items-center justify-center gap-[2px]'>
-            <Text variant='body-3' className='text-3xl font-semibold'>Verification Code</Text>
-            <Text color='secondary' className='text-center text-[12px]'>
+          <div className='flex h-[150px] w-full flex-col items-center justify-center gap-[2px]'>
+            <Text className='font-semibold'>Verification Code</Text>
+            <Text color='secondary' className='text-center'>
               We&apos;ve sent a code to {email}
             </Text>
           </div>
-          <div className='flex h-[100px] w-full flex-col items-center justify-center gap-[20px]'>
+          <div className='flex h-[200px] w-full flex-col items-center justify-center gap-[20px]'>
             <label className='flex w-[300px] flex-col gap-[10px] text-[15px]'>
               code
               <div className='flex gap-[10px]'>
@@ -366,17 +373,19 @@ const OtpVerification = ({
                 ))}
               </div>
             </label>
-            <Button
-              // style={{
-              //   backgroundColor: brandColor,
-              //   color: isLightColor(brandColor)
-              // }}
-              className='w-[300px] rounded-full px-[0.83vw] py-[2vh] text-[15px] font-medium'
-              onClick={() => handleVerifyOtp()}
-              disabled={otp.join('').length !== 6}
-            >
-              Verify
-            </Button>
+            <div>
+              <Button
+                // style={{
+                //   backgroundColor: brandColor,
+                //   color: isLightColor(brandColor)
+                // }}
+                className='w-[360px] rounded-full px-[0.83vw] py-[2vh] text-[15px] font-medium'
+                onClick={() => handleVerifyOtp()}
+                disabled={otp.join('').length !== 6}
+              >
+                Verify
+              </Button>
+            </div>
             <span className='flex items-center gap-[5px]'>
               <Text color='secondary' className='text-[15px]'>
                 Didn&apos;t get a code?

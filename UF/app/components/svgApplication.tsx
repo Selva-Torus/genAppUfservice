@@ -275,8 +275,8 @@ export const DownArrow = ({
 export const SixDotsSvg = ({ fill = 'black', fillOpacity = '0.35' }) => {
   return (
     <svg
-      width='1.18vw'
-      height='2.21vh'
+      width='1.2vw'
+      height='1.2vw'
       viewBox='0 0 24 24'
       fill='none'
       xmlns='http://www.w3.org/2000/svg'

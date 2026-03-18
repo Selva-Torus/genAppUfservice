@@ -21,20 +21,35 @@ import path from "path";
 import Redis from 'ioredis';
 import * as pg from "pg";
 import { GridFSBucket } from "mongodb";
-import { MongoClient, ObjectId } from "mongodb";
+import { MongoClient, ObjectId , Db} from "mongodb";
 import { ConfigService } from "@nestjs/config";
 const NodeRSA = require('node-rsa')
 import { Cron, CronExpression } from "@nestjs/schedule";
+import { readdir, readFile } from 'fs/promises';
+import { connectToMongo, getDb } from "./mongoClient";
+import { EnvData } from "src/envData/envData.service";
+import { decrypt } from "src/decrypt";
+const _ = require("lodash")
 
-export const client = new MongoClient(process.env.MONGODB_URL);
-  client.connect()
-    .then(() => {
-    console.log('Connected to the database successfully!');
-    })
-    .catch((err) => {
-    console.error('Error connecting to the database:', err);
-    });
-  var db= client.db(process.env.MONGODB_NAME)
+let db:Db
+
+// export const client = new MongoClient(process.env.MONGODB_URL);
+//   client.connect()
+//     .then(() => {
+//     console.log('Connected to the database successfully!');
+//     })
+//     .catch((err) => {
+//     console.error('Error connecting to the database:', err);
+//     });
+//   var db= client.db(process.env.MONGODB_NAME)
+
+connectToMongo().then(async () => { 
+    db = await getDb();
+    console.log('Database initialized'); 
+  }).catch((error) => {
+    console.error('Error connecting to MongoDB:', error);
+  }); 
+ 
   type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
   type JsonObject = { [key: string]: JsonValue };
   type JsonArray = JsonValue[];
@@ -56,10 +71,11 @@ export class CommonService{
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
     private readonly mongoService: MongoService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly envData:EnvData
   ) {  
-    this.ftpOutputPath = process.env.FTP_OUTPUT_HOST; 
-    this.seaweedOutPutPath = process.env.SEAWEED_OUTPUT_HOST;
+    //this.ftpOutputPath = process.env.FTP_OUTPUT_HOST; 
+    //this.seaweedOutPutPath = process.env.SEAWEED_OUTPUT_HOST;
     this.vaultAddr = this.configService.get<string>('VAULT_URL',process.env.VAULT_URL);
     this.vaultToken = this.configService.get<string>('VAULT_TOKEN',process.env.VAULT_TOKEN); // Store this in .env
     this.vaultKey = this.configService.get<string>('VAULT_KEY',process.env.VAULT_KEY);
@@ -68,6 +84,38 @@ export class CommonService{
           endpoint: process.env.VAULT_URL,
           token: process.env.VAULT_TOKEN, //Use a service token with limited permissions
         });
+  }
+
+  async  getLatestMigrationSql(isLocal?: string ): Promise<string> {
+    // Determine the base migrations directory based on isLocal
+    const migrationsDir = isLocal === 'dev'
+      ? './dist/erd/prisma/migrations'
+      : './dist/prisma/migrations';
+
+    // Read all entries in the migrations directory
+    //const migrationEntries = await readdir(migrationsDir, { withFileTypes: true });
+
+    // Filter only directories and sort them
+    //const migrationFolders = migrationEntries
+    //  .filter(entry => entry.isDirectory())
+    //  .map(entry => entry.name)
+    //  .sort();
+
+    // Get the latest migration folder
+    //const latestMigrationFolder = migrationFolders.at(-1);
+    // if (!latestMigrationFolder) {
+    //   throw new Error(`No migration folders found in ${migrationsDir}`);
+    // }
+
+    //console.log('Latest migration folder:', latestMigrationFolder);
+
+    // Read the SQL file inside the latest migration folder
+    //const migrationSqlPath = `${migrationsDir}/${latestMigrationFolder}/migration.sql`;
+    const migrationSql = await readFile(`${migrationsDir}/ddlChanges.sql`, 'utf-8');
+
+    console.log('Migration SQL content:', migrationSql);
+
+    return migrationSql;
   }
 
   replaceKeysWithDollar(
@@ -93,7 +141,8 @@ export class CommonService{
   }
 
   async onModuleInit() {
-    const collection = client.db("UploadFile")
+   //const collection = client.db("UploadFile")
+    const collection = await getDb()
     this.bucket = new GridFSBucket(collection, { bucketName: 'CI001/AG001/A001/v1' });
   }
   private readonly logger = new Logger(CommonService.name) 
@@ -337,9 +386,16 @@ export class CommonService{
       return Buffer.from(res.data.data.plaintext, 'base64');
     }
 
-    async findFileById(id: string) {
-      const files = await this.bucket.find({ _id: new ObjectId(id) }).toArray();
-      return files[0];
+    async findFileById(id: string | string[]) {
+      // Handle single ID or array of IDs
+      if (Array.isArray(id)) {
+        const objectIds = id.map(fileId => new ObjectId(fileId));
+        const files = await this.bucket.find({ _id: { $in: objectIds } }).toArray();
+        return files;
+      } else {
+        const files = await this.bucket.find({ _id: new ObjectId(id) }).toArray();
+        return files[0];
+      }
     }
 
     async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number },context: string, enableEncryption: string): Promise<any> {
@@ -358,20 +414,33 @@ export class CommonService{
       return { message: 'Encrypted file uploaded successfully', fileId: uploadStream.id.toString() };
     }
    
-    async getFile(id: string, context: string,enableEncryption: Boolean) {
-      let decrypted:Buffer
+    async getFile(id: string | string[], context: string,enableEncryption: Boolean): Promise<Buffer | Buffer[]> {
+      // Handle array of IDs
+      if (Array.isArray(id)) {
+        const buffers: Buffer[] = [];
+        for (const fileId of id) {
+          const buffer = await this.getSingleFile(fileId, context, enableEncryption);
+          buffers.push(buffer);
+        }
+        return buffers;
+      } else {
+        return this.getSingleFile(id, context, enableEncryption);
+      }
+    }
+
+    private async getSingleFile(id: string, context: string, enableEncryption: Boolean): Promise<Buffer> {
+      let decrypted: Buffer;
       const chunks: Buffer[] = [];
       const downloadStream = this.bucket.openDownloadStream(new ObjectId(id));
       return new Promise<Buffer>((resolve, reject) => {
         downloadStream.on('data', (chunk) => chunks.push(chunk));
         downloadStream.on('end', async () => {
-          const ciphertext = Buffer.concat(chunks)
+          const ciphertext = Buffer.concat(chunks);
           try {
-            //const decrypted = await this.decryptFile(ciphertext,context);
-            if(enableEncryption){
-             decrypted = await this.aes256ctrDecrypt(ciphertext);
-            }else{
-               decrypted = ciphertext;
+            if (enableEncryption) {
+              decrypted = await this.aes256ctrDecrypt(ciphertext);
+            } else {
+              decrypted = ciphertext;
             }
             resolve(decrypted);
           } catch (err) {
@@ -741,7 +810,7 @@ export class CommonService{
     } 
     
     
-      async getRuleCodeMapper(currentNode, inputparam,processedKey,fabric ,SessionInfo ){
+    async getRuleCodeMapper(currentNode, inputparam,processedKey,fabric ,SessionInfo ){
       try {       
         let zenresult
         var ResultObj = {}
@@ -768,9 +837,17 @@ export class CommonService{
             var gparamreq = {}; 
              let afpVal,data,sarr = []
             for(let i=0;i < fieldarr.length;i++){ 
-              let connectedNodeName = fieldarr[i].split('.')[0]
-              let connectedField = fieldarr[i].split('.')[1]
-               if(connectedNodeName == 'session'){
+              // let connectedNodeName = fieldarr[i].split('.')[0]
+              // let connectedField = fieldarr[i].split('.')[1]
+              let field = fieldarr[i].split('.')
+              let connectedNodeName = field[0]
+              field.shift()            
+              let connectedField = field.join('.')
+              
+              if(!connectedField || !connectedNodeName)
+                throw 'connectedField/ connectedNodeName not found in rule'
+
+              if(connectedNodeName == 'session'){
                 if(SessionInfo[connectedField]){
                   afpVal = SessionInfo                  
                 }
@@ -778,6 +855,9 @@ export class CommonService{
               } else {
                 afpVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.response',process.env.CLIENTCODE))
                 connectedField = connectedField.toLowerCase()    
+                
+                afpVal = await this.keysToLowerCaseOnly(afpVal)
+               
               if(afpVal && Array.isArray(afpVal) && afpVal.length > 1 || typeof afpVal == 'string'){               
                 var codeVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.code',process.env.CLIENTCODE))
                 var ifoVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.ifo',process.env.CLIENTCODE))
@@ -789,9 +869,10 @@ export class CommonService{
               else
                throw 'Array of records found in Decision Node'
               }else
-                 data = await this.getNestedValue(afpVal, connectedField) 
+                data = await this.getNestedValue(afpVal, connectedField)                 
               }
-                  if(data)               
+              
+                if(data)               
                   await this.setNestedValue(gparamreq, fieldarr[i], data) 
                 
                 // else{
@@ -799,9 +880,12 @@ export class CommonService{
                 // }  
               // }
               } 
+              console.log('gparamreq',gparamreq);
+              
               var goruleres = await this.ruleEngine.goRule(rule, gparamreq)                  
               if(Object.keys(goruleres.result).length > 0){                   
-                zenresult = goruleres.result.output
+                //zenresult = goruleres.result.output
+                 zenresult = goruleres.result
               }else{
                 throw `Rule doesn't matched with this value ${data}`
               }                         
@@ -810,7 +894,7 @@ export class CommonService{
       
         if (customCode ) {
           var customcoderesult = await this.codeService.customCode(processedKey, customCode, inputparam,fabric,SessionInfo)
-          //console.log('customcoderesult',customcoderesult);        
+          console.log('customcoderesult',customcoderesult);        
         }    
       
       if(zenresult)
@@ -825,18 +909,29 @@ export class CommonService{
       }          
     }
 
-     getNestedValue(obj: any, path: string): any {           
+    keysToLowerCaseOnly(obj: any): any {
+      if (Array.isArray(obj)) {
+          return obj.map((item) => this.keysToLowerCaseOnly(item));
+      } else if (obj !== null && typeof obj === 'object') {
+          return Object.entries(obj).reduce((acc, [key, value]) => {
+              acc[key.toLowerCase()] = this.keysToLowerCaseOnly(value);
+              return acc;
+          }, {});
+      }
+      return obj;
+    }
+
+    getNestedValue(obj: any, path: string): any {           
       let zenresultArr = []               
       if (obj) {     
         if(obj && Array.isArray(obj) && obj.length > 1)
-          throw 'Array of records found in Decision Node'
-      
-        if(obj && Array.isArray(obj) && obj.length == 1){           
-        return obj[0][path]
-
+          throw 'Array of records found in Decision Node'        
+        
+        if(obj && Array.isArray(obj) && obj.length == 1){ 
+          return _.get(obj[0],path) 
         }else if(typeof obj == 'object' && Object.keys(obj).length>0){
-          if (obj[path]) {             
-            return obj[path]
+          if (_.get(obj,path)) {            
+            return _.get(obj,path) 
           }
         }
       }
@@ -1642,7 +1737,7 @@ export class CommonService{
 
    
 
-     async dbconfig(customConfig,collectionName){
+    async dbconfig(customConfig,collectionName){
     try {
       let client: any;
       let nodeVersion = customConfig?.nodeVersion;
@@ -1659,24 +1754,32 @@ export class CommonService{
         tablename = customConfig.data?.pro?.tableName;
         sessionParams = customConfig.data?.pro?.filterParams
          rule = customConfig?.rule
+         manualQuery = customConfig.data?.pro?.manualQuery;
+        if (manualQuery.toLowerCase().includes('insert into'))
+          oprname = 'insert'
+        else
+          oprname = 'select'        
         if (oprname == 'select') {
           filterParams = customConfig.data?.pro[oprname]?.filterParams?.items;
-        }
-        manualQuery = customConfig.data?.pro?.manualQuery;
-        if (oprname == 'insert') {
+        }else if (oprname == 'insert') {
           insertParams = customConfig.data?.pro[oprname]?.insertParams?.items;
         }
       }
       else if (nodeVersion.toLowerCase() == 'v2') {
 
       }
-      if (!dpdkey) throw new CustomException('DPD key not found', 404);
-      let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
-      let nodedata = Object.keys(extdata)[0];
+      if (!dpdkey) throw new CustomException('DPD key not found', 404);          
+       
+      let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];
+      //let nodedata = Object.keys(extdata)[0];
+      let dpdData
+       //if(isEncrypted(extdata)){
+          dpdData = decrypt(extdata)         
+       
       let dbUrl, schemaname, dbConfig, Querystr, dbtype;
       if (customConfig) {
         if (storageType?.toLowerCase() == 'external') {
-          let configConnectors = extdata[nodedata].data['externalConnectors-DB']?.items;
+          let configConnectors = dpdData.data['externalConnectors-DB']?.items;
           if (configConnectors?.length > 0) {
             for (let i = 0; i < configConnectors.length; i++) {
               if (configConnectors[i].connectorName == conncectorName) {
@@ -1708,11 +1811,12 @@ export class CommonService{
           }              
           schemaname = dbConfig?.schema
         } else {
-          if (nodedata)
-            dbtype = extdata[nodedata]['data']?.applicationDBType.value
-          dbUrl = process.env.DATABASE_URL;
-          schemaname = process.env.DATABASE_URL.split('schema=')[1];
-        }
+          // if (nodedata)
+            dbtype = dpdData['data']?.applicationDBType.value
+          dbUrl = this.envData.getDatabaseUrl()//process.env.DATABASE_URL;
+          schemaname = (this.envData.getDatabaseUrl()).split('schema=')[1]; //process.env.DATABASE_URL.split('schema=')[1];
+        }      
+        
         if (!dbUrl) throw new CustomException('DB url not found', 404);
         if (dbtype && dbtype == 'postgres') {
           const { Client } = pg;
@@ -1731,13 +1835,15 @@ export class CommonService{
           });
         }
       }
+      //console.log("client",client);
+      
       return { client, oprname, sessionParams, manualQuery, filterParams,rule}
     } catch (error) {
       throw error
     }
   }
 
-  async mongodbconfig(customConfig,collectionName){
+   async mongodbconfig(customConfig,collectionName){
    try {
     let collnName, manualQryType, manualQry, sessionfilterParams, connectorType, storageType, dpdkey, conncectorName, filterParams;
     let nodeVersion = customConfig?.nodeVersion;
@@ -1756,10 +1862,12 @@ export class CommonService{
       let mongoQry, mongoDbarr, mongodbConfig, mongodbUrl;
       if (storageType?.toLowerCase() == 'external') {
         if (!dpdkey) throw new CustomException('DPD key not found', 404);
-        let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
-        if (!extdata) throw new CustomException('DPD value not found', 404);   
-        let nodedata = Object.keys(extdata)[0];
-        let configConnectors = extdata[nodedata].data['externalConnectors-DB']?.items;
+          let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];      
+          let dpdData      
+          dpdData = decrypt(extdata) 
+        if (!dpdData) throw new CustomException('DPD value not found', 404);   
+       // let nodedata = Object.keys(extdata)[0];
+        let configConnectors = dpdData.data['externalConnectors-DB']?.items;
         if (configConnectors?.length > 0) {
           for (let i = 0; i < configConnectors.length; i++) {
             if (configConnectors[i].connectorName == conncectorName) {
@@ -1777,7 +1885,7 @@ export class CommonService{
         else
         mongodbUrl = mongodbConfig?.host
       } else {
-        mongodbUrl = process.env.DATABASE_URL
+        mongodbUrl = this.envData.getDatabaseUrl() //process.env.DATABASE_URL
       }
       if (!mongodbUrl)
         throw new CustomException('Mongo DB url not found', 404);    
@@ -1831,9 +1939,11 @@ export class CommonService{
       let redisconfig
       if (storageType?.toLowerCase() == 'external') {
         if (!dpdkey) throw new CustomException('DPD key not found', 404);
-        let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
-        let nodedata = Object.keys(extdata)[0];
-        let configConnectors = extdata[nodedata].data['externalConnectors-STREAM']?.items;
+          let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];      
+          let dpdData      
+          dpdData = decrypt(extdata) 
+       // let nodedata = Object.keys(extdata)[0];
+        let configConnectors = dpdData.data['externalConnectors-STREAM']?.items;
         if (configConnectors?.length > 0) {
           for (let i = 0; i < configConnectors.length; i++) {
             if (configConnectors[i].connectorName == conncectorName) {
@@ -1907,10 +2017,12 @@ export class CommonService{
 
     if (storageType.toLowerCase() == 'external') {
       if (!dpdkey) throw new CustomException('DPD key not found', 404);
-      let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
-      if(extdata && Object.keys(extdata).length > 0) {
-        let nodedata = Object.keys(extdata)[0];
-        let configConnectors = extdata[nodedata].data['externalConnectors-FILE']?.items;
+        let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];      
+        let dpdData      
+          dpdData = decrypt(extdata) 
+      //if(extdata && Object.keys(extdata).length > 0) {
+       // let nodedata = Object.keys(extdata)[0];
+        let configConnectors = dpdData.data['externalConnectors-FILE']?.items;
         if (configConnectors?.length > 0) {
           for (let i = 0; i < configConnectors.length; i++) {
             if (configConnectors[i].connectorName == conncectorName) {
@@ -1920,11 +2032,11 @@ export class CommonService{
             }
           }
         }
-      }
+      //}
     } else {
-      url = process.env.SEAWEED_OUTPUT_HOST
-      userName = process.env.SEAWEED_USERNAME
-      password = process.env.SEAWEED_PASSWORD
+      url = this.envData.getSeaweedOutputHost() //process.env.SEAWEED_OUTPUT_HOST
+      userName = this.envData.getSeaweedUsername()//process.env.SEAWEED_USERNAME
+      password = this.envData.getSeaweedPassword()//process.env.SEAWEED_PASSWORD
     }
 
       if (!url || !userName || !password)                
@@ -1977,9 +2089,11 @@ export class CommonService{
       let dbUrl: any
       if (storageType?.toLowerCase() == 'external') {
         if (!dpdkey) throw new CustomException('DPD key not found', 404);
-        let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
-        let nodedata = Object.keys(extdata)[0];
-        let configConnectors = extdata[nodedata].data['externalConnectors-DB']?.items;
+          let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];      
+          let dpdData      
+          dpdData = decrypt(extdata) 
+        //let nodedata = Object.keys(extdata)[0];
+        let configConnectors = dpdData.data['externalConnectors-DB']?.items;
         if (configConnectors?.length > 0) {
           for (let i = 0; i < configConnectors.length; i++) {
             if (configConnectors[i].connectorName == conncectorName) {
@@ -2012,7 +2126,7 @@ export class CommonService{
         }
 
       } else {
-        dbUrl = process.env.DATABASE_URL;
+        dbUrl = this.envData.getDatabaseUrl()//process.env.DATABASE_URL;
       }
       let client
       if (dbType == 'postgres') {
@@ -2041,35 +2155,96 @@ export class CommonService{
     }
   } 
 
-   async appendWhereClause(baseQuery: string, condition: string,) {
-    const query = baseQuery.trim();
-    const lower = query.toLowerCase();
-    const keywords = [' order by ', ' group by ', ' limit '];
-    let firstKeywordIndex = -1;
-    let keywordFound = '';
-    for (const keyword of keywords) {
-      const index = lower.lastIndexOf(keyword);
-      if (index !== -1 && (firstKeywordIndex === -1 || index < firstKeywordIndex)) {
-        firstKeywordIndex = index;
-        keywordFound = keyword;
-      }
-    }
-    let modifiedQuery
-    const mainQuery =
-      firstKeywordIndex !== -1 ? query.substring(0, firstKeywordIndex) : query;
-    const trailingQuery =
-      firstKeywordIndex !== -1 ? query.substring(firstKeywordIndex) : '';
-    if (mainQuery.toLowerCase().includes(' where ')) {
-      let str = mainQuery.toLowerCase().split('where')
-      let flg: any = str.includes(')') ? true : false
-      modifiedQuery = flg == 'flase' ? `${mainQuery} AND ${condition}`
-        : `${mainQuery} WHERE ${condition}`;
-    } else {
-      modifiedQuery = `${mainQuery} WHERE ${condition}`;
-    }
+  async appendWhereClause(baseQuery: string, condition: string) {
+  const query = baseQuery.trim();
+  const lower = query.toLowerCase();
 
-    return `${modifiedQuery}${trailingQuery}`;
+  // ✅ Detect outer query pattern: ") alias"
+  const outerMatch = query.match(/\)\s+\w+\s*$/i);
+
+  // 👉 CASE 1: Query has subquery → apply WHERE outside
+  if (outerMatch) {
+    const insertIndex = outerMatch.index! + outerMatch[0].length;
+
+    // Check if outer already has WHERE
+    const outerPart = query.slice(insertIndex).toLowerCase();
+    const hasOuterWhere = /\bwhere\b/i.test(outerPart);
+
+    if (hasOuterWhere) {
+      return `${query} AND ${condition}`;
+    } else {
+      return `${query} WHERE ${condition}`;
+    }
   }
+
+  // 👉 CASE 2: Simple query (your original logic, cleaned)
+  const keywords = [' order by ', ' group by ', ' limit '];
+  let firstKeywordIndex = -1;
+
+  for (const keyword of keywords) {
+    const index = lower.lastIndexOf(keyword);
+    if (index !== -1 && (firstKeywordIndex === -1 || index < firstKeywordIndex)) {
+      firstKeywordIndex = index;
+    }
+  }
+
+  const mainQuery =
+    firstKeywordIndex !== -1 ? query.substring(0, firstKeywordIndex) : query;
+
+  const trailingQuery =
+    firstKeywordIndex !== -1 ? query.substring(firstKeywordIndex) : '';
+
+  const hasWhere = /\bwhere\b/i.test(mainQuery);
+
+  let modifiedQuery;
+
+  if (hasWhere) {
+    modifiedQuery = `${mainQuery} AND ${condition}`;
+  } else {
+    modifiedQuery = `${mainQuery} WHERE ${condition}`;
+  }
+
+  return `${modifiedQuery}${trailingQuery}`;
+}
+
+//  async appendWhereClause(baseQuery: string, condition: string,) {
+  //   const query = baseQuery.trim();
+  //   const lower = query.toLowerCase();
+  //    const closingIndex = query.lastIndexOf(')');
+
+  // // If no subquery, fallback to simple logic
+  // if (closingIndex === -1) {
+  //   return this.simpleAppend(query, condition);
+  // }
+  //   const keywords = [' order by ', ' group by ', ' limit '];
+  //   let firstKeywordIndex = -1;
+  //   let keywordFound = '';
+  //   for (const keyword of keywords) {
+  //     const index = lower.lastIndexOf(keyword);
+  //     if (index !== -1 && (firstKeywordIndex === -1 || index < firstKeywordIndex)) {
+  //       firstKeywordIndex = index;
+  //       keywordFound = keyword;
+  //     }
+  //   }
+  //   let modifiedQuery
+  //   const mainQuery =
+  //     firstKeywordIndex !== -1 ? query.substring(0, firstKeywordIndex) : query;
+  //   const trailingQuery =
+  //     firstKeywordIndex !== -1 ? query.substring(firstKeywordIndex) : '';
+  //   if (mainQuery.toLowerCase().includes(' where ')) {
+  //     let str = mainQuery.toLowerCase().split('where')
+  //     let flg: any = str.includes(')') ? true : false
+  //     console.log("flg",flg);
+  //     //console.log("mainQuery",mainQuery);
+  // flg = true
+  //     modifiedQuery = flg == false ? `${mainQuery} AND ${condition}`
+  //       : `${mainQuery} WHERE ${condition}`;
+  //   } else {
+  //     modifiedQuery = `${mainQuery} WHERE ${condition}`;
+  //   }
+
+  //   return `${modifiedQuery}${trailingQuery}`;
+  // }
 
   async checkEncryption(nodeInfo) {
     try {
@@ -2131,7 +2306,7 @@ export class CommonService{
       // console.log("insertData",insertData);
 
       if (operationName == 'read') {
-        if (fileType == 'xlsx') {
+        if (fileType == 'xlsx' || fileType == 'pfx') {
           existing = await axios.get<ArrayBuffer>(fileUrl, { auth, responseType: 'arraybuffer' });
         } else
           existing = await axios.get(fileUrl, { auth });

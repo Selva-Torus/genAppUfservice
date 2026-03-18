@@ -115,12 +115,12 @@ const RenderGroup = ({
           >
             <DownArrow fill={isDark ? 'white' : 'black'} />
           </span>
-          <FaRegFolderOpen />
-          <span className='text-xs'>
+          <FaRegFolderOpen className='w-[1.1vw] h-[1.1vw]' />
+          <span style={{ fontSize: branding.fontSize }} className='text-xs'>
             {isSearchOpen === contextKey && searchTerm
               ? highlightText(displayName, searchTerm, brandColor)
               : displayName}{' '}
-            - <span>{displayCode.replace(codePrefix, '')}</span>
+            - <span style={{ fontSize: branding.fontSize }}>{displayCode.replace(codePrefix, '')}</span>
           </span>
         </div>
 

@@ -4,6 +4,7 @@ import { Db, GridFSBucket, MongoClient, ObjectId } from "mongodb";
 import { Readable } from 'stream';
 import axios from 'axios';
 import { connectToMongo, getDb } from './mongoClient';
+import { EnvData } from "src/envData/envData.service";
 
 let db: Db;
   connectToMongo().then(async () => { 
@@ -27,13 +28,22 @@ let db: Db;
 export class MongoService {
     
     private gridfsBucket: GridFSBucket;
-    private vaultAddr = process.env.VAULT_URL //'https://vaultdr.gsstvl.com';
-    private vaultToken = process.env.VAULT_TOKEN//'s.jip6y4lpt2i2axlLsCBJd4U1'; // load securely from config
-    private keyName = process.env.VAULT_KEY//'torus9x-cmk';
-    constructor() {}
+    // private vaultAddr //= process.env.VAULT_URL //'https://vaultdr.gsstvl.com';
+    // private vaultToken //= process.env.VAULT_TOKEN//'s.jip6y4lpt2i2axlLsCBJd4U1'; // load securely from config
+    // private keyName //= process.env.VAULT_KEY//'torus9x-cmk';
+    constructor(
+      private readonly envData:EnvData
+    ) {
+      
+      //  this.vaultAddr = vaultConfig.url;
+      //  this.vaultToken = vaultConfig.token;
+      //  this.keyName = vaultConfig.key;
+
+    }
 
   private readonly logger = new Logger(MongoService.name) 
 
+ 
   // async findDocument(collectionName: any, findQuery: any, projectionValue?: any): Promise<any> {
   //   const collection = db.collection(collectionName);
   //   if (projectionValue) {
@@ -685,15 +695,15 @@ async readFileFromGridFSWithId(bucketName: string, fileId: any, decryptionFlag?:
     try{
       this.logger.log('encryptWithVault started');
       console.log('plaintext', typeof plaintext);
-      
+       let vaultConfig = this.envData.getVaultConfig();
       const base64Plaintext = plaintext.toString('base64');     
       
       const res = await axios.post(
-        `${this.vaultAddr}/v1/transit/encrypt/${this.keyName}`,
+        `${vaultConfig.url}/v1/transit/encrypt/${vaultConfig.key}`,
         { plaintext: base64Plaintext },
         {
           headers: {
-            'X-Vault-Token': this.vaultToken,
+            'X-Vault-Token': vaultConfig.token//this.vaultToken,
           },
         },
       );
@@ -708,12 +718,13 @@ async readFileFromGridFSWithId(bucketName: string, fileId: any, decryptionFlag?:
   
   async decryptWithVault(ciphertext: string): Promise<Buffer> {
     this.logger.log('decryptWithVault started');
+    let vaultConfig = this.envData.getVaultConfig();
     const response = await axios.post(
-      `${this.vaultAddr}/v1/transit/decrypt/${this.keyName}`,
+      `${vaultConfig.url}/v1/transit/decrypt/${vaultConfig.key}`,
       { ciphertext },
       {
         headers: {
-          'X-Vault-Token': this.vaultToken,
+          'X-Vault-Token': vaultConfig.token//this.vaultToken,
         }
       }
     );

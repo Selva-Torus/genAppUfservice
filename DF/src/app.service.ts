@@ -2,6 +2,8 @@
 
 
 
+
+
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import axios from 'axios';
 import * as fs from 'fs';
@@ -17,7 +19,9 @@ export class AppService implements OnModuleInit{
 
   async onModuleInit() {
     console.log('Application started, calling API...');
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoic2VsdmEiLCJjbGllbnQiOiJDSTAwMSIsInR5cGUiOiJjIiwibG9nVHlwZSI6Im1vbmdvZGIiLCJzaWQiOiI5NjQ0ZjQwZS0zMjBmLTRlOWEtOWI1ZS02NWEwODQxZDBjOTMiLCJpYXQiOjE3NzA4NzIwOTcsImV4cCI6MTc3MDg3MzI5N30.DtkV6N9EhWgGp_LFcO6XMAepy6Uop2xkNsaaknRYkcM';
+    console.log('DDL changes update started.');
+    console.log('DDL changes update completed.');    
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnQiOiJDSTAwMSIsImxvZ2luSWQiOiJzZWx2YSIsInNpZCI6ImM1MTAzNzQ4LTgzOWMtNDRlNS05M2YzLTdjNjliZDg2ZGI3YyIsImxvZ1R5cGUiOiJtb25nb2RiIiwidHlwZSI6ImMiLCJpYXQiOjE3NzM4MDc5NjksImV4cCI6MTc3MzgwOTE2OX0.kO5puFGtVJmT-op72w3sARnThNJSPk8NjHjMog1Jq4g';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
     if(Object.keys(preParedData).includes('torusApis'))
     {
@@ -29,7 +33,7 @@ export class AppService implements OnModuleInit{
       //torusData.endpoint = res.data;
       torusData.tenant =  "CI001";
       torusData.domain = "appgroup"; 
-      torusData.collection = "application";
+      torusData.collection = "application1";
       torusData.fabric = 'API-APIPD-TORUS';
       torusData.data = preParedData?.torusApis||{}
       torusData.loginId = "selva";    

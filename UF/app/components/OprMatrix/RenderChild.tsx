@@ -88,7 +88,7 @@ const RenderChild = ({
             </span>
           )}
           <div className='flex flex-col'>
-            <Text contentAlign='left' variant='body-2'>
+            <Text contentAlign='left'>
               {' '}
               {isSearchOpen && searchTerm
                 ? highlightText(displayName, searchTerm, brandColor)
@@ -98,7 +98,7 @@ const RenderChild = ({
           </div>
         </div>
         {!existsInContext && onAddToContext ? (
-          <Button onClick={onAddToContext} view='outlined-success'>
+          <Button onClick={onAddToContext} view='outlined-success' className='!w-auto px-2'>
             <div className='flex items-center gap-2'>
               <PlusIcon
                 fill={isLightColor(brandColor)}

@@ -80,7 +80,7 @@ export  async function getDropdownDetails(dfData:any,mapperColumn: string,catego
 
 
 
-  export  async function getDropdownDetailsNew(dfData:any,mapperColumn: string,mapperText:string,category: any, bindtranValue: any, code: any) {
+  export  async function getDropdownDetailsNew(dfData:any,mapperColumn: string,mapperText:string,category: any, bindtranValue: any, code: any,filterColumn:string) {
   let codName:any
     if(!category && dfData && mapperColumn && !bindtranValue && !code){
       let result = dfData.map((item: any) => item[mapperColumn]);
@@ -115,7 +115,17 @@ export  async function getDropdownDetails(dfData:any,mapperColumn: string,catego
         })
       }
       return codName
-    } else if (code) {
+    } else if (code && filterColumn) {
+      let dropdownData: string[] = []
+      for (let i = 0; i < dfData.length; i++) {
+        Object.keys(dfData[i]).map(keyName => {
+          if (code === dfData[i][keyName] && keyName === filterColumn) {
+            dropdownData.push(dfData[i][mapperColumn])
+          }
+        })
+      }
+      return dropdownData
+    }else if (code) {
       let dropdownData: string[] = []
       for (let i = 0; i < dfData.length; i++) {
         Object.keys(dfData[i]).map(keyName => {

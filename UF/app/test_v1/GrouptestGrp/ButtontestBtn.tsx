@@ -1,6 +1,7 @@
 'use client'
 
 
+
 import React, { useState,useEffect,useContext, useRef } from 'react';
 import axios from 'axios';
 import i18n from '@/app/components/i18n';
@@ -11,13 +12,14 @@ import { uf_getPFDetailsDto,uf_initiatePfDto,te_eventEmitterDto,uf_ifoDto,te_upd
 import { AxiosService } from '@/app/components/axiosService';
 import { getCookie } from '@/app/components/cookieMgment';
 import { nullFilter } from '@/app/utils/nullDataFilter';
-import { eventFunction } from '@/app/utils/eventFunction';
+import {commonSepareteDataFromTheObject, eventFunction } from '@/app/utils/eventFunction';
 import { useRouter } from 'next/navigation';
 import { eventBus } from '@/app/eventBus';
 import {Modal} from '@/components/Modal';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
 import { Icon } from '@/components/Icon';
+import UOmapperData from '@/context/dfdmapperContolnames.json';
 import { DecodedToken,PrimaryTableData,SecurityData,EncryptionFlagPageData,PaginationData,AllowedGroupNode,ActionDetails } from "@/types/global";
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import { getFilterProps,getRouteScreenDetails } from '@/app/utils/assemblerKeys';
@@ -26,8 +28,8 @@ import evaluateDecisionTable  from '@/app/utils/evaluateDecisionTable';
 import { eventDecisionTable } from '@/app/utils/evaluateDecisionTable';
 import decodeToken from '@/app/components/decodeToken';
 import { getGridPositionFromOrder } from '@/app/utils/getGridPositionFromOrder';
+import { Scan } from '@/app/utils/scanService';
 import { XMLParser } from 'fast-xml-parser'
-
 
     
 
@@ -51,7 +53,7 @@ function objectToQueryString(obj: any) {
 }
  
 
-const Buttonbutton = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}: { lockedData:any,setLockedData:any,checkToAdd:any,setCheckToAdd:any,refetch:any,setRefetch:any,primaryTableData:any,setPrimaryTableData:any,encryptionFlagCompData:any,}) => {
+const ButtontestBtn = ({ lockedData,setLockedData,primaryTableData, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData}: { lockedData:any,setLockedData:any,checkToAdd:any,setCheckToAdd:any,refetch:any,setRefetch:any,primaryTableData:any,setPrimaryTableData:any,encryptionFlagCompData:any,}) => {
   const token:string = getCookie('token');
   const {currentToken, setCurrentToken} = useContext(TotalContext) as TotalContextProps;
   const decodedTokenObj:any = decodeToken(token);
@@ -66,6 +68,8 @@ const Buttonbutton = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   const handleDfdRefresh = useHandleDfdRefresh();
 
   let code:string = "";
+  const prevRefreshRef = useRef(false);
+  const [ruleData,setRulseData]=useState<any>([])
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [paginationData, setPaginationData] = React.useState({
     page: 0,
@@ -94,9 +98,9 @@ const Buttonbutton = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
  /////////////
    //another screen
 
-  const {groupff998, setgroupff998}= useContext(TotalContext) as TotalContextProps;
-  const {groupff998Props, setgroupff998Props}= useContext(TotalContext) as TotalContextProps;
-  const {button71874, setbutton71874}= useContext(TotalContext) as TotalContextProps;
+  const {testgrp35550, settestgrp35550}= useContext(TotalContext) as TotalContextProps;
+  const {testgrp35550Props, settestgrp35550Props}= useContext(TotalContext) as TotalContextProps;
+  const {testbtn54460, settestbtn54460}= useContext(TotalContext) as TotalContextProps;
   //////////////
 
 
@@ -106,23 +110,23 @@ const Buttonbutton = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
     code = allCode ||""
     if (code != '') {
       let codeStates: Record<string, any> = {};
-      codeStates['group']  = groupff998,
-      codeStates['setgroup'] = setgroupff998,
+      codeStates['testgrp']  = testgrp35550,
+      codeStates['settestgrp'] = settestgrp35550,
       codeStates['response']  = savedData.current;
       customCode = codeExecution(code,codeStates);
       return customCode;
     }
   }
-  const handleMapper=async () => {
+  const handleMapper=async (data?:any) => {
     try{     
       const orchestrationData: any = await AxiosService.post(
         '/UF/Orchestration',
         {
-          key: "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1",
-          componentId: "2b798fc9c7774ec0b640c43f8d2ff998",
-          controlId: "98956d3a87234d5d83049eb271671874",
+          key: "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1",
+          componentId: "cae8d3787e4948b080baf4aa38c35550",
+          controlId: "17594abbb47d4b1db4a4f40dea554460",
           isTable: false,
-          from:"Buttontest button",
+          from:"ButtontestBtn",
           accessProfile:accessProfile
         },
         {
@@ -140,23 +144,24 @@ const Buttonbutton = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
           page: +orchestrationData?.data?.action?.pagination?.page || 1,
           pageSize: +orchestrationData?.data?.action?.pagination?.count || 1000
     }))
-      if(orchestrationData?.data?.rule?.nodes?.length > 0){
-        let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},decodedTokenObj);
-        // schemaFlag =schemaFlag.output;
-        let order:number = Number(schemaFlag.order);
+    if(orchestrationData?.data?.rule?.nodes?.length > 0){
+      setRulseData(orchestrationData?.data?.rule.nodes)
+      let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},{...decodedTokenObj,...data});
+      // schemaFlag =schemaFlag.output;
+      let order:number = Number(schemaFlag.order);
 
-        // Update grid position based on order number
-        if (order && typeof order === 'number') {
-          const position : any = getGridPositionFromOrder(order);
-          setGridPosition(position);
-        } 
+      // Update grid position based on order number
+      if (order && typeof order === 'number') {
+        const position : any = getGridPositionFromOrder(order);
+        setGridPosition(position);
+      } 
 
-        if (schemaFlag.output !== "true") {
-          setShowFlag(false);
-        }else{
-          setShowFlag(true)
-        }
+      if (schemaFlag.output !== "true") {
+        setShowFlag(false);
+      }else{
+        setShowFlag(true)
       }
+    }
     }catch(err){
         console.log(err);
     }
@@ -165,11 +170,11 @@ const Buttonbutton = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   useEffect(()=>{
     handleMapper();
     eventBus.on("triggerButton", (id:any) => {
-      if (id === "button71874") {
+      if (id === "testbtn54460") {
         handleClick();
       }
     });
-  },[button71874?.refresh,currentToken])
+  },[testbtn54460?.refresh,currentToken])
 
   function SourceIdFilter(eventProperty:any,matchingSequence?:string){
     let ans : any[] = [];
@@ -196,24 +201,6 @@ const Buttonbutton = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
   }
 
   const handleClick=async()=>{
-    if(groupff998Props?.validation==true && groupff998Props?.required==true || groupff998Props?.required==true)
-    {
-      if(validateRefetch.init==0)
-      {
-        setValidateRefetch((pre:any)=>({...pre,value:!pre.value,init:pre.init+1}));
-        return
-      }
-      setValidateRefetch((pre:any)=>({...pre,value:!pre.value,init:pre.init+1}));
-    } 
-    let saveCheck=false;
-        Object.keys(validate).map((item)=>{
-      if(validate[item] == 'invalid'){
-        saveCheck=true;
-    }})
-    if (saveCheck) {   
-      toast('Please verify the data', 'danger');
-      return
-    }
     try{  
           await delay(1000);
       await handleCustomCode();
@@ -226,30 +213,29 @@ const Buttonbutton = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
     }
   }
 
-
- if (button71874?.isHidden) {
+ if (testbtn54460?.isHidden) {
     return <></>
   }
  
   return (
     <div
-      style={{gridColumn: `6 / 13`,gridRow: `24 / 75`, gap:``, height: `100%`, overflow: 'auto'}} 
+      style={{gridColumn: `1 / 25`,gridRow: `12 / 60`, gap:``, height: `100%`, overflow: 'auto'}} 
       >
         {showFlag && <Button 
           ref={buttonRef}
           className="   "
           onClick={handleClick}
           view='action'
-          disabled= {button71874?.isDisabled ? true : false}
-          pin='circle-circle'
+          disabled= {testbtn54460?.isDisabled ? true : false}
+          pin='round-round'
           contentAlign={"center"}
         >
-          {keyset("test button")}
+          {keyset("testBtn")}
         </Button>}
       </div>
     
   )
 }
 
-export default Buttonbutton
+export default ButtontestBtn
 

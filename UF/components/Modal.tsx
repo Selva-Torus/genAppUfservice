@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useTheme } from "@/hooks/useTheme";
+import { eventBus } from "@/app/eventBus";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { Button } from "./Button";
@@ -39,6 +40,7 @@ interface ModalProps {
   className?: string;
   position?: ModalPosition;
   showOverlay?: boolean;
+  modalName?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -58,6 +60,7 @@ export const Modal: React.FC<ModalProps> = ({
   className = "",
   position = "center",
   showOverlay = true,
+  modalName,
 }) => {
   const { isDark, isHighContrast, branding } = useTheme();
 
@@ -87,6 +90,22 @@ export const Modal: React.FC<ModalProps> = ({
       document.body.style.overflow = "unset";
     };
   }, [open]);
+
+  // Listen for closeModal event and close if modalName matches
+  useEffect(() => {
+    if (!modalName) return;
+
+    const handleCloseModal = (name: string) => {
+      if (name === modalName) {
+        onClose();
+      }
+    };
+
+    eventBus.on('closeModal', handleCloseModal);
+    return () => {
+      eventBus.off('closeModal', handleCloseModal);
+    };
+  }, [modalName, onClose]);
 
   if (!open) return null;
 

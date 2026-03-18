@@ -22,6 +22,8 @@ import { Button } from '@/components/Button'
 import { BsThreeDotsVertical } from 'react-icons/bs'
 import Popup from '@/components/Popup'
 import { twMerge } from 'tailwind-merge'
+import { Text } from '@/components/Text'
+import { getFontSizeForHeader } from '@/app/utils/branding'
 
 interface OrgLinkContextType {
   collapsedItems: Record<string, boolean>
@@ -403,9 +405,9 @@ const OrganizationLink = ({
               borderColor
             )}
           >
-            <h2 className='text-torus-text font-semibold'>
+            <Text contentAlign='left' variant={getFontSizeForHeader(branding.fontSize)} className='font-semibold'>
               Available Organizations
-            </h2>
+            </Text>
             <AddOrgGroupButton />
           </div>
 
@@ -436,9 +438,9 @@ const OrganizationLink = ({
               borderColor
             )}
           >
-            <h2 className='text-torus-text font-semibold'>
+            <Text contentAlign='left' variant={getFontSizeForHeader(branding.fontSize)} className='font-semibold'>
               Organization Links
-            </h2>
+            </Text>
           </div>
 
           <div
@@ -616,10 +618,14 @@ const LeftPanelOrgGroup = ({
             <DownArrow fill={isDark ? 'white' : 'black'} />
           </span>
           <FaRegFolderOpen color={isDark ? 'white' : 'black'} />
-          <span>{orgGrp.orgGrpName}</span>
-          <span className='text-torus-text-opacity-50 text-xs'>
-            ({orgGrp.orgGrpCode})
-          </span>
+          <div>
+            <Text contentAlign='left'>{orgGrp.orgGrpName}</Text>
+          </div>
+          <div>
+            <Text contentAlign='left' color='secondary'>
+              ({orgGrp.orgGrpCode})
+            </Text>
+          </div>
         </div>
 
         {/* Three Dots Menu */}
@@ -822,12 +828,16 @@ const LeftPanelOrg = ({
     >
       <div className='flex items-center gap-[0.5vw]'>
         <SixDotsSvg fill={isDark ? 'white' : 'black'} />
-        <LuBuilding2 className='h-[0.9vw] w-[0.9vw]' />
+        <LuBuilding2 className='h-[1.2vw] w-[1.5vw]' />
         <div className='flex flex-col'>
-          <span>{org.orgName}</span>
-          <span className='text-torus-text-opacity-50 text-xs'>
-            {org.orgCode}
-          </span>
+          <div>
+            <Text contentAlign='left'>{org.orgName}</Text>
+          </div>
+          <div>
+            <Text contentAlign='left' color='secondary'>
+              {org.orgCode}
+            </Text>
+          </div>
         </div>
       </div>
 
@@ -994,10 +1004,14 @@ const RightPanelOrgGroup = ({
             <DownArrow fill={isDark ? 'white' : 'black'} />
           </span>
           <FaRegFolderOpen color={isDark ? 'white' : 'black'} />
-          <span className='font-semibold'>{orgGrp.orgGrpName}</span>
-          <span className='text-torus-text-opacity-50 text-xs'>
-            ({orgGrp.orgGrpCode})
-          </span>
+          <div>
+            <Text contentAlign='left' className='font-semibold'>{orgGrp.orgGrpName}</Text>
+          </div>
+          <div>
+            <Text contentAlign='left' color='secondary'>
+              ({orgGrp.orgGrpCode})
+            </Text>
+          </div>
         </div>
 
         <button
@@ -1240,12 +1254,16 @@ const RightPanelOrg = ({
         }
       >
         <div className='flex flex-1 items-center gap-[0.5vw]'>
-          <LuBuilding2 className='h-[0.9vw] w-[0.9vw]' />
+          <LuBuilding2 className='h-[1.2vw] w-[1.5vw]' />
           <div className='flex flex-col'>
-            <span className='font-semibold'>{org.orgName}</span>
-            <span className='text-torus-text-opacity-50 text-xs'>
-              {org.orgCode}
-            </span>
+            <div>
+              <Text contentAlign='left' className='font-semibold'>{org.orgName}</Text>
+            </div>
+            <div>
+              <Text contentAlign='left' color='secondary'>
+                {org.orgCode}
+              </Text>
+            </div>
           </div>
         </div>
 
@@ -1434,12 +1452,16 @@ const RightPanelSubOrg = ({
       )}
     >
       <div className='flex items-center gap-[0.5vw]'>
-        <LuBuilding2 className='h-[0.8vw] w-[0.8vw]' />
+        <LuBuilding2 className='h-[1.2vw] w-[1.5vw]' />
         <div className='flex flex-col'>
-          <span>{subOrg.subOrgName}</span>
-          <span className='text-torus-text-opacity-50 text-xs'>
-            {subOrg.subOrgCode}
-          </span>
+          <div>
+            <Text contentAlign='left'>{subOrg.subOrgName}</Text>
+          </div>
+          <div>
+            <Text contentAlign='left' color='secondary'>
+              {subOrg.subOrgCode}
+            </Text>
+          </div>
         </div>
       </div>
 

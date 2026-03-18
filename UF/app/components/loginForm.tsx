@@ -21,6 +21,7 @@ import i18n from './i18n'
 import TorusFooter from '../utils/TorusFooter.png'
 import Image from 'next/image'
 import { getCdnImage } from '../utils/getAssets'
+import { getFontSizeForDisplay, getFontSizeForHeader } from '../utils/branding'
 
 interface LoginProps {
   logo?: string
@@ -29,7 +30,7 @@ interface LoginProps {
   image?: string
 }
 
-const LoginForm = ({ logo, appName = "application", loginType = "standard", image }: LoginProps) => {
+const LoginForm = ({ logo, appName = "application1", loginType = "standard", image }: LoginProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     password: ''
@@ -90,20 +91,15 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
             setLoading(false)
             return
           }
-          setCookie('token', api_signin.data.token)
+          setCookie("token", api_signin.data.token, 10, "/");
           setCookie('tenant', tenant)
-          document.cookie = `language=${'en'}`
+          setCookie('language', 'en')
           let screenDetails: any = {
             keys:[
   {
-    "screenName": "app1",
-    "screensName": "app1-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 3",
-    "screensName": "menu_item_3-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
+    "screenName": "test",
+    "screensName": "test-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   }
 ]
           }
@@ -136,7 +132,7 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
               '_' +
               defaultScreen.split('-').at(-1)
           }
-          document.cookie = `currentPage=${JSON.stringify(defaultScreen)}`
+          setCookie('currentPage', JSON.stringify(defaultScreen))
           if (api_signin?.data?.redirectToORPSelector) {
             router.push('/select-context')
           } else {
@@ -226,8 +222,8 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
               ) : (
                 <></>
               )}
-              <Text variant='display-3'>
-                <div className='text-2xl font-bold'>{appName}</div>
+              <Text variant={getFontSizeForDisplay(branding.fontSize)} className='text-center font-bold'>
+                {appName}
               </Text>
             </div>
             <div
@@ -239,12 +235,10 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
               )}
             >
               <div className='flex flex-col items-center'>
-                <Text variant='header-2' className='py-2'>
-                  <div className='text-xl font-bold'>
+                <Text variant={getFontSizeForHeader(branding.fontSize)} className='py-2 font-bold'>
                     Log in to your account
-                  </div>
                 </Text>
-                <Text variant='body-1' color='secondary'>
+                <Text color='secondary'>
                   Enter your details to continue
                 </Text>
               </div>
@@ -252,6 +246,7 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
                 <input
                   type='text'
                   name='email'
+                  style={{ fontSize: branding.fontSize }}
                   className={twMerge(
                     'rounded-lg border p-1.5 text-sm 2xl:text-base outline-none 2xl:p-3',
                     borderColor
@@ -269,6 +264,7 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name='password'
+                  style={{ fontSize: branding.fontSize }}
                   className={twMerge(
                     'rounded-lg border p-1.5 text-sm 2xl:text-base outline-none 2xl:p-3',
                     borderColor
@@ -294,7 +290,7 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
                 </button>
               </div>
               <Link href='/forgot-password' className='self-end'>
-                <Text color='brand' className="text-sm 2xl:text-base" variant='body-2'>Forgot Password</Text>
+                <Text color='brand'>Forgot Password</Text>
               </Link>
               <Button
                 onClick={handleFormSubmit}
@@ -328,14 +324,14 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
               )}
 
               <div className='flex justify-center pb-2'>
-                <Text className='flex items-center gap-1 text-nowrap text-sm 2xl:text-base' variant='body-2'>
+                <Text className='flex items-center gap-1 text-nowrap'>
                   Don&apos;t have an account?{' '}
                   <a
                     href='https://outlook.office.com/mail/deeplink/compose?to=support@torus.tech'
                     target='_blank'
                     rel='noopener noreferrer'
                   >
-                    <Text color='brand' className="text-sm 2xl:text-base" variant='body-2'>Contact Admin</Text>
+                    <Text color='brand'>Contact Admin</Text>
                   </a>
                 </Text>
               </div>

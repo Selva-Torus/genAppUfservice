@@ -1,21 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerCookie, deleteServerCookie } from '@/app/components/cookieMgment'
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('token')?.value
+  const token = getServerCookie(request, 'token')
   const path = request.nextUrl.pathname
   const isAuthRoute = ["/" , "/forgot-password"].includes(path);
    let screenName:string = 'User Screen';
     let screenDetails: any = {
         keys:[
   {
-    "screenName": "app1",
-    "screensName": "app1-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 3",
-    "screensName": "menu_item_3-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
+    "screenName": "test",
+    "screensName": "test-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   }
 ]
     }
@@ -63,7 +59,7 @@ export function middleware(request: NextRequest) {
         )
       }
     } catch (error) {
-      request.cookies.delete('token')
+      deleteServerCookie(request, 'token')
       return NextResponse.redirect(
         new URL(`${process.env.NEXT_PUBLIC_BASE_PATH}`, request.url)
       )

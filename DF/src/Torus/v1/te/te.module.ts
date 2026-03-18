@@ -16,7 +16,9 @@ import { BullModule } from "@nestjs/bullmq";
 import { EventEmitterProcessor } from "./event-emitter.processor";
 import { ListenerService } from "./listener.service";
 import { DynamicFlowService } from "./dynamicFlow.service";
+
 import { SchedulerModule } from "../scheduler/scheduler.module";
+import { EnvData } from 'src/envData/envData.service';
  
 @Module({
     imports: [      
@@ -30,7 +32,7 @@ import { SchedulerModule } from "../scheduler/scheduler.module";
       ])    
     ],
     controllers: [TeController],
-    providers: [TeService, RedisService, CommonService,SecurityService,RuleService,JwtService,CodeService,LockService,ConfigService,EventEmitterProcessor,ListenerService,DynamicFlowService,MongoService],
+    providers: [TeService, RedisService, CommonService,SecurityService,RuleService,JwtService,CodeService,LockService,ConfigService,EventEmitterProcessor,ListenerService,DynamicFlowService,EnvData,MongoService],
     exports:[DynamicFlowService]
 })
   export class TeModule implements NestModule

@@ -17,7 +17,9 @@ import { EncryptInterceptor } from './encryptInterceptor';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CacheModule } from '@nestjs/cache-manager';
 import { BullModule } from '@nestjs/bullmq';
-import { ImportClientModule } from './import/import.module';
+import { EnvDataModule } from './envData/envData.module';
+import { EnvData } from './envData/envData.service';
+
 
 @Module({
   imports: [
@@ -28,9 +30,9 @@ import { ImportClientModule } from './import/import.module';
       },
     }),
   CacheModule.register({isGlobal:true}),
-  ScheduleModule.forRoot(),UfModule,TeModule,ImportClientModule,], 
+  ScheduleModule.forRoot(),UfModule,TeModule,EnvDataModule,], 
   controllers: [AppController],
-  providers: [AppService,CommonService,RuleService,CodeService,JwtService,RedisService,ConfigService,MongoService,{
+  providers: [AppService,CommonService,RuleService,CodeService,JwtService,RedisService,ConfigService,EnvData,MongoService,{
       provide: APP_INTERCEPTOR,
       useClass: EncryptInterceptor,
     }],

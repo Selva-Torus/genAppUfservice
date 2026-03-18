@@ -11,8 +11,6 @@ RUN npm install
 
 COPY .env .env
 #RUN npx prisma db push --accept-data-loss
-
-
 # Stage 2: Build the application
 FROM docker.io/library/node:20-alpine AS builder
 WORKDIR /app
@@ -27,6 +25,7 @@ COPY . .
  
 # Build the TypeScript code
 RUN npm run build
+
  
 # Stage 3: Final stage - Run the application
 FROM docker.io/library/node:20-alpine AS production

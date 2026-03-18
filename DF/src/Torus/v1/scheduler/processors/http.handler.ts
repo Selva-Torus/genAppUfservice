@@ -10,7 +10,8 @@ export class HttpHandler {
             let apiUrl = scheduledJob.job_config.url
             let apiMethod = scheduledJob.job_config.method
             let apiParams = scheduledJob.job_config.params//headers
-              
+            
+            payload = payload?.data || payload
             return await this.getDataFromTable(apiParams,apiMethod,apiUrl,payload)    
             // if(apiMethod == 'POST'){
             //     let response = await axios.post(apiUrl,payload); //'http://192.168.2.96:5000/flow/externalApi'

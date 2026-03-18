@@ -219,7 +219,7 @@ export class TeController {
     const { dpdKey,method } = input  
       
       if (input.data){
-        let result :any = await this.teService.savehandler(input.data, input.key, input.event, input.nodeId, input.nodeName,input.nodeType, token, input.upId,input.sourceId, input.lock,input.childTables)
+        let result :any = await this.teService.savehandler(input,token)
         if(dpdKey && method){
           result["dpdKey"] = dpdKey
           result["method"] = method

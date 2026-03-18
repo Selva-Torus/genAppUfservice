@@ -84,7 +84,9 @@ export interface te_eventEmitterDto {
   nodeType?:string;
   upId?:string;
   lock?:any;
-  childTables?:string[]
+  childTables?:string[];
+  childTableData?:any[];
+  ssKey?:string[];
 }
 export interface uf_ifoDto{
   dpdKey?:string;

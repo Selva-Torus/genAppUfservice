@@ -33,6 +33,7 @@ const ContextSelector = () => {
   const [selectedAccessProfile, setSelectedAccessProfile] = useState<string[]>(
     []
   )
+  const [navigationStyles] = useState<'vertical' | 'horizontal'>("vertical");
   const { userDetails, setUserDetails , setMatchedAccessProfileData } = useContext(
     TotalContext
   ) as TotalContextProps
@@ -40,7 +41,7 @@ const ContextSelector = () => {
   const tp_ps: any = getCookie('tp_ps')
   const toast = useInfoMsg()
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
-  const appName = 'application'
+  const appName = 'application1'
   const [accessProfiles, setAccessProfiles] = useState<any[]>([])
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -59,14 +60,9 @@ const ContextSelector = () => {
   let screenDetails: any = {
            keys:[
   {
-    "screenName": "app1",
-    "screensName": "app1-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
-  },
-  {
-    "screenName": "menu item 3",
-    "screensName": "menu_item_3-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1"
+    "screenName": "test",
+    "screensName": "test-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   }
 ]
   }
@@ -141,7 +137,19 @@ const ContextSelector = () => {
                 ? selectedCombinationData.subOrgName
                 : selectedCombinationData.orgName,
               path: selectedCombinationData?.orgPath,
-              id: selectedCombinationData?.id
+              id: selectedCombinationData?.id,
+              mainOrgGrpCode: selectedCombinationData?.subOrgGrpCode
+                ? selectedCombinationData.orgGrpCode
+                : undefined,
+              mainOrgCode: selectedCombinationData?.subOrgCode
+                ? selectedCombinationData.orgCode
+                : undefined,
+              mainOrgGrpName: selectedCombinationData?.subOrgGrpName
+                ? selectedCombinationData.orgGrpName
+                : undefined,
+              mainOrgName: selectedCombinationData?.subOrgName
+                ? selectedCombinationData.orgName
+                : undefined
             }
           : {}
       )
@@ -323,14 +331,14 @@ const ContextSelector = () => {
         brandColor={brandColor}
         mode='closed'
         listMenuItems={false}
-        navBarItemsOrder={navBarItemsOrder}
+        navBarItemsOrder={navigationStyles === 'vertical' ? [] :navBarItemsOrder}
         appLogo={appLogo}
         logo={logo}
       />
 
       <hr className={twMerge('w-full border', borderColor)} />
       <div className='px-5 py-2.5'>
-        <div className='flex w-full items-center justify-end gap-5'>
+        <div className='flex w-full items-center justify-end gap-1'>
           <div title={selectedAccessProfile.length ? selectedAccessProfile[0] : "Select Access Profile"} className='w-[12vw]'>
             <Dropdown
               placeholder='Select Access Profile'
@@ -359,7 +367,7 @@ const ContextSelector = () => {
           </div>
           <div className='flex gap-2 py-2'>
             <Button
-              className='flex items-center rounded-md px-5 py-2 disabled:opacity-50'
+              className='flex items-center rounded-md px-5 py-2.5 disabled:opacity-50'
               icon={'MdArrowForward'}
               onClick={handleNavigationClick}
               disabled={
@@ -414,20 +422,17 @@ const ContextSelector = () => {
                     {/* Texts */}
                     <div className='flex w-full flex-col items-center'>
                       <Text
-                        variant='body-1'
                         className={`w-full truncate text-nowrap text-center`}
                       >
                         {block?.group}
                       </Text>
                       <Text
-                        variant='body-2'
                         className='w-full truncate text-nowrap text-center font-semibold'
                       >
                         {block?.title}
                       </Text>
                       <Text
-                        variant='body-1'
-                        className='w-full truncate text-nowrap text-center'
+                        className='w-full truncate text-nowrap text-center !min-h-4'
                         color='secondary'
                       >
                         {block.subtitle}

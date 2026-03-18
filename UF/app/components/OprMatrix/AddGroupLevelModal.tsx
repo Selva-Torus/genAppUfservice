@@ -82,7 +82,6 @@ const AddGroupLevelModal = ({
       toast('Please fill all details to continue', 'warning')
       return
     }
-
     if (selectedFile) {
       const data = new FormData()
       data.append('file', selectedFile)
@@ -115,7 +114,6 @@ const AddGroupLevelModal = ({
         }
       }
     }
-
     addFunction(path, inputValue, parentCode)
     close()
   }
@@ -137,7 +135,6 @@ const AddGroupLevelModal = ({
       )
       .join(' ') // Join the words without spaces
   }
-
   return (
     <div
       className='flex h-fit flex-col '
@@ -148,14 +145,14 @@ const AddGroupLevelModal = ({
       }}
     >
       <div className='flex w-full items-center justify-between py-[.5vh]'>
-        <Text contentAlign='left' variant='body-3'>
+        <Text contentAlign='left'>
           {modalTitle}
         </Text>
         <Button className={'!w-fit rounded-md p-1'} onClick={close}>
           <Multiply height='.7vw' width='.7vw' />
         </Button>
       </div>
-      <Text contentAlign='left' variant='caption-1' color='secondary'>
+      <Text contentAlign='left' color='secondary'>
         {modalSubText}
       </Text>
 
@@ -253,6 +250,7 @@ const AddGroupLevelModal = ({
             {`Enter the code of the ${resourceField}.`}
           </Text>
         </div>
+
         <input
           id='code'
           name='code'

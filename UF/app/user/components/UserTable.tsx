@@ -14,6 +14,8 @@ import { twMerge } from 'tailwind-merge'
 import { useTheme } from '@/hooks/useTheme'
 import i18n from '../../components/i18n'
 import { getCdnImage } from '../../utils/getAssets'
+import { getFontSizeForHeader, getFontSizeForSubHeader } from '@/app/utils/branding'
+import { useGlobal } from '@/context/GlobalContext'
 
 export interface UserData {
   users: string
@@ -43,6 +45,7 @@ const UserTable: React.FC<{
   const [accessProfiles, setAccessProfiles] = useState<any>({})
   const [editUserModalOpen, setEditUserModalOpen] = useState(false)
   const [userData, setUserData] = useState({})
+  const {branding} = useGlobal()
   const { selectedRows, setSelectedRows, searchTerm } = React.useContext(
     SetupScreenContext
   ) as SetupScreenContextType
@@ -284,21 +287,21 @@ const UserTable: React.FC<{
                 }}
                 className='rounded-full border'
               >
-                <Text variant='subheader-1' className='flex items-center'>
+                <Text variant={getFontSizeForSubHeader(branding.fontSize)} className='flex items-center'>
                   {item.firstName?.charAt(0)}
                   {item.lastName?.charAt(0)}
                 </Text>
               </div>
             )}
             <div className='flex flex-col'>
-              <Text variant='subheader-2'>
+              <Text variant={getFontSizeForSubHeader(branding.fontSize)} color='primary'>
                 {item.firstName} {item.lastName}
               </Text>
-              <Text variant='caption-1' color='secondary'>
+              <Text color='secondary'>
                 {item.email}
               </Text>
               {item.mobile && (
-                <Text variant='caption-2' color='secondary'>
+                <Text color='secondary'>
                   {item.mobile}
                 </Text>
               )}
@@ -341,14 +344,14 @@ const UserTable: React.FC<{
           </div>
         ),
         lastActive: (
-          <Text variant='body-2' key={index}>
+          <Text key={index}>
             {!item.lastActive || item.lastActive === 'NA'
               ? 'NA'
               : formatDate(item.lastActive)}
           </Text>
         ),
         dateAdded: (
-          <Text variant='body-2' key={index}>
+          <Text key={index}>
             {!item.dateAdded || item.dateAdded === 'NA'
               ? 'NA'
               : formatDate(item.dateAdded)}
@@ -404,11 +407,11 @@ const UserTable: React.FC<{
         </Modal>
       </div>
       <div>
-        <Text contentAlign='left' variant='header-1'>
+        <Text contentAlign='left' className='font-bold' variant={getFontSizeForHeader(branding.fontSize)} color='primary'>
           {keyset('User Management')}
         </Text>
       </div>
-      <div className='mt-4 w-[82vw] overflow-auto'>
+      <div className='mt-4 w-full min-w-0 overflow-auto'>
         <CustomTable
           data={rowOfCurrentGrps as any}
           columns={columns as any}

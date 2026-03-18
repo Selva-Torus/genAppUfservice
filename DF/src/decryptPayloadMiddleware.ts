@@ -13,8 +13,6 @@ const DecryptPayloadMiddleware = (commonService: CommonService): FastifyPluginAs
       }
 
       const { dpdKey, method, ciphertext } = req.body;
-      console.log("dpdKey", dpdKey);
-      console.log("method", method);
 
       if (ciphertext) {
         try {

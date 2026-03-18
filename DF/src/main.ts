@@ -4,7 +4,7 @@
   "deploymentArtifactKey": "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
   "appGroupDesc": "appgroup",
   "logType": "mongodb",
-  "appDesc": "application",
+  "appDesc": "application1",
   "isOld": true,
   "clientCode": "CI001",
   "loginDetails": {
@@ -82,18 +82,68 @@ import * as fs from 'fs';
 import DecryptPayloadMiddleware from './decryptPayloadMiddleware';
 import multipart from '@fastify/multipart';
 import { BigIntInterceptor } from './bigint.interceptor';
-
+import { EnvData } from './envData/envData.service';
+//import { envData as mongoClientEnvData } from './mongoClient';
+import { decrypt } from './decrypt';
+import { Logger } from '@nestjs/common';
+const Redis = require('ioredis');
 
 async function bootstrap() {
-    const fastifyAdapter = new FastifyAdapter({
+  const logger = new Logger('Redis');
+  const redis = new Redis({
+    host: process.env.HOST,
+    port: parseInt(process.env.PORT),
+  }).on('error', (err:any) => {
+    console.log('Redis Client Error', err);
+    throw err;
+  });
+
+  let configData = null;
+  try {
+    const redisResult = await redis.call('JSON.GET', "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1:NDP");
+    if (redisResult) {
+      const parsed = JSON.parse(redisResult);
+      const rootKey = Object.keys(parsed)[0];
+      const encryptedPayload = parsed[rootKey];
+      const decryptedData = decrypt<{ data: any }>(encryptedPayload);
+      configData = decryptedData.data;
+
+      if (configData) {
+        logger.log('✅ Config fetched from Redis');
+      } else {
+        logger.warn('⚠️ Config structure Redis - No DPD data found');
+      }
+    } else {
+      logger.warn('⚠️ No config found in Redis for key');
+    }
+  } catch (error) {
+    logger.error('Error loading config from Redis:', error);
+  }
+
+   //if (configData) {
+   // mongoClientEnvData.setConfig(configData);
+ // }
+
+  const fastifyAdapter = new FastifyAdapter({
     bodyLimit: 500 * 1024 * 1024, // 500MB limit
     logger: true,
   });
-  
+  if (configData) {
+    EnvData.preloadConfig(configData);
+    logger.log('✅ Config preloaded into EnvData before bootstrap');
+  }
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     fastifyAdapter,
   );
+
+  const envData = app.get(EnvData);
+  if (configData) {
+    envData.setConfig(configData);
+    console.log('✅ Config loaded into EndDetails at bootstrap');
+  } else {
+    console.error('❌ No config data to load into EndDetails');
+  }
     // Global interceptor for BigInt serialization
   app.useGlobalInterceptors(new BigIntInterceptor());
   //app.use(

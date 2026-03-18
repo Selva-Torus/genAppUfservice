@@ -15,6 +15,7 @@ import Redis from "ioredis";
 import { Kafka, Producer, Consumer, CompressionTypes, EachMessagePayload } from 'kafkajs';
 import * as pg from "pg";
 import { MongoClient } from "mongodb";
+import { EnvData } from "src/envData/envData.service";
 
 @Injectable()
 export class ListenerService implements OnModuleInit, OnModuleDestroy{ 
@@ -33,13 +34,19 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
         private schedulerRegistry: SchedulerRegistry,
         private readonly CommonService: CommonService,
         private readonly teService: TeService,
+         private readonly envData:EnvData,
         @Inject(forwardRef(() => EventEmitterProcessor)) private readonly processor: EventEmitterProcessor
-    ){
-       this.kafka = new Kafka({
-        clientId: process.env.KAFKA_CLIENT_ID,
-        brokers: [process.env.KAFKA_BROKER],
-       }); 
-    }
+    ){}
+
+     private getKafkaInstance(): Kafka {
+        if (!this.kafka) {
+            this.kafka = new Kafka({
+                clientId: this.envData.getKafkaClientId(),
+                brokers: [this.envData.getKafkaBroker()],
+            });
+        }
+        return this.kafka;
+    } 
     private readonly logger = new Logger(ListenerService.name)    
    
 
@@ -54,7 +61,7 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
 
    async getProducer(): Promise<Producer> {
     if (!this.producer) {
-      this.producer = this.kafka.producer({
+      this.producer = this.getKafkaInstance().producer({
         allowAutoTopicCreation: true,
         maxInFlightRequests: 5,
         idempotent: true, // Changed to true for better reliability
@@ -74,7 +81,7 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
   // Reuse consumers by groupId
   async getConsumer(groupId: string): Promise<Consumer> {
     if (!this.consumers.has(groupId)) {
-      const consumer = this.kafka.consumer({
+      const consumer = this.getKafkaInstance().consumer({
         groupId: groupId,
         sessionTimeout: 30000, // Increased from 6000
         heartbeatInterval: 3000, // Increased from 1500
@@ -93,7 +100,7 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
 
     let keyarr = []
         
-    let artifactToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoic2VsdmEiLCJjbGllbnQiOiJDSTAwMSIsInR5cGUiOiJjIiwibG9nVHlwZSI6Im1vbmdvZGIiLCJzaWQiOiI5NjQ0ZjQwZS0zMjBmLTRlOWEtOWI1ZS02NWEwODQxZDBjOTMiLCJpYXQiOjE3NzA4NzIwOTcsImV4cCI6MTc3MDg3MzI5N30.DtkV6N9EhWgGp_LFcO6XMAepy6Uop2xkNsaaknRYkcM';  
+    let artifactToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnQiOiJDSTAwMSIsImxvZ2luSWQiOiJzZWx2YSIsInNpZCI6ImM1MTAzNzQ4LTgzOWMtNDRlNS05M2YzLTdjNjliZDg2ZGI3YyIsImxvZ1R5cGUiOiJtb25nb2RiIiwidHlwZSI6ImMiLCJpYXQiOjE3NzM4MDc5NjksImV4cCI6MTc3MzgwOTE2OX0.kO5puFGtVJmT-op72w3sARnThNJSPk8NjHjMog1Jq4g';  
     for (const key of keyarr) {
       this.listenToKey(key,artifactToken); // fire & forget
     }  
@@ -1207,7 +1214,7 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
                   }
                 }
               }else{
-                 kafkaBrokers = (process.env.KAFKA_BROKER).split(',');
+                 kafkaBrokers = (this.envData.getKafkaBroker()).split(',')//(process.env.KAFKA_BROKER).split(',');
               }
 
               // Initialize Kafka client
@@ -1480,8 +1487,8 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
                       dbUrl = dbConfig?.host
                     schemaname = dbConfig?.schema
                   } else {
-                    dbUrl = process.env.DATABASE_URL;
-                    schemaname = process.env.DATABASE_URL.split('schema=')[1];
+                    dbUrl = this.envData.getDatabaseUrl()//process.env.DATABASE_URL;
+                    schemaname = (this.envData.getDatabaseUrl()).split('schema=')[1]//process.env.DATABASE_URL.split('schema=')[1];
                   }
 
                   if (!dbUrl) throw new CustomException('DB url not found', 404);
@@ -1678,7 +1685,7 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
                     else
                       mongodbUrl = mongodbConfig?.host
                   } else {
-                    mongodbUrl = process.env.DATABASE_URL
+                    mongodbUrl = this.envData.getDatabaseUrl()//process.env.DATABASE_URL
                   }
                   if (!mongodbUrl)
                     throw new CustomException('Mongo DB url not found', 404);
@@ -1844,9 +1851,9 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
                       }
                     }
                   } else {
-                    url = process.env.SEAWEED_OUTPUT_HOST
-                    userName = process.env.SEAWEED_USERNAME
-                    password = process.env.SEAWEED_PASSWORD
+                    url = this.envData.getSeaweedOutputHost()//process.env.SEAWEED_OUTPUT_HOST
+                    userName = this.envData.getSeaweedUsername()//process.env.SEAWEED_USERNAME
+                    password = this.envData.getSeaweedPassword()//process.env.SEAWEED_PASSWORD
                   }
 
                   const seaWeedConfig = {
@@ -2009,7 +2016,7 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
                       dbUrl = dbConfig?.host
                   }
                 } else {
-                  dbUrl = process.env.DATABASE_URL;
+                  dbUrl = this.envData.getDatabaseUrl()//process.env.DATABASE_URL;
                 }
                 if (params?.length > 0) {
                   for (let a = 0; a < params.length; a++) {
@@ -2212,7 +2219,7 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
                   }
 
                 } else {
-                  dbUrl = process.env.DATABASE_URL;
+                  dbUrl = this.envData.getDatabaseUrl()//process.env.DATABASE_URL;
                 }
 
                 if (params?.length > 0) {

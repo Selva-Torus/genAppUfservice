@@ -1051,7 +1051,7 @@ const OPRTopNavSelector = ({
               <div className='w-[90%]'>
                 <div className='flex items-center gap-1'>
                   <OrgStructure />
-                  <Text variant='caption-2' contentAlign='left'>
+                  <Text contentAlign='left'>
                     Organization
                   </Text>
                 </div>
@@ -1100,7 +1100,7 @@ const OPRTopNavSelector = ({
               <div className='w-[90%]'>
                 <div className='flex items-center gap-1'>
                   <ProdStructure />
-                  <Text variant='caption-2' contentAlign='left'>
+                  <Text contentAlign='left'>
                     Products
                   </Text>
                 </div>
@@ -1149,7 +1149,7 @@ const OPRTopNavSelector = ({
               <div className='w-[90%]'>
                 <div className='flex items-center gap-1'>
                   <RoleStructure />
-                  <Text variant='caption-2' contentAlign='left'>
+                  <Text contentAlign='left'>
                     Roles
                   </Text>
                 </div>

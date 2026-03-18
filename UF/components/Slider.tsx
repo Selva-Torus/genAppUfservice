@@ -86,7 +86,7 @@ export const Slider: React.FC<SliderProps> = ({
 
   const sliderElement = (
     <div
-      className={`w-full h-full flex flex-col relative ${direction === "RTL" ? "rtl" : ""}`}
+      className={`w-full h-full flex flex-col relative overflow-hidden ${direction === "RTL" ? "rtl" : ""}`}
       style={{ paddingTop: tooltipDisplay === "on" || (tooltipDisplay === "auto" && showTooltip) ? "40px" : "0px" }}
       onMouseEnter={() => {
         if (!disabled) {
@@ -164,7 +164,7 @@ export const Slider: React.FC<SliderProps> = ({
 
       {/* Slider container - track is 1/2 of parent height, centered */}
       <div className={`flex flex-col w-full relative ${showValue && headerText ? "h-[50%]": showValue && marks ? "h-[25%]" :showValue || marks ? "h-[25%]" : "h-[100%]"}`}  >
-        <div className="w-full relative" style={{ height: "100%" }}>
+        <div className="w-full relative pt-2" style={{ height: "100%" }}>
           {/* Background track */}
           <div
             className={`absolute w-full h-full ${
@@ -263,7 +263,7 @@ export const Slider: React.FC<SliderProps> = ({
                   }}
                 >
                   <div
-                    className={`w-0.5 h-2 mx-auto ${isDark ? "bg-gray-600" : "bg-gray-400"}`}
+                    className={`w-0.5 h-2 mx-auto ${sliderValue >= markValue ? "bg-transparent" : isDark ? "bg-gray-600" : "bg-gray-400"}`}
                   />
                   <span
                     className={`mt-1 block ${fontSizeClass} ${isDark ? "text-gray-400" : "text-gray-600"} ${

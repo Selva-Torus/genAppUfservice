@@ -1,5 +1,6 @@
 
 
+
 'use client'
 import React,{ useEffect, useState,useContext, useRef } from 'react';
 import { AxiosService } from '@/app/components/axiosService';
@@ -7,6 +8,7 @@ import { uf_authorizationCheckDto } from '@/app/interfaces/interfaces';
 import { codeExecution } from '@/app/utils/codeExecution';
 import { useRouter } from 'next/navigation';
 import { getRouteScreenDetails } from '@/app/utils/assemblerKeys';
+import { useHandleGroupArrayCopyFormData } from '@/app/utils/commonfunctions'; 
 import { CommonHeaderAndTooltip } from '@/components/CommonHeaderAndTooltip';
 import { Button } from '@/components/Button';
 import { Text } from '@/components/Text';
@@ -15,20 +17,25 @@ import { Modal } from '@/components/Modal';
 import { eventBus } from '@/app/eventBus';
 import clsx from "clsx";
 import { useHandleDfdRefresh } from '@/context/dfdRefreshContext';
-import Buttontestbtn2  from "./Buttontestbtn2";
+import evaluateDecisionTable from '@/app/utils/evaluateDecisionTable';
+import decodeToken from '@/app/components/decodeToken';
+import uoMapperData from '@/context/dfdmapperContolnames.json';
+import ButtontestBtn  from "./ButtontestBtn";
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { getCookie } from "@/app/components/cookieMgment";
 import { TotalContext, TotalContextProps } from '@/app/globalContext';
 import { useTheme } from '@/hooks/useTheme';
 
 
-const GrouptestGrp2 = ({lockedData={},setLockedData,primaryTableData={}, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,dropdownData,setDropdownData,encryptionFlagPageData, nodeData, setNodeData,paginationDetails,isFormOpen=false}:any)=> {
+const GrouptestGrp = ({lockedData={},setLockedData,primaryTableData={}, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagPageData, nodeData, setNodeData,paginationDetails,isFormOpen=false}:any)=> {
   const token:string = getCookie('token'); 
+  const decodedTokenObj:any = decodeToken(token);
   const {refresh, setRefresh} = useContext(TotalContext) as TotalContextProps;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const handleDfdRefresh = useHandleDfdRefresh();
+  const copyFormData=useHandleGroupArrayCopyFormData()
   let code:any = ``;
   let idx = "";
   let item = "";
@@ -43,19 +50,8 @@ const GrouptestGrp2 = ({lockedData={},setLockedData,primaryTableData={}, setPrim
     "dpd":encryptionDpd,
     "method":encryptionMethod
   };
-  const securityData:any={
-  "Template 1": {
-    "allowedControls": [
-      "testbtn2"
-    ],
-    "allowedGroups": [
-      "canvas",
-      "testgrp2"
-    ],
-    "blockedControls": [],
-    "readOnlyControls": []
-  }
-};
+  const [showFlag, setShowFlag] = React.useState<string>("");
+  const securityData:any={};
   const prevRefreshRef = useRef(false);
   const [allowedComponent,setAllowedComponent]=useState<any>("");
   const [allowedControls,setAllowedControls]=useState<any>("");
@@ -68,13 +64,13 @@ const GrouptestGrp2 = ({lockedData={},setLockedData,primaryTableData={}, setPrim
   const [ButtonGoRuleData,setButtonGoRuleData]=useState<any>({})
  /////////////
    //another screen
-  const {testgrp21c521, settestgrp21c521}= useContext(TotalContext) as TotalContextProps;
-  const {testgrp21c521Props, settestgrp21c521Props}= useContext(TotalContext) as TotalContextProps;
-  const {testbtn27dc73, settestbtn27dc73}= useContext(TotalContext) as TotalContextProps;
+  const {testgrp35550, settestgrp35550}= useContext(TotalContext) as TotalContextProps;
+  const {testgrp35550Props, settestgrp35550Props}= useContext(TotalContext) as TotalContextProps;
+  const {testbtn54460, settestbtn54460}= useContext(TotalContext) as TotalContextProps;
   //////////////
   const [open, setOpen] = React.useState(false);
   async function securityCheck() {
-  const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:artifact2:AFVK:v1",componentId:"46b53fdb1b814e429a6568b82941c521",from:"GroupTestgrp2",accessProfile:accessProfile},{
+  const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1",componentId:"cae8d3787e4948b080baf4aa38c35550",from:"GroupTestgrp",accessProfile:accessProfile},{
     headers: {
       Authorization: `Bearer ${token}`
     }})
@@ -87,16 +83,25 @@ const GrouptestGrp2 = ({lockedData={},setLockedData,primaryTableData={}, setPrim
   }
   setAllowedControls(security) 
   setAllowedComponent(allowedGroups) 
+  if(orchestrationData?.data?.rule?.nodes?.length > 0){
+    let schemaFlag:any = evaluateDecisionTable(orchestrationData?.data?.rule.nodes,{},{...decodedTokenObj});
+
+    if (schemaFlag.output) {
+      setShowFlag(schemaFlag.output.toLowerCase());
+    }else{
+      setShowFlag("")
+    }
+  }
     
   /////////////
-    if(orchestrationData?.data?.readableControls.includes("testbtn2")){
-      settestbtn27dc73({...testbtn27dc73,isDisabled:true});
+    if(orchestrationData?.data?.readableControls.includes("testbtn")){
+      settestbtn54460({...testbtn54460,isDisabled:true});
     }
   //////////////
     if (code != '') {
       let codeStates: any = {};
-      codeStates['testgrp2']  = testgrp21c521,
-      codeStates['settestgrp2'] = settestgrp21c521,
+      codeStates['testgrp']  = testgrp35550,
+      codeStates['settestgrp'] = settestgrp35550,
 
     codeExecution(code,codeStates);
     } 
@@ -108,29 +113,35 @@ const GrouptestGrp2 = ({lockedData={},setLockedData,primaryTableData={}, setPrim
   const handleOnChange=()=>{
 
   }
-  const testgrp21c521Ref = useRef<any>(null);
+  const testgrp35550Ref = useRef<any>(null);
   const handleClearSearch = () => {
-    testgrp21c521Ref.current?.setSearchParams();
-    testgrp21c521Ref.current?.handleSearch({});
+    testgrp35550Ref.current?.setSearchParams();
+    testgrp35550Ref.current?.handleSearch({});
   };
 
   useEffect(() => {    
     securityCheck()   
     handleOnload()
     if (prevRefreshRef.current) {
-      if(!Array.isArray(testgrp21c521) && Object.keys(testgrp21c521)?.length>0)
+      if(!Array.isArray(testgrp35550) && Object.keys(testgrp35550)?.length>0)
       {
-        settestgrp21c521({})
+        settestgrp35550({})
       }
     }else 
       prevRefreshRef.current= true
-  }, [testgrp21c521Props?.refresh])
+  }, [testgrp35550Props?.refresh,token])
 
+
+  const renderBUttons=()=>{
+    return (
+      <></>
+    )
+  }
   return (
     <div 
       style={{          
-        gridColumn: '7 / 18',
-        gridRow: '28 / 173',
+        gridColumn: '6 / 11',
+        gridRow: '61 / 147',
       
         //rowGap: '0px',
         display: 'grid',
@@ -151,10 +162,10 @@ const GrouptestGrp2 = ({lockedData={},setLockedData,primaryTableData={}, setPrim
       }}
       className={`flex flex-col overflow-auto rounded-md  ${isDark ? 'text-white' : 'text-black'}`}
     >
-        {        (("testbtn2" in ButtonGoRuleData)?ButtonGoRuleData["testbtn2"]:true) && 
-          allowedControls.includes("testbtn2")  ?            <Buttontestbtn2 lockedData={lockedData} setLockedData={setLockedData} primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData} checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData}/>: <div></div>} 
+        {        (("testbtn" in ButtonGoRuleData)?ButtonGoRuleData["testbtn"]:true) && 
+          allowedControls.includes("testbtn")  ?            <ButtontestBtn lockedData={lockedData} setLockedData={setLockedData} primaryTableData={primaryTableData} setPrimaryTableData={setPrimaryTableData} checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData}/>: <div></div>} 
     </div>
  )
 }
 
-export default GrouptestGrp2
+export default GrouptestGrp

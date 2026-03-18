@@ -2,10 +2,11 @@ import React from 'react'
 import AppHub from './components/AppHub'
 import { cookies } from 'next/headers'
 import { AxiosService } from '../components/axiosService'
+import { getHeaderCookie } from '../components/cookieMgment'
 
 const page = async () => {
   const cookieStore = await cookies()
-  const token = cookieStore.get('token')?.value || ''
+  const token = getHeaderCookie(cookieStore, 'token')
 
   const getAllAppList = async () => {
     try {

@@ -6,11 +6,12 @@ import { JobProcessor } from "./processors/job.processor";
 import { GrpcHandler } from "./processors/grpc.handler";
 import { HttpHandler } from "./processors/http.handler";
 import { EventHandler } from "./processors/event.handler";
+import { EnvData } from 'src/envData/envData.service';
 
 @Module({
-    imports: [BullModule.registerQueue({name: 'scheduler'}),],
+    imports: [],
     controllers: [SchedulerController],
-    providers: [SchedulerService,JobProcessor,GrpcHandler,HttpHandler,EventHandler],
+    providers: [SchedulerService,JobProcessor,GrpcHandler,HttpHandler,EventHandler,EnvData],
     exports:[]
 })
   export class SchedulerModule{}

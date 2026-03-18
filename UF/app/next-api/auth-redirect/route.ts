@@ -1,4 +1,5 @@
 import { AxiosService } from '@/app/components/axiosService'
+import { setServerCookie } from '@/app/components/cookieMgment'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(req: NextRequest) {
@@ -32,16 +33,8 @@ export async function GET(req: NextRequest) {
           new URL(`${process.env.NEXT_PUBLIC_BASE_PATH}/user`, baseUrl)
         )
       }
-      response.cookies.set({
-        name: "tp_ps",
-        value: "",
-        expires: new Date(0),
-      });
-
-      response.cookies.set({
-        name: "token",
-        value: signinApiResponse.data?.token,
-      });
+      setServerCookie(response, "tp_ps", "", { expires: new Date(0) });
+      setServerCookie(response, "token", signinApiResponse.data?.token);
     } else {
       response = NextResponse.redirect(origin)
     }

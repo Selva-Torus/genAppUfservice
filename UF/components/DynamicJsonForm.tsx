@@ -1,27 +1,64 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { Button } from "./Button";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
+import DocumentUploader from './DocumentUploader'
+import * as v from 'valibot';
 
 type ContentAlign = 'center' | 'left' | 'right';
 type FieldValue = string | number | boolean | null;
-type FieldValues = { [key: string]: FieldValue | FieldValues };
+type FieldValues = { [key: string]: FieldValue | FieldValues | FieldValues[] };
+
+interface ValidationConfig {
+  required?: boolean;
+  rule?: 'Past' | 'Future' | 'FutureOrPresent' | 'PastOrPresent';
+  min?: number;
+  max?: number;
+  minLength?: number;
+  maxLength?: number;
+}
 
 interface FieldMetadata {
-  type: "text" | "number" | "boolean" | "date" | "dropdown" | "textarea" | "password";
+  type: "text" | "number" | "boolean" | "date" | "dropdown" | "textarea" | "password" | "documentuploader";
   label: string;
   defaultValue: FieldValue;
-  options?: readonly string[];
+  options?: readonly string[] | string;
+  text?: string[] | string;
+  static?: boolean;
+  relation?: boolean;
+  saveAs?: string;
+  elementId?: string;
   placeholder?: string;
+  validation?: ValidationConfig;
+  page?: number;
+  count?: number;
+}
+
+interface ArrayMetadataConfig {
+  type: "array";
+  label: string;
+  items: {
+    type: "object";
+    fields: MetadataConfig;
+  };
+}
+
+interface FixedArrayMetadataConfig {
+  type: "fixedarray";
+  label: string;
+  items: Array<{
+    type: "object";
+    fields: MetadataConfig;
+  }>;
 }
 
 type MetadataConfig = {
-  [key: string]: FieldMetadata | NestedMetadataConfig;
+  [key: string]: FieldMetadata | NestedMetadataConfig | ArrayMetadataConfig | FixedArrayMetadataConfig;
 };
 
 interface NestedMetadataConfig {
@@ -34,14 +71,16 @@ interface DynamicContentFieldsProps {
   metadata: MetadataConfig;
   onChange: (values: FieldValues) => void;
   onSubmit?: (values: FieldValues) => void;
+  onValidationChange?: (isValid: boolean) => void;
   values?: FieldValues; // Add external values prop
+  dynamicData?: Record<string, Record<string, any>[]>;
   needTooltip?: boolean;
   tooltipProps?: TooltipPropsType;
   headerText?: string;
   headerPosition?: HeaderPosition;
   className?: string;
   contentAlign?: ContentAlign;
-  
+  getPaginationData?: (value?: any, page?: number, dfd?: string) => void;
 }
 
 
@@ -49,18 +88,45 @@ export default function DynamicContentFields({
   metadata,
   onChange,
   onSubmit,
+  onValidationChange,
   values: externalValues,
+  dynamicData,
   needTooltip = false,
   tooltipProps,
   headerText,
   headerPosition = "top",
   className = "",
   contentAlign = 'left',
+  getPaginationData,
 }: DynamicContentFieldsProps) {
   const { theme, branding } = useGlobal();
   const isDark = theme === "dark" || theme === "dark-hc";
   const [values, setValues] = useState<FieldValues>({});
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [openDropdownKey, setOpenDropdownKey] = useState<string | null>(null);
+  const [openTableName, setOpenTableName] = useState<string>('');
+  const [dropdownPages, setDropdownPages] = useState<Record<string, number>>({});
+  const [loadingDropdowns, setLoadingDropdowns] = useState<Set<string>>(new Set());
+  const [loadTick, setLoadTick] = useState(0);
+  const loadingRef = useRef<Set<string>>(new Set());
+  const scrollTopRef = useRef<Record<string, number>>({});
+  const listDivRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+  const loadPreLengthRef = useRef<Record<string, number>>({});
+  const noMorePagesRef = useRef<Set<string>>(new Set());
+
+  const updateError = (fieldId: string, error: string | null) => {
+    setValidationErrors(prev => {
+      const next = { ...prev };
+      if (error) {
+        next[fieldId] = error;
+      } else {
+        delete next[fieldId];
+      }
+      onValidationChange?.(Object.keys(next).length === 0);
+      return next;
+    });
+  };
 
   // Initialize values from metadata and expand all sections by default
   useEffect(() => {
@@ -68,23 +134,83 @@ export default function DynamicContentFields({
     const initialExpanded: Record<string, boolean> = {};
 
     Object.entries(metadata).forEach(([key, config]) => {
-      if (isNestedMetadata(config)) {
+      if (isFixedArrayMetadata(config)) {
+        initialValues[key] = config.items.map((itemConfig) => {
+          const item: FieldValues = {};
+          Object.entries(itemConfig.fields).forEach(([fieldKey, fieldConfig]) => {
+            if (isFieldMetadata(fieldConfig)) {
+              item[fieldKey] = fieldConfig.defaultValue ?? null;
+            }
+          });
+          return item;
+        });
+        initialExpanded[key] = true;
+      } else if (isArrayMetadata(config)) {
+        const defaultItem: FieldValues = {};
+        Object.entries(config.items.fields).forEach(([fieldKey, fieldConfig]) => {
+          if (isFieldMetadata(fieldConfig)) {
+            defaultItem[fieldKey] = fieldConfig.defaultValue ?? null;
+          }
+        });
+        initialValues[key] = [defaultItem];
+        initialExpanded[key] = true;
+      } else if (isNestedMetadata(config)) {
         const nestedValues: FieldValues = {};
         Object.entries(config.fields).forEach(([nestedKey, nestedConfig]) => {
           if (isFieldMetadata(nestedConfig)) {
-            nestedValues[nestedKey] = nestedConfig.defaultValue;
+            if(nestedConfig?.type === "dropdown") {
+              const initKey = nestedConfig.saveAs ?? nestedKey;
+              nestedValues[initKey] = nestedConfig.defaultValue;
+            }else
+            {
+              nestedValues[nestedKey] = nestedConfig.defaultValue ?? null;
+            }
+          } else if (isFixedArrayMetadata(nestedConfig)) {
+            nestedValues[nestedKey] = nestedConfig.items.map((itemConfig) => {
+              const item: FieldValues = {};
+              Object.entries(itemConfig.fields).forEach(([fieldKey, fieldConfig]) => {
+                if (isFieldMetadata(fieldConfig)) {
+                  item[fieldKey] = fieldConfig.defaultValue ?? null;
+                }
+              });
+              return item;
+            });
+            initialExpanded[`${key}.${nestedKey}`] = true;
+          } else if (isArrayMetadata(nestedConfig)) {
+            const defaultItem: FieldValues = {};
+            Object.entries(nestedConfig.items.fields).forEach(([fieldKey, fieldConfig]) => {
+              if (isFieldMetadata(fieldConfig)) {
+                defaultItem[fieldKey] = fieldConfig.defaultValue ?? null;
+              }
+            });
+            nestedValues[nestedKey] = [defaultItem];
+            initialExpanded[`${key}.${nestedKey}`] = true;
           }
         });
         initialValues[key] = nestedValues;
-        initialExpanded[key] = true; // Expand by default
+        initialExpanded[key] = true;
       } else if (isFieldMetadata(config)) {
-        initialValues[key] = config.defaultValue;
+        initialValues[key] = config.defaultValue ?? null;
       }
     });
 
     setValues(initialValues);
     setExpandedSections(initialExpanded);
-  }, [metadata]);
+    const checkRequiredFields = (fields: MetadataConfig): boolean => {
+      return Object.values(fields).some((config) => {
+        if (isFieldMetadata(config) && config.validation?.required === true) return true;
+        if (isNestedMetadata(config)) return checkRequiredFields(config.fields);
+        if (isArrayMetadata(config)) return checkRequiredFields(config.items.fields);
+        if (isFixedArrayMetadata(config)) return config.items.some(item => checkRequiredFields(item.fields));
+        return false;
+      });
+    };
+
+  if (checkRequiredFields(metadata)) {
+    onValidationChange?.(false);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(metadata)]);
 
   // Sync with external values when they change
   useEffect(() => {
@@ -92,6 +218,21 @@ export default function DynamicContentFields({
       setValues(externalValues);
     }
   }, [externalValues]);
+
+  // Detect "no more pages" after each load attempt completes
+  useEffect(() => {
+    if (!openTableName) return;
+    const preLenEntry = loadPreLengthRef.current[openTableName];
+    if (preLenEntry === undefined) return;
+    const currentLength = Array.isArray(dynamicData?.[openTableName])
+      ? (dynamicData![openTableName] as any[]).length : 0;
+    if (currentLength === preLenEntry) {
+      noMorePagesRef.current.add(openTableName);
+    } else {
+      noMorePagesRef.current.delete(openTableName);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadTick, openTableName]);
 
   const toggleSection = (key: string) => {
     setExpandedSections((prev) => ({
@@ -114,6 +255,25 @@ export default function DynamicContentFields({
   };
 
   const updateValue = (key: string, nestedKey: string | null, value: FieldValue) => {
+    // Handle nested array item updates (key format: "objectKey.arrayKey__index")
+    if (key.includes('.') && nestedKey !== null) {
+      const dotIndex = key.indexOf('.');
+      const objectKey = key.substring(0, dotIndex);
+      const rest = key.substring(dotIndex + 1);
+      if (rest.includes('__')) {
+        const [arrayKey, indexStr] = rest.split('__');
+        updateNestedArrayValue(objectKey, arrayKey, Number(indexStr), nestedKey, value);
+        return;
+      }
+    }
+
+    // Handle array item updates (key format: "arrayKey__index")
+    if (key.includes('__') && nestedKey !== null) {
+      const [arrayKey, indexStr] = key.split('__');
+      updateArrayValue(arrayKey, Number(indexStr), nestedKey, value);
+      return;
+    }
+
     setValues((prev) => {
       const newValues = { ...prev };
       if (nestedKey === null) {
@@ -122,10 +282,166 @@ export default function DynamicContentFields({
         const nested = newValues[key] as FieldValues;
         newValues[key] = { ...nested, [nestedKey]: value };
       }
-      // Notify parent of changes immediately with the new values
       onChange(newValues);
       return newValues;
     });
+  };
+
+  const getArrayDefaultItem = (config: ArrayMetadataConfig): FieldValues => {
+    const defaultItem: FieldValues = {};
+    Object.entries(config.items.fields).forEach(([fieldKey, fieldConfig]) => {
+      if (isFieldMetadata(fieldConfig)) {
+        defaultItem[fieldKey] = fieldConfig.defaultValue ?? null;
+      }
+    });
+    return defaultItem;
+  };
+
+  const addArrayItem = (key: string, config: ArrayMetadataConfig) => {
+    setValues((prev) => {
+      const arr = (prev[key] as FieldValues[]) || [];
+      const newValues = { ...prev, [key]: [...arr, getArrayDefaultItem(config)] };
+      onChange(newValues);
+      return newValues;
+    });
+  };
+
+  const removeArrayItem = (key: string, index: number) => {
+    setValues((prev) => {
+      const arr = (prev[key] as FieldValues[]) || [];
+      const newArr = arr.filter((_, i) => i !== index);
+      const newValues = { ...prev, [key]: newArr };
+      onChange(newValues);
+      return newValues;
+    });
+  };
+
+  const updateArrayValue = (key: string, index: number, nestedKey: string, value: FieldValue) => {
+    setValues((prev) => {
+      const arr = [...((prev[key] as FieldValues[]) || [])];
+      arr[index] = { ...arr[index], [nestedKey]: value };
+      const newValues = { ...prev, [key]: arr };
+      onChange(newValues);
+      return newValues;
+    });
+  };
+
+  const updateNestedArrayValue = (objectKey: string, arrayKey: string, index: number, fieldKey: string, value: FieldValue) => {
+    setValues((prev) => {
+      const objectValues = { ...(prev[objectKey] as FieldValues) };
+      const arr = [...((objectValues[arrayKey] as FieldValues[]) || [])];
+      arr[index] = { ...arr[index], [fieldKey]: value };
+      objectValues[arrayKey] = arr;
+      const newValues = { ...prev, [objectKey]: objectValues };
+      onChange(newValues);
+      return newValues;
+    });
+  };
+
+  const addNestedArrayItem = (objectKey: string, arrayKey: string, config: ArrayMetadataConfig) => {
+    setValues((prev) => {
+      const objectValues = { ...(prev[objectKey] as FieldValues) };
+      const arr = (objectValues[arrayKey] as FieldValues[]) || [];
+      objectValues[arrayKey] = [...arr, getArrayDefaultItem(config)];
+      const newValues = { ...prev, [objectKey]: objectValues };
+      onChange(newValues);
+      return newValues;
+    });
+  };
+
+  const removeNestedArrayItem = (objectKey: string, arrayKey: string, index: number) => {
+    setValues((prev) => {
+      const objectValues = { ...(prev[objectKey] as FieldValues) };
+      const arr = (objectValues[arrayKey] as FieldValues[]) || [];
+      objectValues[arrayKey] = arr.filter((_, i) => i !== index);
+      const newValues = { ...prev, [objectKey]: objectValues };
+      onChange(newValues);
+      return newValues;
+    });
+  };
+
+  const buildNumberSchema = (fieldConfig: FieldMetadata) => {
+    const rules = fieldConfig.validation || {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let schema: any = v.number();
+    if (rules.required) {
+      schema = v.nonNullable(v.number(), `${fieldConfig.label} is required`);
+    }
+    if (rules.min !== undefined) {
+      schema = v.pipe(schema, v.minValue(rules.min, `Minimum value is ${rules.min}`));
+    }
+    if (rules.max !== undefined) {
+      schema = v.pipe(schema, v.maxValue(rules.max, `Maximum value is ${rules.max}`));
+    }
+    return schema;
+  };
+
+  const buildTextSchema = (fieldConfig: FieldMetadata) => {
+    const rules = fieldConfig.validation || {};
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let schema: any = v.string();
+    if (rules.required) {
+      schema = v.pipe(v.string(), v.minLength(1, `${fieldConfig.label || 'Value'} is required`));
+    }
+    if (rules.minLength !== undefined) {
+      schema = v.pipe(schema, v.minLength(rules.minLength, `Minimum length is ${rules.minLength}`));
+    }
+    if (rules.maxLength !== undefined) {
+      schema = v.pipe(schema, v.maxLength(rules.maxLength, `Maximum length is ${rules.maxLength}`));
+    }
+    return schema;
+  };
+
+  const validateField = (fieldConfig: FieldMetadata, value: FieldValue): string | null => {
+    if (!fieldConfig.validation) return null;
+    const { required, rule } = fieldConfig.validation;
+
+    if (required && (value === null || value === '' || value === undefined)) {
+      return 'This field is required';
+    }
+
+    if (rule && fieldConfig.type === 'date' && value && typeof value === 'string') {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const date = new Date(value);
+
+      switch (rule) {
+        case 'Past': {
+          const result = v.safeParse(
+            v.pipe(v.string(), v.check(() => date < today, 'Date must be in the past')),
+            value
+          );
+          if (!result.success) return result.issues[0].message;
+          break;
+        }
+        case 'Future': {
+          const result = v.safeParse(
+            v.pipe(v.string(), v.check(() => date > today, 'Date must be in the future')),
+            value
+          );
+          if (!result.success) return result.issues[0].message;
+          break;
+        }
+        case 'FutureOrPresent': {
+          const result = v.safeParse(
+            v.pipe(v.string(), v.check(() => date >= today, 'Date must be today or in the future')),
+            value
+          );
+          if (!result.success) return result.issues[0].message;
+          break;
+        }
+        case 'PastOrPresent': {
+          const result = v.safeParse(
+            v.pipe(v.string(), v.check(() => date <= today, 'Date must be today or in the past')),
+            value
+          );
+          if (!result.success) return result.issues[0].message;
+          break;
+        }
+      }
+    }
+
+    return null;
   };
 
   const renderInput = (
@@ -135,10 +451,22 @@ export default function DynamicContentFields({
     currentValue: FieldValue
   ) => {
     const inputId = nestedKey ? `field-${key}-${nestedKey}` : `field-${key}`;
+    const errorKey = nestedKey ? `${key}.${nestedKey}` : key;
     const value = currentValue ?? "";
+    const error = validationErrors[errorKey];
 
     const handleChange = (newValue: FieldValue) => {
-      updateValue(key, nestedKey, newValue);
+      if(fieldConfig?.type =="dropdown") {
+        updateValue(key, fieldConfig.saveAs ?? nestedKey, newValue);
+        const errorMsg = validateField(fieldConfig, newValue);
+        updateError(errorKey, errorMsg);
+      }
+      else
+      {
+        updateValue(key, nestedKey, newValue);
+        const errorMsg = validateField(fieldConfig, newValue);
+        updateError(errorKey, errorMsg);
+      }
     };
 
     const hexToRgba = (hex: string, alpha: number) => {
@@ -180,9 +508,11 @@ export default function DynamicContentFields({
       style: { fontFamily: 'var(--font-body)' }
     };
 
+    let inputElement: React.ReactNode;
+
     switch (fieldConfig.type) {
       case "textarea":
-        return (
+        inputElement = (
           <textarea
             id={inputId}
             value={String(value)}
@@ -193,25 +523,36 @@ export default function DynamicContentFields({
             {...commonHandlers}
           />
         );
+        break;
 
-      case "number":
-        return (
+      case "number": {
+        const numRules = fieldConfig.validation || {};
+        const numSchema = buildNumberSchema(fieldConfig);
+        inputElement = (
           <input
             id={inputId}
             type="number"
             value={value === null ? "" : String(value)}
+            min={numRules.min}
+            max={numRules.max}
+            required={numRules.required}
             onChange={(e) => {
               const val = e.target.value;
-              handleChange(val === "" ? null : Number(val));
+              const numericValue = val === "" ? null : Number(val);
+              updateValue(key, nestedKey, numericValue);
+              const result = v.safeParse(numSchema, numericValue);
+              updateError(errorKey, result.success ? null : (result.issues[0]?.message ?? 'Invalid value'));
             }}
             placeholder={fieldConfig.placeholder || "Value"}
             className={inputClassName}
             {...commonHandlers}
           />
         );
+        break;
+      }
 
       case "boolean":
-        return (
+        inputElement = (
           <div className="flex items-center h-9">
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -234,39 +575,204 @@ export default function DynamicContentFields({
             </label>
           </div>
         );
+        break;
 
       case "date":
-        return (
+        inputElement = (
           <input
             id={inputId}
             type="date"
             value={String(value)}
             onChange={(e) => handleChange(e.target.value)}
-            className={inputClassName}
+            className={`${inputClassName} ${error ? 'border-red-500' : ''}`}
             {...commonHandlers}
           />
         );
+        break;
 
-      case "dropdown":
-        return (
-          <select
-            id={inputId}
-            value={String(value)}
-            onChange={(e) => handleChange(e.target.value)}
-            className={inputClassName}
-            {...commonHandlers}
-          >
-            <option value="">Value</option>
-            {fieldConfig.options?.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        );
+      case "dropdown": {
+        const resolveArr = (ref: string[] | readonly string[] | string | undefined): string[] => {
+          if (Array.isArray(ref)) return ref as string[];
+          if (typeof ref === 'string') {
+            const [tName, fieldName] = ref.split('|');
+            const tableData = dynamicData?.[tName];
+            return (Array.isArray(tableData) ? tableData : []).map((row) => String(row[fieldName] ?? ''));
+          }
+          return [];
+        };
+
+        const isDynamic = fieldConfig.static === false && typeof fieldConfig.options === 'string';
+        const tableName = isDynamic ? (fieldConfig.options as string).split('|')[0] : '';
+        const isOpen = openDropdownKey === inputId;
+        const isCurrentlyLoading = loadingDropdowns.has(tableName);
+
+        const initialPage = fieldConfig.page ?? 1;
+        const pageCount = fieldConfig.count;
+
+        const loadPage = (page: number) => {
+          if (!tableName || !page || page < 1 || !pageCount || pageCount < 1) return;
+          if (!getPaginationData || loadingRef.current.has(tableName)) return;
+          const lenBefore = Array.isArray(dynamicData?.[tableName]) ? (dynamicData![tableName] as any[]).length : 0;
+          loadingRef.current.add(tableName);
+          setLoadingDropdowns(prev => new Set(prev).add(tableName));
+          Promise.resolve(getPaginationData(pageCount, page, tableName)).finally(() => {
+            loadingRef.current.delete(tableName);
+            setLoadingDropdowns(prev => { const next = new Set(prev); next.delete(tableName); return next; });
+            setDropdownPages(prev => ({ ...prev, [tableName]: page }));
+            loadPreLengthRef.current[tableName] = lenBefore;
+            setLoadTick(t => t + 1);
+          });
+        };
+
+        const handleOpen = () => {
+          if (isOpen) {
+            setOpenDropdownKey(null);
+            setOpenTableName('');
+          } else {
+            setOpenDropdownKey(inputId);
+            setOpenTableName(tableName);
+            noMorePagesRef.current.delete(tableName);
+            if (isDynamic && !dropdownPages[tableName] && !loadingRef.current.has(tableName)) {
+              loadPage(initialPage);
+            }
+          }
+        };
+
+        const handleListScroll = (e: React.UIEvent<HTMLDivElement>) => {
+          const el = e.currentTarget;
+          const prevScrollTop = scrollTopRef.current[inputId] ?? 0;
+          const isScrollingDown = el.scrollTop > prevScrollTop;
+          scrollTopRef.current[inputId] = el.scrollTop;
+          if (isScrollingDown && el.scrollHeight - el.scrollTop <= el.clientHeight + 20 && !loadingRef.current.has(tableName) && !noMorePagesRef.current.has(tableName)) {
+            const nextPage = (dropdownPages[tableName] || 1) + 1;
+            loadPage(nextPage);
+          }
+        };
+
+        const handleListWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+          if (e.deltaY > 0 && !loadingRef.current.has(tableName) && !noMorePagesRef.current.has(tableName)) {
+            const el = e.currentTarget;
+            if (el.scrollHeight - el.scrollTop <= el.clientHeight + 20) {
+              const nextPage = (dropdownPages[tableName] || 1) + 1;
+              loadPage(nextPage);
+            }
+          }
+        };
+
+        const isRelational = fieldConfig.relation;
+        if (isDynamic && isRelational) {
+          const textArr = resolveArr(fieldConfig.text);
+          const optionsArr = resolveArr(fieldConfig.options);
+          const storedIndex = textArr.indexOf(String(value));
+          const displayValue = storedIndex >= 0 ? optionsArr[storedIndex] : '';
+          inputElement = (
+            <div
+              className="relative"
+              tabIndex={-1}
+              onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOpenDropdownKey(null); }}
+            >
+              <button
+                id={inputId}
+                type="button"
+                onClick={handleOpen}
+                className={`${inputClassName} flex items-center justify-between`}
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
+                <span className={displayValue ? '' : (isDark ? 'text-gray-500' : 'text-gray-400')}>
+                  {displayValue || 'Select...'}
+                </span>
+                <svg className="w-4 h-4 ml-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={isOpen ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7'} />
+                </svg>
+              </button>
+              {isOpen && (
+                <div
+                  ref={(el) => { if (el) listDivRefs.current.set(inputId, el); else listDivRefs.current.delete(inputId); }}
+                  className={`absolute z-50 w-full mt-1 max-h-48 overflow-y-scroll border-2 ${getBorderRadiusClass(branding.borderRadius)} shadow-lg ${isDark ? 'bg-gray-800 border-gray-600' : 'bg-white border-gray-300'}`}
+                  onScroll={handleListScroll}
+                  onWheel={handleListWheel}
+                >
+                  <div
+                    className={`px-3 py-2 cursor-pointer ${getFontSizeClass(branding.fontSize)} ${isDark ? 'text-gray-500 hover:bg-gray-700' : 'text-gray-400 hover:bg-gray-50'}`}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => { handleChange(''); setOpenDropdownKey(null); }}
+                  >
+                    Select...
+                  </div>
+                  {optionsArr.map((option, idx) => (
+                    <div
+                      key={`${option}-${idx}`}
+                      className={`px-3 py-2 cursor-pointer ${getFontSizeClass(branding.fontSize)} ${
+                        option === displayValue
+                          ? isDark ? 'bg-gray-600 text-white' : 'bg-blue-50 text-blue-700'
+                          : isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'
+                      }`}
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        handleChange(idx < textArr.length ? textArr[idx] : option);
+                        setOpenDropdownKey(null);
+                      }}
+                    >
+                      {option}
+                    </div>
+                  ))}
+                  {isCurrentlyLoading && (
+                    <div className={`px-3 py-2 text-center ${getFontSizeClass(branding.fontSize)} ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                      Loading...
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        } else if (isRelational) {
+          const textArr = resolveArr(fieldConfig.text);
+          const optionsArr = resolveArr(fieldConfig.options);
+          const storedIndex = textArr.indexOf(String(value));
+          const displayValue = storedIndex >= 0 ? optionsArr[storedIndex] : '';
+          inputElement = (
+            <select
+              id={inputId}
+              value={displayValue}
+              onChange={(e) => {
+                const idx = optionsArr.indexOf(e.target.value);
+                handleChange(idx >= 0 ? textArr[idx] : e.target.value);
+              }}
+              className={inputClassName}
+              {...commonHandlers}
+            >
+              <option value="">Value</option>
+              {optionsArr.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          );
+        } else {
+          const plainOptions = Array.isArray(fieldConfig.options) ? fieldConfig.options as string[] : [];
+          inputElement = (
+            <select
+              id={inputId}
+              value={String(value)}
+              onChange={(e) => handleChange(e.target.value)}
+              className={inputClassName}
+              {...commonHandlers}
+            >
+              <option value="">Value</option>
+              {plainOptions.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          );
+        }
+        break;
+      }
 
       case "password":
-        return (
+        inputElement = (
           <input
             id={inputId}
             type="password"
@@ -277,20 +783,62 @@ export default function DynamicContentFields({
             {...commonHandlers}
           />
         );
-
-      default: // text
-        return (
+        break;
+        case 'documentuploader':
+          inputElement = (
+            <DocumentUploader
+              id={inputId}
+              value={value as any}
+              onChange={async (files: any) => {
+              setTimeout(() => {
+                if (files && files.length > 0) {
+                  handleChange(files[0])
+                } else {
+                  handleChange('' as any)
+                }
+              }, 0)
+              }}
+              contentAlign={contentAlign}
+              singleSelect={true}
+              fillContainer={false}
+            />
+          )
+        break;
+      default: { // text
+        const textRules = fieldConfig.validation || {};
+        const textSchema = buildTextSchema(fieldConfig);
+        inputElement = (
           <input
             id={inputId}
             type="text"
             value={String(value)}
-            onChange={(e) => handleChange(e.target.value)}
+            minLength={textRules.minLength}
+            maxLength={textRules.maxLength}
+            required={textRules.required}
+            onChange={(e) => {
+              const val = e.target.value;
+              updateValue(key, nestedKey, val);
+              const result = v.safeParse(textSchema, val);
+              updateError(errorKey, result.success ? null : (result.issues[0]?.message ?? 'Invalid value'));
+            }}
             placeholder={fieldConfig.placeholder || "Value"}
             className={inputClassName}
             {...commonHandlers}
           />
         );
+      }
     }
+
+    return (
+      <>
+        {inputElement}
+        {error && (
+          <p className={`text-xs mt-1 ${isDark ? 'text-red-400' : 'text-red-500'}`}>
+            {error}
+          </p>
+        )}
+      </>
+    );
   };
 
   const isNestedMetadata = (config: unknown): config is NestedMetadataConfig => {
@@ -308,7 +856,30 @@ export default function DynamicContentFields({
       config !== null &&
       "type" in config &&
       "label" in config &&
-      "defaultValue" in config
+      (config as { type: string }).type !== "object" &&
+      (config as { type: string }).type !== "array" &&
+      (config as { type: string }).type !== "fixedarray"
+    );
+  };
+
+  const isArrayMetadata = (config: unknown): config is ArrayMetadataConfig => {
+    return (
+      typeof config === "object" &&
+      config !== null &&
+      "type" in config &&
+      (config as ArrayMetadataConfig).type === "array" &&
+      "items" in config
+    );
+  };
+
+  const isFixedArrayMetadata = (config: unknown): config is FixedArrayMetadataConfig => {
+    return (
+      typeof config === "object" &&
+      config !== null &&
+      "type" in config &&
+      (config as FixedArrayMetadataConfig).type === "fixedarray" &&
+      "items" in config &&
+      Array.isArray((config as FixedArrayMetadataConfig).items)
     );
   };
 
@@ -367,26 +938,462 @@ export default function DynamicContentFields({
                 <div className={`px-4 pb-4 pt-2 border-t ${
                   isDark ? 'border-gray-600' : 'border-gray-100'
                 }`}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="flex flex-col gap-4">
+                    {/* Simple fields */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      {Object.entries(config.fields).map(([nestedKey, nestedConfig]) => {
+                        if (!isFieldMetadata(nestedConfig)) return null;
+                        const nestedValues = (values[key] as FieldValues) || {};
+                        const readKey = nestedConfig.saveAs ?? nestedKey;
+                        const currentValue = (readKey in nestedValues ? nestedValues[readKey] : nestedConfig.defaultValue ?? null) as FieldValue;
+                        return (
+                          <div key={nestedKey} className="space-y-1.5">
+                            <label
+                              htmlFor={`field-${key}-${nestedKey}`}
+                              className={`block ${getFontSizeClass(branding.fontSize)} font-medium ${
+                                isDark ? 'text-gray-300' : 'text-gray-600'
+                              }`}
+                              style={{ fontFamily: 'var(--font-body)' }}
+                            >
+                              {nestedConfig.label}
+                              {nestedConfig.validation?.required && <span className="text-red-500 ml-0.5">*</span>}
+                            </label>
+                            {renderInput(key, nestedKey, nestedConfig, currentValue)}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {/* Nested fixed array fields */}
                     {Object.entries(config.fields).map(([nestedKey, nestedConfig]) => {
-                      if (!isFieldMetadata(nestedConfig)) return null;
+                      if (!isFixedArrayMetadata(nestedConfig)) return null;
                       const nestedValues = (values[key] as FieldValues) || {};
-                      const currentValue = (nestedValues[nestedKey] ?? nestedConfig.defaultValue) as FieldValue;
+                      const nestedFixedItems = (nestedValues[nestedKey] as FieldValues[]) || [];
+                      const nestedFixedExpanded = expandedSections[`${key}.${nestedKey}`] ?? false;
                       return (
-                        <div key={nestedKey} className="space-y-1.5">
-                          <label
-                            htmlFor={`field-${key}-${nestedKey}`}
-                            className={`block ${getFontSizeClass(branding.fontSize)} font-medium ${
+                        <div
+                          key={nestedKey}
+                          className={`border ${getBorderRadiusClass(branding.borderRadius)} ${
+                            isDark ? 'border-gray-600 bg-gray-750' : 'border-gray-200 bg-gray-50'
+                          }`}
+                        >
+                          <button
+                            onClick={() => toggleSection(`${key}.${nestedKey}`)}
+                            className={`w-full px-4 py-2 flex items-center justify-between text-left transition-colors ${
+                              getBorderRadiusClass(branding.borderRadius)
+                            } ${getFontSizeClass(branding.fontSize)} ${
+                              isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                            }`}
+                            style={{ fontFamily: 'var(--font-body)' }}
+                          >
+                            <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                              {nestedConfig.label}
+                              <span className={`ml-2 text-xs font-normal ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                ({nestedFixedItems.length} {nestedFixedItems.length === 1 ? 'item' : 'items'})
+                              </span>
+                            </span>
+                            <svg
+                              className={`w-4 h-4 transition-transform ${
+                                isDark ? 'text-gray-400' : 'text-gray-500'
+                              } ${nestedFixedExpanded ? "transform rotate-180" : ""}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          {nestedFixedExpanded && (
+                            <div className={`px-4 pb-4 pt-2 border-t ${isDark ? 'border-gray-600' : 'border-gray-100'}`}>
+                              <div className="flex flex-col gap-3">
+                                {nestedConfig.items.map((itemConfig, index) => {
+                                  const item = nestedFixedItems[index] || {};
+                                  return (
+                                    <div
+                                      key={index}
+                                      className={`border ${getBorderRadiusClass(branding.borderRadius)} p-3 ${
+                                        isDark ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'
+                                      }`}
+                                    >
+                                      <div className="mb-2">
+                                        <span
+                                          className={`${getFontSizeClass(branding.fontSize)} font-medium ${
+                                            isDark ? 'text-gray-300' : 'text-gray-600'
+                                          }`}
+                                          style={{ fontFamily: 'var(--font-body)' }}
+                                        >
+                                          Item {index + 1}
+                                        </span>
+                                      </div>
+                                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {Object.entries(itemConfig.fields).map(([fieldKey, fieldConfig]) => {
+                                          if (!isFieldMetadata(fieldConfig)) return null;
+                                          const currentValue = (fieldKey in item ? item[fieldKey] : fieldConfig.defaultValue ?? null) as FieldValue;
+                                          return (
+                                            <div key={fieldKey} className="space-y-1.5">
+                                              <label
+                                                htmlFor={`field-${key}.${nestedKey}__${index}-${fieldKey}`}
+                                                className={`block ${getFontSizeClass(branding.fontSize)} font-medium ${
+                                                  isDark ? 'text-gray-300' : 'text-gray-600'
+                                                }`}
+                                                style={{ fontFamily: 'var(--font-body)' }}
+                                              >
+                                                {fieldConfig.label}
+                                                {fieldConfig.validation?.required && <span className="text-red-500 ml-0.5">*</span>}
+                                              </label>
+                                              {renderInput(
+                                                `${key}.${nestedKey}__${index}`,
+                                                fieldKey,
+                                                fieldConfig,
+                                                currentValue
+                                              )}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {/* Nested array fields */}
+                    {Object.entries(config.fields).map(([nestedKey, nestedConfig]) => {
+                      if (!isArrayMetadata(nestedConfig)) return null;
+                      const nestedValues = (values[key] as FieldValues) || {};
+                      const nestedArrayItems = (nestedValues[nestedKey] as FieldValues[]) || [];
+                      const nestedArrayExpanded = expandedSections[`${key}.${nestedKey}`] ?? false;
+                      return (
+                        <div
+                          key={nestedKey}
+                          className={`border ${getBorderRadiusClass(branding.borderRadius)} ${
+                            isDark ? 'border-gray-600 bg-gray-750' : 'border-gray-200 bg-gray-50'
+                          }`}
+                        >
+                          <button
+                            onClick={() => toggleSection(`${key}.${nestedKey}`)}
+                            className={`w-full px-4 py-2 flex items-center justify-between text-left transition-colors ${
+                              getBorderRadiusClass(branding.borderRadius)
+                            } ${getFontSizeClass(branding.fontSize)} ${
+                              isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                            }`}
+                            style={{ fontFamily: 'var(--font-body)' }}
+                          >
+                            <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                              {nestedConfig.label}
+                              <span className={`ml-2 text-xs font-normal ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                ({nestedArrayItems.length} {nestedArrayItems.length === 1 ? 'item' : 'items'})
+                              </span>
+                            </span>
+                            <svg
+                              className={`w-4 h-4 transition-transform ${
+                                isDark ? 'text-gray-400' : 'text-gray-500'
+                              } ${nestedArrayExpanded ? "transform rotate-180" : ""}`}
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          {nestedArrayExpanded && (
+                            <div className={`px-4 pb-4 pt-2 border-t ${isDark ? 'border-gray-600' : 'border-gray-100'}`}>
+                              <div className="flex flex-col gap-3">
+                                {nestedArrayItems.map((item, index) => (
+                                  <div
+                                    key={index}
+                                    className={`border ${getBorderRadiusClass(branding.borderRadius)} p-3 ${
+                                      isDark ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between mb-2">
+                                      <span
+                                        className={`${getFontSizeClass(branding.fontSize)} font-medium ${
+                                          isDark ? 'text-gray-300' : 'text-gray-600'
+                                        }`}
+                                        style={{ fontFamily: 'var(--font-body)' }}
+                                      >
+                                        Item {index + 1}
+                                      </span>
+                                      {nestedArrayItems.length > 1 && (
+                                        <button
+                                          onClick={() => removeNestedArrayItem(key, nestedKey, index)}
+                                          className={`p-1 rounded transition-colors ${
+                                            isDark
+                                              ? 'text-red-400 hover:bg-red-900/30'
+                                              : 'text-red-500 hover:bg-red-50'
+                                          }`}
+                                          title="Remove item"
+                                        >
+                                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                          </svg>
+                                        </button>
+                                      )}
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                      {Object.entries(nestedConfig.items.fields).map(([fieldKey, fieldConfig]) => {
+                                        if (!isFieldMetadata(fieldConfig)) return null;
+                                        const currentValue = (fieldKey in item ? item[fieldKey] : fieldConfig.defaultValue ?? null) as FieldValue;
+                                        return (
+                                          <div key={fieldKey} className="space-y-1.5">
+                                            <label
+                                              htmlFor={`field-${key}.${nestedKey}__${index}-${fieldKey}`}
+                                              className={`block ${getFontSizeClass(branding.fontSize)} font-medium ${
+                                                isDark ? 'text-gray-300' : 'text-gray-600'
+                                              }`}
+                                              style={{ fontFamily: 'var(--font-body)' }}
+                                            >
+                                              {fieldConfig.label}
+                                              {fieldConfig.validation?.required && <span className="text-red-500 ml-0.5">*</span>}
+                                            </label>
+                                            {renderInput(
+                                              `${key}.${nestedKey}__${index}`,
+                                              fieldKey,
+                                              fieldConfig,
+                                              currentValue
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ))}
+                                <button
+                                  onClick={() => addNestedArrayItem(key, nestedKey, nestedConfig)}
+                                  className={`w-full py-2 px-4 border-2 border-dashed ${getBorderRadiusClass(branding.borderRadius)} transition-colors ${
+                                    getFontSizeClass(branding.fontSize)
+                                  } ${
+                                    isDark
+                                      ? 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300'
+                                      : 'border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-600'
+                                  }`}
+                                  style={{ fontFamily: 'var(--font-body)' }}
+                                >
+                                  + Add Item
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        } else if (isFixedArrayMetadata(config)) {
+          const isExpanded = expandedSections[key] ?? false;
+          const fixedItems = (values[key] as FieldValues[]) || [];
+          return (
+            <div
+              key={key}
+              className={`border-2 ${getBorderRadiusClass(branding.borderRadius)} ${
+                isDark ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'
+              } ${className}`}
+            >
+              <button
+                onClick={() => toggleSection(key)}
+                className={`w-full px-4 py-3 flex items-center justify-between text-left transition-colors ${
+                  getBorderRadiusClass(branding.borderRadius)
+                } ${getFontSizeClass(branding.fontSize)} ${
+                  isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                }`}
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
+                <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                  {config.label}
+                  <span className={`ml-2 text-xs font-normal ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    ({fixedItems.length} {fixedItems.length === 1 ? 'item' : 'items'})
+                  </span>
+                </span>
+                <svg
+                  className={`w-5 h-5 transition-transform ${
+                    isDark ? 'text-gray-400' : 'text-gray-500'
+                  } ${isExpanded ? "transform rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isExpanded && (
+                <div className={`px-4 pb-4 pt-2 border-t ${isDark ? 'border-gray-600' : 'border-gray-100'}`}>
+                  <div className="flex flex-col gap-4">
+                    {config.items.map((itemConfig, index) => {
+                      const item = fixedItems[index] || {};
+                      return (
+                        <div
+                          key={index}
+                          className={`border ${getBorderRadiusClass(branding.borderRadius)} p-4 ${
+                            isDark ? 'border-gray-600 bg-gray-750' : 'border-gray-200 bg-gray-50'
+                          }`}
+                        >
+                          <div className="mb-3">
+                            <span
+                              className={`${getFontSizeClass(branding.fontSize)} font-medium ${
+                                isDark ? 'text-gray-300' : 'text-gray-600'
+                              }`}
+                              style={{ fontFamily: 'var(--font-body)' }}
+                            >
+                              Item {index + 1}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            {Object.entries(itemConfig.fields).map(([fieldKey, fieldConfig]) => {
+                              if (!isFieldMetadata(fieldConfig)) return null;
+                              const currentValue = (fieldKey in item ? item[fieldKey] : fieldConfig.defaultValue ?? null) as FieldValue;
+                              return (
+                                <div key={fieldKey} className="space-y-1.5">
+                                  <label
+                                    htmlFor={`field-${key}__${index}-${fieldKey}`}
+                                    className={`block ${getFontSizeClass(branding.fontSize)} font-medium ${
+                                      isDark ? 'text-gray-300' : 'text-gray-600'
+                                    }`}
+                                    style={{ fontFamily: 'var(--font-body)' }}
+                                  >
+                                    {fieldConfig.label}
+                                    {fieldConfig.validation?.required && <span className="text-red-500 ml-0.5">*</span>}
+                                  </label>
+                                  {renderInput(
+                                    `${key}__${index}`,
+                                    fieldKey,
+                                    fieldConfig,
+                                    currentValue
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        } else if (isArrayMetadata(config)) {
+          const isExpanded = expandedSections[key] ?? false;
+          const arrayItems = (values[key] as FieldValues[]) || [];
+          return (
+            <div
+              key={key}
+              className={`border-2 ${getBorderRadiusClass(branding.borderRadius)} ${
+                isDark ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'
+              } ${className}`}
+            >
+              {/* Collapsible Header */}
+              <button
+                onClick={() => toggleSection(key)}
+                className={`w-full px-4 py-3 flex items-center justify-between text-left transition-colors ${
+                  getBorderRadiusClass(branding.borderRadius)
+                } ${getFontSizeClass(branding.fontSize)} ${
+                  isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                }`}
+                style={{ fontFamily: 'var(--font-body)' }}
+              >
+                <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-700'}`}>
+                  {config.label}
+                  <span className={`ml-2 text-xs font-normal ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    ({arrayItems.length} {arrayItems.length === 1 ? 'item' : 'items'})
+                  </span>
+                </span>
+                <svg
+                  className={`w-5 h-5 transition-transform ${
+                    isDark ? 'text-gray-400' : 'text-gray-500'
+                  } ${isExpanded ? "transform rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* Collapsible Content */}
+              {isExpanded && (
+                <div className={`px-4 pb-4 pt-2 border-t ${isDark ? 'border-gray-600' : 'border-gray-100'}`}>
+                  <div className="flex flex-col gap-4">
+                    {arrayItems.map((item, index) => (
+                      <div
+                        key={index}
+                        className={`border ${getBorderRadiusClass(branding.borderRadius)} p-4 ${
+                          isDark ? 'border-gray-600 bg-gray-750' : 'border-gray-200 bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <span
+                            className={`${getFontSizeClass(branding.fontSize)} font-medium ${
                               isDark ? 'text-gray-300' : 'text-gray-600'
                             }`}
                             style={{ fontFamily: 'var(--font-body)' }}
                           >
-                            {nestedConfig.label}
-                          </label>
-                          {renderInput(key, nestedKey, nestedConfig, currentValue)}
+                            Item {index + 1}
+                          </span>
+                          {arrayItems.length > 1 && (
+                            <button
+                              onClick={() => removeArrayItem(key, index)}
+                              className={`p-1 rounded transition-colors ${
+                                isDark
+                                  ? 'text-red-400 hover:bg-red-900/30'
+                                  : 'text-red-500 hover:bg-red-50'
+                              }`}
+                              title="Remove item"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          )}
                         </div>
-                      );
-                    })}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          {Object.entries(config.items.fields).map(([fieldKey, fieldConfig]) => {
+                            if (!isFieldMetadata(fieldConfig)) return null;
+                            const currentValue = (fieldKey in item ? item[fieldKey] : fieldConfig.defaultValue ?? null) as FieldValue;
+                            return (
+                              <div key={fieldKey} className="space-y-1.5">
+                                <label
+                                  htmlFor={`field-${key}__${index}-${fieldKey}`}
+                                  className={`block ${getFontSizeClass(branding.fontSize)} font-medium ${
+                                    isDark ? 'text-gray-300' : 'text-gray-600'
+                                  }`}
+                                  style={{ fontFamily: 'var(--font-body)' }}
+                                >
+                                  {fieldConfig.label}
+                                  {fieldConfig.validation?.required && <span className="text-red-500 ml-0.5">*</span>}
+                                </label>
+                                {renderInput(
+                                  `${key}__${index}`,
+                                  fieldKey,
+                                  fieldConfig,
+                                  currentValue
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Add Item Button */}
+                    <button
+                      onClick={() => addArrayItem(key, config)}
+                      className={`w-full py-2 px-4 border-2 border-dashed ${getBorderRadiusClass(branding.borderRadius)} transition-colors ${
+                        getFontSizeClass(branding.fontSize)
+                      } ${
+                        isDark
+                          ? 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300'
+                          : 'border-gray-300 text-gray-500 hover:border-gray-400 hover:text-gray-600'
+                      }`}
+                      style={{ fontFamily: 'var(--font-body)' }}
+                    >
+                      + Add Item
+                    </button>
                   </div>
                 </div>
               )}
@@ -410,8 +1417,9 @@ export default function DynamicContentFields({
                   style={{ fontFamily: 'var(--font-body)' }}
                 >
                   {config.label}
+                  {config.validation?.required && <span className="text-red-500 ml-0.5">*</span>}
                 </label>
-                {renderInput(key, null, config, (values[key] ?? config.defaultValue) as FieldValue)}
+                {renderInput(key, null, config, (key in values ? values[key] : config.defaultValue) as FieldValue)}
               </div>
             </div>
           );

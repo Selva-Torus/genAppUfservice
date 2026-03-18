@@ -16,30 +16,22 @@ import { useTheme } from '@/hooks/useTheme';
 import { DecodedToken,PrimaryTableData,SecurityData,EncryptionFlagPageData,PaginationData,AllowedGroupNode,ActionDetails } from "@/types/global";
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 import clsx from "clsx";
-import Groupgroup  from "./Groupgroup/Groupgroup";
+import GrouptestGrp  from "./GrouptestGrp/GrouptestGrp";
 
 
-export default function PageApp1V1() {
+export default function PageTestV1() {
   const { isDark, isHighContrast, bgStyle, textStyle } : { isDark: boolean; isHighContrast: boolean; bgStyle: string; textStyle: string } = useTheme();
   const [initialLoad, setInitialLoad] = useState<boolean>(false);
-  const securityData : SecurityData = {
-  "Template 1": {
-    "allowedGroups": [
-      "canvas",
-      "group"
-    ]
-  }
-};
+  const securityData : SecurityData = {};
   let code : string = "";
   //const language=useLanguage();
   const routes : AppRouterInstance = useRouter();
   const toast : Function = useInfoMsg();
   const [primaryTableData, setPrimaryTableData] = useState<PrimaryTableData>({primaryKey:"",value:"",compName:""});
   const [checkToAdd, setCheckToAdd] = useState<Record<string, any>>({});
-  const [dropdownData, setDropdownData] = useState<Record<string, any>>({});
   const token:string = getCookie('token'); 
   const decodedTokenObj: DecodedToken = decodeToken(token);
-  const screenName:string = "app1";
+  const screenName:string = "test";
   const user : string | undefined = decodedTokenObj?.selectedAccessProfile;
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const {refetch, setRefetch} = useContext(TotalContext) as TotalContextProps;
@@ -48,9 +40,9 @@ export default function PageApp1V1() {
   const {paginationDetails, setpaginationDetails} = useContext(TotalContext) as TotalContextProps;
   const {accessProfile, setAccessProfile} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
-  const {defaultapp_v1Props, setdefaultapp_v1Props} = useContext(TotalContext) as TotalContextProps;
-  const [checkgroup,setCheckgroup,]=useState<boolean>(false);
-  const {groupff998, setgroupff998} = useContext(TotalContext) as TotalContextProps;
+  const {test_v1Props, settest_v1Props} = useContext(TotalContext) as TotalContextProps;
+  const [checktestgrp,setChecktestgrp,]=useState<boolean>(false);
+  const {testgrp35550, settestgrp35550} = useContext(TotalContext) as TotalContextProps;
   const encryptionFlagPage: boolean = false|| encAppFalg.flag;
   let encryptionDpd: string = "";
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encAppFalg.dpd;
@@ -66,7 +58,7 @@ export default function PageApp1V1() {
     });
 
   async function securityCheck(): Promise<void> {
-    const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1",accessProfile:[user],from:"pageApp1V1"},{
+    const orchestrationData:any = await AxiosService.post("/UF/Orchestration",{key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1",accessProfile:[user],from:"pageTestV1"},{
       headers: {
         Authorization: `Bearer ${token}`
       }});
@@ -90,7 +82,7 @@ export default function PageApp1V1() {
             params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
+              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
             }
           }) 
         }else{
@@ -99,7 +91,7 @@ export default function PageApp1V1() {
               Authorization: `Bearer ${token}`
              },
             params: {
-              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"  
+              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"  
             }
           })          
         }
@@ -124,7 +116,7 @@ export default function PageApp1V1() {
           params: {
               dpdKey: encryptionDpd,
               method: encryptionMethod,
-              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
+              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
             }
         }) 
         }else{
@@ -133,7 +125,7 @@ export default function PageApp1V1() {
              Authorization: `Bearer ${token}`
            },
             params: {
-              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:defaultapp:AFVK:v1"
+              key:"CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
             }
          })          
         }
@@ -166,9 +158,9 @@ export default function PageApp1V1() {
         try{
           if (security == 'AA' || security == 'RA') {
           allowedGroup.map((nodes:AllowedGroupNode)=>{
-            if(nodes?.groupName == 'group' && (nodes?.security== 'AA' || nodes?.security == 'ATO' || nodes?.security == 'RA'))
+            if(nodes?.groupName == 'testGrp' && (nodes?.security== 'AA' || nodes?.security == 'ATO' || nodes?.security == 'RA'))
             {
-              setCheckgroup(true)
+              setChecktestgrp(true)
             }
           })
           }
@@ -183,8 +175,8 @@ export default function PageApp1V1() {
         //Code Execution
         if (code !="" ) {
           let codeStates: Record<string, any> = {}
-          codeStates['group'] = groupff998;
-          codeStates['setgroup'] = setgroupff998;
+          codeStates['testgrp'] = testgrp35550;
+          codeStates['settestgrp'] = settestgrp35550;
           codeExecution(code,codeStates);
         }   
         setInitialLoad(true);        
@@ -212,6 +204,7 @@ export default function PageApp1V1() {
   }, [])
   return (
     <>
+
      <div className={clsx("",
         "w-full",
         isDark ? 'text-white' : 'text-black'
@@ -242,7 +235,7 @@ export default function PageApp1V1() {
           borderWidth: '2px'
       })
       }}>
-        {checkgroup && initialLoad &&<Groupgroup
+        {checktestgrp && initialLoad &&<GrouptestGrp
           lockedData={lockedData} 
           setLockedData={setLockedData} 
           primaryTableData={primaryTableData}
@@ -251,8 +244,6 @@ export default function PageApp1V1() {
           setCheckToAdd={setCheckToAdd}  
           refetch={refetch}
           setRefetch={setRefetch}
-          dropdownData={dropdownData} 
-          setDropdownData={setDropdownData}
           encryptionFlagPageData={encryptionFlagPageData}
           paginationDetails={paginationDetails}        />}
         

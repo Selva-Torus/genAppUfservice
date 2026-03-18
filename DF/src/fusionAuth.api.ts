@@ -1,13 +1,15 @@
 export const FusionAuthTenantCreation = async (
+  fusionAuthBaseUrl: string,
+  fusionAuthApiKey: string,
   tenantId: string,
   tenantName: string,
 ) => {
   const tenantResponse = await fetch(
-    `${process.env.FUSIONAUTH_BASEURL}/api/tenant/${tenantId}`,
+    `${fusionAuthBaseUrl}/api/tenant/${tenantId}`,
     {
       method: 'POST',
       headers: {
-        Authorization: process.env.FUSIONAUTH_APIKEY,
+        Authorization: fusionAuthApiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -25,27 +27,29 @@ export const FusionAuthTenantCreation = async (
   }
 };
 
-export const FusionAuthTenantDeletion = async (tenantId: string) => {
-  await fetch(`${process.env.FUSIONAUTH_BASEURL}/api/tenant/${tenantId}`, {
+export const FusionAuthTenantDeletion = async (fusionAuthBaseUrl: string, fusionAuthApiKey: string, tenantId: string) => {
+  await fetch(`${fusionAuthBaseUrl}/api/tenant/${tenantId}`, {
     method: 'DELETE',
     headers: {
-      Authorization: process.env.FUSIONAUTH_APIKEY,
+      Authorization: fusionAuthApiKey,
     },
   });
 };
 
 export const FusionAuthApplicationCreationWithRole = async (
+  fusionAuthBaseUrl: string,
+  fusionAuthApiKey: string,
   applicationId: string,
   tenantId: string,
   roles: any[],
   applicationName: string,
 ) => {
   const applicationResponse = await fetch(
-    `${process.env.FUSIONAUTH_BASEURL}/api/application/${applicationId}`,
+    `${fusionAuthBaseUrl}/api/application/${applicationId}`,
     {
       method: 'POST',
       headers: {
-        Authorization: process.env.FUSIONAUTH_APIKEY,
+        Authorization: fusionAuthApiKey,
         'Content-Type': 'application/json',
         'X-FusionAuth-TenantId': tenantId,
       },
@@ -83,19 +87,21 @@ export const FusionAuthApplicationCreationWithRole = async (
   return data;
 };
 
-export const FusionAuthApplicationDeletion = async (applicationId: string) => {
+export const FusionAuthApplicationDeletion = async (fusionAuthBaseUrl: string, fusionAuthApiKey: string, applicationId: string) => {
   await fetch(
-    `${process.env.FUSIONAUTH_BASEURL}/api/application/${applicationId}?hardDelete=true`,
+    `${fusionAuthBaseUrl}/api/application/${applicationId}?hardDelete=true`,
     {
       method: 'DELETE',
       headers: {
-        Authorization: process.env.FUSIONAUTH_APIKEY,
+        Authorization: fusionAuthApiKey,
       },
     },
   );
 };
 
 export const FusionAutRoleCRUDAlongWithApp = async (
+  fusionAuthBaseUrl: string,
+  fusionAuthApiKey: string,
   applicationId: string,
   roleId: string,
   roleName: string,
@@ -104,7 +110,7 @@ export const FusionAutRoleCRUDAlongWithApp = async (
   const options: RequestInit = {
     method: methodName,
     headers: {
-      Authorization: process.env.FUSIONAUTH_APIKEY as string,
+      Authorization: fusionAuthApiKey as string,
       'Content-Type': 'application/json',
     },
   };
@@ -117,7 +123,7 @@ export const FusionAutRoleCRUDAlongWithApp = async (
 
   // API call
   const response = await fetch(
-    `${process.env.FUSIONAUTH_BASEURL}/api/application/${applicationId}/role/${roleId}`,
+    `${fusionAuthBaseUrl}/api/application/${applicationId}/role/${roleId}`,
     options,
   );
 
@@ -128,6 +134,8 @@ export const FusionAutRoleCRUDAlongWithApp = async (
 };
 
 export const FusionAuthUserCreationWithAppAndRole = async (
+  fusionAuthBaseUrl: string,
+  fusionAuthApiKey: string,
   tenantId: string,
   userId: string,
   applicationId: string,
@@ -140,11 +148,11 @@ export const FusionAuthUserCreationWithAppAndRole = async (
   mobile?: string | number,
 ) => {
   const userResponse = await fetch(
-    `${process.env.FUSIONAUTH_BASEURL}/api/user/registration/${userId}`,
+    `${fusionAuthBaseUrl}/api/user/registration/${userId}`,
     {
       method: 'POST',
       headers: {
-        Authorization: process.env.FUSIONAUTH_APIKEY,
+        Authorization: fusionAuthApiKey,
         'Content-Type': 'application/json',
         'X-FusionAuth-TenantId': tenantId,
       },
@@ -171,19 +179,21 @@ export const FusionAuthUserCreationWithAppAndRole = async (
   }
 };
 
-export const FusionAuthUserDeletion = async (userId: string) => {
+export const FusionAuthUserDeletion = async (fusionAuthBaseUrl: string, fusionAuthApiKey: string, userId: string) => {
   await fetch(
-    `${process.env.FUSIONAUTH_BASEURL}/api/user/${userId}?hardDelete=true`,
+    `${fusionAuthBaseUrl}/api/user/${userId}?hardDelete=true`,
     {
       method: 'DELETE',
       headers: {
-        Authorization: process.env.FUSIONAUTH_APIKEY,
+        Authorization: fusionAuthApiKey,
       },
     },
   );
 };
 
 export const FusionAuthUserCreation = async (
+  fusionAuthBaseUrl: string,
+  fusionAuthApiKey: string,
   tenantId: string,
   userId: string,
   firstName: string,
@@ -195,11 +205,11 @@ export const FusionAuthUserCreation = async (
   mobile?: string | number,
 ) => {
   const userResponse = await fetch(
-    `${process.env.FUSIONAUTH_BASEURL}/api/user/${userId}`,
+    `${fusionAuthBaseUrl}/api/user/${userId}`,
     {
       method: methjodName,
       headers: {
-        Authorization: process.env.FUSIONAUTH_APIKEY,
+        Authorization: fusionAuthApiKey,
         'Content-Type': 'application/json',
         'X-FusionAuth-TenantId': tenantId,
       },
@@ -223,17 +233,19 @@ export const FusionAuthUserCreation = async (
 };
 
 export const FusionAuthUserApplicatonGet = async (
+  fusionAuthBaseUrl: string,
+  fusionAuthApiKey: string,
   tenantId: string,
   userId: string,
   applicationId: string,
 ) => {
   try {
     const userResponse = await fetch(
-      `${process.env.FUSIONAUTH_BASEURL}/api/user/registration/${userId}?applicationId=${applicationId}`,
+      `${fusionAuthBaseUrl}/api/user/registration/${userId}?applicationId=${applicationId}`,
       {
         method: 'GET',
         headers: {
-          Authorization: process.env.FUSIONAUTH_APIKEY,
+          Authorization: fusionAuthApiKey,
           'Content-Type': 'application/json',
           'X-FusionAuth-TenantId': tenantId,
         },
@@ -251,6 +263,8 @@ export const FusionAuthUserApplicatonGet = async (
 };
 
 export const FusionAuthApplicatonAssign = async (
+  fusionAuthBaseUrl: string,
+  fusionAuthApiKey: string,
   tenantId: string,
   userId: string,
   applicationId: string,
@@ -264,11 +278,11 @@ export const FusionAuthApplicatonAssign = async (
 ) => {
   try {
     const userResponse = await fetch(
-      `${process.env.FUSIONAUTH_BASEURL}/api/user/registration/${userId}`,
+      `${fusionAuthBaseUrl}/api/user/registration/${userId}`,
       {
         method: methodName,
         headers: {
-          Authorization: process.env.FUSIONAUTH_APIKEY,
+          Authorization: fusionAuthApiKey,
           'Content-Type': 'application/json',
           'X-FusionAuth-TenantId': tenantId,
         },
@@ -291,6 +305,8 @@ export const FusionAuthApplicatonAssign = async (
 };
 
 export const FusionAuthUserRoleCreation = async (
+  fusionAuthBaseUrl: string,
+  fusionAuthApiKey: string,
   tenantId: string,
   userId: string,
   applicationId: string,
@@ -298,11 +314,11 @@ export const FusionAuthUserRoleCreation = async (
   roles?: any[],
 ) => {
   const userResponse = await fetch(
-    `${process.env.FUSIONAUTH_BASEURL}/api/user/registration/${userId}`,
+    `${fusionAuthBaseUrl}/api/user/registration/${userId}`,
     {
       method: methodName,
       headers: {
-        Authorization: process.env.FUSIONAUTH_APIKEY,
+        Authorization: fusionAuthApiKey,
         'Content-Type': 'application/json',
         'X-FusionAuth-TenantId': tenantId,
       },
@@ -329,16 +345,18 @@ export const FusionAuthUserRoleCreation = async (
 };
 
 export const FusionAuthUserEdition = async (
+  fusionAuthBaseUrl: string,
+  fusionAuthApiKey: string,
   userId: string,
   firstName: string,
   lastName: string,
 ) => {
   const userResponse = await fetch(
-    `${process.env.FUSIONAUTH_BASEURL}/api/user/${userId}`,
+    `${fusionAuthBaseUrl}/api/user/${userId}`,
     {
       method: 'PATCH',
       headers: {
-        Authorization: process.env.FUSIONAUTH_APIKEY,
+        Authorization: fusionAuthApiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -355,15 +373,18 @@ export const FusionAuthUserEdition = async (
     throw errorText;
   }
 };
+
 export const FusionAuthUserGet = async (
+  fusionAuthBaseUrl: string,
+  fusionAuthApiKey: string,
   userId: string,
 ) => {
   const userResponse = await fetch(
-    `${process.env.FUSIONAUTH_BASEURL}/api/user/${userId}`,
+    `${fusionAuthBaseUrl}/api/user/${userId}`,
     {
       method: 'GET',
       headers: {
-        Authorization: process.env.FUSIONAUTH_APIKEY,
+        Authorization: fusionAuthApiKey,
         'Content-Type': 'application/json',
       },
     },

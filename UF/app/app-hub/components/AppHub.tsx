@@ -9,6 +9,9 @@ import { getCdnImage } from '@/app/utils/getAssets'
 import { getCookie } from '@/app/components/cookieMgment'
 import { AxiosService } from '@/app/components/axiosService'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
+import { Button } from '@/components/Button'
+import { Dropdown } from '@/components/Dropdown'
+import { SearchIcon } from '@/app/components/svgApplication'
 
 type VersionInfo = {
   version: string
@@ -28,7 +31,7 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
   ) as TotalContextProps
   const { branding } = useGlobal()
   const { brandColor } = branding
-  const { borderColor } = useTheme()
+  const { borderColor, isDark } = useTheme()
   const token = getCookie('token')
   const toast: Function = useInfoMsg()
 
@@ -75,17 +78,52 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
       <hr className={twMerge('w-full border', borderColor)} />
       {/* Header Controls */}
       <div className='flex items-center justify-between px-6 py-4'>
-        <input
-          type='text'
-          placeholder='Search'
-          className='w-72 rounded-md border px-3 py-2 text-sm outline-none'
-          value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
-        />
+        <div
+          className={twMerge(
+            'flex w-96 items-center gap-[.5vw] rounded-lg border px-3 py-1',
+            borderColor
+          )}
+        >
+          <span>
+            <SearchIcon
+              fill={isDark ? 'white' : 'black'}
+              height='0.83vw'
+              width='0.83vw'
+            />
+          </span>
+          <input
+            type='text'
+            placeholder='Search'
+            className='w-full outline-none'
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
 
-        <div className='flex items-center gap-3'>
-          <select
-            className='rounded-md border px-3 py-2 text-sm outline-none disabled:opacity-50'
+        <div className='flex items-center'>
+          <div
+            title={selectedVersion?.version ?? 'Select Version'}
+            className='w-[10vw]'
+          >
+            <Dropdown
+              placeholder='Select Version'
+              disabled={!selectedApp?.versionInfo?.length}
+              className='rounded-md outline-none disabled:opacity-50'
+              static
+              staticProps={selectedApp?.versionInfo?.map(v => v.version) ?? []}
+              value={selectedVersion?.version ?? ''}
+              onChange={val => {
+                const version = selectedApp?.versionInfo?.find(
+                  v => v.version === val
+                )
+                setSelectedVersion(version ?? null)
+              }}
+            />
+          </div>
+
+          {/* <select
+            className='rounded-md border px-4 py-3 outline-none disabled:opacity-50'
+            style={{ fontSize: branding.fontSize }}
             disabled={!selectedApp?.versionInfo?.length}
             value={selectedVersion?.version ?? ''}
             onChange={e => {
@@ -101,10 +139,10 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
                 {v.version}
               </option>
             ))}
-          </select>
+          </select> */}
 
-          <button
-            className='rounded-md bg-[var(--brand-color)] px-6 py-2 text-sm font-medium disabled:opacity-50'
+          <Button
+            className='rounded-md px-4 py-2 disabled:opacity-50'
             disabled={!selectedVersion}
             onClick={() => {
               if (selectedVersion?.accessUrl) {
@@ -123,7 +161,7 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
             }}
           >
             Next →
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -154,7 +192,7 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
                     isSelected ? 'bg-[var(--selection-color)]' : 'bg-unset'
                   )}
                 >
-                  <div className='mb-3 flex h-10 w-10 items-center justify-center rounded-md bg-gray-100'>
+                  <div className='mb-3 flex h-10 w-12 items-center justify-center rounded-md bg-gray-100'>
                     {app.logo ? (
                       <img
                         src={getCdnImage(app.logo)}
@@ -162,11 +200,21 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
                         className='h-6 w-6 object-contain'
                       />
                     ) : (
-                      <span className='text-xs font-bold'>APP</span>
+                      <span
+                        style={{ fontSize: branding.fontSize }}
+                        className='font-bold'
+                      >
+                        APP
+                      </span>
                     )}
                   </div>
 
-                  <p className='text-sm font-medium'>{app.name}</p>
+                  <p
+                    style={{ fontSize: branding.fontSize }}
+                    className='font-medium'
+                  >
+                    {app.name}
+                  </p>
                 </div>
               )
             })}
