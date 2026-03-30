@@ -202,11 +202,11 @@ export class TeService{
                     if (!pfresponse)
                     pfresponse = await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i-1].nodeName  + '.PRO', '.response', client);
                   pfresponse = pfresponse.data && pfresponse.data[poNode[i-1].nodeName] ? pfresponse.data[poNode[i-1].nodeName] : pfresponse.data; 
-                   return { upId: pfdto.upId, message: `Awaiting for: ${poNode[i].nodeName}`, event: event, data: pfresponse };
+                   return { upId: pfdto.upId, message: `Awaiting for: ${poNode[i].nodeName}`, event: event, data: pfresponse,node:'outputnode' };
                   } 
                   const data = await this.redisService.getJsonData(processedKey + pfdto.upId + ':previousResponse', client);
                   const npvdata = data ? JSON.parse(data) : undefined;
-                  return { upId: pfdto.upId, message: `Awaiting for: ${poNode[i].nodeName}`, event: event, insertedData: npvdata };
+                  return { upId: pfdto.upId, message: `Awaiting for: ${poNode[i].nodeName}`, event: event, data: npvdata };
                 } else if (poNode[i].nodeId == poNode[1].nodeId) {
                   throw new CustomException('Sourceid not found', 404)
                 }
@@ -595,28 +595,31 @@ export class TeService{
                               pfresponse = pfresponse.data && pfresponse.data[pfjson[pfs].nodeName] ? pfresponse.data[pfjson[pfs].nodeName] : pfresponse.data; 
                               
                               // OPTIMIZATION: Parallelize cleanup operations with concurrency limiting
-                              const [processedNodes, processedQueues] = await Promise.all([
-                                this.redisService.getKeys(processedKey + pfdto.upId, client),
-                                this.redisService.getKeys(client + '_*_ProcessStatus', client)
-                              ]);
+                              // const [processedNodes, processedQueues] = await Promise.all([
+                              //   this.redisService.getKeys(processedKey + pfdto.upId, client),
+                              //   this.redisService.getKeys(client + '_*_ProcessStatus', client)
+                              // ]);
 
-                              // Batch delete with chunking to prevent connection pool exhaustion
-                              const allKeysToDelete = [
-                                ...(processedNodes || []),
-                                ...(processedQueues || [])
-                              ];
+                              // // Batch delete with chunking to prevent connection pool exhaustion
+                              // const allKeysToDelete = [
+                              //   ...(processedNodes || []),
+                              //   ...(processedQueues || [])
+                              // ];
 
-                              if(allKeysToDelete.length > 0){
-                                // Delete in chunks of 10 to avoid overwhelming connection pool
-                                await this.executeInChunks(
-                                  allKeysToDelete,
-                                  (key) => this.redisService.deleteKey(key, client),
-                                  10
-                                );
-                                this.logger.log(`✅ Cleaned up ${allKeysToDelete.length} keys in chunks`);
-                              }  
+                              // if(allKeysToDelete.length > 0){
+                              //   // Delete in chunks of 10 to avoid overwhelming connection pool
+                              //   await this.executeInChunks(
+                              //     allKeysToDelete,
+                              //     (key) => this.redisService.deleteKey(key, client),
+                              //     10
+                              //   );
+                              //   this.logger.log(`✅ Cleaned up ${allKeysToDelete.length} keys in chunks`);
+                              // }  
                              
                               this.logger.log('Event Emmiter Completed....');                             
+                              if(pfjson[pfs].nodeType == 'outputnode' && (Array.isArray(pfresponse) && pfresponse?.length>0 || Object.keys(pfresponse).length>0))
+                                return { statusCode: 201, message: 'Success', key: pfdto.key, upId: pfdto.upId, event: event, data: pfresponse,node:'outputnode'};                              
+                              else                                                    
                               return { statusCode: 201, message: 'Success', key: pfdto.key, upId: pfdto.upId, event: event, data: pfresponse};
                             } else {
                               let obj = {};
@@ -644,27 +647,27 @@ export class TeService{
                                   await this.redisService.sethash(obj['data'],dstkey+ tokenDecode.loginId + '_DS_Object')
                                 }    
                                 
-                              // OPTIMIZATION: Parallelize cleanup operations with concurrency limiting
-                                // const [processedNodes, processedQueues] = await Promise.all([
-                              //   this.redisService.getKeys(processedKey + pfdto.upId, client),
-                              //   this.redisService.getKeys(client + '_*_ProcessStatus', client)
-                              // ]);
+                               // OPTIMIZATION: Parallelize cleanup operations with concurrency limiting
+                                const [processedNodes, processedQueues] = await Promise.all([
+                                  this.redisService.getKeys(processedKey + pfdto.upId, client),
+                                  this.redisService.getKeys(client + '_*_ProcessStatus', client)
+                                ]);
 
-                              // // Batch delete with chunking to prevent connection pool exhaustion
-                              // const allKeysToDelete = [
-                              //   ...(processedNodes || []),
-                              //   ...(processedQueues || [])
-                              // ];
+                                // Batch delete with chunking to prevent connection pool exhaustion
+                                const allKeysToDelete = [
+                                  ...(processedNodes || []),
+                                  ...(processedQueues || [])
+                                ];
 
-                              // if(allKeysToDelete.length > 0){
-                              //   // Delete in chunks of 10 to avoid overwhelming connection pool
-                              //   // await this.executeInChunks(
-                              //   //   allKeysToDelete,
-                              //   //   (key) => this.redisService.deleteKey(key, client),
-                              //   //   10
-                              //   // );
-                              //   this.logger.log(`✅ Cleaned up ${allKeysToDelete.length} keys in chunks`);
-                              // }  
+                                if(allKeysToDelete.length > 0){
+                                  // Delete in chunks of 10 to avoid overwhelming connection pool
+                                  await this.executeInChunks(
+                                    allKeysToDelete,
+                                    (key) => this.redisService.deleteKey(key, client),
+                                    10
+                                  );
+                                  this.logger.log(`✅ Cleaned up ${allKeysToDelete.length} keys in chunks`);
+                                }  
                                
                                 if(obj['data'] == 'logicCenter' && !logicCenter)
                                   return { status: 'Success', statusCode: 201, processKey: dstkey, upId: pfdto.upId, message: 'Success', event: FinalEvent,dataset:'Bulk Data Processing'};
@@ -778,8 +781,9 @@ export class TeService{
                         new PoEvent(pfdto, event, pfjson, pfo, poJson, Ndp, refflag, page, count)
                       ))
                       
-                      if (eventResponse.data && pfdto.nodeType == 'apinode') {
-                        prevres[poNode[i].nodeId] = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', '.response', client))
+                      if (eventResponse.data && pfdto.nodeType == 'apinode' && eventResponse?.method == 'post') {
+                        //prevres[poNode[i].nodeId] = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', '.response', client))
+                        prevres = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', '.response', client))
                         await this.redisService.setJsonData(processedKey + pfdto.upId + ':previousResponse', JSON.stringify(prevres), client);
                       }
                       if (!eventResponse.status && eventResponse.status != 200 ) {

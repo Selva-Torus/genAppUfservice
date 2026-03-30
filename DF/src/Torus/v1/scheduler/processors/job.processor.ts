@@ -191,12 +191,11 @@ export class JobProcessor{
     }
 
     getNextRun(expression: string, timezone = 'UTC'): Date { 
-        // const interval = cronParser.parseExpression(expression, { 
-        // tz: timezone, 
-        // currentDate: new Date(), 
-        // }); 
-        // return interval.next().toDate(); 
-        return new Date()
+        const interval = cronParser.parseExpression(expression, { 
+        tz: timezone, 
+        currentDate: new Date(), 
+        }); 
+        return interval.next().toDate(); 
     } 
 
     async getDataFromTable(token,method,tableName,data,params?): Promise<any> {

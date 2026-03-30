@@ -9,7 +9,7 @@ pipeline {
     }
     environment {
         DOCKERHUB_USERNAME = "192.168.2.164:5000"
-        APP_NAME = "a001-df-v1"
+        APP_NAME = "itax-df-v1"
         IMAGE_NAME = "${DOCKERHUB_USERNAME}/${APP_NAME}"
         BUILD_NUMBER = "${BUILD_NUMBER}"
         GITHUB_CREDENTIALS = "GIT_HUB_PAT"
@@ -27,21 +27,21 @@ pipeline {
         stage('Code Checkout') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${GITHUB_CREDENTIALS}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/TorusDev2023/Claims5UF.git'
+                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/Torus9x/ITAX.git'
                 }
             }
         }
 
-        stage('Detect Changes in CI001 App') {
+        stage('Detect Changes in CT010 App') {
             steps {
                 script {
                     def diff = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
-                    if (diff.split('\n').any { it.startsWith('apps/CI001/AG001/A001/v1/Nest-df/') }) {
+                    if (diff.split('\n').any { it.startsWith('apps/CT010/I001/ITAX/v1/Nest-df/') }) {
                         env.NEST_DF_CHANGED = "true"
-                        echo "Changes detected in apps/CI001/AG001/A001/v1/Nest-df"
+                        echo "Changes detected in apps/CT010/I001/ITAX/v1/Nest-df"
                     } else {
                         env.NEST_DF_CHANGED = "false"
-                        echo "No changes in apps/CI001/AG001/A001/v1/Nest-df. Skipping build and deployment stages."
+                        echo "No changes in apps/CT010/I001/ITAX/v1/Nest-df. Skipping build and deployment stages."
                     }
                 }
             }
@@ -55,7 +55,7 @@ pipeline {
                 script {
                     docker.withRegistry("http://${DOCKERHUB_USERNAME}", '') {
                         sh """
-                        docker build -t ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG} -f apps/CI001/AG001/A001/v1/Nest-df/Dockerfile1 apps/CI001/AG001/A001/v1/Nest-df
+                        docker build -t ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG} -f apps/CT010/I001/ITAX/v1/Nest-df/Dockerfile1 apps/CT010/I001/ITAX/v1/Nest-df
                         docker push ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG}
                         """
                     }
@@ -69,7 +69,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CI001/AG001/A001/v1/Nest-df/kubernetes/deploymentservice.yaml"
+                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CT010/I001/ITAX/v1/Nest-df/kubernetes/deploymentservice.yaml"
                 }
             }
         }
@@ -81,7 +81,7 @@ pipeline {
             steps {
                 script {
                     withKubeConfig(credentialsId: 'kubernetes-165', serverUrl: 'https://lb.kubesphere.local:6443') {
-                        sh "kubectl apply -f apps/CI001/AG001/A001/v1/Nest-df/kubernetes/deploymentservice.yaml"
+                        sh "kubectl apply -f apps/CT010/I001/ITAX/v1/Nest-df/kubernetes/deploymentservice.yaml"
                     }
                 }
             }

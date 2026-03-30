@@ -47,6 +47,7 @@ export interface api_paginationDto{
     searchFilter?:any
     dpdKey?:string;
     method?:string;
+    filterData?:any[];
   }
 export interface uf_paginationDataFilterDto{
     data?:any;
@@ -82,7 +83,7 @@ export interface te_eventEmitterDto {
   nodeId?:string;
   nodeName?:string;
   nodeType?:string;
-  upId?:string;
+  upId?:string | string[];
   lock?:any;
   childTables?:string[];
   childTableData?:any[];

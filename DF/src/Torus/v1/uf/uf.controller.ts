@@ -958,7 +958,8 @@ export class UfController {
         input.count,
         input.filterDetails,
         input.searchFilter,
-        token
+        token,
+        input.filterData,
       );
       if(dpdKey && method){
       result["dpdKey"] = dpdKey

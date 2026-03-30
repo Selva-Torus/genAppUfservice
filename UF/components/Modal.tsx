@@ -182,7 +182,8 @@ export const Modal: React.FC<ModalProps> = ({
           <div
             className={`
               flex items-center justify-between
-            
+              mt-4
+              px-6
               backdrop-blur-sm
             `}
             style={{
@@ -194,7 +195,7 @@ export const Modal: React.FC<ModalProps> = ({
           >
             {title && (
               <h2
-                className={`${getFontSizeClass(branding.fontSize)} font-semibold`}
+                className={`text-xl font-semibold`}
                 style={{ color: isDark ? "#F9FAFB" : "#111827" }}
               >
                 {title}
@@ -209,12 +210,7 @@ export const Modal: React.FC<ModalProps> = ({
                   ${getBorderRadiusClass(branding.borderRadius)}
                   transition-all duration-200
                   ${isDark ? "hover:bg-gray-700 hover:shadow-lg" : "hover:bg-gray-100 hover:shadow-md"}
-                `}
-                style={{
-                  boxShadow: isDark
-                    ? "0 2px 4px rgba(0, 0, 0, 0.2)"
-                    : "0 2px 4px rgba(0, 0, 0, 0.1)",
-                }}
+                `}                
                 aria-label="Close modal"
               >
                 <Icon data="FaTimes" size={20} />

@@ -166,7 +166,8 @@ export class readAPIDTO {
       filterDetails?: object   
       searchFilter?:object      
       dpdKey?:string
-      method?:string   
+      method?:string
+      filterData?:string   
   }
   export class dataGet { 
     @IsNotEmpty()

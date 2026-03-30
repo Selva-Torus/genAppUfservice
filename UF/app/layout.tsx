@@ -1,5 +1,5 @@
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT010:AFGK:I001:AFK:ITAX:AFVK:v1:bldc",
   "ufKey": "Logs Screen",
   "screenName": "logs",
   "screenLabel": "logs",
@@ -29,48 +29,75 @@
       "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
     },
     {
-      "menuGroupLabel": "test",
+      "menuGroupLabel": "Transaction",
       "screenDetails": [
         {
-          "name": "test",
-          "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1",
-          "allowedAccessProfile": [],
+          "name": "transaction",
+          "key": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_KEDTB_Main_Screen:AFVK:v1",
+          "allowedAccessProfile": [
+            "Branch Officer",
+            "Branch Manager",
+            "Credit Approver",
+            "System Administrator"
+          ],
           "static": false
         }
       ],
       "items": []
+    },
+    {
+      "menuGroupLabel": "Dashboard",
+      "screenDetails": [
+        {
+          "name": "dashboard",
+          "key": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_Dashboard:AFVK:v1",
+          "allowedAccessProfile": [
+            "Branch Officer",
+            "Branch Manager",
+            "Credit Approver",
+            "System Administrator"
+          ],
+          "static": false,
+          "icon": "/torus/9.1/resources/icons/clipboard-list-svgrepo-com.svg"
+        }
+      ],
+      "items": [],
+      "icon": "/torus/9.1/resources/icons/clipboard-list-svgrepo-com.svg"
     }
   ],
   "setupData": {
     "appInfo": {
-      "name": "application1",
-      "code": "A001",
-      "logType": "mongodb",
-      "deploymentArtifactKey": "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
-      "applicationUniqueId": "9cef7d6e-cf51-4b98-af18-5b28c0572833",
-      "lastBuildVersion": "v1",
-      "lastBuildOn": "2026-03-14T06:11:21.486Z",
-      "accessUrl": "https://tgadev.toruslowcode.com/<tenantCode>/<AppGroupCode>/<AppCode>/<version>",
-      "logo": "torus/9.1/CI001/resources/images/images.jfif",
+      "name": "ITAX",
+      "code": "ITAX",
       "encryption": {
         "type": ""
       },
-      "appGrpName": "appgroup",
-      "appGrpCode": "AG001",
-      "fusionAuthAppClientSecret": "2XQt7BDl1Ozkx_BglytBp-J88OwXFSWH9PtePcdEVCQ"
+      "applicationUniqueId": "9adb0d06-0e8a-4b6b-94e9-841cd9d7477d",
+      "deploymentArtifactKey": "CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:I001:AFGK:ITAX:AFK:ITAX_DPD:AFVK:v1",
+      "lastBuildVersion": "v1",
+      "lastBuildOn": "2026-03-30T11:31:13.491Z",
+      "accessUrl": "https://tgadev.toruslowcode.com/ct010/i001/itax/v1",
+      "logo": "torus/9.1/CT010/resources/images/Logo_resize.png",
+      "appLogo": "torus/9.1/CT010/resources/images/DTB_Resize_logo.png",
+      "appGrpName": "ITAX",
+      "appGrpCode": "I001",
+      "fusionAuthAppClientSecret": "e-iy489vgS9yN_ZML2Td8YGE666Ik2Q9qrX8586qemQ"
     },
-    "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CI001:AFK:PROFILE:AFVK:v1:appearance",
+    "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CT010:AFK:PROFILE:AFVK:v1:appearance",
     "selectedPresetKey": "default",
-    "fontSize": "Large",
+    "group-bg-color": "#ffffff",
+    "fontSize": "Medium",
     "direction": "LTR",
-    "brandColor": "#0737c9",
-    "selectionColor": "#579eff",
-    "hoverColor": "#d5eeff",
-    "borderRadius": "xl",
+    "brandColor": "#e5003a",
+    "selectionColor": "#e5003a",
+    "hoverColor": "#e5003a",
+    "borderRadius": "s",
+    "topbarColor": "#ffffff",
+    "menubarColor": "#ffffff",
     "sidebarStyle": "",
-    "navigationStyles": "vertical",
+    "navigationStyles": "horizontal",
     "theme": "light",
-    "layoutMode": "detached",
+    "layoutMode": "fluid",
     "mobileAppearance": {
       "language": "English",
       "direction": "LTR",
@@ -81,8 +108,8 @@
         "tertiary": "#ee8b60"
       },
       "accentColors": {
-        "accentOne": "#4c4b39ef",
-        "accentTwo": "#4d39d2c0"
+        "accentOne": "#4c4b39",
+        "accentTwo": "#4d39d2"
       },
       "utilityColors": {
         "lightMode": {
@@ -119,29 +146,22 @@
       "navigationStyle": "Bottom Navigation",
       "drawerStyle": ""
     },
+    "page-bg-color": "#ffffff",
     "language": "English",
-    "fontFamily": [
-      {
-        "fontUrl": "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
-        "label": "Inter"
-      }
-    ],
-    "text-body-font": "Inter",
-    "text-header-font": "Inter",
-    "text-display-font": "Inter",
     "name": "default",
-    "appBackgroundImage": "torus/9.1/CI001/resources/images/simple-background-yixvlrrhdncvb736.jpg"
+    "appBackgroundImage": ""
   },
-  "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:appearance",
+  "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT010:AFGK:I001:AFK:ITAX:AFVK:v1:appearance",
   "allKeys": [
-    "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
+    "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_KEDTB_Main_Screen:AFVK:v1",
+    "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_Dashboard:AFVK:v1"
   ],
   "loginDetails": {
-    "loginId": "selva",
-    "firstName": "selva",
-    "lastName": "g",
-    "email": "selvakumarg+a@torus.tech",
-    "mobile": "6369726232",
+    "loginId": "Haritha",
+    "firstName": "Haritha",
+    "lastName": "R",
+    "email": "haritha@torus.tech",
+    "mobile": "2356895623",
     "2FAFlag": "N",
     "scope": "client_admin",
     "status": "active",
@@ -149,19 +169,13 @@
       "admin"
     ],
     "accessExpires": "",
-    "dateAdded": "2026-01-23T13:29:31.878Z",
+    "dateAdded": "2026-03-05T07:42:47.028Z",
     "isRestricted": false,
-    "userUniqueId": "399bb002-571a-4f60-8242-67a2d5d03a4b",
+    "userUniqueId": "87cc96dc-ad16-4152-be5e-5c8f528d8ff0",
     "touring": {
       "isneedTouring": false,
       "touringData": {
-        "/control-center/storage-configuration": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "/control-center/tenant": {
+        "/torus": {
           "stepIndex": 0,
           "isSkipped": true,
           "completed": false,
@@ -169,48 +183,29 @@
         }
       }
     },
-    "client": "CI001",
-    "quickLinks": [
-      {
-        "label": "Tenant Profile",
-        "key": "tenantProfile",
-        "routes": "/control-center/tenant"
-      },
-      {
-        "label": "Appearance",
-        "key": "tenantappearance",
-        "routes": "/tenant-settings?tenant=${tenant}"
-      },
-      {
-        "label": "Company Profile",
-        "key": "PersonalcompanyProfile",
-        "routes": "/control-center/company-profile"
-      },
-      {
-        "label": "Notifications",
-        "key": "tenantnotifications",
-        "routes": "/control-center/notifications"
-      },
-      {
-        "label": "User Management",
-        "key": "usermanagement",
-        "routes": "/control-center/user-management"
-      }
-    ]
+    "lastActive": "2026-03-30T12:55:40.320Z",
+    "client": "CT010"
   },
   "webOnBoarding": {
     "navBarStyle": {
       "activeItems": [
         {
+          "name": "app logo",
+          "gridColumn": "1/2"
+        },
+        {
           "name": "menu items",
+          "gridColumn": "2/8",
           "gridRow": "1/6"
         },
         {
           "name": "opr matrix",
-          "gridRow": "9/12"
+          "gridColumn": "9/12",
+          "gridRow": "6/9"
         },
         {
           "name": "profile",
+          "gridColumn": "12/13",
           "gridRow": "12/13"
         }
       ],
@@ -218,28 +213,32 @@
         {
           "name": "logo",
           "gridColumn": "1/2"
-        },
-        {
-          "name": "app logo",
-          "gridColumn": "2/4"
         }
       ]
     },
-    "landingScreen": "User Screen"
+    "landingScreen": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_KEDTB_Main_Screen:AFVK:v1",
+    "loginType": "rightAligned",
+    "image": "torus/9.1/CT010/resources/images/Half.png"
   },
   "allKeyswithScreenNames": [
     {
-      "screenName": "test",
-      "screensName": "test-v1",
-      "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
+      "screenName": "transaction",
+      "screensName": "transaction-v1",
+      "ufKey": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_KEDTB_Main_Screen:AFVK:v1"
+    },
+    {
+      "screenName": "dashboard",
+      "screensName": "dashboard-v1",
+      "ufKey": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_Dashboard:AFVK:v1"
     }
   ],
-  "deploymentArtifactKey": "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
-  "appGroupDesc": "appgroup",
+  "deploymentArtifactKey": "CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:I001:AFGK:ITAX:AFK:ITAX_DPD:AFVK:v1",
+  "appGroupDesc": "ITAX",
   "logType": "mongodb",
-  "appDesc": "application1",
+  "appDesc": "ITAX",
+  "appLogo": "torus/9.1/CT010/resources/images/DTB_Resize_logo.png",
   "isOld": true,
-  "clientCode": "CI001"
+  "clientCode": "CT010"
 } */
 import './globals.css';
 import type { Metadata } from 'next';
@@ -251,8 +250,8 @@ import { GlobalProvider } from '@/context/GlobalContext';
 import { EventBusProvider } from '@/context/EventBusContext';
 import { ThemeWrapper } from '@/components/ThemeWrapper';
 export const metadata: Metadata = {
-  title: 'application1',
-  description: 'application1 Generated by Torus'
+  title: 'ITAX',
+  description: 'ITAX Generated by Torus'
 }
 
 export default function RootLayout({

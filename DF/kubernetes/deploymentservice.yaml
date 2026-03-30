@@ -2,10 +2,10 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
-  name: ci001-a001-df-generator
-  namespace: ci001-a001-df-v1
+  name: ct010-itax-df-generator
+  namespace: ct010-itax-df-v1
   labels:
-    app: ci001-a001-df-generator
+    app: ct010-itax-df-generator
 spec:
   replicas: 1
   strategy:
@@ -18,15 +18,15 @@ spec:
       - setWeight: 100  # 100% Canary (Stable)
   selector:
     matchLabels:
-      app: ci001-a001-df-generator
+      app: ct010-itax-df-generator
   template:
     metadata:
       labels:
-        app: ci001-a001-df-generator
+        app: ct010-itax-df-generator
     spec:
       containers:
-      - name: ci001-a001-df-generator-backend-container
-        image: 192.168.2.164:5000/ci001-a001-df-v1:docker_tag
+      - name: ct010-itax-df-generator-backend-container
+        image: 192.168.2.164:5000/ct010-itax-df-v1:docker_tag
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -41,13 +41,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ci001-a001-df-generator
-  namespace: ci001-a001-df-v1
+  name: ct010-itax-df-generator
+  namespace: ct010-itax-df-v1
   labels:
-    app: ci001-a001-df-generator
+    app: ct010-itax-df-generator
 spec:
   selector:
-    app: ci001-a001-df-generator
+    app: ct010-itax-df-generator
   ports:
     - name: http
       protocol: TCP

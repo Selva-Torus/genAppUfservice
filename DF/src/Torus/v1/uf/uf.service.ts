@@ -1,5 +1,5 @@
 
-import { BadGatewayException, HttpStatus, Injectable } from '@nestjs/common';
+import { BadGatewayException, HttpStatus, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { CommonService } from 'src/common.Service';
 import { RedisService } from 'src/redisService';
 import * as v from 'valibot';
@@ -22,10 +22,10 @@ import { MongoService } from 'src/mongoService';
 const jsonata = require('jsonata');
 import * as fs from 'fs';
 import * as path from 'path';
-import { table } from 'console';
 import axios, { AxiosRequestConfig, Method } from 'axios';
 import * as FormData from 'form-data'; // Use this
 import { Readable } from 'stream';
+import { Pool } from 'pg';
 //import { v4 as uuidv4 } from 'uuid';
 import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet, FusionAuthUserCreation } from 'src/fusionAuth.api';
 import { EnvData } from 'src/envData/envData.service';
@@ -65,7 +65,7 @@ const defaultAuth =  process.env.DEFAULT_AUTHENTICATION;
 const torusAppApiBaseUrl = process.env.TOURS_APP_API_BASE_URL
 
 @Injectable()
-export class UfService {
+export class UfService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly jwtService: JwtServices,
     private readonly jwt: JwtService,
@@ -75,6 +75,125 @@ export class UfService {
     private readonly mongoService: MongoService,
     private readonly envData: EnvData
   ) {}
+    private pool : Pool;
+    
+    async onModuleInit() {
+     this.pool = new Pool({
+      connectionString: process.env.PG_URL,
+      application_name: `${tenant}_${ag}_${app}_ufService`,
+      // Pool sizing
+      max: 10,                // max connections in pool
+      min: 2,                 // keep at least 2 alive
+      idleTimeoutMillis: 30000,       // close idle connections after 30s
+      connectionTimeoutMillis: 5000,  // fail fast if can't connect in 5s
+      allowExitOnIdle: false,         // keep pool alive
+    });
+    // 🔑 Key: handle pool-level errors so they don't crash the process
+    this.pool.on('error', (err, client) => {
+      console.error('Unexpected error on idle pg client:', err.message);
+      // Do NOT re-throw — just log. Pool will recover automatically.
+    });
+
+     // Also handle process-level unhandled errors as safety net
+    process.on('unhandledRejection', (reason) => {
+      console.error('Unhandled Rejection:', reason);
+    });
+
+    try {
+      const client = await this.pool.connect();
+      console.log('PostgreSQL pool connected from uf.service');
+      client.release();
+    } catch (err) {
+      console.error('Failed to connect to PostgreSQL:', err.message);
+      throw err;
+    }
+  }
+
+   async onModuleDestroy() {
+       if (this.pool) {
+      await this.pool.end();
+      console.log('PostgreSQL pool closed');
+    }
+    }
+
+  async query<T = any>(text: string, params?: any[]): Promise<T[]> {
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(text, params);
+      return result.rows;
+    } catch (err) {
+      console.error('Query error:', err.message);
+      throw err;
+    } finally {
+      client.release(); // always release back to pool
+    }
+  }
+
+  async updateTable(
+    tableName: string,
+    data: Record<string, any>,
+    primaryKey: string,
+  ) {
+    try {
+      if (!tableName) throw new Error('Table name missing');
+ 
+      const columns = Object.keys(data).filter((col) => col !== primaryKey);
+ 
+      const setClause = columns.map((col, i) => `${col}=$${i + 1}`).join(',');
+ 
+      const values = columns.map((col) => data[col]);
+ 
+      const whereValue = data[primaryKey];
+ 
+      const query = `
+      UPDATE ${tenant}.${tableName}
+      SET ${setClause}
+      WHERE ${primaryKey}=$${columns.length + 1}
+      RETURNING *;
+    `;
+ 
+      const result = await this.query(query, [...values, whereValue]);
+ 
+      return {
+        message: `${tableName} updated successfully`,
+        data: result,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async insertIntoTable(
+    tableName: string,
+    data: Record<string, any>,
+  ) {
+    try {
+      if (!tableName) throw new Error('Table or schema missing');
+ 
+      // Column names
+      const columns = Object.keys(data);
+      // Values placeholders $1, $2 ...
+      const placeholders = columns.map((_, i) => `$${i + 1}`);
+      // Values array
+      const values = Object.values(data);
+ 
+      // Final query
+      const query = `
+      INSERT INTO ${tenant}.${tableName} (${columns.join(',')})
+      VALUES (${placeholders.join(',')})
+      RETURNING *;
+    `;
+ 
+      const result = await this.query(query, values);
+ 
+      return {
+        message: `${tableName} inserted successfully`,
+        data: result,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
 
 getConfig(): FusionAuthConfig {
   return {
@@ -200,7 +319,7 @@ getConfig(): FusionAuthConfig {
     try {
       // Normalize to array if single URL provided
       const urls = Array.isArray(fileUrl) ? fileUrl : [fileUrl];
-      const fullUrls = urls.map(url => `${process.env.FTP_OUTPUT_HOST}/${url}`);
+      const fullUrls = urls.map(url => `${this.envData.getFtpOutputHost()}/${url}`);
       // console.log("fileUrl ==> ", fullUrls);
 
       const fileBuffers: Buffer[] = [];
@@ -516,216 +635,97 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async getpagination(
+   async getpaginationwithLogicCenter(
     key: any,
     page,
     count,
     filter?,
     searchObj?,
     token?: string,
+    filterData?
   ) {
     try {
-      let tokenDecode = await this.jwtService.decodeToken(token);
-      if (!tokenDecode?.selectedAccessProfile)
-        throw 'Selected Access Profile not found';
-
-      if(!tokenDecode?.loginId) throw 'loginId not found'
-      let dsObject,data
-      let afkey = key.replace(':FNGK:AFP:FNK:DF-DST:',':FNGK:AF:FNK:DF-DFD:')
-       let afi = JSON.parse( await this.redisService.getJsonData(afkey+'AFI', process.env.CLIENTCODE))      
-       if(!afi.logicCenter){
+      
+      let filterobj = {}
+      let afkey = key.replace(':FNGK:AFP:FNK:DF-DST:',':FNGK:AF:FNK:DF-DFD:')     
+        let dbnodeid = Object.keys(JSON.parse(await this.redisService.getJsonData(afkey+'NDP',process.env.CLIENTCODE)))[0]
+      if(filterData && Object.keys(filterData).length > 0){
+        filterobj = filterData?.find(n => n.nodeId === dbnodeid);
+        if(!filterobj) filterobj = {}
+      }else{        
+        filterobj['nodeId'] = dbnodeid;
+      }
+        
+        filterobj = Object.assign(filterobj,searchObj)     
+      if (!page) page = 1;
+      let rule: any;       
+      let start,end;
+      if(count){
+        start = (page - 1) * count;
+        end = start + count;
+      }       
+       let payload = { key: afkey, count: count, page: page };
         const requestConfig: AxiosRequestConfig = {
-            headers: {
-                Authorization: `Bearer ${token}`
-            },timeout: 300000 
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+              timeout: 300000,
             };
-         // if (!(this.envData.getBeUrl())) throw new CustomException('Server Url not found', 404) 
-         await this.commonService.postCall(process.env.BE_URL+ '/te/eventEmitter',{ "key": afkey,count:count,page:page },requestConfig)          
-       }     
-        dsObject = await this.redisService.getAllRecordshash(key + tokenDecode.loginId+'_DS_Object')         
+         
+          
+      if (filter) {
+        var json = JSON.parse(await this.redisService.getJsonDataWithPath(filter.ufKey,'.mappedData.artifact.node',process.env.CLIENTCODE,));
+        if(json){
+                             
+          rule = json.find(f => f.nodeId === filter.nodeId)
+          if(!rule) throw `Node Id not found ${filter.nodeId}`
+          rule = rule.rule
+                   
+          let decisionTable = rule.nodes?.find(n => n.type === "decisionTableNode");
+          if(decisionTable){
+            let ruleInputs = decisionTable.content?.inputs 
+            let ruleConditions = decisionTable.content?.rules 
+            let ruleobj = {}
+            for(let item of ruleInputs){
+
+              let ruleId = item.id
+              let ruleField = item.field
+              
+            let ruleValue = []
+              for(let i=0;i< ruleConditions.length;i++){
+                if(ruleConditions[i][ruleId])
+                  ruleValue.push(JSON.parse(ruleConditions[i][ruleId]))
+            }           
+              ruleobj[ruleField] = ruleValue    
+            }     
+            filterobj = Object.assign(filterobj,ruleobj)               
+          }
+        }          
+      }
+      if (Object.keys(filterobj)?.length > 0) {
+            payload['filterData'] = [filterobj];
+        } 
+      console.log('payload',JSON.stringify(payload));
+         
+       await this.commonService.postCall(
+              //process.env.BE_URL + '/te/eventEmitter',
+              this.envData.getBeUrl() + '/te/eventEmitter',
+              payload,
+              requestConfig,
+            );
+            let tokenDecode = await this.jwtService.decodeToken(token);           
+            if(!tokenDecode?.loginId) throw 'loginId not found'
+            //return await this.redisService.getAllRecordshash(key + tokenDecode.loginId+'_DS_Object') 
+           let data =  await this.redisService.getAllRecordshash(key + tokenDecode.loginId+'_DS_Object') 
+          return { records: data, totalRecords: data.length } 
+      
        
-      if (!dsObject) {
-        await this.commonService.errorLog(
-          'Technical',
-          'AK',
-          'Fatal',
-          'TG033',
-          'DataSet does not exists',
-          key,
-          token,
-        );
-      }
-    //if(f == 1)
-       data = dsObject
-     // else
-     // data = dsObject?.data
-      if (data && tokenDecode) {
-        if (!page) page = 1;
-        let rule: any;
-        let finalData = [];
-        var dataArr = [];
-        var searcharr = [];
-        let start,end;
-        if(count){
-          start = (page - 1) * count;
-          end = start + count;
-        }
-
-        if (searchObj && Object.keys(searchObj).length > 0) {
-          var searchkey = Object.keys(searchObj);
-          var searchval = Object.values(searchObj);
-        }
-
-        if (filter) {
-          var json = JSON.parse(
-            await this.redisService.getJsonDataWithPath(
-              filter.ufKey,
-              '.mappedData.artifact.node',
-              process.env.CLIENTCODE,
-            ),
-          );
-
-          if (!json) {
-            await this.commonService.errorLog(
-              'Technical',
-              'AK',
-              'Fatal',
-              'TG034',
-              'node is empty',
-              key,
-              token,
-            );
-          }
-          for (let s = 0; s < json.length; s++) {
-            if (json[s].nodeId == filter.nodeId) {
-              rule = json[s].rule;
-            }
-          }
-
-          if (rule?.nodes?.length && rule?.edges?.length) {
-            for (let j = 0; j < data.length; j++) {
-              let result: any = await this.gorule.goRule(rule, data[j]);
-              if (result?.error) {
-                break;
-              } else if (result?.result?.output === true) {
-                // if (tokenDecode?.dap == 'f') {
-                finalData.push(data[j]);
-                // } else if (
-                //   tokenDecode.orgGrpCode == data[j]['trs_org_grp_code'] &&
-                //   tokenDecode.orgCode == data[j]['trs_org_code'] &&
-                //   tokenDecode.roleGrpCode == data[j]['trs_role_grp_code'] &&
-                //   tokenDecode.roleCode == data[j]['trs_role_code'] &&
-                //   tokenDecode.psGrpCode == data[j]['trs_ps_grp_code'] &&
-                //   tokenDecode.psCode == data[j]['trs_ps_code'] &&
-                //   tokenDecode.selectedAccessProfile ==
-                //     data[j]['trs_access_profile'] &&
-                //   tokenDecode.loginId == data[j]['trs_created_by']
-                // ) {
-                //   finalData.push(data[j]);
-                // }
-              }
-            }
-
-            if (searchObj && Object.keys(searchObj).length > 0) {
-              for (var x = 0; x < finalData.length; x++) {
-                var s = 0;
-                for (var q = 0; q < searchkey.length; q++) {
-                  if (finalData[x][searchkey[q]] == searchval[q]) {
-                    // if (tokenDecode?.dap == 'f') {
-                    s++;
-                    // } else if (
-                    //   tokenDecode.orgGrpCode ==
-                    //     finalData[x]['trs_org_grp_code'] &&
-                    //   tokenDecode.orgCode == finalData[x]['trs_org_code'] &&
-                    //   tokenDecode.roleGrpCode ==
-                    //     finalData[x]['trs_role_grp_code'] &&
-                    //   tokenDecode.roleCode == finalData[x]['trs_role_code'] &&
-                    //   tokenDecode.psGrpCode ==
-                    //     finalData[x]['trs_ps_grp_code'] &&
-                    //   tokenDecode.psCode == finalData[x]['trs_ps_code'] &&
-                    //   tokenDecode.selectedAccessProfile ==
-                    //     finalData[x]['trs_access_profile'] &&
-                    //   tokenDecode.loginId == finalData[x]['trs_created_by']
-                    // ) {
-                    //   s++;
-                    // }
-                  }
-                }
-                // if(searchset.includes(searchkey.toLowerCase())){
-                if (s == searchkey.length) searcharr.push(finalData[x]);
-                //  }
-              }
-              return await this.filterpagination(start, end, searcharr);
-            }
-            return await this.filterpagination(start, end, finalData);
-          } else {
-            await this.commonService.errorLog(
-              'Technical',
-              'AK',
-              'Fatal',
-              'TG035',
-              'Invalid rule',
-              key,
-              token,
-            );
-          }
-        }
-
-        if (searchObj && Object.keys(searchObj).length > 0) {
-          for (var x = 0; x < data.length; x++) {
-            var s = 0;
-            for (var q = 0; q < searchkey.length; q++) {
-              if (data[x][searchkey[q]] == searchval[q]) {
-                // if (tokenDecode?.dap == 'f') {
-                s++;
-                // } else if (
-                //   tokenDecode.orgGrpCode == data[x]['trs_org_grp_code'] &&
-                //   tokenDecode.orgCode == data[x]['trs_org_code'] &&
-                //   tokenDecode.roleGrpCode == data[x]['trs_role_grp_code'] &&
-                //   tokenDecode.roleCode == data[x]['trs_role_code'] &&
-                //   tokenDecode.psGrpCode == data[x]['trs_ps_grp_code'] &&
-                //   tokenDecode.psCode == data[x]['trs_ps_code'] &&
-                //   tokenDecode.selectedAccessProfile ==
-                //     data[x]['trs_access_profile'] &&
-                //   tokenDecode.loginId == data[x]['trs_created_by']
-                // ) {
-                //   s++;
-                // }
-              }
-            }
-            // if(searchset.includes(searchkey.toLowerCase())){ searchkey
-            if (s == searchkey.length) searcharr.push(data[x]);
-          }
-          return await this.filterpagination(start, end, searcharr);
-        }
-
-        if (data?.length > 0) {
-          for (let i = 0; i < data.length; i++) {
-            // if (tokenDecode?.dap == 'f') {
-            dataArr.push(data[i]);
-            // } else if (
-            //   tokenDecode.orgGrpCode == data[i]['trs_org_grp_code'] &&
-            //   tokenDecode.orgCode == data[i]['trs_org_code'] &&
-            //   tokenDecode.roleGrpCode == data[i]['trs_role_grp_code'] &&
-            //   tokenDecode.roleCode == data[i]['trs_role_code'] &&
-            //   tokenDecode.psGrpCode == data[i]['trs_ps_grp_code'] &&
-            //   tokenDecode.psCode == data[i]['trs_ps_code'] &&
-            //   tokenDecode.selectedAccessProfile ==
-            //     data[i]['trs_access_profile'] &&
-            //   tokenDecode.loginId == data[i]['trs_created_by']
-            // ) {
-            //   dataArr.push(data[i]);
-            // }
-          }
-        }
-        return await this.filterpagination(start, end, dataArr);
-      }
     } catch (err) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
         'Fatal',
-        'TG036',
+        'TG036', 
         `Error in pagination:${err.message}`,
         key,
         token,
@@ -733,9 +733,427 @@ getConfig(): FusionAuthConfig {
     }
   }
 
+   // async getpagination(
+  //   key: any,
+  //   page,
+  //   count,
+  //   filter?,
+  //   searchObj?,
+  //   token?: string,
+  // ) {
+  //   try {
+  //     let tokenDecode = await this.jwtService.decodeToken(token);
+  //     if (!tokenDecode?.selectedAccessProfile)
+  //       throw 'Selected Access Profile not found';
+
+  //     if(!tokenDecode?.loginId) throw 'loginId not found'
+  //     let sobj ={}
+  //     sobj['orgGrpCode'] = tokenDecode.orgGrpCode 
+  //       sobj['orgCode'] = tokenDecode.orgCode
+  //       sobj['roleGrpCode'] = tokenDecode.roleGrpCode 
+  //       sobj['roleCode'] = tokenDecode.roleCode 
+  //       sobj['psGrpCode'] = tokenDecode.psGrpCode 
+  //       sobj['psCode'] = tokenDecode.psCode 
+  //       sobj['selectedAccessProfile'] = tokenDecode.selectedAccessProfile 
+  //       sobj['loginId'] = tokenDecode.loginId 
+  //       sobj['orgGrpName'] = tokenDecode?.orgGrpName 
+  //       sobj['orgName'] = tokenDecode?.orgName 
+  //       sobj['roleGrpName'] = tokenDecode?.roleGrpName 
+  //       sobj['roleName'] = tokenDecode?.roleName 
+  //       sobj['psGrpName'] = tokenDecode?.psGrpName 
+  //       sobj['psName'] = tokenDecode?.psName 
+  //       //sobj['session.trs_process_id'] = upId
+  //       sobj['userCode'] = tokenDecode?.userCode
+  //       sobj['subOrgGrpCode'] = tokenDecode?.subOrgGrpCode 
+  //       sobj['subOrgGrpName'] = tokenDecode?.subOrgGrpName 
+  //       sobj['subOrgCode'] = tokenDecode?.subOrgCode 
+  //       sobj['subOrgName'] = tokenDecode?.subOrgName 
+  //     let dsObject,data
+  //     let afkey = key.replace(':FNGK:AFP:FNK:DF-DST:',':FNGK:AF:FNK:DF-DFD:')    
+      
+  //     let afi = JSON.parse( await this.redisService.getJsonData(afkey+'AFI', process.env.CLIENTCODE))      
+  //     if (!afi.logicCenter) {            
+  //       return await this.getpaginationwithLogicCenter(key,page,count,filter,searchObj,token,);
+  //     } 
+
+  //       dsObject = await this.redisService.getAllRecordshash(key + tokenDecode.loginId+'_DS_Object')        
+  //     if (!dsObject) {
+  //       await this.commonService.errorLog(
+  //         'Technical',
+  //         'AK',
+  //         'Fatal',
+  //         'TG033',
+  //         'DataSet does not exists',
+  //         key,
+  //         token,
+  //       );
+  //     }
+  //   //if(f == 1)
+  //      data = dsObject
+  //    // else
+  //    // data = dsObject?.data
+  //   // console.log(12,data);
+     
+  //     if (data && tokenDecode) {
+  //       if (!page) page = 1;
+  //       let rule: any;
+  //       let finalData = []; 
+  //       var dataArr = [];
+  //       var searcharr = [];
+  //       let start,end;
+  //       if(count){
+  //         start = (page - 1) * count;
+  //         end = start + count;
+  //       }
+
+
+  //       if (searchObj && Object.keys(searchObj).length > 0) {
+  //         var searchkey = Object.keys(searchObj);
+  //         var searchval = Object.values(searchObj);
+  //       }
+
+  //       if (filter) {
+  //         var json = JSON.parse(
+  //           await this.redisService.getJsonDataWithPath(
+  //             filter.ufKey,
+  //             '.mappedData.artifact.node',
+  //             process.env.CLIENTCODE,
+  //           ),
+  //         );
+
+  //         if (!json) {
+  //           await this.commonService.errorLog(
+  //             'Technical',
+  //             'AK',
+  //             'Fatal',
+  //             'TG034',
+  //             'node is empty',
+  //             key,
+  //             token,
+  //           );
+  //         }
+  //         for (let s = 0; s < json.length; s++) {
+  //           if (json[s].nodeId == filter.nodeId) {
+  //             rule = json[s].rule;
+  //           }
+  //         }
+  //         let fieldarr = []
+  //         let result: any
+  //         if (rule?.nodes?.length && rule?.edges?.length) {
+  //           for (let j = 0; j < data.length; j++) {
+  //              var nodes = rule.nodes     
+  //         if(nodes && nodes.length > 0){
+  //           for(var c=0;c < nodes.length;c++){
+  //             var content = nodes[c].content
+  //             if(content){
+  //               let inputs = content.inputs
+  //               if(inputs?.length > 0){
+  //                 for(let i=0;i < inputs.length;i++){
+  //                   fieldarr.push(content.inputs[i].field)
+  //                 }
+  //               }                
+  //               if(fieldarr?.length == 0)
+  //                 throw 'Field not found in rule'
+  //             }            
+  //           }           
+  //           var gparamreq = {}; 
+  //            let afpVal,data,sarr = []
+  //           for(let i=0;i < fieldarr.length;i++){ 
+  //              //let connectedNodeName = fieldarr[i].split('.')[0]
+  //            // let connectedField = fieldarr[i].split('.')[1]
+  //             let field = fieldarr[i].split('.')
+  //             let connectedNodeName = field[0]
+  //             field.shift()            
+  //             let connectedField = field.join('.')
+              
+  //             // if(!connectedField || !connectedNodeName)
+  //             //   throw 'connectedField/ connectedNodeName not found in rule'
+  //             console.log("connectedNodeName",connectedNodeName);
+              
+  //             if(connectedNodeName == 'session'){
+  //               if(sobj[connectedField]){
+  //                 afpVal = sobj                  
+  //               }
+  //             }else{
+  //               console.log(123);                
+  //               afpVal = data[j]
+  //                console.log("afpVal",afpVal);
+  //             }
+  //              console.log("data[j]",data[j]);
+             
+  //             console.log("connectedField",connectedField);
+              
+  //               data = await this.commonService.getNestedValue(afpVal, connectedField)
+  //               console.log("data",data)
+                            
+  //               if(data)               
+  //                 await this.commonService.setNestedValue(gparamreq, fieldarr[i], data) 
+                
+  //               // else{
+  //               //   throw `${fieldarr[i]} not found in given request to take decision`                    
+  //               // }  
+  //             // }
+  //             } 
+  //              console.log('gparamreq',gparamreq);
+  //              result = await this.gorule.goRule(rule, gparamreq);
+  //            // var goruleres = await this.ruleEngine.goRule(rule, gparamreq)                  
+  //             // if(Object.keys(goruleres.result).length > 0){                   
+  //             //   //zenresult = goruleres.result.output
+  //             //    zenresult = goruleres.result
+  //             // }else{
+  //             //   throw `Rule doesn't matched with this value ${data}`
+  //             // }                         
+  //         }  
+  //            //let result: any = await this.gorule.goRule(rule, data[j]);
+  //           // let result = await this.commonService.getRuleCodeMapper()
+  //             console.log('result',result);
+              
+  //             if (result?.error) {
+  //               break;
+  //             } else if (result?.result?.output === true) {              
+  //               finalData.push(data[j]);                
+  //             }
+  //           }
+
+  //           if (searchObj && Object.keys(searchObj).length > 0) {
+  //             for (var x = 0; x < finalData.length; x++) {
+  //               var s = 0;
+  //               for (var q = 0; q < searchkey.length; q++) {
+  //                 if (finalData[x][searchkey[q]] == searchval[q]) {                   
+  //                   s++;                  
+  //                 }
+  //               }               
+  //               if (s == searchkey.length) searcharr.push(finalData[x]);
+                
+  //             }
+  //             return await this.filterpagination(start, end, searcharr);
+  //           }
+  //           return await this.filterpagination(start, end, finalData);
+  //         } else {
+  //           await this.commonService.errorLog(
+  //             'Technical',
+  //             'AK',
+  //             'Fatal',
+  //             'TG035',
+  //             'Invalid rule',
+  //             key,
+  //             token,
+  //           );
+  //         }
+  //       }
+
+  //       if (searchObj && Object.keys(searchObj).length > 0) {
+  //         for (var x = 0; x < data.length; x++) {
+  //           var s = 0;
+  //           for (var q = 0; q < searchkey.length; q++) {
+  //             if (data[x][searchkey[q]] == searchval[q]) {               
+  //               s++;               
+  //             }
+  //           }           
+  //           if (s == searchkey.length) searcharr.push(data[x]);
+  //         }
+  //         return await this.filterpagination(start, end, searcharr);
+  //       }        
+  //       return await this.filterpagination(start, end, data);
+  //     }
+  //   } catch (err) {
+  //     await this.commonService.errorLog(
+  //       'Technical',
+  //       'AK',
+  //       'Fatal',
+  //       'TG036',
+  //       `Error in pagination:${err.message}`,
+  //       key,
+  //       token,
+  //     );
+  //   }
+  // }
+
+  async getpagination(
+    key: any,
+    page,
+    count,
+    filter?,
+    searchObj?,
+    token?: string,
+    filterData?
+  ) {
+    try {
+      const tokenDecode = await this.jwtService.decodeToken(token);
+
+      if (!tokenDecode?.selectedAccessProfile)
+        throw new Error('Selected Access Profile not found');
+
+      if (!tokenDecode?.loginId)
+        throw new Error('loginId not found');
+
+      // ✅ Build session object
+      const sobj: any = {
+        orgGrpCode: tokenDecode?.orgGrpCode,
+        orgCode: tokenDecode?.orgCode,
+        roleGrpCode: tokenDecode?.roleGrpCode,
+        roleCode: tokenDecode?.roleCode,
+        psGrpCode: tokenDecode?.psGrpCode,
+        psCode: tokenDecode?.psCode,
+        selectedAccessProfile: tokenDecode?.selectedAccessProfile,
+        loginId: tokenDecode?.loginId,
+        orgGrpName: tokenDecode?.orgGrpName,
+        orgName: tokenDecode?.orgName,
+        roleGrpName: tokenDecode?.roleGrpName,
+        roleName: tokenDecode?.roleName,
+        psGrpName: tokenDecode?.psGrpName,
+        psName: tokenDecode?.psName,
+        userCode: tokenDecode?.userCode,
+        subOrgGrpCode: tokenDecode?.subOrgGrpCode,
+        subOrgGrpName: tokenDecode?.subOrgGrpName,
+        subOrgCode: tokenDecode?.subOrgCode,
+        subOrgName: tokenDecode?.subOrgName,
+      };
+
+      // ✅ Get AFI
+      const afkey = key.replace(':FNGK:AFP:FNK:DF-DST:', ':FNGK:AF:FNK:DF-DFD:');
+
+      const afi = JSON.parse(
+        await this.redisService.getJsonData(afkey + 'AFI', process.env.CLIENTCODE),
+      );
+
+      if (!afi.logicCenter) {
+        return await this.getpaginationwithLogicCenter(
+          key,
+          page,
+          count,
+          filter,
+          searchObj,
+          token,
+          filterData
+        );
+      }
+
+      // ✅ Get dataset
+      const dsObject = await this.redisService.getAllRecordshash(
+        key + tokenDecode.loginId + '_DS_Object',
+      );
+
+      if (!dsObject) {
+        throw new Error('DataSet does not exist');
+      }
+
+      let data = dsObject;
+
+      // ✅ Pagination calc
+      page = page || 1;
+      const start = count ? (page - 1) * count : 0;
+      const end = count ? start + count : data.length;
+
+      let finalData: any[] = [];
+
+      // ================= FILTER =================
+      if (filter) {
+        const json = JSON.parse(
+          await this.redisService.getJsonDataWithPath(
+            filter.ufKey,
+            '.mappedData.artifact.node',
+            process.env.CLIENTCODE,
+          ),
+        );
+
+        if (!json) throw new Error('Node is empty');
+
+        let rule;
+        for (const node of json) {
+          if (node.nodeId == filter.nodeId) {
+            rule = node.rule;
+            break;
+          }
+        }
+
+        if (!rule?.nodes?.length) throw new Error('Invalid rule');
+
+        for (let j = 0; j < data.length; j++) {
+          const record = data[j];
+          let gparamreq: any = {};
+          let fieldarr: string[] = [];
+
+          // ✅ Extract fields from rule
+          for (const node of rule.nodes) {
+            const inputs = node?.content?.inputs;
+            if (inputs?.length) {
+              for (const inp of inputs) {
+                fieldarr.push(inp.field);
+              }
+            }
+          }
+
+          if (!fieldarr.length) throw new Error('Field not found in rule');
+          let parts,root,nestedPath
+          // ✅ Build gparamreq safely
+          for (const fieldPath of fieldarr) {         
+            if(fieldPath.includes('.')){
+              parts = fieldPath.split('.');
+            root = parts.shift();
+            nestedPath = parts.join('.');
+            }else{
+              nestedPath = fieldPath
+            } 
+            let source;
+            if (root === 'session') {
+              source = sobj;
+            } else {
+              source = record;
+            }
+            const value = await this.commonService.getNestedValue(
+              source,
+              nestedPath,
+            );         
+            
+            if (value !== undefined) {
+              await this.commonService.setNestedValue(
+                gparamreq,
+                fieldPath,
+                value,
+              );
+            }
+          }      
+          
+          // ✅ Execute rule
+          const result = await this.gorule.goRule(rule, gparamreq);
+
+          if (result?.result?.output === true) {
+            finalData.push(record);
+          }
+        }
+      } else {
+        finalData = data;
+      }
+
+      // ================= SEARCH =================
+      if (searchObj && Object.keys(searchObj).length > 0) {
+        const searchKeys = Object.keys(searchObj);
+        const searchVals = Object.values(searchObj);
+
+        finalData = finalData.filter((item) =>
+          searchKeys.every((k, i) => item[k] == searchVals[i]),
+        );
+      }
+
+      // ================= PAGINATION =================
+      return await this.filterpagination(start, end, finalData);
+    } catch (err) {
+      await this.commonService.errorLog(
+        'Technical',
+        'AK',
+        'Fatal',
+        'TG036',
+        `Error in pagination: ${err.message}`,
+        key,
+        token,
+      );
+      throw err;
+    }
+  }
+
   async filterpagination(start, end, searcharr) {
     try {
-      console.log(1,end,2, searcharr)
       var filArray = [];
       if(end){
         for (let i = start; i < end; i++) {
@@ -893,6 +1311,14 @@ getConfig(): FusionAuthConfig {
                     }else{
                       if(templateArray[i].security.artifact.node[m].SIFlag
                         .selectedValue === 'AA'){
+                          componentNameArray.push(
+                            templateArray[i].security.artifact.node[
+                              m
+                            ].resource.toLowerCase(),
+                          );
+                        }
+                        if(templateArray[i].security.artifact.node[m].SIFlag
+                          .selectedValue === 'RA'){
                           componentNameArray.push(
                             templateArray[i].security.artifact.node[
                               m
@@ -1219,6 +1645,68 @@ getConfig(): FusionAuthConfig {
                 if (controlId === mappedData[i].objElements[j].elementId) {
                   if (mappedData[i].objElements[j].mapper.length == 0) {
                     dfData = [];
+                    let UFSData =await this.commonService.readAPI(
+                                  key + ':UFS',
+                                  process.env.CLIENTCODE,
+                                  token,
+                                );
+                    let tempAPIData={parentId:"",
+                      virtualControllerKey:"",
+                      apiKey:""
+                    };
+                    if(UFSData?.length>0)
+                    {   
+                      for (let o = 0; o < UFSData?.length; o++) {
+                        if(UFSData[o].id==mappedData[i].nodeId&&"virtualControllerKey" in UFSData[o])
+                        {
+                         tempAPIData={...tempAPIData,
+                          virtualControllerKey:UFSData[o]?.virtualControllerKey,
+                          parentId:UFSData[o]?.T_parentId
+                         }
+                        break;
+                        }
+                      }   
+                      if(tempAPIData?.parentId !="" && tempAPIData?.virtualControllerKey !="")
+                      {
+                        for (let o = 0; o < UFSData?.length; o++) {
+                          if(UFSData[o].id==tempAPIData?.parentId &&"virtualControllerKey" in UFSData[o]&&UFSData[o]?.virtualControllerKey==tempAPIData?.virtualControllerKey)
+                          {
+                            tempAPIData={...tempAPIData,apiKey:UFSData[o]?.apiKey}
+                            break;
+                          }
+                        }           
+                      }
+                      if(tempAPIData?.apiKey!=undefined && tempAPIData?.apiKey != "")
+                      {
+                        let NDPScehemaData =await this.commonService.readAPI(
+                                  tempAPIData?.apiKey,
+                                  process.env.CLIENTCODE,
+                                  token,
+                                );
+                        if(Object.keys(NDPScehemaData)?.length>0)
+                        {
+                          let schema:any = {}
+                          Object.keys(NDPScehemaData)?.map((keys:any)=>{
+                            if(NDPScehemaData[keys]?.nodeType== "datasetschemanode")
+                            {
+                              if("properties" in NDPScehemaData[keys]?.dataset)
+                              {
+                                schema = NDPScehemaData[keys]?.dataset?.properties
+                              }else if("items" in NDPScehemaData[keys]?.dataset)
+                              {
+                                schema = NDPScehemaData[keys]?.dataset?.items?.properties
+                              }
+                            }
+                          })
+                          if(Object.keys(schema)?.length>0)
+                          {
+                            if(mappedData[i].objElements[j]?.elementName in schema){
+                              dataType= schema[mappedData[i].objElements[j]?.elementName]?.type
+                            }
+                          }
+                        }
+                      }
+                    }
                   } else {
                     let dfdKey: string =
                       mappedData[i].objElements[j].mapper[0].sourceKey[0].split(
@@ -3373,14 +3861,20 @@ getConfig(): FusionAuthConfig {
       const auth_secret = config.authSecret
       const accessTokenExpiryTime = config.authAccessTokenExpiryTime 
 
-      const accessProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`;
-      const accessProfileCache = await this.redisService.getJsonData(
-        accessProfileCacheKey,
-        process.env.CLIENTCODE,
-      );
-      const accessProfileList = accessProfileCache
-        ? JSON.parse(accessProfileCache)
-        : [];
+       const accessProfileList = await this.query(`select 
+        opr_ap_id ,
+        access_profile as "accessProfile" ,
+        dap ,
+        org_grp as "orgGrp" ,
+        users_cnt as "no.ofusers" ,
+        trs_created_date::text as "createdOn" ,
+        role_unique_id as "roleUniqueId" ,
+        assigned_keys as "assignedKeys"
+        from 
+        ${tenant}.opr_access_profile 
+        where 
+        tenant_code=$1 and ag_code=$2 and app_code=$3`
+          , [tenant , ag , app])
       const filteredAccessprofile = accessProfileList.find(
         (t: any) => t?.accessProfile === selectedAccessProfile,
       );
@@ -3594,14 +4088,26 @@ getConfig(): FusionAuthConfig {
     try {
       const accountDetails = await this.MyAccountForClient(token, 's', true);
       const { client, accessProfile } = accountDetails;
-      const accessTemplateCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`;
-      const accessTemplateResponse = await this.redisService.getJsonData(
-        accessTemplateCacheKey,
-        process.env.CLIENTCODE,
-      );
-      if (accessTemplateResponse) {
-        const accessTemplate = JSON.parse(accessTemplateResponse);
-        const filteredAccessTemplate = accessTemplate.filter((template: any) =>
+      const accessProfileList = await this.query(`select 
+        opr_ap_id ,
+        access_profile as "accessProfile" ,
+        dap ,
+        org_grp as "orgGrp" ,
+        users_cnt as "no.ofusers" ,
+        trs_created_date::text as "createdOn" ,
+        role_unique_id as "roleUniqueId" ,
+        assigned_keys as "assignedKeys"
+        from 
+        ${tenant}.opr_access_profile 
+        where 
+        tenant_code=$1 and ag_code=$2 and app_code=$3`
+          , [tenant , ag , app])
+      if (
+        accessProfileList && 
+        Array.isArray(accessProfileList) && 
+        accessProfileList.length
+      ) {
+        const filteredAccessTemplate = accessProfileList.filter((template: any) =>
           accessProfile.includes(template?.accessProfile),
         );
         return this.transformToCombinations(filteredAccessTemplate);
@@ -3754,17 +4260,30 @@ getConfig(): FusionAuthConfig {
             token,
           );
         } else {
-     
-          const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
-          const responseFromRedis = await this.redisService.getJsonData(
-            userCachekey,
-            process.env.CLIENTCODE,
-          );
-          const userList = JSON.parse(responseFromRedis);
+           const userList = await this.query(`SELECT
+            au.org_au_id,
+            tu.user_unique_id AS "userUniqueId",
+            tu.email,
+            tu.first_name AS "firstName",
+            tu.last_name AS "lastName",
+            tu.login_id AS "loginId",
+            tu.user_code AS "userCode",
+            tu.trs_created_date::text AS "dateAdded",
+            tu.status,
+            au.is_app_admin as "isAppAdmin",
+            au.no_of_products_service AS "noOfProductsService",
+            au.access_profile AS "accessProfile",
+            au.last_active AS "lastActive"
+          FROM ${tenant}.tenant_user tu
+          JOIN ${tenant}.app_user au
+            ON au.org_tu_id = tu.org_tu_id
+          WHERE au.tenant_code = $1
+            AND au.ag_code     = $2
+            AND au.app_code    = $3 AND login_id=$4 or email=$4` , [tenant , ag , app ,payload.loginId])
+      
           const reqiredUser = userList.find(
             (user) => user.loginId === payload.loginId,
           );
-          delete reqiredUser.password;
           return { ...reqiredUser, client: tenant };
         }
       } catch (error) {
@@ -4018,7 +4537,7 @@ getConfig(): FusionAuthConfig {
     return currentDate > expiryDate;
   }
 
-    async signIntoTorus(
+   async signIntoTorus(
     username: string,
     password: string,
     ufClientType: string,
@@ -4030,22 +4549,32 @@ getConfig(): FusionAuthConfig {
       const auth_secret = config.authSecret
       const accessTokenExpiryTime = config.authAccessTokenExpiryTime 
       const refreshTokenExpiryTime = config.authRefreshTokenExpiryTime 
+      const tenantUser = await this.query(`SELECT
+            au.org_au_id,
+            tu.user_unique_id AS "userUniqueId",
+            tu.email,
+            tu.password,
+            tu.first_name AS "firstName",
+            tu.last_name AS "lastName",
+            tu.login_id AS "loginId",
+            tu.user_code AS "userCode",
+            tu.trs_created_date::text AS "dateAdded",
+            tu.status,
+            au.is_app_admin as "isAppAdmin",
+            au.no_of_products_service AS "noOfProductsService",
+            au.access_profile AS "accessProfile",
+            au.last_active AS "lastActive"
+          FROM ${tenant}.tenant_user tu
+          JOIN ${tenant}.app_user au
+            ON au.org_tu_id = tu.org_tu_id
+          WHERE au.tenant_code = $1
+            AND au.ag_code     = $2
+            AND au.app_code    = $3 AND login_id=$4 or email=$4` , [tenant , ag , app ,username])
 
-      let tenantUserKey: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
-      const appUserKey: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
       const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
 
-      let tenantUser: any = JSON.parse(
-        await this.redisService.getJsonData(
-          tenantUserKey,
-          process.env.CLIENTCODE,
-        ),
-      );
-      let appUser: any = [];
-      // return appUserKey
-
       if (tenantUser?.length > 0) {
-        let loginUser: any =
+        let loggedInUser: any =
           tenantUser.find((user: any) => {
             const isUserMatch =
               user.loginId === username || user.email === username;
@@ -4056,25 +4585,17 @@ getConfig(): FusionAuthConfig {
               return user?.password?this.comparePasswords(password, user.password):false
             }
           }) || null;
-        if (!loginUser){
+        if (!loggedInUser){
           if(isOauthUser)
             return false;
           else 
             throw new NotFoundException('User not found');
         }
-        appUser = JSON.parse(
-            await this.redisService.getJsonData(
-              appUserKey,
-              process.env.CLIENTCODE,
-            ),
-          ) || []; // app user are null
-        let loggedInUser = appUser.find(
-          (user: any) => loginUser?.userUniqueId === user?.userUniqueId,
-        );
+      
         if (!loggedInUser) {
           throw new NotFoundException(`User did not have access to the application`);
         }
-        loggedInUser={...loggedInUser,firstName:loginUser?.firstName,lastName:loginUser?.lastName,profile:loginUser?.profile}
+        loggedInUser={...loggedInUser,firstName:loggedInUser?.firstName,lastName:loggedInUser?.lastName,profile:loggedInUser?.profile}
         const isExpiredUser = this.isUserAccessExpired(loggedInUser);
 
         if (isExpiredUser) {
@@ -4085,32 +4606,17 @@ getConfig(): FusionAuthConfig {
 
         if (isOauthUser && !loggedInUser?.accessProfile?.length) {
           throw new UnauthorizedException(
-            `User access pending for ${loggedInUser.loginId ?? loginUser?.email} , you'll be notified when approved`,
+            `User access pending for ${loggedInUser.loginId ?? loggedInUser?.email} , you'll be notified when approved`,
           );
         }
         else if (!loggedInUser?.accessProfile?.length) {
           throw new UnauthorizedException(
-            `User access pending for ${loggedInUser.loginId ?? loginUser?.email} , you'll be notified when approved`,
+            `User access pending for ${loggedInUser.loginId ?? loggedInUser?.email} , you'll be notified when approved`,
           );
         }
 
-        const userIndex = appUser.findIndex(
-          (user: any) =>
-            user.loginId === username &&
-            user.userUniqueId === loggedInUser.userUniqueId,
-        );
+        await this.query(`update ${tenant}.app_user set last_active=$1 where org_au_id=$2`, [new Date().toISOString() , loggedInUser?.org_au_id])
 
-        appUser.splice(userIndex, 1, {
-          ...loggedInUser,
-          status: 'active',
-          lastActive: new Date(),
-        });
-
-        await this.redisService.setJsonData(
-          appUserKey,
-          JSON.stringify(appUser),
-          process.env.CLIENTCODE,
-        );
 
         delete loggedInUser.password;
 
@@ -4123,7 +4629,7 @@ getConfig(): FusionAuthConfig {
             ag,
             app,
             isAppAdmin: loggedInUser?.isAppAdmin ?? undefined,
-            userCode: loginUser?.userCode ?? undefined,
+            userCode: loggedInUser?.userCode ?? undefined,
             sid: sid,
           },
           {
@@ -4162,21 +4668,25 @@ getConfig(): FusionAuthConfig {
           return {
             token,
             authorized: true,
-            email: loginUser.email,
+            email: loggedInUser.email,
             redirectToORPSelector: true,
           };
         }
-
-        const accessProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`;
-
-        const accessProfileCache = await this.redisService.getJsonData(
-          accessProfileCacheKey,
-          process.env.CLIENTCODE,
-        );
-
-        const accessProfileList = accessProfileCache
-          ? JSON.parse(accessProfileCache)
-          : [];
+        const accessProfileList = await this.query(`select 
+          opr_ap_id ,
+          access_profile as "accessProfile" ,
+          dap ,
+          org_grp as "orgGrp" ,
+          users_cnt as "no.ofusers" ,
+          trs_created_date::text as "createdOn" ,
+          role_unique_id as "roleUniqueId" ,
+          assigned_keys as "assignedKeys"
+          from 
+          ${tenant}.opr_access_profile 
+          where 
+          tenant_code=$1 and ag_code=$2 and app_code=$3`
+           , [tenant , ag , app])
+        
 
         if (accessProfileList.length == 0) {
           await this.addSession(
@@ -4192,7 +4702,7 @@ getConfig(): FusionAuthConfig {
           return {
             token,
             authorized: true,
-            email: loginUser.email,
+            email: loggedInUser.email,
             redirectToORPSelector: false,
           };
         }
@@ -4234,7 +4744,7 @@ getConfig(): FusionAuthConfig {
                   type: 't',
                   ag,
                   app,
-                  userCode: loginUser?.userCode ?? undefined,
+                  userCode: loggedInUser?.userCode ?? undefined,
                   ...orpAccessObj,
                  sid:sid,
                 },
@@ -4429,10 +4939,9 @@ getConfig(): FusionAuthConfig {
   }
 
   // static screen's apis
-  async getTenantUser(tenantCode: string, client: string) {
+  async getTenantUser() {
     try {
-      let key: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenantCode}:AFK:PROFILE:AFVK:v1:users`;
-      const res = JSON.parse(await this.redisService.getJsonData(key, client));
+      const res = await this.query(`select * from ${tenant}.tenant_user tu where tenant_code=$1` , [tenant])
       return res || [];
     } catch (err: any) {
       throw new UnauthorizedException('Invalid tenant key');
@@ -4449,11 +4958,28 @@ getConfig(): FusionAuthConfig {
       if (!tenant || !ag || !app || !client) {
         return [];
       }
-      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
-      const responseFromRedis = JSON.parse(
-        await this.redisService.getJsonData(userCachekey, client),
-      );
-      return responseFromRedis || [];
+      const tenantUserList = await this.query(`SELECT
+            au.org_au_id,
+            tu.user_unique_id AS "userUniqueId",
+            tu.email,
+            tu.password,
+            tu.first_name AS "firstName",
+            tu.last_name AS "lastName",
+            tu.login_id AS "loginId",
+            tu.user_code AS "userCode",
+            tu.trs_created_date::text AS "dateAdded",
+            tu.status,
+            au.is_app_admin as "isAppAdmin",
+            au.no_of_products_service AS "noOfProductsService",
+            au.access_profile AS "accessProfile",
+            au.last_active AS "lastActive"
+          FROM ${tenant}.tenant_user tu
+          JOIN ${tenant}.app_user au
+            ON au.org_tu_id = tu.org_tu_id
+          WHERE au.tenant_code = $1
+            AND au.ag_code     = $2
+            AND au.app_code    = $3` , [tenant , ag , app])
+      return tenantUserList || [];
     } catch (error) {
       throw new UnauthorizedException('Please check credentials');
     }
@@ -4463,7 +4989,7 @@ getConfig(): FusionAuthConfig {
     try {
       let setAssignUsers = []
 
-      const tenantUser: any[] = await this.getTenantUser(tenant, client);
+      const tenantUser: any[] = await this.getTenantUser();
       const tenantAppUser: any[] = await this.getAppUserList(tenant, ag, app, client);
       tenantAppUser.filter((appUser: any) =>
         tenantUser.some(
@@ -4483,36 +5009,97 @@ getConfig(): FusionAuthConfig {
 
   async getAppSecurityData() {
     try {
-      if (!tenant)
-        throw new BadRequestException(
-          'Either AppGroup or Application not available',
-        );
-      const appCachePrefix = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1`;
-      const cacheKeyArray = ['orgMatrix', 'appearance', 'orgMaster'];
-      const securityResponse = {};
-      for (let index = 0; index < cacheKeyArray.length; index++) {
-        const cacheKey = `${appCachePrefix}:${cacheKeyArray[index]}`;
-        const data = await this.redisService.getJsonData(
-          cacheKey,
-          process.env.CLIENTCODE,
-        );
-        if (data) {
-          securityResponse[cacheKeyArray[index]] =
-            cacheKeyArray[index] == 'users'
-              ? JSON.parse(data).filter((user) => {
-                  delete user.password;
-                  return user;
-                })
-              : JSON.parse(data);
-        } else {
-          securityResponse[cacheKeyArray[index]] =
-            (data ?? cacheKeyArray[index] == 'appearance') ? {} : [];
+      const actions = [
+        {
+          code : "orgMatrix",
+          parseFields: ["org"],   // 👈 this table stores org as text
+          query : `SELECT
+            opr_mx_id,
+            org_grp_code AS "orgGrpCode",
+            org_grp_name AS "orgGrpName",
+            org_grp_id AS "orgGrpId",
+            src_id AS "srcId",
+            org
+          FROM ${tenant}.opr_org_matrix
+          WHERE tenant_code = $1
+            AND ag_code = $2
+            AND app_code = $3`,
+          params : [tenant , ag , app]  
+        },
+        {
+          code : "orgMaster",
+          parseFields: ["org"],   // 👈 add defensively — no-op if already object
+          query : ` SELECT
+            opr_om_id,
+            org_grp_code AS "orgGrpCode",
+            org_grp_name AS "orgGrpName",
+            org_grp_id   AS "orgGrpId",
+            org
+         FROM   ${tenant}.opr_org_master
+         WHERE  tenant_code = $1
+           AND  ag_code     = $2
+           AND  app_code    = $3`,
+          params : [tenant , ag , app]  
+        },
+        {
+          code : "users",
+          parseFields: ["accessProfile"],  // 👈 if stored as text[]  or json string
+          // here the query give the result without password
+          query : `select
+            tu.org_tu_id,
+            tu.user_unique_id as "userUniqueId",
+            tu.email,
+            tu.password,
+            tu.first_name as "firstName",
+            tu.last_name as "lastName",
+            tu.login_id as "loginId",
+            tu.user_code as "userCode",
+            tu.trs_created_date::text as "dateAdded",
+            tu.status,
+            au.org_au_id,
+            au.no_of_products_service as "noOfProductsService",
+            au.access_profile as "accessProfile",
+            au.last_active as "lastActive",
+            au.access_expires as "accessExpires",
+            au.is_app_admin as "isAppAdmin",
+            case
+              when au.org_au_id is not null then true
+              else false
+            end as "isAssigned"
+          from
+            ${tenant}.tenant_user tu
+          left join ${tenant}.app_user au
+              on
+            au.org_tu_id = tu.org_tu_id
+            and au.ag_code = $2
+            and au.app_code = $3
+          where
+            tu.tenant_code = $1`,
+          params : [tenant , ag , app]  
         }
-      }
-      securityResponse['users'] = (await this.getTenantAppUser(tenant, process.env.CLIENTCODE, ag, app)).map(user => {
-        delete user.password;
-        return user;
-      });
+      ]
+      const securityResponse = {};
+      for (const action of actions) {
+          let rows = await this.query(action.query, action.params) ?? [];
+          // Parse any string JSON fields after fetching
+          if (action.parseFields) {
+            rows = rows.map(row => {
+              const parsed = { ...row };
+              for (const field of action.parseFields) {
+                if (typeof parsed[field] === 'string') {
+                  try {
+                    parsed[field] = JSON.parse(parsed[field]);
+                  } catch {
+                    // leave as-is if not valid JSON
+                  }
+                }
+              }
+              return parsed;
+            });
+          }
+          securityResponse[action.code] = rows;
+        }
+
       return securityResponse;
     } catch (error) {
       await this.commonService.errorLog(
@@ -4534,24 +5121,46 @@ getConfig(): FusionAuthConfig {
 
   async getAPPSecurityTemplateData() {
     try {
-      const responseFromRedis = await this.redisService.getJsonData(
-        `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`,
-        process.env.CLIENTCODE,
-      );
-      const userResponse = await this.redisService.getJsonData(
-        `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`,
-        process.env.CLIENTCODE,
-      );
-
-      let securityTemplateData = [];
-      if (responseFromRedis) {
-        securityTemplateData = JSON.parse(responseFromRedis);
+      let securityTemplateData = await this.query(`select 
+        opr_ap_id ,
+        access_profile as "accessProfile" ,
+        dap ,
+        org_grp as "orgGrp" ,
+        users_cnt as "no.ofusers" ,
+        trs_created_date::text as "createdOn" ,
+        role_unique_id as "roleUniqueId" ,
+        assigned_keys as "assignedKeys"
+        from 
+        ${tenant}.opr_access_profile 
+        where 
+        tenant_code=$1 and ag_code=$2 and app_code=$3`
+          , [tenant , ag , app]);
         securityTemplateData = securityTemplateData.map((data) => ({
           ...data,
           'no.ofusers': 0,
         }));
-        if (userResponse) {
-          const userlist = JSON.parse(userResponse);
+          const userlist = await this.query(`SELECT
+            au.org_au_id,
+            tu.user_unique_id AS "userUniqueId",
+            tu.email,
+            tu.password,
+            tu.first_name AS "firstName",
+            tu.last_name AS "lastName",
+            tu.login_id AS "loginId",
+            tu.user_code AS "userCode",
+            tu.trs_created_date::text AS "dateAdded",
+            tu.status,
+            au.is_app_admin as "isAppAdmin",
+            au.no_of_products_service AS "noOfProductsService",
+            au.access_profile AS "accessProfile",
+            au.last_active AS "lastActive"
+          FROM ${tenant}.tenant_user tu
+          JOIN ${tenant}.app_user au
+            ON au.org_tu_id = tu.org_tu_id
+          WHERE au.tenant_code = $1
+            AND au.ag_code     = $2
+            AND au.app_code    = $3` , [tenant , ag , app]);
+
           securityTemplateData = securityTemplateData.map((data) => {
             var noOfUsers = 0;
             userlist.forEach((user) => {
@@ -4565,8 +5174,6 @@ getConfig(): FusionAuthConfig {
 
             return { ...data, 'no.ofusers': noOfUsers };
           });
-        }
-      }
       return securityTemplateData;
     } catch (error) {
       await this.commonService.errorLog(
@@ -4593,14 +5200,23 @@ getConfig(): FusionAuthConfig {
           'Either AppGroup or Application not available',
         );
       }
-      const responseFromRedis = await this.redisService.getJsonData(
-        `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`,
-        process.env.CLIENTCODE,
-      );
+   
       const accessProfileArray = [];
       const accessProfileWithProductAndService = {};
-      if (responseFromRedis) {
-        const accessProfileData: any[] = JSON.parse(responseFromRedis);
+        const accessProfileData: any[] = await this.query(`select 
+        opr_ap_id ,
+        access_profile as "accessProfile" ,
+        dap ,
+        org_grp as "orgGrp" ,
+        users_cnt as "no.ofusers" ,
+        trs_created_date::text as "createdOn" ,
+        role_unique_id as "roleUniqueId" ,
+        assigned_keys as "assignedKeys"
+        from 
+        ${tenant}.opr_access_profile 
+        where 
+        tenant_code=$1 and ag_code=$2 and app_code=$3`
+          , [tenant , ag , app]);
         accessProfileData.forEach((accessProfileObj) => {
           var noOfProdService = 0;
            accessProfileObj['orgGrp']?.forEach((orgGrp: any) => {
@@ -4614,7 +5230,6 @@ getConfig(): FusionAuthConfig {
             noOfProdService;
           accessProfileArray.push(accessProfileObj?.accessProfile);
         });
-      }
       return accessProfileWithProductAndService;
     } catch (error) {
       await this.commonService.errorLog(
@@ -4643,10 +5258,7 @@ getConfig(): FusionAuthConfig {
       const auth_secret = config.authSecret
 
       if (
-        !tenant ||
         !data ||
-        !ag ||
-        !app ||
         !process.env.CLIENTCODE ||
         !token
       ) {
@@ -4655,13 +5267,11 @@ getConfig(): FusionAuthConfig {
       const payload = await this.jwt.verifyAsync(token, {
         secret: auth_secret,
       });
-      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
-      const responseFromRedis = JSON.parse(
-        await this.redisService.getJsonData(
-          userCachekey,
-          process.env.CLIENTCODE,
-        ) ?? [],
-      );
+      
+      const userResponseFromDB = await this.query(
+        `select * from ${tenant}.app_user au where org_tu_id=$1 and tenant_code=$2 and ag_code=$3 and app_code=$4`,
+        [data?.org_tu_id , tenant , ag , app]
+       )
 
       const app_user_data = {
         user_unique_id: data?.userUniqueId ?? '',
@@ -4676,7 +5286,7 @@ getConfig(): FusionAuthConfig {
         tenant_code: tenant,
         ag_code: ag,
         app_code: app,
-        // org_tu_id: 0,
+        org_tu_id: data?.org_tu_id,
         trs_created_date: data?.['dateAdded'] ?? new Date().toISOString(),
         trs_created_by: payload?.loginId ?? 'anonymous',
         trs_modified_date: data?.['dateAdded'] ?? new Date().toISOString(),
@@ -4715,8 +5325,7 @@ getConfig(): FusionAuthConfig {
         );
       }
 
-      let res;
-      if (responseFromRedis == null || responseFromRedis?.length == 0) {
+      if (!userResponseFromDB || !userResponseFromDB?.length) {
         if (
           defaultAuth === 'fusionauth' &&
           fusionAuthTenantId &&
@@ -4735,33 +5344,22 @@ getConfig(): FusionAuthConfig {
               data.loginId,
               data.email,
               'POST',
-              data?.accessProfile || [],
+              [],
             );
           }
         }
         
         // Torus API OPR Table entry
-        const postAppUserResponse = await this.callTorusAPI('app_user', {
-          method: 'POST',
-          data: app_user_data,
-          token: token,
-        });
-        const org_au_id =
-          postAppUserResponse.status == 201
-            ? postAppUserResponse.data?.org_au_id
-            : undefined;
-
-        res = await this.redisService.setJsonData(
-          userCachekey,
-          JSON.stringify([{ ...data, org_au_id }]),
-          process.env.CLIENTCODE,
+        await this.insertIntoTable(
+          'app_user',
+          app_user_data
         );
       } else {
         let userExist: boolean = false;
         let updateIndex: any = null;
 
-        responseFromRedis.forEach((user: any, index: number) => {
-          if (data?.userUniqueId === user?.userUniqueId) {
+        userResponseFromDB.forEach((user: any, index: number) => {
+          if (data?.userUniqueId === user?.user_unique_id) {
             userExist = true;
             updateIndex = index;
           }
@@ -4785,7 +5383,7 @@ getConfig(): FusionAuthConfig {
                 data.loginId,
                 data.email,
                 'POST',
-                data?.accessProfile || [],
+                [],
               );
             } else if (dataExistOrNot?.registration) {
               await FusionAuthApplicatonAssign(
@@ -4799,7 +5397,7 @@ getConfig(): FusionAuthConfig {
                 data.loginId,
                 data.email,
                 'PUT',
-                data?.accessProfile || [],
+                [],
               );
             }
           }
@@ -4809,19 +5407,20 @@ getConfig(): FusionAuthConfig {
           if (data?.org_au_id) {
             org_au_id = data?.org_au_id;
             // handle patch only if field values gets changed
-            const equivalentDataInRedis = responseFromRedis[updateIndex];
+            const equivalentDataInRedis = userResponseFromDB[updateIndex];
             if (
               data?.['noOfProductsService'] !==
-                equivalentDataInRedis?.['noOfProductsService'] ||
-              data['isAppAdmin'] !== equivalentDataInRedis['isAppAdmin'] ||
+                equivalentDataInRedis?.['no_of_products_service '] ||
+              data['isAppAdmin'] !== equivalentDataInRedis['is_app_admin'] ||
               JSON.stringify(data['accessProfile']) !==
-                JSON.stringify(equivalentDataInRedis['accessProfile']) ||
-              data['lastActive'] !== equivalentDataInRedis['lastActive'] ||
-              data['accessExpires'] !== equivalentDataInRedis['accessExpires']
+                JSON.stringify(equivalentDataInRedis['access_profile']) ||
+              data['lastActive'] !== equivalentDataInRedis['last_active'] ||
+              data['accessExpires'] !== equivalentDataInRedis['access_expires']
             ) {
-              await this.callTorusAPI('app_user', {
-                method: 'PATCH',
-                data: {
+              await this.updateTable(
+                'app_user',
+                {
+                  org_au_id : org_au_id,
                   no_of_products_service: data?.['noOfProductsService'] ?? '',
                   access_profile: data?.['accessProfile'] ?? [],
                   is_app_admin:
@@ -4833,37 +5432,16 @@ getConfig(): FusionAuthConfig {
                   trs_modified_date: new Date().toISOString(),
                   trs_modified_by: payload?.loginId ?? 'anonymous',
                 },
-              });
+                'org_au_id'
+              )
             }
           } else {
-            const postAppUserResponse = await this.callTorusAPI('app_user', {
-              method: 'POST',
-              data: app_user_data,
-              token: token,
-            });
-            org_au_id =
-              postAppUserResponse.status == 201
-                ? postAppUserResponse.data?.org_au_id
-                : undefined;
+            // insert record
+            await this.insertIntoTable(
+              'app_user',
+              app_user_data,
+            )
           }
-
-          responseFromRedis[updateIndex] = { ...data, org_au_id };
-          ////////////
-          let uniqueData: any[] = responseFromRedis?.filter(
-            (obj) => 'userUniqueId' in obj,
-          );
-          uniqueData = uniqueData.filter(
-            (item: any, index: any, self: any) =>
-              index ===
-              self.findIndex((t: any) => t.userUniqueId === item.userUniqueId),
-          );
-          ////////////
-
-          res = await this.redisService.setJsonData(
-            userCachekey,
-            JSON.stringify(uniqueData), // set JSON.stringify(responseFromRedis), this once all app keys have correct object
-            process.env.CLIENTCODE,
-          );
         } else {
           if (
             defaultAuth === 'fusionauth' &&
@@ -4887,33 +5465,47 @@ getConfig(): FusionAuthConfig {
               );
             }
           }
-           // Torus API OPR Table entry
-          const postAppUserResponse = await this.callTorusAPI('app_user', {
-          method: 'POST',
-          data: app_user_data,
-          token: token,
-        });
-        const org_au_id =
-          postAppUserResponse.status == 201
-            ? postAppUserResponse.data?.org_au_id
-            : undefined;
-          responseFromRedis.push({...data , org_au_id});
-          //////////
-          let uniqueData: any[] = responseFromRedis;
-          uniqueData = uniqueData.filter(
-            (item: any, index: any, self: any) =>
-              index ===
-              self.findIndex((t: any) => t.userUniqueId === item.userUniqueId),
-          );
-          ////////////
-          res = await this.redisService.setJsonData(
-            userCachekey,
-            JSON.stringify(uniqueData), // set JSON.stringify(responseFromRedis), this once all app keys have correct object
-            process.env.CLIENTCODE,
-          );          
+        // insert record
+        await this.insertIntoTable(
+              'app_user',
+              app_user_data,
+            )
         }
       }
-      return res;
+      const val = await this.query(`select
+            tu.org_tu_id,
+            tu.user_unique_id as "userUniqueId",
+            tu.email,
+            tu.password,
+            tu.first_name as "firstName",
+            tu.last_name as "lastName",
+            tu.login_id as "loginId",
+            tu.user_code as "userCode",
+            tu.trs_created_date::text as "dateAdded",
+            tu.status,
+            au.org_au_id,
+            au.no_of_products_service as "noOfProductsService",
+            au.access_profile as "accessProfile",
+            au.last_active as "lastActive",
+            au.access_expires as "accessExpires",
+            au.is_app_admin as "isAppAdmin",
+            case
+              when au.org_au_id is not null then true
+              else false
+            end as "isAssigned"
+          from
+            ${tenant}.tenant_user tu
+          left join ${tenant}.app_user au
+              on
+            au.org_tu_id = tu.org_tu_id
+            and au.ag_code = $2
+            and au.app_code = $3
+          where
+            tu.tenant_code = $1` , 
+            [tenant , ag , app])
+        if(val && Array.isArray(val)){
+          return val
+        }
     } catch (error) {
       await this.commonService.errorLog(
         'Technical',
@@ -5079,14 +5671,28 @@ getConfig(): FusionAuthConfig {
   async getResetPasswordOtp(email: string) {
     try {
       if (!email) throw new BadRequestException('email is required');
-      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
       const otpCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:otp`;
-      const userResponse = await this.redisService.getJsonData(
-        userCachekey,
-        process.env.CLIENTCODE,
-      );
-      if (!userResponse) throw new NotFoundException('no data found');
-      const userList: any[] = userResponse ? JSON.parse(userResponse) : [];
+      const userList: any[] = await this.query(`SELECT
+            au.org_au_id,
+            tu.user_unique_id AS "userUniqueId",
+            tu.email,
+            tu.password,
+            tu.first_name AS "firstName",
+            tu.last_name AS "lastName",
+            tu.login_id AS "loginId",
+            tu.user_code AS "userCode",
+            tu.trs_created_date::text AS "dateAdded",
+            tu.status,
+            au.is_app_admin as "isAppAdmin",
+            au.no_of_products_service AS "noOfProductsService",
+            au.access_profile AS "accessProfile",
+            au.last_active AS "lastActive"
+          FROM ${tenant}.tenant_user tu
+          JOIN ${tenant}.app_user au
+            ON au.org_tu_id = tu.org_tu_id
+          WHERE au.tenant_code = $1
+            AND au.ag_code     = $2
+            AND au.app_code    = $3` , [tenant , ag , app ]);
       const foundedUser = userList.find(
         (user) => user.email.toLowerCase() === email.toLowerCase(),
       );
@@ -5213,16 +5819,10 @@ getConfig(): FusionAuthConfig {
       throw new BadRequestException('Please provide valid email and password');
       }
 
-      const tenantUserKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
-      const tenantUserResponse = await this.redisService.getJsonData(
-        tenantUserKey,
-        process.env.CLIENTCODE,
-      );
-      if (!tenantUserResponse) {
-        throw new NotFoundException('No data found');
-      }
-
-      const tenantList: any[] = JSON.parse(tenantUserResponse);
+      const tenantList: any[] = await this.query(`SELECT
+            *
+          FROM ${tenant}.tenant_user tu
+         where tu.email=$1`, [email])
       const index = tenantList.findIndex(
         (user) => user.email.toLowerCase() === email.toLowerCase(),
       );
@@ -5231,10 +5831,14 @@ getConfig(): FusionAuthConfig {
       }
       const tenantUser = tenantList[index];
 
+      if(this.comparePasswords(password , tenantUser?.password)){
+        throw new NotAcceptableException('New password must be different from your current password.')
+      }
+
       // --- FusionAuth flow ---
       if (process.env.DEFAULT_AUTHENTICATION === 'fusionauth') {
         const fusionAuthTenantId = process.env.FUSIONAUTH_TENANTID;
-        const uniqueId = tenantUser.userUniqueId;
+        const uniqueId = tenantUser.user_unique_id;
 
         if (!fusionAuthTenantId || !uniqueId) {
           throw new NotFoundException(
@@ -5247,7 +5851,6 @@ getConfig(): FusionAuthConfig {
           password,
           uniqueId,
         );
-      console.log("value", value)
         if (value.status !== 200) {
           throw new UnauthorizedException(
             value?.error ?? 'FusionAuth password update failed',
@@ -5256,13 +5859,17 @@ getConfig(): FusionAuthConfig {
       }
 
       // --- Update Redis only after FusionAuth success (or if not fusionauth) ---
-      tenantUser.password = this.hashPassword(password);
-      tenantList.splice(index, 1, tenantUser);
-      await this.redisService.setJsonData(
-        tenantUserKey,
-        JSON.stringify(tenantList),
-        process.env.CLIENTCODE,
-      );
+      await this.updateTable('tenant_user' , {
+        password : this.hashPassword(password),
+        email
+      } , 'email')
+      // tenantUser.password = this.hashPassword(password);
+      // tenantList.splice(index, 1, tenantUser);
+      // await this.redisService.setJsonData(
+      //   tenantUserKey,
+      //   JSON.stringify(tenantList),
+      //   process.env.CLIENTCODE,
+      // );
 
       return 'Password updated successfully';
     } catch (error) {
@@ -7202,11 +7809,8 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async notifyUserAccessPending(oauthUser: any, userList: any[]) {
+  async notifyUserAccessPending(oauthUser: any, adminList: any[]) {
     try {
-      const adminList = userList
-        ?.filter((user: any) => user?.isAppAdmin === true)
-        .map((user: any) => user?.email);
       let mailOptions = {};
       const emailTemplateResponseFromRedis =
         await this.redisService.getJsonData(
@@ -7292,39 +7896,48 @@ getConfig(): FusionAuthConfig {
       } else {
         let tempId:string = uuid()
         user['userUniqueId']=tempId
-        await this.postTenantUser(user)
-        const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
+        const tenatUserAddedResponse = await this.postTenantUser(user)
         let temp: string = user?.email?.split('@').at(0) || '';
-        const userObject = {
-          userUniqueId:user?.providerAccountId||user?.userUniqueId,
-          users: user?.name || temp,
-          email: user?.email ?? '',
-          password: '',
-          firstName: user?.name || temp,
-          lastName: user?.name || temp,
-          loginId: user?.name || temp,
-          mobile: '',
-          accessProfile: [],
-          dateAdded: new Date(),
-          status: 'active',
-          isRestricted: false,
-          profile: user?.image ?? '',
-          accessExpires: '',
-          lastActive: '',
-          noOfProductsService: 0,
-          isAppAdmin: false,
-          originalIndex: '',
-        };
-        const userListResponse = await this.redisService.getJsonData(
-          userCachekey,
-          process.env.CLIENTCODE,
-        );
-        const userList = userListResponse ? JSON.parse(userListResponse) : [];
-        await this.redisService.setJsonData(
-          userCachekey,
-          JSON.stringify([...userList, userObject]),
-          process.env.CLIENTCODE,
-        );
+         const app_user_data = {
+              user_unique_id: user?.userUniqueId ?? '',
+              no_of_products_service: '',
+              access_profile: [],
+              is_app_admin: false,
+              last_active: '',
+              access_expires: '',
+              tenant_code: tenant,
+              ag_code: ag,
+              app_code: app,
+              org_tu_id: tenatUserAddedResponse?.data?.[0].org_tu_id,
+              trs_created_by: '',
+              trs_modified_date: new Date().toISOString(),
+              trs_modified_by: '',
+              trs_status: '',
+              trs_next_status: '',
+              trs_process_id: '',
+              trs_access_profile: '',
+              trs_org_grp_code: '',
+              trs_org_code: '',
+              trs_role_grp_code: '',
+              trs_role_code: '',
+              trs_ps_grp_code: '',
+              trs_ps_code: '',
+              trs_sub_org_grp_code: '',
+              trs_sub_org_code: '',
+              trs_app_code: '',
+            };
+        await this.insertIntoTable('app_user' , app_user_data)
+        const userList = await this.query(`select
+                          tu.email 
+                        from
+                          app_user au
+                        join tenant_user tu on
+                          tu.org_tu_id = au.org_tu_id
+                        where
+                          au.is_app_admin=$1
+                          and au.tenant_code=$2
+                          and au.ag_code=$3
+                          and au.app_code=$4` , [true , tenant , ag , app])
         await this.notifyUserAccessPending(user, userList);
         return await this.signIntoTorus(
           user?.email,
@@ -7357,114 +7970,16 @@ getConfig(): FusionAuthConfig {
   ) {
     try {
       if (tenant && data) {
-        const config = this.getConfig();
-        const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
-        const fusionAuthApiKey = config.fusionAuthApiKey;
-        
-        const clientCode = process.env.CLIENTCODE
-        let defaultAuthenticationMethod = 'nextAuth';
-        let applicationUniqueId = '';
-        let setupData: any = JSON.parse(
-          await this.redisService.getJsonData(
-            `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`,
-            clientCode,
-          ),
-        );
-        let newData: any = [];
-
-        setupData?.AG.map((AppGrp: any) => {
-          if (AppGrp?.code == ag) {
-            AppGrp?.APPS.map((App: any) => {
-              if (App?.code == app) {
-                applicationUniqueId = App?.applicationUniqueId;
-              }
-            });
+        let existingRoles: any[] =
+         await this.getAPPSecurityTemplateData()
+         data = data.map(t => {
+          if(!t.roleUniqueId){
+            return {...t , roleUniqueId : uuid() }
           }
-        });
+          return t
+         })
 
-        let existRoles: any[] =
-          JSON.parse(
-            await this.redisService.getJsonData(
-              `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`,
-              clientCode,
-            ),
-          ) || [];
-
-        // return deletedRoles
-        existRoles.map((existRoleObj: any) => {
-          data.map((comingRoleObj: any) => {
-            if (
-              existRoleObj?.roleUniqueId == comingRoleObj?.roleUniqueId &&
-              existRoleObj?.accessProfile != comingRoleObj?.accessProfile
-            ) {
-              newData.push({ ...comingRoleObj, isForEdit: true });
-            }
-          });
-        });
-        if ('defaultAuthentication' in setupData)
-          [(defaultAuthenticationMethod = setupData.defaultAuthentication)];
-
-        if (Array.isArray(data)) {
-          for (let i = 0; i < data.length; i++) {
-            if (!('roleUniqueId' in data[i])) {
-              const newId = uuid();
-              data[i]['roleUniqueId'] = newId;
-              newData.push(data[i]);
-            }
-          }
-        }
-        // return newData
-        const inputTenantIds = data.map((r) => r.roleUniqueId).filter(Boolean);
-        const deletedRoles = existRoles.filter(
-          (r) => !inputTenantIds.includes(r.roleUniqueId),
-        );
-        if (
-          defaultAuthenticationMethod == 'fusionauth' &&
-          applicationUniqueId
-        ) {
-          for (const roleObj of deletedRoles) {
-            await FusionAutRoleCRUDAlongWithApp(
-              fusionAuthBaseUrl,
-              fusionAuthApiKey,
-              applicationUniqueId,
-              roleObj?.roleUniqueId,
-              roleObj?.accessProfile,
-              'DELETE',
-            );
-          }
-
-          for (const roleObj of newData) {
-            if (roleObj?.isForEdit) {
-              await FusionAutRoleCRUDAlongWithApp(
-                fusionAuthBaseUrl,
-                fusionAuthApiKey,
-                applicationUniqueId,
-                roleObj?.roleUniqueId,
-                roleObj?.accessProfile,
-                'DELETE',
-              );
-              await FusionAutRoleCRUDAlongWithApp(
-                fusionAuthBaseUrl,
-                fusionAuthApiKey,
-                applicationUniqueId,
-                roleObj?.roleUniqueId,
-                roleObj?.accessProfile,
-                'POST',
-              );
-            } else {
-              await FusionAutRoleCRUDAlongWithApp(
-                fusionAuthBaseUrl,
-                fusionAuthApiKey,
-                applicationUniqueId,
-                roleObj?.roleUniqueId,
-                roleObj?.accessProfile,
-                'POST',
-              );
-            }
-          }
-        }
-        
-      const securityTempPrevdataIds = existRoles ? existRoles?.map((item: any) => item?.opr_ap_id).filter((id: any) => id !== undefined) : [];
+      const securityTempPrevdataIds = existingRoles ? existingRoles?.map((item: any) => item?.opr_ap_id).filter((id: any) => id !== undefined) : [];
       const incomingSecurityDataIds = data?.map((item: any) => item?.opr_ap_id).filter((id: any) => id !== undefined) || [];
       const securityDataIdsToDelete = securityTempPrevdataIds.filter((id: any) => !incomingSecurityDataIds.includes(id));
 
@@ -7474,20 +7989,15 @@ getConfig(): FusionAuthConfig {
          const security_data = {
             access_profile: secDataObj?.accessProfile,
             dap: secDataObj?.dap,
-            org_grp: secDataObj?.orgGrp ?? [],
+            org_grp: JSON.stringify(secDataObj?.orgGrp ?? []),
             users_cnt: secDataObj["no.ofusers"],
             role_unique_id: secDataObj?.roleUniqueId,
             tenant_code: tenant,
             ag_code: ag,
             app_code: app,
-            // "opr_mx_id": 0,
-            trs_created_date: new Date().toISOString(),
             trs_created_by: tokenDecode?.loginId || 'anonymous',
             trs_modified_date: new Date().toISOString(),
             trs_modified_by: tokenDecode?.loginId || 'anonymous',
-            // "trs_status": "string",
-            // "trs_next_status": "string",
-            // "trs_process_id": "string",
             trs_access_profile: tokenDecode?.selectedAccessProfile,
             trs_org_grp_code: tokenDecode?.orgGrpCode,
             trs_org_code: tokenDecode?.orgCode,
@@ -7500,61 +8010,41 @@ getConfig(): FusionAuthConfig {
          }
 
          if (secDataObj?.opr_ap_id) {
-          const masterDataItemResponse = await this.callTorusAPI(
-            `opr_access_profile/${secDataObj?.opr_ap_id}`,
-            {
-              method: 'GET',
-              token: token,
-            },
-          );
-          if (masterDataItemResponse?.status == 200) {
-            const prevData = masterDataItemResponse.data;
+          const currentAccessTemplate = await this.query(`select * from ${tenant}.opr_access_profile where opr_ap_id=$1` , [secDataObj?.opr_ap_id])
+          
+          if (currentAccessTemplate && Array.isArray(currentAccessTemplate) && currentAccessTemplate.length) {
+            const prevData = currentAccessTemplate?.[0];
             if (
               prevData?.access_profile == security_data.access_profile &&
-              JSON.stringify(prevData ?? {}) ==
-                JSON.stringify(security_data ?? {})
+              (prevData?.org_grp ?? '{}') ==
+                (security_data.org_grp ?? '{}')
             ) {
               continue;
             } else {
               // patch this record
-              await this.callTorusAPI(
-                `opr_access_profile/${secDataObj?.opr_ap_id}`,
+              await this.updateTable('opr_access_profile' , 
                 {
-                  method: 'PATCH',
-                  token: token,
-                  data: security_data,
+                  ...security_data,
+                  opr_ap_id : secDataObj?.opr_ap_id,
                 },
-              );
+                'opr_ap_id'
+              )
             }
           }
           continue;
         } else {
-          const response = await this.callTorusAPI('opr_access_profile', {
-            method: 'POST',
-            token: token,
-            data: security_data,
-          });
-          if (response?.status == 201) {
-            secDataObj['opr_ap_id'] = response.data?.opr_ap_id;
-          }
+          await this.insertIntoTable(
+            'opr_access_profile',
+            security_data,
+          )
         }
       }
 
       // delete records from torus which are deleted from incoming data 
       for (const masterId of securityDataIdsToDelete) {
-        await this.callTorusAPI(`opr_access_profile/${masterId}`, {
-          method: 'DELETE',
-          token: token,
-        });
+        await this.query(`DELETE FROM ${tenant}.opr_access_profile WHERE opr_ap_id=$1` , [masterId])
       }
-
       //Torus API OPR Table entry End
-  
-        return await this.redisService.setJsonData(
-          `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:securityTemplate`,
-          JSON.stringify(data),
-          clientCode,
-        );
       } else {
         throw new BadRequestException(
           'Please provide all necessary credentials',
@@ -7770,69 +8260,43 @@ getConfig(): FusionAuthConfig {
   }
   
   async postTenantUser(userDetail: any) {
-    let tenantUserKey: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
-    const appUserKey: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
-    let tenantUser: any = JSON.parse(
-      await this.redisService.getJsonData(
-        tenantUserKey,
-        process.env.CLIENTCODE,
-      ),
-    );
-    if (tenantUser?.length) {
-      const isExists: any = tenantUser.find(
+    let tenantUser: any = await this.getTenantUser();
+      const isExists: any = (tenantUser ?? []).find(
         (allUser: any) => allUser?.email == userDetail?.email,
       );
+    
+      let temp: string = userDetail?.email?.split('@').at(0) || '';
+
+       const tenant_user_payload = {
+        user_unique_id : userDetail?.providerAccountId || userDetail?.userUniqueId,
+        email : userDetail?.email,
+        password : '',
+        first_name : userDetail?.name || temp,
+        last_name : userDetail?.name || temp,
+        login_id : userDetail?.loginId,
+        user_code : userDetail?.userCode,
+        status : '',
+        tenant_code : tenant,
+        trs_created_by: userDetail?.loginId,
+        trs_modified_date: new Date().toISOString(),
+        trs_modified_by: '',
+        // "trs_status": "string",
+        // "trs_next_status": "string",
+        // "trs_process_id": "string",
+        trs_access_profile: "",
+        trs_org_grp_code: "",
+        trs_org_code: "",
+        trs_role_grp_code: "",
+        trs_role_code: "",
+        trs_ps_grp_code: "",
+        trs_ps_code: "",
+        trs_sub_org_grp_code: "",
+        trs_sub_org_code: ""
+      }
 
       if (!isExists) {
-        let temp: string = userDetail?.email?.split('@').at(0) || '';
-        let postOneUser: any = {
-          userUniqueId:userDetail?.providerAccountId||userDetail?.userUniqueId,
-          users: '',
-          email: userDetail?.email,
-          firstName: temp,
-          lastName: temp,
-          loginId: temp,
-          dateAdded: new Date().toISOString(),
-          status: 'inactive',
-        };
-        tenantUser.push(postOneUser);
-        await this.redisService.setJsonData(
-          tenantUserKey,
-          JSON.stringify(tenantUser),
-          process.env.CLIENTCODE,
-        );
-        postOneUser = {
-          ...postOneUser,
-          noOfProductsService: 0,
-          accessProfile: [],
-          isAppAdmin: false,
-        };
+        return await this.insertIntoTable('tenant_user' ,tenant_user_payload)
       }
-    } else {
-      let temp: string = userDetail?.email?.split('@').at(0) || '';
-      let postOneUser: any = {
-        userUniqueId:userDetail?.providerAccountId||userDetail?.userUniqueId,
-        users: '',
-        email: userDetail?.email,
-        firstName: temp,
-        lastName: temp,
-        loginId: temp,
-        dateAdded: new Date().toISOString(),
-        status: 'inactive',
-      };
-      await this.redisService.setJsonData(
-        tenantUserKey,
-        JSON.stringify([postOneUser]),
-        process.env.CLIENTCODE,
-      );
-
-      postOneUser = {
-        ...postOneUser,
-        noOfProductsService: 0,
-        accessProfile: [],
-        isAppAdmin: false,
-      };;
-    }
   }
 
   async getAppList(token: string) {
@@ -7849,12 +8313,8 @@ getConfig(): FusionAuthConfig {
         ag,
         app: currentApp,
       } = payload;
-      const tenantUserCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
       const tenantProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`;
-      const tenantUserListResponse = await this.redisService.getJsonData(
-        tenantUserCacheKey,
-        process.env.CLIENTCODE,
-      );
+    
       const tenantProfileResponse = await this.redisService.getJsonData(
         tenantProfileCacheKey,
         process.env.CLIENTCODE,
@@ -7862,12 +8322,8 @@ getConfig(): FusionAuthConfig {
       const tenantProfile = tenantProfileResponse
         ? JSON.parse(tenantProfileResponse)
         : {};
-      const tenantUserList = tenantUserListResponse
-        ? JSON.parse(tenantUserListResponse)
-        : [];
-      const foundUser = tenantUserList.find(
-        (user: any) => user?.loginId == loginId,
-      );
+      const foundUser = await this.query(`select * from ${tenant}.tenant_user tu where tu.tenant_code=$1 and tu.login_id=$2` , [tenant , loginId])
+   
       const appGroupInfo =
         tenantProfile?.AG?.find((group: any) => group?.code == ag) ?? {};
       const overAllApplicationList =
@@ -7876,16 +8332,25 @@ getConfig(): FusionAuthConfig {
       let accessibleAppList: any[] = [];
 
       for (const application of overAllApplicationList) {
-        const userKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${application?.code}:AFVK:v1:users`;
-        const userResponse = await this.redisService.getJsonData(
-          userKey,
-          process.env.CLIENTCODE,
-        );
-        const userList = userResponse ? JSON.parse(userResponse) : [];
+        let userList = []
+        try {
+           userList = await this.query(`select
+                              *
+                            from
+                              ${tenant}.app_user au
+                            where
+                              au.tenant_code =$1
+                              and au.ag_code =$2
+                              and au.app_code =$3
+                              and au.org_tu_id =$4` , [tenant , ag , app ,foundUser?.[0]?.org_tu_id ])
+          
+        } catch (error) {
+          userList = []
+        }
         const isUserExistInApp = userList.find(
           (user: any) =>
-            user?.userUniqueId == foundUser?.userUniqueId &&
-            user?.accessProfile?.length,
+            user?.user_unique_id == foundUser?.[0]?.user_unique_id &&
+            user?.access_profile?.length,
         );
         if (!isUserExistInApp) continue;
         // check the application's build key information along with the accessUrl
@@ -7958,15 +8423,13 @@ getConfig(): FusionAuthConfig {
   async sso(sourceToken: string , ufClientType:string) {
     try {
       const payload = await this.jwt.decode(sourceToken);
-      const { client:tenant , loginId } = payload;
-      const tenantUserCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:users`;
-      const tenantUserListResponse = await this.redisService.getJsonData(
-        tenantUserCacheKey,
-        process.env.CLIENTCODE,
-      );
-      const tenantUserList = tenantUserListResponse
-        ? JSON.parse(tenantUserListResponse) 
-        : [];
+      const { loginId } = payload;
+      let tenantUserList = []
+      try {
+        tenantUserList = await this.query(`select tu.email , tu.login_id from ${tenant}.tenant_user tu where tu.login_id=$1` , [loginId])
+      } catch (error) {
+        tenantUserList = []
+      }
       const user = tenantUserList.find(
         (user: any) => user?.loginId == loginId,
       );
@@ -8001,126 +8464,66 @@ getConfig(): FusionAuthConfig {
       const config = this.getConfig();
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
       const fusionAuthApiKey = config.fusionAuthApiKey;
-
-      // got from .env file
       let tokenDecode = await this.jwtService.decodeToken(token);
       let tenantCode = tenant;
-      let client = process.env.CLIENTCODE
-      // got from .env file
-      let existUser: any[] = await this.getTenantUser(tenantCode, client);
-   
-      let res;
+      let existUser: any[] = await this.getTenantUser();
       let userUniqueId = uuid();
-      if (existUser == null || existUser?.length == 0) {
-        let postOneUser: any = {
-          ...content,
-          password: await this.hashPassword(content?.password),
-          userUniqueId: userUniqueId,
-        };
-        if (defaultAuth === 'fusionauth' && fusionAuthTenantId) {
-          await FusionAuthUserCreation(
-            fusionAuthBaseUrl,
-            fusionAuthApiKey,
-            fusionAuthTenantId,
-            postOneUser.userUniqueId,
-            postOneUser.firstName,
-            postOneUser.lastName,
-            postOneUser.loginId,
-            postOneUser.email,
-            content?.password,
-            'POST',
-            postOneUser?.mobile,
-          );
-        }
-        // delete postOneUser?.accessProfile;
-        delete postOneUser?.accessExpires;
 
-        let key: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenantCode}:AFK:PROFILE:AFVK:v1:users`;
-        res = await this.redisService.setJsonData(
-          key,
-          JSON.stringify([postOneUser]),
-          client,
-        );
-      } else {
-        let postOneUser: any = {
-          ...content,
-          password: await this.hashPassword(content?.password),
-          userUniqueId: userUniqueId,
-        };
-        delete postOneUser?.accessProfile;
-        delete postOneUser?.accessExpires;
-        existUser.push(postOneUser);
-        if (defaultAuth === 'fusionauth' && fusionAuthTenantId) {
-          await FusionAuthUserCreation(
-            fusionAuthBaseUrl,
-            fusionAuthApiKey,
-            fusionAuthTenantId,
-            postOneUser.userUniqueId,
-            postOneUser.firstName,
-            postOneUser.lastName,
-            postOneUser.loginId,
-            postOneUser.email,
-            content?.password,
-            'POST',
-            postOneUser?.mobile,
-          );
-        }
-
-        ////////////
-        let uniqueData: any[] = existUser?.filter(
-          (obj) => 'userUniqueId' in obj,
-        );
-        
-        //Torus API OPR Table entry Start
-        for (const user of existUser) {
-          if(user.org_tu_id) continue
-          const user_data ={
-            user_unique_id: user.userUniqueId ?? "",
-            email: user.email,
-            password: user.password,
-            first_name: user.firstName ?? "",
-            last_name: user.lastName ?? "",
-            login_id: user.loginId,
-            user_code: user.userCode ?? "",
-            status: user.status ?? "",
-            tenant_code: tenant,
-            trs_created_date: new Date().toISOString(),
-            trs_created_by: tokenDecode?.loginId || 'anonymous',
-            trs_modified_date: new Date().toISOString(),
-            trs_modified_by: tokenDecode?.loginId || 'anonymous',
-            // "trs_status": "string",
-            // "trs_next_status": "string",
-            // "trs_process_id": "string",
-            trs_access_profile: tokenDecode?.selectedAccessProfile,
-            trs_org_grp_code: tokenDecode?.orgGrpCode,
-            trs_org_code: tokenDecode?.orgCode,
-            trs_role_grp_code: tokenDecode?.roleGrpCode,
-            trs_role_code: tokenDecode?.roleCode,
-            trs_ps_grp_code: tokenDecode?.psGrpCode,
-            trs_ps_code: tokenDecode?.psCode,
-            trs_sub_org_grp_code: tokenDecode?.subOrgGrpCode ?? "",
-            trs_sub_org_code: tokenDecode?.subOrgCode ?? ""
-          }
-            const response = await this.callTorusAPI('tenant_user', {
-            method: 'POST',
-            token: token,
-            data: user_data,
-          });
-          if (response?.status == 201) {
-            user['org_tu_id'] = response.data?.org_tu_id;
-          }
-        }
-
-        //Torus API OPR Table entry End
- 
-        ////////////////
-        let key: string = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenantCode}:AFK:PROFILE:AFVK:v1:users`;
-        res = await this.redisService.setJsonData(
-          key,
-          JSON.stringify(uniqueData), // set JSON.stringify(existUser), this once all app keys have correct object
-          client,
-        );
+      const tenant_user_payload = {
+        user_unique_id : userUniqueId,
+        email : content?.email,
+        password : this.hashPassword(content?.password),
+        first_name : content.firstName,
+        last_name : content?.lastName,
+        login_id : content?.loginId,
+        user_code : content?.userCode,
+        status : '',
+        tenant_code : tenant,
+        trs_created_by: tokenDecode?.loginId || 'anonymous',
+        trs_modified_date: new Date().toISOString(),
+        trs_modified_by: tokenDecode?.loginId || 'anonymous',
+        // "trs_status": "string",
+        // "trs_next_status": "string",
+        // "trs_process_id": "string",
+        trs_access_profile: tokenDecode?.selectedAccessProfile,
+        trs_org_grp_code: tokenDecode?.orgGrpCode,
+        trs_org_code: tokenDecode?.orgCode,
+        trs_role_grp_code: tokenDecode?.roleGrpCode,
+        trs_role_code: tokenDecode?.roleCode,
+        trs_ps_grp_code: tokenDecode?.psGrpCode,
+        trs_ps_code: tokenDecode?.psCode,
+        trs_sub_org_grp_code: tokenDecode?.subOrgGrpCode ?? "",
+        trs_sub_org_code: tokenDecode?.subOrgCode ?? ""
       }
+
+      if(existUser.find((u) => u.email == tenant_user_payload.email)){
+        throw new NotAcceptableException('Email already taken , please add another email')
+      }
+      if(existUser.find((u) => u.login_id == tenant_user_payload.login_id)){
+        throw new NotAcceptableException('Username already taken , please choose different name')
+      }
+
+      // create user in fusion auth
+       if (defaultAuth === 'fusionauth' && fusionAuthTenantId) {
+          await FusionAuthUserCreation(
+            fusionAuthBaseUrl,
+            fusionAuthApiKey,
+            fusionAuthTenantId,
+            tenant_user_payload.user_unique_id,
+            tenant_user_payload.first_name,
+            tenant_user_payload.last_name,
+            tenant_user_payload.login_id,
+            tenant_user_payload.email,
+            content?.password,
+            'POST',
+            '',
+          );
+        }
+       const userAddedResponse = await this.insertIntoTable('tenant_user' ,{
+          ...tenant_user_payload ,
+          trs_created_by : tokenDecode?.loginId 
+        })
+        
       const resForTenantUserAddition = await this.redisService.getJsonData(
         `CK:TRL:FNGK:AFR:FNK:PORTAL:CATK:EMAILTEMPLATE:AFGK:TORUS:AFK:CLIENTUSERADDITION:AFVK:v1:TPI`,
         'TORUS',
@@ -8158,12 +8561,8 @@ getConfig(): FusionAuthConfig {
           // return `Email sent`;
         }
       });
-      await this.postAppUserList({...content, userUniqueId: userUniqueId , password: undefined} , token);
-      const resultUserList =  (await this.getTenantAppUser(tenant, process.env.CLIENTCODE, ag, app))
-      return resultUserList.map(user => {
-        delete user.password;
-        return user;
-      });
+     const result = await this.postAppUserList({...content, userUniqueId: userUniqueId , password: undefined , org_tu_id : userAddedResponse?.data?.[0].org_tu_id } , token);
+     return result;
     } catch (err: any) {
         await this.commonService.errorLog(
         'Technical',
@@ -8312,27 +8711,19 @@ getConfig(): FusionAuthConfig {
         throw new BadRequestException(
           'Master data and matrix data are required',
         );
-      const orgMasterKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:orgMaster`;
-      const orgMatrixKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:orgMatrix`;
-      const orgMasterResponse = await this.redisService.getJsonData(
-        orgMasterKey,
-        process.env.CLIENTCODE,
-      );
-      const orgMatrixResponse = await this.redisService.getJsonData(
-        orgMatrixKey,
-        process.env.CLIENTCODE,
-      );
+
+      const val = await this.getAppSecurityData() 
+      const {orgMatrix : orgMatrixResponse  , orgMaster : orgMasterResponse} = val as any;
 
       // To delete records which are deleted from incoming data in torus as well as in redis, 
       // we need to get the existing record ids from redis and compare with incoming data ids, 
       // if any id is not present in incoming data then we can delete that record from torus and redis both
-      const orgMasterPrevdataIds = orgMasterResponse ? JSON.parse(orgMasterResponse)?.map((item: any) => item?.opr_om_id).filter((id: any) => id !== undefined) : [];
-      const orgMatrixPrevdataIds = orgMatrixResponse ? JSON.parse(orgMatrixResponse)?.map((item: any) => item?.opr_mx_id).filter((id: any) => id !== undefined) : [];
+      const orgMasterPrevdataIds = orgMasterResponse ? orgMasterResponse?.map((item: any) => item?.opr_om_id).filter((id: any) => id !== undefined) : [];
+      const orgMatrixPrevdataIds = orgMatrixResponse ? orgMatrixResponse?.map((item: any) => item?.opr_mx_id).filter((id: any) => id !== undefined) : [];
       const incomingMasterDataIds = incomingMasterData?.map((item: any) => item?.opr_om_id).filter((id: any) => id !== undefined) || [];
       const incomingMatrixDataIds = incomingMatrixData?.map((item: any) => item?.opr_mx_id).filter((id: any) => id !== undefined) || [];
       const masterDataIdsToDelete = orgMasterPrevdataIds.filter((id: any) => !incomingMasterDataIds.includes(id));
       const matrixDataIdsToDelete = orgMatrixPrevdataIds.filter((id: any) => !incomingMatrixDataIds.includes(id));
-
 
       // Torus API OPR Table entry start
       // loop thorugh masterData
@@ -8342,11 +8733,11 @@ getConfig(): FusionAuthConfig {
           org_grp_code: masterDataItem?.orgGrpCode,
           org_grp_name: masterDataItem?.orgGrpName,
           org_grp_id: masterDataItem?.orgGrpId,
-          org: masterDataItem?.org,
+          org: JSON.stringify(masterDataItem?.org ?? []),
           tenant_code: tenant,
           ag_code: ag,
           app_code: app,
-          trs_created_date: new Date().toISOString(),
+          // trs_created_date: new Date().toISOString(),
           trs_created_by: payload?.loginId || 'anonymous',
           trs_modified_date: new Date().toISOString(),
           trs_modified_by: payload?.loginId || 'anonymous',
@@ -8365,48 +8756,30 @@ getConfig(): FusionAuthConfig {
         };
         // if opr_om_id exist then patch else post
         if (masterDataItem?.opr_om_id) {
-          const masterDataItemResponse = await this.callTorusAPI(
-            `opr_org_master/${masterDataItem?.opr_om_id}`,
-            {
-              method: 'GET',
-              token: token,
-            },
-          );
-          if (masterDataItemResponse?.status == 200) {
-            const prevData = masterDataItemResponse.data;
+          const mstrData :any[] = await this.query(`select * from ${tenant}.opr_org_master where opr_om_id=$1` , [masterDataItem?.opr_om_id])
+          if (mstrData && Array.isArray(mstrData) && mstrData.length) {
             if (
-              prevData?.org_grp_name == opr_org_master_data.org_grp_name &&
-              JSON.stringify(prevData?.org ?? {}) ==
-                JSON.stringify(opr_org_master_data.org ?? {})
+              mstrData?.[0].org_grp_name == opr_org_master_data.org_grp_name &&
+              (mstrData?.[0].org ?? {}) ==      //this is already in stringified format
+                opr_org_master_data.org
             ) {
               continue;
             } else {
               // patch this record
-              await this.callTorusAPI(
-                `opr_org_master/${masterDataItem?.opr_om_id}`,
+              await this.updateTable('opr_org_master' , 
                 {
-                  method: 'PATCH',
-                  token: token,
-                  data: {
-                    org_grp_name: opr_org_master_data.org_grp_name,
-                    org: opr_org_master_data.org,
-                    trs_modified_date: new Date().toISOString(),
-                    trs_modified_by: payload?.loginId || 'anonymous',
-                  },
-                },
-              );
+                ...opr_org_master_data ,
+                opr_om_id : masterDataItem?.opr_om_id,
+                trs_created_by: mstrData?.[0].trs_created_by ?? ''
+                } 
+                ,'opr_om_id' )
             }
           }
           continue;
         } else {
-          const response = await this.callTorusAPI('opr_org_master', {
-            method: 'POST',
-            token: token,
-            data: opr_org_master_data,
-          });
-          if (response?.status == 201) {
-            masterDataItem['opr_om_id'] = response.data?.opr_om_id;
-          }
+          await this.insertIntoTable('opr_org_master' , 
+            {...opr_org_master_data }
+          )
         }
       }
 
@@ -8418,11 +8791,11 @@ getConfig(): FusionAuthConfig {
           org_grp_name: matrixDataItem?.orgGrpName,
           org_grp_id: matrixDataItem?.orgGrpId,
           src_id: matrixDataItem?.srcId,
-          org: matrixDataItem?.org,
+          org: JSON.stringify(matrixDataItem?.org ?? []),
           tenant_code: tenant,
           ag_code: ag,
           app_code: app,
-          trs_created_date: new Date().toISOString(),
+          // trs_created_date: new Date().toISOString(),
           trs_created_by: payload?.loginId || 'anonymous',
           trs_modified_date: new Date().toISOString(),
           trs_modified_by: payload?.loginId || 'anonymous',
@@ -8441,78 +8814,44 @@ getConfig(): FusionAuthConfig {
         };
         // if opr_mx_id exist then patch else post
         if (matrixDataItem?.opr_mx_id) {
-          const matrixDataItemResponse = await this.callTorusAPI(
-            `opr_org_matrix/${matrixDataItem?.opr_mx_id}`,
-            {
-              method: 'GET',
-              token: token,
-            },
-          );
-          if (matrixDataItemResponse?.status == 200) {
-            const prevData = matrixDataItemResponse.data;
+          const mtrxData : any[] = await this.query(`select * from ${tenant}.opr_org_matrix where opr_mx_id=$1` , [matrixDataItem?.opr_mx_id])
+         
+          if (mtrxData && Array.isArray(mtrxData) && mtrxData.length) {
             if (
-              prevData?.org_grp_name == opr_org_matrix_data.org_grp_name &&
-              JSON.stringify(prevData?.org ?? {}) ==
-                JSON.stringify(opr_org_matrix_data.org ?? {})
+              mtrxData?.[0].org_grp_name == opr_org_matrix_data.org_grp_name &&
+              (mtrxData?.[0].org ?? {}) ==
+                opr_org_matrix_data.org
             ) {
               continue;
             } else {
-              // patch this record
-              await this.callTorusAPI(
-                `opr_org_matrix/${matrixDataItem?.opr_mx_id}`,
+             // patch this record
+              await this.updateTable('opr_org_matrix' , 
                 {
-                  method: 'PATCH',
-                  token: token,
-                  data: {
-                    org_grp_name: opr_org_matrix_data.org_grp_name,
-                    org: opr_org_matrix_data.org,
-                    trs_modified_date: new Date().toISOString(),
-                    trs_modified_by: payload?.loginId || 'anonymous',
-                  },
-                },
-              );
+                  ...opr_org_matrix_data,
+                  opr_mx_id : matrixDataItem?.opr_mx_id,
+                   trs_created_by: mtrxData?.[0].trs_created_by
+                  } 
+                ,'opr_mx_id' )
             }
           }
           continue;
         } else {
-          const response = await this.callTorusAPI('opr_org_matrix', {
-            method: 'POST',
-            token: token,
-            data: opr_org_matrix_data,
-          });
-          if (response.status == 201) {
-            matrixDataItem['opr_mx_id'] = response.data?.opr_mx_id;
-          }
+          await this.insertIntoTable('opr_org_matrix' , 
+            {...opr_org_matrix_data }
+          )
         }
       }
       // Torus API OPR Table entry end
 
       // delete records from torus which are deleted from incoming data 
       for (const masterId of masterDataIdsToDelete) {
-        await this.callTorusAPI(`opr_org_master/${masterId}`, {
-          method: 'DELETE',
-          token: token,
-        });
+        await this.query(`DELETE FROM ${tenant}.opr_org_master WHERE opr_om_id=$1` , [masterId])
       }
 
       for (const matrixId of matrixDataIdsToDelete) {
-        await this.callTorusAPI(`opr_org_matrix/${matrixId}`, {
-          method: 'DELETE',
-          token: token,
-        });
+        await this.query(`DELETE FROM ${tenant}.opr_org_matrix WHERE opr_mx_id=$1` , [matrixId])
       }
-      // delete records from torus which are deleted from incoming data
-
-      await this.redisService.setJsonData(
-        orgMasterKey,
-        JSON.stringify(incomingMasterData),
-        process.env.CLIENTCODE,
-      );
-      await this.redisService.setJsonData(
-        orgMatrixKey,
-        JSON.stringify(incomingMatrixData),
-        process.env.CLIENTCODE,
-      );
+      
       return { message: 'Organization data saved successfully' };
     } catch (error) {
       await this.commonService.errorLog(

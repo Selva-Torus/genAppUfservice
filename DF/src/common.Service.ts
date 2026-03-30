@@ -61,7 +61,7 @@ export class CommonService{
   private readonly seaweedOutPutPath:string;
   private vaultClient: ReturnType<typeof vault>;
   private client: MongoClient;
-  private readonly encryptionKey =  process.env.VAULT_KEY;
+  private readonly encryptionKey: string;
   private vaultAddr: string;
   private vaultToken: string;
   private vaultKey: string;
@@ -74,16 +74,18 @@ export class CommonService{
     private readonly configService: ConfigService,
     private readonly envData:EnvData
   ) {  
+    const vaultConfig = this.envData.getVaultConfig();
     //this.ftpOutputPath = process.env.FTP_OUTPUT_HOST; 
     //this.seaweedOutPutPath = process.env.SEAWEED_OUTPUT_HOST;
-    this.vaultAddr = this.configService.get<string>('VAULT_URL',process.env.VAULT_URL);
-    this.vaultToken = this.configService.get<string>('VAULT_TOKEN',process.env.VAULT_TOKEN); // Store this in .env
-    this.vaultKey = this.configService.get<string>('VAULT_KEY',process.env.VAULT_KEY);
+    this.vaultAddr = this.configService.get<string>('VAULT_URL',vaultConfig?.url);
+    this.vaultToken = this.configService.get<string>('VAULT_TOKEN',vaultConfig?.token); // Store this in .env
+    this.vaultKey = this.configService.get<string>('VAULT_KEY',vaultConfig?.key);
     this.vaultClient = vault({
           apiVersion: 'v1',
-          endpoint: process.env.VAULT_URL,
-          token: process.env.VAULT_TOKEN, //Use a service token with limited permissions
+          endpoint: vaultConfig?.url,
+          token: vaultConfig?.token, //Use a service token with limited permissions
         });
+    this.encryptionKey = this.vaultKey;
   }
 
   async  getLatestMigrationSql(isLocal?: string ): Promise<string> {
@@ -143,7 +145,7 @@ export class CommonService{
   async onModuleInit() {
    //const collection = client.db("UploadFile")
     const collection = await getDb()
-    this.bucket = new GridFSBucket(collection, { bucketName: 'CI001/AG001/A001/v1' });
+    this.bucket = new GridFSBucket(collection, { bucketName: 'CT010/I001/ITAX/v1' });
   }
   private readonly logger = new Logger(CommonService.name) 
 
@@ -163,13 +165,17 @@ export class CommonService{
         return Buffer.from(result.data.plaintext, 'base64').toString('utf-8');
     }    
 
-      async getEncryptionInfo(dpdKey,encMethod){
+    async getEncryptionInfo(dpdKey:string,encMethod:string){
       try {
         if (dpdKey && await this.redisService.exist(dpdKey + ':NDP',process.env.CLIENTCODE)) {
-          let dpdData = JSON.parse(await this.redisService.getJsonData(dpdKey + ':NDP',process.env.CLIENTCODE))
+          let dpdData = await this.redisService.getJsonData(dpdKey + ':NDP',process.env.CLIENTCODE)
+          const parsed = JSON.parse(dpdData);
+          const rootKey = Object.keys(parsed)[0];
+          const encryptedPayload = parsed[rootKey];
+          dpdData = decrypt<{ data: any }>(encryptedPayload);
           if (!dpdData || Object.keys(dpdData).length == 0) throw `${dpdKey}:NDP value was empty`
           let dpdNodeId = Object.keys(dpdData)[0]
-          let encryptData = dpdData[dpdNodeId]?.data?.encryption
+          let encryptData = dpdData?.data?.encryption
           if (encryptData && Object.keys(encryptData).length > 0) {
             let encryptionInfo = encryptData?.encryptionInfo?.items
             if(encryptionInfo && encryptionInfo.length > 0){
@@ -817,8 +823,16 @@ export class CommonService{
         let fieldarr = []
         let rule = currentNode?.rule
         let customCode = currentNode?.code   
-        //console.log("SessionInfo",SessionInfo);        
-        if(rule && Object.keys(rule).length > 0){
+        //console.log("SessionInfo",SessionInfo);
+      
+        if (customCode ) {
+          var customcoderesult = await this.codeService.customCode(processedKey, customCode, inputparam,fabric,SessionInfo)
+          console.log('customcoderesult',customcoderesult); 
+          if(customcoderesult)
+          await this.redisService.setJsonData(processedKey + ':NPV:' +currentNode.nodeName + '.PRO', JSON.stringify(customcoderesult), process.env.CLIENTCODE, 'response',);       
+        }    
+
+         if(rule && Object.keys(rule).length > 0){
           var nodes = rule.nodes     
           if(nodes && nodes.length > 0){
             for(var c=0;c < nodes.length;c++){
@@ -880,7 +894,7 @@ export class CommonService{
                 // }  
               // }
               } 
-              console.log('gparamreq',gparamreq);
+              // console.log('gparamreq',gparamreq);
               
               var goruleres = await this.ruleEngine.goRule(rule, gparamreq)                  
               if(Object.keys(goruleres.result).length > 0){                   
@@ -890,12 +904,7 @@ export class CommonService{
                 throw `Rule doesn't matched with this value ${data}`
               }                         
           }     
-        }   
-      
-        if (customCode ) {
-          var customcoderesult = await this.codeService.customCode(processedKey, customCode, inputparam,fabric,SessionInfo)
-          console.log('customcoderesult',customcoderesult);        
-        }    
+        } 
       
       if(zenresult)
         ResultObj['rule'] = zenresult
@@ -907,6 +916,67 @@ export class CommonService{
       } catch (error) {
         throw error
       }          
+    }
+
+    async PfRuleExtract(rule:any,SessionInfo,HtInputParam){
+      let fieldarr = []
+       if(rule && Object.keys(rule).length > 0){
+          var nodes = rule.nodes     
+          if(nodes && nodes.length > 0){
+            for(var c=0;c < nodes.length;c++){
+              var content = nodes[c]?.content
+              if(content){
+                let inputs = content.inputs
+                if(inputs?.length > 0){
+                  for(let i=0;i < inputs.length;i++){
+                    if(content.inputs[i]?.field)
+                      fieldarr.push(content.inputs[i]?.field)
+                  }
+                }      
+              }            
+            }   
+            
+            let afpVal:any,data,gparamreq = {}
+            
+            if(fieldarr?.length>0){
+              for(let i=0;i < fieldarr.length;i++){ 
+               
+                let field = fieldarr[i].split('.')
+                let connectedNodeName = field[0]                
+  
+                if(connectedNodeName == 'session'){
+                            
+                  let connectedField = field.join('.')            
+                
+                  if(!connectedField || !connectedNodeName)
+                    throw 'connectedField/ connectedNodeName not found in rule'
+                  
+                  if(SessionInfo[connectedField]){
+                    afpVal = SessionInfo                  
+                  }
+                  data = await this.getNestedValue(afpVal, connectedField)
+                }else if(connectedNodeName && HtInputParam[connectedNodeName]){
+                  data = await this.getNestedValue(HtInputParam, connectedNodeName) 
+                }           
+                
+                if(data)               
+                  await this.setNestedValue(gparamreq, fieldarr[i], data)                 
+                  
+              } 
+            }else{
+              gparamreq = HtInputParam
+            }
+             
+            var goruleres = await this.ruleEngine.goRule(rule, gparamreq)   
+            // console.log('goruleres',goruleres);               
+            if(Object.keys(goruleres.result).length > 0){  
+              return goruleres.result
+            }
+            // else{
+              // throw `Rule doesn't matched with this value ${data}`
+            // }                         
+          }     
+        } 
     }
 
     keysToLowerCaseOnly(obj: any): any {
@@ -1390,8 +1460,8 @@ export class CommonService{
         
         if(typeof key != 'string')
         key = 'commonError'
-        tenant=tenant || "CI001"
-        app=app ||  "A001"
+        tenant=tenant || "CT010"
+        app=app ||  "ITAX"
         await this.redisService.setStreamData(tenant+'-'+app+'-TSL',key,JSON.stringify(logs))    
         return logs
 
@@ -1822,6 +1892,7 @@ export class CommonService{
           const { Client } = pg;
           client = new Client({
             connectionString: dbUrl,
+            application_name: `${process.env.TENANT}_${process.env.APPGROUPCODE}_${process.env.APPCODE}_PFservice`
           });
         } else if (dbtype == 'mysql') {
           const mysql = require('mysql2/promise');
@@ -2133,6 +2204,7 @@ export class CommonService{
         const { Client } = pg;
          client = new Client({
           connectionString: dbUrl,
+          application_name: `${process.env.TENANT}_${process.env.APPGROUPCODE}_${process.env.APPCODE}_PFservice`
         });
 
       } else if (dbType == 'mysql') {
@@ -2160,20 +2232,23 @@ export class CommonService{
   const lower = query.toLowerCase();
 
   // ✅ Detect outer query pattern: ") alias"
-  const outerMatch = query.match(/\)\s+\w+\s*$/i);
+  const outerMatch = query.match(
+     /(\)\s+\w+)((\s+(?:LIMIT|ORDER\s+BY|GROUP\s+BY|OFFSET)\b[\s\S]*)?)$/i,
+   );
 
   // 👉 CASE 1: Query has subquery → apply WHERE outside
   if (outerMatch) {
-    const insertIndex = outerMatch.index! + outerMatch[0].length;
+    const aliasEnd      = outerMatch.index! + outerMatch[1].length; // right after ") alias"
+    const trailingClause = outerMatch[2] || '';                      // " LIMIT 10 OFFSET 0" or ""
+    const beforeTrailing = query.slice(0, aliasEnd);                 // everything up to and including ") alias"
+    const betweenPart    = query.slice(aliasEnd, query.length - trailingClause.length); // any existing WHERE between alias and trailing
 
-    // Check if outer already has WHERE
-    const outerPart = query.slice(insertIndex).toLowerCase();
-    const hasOuterWhere = /\bwhere\b/i.test(outerPart);
+    const hasOuterWhere = /\bwhere\b/i.test(betweenPart);
 
     if (hasOuterWhere) {
-      return `${query} AND ${condition}`;
+      return `${beforeTrailing}${betweenPart} AND ${condition}${trailingClause}`;
     } else {
-      return `${query} WHERE ${condition}`;
+      return `${beforeTrailing} WHERE ${condition}${trailingClause}`;
     }
   }
 

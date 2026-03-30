@@ -414,7 +414,8 @@ const sortedData = sortColumn
               )}
                 {(visibleColumns.find((cols:any)=>(cols?.type=='__ActionDetails__')) && tableActions==true)&&(<th
                   className={`
-                    px-4 py-3
+                    px-2 py-3
+                    w-12
                     text-left
                     ${getFontSizeClass(branding.fontSize)}
                     font-semibold
@@ -587,7 +588,7 @@ const sortedData = sortColumn
                     (visibleColumns.find((cols:any)=>(cols?.type=='__ActionDetails__'))&&tableActions==true && renderRowActions)&&
                     (
                       <td
-                      className="w-[10%]"
+                      className="w-12"
                       onClick={(e) => e.stopPropagation()}
                       >
                         {renderRowActions({ item: row, index,nodeName:`${"ss"}`})}

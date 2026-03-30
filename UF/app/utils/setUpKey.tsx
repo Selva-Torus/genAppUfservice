@@ -54,11 +54,11 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
   const [data, setData] = useState<SetupKeyData | null>(null);
   const token:string = getCookie('token'); 
   const encryptionFlagApp: boolean = true;
-  const encryptionDpd: string = "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1";
+  const encryptionDpd: string = "CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:I001:AFGK:ITAX:AFK:ITAX_DPD:AFVK:v1";
   const encryptionMethod: string = "";
   const fetchSetupKey = async () => {
     try {
-      let setUpKeyDto:any = {key:"CK:TGA:FNGK:SETUP:FNK:SF:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:appearance"};
+      let setUpKeyDto:any = {key:"CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT010:AFGK:I001:AFK:ITAX:AFVK:v1:appearance"};
       if (encryptionFlagApp) {
         setUpKeyDto["dpdKey"] = encryptionDpd;
         setUpKeyDto["method"] = encryptionMethod;

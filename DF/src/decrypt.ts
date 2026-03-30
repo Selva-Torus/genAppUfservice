@@ -18,6 +18,7 @@ const REDIS_KEY = (() => {
 
 
 function decryptWithKey<T = unknown>(payload: string, key: Buffer): T {
+  try {
     const parsed: any = JSON.parse(payload);
 
     if (parsed.v !== 1) {
@@ -38,6 +39,9 @@ function decryptWithKey<T = unknown>(payload: string, key: Buffer): T {
     ]);
 
     return JSON.parse(plaintext.toString('utf8')) as T;
+    } catch (err) {
+    throw new Error('Failed to decrypt payload');
+  }
 }
 
 export function decrypt<T = unknown>(payload: string): T {

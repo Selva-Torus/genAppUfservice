@@ -1176,8 +1176,11 @@ const OPRTopNavSelector = ({
         </button>
       </>
       {selectedProd?.psLogo && (
-          <img
-            className='h-[50px] min-w-[100px] px-2 border-l'
+           <img
+            className={clsx('h-fit w-fit ' , {
+              'border-l px-2' : fullView,
+              'border-t py-2' : !fullView,
+            })}
             width={100}
             height={100}
             src={getCdnImage(selectedProd?.psLogo)}

@@ -130,13 +130,17 @@ const OtpVerification = ({
       toast('Password does not match', 'danger')
       return
     }
+    if(Object.values(passwordErrors).some((t) => !t)){
+      toast('Password must meet all the required criteria.', 'danger')
+      return
+    }
     try {
       const res = await AxiosService.patch(`UF/resetPassword`, {
         email: email,
         password: formData.password
       })
       if (res.status == 200) {
-        toast(res.data.message, 'success')
+        toast(typeof res.data == "string" ? res.data : 'Password updated successfully', 'success')
         setIsOtpVerified(false)
         setIsOtpReceive(false)
         router.push('/')
@@ -324,7 +328,7 @@ const OtpVerification = ({
             </label>
 
             <Button
-              className='w-[300px] rounded-full px-[0.83vw] py-[2vh] text-[15px] font-medium'
+              className='!w-[300px] rounded-full px-[0.83vw] py-[2vh] text-[15px] font-medium'
               onClick={handleFormSubmit}
               disabled={!formData.password || !formData.confirmPassword}
             >

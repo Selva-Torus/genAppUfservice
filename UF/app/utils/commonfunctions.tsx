@@ -18,3 +18,18 @@ export function useHandleGroupArrayCopyFormData(){
     return(copiedData:any,type:any,arraygroupName:any)=>{
     }
 }
+
+
+export function flattenKeepInner(obj:any, result:any = {}) {
+  for (let key in obj) {
+    const value = obj[key];
+
+    if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      result[key] = value; // keep the parent key
+      flattenKeepInner(value, result); // also spread inner keys
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}

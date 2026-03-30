@@ -21,6 +21,7 @@ interface TabItem {
 
 interface TabsProps {
   items: TabItem[];
+  security:any[],
   direction?: TabDirection;
   disabled?: boolean;
   needTooltip?: boolean;
@@ -37,6 +38,7 @@ interface TabsProps {
 
 export const Tabs: React.FC<TabsProps> = ({
   items,
+  security,
   direction,
   disabled = false,
   needTooltip = false,
@@ -118,51 +120,55 @@ export const Tabs: React.FC<TabsProps> = ({
         >
         {items.map((item) => {
           const isActive = currentActiveTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={()=> handleTabClick(item.id)}
-              disabled={disabled}
-              className={`
-                ${getSizeClasses()}
-                rounded-full
-                flex items-center justify-center gap-2
-                font-medium
-                whitespace-nowrap
-                transition-all
-                ${direction === "vertical" ? "" : headerAlignment === "full" ? "flex-1" : ""}
-                ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-                ${isActive
-                  ? "text-white shadow-sm"
-                  : isDark ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-gray-900"
-                }
-              `}
-              style={{
-                backgroundColor: isActive ? branding.brandColor : "transparent",
-              }}
-              onMouseEnter={(e) => {
-                if (!disabled && !isActive) {
-                  e.currentTarget.style.backgroundColor = hexToRgba(branding.hoverColor, 0.25);
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!disabled && !isActive) {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                }
-              }}
-              onFocus={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.boxShadow = `0 0 0 2px ${hexToRgba(branding.selectionColor, 0.3)}`;
-                }
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            >
-              {item.icon && <Icon data={item.icon} size={16} />}
-              {item.title}
-            </button>
-          );
+          if(security?.includes(item.id))
+          {
+            
+            return (
+              <button
+                key={item.id}
+                onClick={()=> handleTabClick(item.id)}
+                disabled={disabled}
+                className={`
+                  ${getSizeClasses()}
+                  rounded-full
+                  flex items-center justify-center gap-2
+                  font-medium
+                  whitespace-nowrap
+                  transition-all
+                  ${direction === "vertical" ? "" : headerAlignment === "full" ? "flex-1" : ""}
+                  ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                  ${isActive
+                    ? "text-white shadow-sm"
+                    : isDark ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-gray-900"
+                  }
+                `}
+                style={{
+                  backgroundColor: isActive ? branding.brandColor : "transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (!disabled && !isActive) {
+                    e.currentTarget.style.backgroundColor = hexToRgba(branding.hoverColor, 0.25);
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!disabled && !isActive) {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                  }
+                }}
+                onFocus={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.boxShadow = `0 0 0 2px ${hexToRgba(branding.selectionColor, 0.3)}`;
+                  }
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                {item.icon && <Icon data={item.icon} size={16} />}
+                {item.title}
+              </button>
+            );
+          }
         })}
         </div>
         {tabHeaders && tabHeaders.length > 0 && (

@@ -332,7 +332,7 @@ const UserTable: React.FC<{
                     textColor
                   )}
                   type='date'
-                  defaultValue={item.accessExpires}
+                  value={item.accessExpires ? new Date(item.accessExpires).toISOString().split('T')[0] : ''}
                   min={new Date().toISOString().split('T')[0]}
                   readOnly
                   onChange={e =>

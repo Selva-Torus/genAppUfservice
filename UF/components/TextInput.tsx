@@ -19,6 +19,7 @@ import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
 import { RiCloseCircleLine } from 'react-icons/ri'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 type ContentAlign = 'center' | 'left' | 'right'
+type NumberFormatStyle = 'none' | 'Indian' | 'International' | 'European'
 interface TextInputProps {
   nodeId?: string
   disabled?: boolean
@@ -49,6 +50,7 @@ interface TextInputProps {
   className?: string
   fillContainer?: boolean
   contentAlign?: ContentAlign
+  numberFormat?: NumberFormatStyle
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -80,7 +82,8 @@ export const TextInput: React.FC<TextInputProps> = ({
   events,
   className = '',
   fillContainer = true,
-  contentAlign = 'left'
+  contentAlign = 'left',
+  numberFormat
 }) => {
   const { theme, direction, branding } = useGlobal()
   const eventBus = useEventBus()
@@ -91,7 +94,49 @@ export const TextInput: React.FC<TextInputProps> = ({
   const [rightWidth, setRightWidth] = useState(0)
   const leftContentRef = useRef<HTMLDivElement>(null)
   const rightContentRef = useRef<HTMLDivElement>(null)
-    const showToast = useInfoMsg()                                                                                                                                                    
+  const showToast = useInfoMsg()
+
+  // Number formatting functions
+  const formatNumber = (val: any): string => {
+    if (!numberFormat || numberFormat === 'none') return val?.toString() ?? ''
+    if (val === null || val === undefined || val === '') return ''
+    const num = typeof val === 'string' ? parseFloat(val.replace(/[,.\s]/g, (match) => {
+      if (numberFormat === 'European' && match === '.') return ''
+      if (numberFormat !== 'European' && match === ',') return ''
+      return match
+    })) : val
+    if (isNaN(num) || !isFinite(num)) return val?.toString() ?? ''
+
+    switch (numberFormat) {
+      case 'Indian':
+        return num.toLocaleString('en-IN')
+      case 'International':
+        return num.toLocaleString('en-US')
+      case 'European':
+        return num.toLocaleString('de-DE')
+      default:
+        return val?.toString() ?? ''
+    }
+  }
+
+  const parseNumber = (val: string): string => {
+    if (!numberFormat || numberFormat === 'none') return val
+    if (val === '') return ''
+    let cleanedValue = val
+    switch (numberFormat) {
+      case 'European':
+        // European: . is thousand separator, , is decimal
+        cleanedValue = val.replace(/\./g, '').replace(',', '.')
+        break
+      case 'Indian':
+      case 'International':
+      default:
+        // Indian/International: , is thousand separator
+        cleanedValue = val.replace(/,/g, '')
+        break
+    }
+    return cleanedValue
+  }                                                                                                                                                    
        const prevValidationState = useRef(validationState)                                                                                                                               
                                                                                                                                                                                        
       useEffect(() => {                                                                                                                                                                 
@@ -116,11 +161,29 @@ export const TextInput: React.FC<TextInputProps> = ({
   }, [value])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value
-    setInternalValue(newValue)
-    onChange?.(e)
+    const rawValue = e.target.value
+
+    // If numberFormat is set, parse and validate
+    if (numberFormat && numberFormat !== 'none') {
+      const parsedValue = parseNumber(rawValue)
+      // Only allow valid number characters
+      if (parsedValue !== '' && !/^-?\d*\.?\d*$/.test(parsedValue)) {
+        return // Block invalid input
+      }
+      setInternalValue(rawValue)
+      // Pass parsed value to parent
+      const modifiedEvent = {
+        ...e,
+        target: { ...e.target, value: parsedValue }
+      } as React.ChangeEvent<HTMLInputElement>
+      onChange?.(modifiedEvent)
+    } else {
+      setInternalValue(rawValue)
+      onChange?.(e)
+    }
 
     // Emit rise events when onChange occurs
+    const newValue = numberFormat && numberFormat !== 'none' ? parseNumber(rawValue) : rawValue
     const onChangeEvent = events?.find(e => e.name === 'onChange')
     if (onChangeEvent?.enabled && onChangeEvent.rise && nodeId) {
       onChangeEvent.rise.forEach(riseEvent => {
@@ -304,9 +367,9 @@ export const TextInput: React.FC<TextInputProps> = ({
         )}
 
         <input
-          type={type}
+          type={numberFormat && numberFormat !== 'none' ? 'text' : type}
           name={name}
-          value={internalValue}
+          value={numberFormat && numberFormat !== 'none' ? formatNumber(internalValue) : internalValue}
           onChange={handleChange}
           placeholder={placeholder}
           disabled={disabled}

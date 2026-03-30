@@ -1,5 +1,5 @@
 let data:any ={
-  "defaultDPD": {
+  "ITAX_DPD": {
     "encryptionType": {
       "name": "encryptionType",
       "_type": "select",

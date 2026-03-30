@@ -30,7 +30,7 @@ interface LoginProps {
   image?: string
 }
 
-const LoginForm = ({ logo, appName = "application1", loginType = "standard", image }: LoginProps) => {
+const LoginForm = ({ logo, appName = "ITAX", loginType = "standard", image }: LoginProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     password: ''
@@ -43,7 +43,7 @@ const LoginForm = ({ logo, appName = "application1", loginType = "standard", ima
   const { branding } = useGlobal()
   const { brandColor } = branding
   const { bgColor, borderColor, textColor } = useTheme()
-  const onBoardingKey : string = "User Screen"
+  const onBoardingKey : string = "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_KEDTB_Main_Screen:AFVK:v1"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
@@ -67,7 +67,7 @@ const LoginForm = ({ logo, appName = "application1", loginType = "standard", ima
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT010:AFGK:I001:AFK:ITAX:AFVK:v1:bldc",
           ufClientType: 'UFW'
         }
         const api_signin = await axios.post(
@@ -97,9 +97,14 @@ const LoginForm = ({ logo, appName = "application1", loginType = "standard", ima
           let screenDetails: any = {
             keys:[
   {
-    "screenName": "test",
-    "screensName": "test-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
+    "screenName": "transaction",
+    "screensName": "transaction-v1",
+    "ufKey": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_KEDTB_Main_Screen:AFVK:v1"
+  },
+  {
+    "screenName": "dashboard",
+    "screensName": "dashboard-v1",
+    "ufKey": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_Dashboard:AFVK:v1"
   }
 ]
           }

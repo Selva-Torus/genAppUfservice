@@ -1,0 +1,1545 @@
+
+import { HttpException, Injectable,HttpStatus,InternalServerErrorException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
+import { PrismaService } from '../prisma.service';
+import * as v from 'valibot';
+import { errorObj } from 'src/dto';
+import { CommonService } from 'src/common.Service';
+import { parsePrismaCreateError } from 'src/prisma-error-handler';
+import { itax_sourceEntity } from './entity/itax_source.entity';
+import { CustomException } from 'src/customException';
+@Injectable()
+export class itax_sourceService {
+  constructor(private readonly prismaService: PrismaService,
+  private readonly commonService: CommonService) {}
+  private encryptedCols: any={
+  "itax_source": [
+    {
+      "column": "itax_source_tran",
+      "isRequired": true,
+      "dataType": "childtable"
+    },
+    {
+      "column": "itax_source_tran_credit_approval",
+      "isRequired": true,
+      "dataType": "childtable"
+    },
+    {
+      "column": "itax_source_tran_payment",
+      "isRequired": true,
+      "dataType": "childtable"
+    }
+  ],
+  "itax_source_tran": [
+    {
+      "column": "itax_tran_log",
+      "isRequired": true,
+      "dataType": "childtable"
+    },
+    {
+      "column": "itax_tran_error_log",
+      "isRequired": true,
+      "dataType": "childtable"
+    },
+    {
+      "column": "itax_source_tran_doc",
+      "isRequired": true,
+      "dataType": "childtable"
+    },
+    {
+      "column": "itax_source_tran_dtl",
+      "isRequired": true,
+      "dataType": "childtable"
+    }
+  ],
+  "itax_source_tran_credit_approval": [],
+  "itax_source_tran_payment": [],
+  "itax_tran_log": [],
+  "itax_tran_error_log": [],
+  "itax_source_tran_doc": [],
+  "itax_source_tran_dtl": [],
+  "itax_system_setup": [],
+  "itax_check_balance": []
+}
+
+  async encryptData(data: any, tableName: string, method) {
+    let encryptedData = { ...data };
+    const columns = this.encryptedCols[tableName];
+    if (!columns) return encryptedData;
+    for (const table of columns) {
+      if (table?.column in data && table.dataType === 'String') {
+        const encryptedValue = await this.commonService.encrypt(
+          data[table.column],table.column
+        );
+        encryptedData[table.column] = encryptedValue;
+      } else if (table?.column in data && table.dataType === 'childtable') {
+        if (
+          data[table.column][method] &&
+          !Array.isArray(data[table.column][method])
+        ) {
+          encryptedData[table.column][method] = await this.encryptData(
+            data[table.column][method],
+            table.column,
+            method,
+          );
+        } else if (
+          data[table.column][method] &&
+          Array.isArray(data[table.column][method])
+        ) {
+          let tempArray = [];
+          for (const chlldArray of data[table.column][method]) {
+            tempArray.push(
+              await this.encryptData(chlldArray, table.column, method),
+            );
+          }
+          encryptedData[table.column]['create'] = tempArray;
+        }
+      } else if (
+        table?.column in data &&
+        table.dataType === 'Object'
+      ) {
+        let encryptedValue : any;
+          if(Object.keys(data[table.column])[0] == "some"){
+            encryptedValue = await this.encryptData(
+              data[table.column].some,
+              table?.interRelation,
+              method,
+            );
+            encryptedData[table.column]["some"] = encryptedValue;
+          }else if(Object.keys(data[table.column])[0] == "is"){
+            encryptedValue = await this.encryptData(
+              data[table.column].is,
+              table?.interRelation,
+              method,
+            );
+            encryptedData[table.column]["is"] = encryptedValue;
+          }else{
+            encryptedValue = await this.encryptData(
+              data[table.column],
+              table?.interRelation,
+              method,
+            );
+            encryptedData[table.column] = encryptedValue;
+          }
+      } else if (
+        table?.column in data &&
+        table.dataType === 'Array' &&
+        table?.interRelation != ''
+      ) {
+        let arrayObject: any = [];
+        let check = data[table.column]
+        if(!Array.isArray(check)){
+          let encryptedValue : any;
+          if(Object.keys(check)[0] == "some"){
+            encryptedValue = await this.encryptData(
+              check.some,
+              table?.interRelation,
+              method,
+            );
+            encryptedData[table.column]["some"] = encryptedValue;
+          }
+          if(Object.keys(check)[0] == "is"){
+            encryptedValue = await this.encryptData(
+              check.is,
+              table?.interRelation,
+              method,
+            );
+            encryptedData[table.column]["is"] = encryptedValue;
+          }
+        
+        }else{
+          for (const eachObject of data[table.column]) {
+            const encryptedValue = await this.encryptData(
+              eachObject,
+              table?.interRelation,
+              method,
+            );
+            arrayObject.push(encryptedValue);
+          }
+          encryptedData[table.column] = arrayObject;
+        }
+      }
+    }
+    return encryptedData;
+  }
+
+  async commonDecimalDatahandle(data:any){
+    const plainData = { ...data,
+      }
+    return plainData
+  }
+
+   async decryptData(data: any, tableName: string) {
+    if (typeof data == 'string') return data;
+
+    let encryptedData = { ...data };
+    const columns = this.encryptedCols[tableName];
+    if (!columns) return encryptedData;
+    for (const table of columns) {
+      if (table?.column in data && table.dataType == 'String') {
+        if (
+          data[table.column] != null &&
+          data[table?.column] != '' &&
+          data[table.column].startsWith('vault:')
+        ) {
+          const encryptedValue = await this.commonService.decrypt(
+            data[table.column],
+            table.column
+          );
+          encryptedData[table.column] = encryptedValue;
+        }
+      }
+    }
+    for (const key in encryptedData) {
+      if (
+        typeof encryptedData[key] === 'object' &&
+        encryptedData[key] !== null
+      ) {
+        if (Array.isArray(encryptedData[key])) {
+          let arrayDocName: string = '';
+          this.encryptedCols[tableName].forEach((element: any) => {
+            if (
+              element.column == key &&
+              element.interRelation != '' &&
+              element.dataType == 'Array'
+            ) {
+              arrayDocName = element.interRelation;
+            }
+          });
+          if (arrayDocName != '') {
+            let tempArray = [];
+            for (const eachObject of encryptedData[key]) {
+              tempArray.push(await this.decryptData(eachObject, arrayDocName));
+            }
+            encryptedData[key] = tempArray;
+          } else {
+            let tempArray = [];
+            for (const eachObject of encryptedData[key]) {
+              tempArray.push(await this.decryptData(eachObject, key));
+            }
+
+            encryptedData[key] = tempArray;
+          }
+        } else if (Object.keys(encryptedData[key]).length > 0) {
+          let docName: string = '';
+          this.encryptedCols[tableName].forEach((element: any) => {
+            if (
+              element.column == key &&
+              element.interRelation != '' &&
+              (element.dataType == 'Object' || element.dataType == 'Array')
+            ) {
+              docName = element.interRelation;
+            }
+          });
+
+          if (docName != '') {
+            encryptedData[key] = await this.decryptData(
+              encryptedData[key],
+              docName,
+            );
+          } else {
+            encryptedData[key] = await this.decryptData(
+              encryptedData[key],
+              key,
+            );
+          }
+        }
+      }
+    }
+    return encryptedData;
+  }
+
+  async findSchema (token) {
+    const data = {
+      itaxs_id:"number",
+      tran_category:"enum",
+      source_category:"enum",
+      source_reference:"string",
+      source_name:"string",
+      request_data:"json",
+      response_data:"json",
+      trs_created_date:"Date",
+      trs_created_by:"string",
+      trs_modified_date:"Date",
+      trs_modified_by:"string",
+      trs_process_id:"string",
+      trs_access_profile:"string",
+      trs_org_grp_code:"string",
+      trs_org_code:"string",
+      trs_role_grp_code:"string",
+      trs_role_code:"string",
+      trs_ps_grp_code:"string",
+      trs_ps_code:"string",
+      trs_sub_org_grp_code:"string",
+      trs_sub_org_code:"string",
+      trs_locked_by : "string",
+      trs_locked_time : "Date",
+      trs_tenant_id:"string",    
+      trs_app_code:"string",         
+      trs_product_code:"string",
+      trs_event_process_status:"string",         
+      trs_event_status:"string",
+    }
+    return data;
+  }
+
+ async findAllmethod(queryDto: any, limit:number,selectColumns:any,token:any) {
+    try {
+      let queryCondition:any ={}
+      let queryValue:any = {}
+      let columns:any = {}
+      selectColumns.forEach(element => {
+        columns[element] = true
+      });
+      Object.keys(queryDto).forEach((key) => {
+        if (key.includes('-')) {
+          queryCondition[key.split('-')[0]] = key.split('-')[1]
+          queryValue[key.split('-')[0]] = queryDto[key]
+        }
+      })      
+      const { page }: { page: number } = queryDto;
+      let query: any = {}; 
+      const { itaxs_id }: {itaxs_id : number} = queryValue;
+      const { tran_category }: {tran_category : Date} = queryValue;
+      const { source_category }: {source_category : Date} = queryValue;
+      const { source_reference }: {source_reference : string} = queryValue;
+      const { source_name }: {source_name : string} = queryValue;
+      const { request_data }: {request_data : any } = queryValue;
+      const { response_data }: {response_data : any } = queryValue;
+
+      if(itaxs_id){ 
+        query.itaxs_id = { [queryCondition['itaxs_id']]: itaxs_id };
+      }
+      if(tran_category){ 
+        query.tran_category = { [queryCondition['tran_category']]: tran_category };
+      }
+      if(source_category){ 
+        query.source_category = { [queryCondition['source_category']]: source_category };
+      }
+      if(source_reference){ 
+        query.source_reference = { [queryCondition['source_reference']]: source_reference };
+      }
+      if(source_name){ 
+        query.source_name = { [queryCondition['source_name']]: source_name };
+      }
+      if(request_data){ 
+        query.request_data = { [queryCondition['request_data']]: request_data };
+      }
+      if(response_data){ 
+        query.response_data = { [queryCondition['response_data']]: response_data };
+      }
+      const skip = (page - 1) * limit;
+      if (Object.keys(query).length > 0) {
+        const banks = await this.prismaService.withConnection(() =>
+        this.prismaService.itax_source.findMany({
+          select:columns,
+          where: query,          
+        }));
+        let decryptedRes: any = [];
+        for (const indiviual of banks) {
+          const decryptedData = await this.decryptData(indiviual, 'itax_source');
+          decryptedRes.push(decryptedData);
+        }
+        return decryptedRes;
+      }
+
+      if(!skip && !limit && Object.keys(query).length == 0){
+        const banks = await this.prismaService.withConnection(() =>
+        this.prismaService.itax_source.findMany({
+          select:columns,
+        }));
+        let decryptedRes: any = [];
+        for (const indiviual of banks) {
+          const decryptedData = await this.decryptData(indiviual, 'itax_source');
+          decryptedRes.push(decryptedData);
+        }
+        return decryptedRes;
+      }
+
+      const banks = await this.prismaService.withConnection(() =>
+      this.prismaService.itax_source.findMany({
+        select:columns,
+        where: query,
+        skip: skip,
+        take: limit,
+      }));
+
+      const totalItems = await this.prismaService.withConnection(() =>
+      this.prismaService.itax_source.count({
+        where: query,
+      }));
+
+      let decryptedRes: any = [];
+      for (const indiviual of banks) {
+        const decryptedData = await this.decryptData(indiviual, 'itax_source');
+        decryptedRes.push(decryptedData);
+      }
+      return {
+        items: decryptedRes,
+        totalPages: Math.ceil(totalItems / limit),
+      };
+    } catch (error) {
+      const errorMessage = 'Error in findAllmethod';
+      await this.commonService.errorLog(
+        "Technical",
+        'AK',
+        'Fatal',
+        "TG020",
+        error,
+        "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+        token
+      );
+      throw new CustomException(errorMessage, error);
+    }
+  }
+
+  async findOne(itaxs_id:number,token : string) {
+    try{
+      const res = await this.prismaService.withConnection(() =>
+      this.prismaService.itax_source.findUnique({ 
+      where: {itaxs_id},
+      select: {itaxs_id:true,tran_category:true,source_category:true,source_reference:true,source_name:true,request_data:true,response_data:true,            itax_source_tran:{
+              select:{
+              itaxst_id:true,              tran_category:true,              tran_date:true,              tran_reference:true,              product_basic:true            ,
+          trs_created_date:true,
+          trs_created_by:true,
+          trs_modified_date:true,
+          trs_modified_by:true,
+          trs_process_id:true,
+          trs_access_profile:true,
+          trs_org_grp_code:true,
+          trs_org_code:true,
+          trs_role_grp_code:true,
+          trs_role_code:true,
+          trs_ps_grp_code:true,
+          trs_ps_code:true,
+          trs_sub_org_code:true,
+          trs_sub_org_grp_code:true,
+          trs_locked_by:true,
+          trs_locked_time:true,
+          trs_tenant_id:true,    
+          trs_app_code:true,         
+          trs_product_code:true,
+          trs_event_process_status:true,         
+          trs_event_status:true,
+          trs_prev_process_code:true,    
+          trs_prev_status:true,         
+          trs_prev_process_status:true,
+          trs_process_code:true,         
+          trs_status:true,               
+          trs_process_status:true,        
+          trs_next_process_code:true,    
+          trs_next_status:true,          
+          trs_next_process_status:true
+              }
+            },
+            itax_source_tran_credit_approval:{
+              select:{
+              itaxstca_id:true,              tran_category:true,              tran_date:true,              tran_reference:true,              eslip_no:true,              credit_application_id:true,              credit_approval_doc_id:true            ,
+          trs_created_date:true,
+          trs_created_by:true,
+          trs_modified_date:true,
+          trs_modified_by:true,
+          trs_process_id:true,
+          trs_access_profile:true,
+          trs_org_grp_code:true,
+          trs_org_code:true,
+          trs_role_grp_code:true,
+          trs_role_code:true,
+          trs_ps_grp_code:true,
+          trs_ps_code:true,
+          trs_sub_org_code:true,
+          trs_sub_org_grp_code:true,
+          trs_locked_by:true,
+          trs_locked_time:true,
+          trs_tenant_id:true,    
+          trs_app_code:true,         
+          trs_product_code:true,
+          trs_event_process_status:true,         
+          trs_event_status:true,
+          trs_prev_process_code:true,    
+          trs_prev_status:true,         
+          trs_prev_process_status:true,
+          trs_process_code:true,         
+          trs_status:true,               
+          trs_process_status:true,        
+          trs_next_process_code:true,    
+          trs_next_status:true,          
+          trs_next_process_status:true
+              }
+            },
+            itax_source_tran_payment:{
+              select:{
+              itaxstp_id:true,              eslip_no:true,              product_basic:true            ,
+          trs_created_date:true,
+          trs_created_by:true,
+          trs_modified_date:true,
+          trs_modified_by:true,
+          trs_process_id:true,
+          trs_access_profile:true,
+          trs_org_grp_code:true,
+          trs_org_code:true,
+          trs_role_grp_code:true,
+          trs_role_code:true,
+          trs_ps_grp_code:true,
+          trs_ps_code:true,
+          trs_sub_org_code:true,
+          trs_sub_org_grp_code:true,
+          trs_locked_by:true,
+          trs_locked_time:true,
+          trs_tenant_id:true,    
+          trs_app_code:true,         
+          trs_product_code:true,
+          trs_event_process_status:true,         
+          trs_event_status:true,
+          trs_prev_process_code:true,    
+          trs_prev_status:true,         
+          trs_prev_process_status:true,
+          trs_process_code:true,         
+          trs_status:true,               
+          trs_process_status:true,        
+          trs_next_process_code:true,    
+          trs_next_status:true,          
+          trs_next_process_status:true
+              }
+            },
+        trs_created_date:true,
+        trs_created_by:true,
+        trs_modified_date:true,
+        trs_modified_by:true,
+        trs_process_id:true,
+        trs_access_profile:true,
+        trs_org_grp_code:true,
+        trs_org_code:true,
+        trs_role_grp_code:true,
+        trs_role_code:true,
+        trs_ps_grp_code:true,
+        trs_ps_code:true,
+        trs_sub_org_code:true,
+        trs_sub_org_grp_code:true,
+        trs_locked_by:true,
+        trs_locked_time:true,
+        trs_tenant_id:true,    
+        trs_app_code:true,         
+        trs_product_code:true,
+        trs_event_process_status:true,         
+        trs_event_status:true,
+        }
+    }));
+    return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_source');
+  } catch (error) {
+    const errorMessage = 'Error in findOne';
+      await this.commonService.errorLog(
+        "Technical",
+        'AK',
+        'Fatal',
+        "TG024",
+        error,
+        "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+        token
+      );
+      throw new CustomException(errorMessage, error);
+  }
+  }
+
+  async findAll(token : string,trs_created_date?: Date,trs_created_by?: string,trs_modified_date?: Date,trs_modified_by?: string,trs_process_id?: string,trs_access_profile?: string,trs_org_grp_code?: string,trs_org_code?: string,trs_role_grp_code?: string,trs_role_code?: string,trs_ps_grp_code?: string,trs_ps_code?: string,trs_sub_org_grp_code?: string,trs_sub_org_code?: string,trs_locked_by?: string,trs_locked_time?: Date,trs_tenant_id?:string,trs_app_code?:string,trs_product_code?:string,trs_event_process_status?:string,trs_event_status?:string) {
+    try{
+      const whereClause: any = {};
+      if (trs_created_date) {
+        whereClause.trs_created_date = trs_created_date;
+      }
+      if (trs_created_by) {
+        whereClause.trs_created_by = trs_created_by;
+      }
+      if (trs_modified_date) {
+        whereClause.trs_modified_date = trs_modified_date;
+      }
+      if (trs_modified_by) {
+        whereClause.trs_modified_by = trs_modified_by;
+      }
+      if (trs_process_id) {
+        whereClause.trs_process_id = trs_process_id;
+      }
+      if (trs_access_profile) {
+        whereClause.trs_access_profile = trs_access_profile;
+      }
+      if (trs_org_grp_code) {
+        whereClause.trs_org_grp_code = trs_org_grp_code;
+      }
+      if (trs_org_code) {
+        whereClause.trs_org_code = trs_org_code;
+      }
+      if (trs_role_grp_code) {
+        whereClause.trs_role_grp_code = trs_role_grp_code;
+      }
+      if (trs_role_code) {
+        whereClause.trs_role_code = trs_role_code;
+      }
+      if (trs_ps_grp_code) {
+        whereClause.trs_ps_grp_code = trs_ps_grp_code;
+      }
+      if (trs_ps_code) {
+        whereClause.trs_ps_code = trs_ps_code;
+      }
+      if (trs_sub_org_grp_code) {
+        whereClause.trs_sub_org_grp_code = trs_sub_org_grp_code;
+      }
+      if (trs_sub_org_code) {
+        whereClause.trs_sub_org_code = trs_sub_org_code;
+      }
+      if (trs_locked_by) {
+        whereClause.trs_locked_by = trs_locked_by;
+      }
+      if (trs_locked_time) {
+        whereClause.trs_locked_time = trs_locked_time;
+      }
+      if (trs_tenant_id) {
+        whereClause.trs_tenant_id = trs_tenant_id;
+      }
+      if (trs_app_code) {
+        whereClause.trs_app_code = trs_app_code;
+      }
+      if (trs_product_code) {
+        whereClause.trs_product_code = trs_product_code;
+      }
+      if (trs_event_process_status) {
+        whereClause.trs_event_process_status = trs_event_process_status;
+      }
+      if (trs_event_status) {
+        whereClause.trs_event_status = trs_event_status;
+      }
+      const res = await this.prismaService.withConnection(() =>
+      this.prismaService.itax_source.findMany({ 
+      where: whereClause,
+      select: {itaxs_id:true,tran_category:true,source_category:true,source_reference:true,source_name:true,request_data:true,response_data:true,          itax_source_tran:{
+              select:{
+              itaxst_id:true,              tran_category:true,              tran_date:true,              tran_reference:true,              product_basic:true            ,
+          trs_created_date:true,
+          trs_created_by:true,
+          trs_modified_date:true,
+          trs_modified_by:true,
+          trs_process_id:true,
+          trs_access_profile:true,
+          trs_org_grp_code:true,
+          trs_org_code:true,
+          trs_role_grp_code:true,
+          trs_role_code:true,
+          trs_ps_grp_code:true,
+          trs_ps_code:true,
+          trs_sub_org_code:true,
+          trs_sub_org_grp_code:true,
+          trs_locked_by:true,
+          trs_locked_time:true,
+          trs_tenant_id:true,    
+          trs_app_code:true,         
+          trs_product_code:true,
+          trs_event_process_status:true,         
+          trs_event_status:true,
+          trs_prev_process_code:true,    
+          trs_prev_status:true,         
+          trs_prev_process_status:true,
+          trs_process_code:true,         
+          trs_status:true,               
+          trs_process_status:true,        
+          trs_next_process_code:true,    
+          trs_next_status:true,          
+          trs_next_process_status:true
+              }
+            },
+          itax_source_tran_credit_approval:{
+              select:{
+              itaxstca_id:true,              tran_category:true,              tran_date:true,              tran_reference:true,              eslip_no:true,              credit_application_id:true,              credit_approval_doc_id:true            ,
+          trs_created_date:true,
+          trs_created_by:true,
+          trs_modified_date:true,
+          trs_modified_by:true,
+          trs_process_id:true,
+          trs_access_profile:true,
+          trs_org_grp_code:true,
+          trs_org_code:true,
+          trs_role_grp_code:true,
+          trs_role_code:true,
+          trs_ps_grp_code:true,
+          trs_ps_code:true,
+          trs_sub_org_code:true,
+          trs_sub_org_grp_code:true,
+          trs_locked_by:true,
+          trs_locked_time:true,
+          trs_tenant_id:true,    
+          trs_app_code:true,         
+          trs_product_code:true,
+          trs_event_process_status:true,         
+          trs_event_status:true,
+          trs_prev_process_code:true,    
+          trs_prev_status:true,         
+          trs_prev_process_status:true,
+          trs_process_code:true,         
+          trs_status:true,               
+          trs_process_status:true,        
+          trs_next_process_code:true,    
+          trs_next_status:true,          
+          trs_next_process_status:true
+              }
+            },
+          itax_source_tran_payment:{
+              select:{
+              itaxstp_id:true,              eslip_no:true,              product_basic:true            ,
+          trs_created_date:true,
+          trs_created_by:true,
+          trs_modified_date:true,
+          trs_modified_by:true,
+          trs_process_id:true,
+          trs_access_profile:true,
+          trs_org_grp_code:true,
+          trs_org_code:true,
+          trs_role_grp_code:true,
+          trs_role_code:true,
+          trs_ps_grp_code:true,
+          trs_ps_code:true,
+          trs_sub_org_code:true,
+          trs_sub_org_grp_code:true,
+          trs_locked_by:true,
+          trs_locked_time:true,
+          trs_tenant_id:true,    
+          trs_app_code:true,         
+          trs_product_code:true,
+          trs_event_process_status:true,         
+          trs_event_status:true,
+          trs_prev_process_code:true,    
+          trs_prev_status:true,         
+          trs_prev_process_status:true,
+          trs_process_code:true,         
+          trs_status:true,               
+          trs_process_status:true,        
+          trs_next_process_code:true,    
+          trs_next_status:true,          
+          trs_next_process_status:true
+              }
+            },
+        trs_created_date:true,
+        trs_created_by:true,
+        trs_modified_date:true,
+        trs_modified_by:true,
+        trs_process_id:true,
+        trs_access_profile:true,
+        trs_org_grp_code:true,
+        trs_org_code:true,
+        trs_role_grp_code:true,
+        trs_role_code:true,
+        trs_ps_grp_code:true,
+        trs_ps_code:true,
+        trs_sub_org_code:true,
+        trs_sub_org_grp_code:true,
+        trs_locked_by:true,
+        trs_locked_time:true,
+        trs_tenant_id:true,    
+        trs_app_code:true,         
+        trs_product_code:true,
+        trs_event_process_status:true,         
+        trs_event_status:true,
+      }
+      }));
+      let decryptedRes: any = [];
+      for (const indiviual of res) {
+        const plain = await this.commonDecimalDatahandle(indiviual)
+        const decryptedData = await this.decryptData(plain, 'itax_source');
+        decryptedRes.push(decryptedData);
+      }
+      return decryptedRes;
+    } catch (error) {
+        const errorMessage = 'find All Error';
+        await this.commonService.errorLog(
+          "Technical",
+          'AK',
+          'Fatal',
+          "TG023",
+          error,
+          "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+          token
+        );
+        throw new CustomException(errorMessage, error);
+    }
+    }
+    
+  async create(createitax_sourceDto: Prisma.itax_sourceCreateInput,token:string) {
+    try{
+
+      enum tran_category_itax_source{
+        Financial="Financial",
+        Non_Financial="Non_Financial",
+      }
+      enum source_category_itax_source{
+        API="API",
+        FILE="FILE",
+      }
+      const dataSchema:any =  v.object({
+            tran_category :  v.optional(v.enum(tran_category_itax_source,"Invalid tran_category_itax_source enum")), 
+            source_category :  v.optional(v.enum(source_category_itax_source,"Invalid source_category_itax_source enum")), 
+            source_reference :  v.optional(v.pipe(v.string(),v.maxLength(32 ))), 
+            source_name :  v.optional(v.pipe(v.string(),v.maxLength(64 ))), 
+            request_data :  v.optional(v.any() ), 
+            response_data :  v.optional(v.any() ), 
+        });
+        let validate : any = v.safeParse(dataSchema,createitax_sourceDto);
+        if (!validate.success) {
+          let errorObj: errorObj = {
+            tname: 'TG',
+            errGrp: 'Data',
+            fabric: 'DF',
+            errType: 'Fatal',
+            errCode: 'TG101',
+          };
+          const errorMessage = validate.issues[0].message;
+          await this.commonService.errorLog(
+            "Technical",
+            'AK',
+            'Fatal',
+            "TG021",
+            errorMessage,
+            "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+            token
+          );
+        }
+      const encryptedData = await this.encryptData(createitax_sourceDto, 'itax_source', 'create');
+      const res = await this.prismaService.withConnection(() =>
+        this.prismaService.itax_source.create({
+          data: encryptedData,
+          select:{itaxs_id:true,tran_category:true,source_category:true,source_reference:true,source_name:true,request_data:true,response_data:true,itax_source_tran:true,itax_source_tran_credit_approval:true,itax_source_tran_payment:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true}          
+        })
+      );
+    return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_source');
+  } catch (error) {
+    const errMsg = parsePrismaCreateError(error);
+    const errorMessage = 'Create Error';
+    await this.commonService.errorLog(
+      "Technical",
+      'AK',
+      'Fatal',
+      "TG022",
+      errMsg,
+      "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+      token
+    );
+    throw new InternalServerErrorException(errMsg);
+  }
+    
+  }
+
+  // =====================================================
+  // MAKER-CHECKER METHODS (JSON Parent-Child Process)
+  // =====================================================
+  //
+  // Role-based routing:
+  // - MAKER role: Calls request_change() to submit changes for approval
+  // - CHECKER role: Calls approve_change() to approve pending requests
+  // =====================================================
+
+  /**
+   * Create a new customer record through maker-checker approval flow.
+   *
+   * Role-based behavior:
+   * - MAKER: Calls request_change() to submit INSERT request for approval
+   * - CHECKER: Calls approve_change() to approve a pending INSERT request
+   *
+   * @param createcustomersDto - The customer data to create (for MAKER) or approval_id (for CHECKER)
+   * @param userInfo - Contains role, username, and remarks
+   * @param token - Auth token
+   */
+  async createMaster(
+    createitax_sourceDto: Prisma.itax_sourceCreateInput,
+    userInfo: { role: string; username: string; remarks?: string,approvalStatus?:string, approvalId?: string },
+    token: string
+  ) {
+    try {
+      const role = userInfo.role?.toUpperCase();
+      const approvalStatus = userInfo.approvalStatus?.toUpperCase();
+
+      // =====================================================
+      // CHECKER ROLE: Approve pending INSERT request
+      // =====================================================
+      if (role === 'CHECKER') {
+        const approvalId = userInfo.approvalId;
+
+        if (!approvalId) {
+          throw new HttpException('approval_id is required for CHECKER role', HttpStatus.BAD_REQUEST);
+        }
+
+        if (approvalStatus === 'APPROVED') {
+          // Call approve_change(approval_id, checker_id, checker_remarks)
+          
+          const result = await this.prismaService.withConnection(() =>
+          this.prismaService.$queryRaw<any[]>`
+            SELECT ct006_torus202610.approve_change(
+              ${+approvalId},
+              ${userInfo.username},
+              ${userInfo.remarks || null}
+            ) AS success
+          `);
+  
+          const success = result[0]?.success;
+  
+          if (success) {
+            return {
+              success: true,
+              message: 'itax_source creation approved and applied successfully',
+              approval_id: approvalId,
+              status: 'APPROVED'
+            };
+          } else {
+            return {
+              success: false,
+              message: 'Approval failed - please check for version conflicts or missing records',
+              approval_id: approvalId,
+              status: 'FAILED'
+            };
+          }
+                    
+        }
+        else if (approvalStatus === 'REJECTED') {
+          // Call approve_change(approval_id, checker_id, checker_remarks)
+          const result = await this.prismaService.withConnection(() =>
+          this.prismaService.$queryRaw<any[]>`
+            SELECT ct006_torus202610.reject_change(
+              ${+approvalId},
+              ${userInfo.username},
+              ${userInfo.remarks || null}
+            ) AS success
+          `);
+  
+          const success = result[0]?.success;
+  
+          if (success) {
+            return {
+              success: true,
+              message: 'itax_source creation rejected',
+              approval_id: approvalId,
+              status: 'REJECTED'
+            };
+          } else {
+            return {
+              success: false,
+              message: 'Approval failed - please check for version conflicts or missing records',
+              approval_id: approvalId,
+              status: 'FAILED'
+            };
+          }
+                    
+        }
+      }
+
+      // =====================================================
+      // MAKER ROLE: Submit INSERT request for approval
+      // =====================================================
+      // Validate the input data
+
+      enum tran_category_itax_source{
+        Financial="Financial",
+        Non_Financial="Non_Financial",
+      }
+      enum source_category_itax_source{
+        API="API",
+        FILE="FILE",
+      }
+      const dataSchema:any =  v.object({
+            tran_category :  v.optional(v.enum(tran_category_itax_source,"Invalid tran_category_itax_source enum")), 
+            source_category :  v.optional(v.enum(source_category_itax_source,"Invalid source_category_itax_source enum")), 
+            source_reference :  v.optional(v.pipe(v.string(),v.maxLength(32 ))), 
+            source_name :  v.optional(v.pipe(v.string(),v.maxLength(64 ))), 
+            request_data :  v.optional(v.any() ), 
+            response_data :  v.optional(v.any() ), 
+        });
+        let validate : any = v.safeParse(dataSchema,createitax_sourceDto);
+        if (!validate.success) {
+          let errorObj: errorObj = {
+            tname: 'TG',
+            errGrp: 'Data',
+            fabric: 'DF',
+            errType: 'Fatal',
+            errCode: 'TG101',
+          };
+          const errorMessage = validate.issues[0].message;
+          await this.commonService.errorLog(
+            "Technical",
+            'AK',
+            'Fatal',
+            "TG021",
+            errorMessage,
+            "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+            token
+          );
+          throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
+        }
+      
+      // Encrypt data if needed
+      const encryptedData = await this.encryptData(createitax_sourceDto, 'itax_source', 'create');
+      encryptedData['trs_modified_date'] = new Date();
+
+      // Convert numeric values to strings for JSONB (as per the documentation pattern)
+      //const changes: Record<string, string> = {};
+      //for (const [key, value] of Object.entries(encryptedData)) {
+      //  if (value !== null && value !== undefined && key !== 'approval_id') {
+      //    changes[key] = String(value);
+      //  }
+      //}
+      if(role === 'MAKER')
+      {
+        
+        const result = await this.prismaService.withConnection(() =>
+        this.prismaService.$queryRaw<any[]>`
+          SELECT ct006_torus202610.request_change(
+            p_table_name     := 'itax_source',
+            p_operation_type := 'INSERT',
+            p_record_id      := NULL,
+            p_record_id_column := 'itaxs_id',
+            p_changes        := ${encryptedData}::JSONB,
+            p_maker_id       := ${userInfo.username},
+            p_maker_remarks  := ${userInfo.remarks || null},
+            p_schema    := 'ct010_i001'
+          ) AS approval_id
+        `);
+
+        const approvalId = result[0]?.approval_id;
+
+        return {
+          success: true,
+          message: 'itax_source creation request submitted for approval',
+          approval_id: approvalId,
+          status: 'CREATED'
+        };
+      }
+      // Call request_change() for INSERT
+      // For INSERT: p_record_id is NULL, p_changes contains the new data
+
+    } catch (error: any) {
+      const errorMessage = 'Error in createMaster';
+      await this.commonService.errorLog(
+        "Technical",
+        'AK',
+        'Fatal',
+        "TG031",
+        error,
+        "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+        token
+      );
+
+      // Handle specific PostgreSQL errors
+      if (error.message?.includes('Maker and checker cannot be the same')) {
+        throw new HttpException('You cannot approve your own request', HttpStatus.FORBIDDEN);
+      }
+      if (error.message?.includes('Cannot approve record with status')) {
+        throw new HttpException('This request has already been processed', HttpStatus.BAD_REQUEST);
+      }
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new CustomException(errorMessage, error);
+    }
+  }
+
+  async update(itaxs_id:number, updateitax_sourceDto: Prisma.itax_sourceUpdateInput,token:string) {   
+    try{
+
+      enum tran_category_itax_source{
+        Financial="Financial",
+        Non_Financial="Non_Financial",
+      }
+      enum source_category_itax_source{
+        API="API",
+        FILE="FILE",
+      }
+      const dataSchema:any =  v.object({
+          tran_category :  v.optional(v.enum(tran_category_itax_source,"Invalid tran_category_itax_source enum")), 
+          source_category :  v.optional(v.enum(source_category_itax_source,"Invalid source_category_itax_source enum")), 
+          source_reference :  v.optional(v.pipe(v.string(),v.maxLength(32 ))), 
+          source_name :  v.optional(v.pipe(v.string(),v.maxLength(64 ))), 
+          request_data :  v.optional(v.any()), 
+          response_data :  v.optional(v.any()), 
+      });
+      let validate : any = v.safeParse(dataSchema,updateitax_sourceDto);
+      if (!validate.success) {
+        let errorObj: errorObj = {
+          tname: 'TG',
+          errGrp: 'Data',
+          fabric: 'DF',
+          errType: 'Fatal',
+          errCode: 'TG101',
+        };
+        const errorMessage = validate.issues[0].message;
+        await this.commonService.errorLog(
+          "Technical",
+          'AK',
+          'Fatal',
+          "TG025",
+          errorMessage,
+          "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+          token
+        );
+      }
+      const encryptedData = await this.encryptData(updateitax_sourceDto,'itax_source','update');
+      const res = await this.prismaService.withConnection(() =>
+      this.prismaService.itax_source.update({
+      where: {itaxs_id},
+      data: encryptedData,
+      select: {itaxs_id:true,tran_category:true,source_category:true,source_reference:true,source_name:true,request_data:true,response_data:true,itax_source_tran:true,itax_source_tran_credit_approval:true,itax_source_tran_payment:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true}
+    }));
+    return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_source');
+    } catch (error) {
+        const errorMessage = 'update Error';
+        await this.commonService.errorLog(
+          "Technical",
+          'AK',
+          'Fatal',
+          "TG023",
+          error,
+          "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+          token
+        );
+        throw new CustomException(errorMessage, error);
+    }  
+}
+
+/**
+   * Update an existing customer record through maker-checker approval flow.
+   *
+   * Role-based behavior:
+   * - MAKER: Calls request_change() to submit UPDATE request for approval
+   * - CHECKER: Calls approve_change() to approve a pending UPDATE request
+   *
+   * @param id - The customer ID to update (for MAKER) or approval_id (for CHECKER with id=0)
+   * @param updatecustomersDto - The updated customer data (for MAKER) or approval_id (for CHECKER)
+   * @param userInfo - Contains role, username, and remarks
+   * @param token - Auth token
+   */
+  async updateMaster(
+itaxs_id:number,
+    updateitax_sourceDto: Prisma.itax_sourceUpdateInput,
+    userInfo: { role: string; username: string; remarks?: string,approvalStatus?:string },
+    token:string
+  ) {
+    try {
+      const role = userInfo.role?.toUpperCase();
+      const updateMaster_id =itaxs_id;
+
+      // =====================================================
+      // CHECKER ROLE: Approve pending UPDATE request
+      // =====================================================
+      if (role === 'CHECKER') {
+
+        if (!updateMaster_id) {
+          throw new HttpException('id is required for CHECKER role', HttpStatus.BAD_REQUEST);
+        }
+
+        // Call approve_change(approval_id, checker_id, checker_remarks)
+        // const result = await this.prismaService.withConnection(() =>
+        //this.prismaService.$queryRaw<any[]>`
+        //   SELECT * FROM approve_change_by_record(
+        //     'customers',
+        //     ${approvalId},
+        //     ${userInfo.username},
+        //     ${userInfo.remarks || null}
+        //   ) AS success
+        // `);
+        if (userInfo.approvalStatus === 'APPROVED') {
+        const result = await this.prismaService.withConnection(() =>
+        this.prismaService.$queryRaw<any[]>`
+          SELECT * FROM ct006_torus202610.approve_change_by_record(
+              p_table_name      := 'itax_source',
+              p_record_id       := ${updateMaster_id.toString()},
+              p_checker_id      := ${userInfo.username},
+              p_checker_remarks := ${userInfo.remarks || null}
+          );
+        `);
+
+        const success = result[0]?.success;
+        const approvalId = result[0]?.approval_id;
+
+        if (success) {
+          return {
+            success: true,
+            message: 'itax_source update approved and applied successfully',
+            approvalId: approvalId,
+            record_id: updateMaster_id,
+            status: 'APPROVED'
+          };
+        } else {
+          return {
+            success: false,
+            message: 'Approval failed - please check for version conflicts or missing records',
+            approvalId: approvalId,
+            record_id: updateMaster_id,
+            status: 'FAILED'
+          };
+        }
+        }else if (userInfo.approvalStatus === 'REJECTED') {
+          const result = await this.prismaService.withConnection(() =>
+          this.prismaService.$queryRaw<any[]>`
+            SELECT * FROM ct006_torus202610.reject_change_by_record(
+                p_table_name      := 'itax_source',
+                p_record_id       := ${updateMaster_id.toString()},
+                p_checker_id      := ${userInfo.username},
+                p_checker_remarks := ${userInfo.remarks || null}
+            );
+          `);
+
+          const success = result[0]?.success;
+          const approvalId = result[0]?.approval_id;
+
+          if (success) {
+            return {
+              success: true,
+              message: 'itax_source update rejected',
+              approvalId: approvalId,
+              record_id: updateMaster_id,
+              status: 'REJECTED'
+            };
+          } else {
+            return {
+              success: false,
+              message: 'Approval failed - please check for version conflicts or missing records',
+              approvalId: approvalId,
+              record_id: updateMaster_id,
+              status: 'FAILED'
+            };
+          }
+        }
+      }
+
+      // =====================================================
+      // MAKER ROLE: Submit UPDATE request for approval
+      // =====================================================
+      // Validate the input data
+
+      enum tran_category_itax_source{
+        Financial="Financial",
+        Non_Financial="Non_Financial",
+      }
+      enum source_category_itax_source{
+        API="API",
+        FILE="FILE",
+      }
+      const dataSchema:any =  v.object({
+          tran_category :  v.optional(v.enum(tran_category_itax_source,"Invalid tran_category_itax_source enum")), 
+          source_category :  v.optional(v.enum(source_category_itax_source,"Invalid source_category_itax_source enum")), 
+          source_reference :  v.optional(v.pipe(v.string(),v.maxLength(32 ))), 
+          source_name :  v.optional(v.pipe(v.string(),v.maxLength(64 ))), 
+          request_data :  v.optional(v.any()), 
+          response_data :  v.optional(v.any()), 
+      });
+      let validate : any = v.safeParse(dataSchema,updateitax_sourceDto);
+      if (!validate.success) {
+        const errorMessage = validate.issues[0].message;
+        await this.commonService.errorLog(
+          "Technical",
+          'AK',
+          'Fatal',
+          "TG025",
+          errorMessage,
+          "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+          token
+        );
+        throw new HttpException(errorMessage, HttpStatus.BAD_REQUEST);
+      }
+
+      // Verify record exists
+      const existingRecord = await this.prismaService.withConnection(() =>
+      this.prismaService.itax_source.findUnique({
+        where: {itaxs_id}
+      }));
+
+      if (!existingRecord) {
+        throw new HttpException('Record not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Encrypt data if needed
+      const encryptedData = await this.encryptData(updateitax_sourceDto, 'itax_source', 'update');
+
+      // Convert values to strings for JSONB (as per the documentation pattern)
+      // Only include the fields that are being changed
+      //const changes: Record<string, string> = {};
+      //for (const [key, value] of Object.entries(encryptedData)) {
+      //  if (value !== null && value !== undefined && key !== 'approval_id') {
+      //    changes[key] = String(value);
+      //  }
+      //}
+
+      // Call request_change() for UPDATE
+      // For UPDATE: p_record_id is the ID, p_changes contains only changed fields
+      const result = await this.prismaService.withConnection(() =>
+      this.prismaService.$queryRaw<any[]>`
+        SELECT ct006_torus202610.request_change(
+          p_table_name     := 'itax_source',
+          p_operation_type := 'UPDATE',
+          p_record_id      := ${updateMaster_id.toString()},
+          p_record_id_column := 'itaxs_id',
+          p_changes        := ${encryptedData}::JSONB,
+          p_maker_id       := ${userInfo.username},
+          p_maker_remarks  := ${userInfo.remarks || null},
+          p_schema    := 'ct010_i001'
+        ) AS approval_id
+      `);
+
+      const approvalId = result[0]?.approval_id;
+
+      return {
+        success: true,
+        message: 'itax_source update request submitted for approval',
+        approval_id: approvalId,
+        record_id: updateMaster_id,
+        status: 'CREATED'
+      };
+    } catch (error: any) {
+      const errorMessage = 'Error in updateMaster';
+      await this.commonService.errorLog(
+        "Technical",
+        'AK',
+        'Fatal',
+        "TG033",
+        error,
+        "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+        token
+      );
+
+      // Handle specific PostgreSQL errors
+      if (error.message?.includes('Maker and checker cannot be the same')) {
+        throw new HttpException('You cannot approve your own request', HttpStatus.FORBIDDEN);
+      }
+      if (error.message?.includes('Cannot approve record with status')) {
+        throw new HttpException('This request has already been processed', HttpStatus.BAD_REQUEST);
+      }
+      if (error.message?.includes('pending request already exists')) {
+        throw new HttpException('A pending request already exists for this record', HttpStatus.CONFLICT);
+      }
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new CustomException(errorMessage, error);
+    }
+  }
+
+  async remove(itaxs_id:number,token : string) {
+    try{
+      const res = await this.prismaService.withConnection(() =>
+      this.prismaService.itax_source.delete({
+      where: {itaxs_id },
+      select: {itaxs_id:true,tran_category:true,source_category:true,source_reference:true,source_name:true,request_data:true,response_data:true,itax_source_tran:true,itax_source_tran_credit_approval:true,itax_source_tran_payment:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true}
+    }));
+    return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_source');
+  } catch (error) {
+    const errorMessage = 'Error in remove Data';
+      await this.commonService.errorLog(
+        "Technical",
+        'AK',
+        'Fatal',
+        "TG026",
+        error,
+        "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+        token
+      );
+      throw new CustomException(errorMessage, error);
+  }
+  }
+   /**
+   * Delete a customer record through maker-checker approval flow.
+   *
+   * Role-based behavior:
+   * - MAKER: Calls request_change() to submit DELETE request for approval
+   * - CHECKER: Calls approve_change() to approve a pending DELETE request
+   *
+   * @param id - The customer ID to delete (for MAKER) or approval_id (for CHECKER)
+   * @param userInfo - Contains role, username, remarks, and optionally approval_id
+   * @param token - Auth token
+   */
+  async deleteMaster(
+itaxs_id:number,
+    userInfo: { role: string; username: string; remarks?: string; approvalStatus?:string },
+    token: string
+  ) {
+    try {
+      const role = userInfo.role?.toUpperCase();
+      const deleteMaster_id =itaxs_id;
+
+      // =====================================================
+      // CHECKER ROLE: Approve pending DELETE request
+      // =====================================================
+      if (role === 'CHECKER') {
+
+        if (!deleteMaster_id) {
+          throw new HttpException('id is required for CHECKER role', HttpStatus.BAD_REQUEST);
+        }
+
+        // Call approve_change(approval_id, checker_id, checker_remarks)
+        if (userInfo.approvalStatus === 'APPROVED') {
+        const result = await this.prismaService.withConnection(() =>
+        this.prismaService.$queryRaw<any[]>`
+          SELECT * FROM ct006_torus202610.approve_change_by_record(
+              p_table_name      := 'itax_source',
+              p_record_id       := ${deleteMaster_id.toString()},
+              p_checker_id      := ${userInfo.username},
+              p_checker_remarks := ${userInfo.remarks || null}
+          );
+        `);
+
+        const success = result[0]?.success;
+        const approvalId = result[0]?.approval_id;
+
+        if (success) {
+          return {
+            success: true,
+            message: 'itax_source deletion approved and applied successfully',
+            approval_id: approvalId,
+            record_id: deleteMaster_id,
+            status: 'APPROVED'
+          };
+        } else {
+          return {
+            success: false,
+            message: 'Approval failed - please check for version conflicts or missing records',
+            approval_id: approvalId,
+            record_id: deleteMaster_id,
+            status: 'FAILED'
+          };
+        }
+        }else if (userInfo.approvalStatus === 'REJECTED') {
+          const result = await this.prismaService.withConnection(() =>
+          this.prismaService.$queryRaw<any[]>`
+            SELECT * FROM ct006_torus202610.reject_change_by_record(
+                p_table_name      := 'itax_source',
+                p_record_id       := ${deleteMaster_id.toString()},
+                p_checker_id      := ${userInfo.username},
+                p_checker_remarks := ${userInfo.remarks || null}
+            );
+          `);
+
+          const success = result[0]?.success;
+          const approvalId = result[0]?.approval_id;
+
+          if (success) {
+            return {
+              success: true,
+              message: 'itax_source deletion rejected',
+              approval_id: approvalId,
+              record_id: deleteMaster_id,
+              status: 'REJECTED'
+            };
+          } else {
+            return {
+              success: false,
+              message: 'Approval failed - please check for version conflicts or missing records',
+              approval_id: approvalId,
+              record_id: deleteMaster_id,
+              status: 'FAILED'
+            };
+          }
+        }
+      }
+
+      // =====================================================
+      // MAKER ROLE: Submit DELETE request for approval
+      // =====================================================
+      // Verify record exists
+      const existingRecord = await this.prismaService.withConnection(() =>
+      this.prismaService.itax_source.findUnique({
+        where: {itaxs_id  }
+      }));
+
+      if (!existingRecord) {
+        throw new HttpException('Record not found', HttpStatus.NOT_FOUND);
+      }
+
+      // Call request_change() for DELETE
+      // For DELETE: p_record_id is the ID, p_changes is empty object
+      const result = await this.prismaService.withConnection(() =>
+      this.prismaService.$queryRaw<any[]>`
+        SELECT ct006_torus202610.request_change(
+          p_table_name     := 'itax_source',
+          p_operation_type := 'DELETE',
+          p_record_id      := ${deleteMaster_id.toString()},
+          p_record_id_column := 'itaxs_id',
+          p_changes        := '{}'::JSONB,
+          p_maker_id       := ${userInfo.username},
+          p_maker_remarks  := ${userInfo.remarks || null},
+          p_schema    := 'ct010_i001'
+        ) AS approval_id
+      `);
+
+      const approvalId = result[0]?.approval_id;
+
+      return {
+        success: true,
+        message: 'itax_source deletion request submitted for approval',
+        approval_id: approvalId,
+        record_id: deleteMaster_id,
+        status: 'CREATED'
+      };
+    } catch (error: any) {
+      const errorMessage = 'Error in deleteMaster';
+      await this.commonService.errorLog(
+        "Technical",
+        'AK',
+        'Fatal',
+        "TG034",
+        error,
+        "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+        token
+      );
+
+      // Handle specific PostgreSQL errors
+      if (error.message?.includes('Maker and checker cannot be the same')) {
+        throw new HttpException('You cannot approve your own request', HttpStatus.FORBIDDEN);
+      }
+      if (error.message?.includes('Cannot approve record with status')) {
+        throw new HttpException('This request has already been processed', HttpStatus.BAD_REQUEST);
+      }
+      if (error.message?.includes('pending request already exists')) {
+        throw new HttpException('A pending request already exists for this record', HttpStatus.CONFLICT);
+      }
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      throw new CustomException(errorMessage, error);
+    }
+  }
+  async findFirst(token : string) {
+    try{
+      const res = await this.prismaService.withConnection(() =>
+      this.prismaService.itax_source.findFirst({ 
+        orderBy: { trs_created_date: 'asc' },
+      }));
+      return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_source');
+    } catch (error) {
+      const errorMessage = 'Error in findFirst';
+        await this.commonService.errorLog(
+          "Technical",
+          'AK',
+          'Fatal',
+          "TG028",
+          error,
+          "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+          token
+        );
+        throw new CustomException(errorMessage, error);
+      }
+  }
+  async findLast(token : string) {
+    try{
+      const res = await this.prismaService.withConnection(() =>
+      this.prismaService.itax_source.findFirst({ 
+        orderBy: { trs_created_date: 'desc' },
+      }));
+      return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_source');
+    } catch (error) {
+      const errorMessage = 'Error in findLast';
+        await this.commonService.errorLog(
+          "Technical",
+          'AK',
+          'Fatal',
+          "TG028",
+          error,
+          "CK:CT010:FNGK:AF:FNK:API-ERD:CATK:I001:AFGK:ITAX:AFK:ITAX_Core_Bank:AFVK:v1",
+          token
+        );
+        throw new CustomException(errorMessage, error);
+      }
+  }
+
+}
