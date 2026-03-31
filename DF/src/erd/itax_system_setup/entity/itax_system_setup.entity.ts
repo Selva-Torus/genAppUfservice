@@ -94,6 +94,9 @@ export class  itax_system_setupEntity implements itax_system_setup{
     trs_event_status: string;
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
+    trs_token_id: string;
+    @ApiPropertyOptional({example:"string"})
+    @IsOptional()
     trs_prev_process_code: string;
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
@@ -208,6 +211,9 @@ export class  itax_system_setup_OnlyParentEntity {
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
     trs_event_status: string;
+    @ApiPropertyOptional({example:"string"})
+    @IsOptional()
+    trs_token_id: string;
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
     trs_prev_process_code: string;

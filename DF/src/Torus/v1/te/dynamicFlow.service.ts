@@ -6917,7 +6917,8 @@ export class DynamicFlowService {
                             tempArr = await this.combineData(innerpathVal, tempArr)
                         }
                         if (connectedHandle.includes('ifo')) {
-                            innerpathVal = afpValue.ifo
+                            //innerpathVal = afpValue.ifo
+                             innerpathVal = Object.assign(afpValue.ifo,afpValue.response)
                             if (conncectedNodeType == 'api_inputnode') {
                                 innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)
                             }

@@ -221,7 +221,7 @@ const Buttoncancel = ({ lockedData,setLockedData,primaryTableData, setPrimaryTab
     setValidateRefetch({
       value:false,
       init:0
-    });
+    });   
       await handleCustomCode();
     }catch (err: any) {
       setIsProcessing(false);

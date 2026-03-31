@@ -897,7 +897,7 @@ const SetupScreen = ({
               {/* RIGHT : TABS */}
               {selectedMenuItem === 'org' && (
                 <Tabs
-                security={['orgsetup' , 'oprmatrix']}
+                  security={['orgsetup' , 'oprmatrix']}
                   direction='horizontal'
                   items={[
                     { id: 'orgsetup', title: 'Organization Setup' },

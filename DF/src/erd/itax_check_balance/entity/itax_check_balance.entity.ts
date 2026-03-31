@@ -77,6 +77,9 @@ export class  itax_check_balanceEntity implements Omit<itax_check_balance,"balan
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
     trs_event_status: string;
+    @ApiPropertyOptional({example:"string"})
+    @IsOptional()
+    trs_token_id: string;
 }
       
 export class  itax_check_balance_OnlyParentEntity {
@@ -151,6 +154,9 @@ export class  itax_check_balance_OnlyParentEntity {
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
     trs_event_status: string;
+    @ApiPropertyOptional({example:"string"})
+    @IsOptional()
+    trs_token_id: string;
 }
 
 

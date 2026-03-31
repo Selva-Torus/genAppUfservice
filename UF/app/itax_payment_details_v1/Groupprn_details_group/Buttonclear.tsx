@@ -245,7 +245,7 @@ const Buttonclear = ({ lockedData,setLockedData,primaryTableData, setPrimaryTabl
     setValidateRefetch({
       value:false,
       init:0
-    });
+    });   
     // clearHandler riseListen
     // for group
     Object.keys(payment_type_cheque_group239dd).map((keys:any)=>{         
@@ -256,7 +256,7 @@ const Buttonclear = ({ lockedData,setLockedData,primaryTableData, setPrimaryTabl
     setValidateRefetch({
       value:false,
       init:0
-    });
+    });   
     // clearHandler riseListen
     // for group
     Object.keys(payment_type_dt_groupedf52).map((keys:any)=>{         
@@ -267,7 +267,7 @@ const Buttonclear = ({ lockedData,setLockedData,primaryTableData, setPrimaryTabl
     setValidateRefetch({
       value:false,
       init:0
-    });
+    });   
       await handleCustomCode();
     }catch (err: any) {
       setIsProcessing(false);

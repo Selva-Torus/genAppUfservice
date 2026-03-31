@@ -134,6 +134,10 @@ export class  Createitax_sourceDto {
         @IsOptional()
         trs_event_status?: string;
 
+        @ApiPropertyOptional()
+        @IsOptional()
+        trs_token_id?: string;
+
 
         
 }

@@ -97,6 +97,9 @@ export class  itax_tran_logEntity implements itax_tran_log{
     trs_event_status: string;
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
+    trs_token_id: string;
+    @ApiPropertyOptional({example:"string"})
+    @IsOptional()
     trs_prev_process_code: string;
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
@@ -208,6 +211,9 @@ export class  itax_tran_log_OnlyParentEntity {
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
     trs_event_status: string;
+    @ApiPropertyOptional({example:"string"})
+    @IsOptional()
+    trs_token_id: string;
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
     trs_prev_process_code: string;

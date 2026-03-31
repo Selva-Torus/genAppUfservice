@@ -137,6 +137,10 @@ export class  Createitax_source_tranDto {
 
         @ApiPropertyOptional()
         @IsOptional()
+        trs_token_id?: string;
+
+        @ApiPropertyOptional()
+        @IsOptional()
         trs_prev_process_code?: string; 
 
         @ApiPropertyOptional()

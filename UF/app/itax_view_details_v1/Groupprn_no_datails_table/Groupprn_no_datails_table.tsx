@@ -214,7 +214,7 @@ const Groupprn_no_datails_table = ({lockedData={},setLockedData,primaryTableData
     <div 
       style={{          
         gridColumn: '1 / 25',
-        gridRow: '68 / 149',
+        gridRow: '68 / 138',
       
         //rowGap: '0px',
         overflow: 'visible',

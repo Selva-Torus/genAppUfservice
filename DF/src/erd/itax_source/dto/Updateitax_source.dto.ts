@@ -130,6 +130,9 @@ export class  Updateitax_sourceDto {
         @ApiPropertyOptional()
         @IsOptional()
         trs_event_status?: string;
+        @ApiPropertyOptional({example:"string"})
+        @IsOptional()
+        trs_token_id?: string;
 
 }
 

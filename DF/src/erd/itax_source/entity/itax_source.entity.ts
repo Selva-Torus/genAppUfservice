@@ -106,6 +106,9 @@ export class  itax_sourceEntity implements itax_source{
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
     trs_event_status: string;
+    @ApiPropertyOptional({example:"string"})
+    @IsOptional()
+    trs_token_id: string;
 }
       
 export class  itax_source_OnlyParentEntity {
@@ -192,6 +195,9 @@ export class  itax_source_OnlyParentEntity {
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
     trs_event_status: string;
+    @ApiPropertyOptional({example:"string"})
+    @IsOptional()
+    trs_token_id: string;
 }
 
 

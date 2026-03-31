@@ -343,7 +343,7 @@ const Groupview_detail_group = ({lockedData={},setLockedData,primaryTableData={}
     <div 
       style={{          
         gridColumn: '1 / 25',
-        gridRow: '10 / 163',
+        gridRow: '10 / 151',
       
         //rowGap: '0px',
         display: 'grid',

@@ -131,6 +131,9 @@ export class  Updateitax_source_tranDto {
         @ApiPropertyOptional()
         @IsOptional()
         trs_event_status?: string;
+        @ApiPropertyOptional({example:"string"})
+        @IsOptional()
+        trs_token_id?: string;
         @ApiPropertyOptional()
         @IsOptional()
         trs_prev_process_code?: string;      

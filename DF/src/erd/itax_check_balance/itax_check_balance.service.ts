@@ -276,6 +276,7 @@ export class itax_check_balanceService {
       trs_product_code:"string",
       trs_event_process_status:"string",         
       trs_event_status:"string",
+      trs_token_id:"string",
     }
     return data;
   }
@@ -400,6 +401,7 @@ export class itax_check_balanceService {
         trs_product_code:true,
         trs_event_process_status:true,         
         trs_event_status:true,
+        trs_token_id:true,
         }
     }));
     return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_check_balance');
@@ -418,7 +420,7 @@ export class itax_check_balanceService {
   }
   }
 
-  async findAll(token : string,trs_created_date?: Date,trs_created_by?: string,trs_modified_date?: Date,trs_modified_by?: string,trs_process_id?: string,trs_access_profile?: string,trs_org_grp_code?: string,trs_org_code?: string,trs_role_grp_code?: string,trs_role_code?: string,trs_ps_grp_code?: string,trs_ps_code?: string,trs_sub_org_grp_code?: string,trs_sub_org_code?: string,trs_locked_by?: string,trs_locked_time?: Date,trs_tenant_id?:string,trs_app_code?:string,trs_product_code?:string,trs_event_process_status?:string,trs_event_status?:string) {
+  async findAll(token : string,trs_created_date?: Date,trs_created_by?: string,trs_modified_date?: Date,trs_modified_by?: string,trs_process_id?: string,trs_access_profile?: string,trs_org_grp_code?: string,trs_org_code?: string,trs_role_grp_code?: string,trs_role_code?: string,trs_ps_grp_code?: string,trs_ps_code?: string,trs_sub_org_grp_code?: string,trs_sub_org_code?: string,trs_locked_by?: string,trs_locked_time?: Date,trs_tenant_id?:string,trs_app_code?:string,trs_product_code?:string,trs_event_process_status?:string,trs_event_status?:string,trs_token_id?:string) {
     try{
       const whereClause: any = {};
       if (trs_created_date) {
@@ -484,6 +486,9 @@ export class itax_check_balanceService {
       if (trs_event_status) {
         whereClause.trs_event_status = trs_event_status;
       }
+      if (trs_token_id) {
+        whereClause.trs_token_id = trs_token_id;
+      }
       const res = await this.prismaService.withConnection(() =>
       this.prismaService.itax_check_balance.findMany({ 
       where: whereClause,
@@ -508,6 +513,7 @@ export class itax_check_balanceService {
         trs_product_code:true,
         trs_event_process_status:true,         
         trs_event_status:true,
+        trs_token_id:true,
       }
       }));
       let decryptedRes: any = [];
@@ -563,7 +569,7 @@ export class itax_check_balanceService {
       const res = await this.prismaService.withConnection(() =>
         this.prismaService.itax_check_balance.create({
           data: encryptedData,
-          select:{itaxcb_id:true,account_number:true,balance:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true}          
+          select:{itaxcb_id:true,account_number:true,balance:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true,trs_token_id:true}          
         })
       );
     return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_check_balance');
@@ -815,7 +821,7 @@ export class itax_check_balanceService {
       this.prismaService.itax_check_balance.update({
       where: {account_number},
       data: encryptedData,
-      select: {itaxcb_id:true,account_number:true,balance:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true}
+      select: {itaxcb_id:true,account_number:true,balance:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true,trs_token_id:true}
     }));
     return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_check_balance');
     } catch (error) {
@@ -1044,7 +1050,7 @@ account_number: string,
       const res = await this.prismaService.withConnection(() =>
       this.prismaService.itax_check_balance.delete({
       where: {account_number },
-      select: {itaxcb_id:true,account_number:true,balance:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true}
+      select: {itaxcb_id:true,account_number:true,balance:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true,trs_token_id:true}
     }));
     return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_check_balance');
   } catch (error) {

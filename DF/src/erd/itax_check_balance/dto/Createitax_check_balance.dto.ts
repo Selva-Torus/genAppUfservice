@@ -103,6 +103,10 @@ export class  Createitax_check_balanceDto {
         @IsOptional()
         trs_event_status?: string;
 
+        @ApiPropertyOptional()
+        @IsOptional()
+        trs_token_id?: string;
+
 
         
 }

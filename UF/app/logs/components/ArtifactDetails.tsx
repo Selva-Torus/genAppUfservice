@@ -461,8 +461,8 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
           <div className={`flex h-full w-1/2 min-w-[400px] p-3 text-center`}>
             <div className='w-full'>
               <Tabs
-                direction='horizontal'
                 security={["request" , "response" , "exception"]}
+                direction='horizontal'
                 items={[
                   {
                     id: 'request',

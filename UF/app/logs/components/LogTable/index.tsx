@@ -514,8 +514,8 @@ const LogSwitcher = ({
   return (
     <div>
       <Tabs
-        className={twMerge('', borderColor)}
         security={["process" , "torus"]}
+        className={twMerge('', borderColor)}
         items={[
           {
             id: 'process',

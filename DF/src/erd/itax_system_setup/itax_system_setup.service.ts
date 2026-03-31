@@ -280,6 +280,7 @@ export class itax_system_setupService {
       trs_product_code:"string",
       trs_event_process_status:"string",         
       trs_event_status:"string",
+      trs_token_id:"string",
       trs_prev_process_code:"string",    
       trs_prev_status:"string",         
       trs_prev_process_status:"string",
@@ -433,6 +434,7 @@ export class itax_system_setupService {
         trs_product_code:true,
         trs_event_process_status:true,         
         trs_event_status:true,
+        trs_token_id:true,
         trs_prev_process_code:true,    
         trs_prev_status:true,         
         trs_prev_process_status:true,
@@ -460,7 +462,7 @@ export class itax_system_setupService {
   }
   }
 
-  async findAll(token : string,trs_created_date?: Date,trs_created_by?: string,trs_modified_date?: Date,trs_modified_by?: string,trs_process_id?: string,trs_access_profile?: string,trs_org_grp_code?: string,trs_org_code?: string,trs_role_grp_code?: string,trs_role_code?: string,trs_ps_grp_code?: string,trs_ps_code?: string,trs_sub_org_grp_code?: string,trs_sub_org_code?: string,trs_locked_by?: string,trs_locked_time?: Date,trs_tenant_id?:string,trs_app_code?:string,trs_product_code?:string,trs_event_process_status?:string,trs_event_status?:string,trs_prev_process_code?:string,trs_prev_status?:string,trs_prev_process_status?:string,trs_process_code?:string,trs_status?:string,trs_process_status?:string,trs_next_process_code?:string,trs_next_status?:string,trs_next_process_status?:string,setup_code?:string) {
+  async findAll(token : string,trs_created_date?: Date,trs_created_by?: string,trs_modified_date?: Date,trs_modified_by?: string,trs_process_id?: string,trs_access_profile?: string,trs_org_grp_code?: string,trs_org_code?: string,trs_role_grp_code?: string,trs_role_code?: string,trs_ps_grp_code?: string,trs_ps_code?: string,trs_sub_org_grp_code?: string,trs_sub_org_code?: string,trs_locked_by?: string,trs_locked_time?: Date,trs_tenant_id?:string,trs_app_code?:string,trs_product_code?:string,trs_event_process_status?:string,trs_event_status?:string,trs_token_id?:string,trs_prev_process_code?:string,trs_prev_status?:string,trs_prev_process_status?:string,trs_process_code?:string,trs_status?:string,trs_process_status?:string,trs_next_process_code?:string,trs_next_status?:string,trs_next_process_status?:string,setup_code?:string) {
     try{
       const whereClause: any = {};
       if (trs_created_date) {
@@ -526,6 +528,9 @@ export class itax_system_setupService {
       if (trs_event_status) {
         whereClause.trs_event_status = trs_event_status;
       }
+      if (trs_token_id) {
+        whereClause.trs_token_id = trs_token_id;
+      }
       if (trs_prev_process_code) {
         whereClause.trs_prev_process_code = trs_prev_process_code;
       }
@@ -580,6 +585,7 @@ export class itax_system_setupService {
         trs_product_code:true,
         trs_event_process_status:true,         
         trs_event_status:true,
+        trs_token_id:true,
         trs_prev_process_code:true,    
         trs_prev_status:true,         
         trs_prev_process_status:true,
@@ -649,7 +655,7 @@ export class itax_system_setupService {
       const res = await this.prismaService.withConnection(() =>
         this.prismaService.itax_system_setup.create({
           data: encryptedData,
-          select:{itaxss_id:true,setup_code:true,interface_product:true,category:true,sub_category:true,purpose:true,setup_value:true,parent_setup_code:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true,trs_prev_process_code:true,trs_prev_status:true,trs_prev_process_status:true,trs_process_code:true,trs_status:true,trs_process_status:true,trs_next_process_code:true,trs_next_status:true,trs_next_process_status:true}          
+          select:{itaxss_id:true,setup_code:true,interface_product:true,category:true,sub_category:true,purpose:true,setup_value:true,parent_setup_code:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true,trs_token_id:true,trs_prev_process_code:true,trs_prev_status:true,trs_prev_process_status:true,trs_process_code:true,trs_status:true,trs_process_status:true,trs_next_process_code:true,trs_next_status:true,trs_next_process_status:true}          
         })
       );
     return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_system_setup');
@@ -911,7 +917,7 @@ export class itax_system_setupService {
       this.prismaService.itax_system_setup.update({
       where: {itaxss_id},
       data: encryptedData,
-      select: {itaxss_id:true,setup_code:true,interface_product:true,category:true,sub_category:true,purpose:true,setup_value:true,parent_setup_code:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true,trs_prev_process_code:true,trs_prev_status:true,trs_prev_process_status:true,trs_process_code:true,trs_status:true,trs_process_status:true,trs_next_process_code:true,trs_next_status:true,trs_next_process_status:true}
+      select: {itaxss_id:true,setup_code:true,interface_product:true,category:true,sub_category:true,purpose:true,setup_value:true,parent_setup_code:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true,trs_token_id:true,trs_prev_process_code:true,trs_prev_status:true,trs_prev_process_status:true,trs_process_code:true,trs_status:true,trs_process_status:true,trs_next_process_code:true,trs_next_status:true,trs_next_process_status:true}
     }));
     return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_system_setup');
     } catch (error) {
@@ -1145,7 +1151,7 @@ itaxss_id:number,
       const res = await this.prismaService.withConnection(() =>
       this.prismaService.itax_system_setup.delete({
       where: {itaxss_id },
-      select: {itaxss_id:true,setup_code:true,interface_product:true,category:true,sub_category:true,purpose:true,setup_value:true,parent_setup_code:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true,trs_prev_process_code:true,trs_prev_status:true,trs_prev_process_status:true,trs_process_code:true,trs_status:true,trs_process_status:true,trs_next_process_code:true,trs_next_status:true,trs_next_process_status:true}
+      select: {itaxss_id:true,setup_code:true,interface_product:true,category:true,sub_category:true,purpose:true,setup_value:true,parent_setup_code:true,trs_created_date:true,trs_created_by:true,trs_modified_date:true,trs_modified_by:true,trs_process_id:true,trs_access_profile:true,trs_org_grp_code:true,trs_org_code:true,trs_role_grp_code:true,trs_role_code:true,trs_ps_grp_code:true,trs_ps_code:true,trs_sub_org_code:true,trs_sub_org_grp_code:true,trs_locked_by:true,trs_locked_time:true,trs_tenant_id:true,trs_app_code:true,trs_product_code:true,trs_event_process_status:true,trs_event_status:true,trs_token_id:true,trs_prev_process_code:true,trs_prev_status:true,trs_prev_process_status:true,trs_process_code:true,trs_status:true,trs_process_status:true,trs_next_process_code:true,trs_next_status:true,trs_next_process_status:true}
     }));
     return await this.decryptData(await this.commonDecimalDatahandle(res), 'itax_system_setup');
   } catch (error) {

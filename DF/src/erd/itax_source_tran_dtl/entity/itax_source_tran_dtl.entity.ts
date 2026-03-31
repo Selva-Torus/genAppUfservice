@@ -92,6 +92,9 @@ export class  itax_source_tran_dtlEntity implements itax_source_tran_dtl{
     trs_event_status: string;
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
+    trs_token_id: string;
+    @ApiPropertyOptional({example:"string"})
+    @IsOptional()
     trs_prev_process_code: string;
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
@@ -198,6 +201,9 @@ export class  itax_source_tran_dtl_OnlyParentEntity {
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
     trs_event_status: string;
+    @ApiPropertyOptional({example:"string"})
+    @IsOptional()
+    trs_token_id: string;
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
     trs_prev_process_code: string;

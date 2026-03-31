@@ -81,6 +81,9 @@ export class  itax_source_tran_paymentEntity implements itax_source_tran_payment
     trs_event_status: string;
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
+    trs_token_id: string;
+    @ApiPropertyOptional({example:"string"})
+    @IsOptional()
     trs_prev_process_code: string;
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
@@ -180,6 +183,9 @@ export class  itax_source_tran_payment_OnlyParentEntity {
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
     trs_event_status: string;
+    @ApiPropertyOptional({example:"string"})
+    @IsOptional()
+    trs_token_id: string;
     @ApiPropertyOptional({example:"string"})
     @IsOptional()
     trs_prev_process_code: string;
