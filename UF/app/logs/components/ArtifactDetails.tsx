@@ -462,6 +462,7 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
             <div className='w-full'>
               <Tabs
                 direction='horizontal'
+                security={["request" , "response" , "exception"]}
                 items={[
                   {
                     id: 'request',

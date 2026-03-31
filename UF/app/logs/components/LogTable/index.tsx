@@ -164,11 +164,11 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     }
     return (
       <div
-        className='flex w-[40%] flex-col gap-1'
+        className='flex w-full flex-col gap-1 justify-start'
         onClick={() => setNodeData(nodeData)}
       >
-        <Text variant={getFontSizeForSubHeader(branding.fontSize)}>{artifact}</Text>
-        <Text color='secondary'>
+        <Text contentAlign='left' variant={getFontSizeForSubHeader(branding.fontSize)}>{artifact}</Text>
+        <Text contentAlign='left' color='secondary'>
           {grpDetails}
         </Text>
         {processId && (
@@ -515,6 +515,7 @@ const LogSwitcher = ({
     <div>
       <Tabs
         className={twMerge('', borderColor)}
+        security={["process" , "torus"]}
         items={[
           {
             id: 'process',
