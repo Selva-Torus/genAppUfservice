@@ -39,14 +39,7 @@ export const PieChart: React.FC<PieChartProps> =({
   tooltipProps,
   headerText = "",
   headerPosition = "top",
-  colors = [
-    '#FF9F40',
-    '#FF6B6B',
-    '#36A2EB',
-    '#4CAF50',
-    '#9C27B0',
-    '#00BCD4'
-  ]
+  colors = []
 }) => {
   const { theme } = useGlobal();
   const keyset:any=i18n.keyset("language"); 

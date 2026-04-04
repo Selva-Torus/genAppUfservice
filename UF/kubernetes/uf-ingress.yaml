@@ -1,8 +1,8 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: ct010-itax-uf-v1-ingress
-  namespace: ct010-itax-uf-v1
+  name: ci001-a001-uf-v1-ingress
+  namespace: ci001-a001-uf-v1
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
@@ -10,15 +10,15 @@ spec:
   tls:
     - hosts:
         - tgadev.toruslowcode.com
-      secretName: ct010-itax-uf-v1-tls
+      secretName: ci001-a001-uf-v1-tls
   rules:
     - host: tgadev.toruslowcode.com
       http:
         paths:
-          - path: /ct010/i001/itax/v1
+          - path: /ci001/ag001/a001/v1
             pathType: Prefix
             backend:
               service:
-                name: ct010-itax-uf-generator
+                name: ci001-a001-uf-generator
                 port:
                   number: 443

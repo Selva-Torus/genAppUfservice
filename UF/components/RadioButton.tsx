@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useGlobal } from '@/context/GlobalContext'
 import {
   ComponentSize,
@@ -51,6 +51,14 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
   const [selectedValue, setSelectedValue] = useState(
     defaultValue || items[0]?.value || ''
   )
+
+  // Call onChange with default value on mount
+  useEffect(() => {
+    const initialValue = defaultValue || items[0]?.value || '';
+    if (initialValue) {
+      onChange?.(initialValue);
+    }
+  }, []);
 
   const handleChange = (value: string) => {
     if (!disabled) {

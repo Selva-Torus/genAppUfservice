@@ -15,23 +15,18 @@ export default function HomePage() {
   const token :string | undefined = getCookie('token');
   const decodedToken : DecodedToken = decodeToken(token);
   const encryptionFlagApp: boolean = false;    
-  let landingScreen:string = 'CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_KEDTB_Main_Screen:AFVK:v1';
+  let landingScreen:string = 'User Screen';
   const toast : Function = useInfoMsg();
   let screenDetails : ScreenDetail[] = [
   {
-    "screenName": "transaction",
-    "screensName": "transaction-v1",
-    "ufKey": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_KEDTB_Main_Screen:AFVK:v1"
-  },
-  {
-    "screenName": "dashboard",
-    "screensName": "dashboard-v1",
-    "ufKey": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_Dashboard:AFVK:v1"
+    "screenName": "test",
+    "screensName": "test-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   }
 ]
   const securityCheck = async () : Promise<void> => {
     try {
-      const encryptionDpd: string = "CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:I001:AFGK:ITAX:AFK:ITAX_DPD:AFVK:v1";
+      const encryptionDpd: string = "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1";
       const encryptionMethod: string = "";
       let introspect:any;
       if(encryptionFlagApp){
@@ -100,7 +95,7 @@ export default function HomePage() {
 
   return (
     <>
-      <LoginForm logo="torus/9.1/CT010/resources/images/DTB_Resize_logo.png"   loginType="rightAligned"   image="torus/9.1/CT010/resources/images/Half.png"/>
+      <LoginForm logo=""  image=""/>
     </>
   )
 }

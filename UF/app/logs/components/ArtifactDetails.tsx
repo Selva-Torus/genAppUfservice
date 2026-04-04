@@ -148,9 +148,9 @@ const RenderNodesInfo = ({
           </div>
           <div>
             {isExpanded &&
-              item?.subFlowInfo?.subFlowUpId &&
-              isExpanded == item?.subFlowInfo?.subFlowUpId &&
-              isLoading ? (
+            item?.subFlowInfo?.subFlowUpId &&
+            isExpanded == item?.subFlowInfo?.subFlowUpId &&
+            isLoading ? (
               <Spin
                 className='flex w-full justify-center'
                 spinning
@@ -239,13 +239,13 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
       } else {
         return status.toLowerCase() === 'success'
           ? {
-            endTime: formatDate(time[time.length - 1]),
-            processingTime: 'Process completed successfully'
-          }
+              endTime: formatDate(time[time.length - 1]),
+              processingTime: 'Process completed successfully'
+            }
           : {
-            endTime: 'process not finished',
-            processingTime: 'Process not finished'
-          }
+              endTime: 'process not finished',
+              processingTime: 'Process not finished'
+            }
       }
     } else {
       throw new Error("Invalid data: 'time' must be an array of strings.")
@@ -434,7 +434,6 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                 </Text>
               </div>
             </div>
-
           </div>
 
           <hr

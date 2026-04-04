@@ -1,6 +1,8 @@
 import { Controller, Get, Body,Post, Delete, Query } from '@nestjs/common';
 import { AppService } from './app.service';
 import { CommonService } from 'src/common.Service';
+import { ApiBody, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ProcessLogResponseDto, RawProcessLogInputDto } from './dto';
 
 @Controller()
 export class AppController {
@@ -59,4 +61,30 @@ export class AppController {
       return result
     }
   
+
+     @ApiOperation({
+    summary: 'Transform process log',
+    description:
+      'Accepts the raw AFSK process-log payload and returns a flat array ' +
+      'of entries containing only nodeName, event, status, and DateAndTime.',
+  })
+  @ApiBody({ type: RawProcessLogInputDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Successfully transformed process log entries',
+    type: ProcessLogResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid request body',
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Internal server error',
+  })
+  @Post('logSatus')
+  transform(@Body() rawInput: any):  Promise<any> {
+    return this.apiService.transform(rawInput);
+  }
+
 }

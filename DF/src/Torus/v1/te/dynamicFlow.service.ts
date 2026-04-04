@@ -41,7 +41,7 @@ export class DynamicFlowService {
     private ajv = new Ajv();  
     private statickeyword = ['get', 'post', 'patch', '200', '201', '202', '204', '400', '401', '403', '404', '500','requestBody', '*/*', 'responses', 'content', 'application/json', 'application/xml', 'text/plain', 'application/jwt', 'application/json; charset=utf-8', 'schema', 'properties', 'allOf', 'oneOf', 'inputschema', 'outputschema',];//"parameters",
     private numberArr: string[] = Array.from({ length: 101 }, (_, i) => i.toString());  
-
+    private ruleParams={}
     constructor(
     private readonly redisService:RedisService,
     private readonly listenerService:ListenerService,
@@ -117,46 +117,8 @@ export class DynamicFlowService {
        
         let SessionToken = await this.jwtService.decode(token, { json: true });
        // let tokenDecode = await this.CommonService.MyAccountForClient(token);  
-        let sobj = {},SessionInfo = {}    
         
-        sobj['session.orgGrpCode'] = SessionToken.orgGrpCode || process.env?.ORGGRPCODE
-        sobj['session.orgCode'] = SessionToken.orgCode || process.env?.ORGCODE
-        sobj['session.roleGrpCode'] = SessionToken.roleGrpCode || process.env?.ROLEGRPCODE
-        sobj['session.roleCode'] = SessionToken.roleCode || process.env?.ROLECODE
-        sobj['session.psGrpCode'] = SessionToken.psGrpCode || process.env?.PSGRPCODE
-        sobj['session.psCode'] = SessionToken.psCode || process.env?.PSCODE
-        sobj['session.selectedAccessProfile'] = SessionToken.selectedAccessProfile || process.env?.ACCESSPROFILE
-        sobj['session.loginId'] = SessionToken.loginId || process.env?.LOGINID
-        sobj['session.orgGrpName'] = SessionToken?.orgGrpName || process.env?.ORGGRPNAME
-        sobj['session.orgName'] = SessionToken?.orgName || process.env?.ORGNAME
-        sobj['session.roleGrpName'] = SessionToken?.roleGrpName || process.env?.ROLEGRPNAME
-        sobj['session.roleName'] = SessionToken?.roleName || process.env?.ROLENAME
-        sobj['session.psGrpName'] = SessionToken?.psGrpName || process.env?.PSGRPNAME
-        sobj['session.psName'] = SessionToken?.psName || process.env?.PSNAME
-        sobj['session.trs_process_id'] = upId
-        sobj['session.userCode'] = SessionToken?.userCode
-        sobj['session.subOrgGrpCode'] = SessionToken?.subOrgGrpCode || process.env?.SUBORGGRPCODE
-        sobj['session.subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME
-        sobj['session.subOrgCode'] = SessionToken?.subOrgCode || process.env?.SUBORGCODE
-        sobj['session.subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME
-
-        SessionInfo['loginId'] = SessionToken?.loginId || process.env?.LOGINID || '';
-        SessionInfo['accessProfile'] = SessionToken?.selectedAccessProfile || process.env?.ACCESSPROFILE || '';
-        SessionInfo['orgGrpName'] = SessionToken?.orgGrpName || process.env?.ORGGRPNAME || '';
-        SessionInfo['orgName'] = SessionToken?.orgName || process.env?.ORGNAME || '';
-        SessionInfo['roleGrpName'] = SessionToken?.roleGrpName || process.env?.ROLEGRPNAME || '';
-        SessionInfo['roleName'] = SessionToken?.roleName || process.env?.ROLENAME || '';
-        SessionInfo['psGrpName'] = SessionToken?.psGrpName || process.env?.PSGRPNAME || '';
-        SessionInfo['psName'] = SessionToken?.psName || process.env?.PSNAME || '';
-        SessionInfo['userCode'] = SessionToken?.userCode || ''
-        SessionInfo['subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME || '';
-        SessionInfo['subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME || '';
-        SessionInfo['orgGrpCode'] = SessionToken.orgGrpCode || process.env?.ORGGRPCODE
-        SessionInfo['orgCode'] = SessionToken.orgCode || process.env?.ORGCODE
-        SessionInfo['roleGrpCode'] = SessionToken.roleGrpCode || process.env?.ROLEGRPCODE
-        SessionInfo['roleCode'] = SessionToken.roleCode || process.env?.ROLECODE
-        SessionInfo['psGrpCode'] = SessionToken.psGrpCode || process.env?.PSGRPCODE
-        SessionInfo['psCode'] = SessionToken.psCode || process.env?.PSCODE
+        let {sobj,SessionInfo} = await this.CommonService.sessionDecode(token, upId);
 
         let sourceStatus, srcQueue, targetStatus, targetQueue, failureQueue, failureTargetStatus, suspiciousStatus, suspiciousQueue, errorStatus, errorQueue;
         for (var j = 0; j < poNode.length; j++) {
@@ -199,14 +161,16 @@ export class DynamicFlowService {
             if (nodeType == 'humantasknode' && poNode[j].nodeId == nodeId) {
                 try {
                     this.logger.log('HumanTask node Started');
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                    this.ruleParams[nodeName] = inputparam
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
                     }
+                    console.log('RCMresult', RCMresult)
                     let nodeIfo = poNode[j].ifo
                     let pfRuleResult = {}
-                    if(nodeIfo?.length>0){
+                        if(nodeIfo?.length>0){
                         for (const item of nodeIfo) {
                             if(item.variableType == "ProcessVariable" && item.type == "pfrule"){                              
                                 let pfRuleValue
@@ -217,7 +181,7 @@ export class DynamicFlowService {
                                     pfRuleValue = JSON.parse(pfRuleValue)
                                     let rule = (Object.values(pfRuleValue)[0])['rule']
 
-                                    let RCMresult:any = await this.CommonService.PfRuleExtract(rule,sobj,inputparam);
+                                    let RCMresult:any = await this.CommonService.PfRuleExtract(rule,sobj,inputparam,pfdto.controllerName);
                                     
                                     if (RCMresult) {
                                         if(!inputparam) inputparam = {}
@@ -229,10 +193,12 @@ export class DynamicFlowService {
                                 }                                   
                             }
                         }  
-                        if(pfRuleResult)                              
+                        if(Object.keys(pfRuleResult).length>0)                            
                          await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(pfRuleResult), collectionName, 'ifo');
                         
-                    }
+                        }
+                    if(zenresult && Object.keys(zenresult).length>0 && zenresult[nodeName])
+                    inputparam = await this.codeORifoAndInputparamAssign(zenresult[nodeName], inputparam)
                     ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
                    
                     if (customcoderesult && customcoderesult != undefined && customcoderesult != null) {
@@ -261,10 +227,11 @@ export class DynamicFlowService {
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: inputparam, response: inputparam } }),);
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(pfdto.sourceId), collectionName, 'sourceid',);
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam,);
-                    inputparam = { [nodeName]: inputparam }
+                     inputparam = { [nodeName]: inputparam }
                     this.logger.log('HumanTask node completed');
                     return { status: 200, targetStatus: targetStatus, data: inputparam };
                 } catch (error) {
+                    console.log('HumanTask node error', error);
                     await this.exceptionhandler(failureQueue, suspiciousQueue, errorQueue, error, upId, nodeId, failureTargetStatus, inputparam)
                 }
             }
@@ -277,7 +244,8 @@ export class DynamicFlowService {
                         throw new CustomException('Rule is required for decision node', 404);
                     }
                     let decisionRes
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                      
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     if (RCMresult) {
                         zenresult = RCMresult.rule.output;
                         customcoderesult = RCMresult.code;
@@ -304,6 +272,8 @@ export class DynamicFlowService {
                     if (decisionRes) {
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(decisionRes), collectionName, 'response',);
                     }
+                     this.ruleParams[nodeName] = Array.isArray(inputparam) ? {...this.ruleParams , ...inputparam[0]} : {...this.ruleParams , ...inputparam}
+
                     this.logger.log('Decision node completed');
                     return { status: 200, targetStatus: zenresult, data: inputparam };
                 } catch (error) {
@@ -458,7 +428,7 @@ export class DynamicFlowService {
 
                         let apires: any,headerRole
                         if (customConfig) { 
-
+                       
                            if(rule?.approvalProcess){
                             let rulekey = rule?.ruleKey                           
                             if (!rulekey) throw new CustomException(pfjson[i].nodeName+' rulekey key not found', 404);
@@ -466,13 +436,13 @@ export class DynamicFlowService {
                             if (!ruleConfig || Object.keys(ruleConfig).length == 0)
                                 throw new CustomException(pfjson[i].nodeName +' Reference key value not found', 404);
                             let rulejson: any = Object.values(ruleConfig)[0]; 
-                            let rulecheck:any = await this.CommonService.getRuleCodeMapper(rulejson, inputparam, processedKey + upId, currentFabric, SessionInfo);
+                            let rulecheck:any = await this.CommonService.getRuleCodeMapper(rulejson, this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                             headerRole = rulecheck?.rule
                            }
                             encCredentials = await this.CommonService.checkEncryption(poNode[j]);
                             
                             if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL') {
-                                RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                                RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                                 if (RCMresult) {
                                     zenresult = RCMresult.rule;
                                     customcoderesult = RCMresult.code;
@@ -670,8 +640,9 @@ export class DynamicFlowService {
                                     }
                                     inputparam = await this.assignToInputParam(inputparam, nodeName, apires)
                                     if (!inputparam || inputparam?.length == 0) {
+                                         this.ruleParams[nodeName] = apires
                                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(apires), collectionName, 'customResponse',);
-                                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], apires, processedKey + upId, currentFabric, SessionInfo);
+                                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                                     }
                                     if (RCMresult) {
                                         zenresult = RCMresult.rule;
@@ -1148,6 +1119,7 @@ export class DynamicFlowService {
                                         await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, apiResult,);
                                         apires = apiResult;
                                     }
+                                    this.ruleParams[nodeName] = Array.isArray(apires) ? {...this.ruleParams , ...apires[0]} : {...this.ruleParams , ...apires}
                                 }
                             }
                         }
@@ -1176,7 +1148,8 @@ export class DynamicFlowService {
             if (nodeType == 'automationnode' && poNode[j].nodeId == nodeId) {
                 try {
                     this.logger.log('Automation Node Started');
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                    
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -1202,6 +1175,7 @@ export class DynamicFlowService {
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(res), collectionName, 'response');
                     if (res)
                         await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, res);
+                          this.ruleParams[nodeName] = Array.isArray(res) ? {...this.ruleParams , ...res[0]} : {...this.ruleParams , ...res}
                     this.logger.log('Automation node completed');
                     return { status: 200, targetStatus: targetStatus };
                 } catch (error) {
@@ -1238,31 +1212,24 @@ export class DynamicFlowService {
                         //headerRole = rulecheck?.rule
                         //str.push({'xCdcaRole':headerRole,'xCdcaUsername':SessionToken?.loginId})
                      //}
-                    if (sessionParams?.length > 0) {
-                        for (let i = 0; i < sessionParams.length; i++) {
-                            var filcol = sessionParams[i].name;
-                            var filval = sessionParams[i].value;
-                            if (filval) {
-                                if ((Object.keys(sobj)).includes(filval) && sobj[filval]) {
-                                    let strobj = ` ${filcol} = '${sobj[filval]}' `
-                                    str.push(strobj);
-                                }
-                            }
-                        }
-                    }
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    console.log("RCMresult",RCMresult);
+                    let ruleRes = RCMresult.rule
+                    let appendQry
+                    if(typeof ruleRes == 'object'){
+                        appendQry = Object.values(ruleRes)[0]
+                    }else if(typeof ruleRes == 'string'){
+                        appendQry = ruleRes
+                    }                                        
+                    
+                    if (manualQuery.endsWith(';')) {
+                        manualQuery = manualQuery.slice(0, -1);
+                    }                    
 
-                    if (filterParams?.length > 0) {
-                        for (let i = 0; i < filterParams.length; i++) {
-                            var filcol = filterParams[i].key;
-                            var filval = filterParams[i].value.value;
-                            if (filval && filval.includes('session.') && filcol && sobj[filval])
-                                //str.push(` ${filcol} = '${sobj[filval]}' `);
-                            mapObj[filcol] = sobj[filval]
-                            else if (filcol && filval)
-                               // str.push(` ${filcol} = '${filval}' `);
-                             mapObj[filcol] = filval
-                        }
-                    }
+                    if (manualQuery.includes('$where')) {                       
+                        manualQuery = manualQuery.replace('$where', () => appendQry);                       
+                    }                                                     
+
                     let childInsertArr, tempQryVal = []
                     if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
                         let currentNodeEdge = internalEdges[poNode[j].nodeId];
@@ -1279,6 +1246,7 @@ export class DynamicFlowService {
                         if (childInsertArr?.length > 0) {
                             for (let i = 0; i < childInsertArr.length; i++) {
                                 mapObj = childInsertArr[i]
+                                 mapObj = Object.assign(mapObj,sobj)
                                 // if (mapObj && Object.keys(mapObj).length > 0) {
                                 //     let mapcol = Object.keys(mapObj)
                                 //     let mapval = Object.values(mapObj)
@@ -1295,6 +1263,7 @@ export class DynamicFlowService {
                             }
                             }
                         } else {
+                             mapObj = sobj
                             if (mapObj && Object.keys(mapObj).length > 0) {
                                  Object.keys(mapObj).forEach(key => {
                                     const regex = new RegExp(`\\$\\$${key}`, 'g');
@@ -1304,6 +1273,7 @@ export class DynamicFlowService {
                             }
                         }
                     } else{
+                          mapObj = sobj
                         if (mapObj && Object.keys(mapObj).length > 0) {
                                 Object.keys(mapObj).forEach(key => {
                                     const regex = new RegExp(`\\$\\$${key}`, 'g');
@@ -1381,12 +1351,13 @@ export class DynamicFlowService {
                                     formKey = formKey.slice(0, -4);
                                 }
                             }
-
-                            if (formKey) str.push(formKey)
-                            if (str.length > 0) {
-                                Querystr = str.join('AND');
-                                qry = await this.CommonService.appendWhereClause(qry, Querystr);
-                            }
+                           
+                            if (formKey) qry = await this.CommonService.appendWhereClause(qry, formKey);
+                            //str.push(formKey)
+                            // if (str.length > 0) { 
+                            //     Querystr = str.join('AND');
+                            //     qry = await this.CommonService.appendWhereClause(qry, Querystr);
+                            // }
                         }
                     }
                      console.log("qry",qry);
@@ -1423,10 +1394,11 @@ export class DynamicFlowService {
                      if(dbres && currentFabric == 'PF-PFD')
                      await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(dbres), collectionName, 'response');
                     if (inputparam) {
+
                         inputparam = await this.assignToInputParam(inputparam, nodeName, dbres)
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
-                    } else {
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], dbres, processedKey + upId, currentFabric, SessionInfo);
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    } else {   
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     }
 
                     if (RCMresult) {
@@ -1455,6 +1427,7 @@ export class DynamicFlowService {
                         await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, qry, dbres);
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(qry), collectionName, 'request');
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(dbres), collectionName, 'response');
+                          this.ruleParams[nodeName] = Array.isArray(dbres) ? {...this.ruleParams , ...dbres[0]} : {...this.ruleParams , ...dbres}
                     }
 
                     this.logger.log('DB Node execution completed');
@@ -1660,10 +1633,12 @@ export class DynamicFlowService {
                         return { data: 'logicCenter' }
                     }
                     if (inputparam) {
+                        
                         inputparam = await this.assignToInputParam(inputparam, nodeName, mongoDbarr)
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     } else {
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], mongoDbarr, processedKey + upId, currentFabric, SessionInfo);
+                        
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     }
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
@@ -1692,6 +1667,7 @@ export class DynamicFlowService {
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(manualQry), collectionName, 'request');
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(mongoDbarr), collectionName, 'response',);
                     }
+                      this.ruleParams[nodeName] = Array.isArray(mongoDbarr) ? {...this.ruleParams , ...mongoDbarr[0]} : {...this.ruleParams , ...mongoDbarr}
                     this.logger.log('Mongo DB Node execution completed');
                     return { status: 200, targetStatus: targetStatus, data: mongoDbarr };
                 } catch (error) {
@@ -2098,10 +2074,12 @@ export class DynamicFlowService {
                             await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, streamName, '');
                             return { data: 'logicCenter' }
                         }
-                        if (inputparam && Object.keys(inputparam).length > 0) {                                                       
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                        if (inputparam && Object.keys(inputparam).length > 0) { 
+                                                                                  
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                         } else {
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], streamArr, processedKey + upId, currentFabric, SessionInfo);
+                            
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                         }
                         if (RCMresult) {
                             zenresult = RCMresult.rule;
@@ -2134,6 +2112,7 @@ export class DynamicFlowService {
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(streamName), collectionName, 'request');
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(streamArr), collectionName, 'response');
                         }
+                          this.ruleParams[nodeName] = Array.isArray(streamArr) ? {...this.ruleParams , ...streamArr[0]} : {...this.ruleParams , ...streamArr}
                         this.logger.log('Stream Node execution completed');
                         if(currentFabric == 'PF-SFD' || currentFabric == 'PF-PFD' || currentFabric == 'PF-SCDL')                           
                             return { status: 200, targetStatus: targetStatus, data:inputparam};
@@ -2440,11 +2419,13 @@ export class DynamicFlowService {
                     }
                     RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
                 } else {
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], kafkaResultArr, processedKey + upId, currentFabric, SessionInfo);
+                       
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                 }
                 // Store results in Redis
                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify({ topic: topicName, operation: oprname }), collectionName, 'request');
                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(kafkaResultArr), collectionName, 'response');
+                  this.ruleParams[nodeName] = Array.isArray(kafkaResultArr) ? {...this.ruleParams , ...kafkaResultArr[0]} : {...this.ruleParams , ...kafkaResultArr}
 
                 this.logger.log('Kafka Stream first node Completed');
                 // if (semarc)
@@ -2673,10 +2654,12 @@ export class DynamicFlowService {
                             await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, fileName, '');
                             return { data: 'logicCenter' }
                         }
-                        if (inputparam) {                           
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                        if (inputparam) {    
+                                               
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                         } else {
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], fileres, processedKey + upId, currentFabric, SessionInfo);
+                           
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                         }
                         if (RCMresult) {
                             zenresult = RCMresult.rule;
@@ -2709,6 +2692,7 @@ export class DynamicFlowService {
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(fullPath), collectionName, 'request');
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(fileres), collectionName, 'response');
                         }
+                          this.ruleParams[nodeName] = Array.isArray(fileres) ? {...this.ruleParams , ...fileres[0]} : {...this.ruleParams , ...fileres}
                         this.logger.log('File Node execution completed');
                         if(currentFabric == 'PF-PFD'|| currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL')
                             return { status: 200, targetStatus: targetStatus, data: inputparam };
@@ -2918,6 +2902,7 @@ export class DynamicFlowService {
                                 await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, pfdto, subPoResult);
                                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(pfExecutedSet), collectionName, 'response',);
                             }
+                              this.ruleParams[nodeName] = Array.isArray(subPoResult) ? {...this.ruleParams , ...subPoResult[0]} : {...this.ruleParams , ...subPoResult}
                             this.logger.log('Sub Flow Node Completed');
                             return { status: 200, targetStatus: targetStatus, data: inputparam };
                         } else {
@@ -2973,9 +2958,10 @@ export class DynamicFlowService {
                         let logReq;
                         if (inputparam) {
                             inputparam = await this.assignToInputParam(inputparam, nodeName, inputData)
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                         } else {
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputData, processedKey + upId, currentFabric, SessionInfo);
+                            
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                         }
                         if (RCMresult) {
                             zenresult = RCMresult.rule;
@@ -3181,6 +3167,8 @@ export class DynamicFlowService {
                             await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, logReq);
                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(logReq), collectionName, 'request');
                         }
+                         this.ruleParams[nodeName] = Array.isArray(logReq) ? {...this.ruleParams , ...logReq[0]} : {...this.ruleParams , ...logReq}
+
 
                     } else {
                         throw new CustomException('Data not found', 404);
@@ -3197,7 +3185,8 @@ export class DynamicFlowService {
             if (nodeType == 'api_inputnode' && poNode[j].nodeId == nodeId) {
                 try {
                     this.logger.log('.....api_inputnode Started')
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo)
+                    
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
@@ -3215,7 +3204,8 @@ export class DynamicFlowService {
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(event), collectionName, 'event')
                     await this.redisService.setStreamData(srcQueue, collectionName + 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: inputparam } }))
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, { "PID": upId, "TID": nodeId, "EVENT": targetStatus })
-                    inputparam = { [nodeName]: inputparam }
+                    //this.ruleParams[nodeName] = Array.isArray(inputparam) ? {...this.ruleParams , ...inputparam[0]} : {...this.ruleParams , ...inputparam}
+                   inputparam = { [nodeName]: inputparam }
                     this.logger.log('api_inputnode Completed')
                     return { status: 200, targetStatus: targetStatus, data: inputparam }
 
@@ -3240,7 +3230,7 @@ export class DynamicFlowService {
                         throw new CustomException('Data not found', 404);
                     }
                     if (customConfig) {
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo)
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
                         if (RCMresult) {
                             zenresult = RCMresult.rule
                             customcoderesult = RCMresult.code
@@ -3543,6 +3533,7 @@ export class DynamicFlowService {
                                     }
                                 }
                                 return { status: 200, targetStatus: targetStatus, data: datasetSchemaRes };
+                                 this.ruleParams[nodeName] = Array.isArray(datasetSchemaRes) ? {...this.ruleParams , ...datasetSchemaRes[0]} : {...this.ruleParams , ...datasetSchemaRes}
                             }
                             else
                                 return { status: 200, targetStatus: targetStatus, data: inputparam };
@@ -3593,7 +3584,8 @@ export class DynamicFlowService {
                             DfExecutedDataSet = dsObject
                             if (!DfExecutedDataSet || DfExecutedDataSet.length == 0) throw new CustomException(`Dataset not found ${DstKey + 'DS_Object'}`, 404)
                         }
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], DfExecutedDataSet, processedKey, currentFabric, SessionInfo)
+                        
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey, currentFabric, SessionInfo)
                         if (RCMresult) {
                             zenresult = RCMresult.rule
                             customcoderesult = RCMresult.code
@@ -3841,6 +3833,7 @@ export class DynamicFlowService {
                             }
 
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(rootpatharr ? [finalRes] : finalRes), collectionName, 'response')
+                             this.ruleParams[nodeName] = Array.isArray(finalRes) ? {...this.ruleParams , ...finalRes[0]} : {...this.ruleParams , ...finalRes}
                             this.logger.log('DataSet Node Completed');
                             if (currentFabric == 'DF-DFD')
                             return { status: 200, targetStatus: targetStatus, data: rootpatharr ? [finalRes] : finalRes };
@@ -3882,7 +3875,8 @@ export class DynamicFlowService {
                     let queryarr = [], headersarr = [], patharr = []
 
                     let edgesarr
-                    let RCMresult: any = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo)
+                    
+                    let RCMresult: any = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
                     let customcoderesult, zenresult
                     if (RCMresult) {
                         zenresult = RCMresult.rule
@@ -4340,6 +4334,7 @@ export class DynamicFlowService {
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(inputparam), collectionName, 'request')
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(finalobj), collectionName, 'response')
                     }
+                     this.ruleParams[nodeName] = Array.isArray(finalobj) ? {...this.ruleParams , ...finalobj[0]} : {...this.ruleParams , ...finalobj}
                     this.logger.log(`Api output node Completed`)
                     return { status: returnStscode, targetStatus: targetStatus, data: finalobj || { description: returnDescription } }
                 } catch (error) {
@@ -4524,6 +4519,7 @@ export class DynamicFlowService {
                     }
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', token, targetQueue, currentFabric, sourceStatus, inputparam, inputparam);
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: inputparam, response: inputparam } }));
+                     this.ruleParams[nodeName] = Array.isArray(inputparam) ? {...this.ruleParams , ...inputparam[0]} : {...this.ruleParams , ...inputparam}
 
                     this.logger.log('jsonparser node completed');
                     if (currentFabric == 'PF-PFD')
@@ -4613,7 +4609,7 @@ export class DynamicFlowService {
                     const xmlData = json2xml(jsonString, { compact: true, spaces: 4 });
                     inputparam = await this.assignToInputParam(inputparam, nodeName, { json2xmldata: xmlData })
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify({ json2xmldata: xmlData }), collectionName, 'response')
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -4625,6 +4621,7 @@ export class DynamicFlowService {
                     }
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam)
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: { json2xmldata: xmlData } } }))
+                     this.ruleParams[nodeName] = Array.isArray(inputparam) ? {...this.ruleParams , ...inputparam[0]} : {...this.ruleParams , ...inputparam}
                     this.logger.log('json2xmlnode node completed')
                     return { status: 200, targetStatus: targetStatus, data: inputparam }
                 } catch (error) {
@@ -4709,7 +4706,8 @@ export class DynamicFlowService {
                     let jsonData = await parseStringPromise(parsedXml);
                     inputparam = await this.assignToInputParam(inputparam, nodeName, { xml2jsondata: jsonData })
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify({ xml2jsondata: jsonData }), collectionName, 'response')
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                      
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -4721,6 +4719,7 @@ export class DynamicFlowService {
                     }
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam)
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: { xml2jsondata: jsonData } } }))
+                     this.ruleParams[nodeName] = Array.isArray(inputparam) ? {...this.ruleParams , ...inputparam[0]} : {...this.ruleParams , ...inputparam}
 
                     this.logger.log('xml2jsonnode node completed')
                     if (currentFabric == 'PF-PFD')
@@ -4998,7 +4997,7 @@ export class DynamicFlowService {
                     if (childInsertArr?.length == 0) throw new CustomException(`Mapping was required in ${poNode[j].nodeName}`, 404)
                     inputparam = await this.assignToInputParam(inputparam, nodeName, childInsertArr)
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(childInsertArr), collectionName, 'response')
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -5010,6 +5009,7 @@ export class DynamicFlowService {
                     }
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, childInsertArr)
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: childInsertArr } }))
+                      this.ruleParams[nodeName] = Array.isArray(childInsertArr) ? {...this.ruleParams , ...childInsertArr[0]} : {...this.ruleParams , ...inputparam}
 
                     this.logger.log('xlparsernode node completed')
                     return { status: 200, targetStatus: targetStatus, data: inputparam }
@@ -5133,7 +5133,8 @@ export class DynamicFlowService {
                         return { data: 'logicCenter' }
                     }
                     inputparam = await this.assignToInputParam(inputparam, nodeName, status)
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo)
+                       
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
@@ -5157,7 +5158,7 @@ export class DynamicFlowService {
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(status), collectionName, 'response')
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam)
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: status } }))
-
+                     this.ruleParams[nodeName] = Array.isArray(inputparam) ? {...this.ruleParams , ...inputparam[0]} : {...this.ruleParams , ...inputparam}
                     this.logger.log('procedureExecution node completed')
                     if (currentFabric == 'PF-PFD')
                         return { status: 200, targetStatus: targetStatus, data: inputparam }
@@ -5291,7 +5292,8 @@ export class DynamicFlowService {
                         return { data: 'logicCenter' }
                     }
                     inputparam = await this.assignToInputParam(inputparam, nodeName, status)
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo)
+                    
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
@@ -5473,7 +5475,7 @@ export class DynamicFlowService {
                         return { data: 'logicCenter' }
                     }
                     // inputparam = await this.assignToInputParam(inputparam,nodeName,status)
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo)
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
@@ -5499,6 +5501,7 @@ export class DynamicFlowService {
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(status), collectionName, 'response')
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam)
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: status } }))
+                     this.ruleParams[nodeName] = Array.isArray(inputparam) ? {...this.ruleParams , ...inputparam[0]} : {...this.ruleParams , ...inputparam}
                     this.logger.log('functionnode node completed')
                     if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD')
                         return { status: 200, targetStatus: targetStatus, data: inputparam }
@@ -5520,49 +5523,6 @@ export class DynamicFlowService {
             }
 
         }
-    }
-
-    async sessionDecode(token,upId){
-    try {
-        let sobj = {},SessionInfo = {}
-        let SessionToken = await this.jwtService.decode(token, { json: true });
-        sobj['session.orgGrpCode'] = SessionToken.orgGrpCode || process.env?.ORGGRPCODE
-        sobj['session.orgCode'] = SessionToken.orgCode || process.env?.ORGCODE
-        sobj['session.roleGrpCode'] = SessionToken.roleGrpCode || process.env?.ROLEGRPCODE
-        sobj['session.roleCode'] = SessionToken.roleCode || process.env?.ROLECODE
-        sobj['session.psGrpCode'] = SessionToken.psGrpCode || process.env?.PSGRPCODE
-        sobj['session.psCode'] = SessionToken.psCode || process.env?.PSCODE
-        sobj['session.selectedAccessProfile'] = SessionToken.selectedAccessProfile || process.env?.ACCESSPROFILE
-        sobj['session.loginId'] = SessionToken.loginId || process.env?.LOGINID
-        sobj['session.orgGrpName'] = SessionToken?.orgGrpName || process.env?.ORGGRPNAME
-        sobj['session.orgName'] = SessionToken?.orgName || process.env?.ORGNAME
-        sobj['session.roleGrpName'] = SessionToken?.roleGrpName || process.env?.ROLEGRPNAME
-        sobj['session.roleName'] = SessionToken?.roleName || process.env?.ROLENAME
-        sobj['session.psGrpName'] = SessionToken?.psGrpName || process.env?.PSGRPNAME
-        sobj['session.psName'] = SessionToken?.psName || process.env?.PSNAME
-        sobj['session.trs_process_id'] = upId
-        sobj['session.userCode'] = SessionToken?.userCode
-        sobj['session.subOrgGrpCode'] = SessionToken?.subOrgGrpCode || process.env?.SUBORGGRPCODE
-        sobj['session.subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME
-        sobj['session.subOrgCode'] = SessionToken?.subOrgCode || process.env?.SUBORGCODE
-        sobj['session.subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME 
-
-        SessionInfo['loginId'] = SessionToken?.loginId || process.env?.LOGINID || '';
-        SessionInfo['accessProfile'] = SessionToken?.selectedAccessProfile || process.env?.ACCESSPROFILE || '';
-        SessionInfo['orgGrpName'] = SessionToken?.orgGrpName || process.env?.ORGGRPNAME || '';
-        SessionInfo['orgName'] = SessionToken?.orgName || process.env?.ORGNAME || '';
-        SessionInfo['roleGrpName'] = SessionToken?.roleGrpName || process.env?.ROLEGRPNAME || '';
-        SessionInfo['roleName'] = SessionToken?.roleName || process.env?.ROLENAME || '';
-        SessionInfo['psGrpName'] = SessionToken?.psGrpName || process.env?.PSGRPNAME || '';
-        SessionInfo['psName'] = SessionToken?.psName || process.env?.PSNAME || '';
-        SessionInfo['userCode'] = SessionToken?.userCode || ''
-        SessionInfo['subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME || '';
-        SessionInfo['subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME || '';
-
-        return {sobj,SessionInfo,SessionToken}
-    } catch (error) {
-    throw error
-    }
     }
 
     async assign(apiResult, ifoObj, codeObj, inputparam, nodeName, mapObj,) {
@@ -6861,7 +6821,7 @@ export class DynamicFlowService {
             let childInsertArr = []
             let srcIdArr = []
             let mapObj, tempQryVal, targetVal, staticRemove, textobj
-
+            if(currentNodeEdge?.length>0){    
             for (let s = 0; s < currentNodeEdge.length; s++) {
                 let source = currentNodeEdge[s].source
                 let sourceHandle = currentNodeEdge[s].sourceHandle
@@ -7460,7 +7420,7 @@ export class DynamicFlowService {
                     childInsertArr.push(mapObj);
                 }
             }
-
+            }
             return { childInsertArr, tempQryVal, textobj }
         } catch (error) {
             console.log('Error', error);        
@@ -7519,7 +7479,9 @@ export class DynamicFlowService {
                 }
 
                 return currentNodeEdge
-            }
+            }else
+                return []
+            
         } catch (error) {
             throw error
         }

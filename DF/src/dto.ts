@@ -153,6 +153,7 @@ export class readAPIDTO {
       schedulerStatus?:string
       parentUpId?:string
       ssKey?:string
+      controllerName?:string
     }
   
     export class pageDto { 
@@ -169,6 +170,53 @@ export class readAPIDTO {
       method?:string
       filterData?:string   
   }
+
+    export class ProcessLogEntryDto {
+  @ApiProperty({ example: 'make_payment', description: 'Name of the process node' })
+  nodeName: string;
+
+  @ApiProperty({ example: 'RequestInitiated', description: 'Event triggered at this node' })
+  event: string;
+
+  @ApiProperty({ example: 'Success', description: 'Execution status of the node', enum: ['Success', 'Failed'] })
+  status: string;
+
+  @ApiProperty({ example: '2026-03-30 13:31:11:883', description: 'Timestamp when the node was executed' })
+  DateAndTime: string;
+}
+
+export class ProcessLogResponseDto {
+  @ApiProperty({ type: [ProcessLogEntryDto], description: 'Filtered list of process log entries' })
+  data: ProcessLogEntryDto[];
+}
+
+export class RawProcessLogInputDto {
+  @ApiProperty({
+    description: 'Raw process log payload from the upstream API (full AFSK structure)',
+    example: {
+      data: [
+        {
+          CK: 'CT010',
+          AFSK: {
+            d757p7ra1bjg008yerhg: [
+              {
+                sessionInfo: { user: 'Haritha' },
+                processInfo: {
+                  nodeName: 'make_payment',
+                  event: 'RequestInitiated',
+                  status: 'Success',
+                },
+                DateAndTime: '2026-03-30 13:31:11:883',
+              },
+            ],
+          },
+        },
+      ],
+    },
+  })
+  data: any[];
+}
+
   export class dataGet { 
     @IsNotEmpty()
     @IsString()

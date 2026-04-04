@@ -145,7 +145,7 @@ export class CommonService{
   async onModuleInit() {
    //const collection = client.db("UploadFile")
     const collection = await getDb()
-    this.bucket = new GridFSBucket(collection, { bucketName: 'CT010/I001/ITAX/v1' });
+    this.bucket = new GridFSBucket(collection, { bucketName: 'CI001/AG001/A001/v1' });
   }
   private readonly logger = new Logger(CommonService.name) 
 
@@ -814,90 +814,52 @@ export class CommonService{
       .then((res) => this.responseData(res.status, res.data).then((res) => res))
       .catch((err) => {throw err});  
     } 
+
+        async extractInputFields(rule) {
+               let fieldarr = [];
+
+           if (rule?.nodes?.length) {
+         for (let node of rule.nodes) {
+         let inputs = node?.content?.inputs;
+
+            if (inputs?.length) {
+            for (let input of inputs) {
+              if (input.field) {
+             fieldarr.push(input.field);
+            }
+           }
+         }
+       }
+      }
+
+     return fieldarr;
+     }
     
     
-    async getRuleCodeMapper(currentNode, inputparam,processedKey,fabric ,SessionInfo ){
+       async getRuleCodeMapper(currentNode, inputparam,processedKey,fabric ,SessionInfo ){
+       
       try {       
         let zenresult
         var ResultObj = {}
         let fieldarr = []
         let rule = currentNode?.rule
         let customCode = currentNode?.code   
-        //console.log("SessionInfo",SessionInfo);
-      
         if (customCode ) {
           var customcoderesult = await this.codeService.customCode(processedKey, customCode, inputparam,fabric,SessionInfo)
-          console.log('customcoderesult',customcoderesult); 
+          // console.log("customcoderesult",customcoderesult);
+          
           if(customcoderesult)
           await this.redisService.setJsonData(processedKey + ':NPV:' +currentNode.nodeName + '.PRO', JSON.stringify(customcoderesult), process.env.CLIENTCODE, 'response',);       
         }    
 
          if(rule && Object.keys(rule).length > 0){
-          var nodes = rule.nodes     
+          var nodes = rule.nodes             
           if(nodes && nodes.length > 0){
-            for(var c=0;c < nodes.length;c++){
-              var content = nodes[c].content
-              if(content){
-                let inputs = content.inputs
-                if(inputs?.length > 0){
-                  for(let i=0;i < inputs.length;i++){
-                    fieldarr.push(content.inputs[i].field)
-                  }
-                }                
-                if(fieldarr?.length == 0)
-                  throw 'Field not found in rule'
-              }            
-            }           
             var gparamreq = {}; 
              let afpVal,data,sarr = []
-            for(let i=0;i < fieldarr.length;i++){ 
-              // let connectedNodeName = fieldarr[i].split('.')[0]
-              // let connectedField = fieldarr[i].split('.')[1]
-              let field = fieldarr[i].split('.')
-              let connectedNodeName = field[0]
-              field.shift()            
-              let connectedField = field.join('.')
-              
-              if(!connectedField || !connectedNodeName)
-                throw 'connectedField/ connectedNodeName not found in rule'
-
-              if(connectedNodeName == 'session'){
-                if(SessionInfo[connectedField]){
-                  afpVal = SessionInfo                  
-                }
-                data = await this.getNestedValue(afpVal, connectedField)
-              } else {
-                afpVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.response',process.env.CLIENTCODE))
-                connectedField = connectedField.toLowerCase()    
-                
-                afpVal = await this.keysToLowerCaseOnly(afpVal)
-               
-              if(afpVal && Array.isArray(afpVal) && afpVal.length > 1 || typeof afpVal == 'string'){               
-                var codeVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.code',process.env.CLIENTCODE))
-                var ifoVal = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + ':NPV:'+connectedNodeName+'.PRO','.ifo',process.env.CLIENTCODE))
-               if(codeVal[connectedField]){
-                 data = await this.getNestedValue(codeVal, connectedField) 
-              }
-              else if(ifoVal[connectedField])
-                  data = await this.getNestedValue(ifoVal, connectedField) 
-              else
-               throw 'Array of records found in Decision Node'
-              }else
-                data = await this.getNestedValue(afpVal, connectedField)                 
-              }
-              
-                if(data)               
-                  await this.setNestedValue(gparamreq, fieldarr[i], data) 
-                
-                // else{
-                //   throw `${fieldarr[i]} not found in given request to take decision`                    
-                // }  
-              // }
-              } 
-              // console.log('gparamreq',gparamreq);
-              
-              var goruleres = await this.ruleEngine.goRule(rule, gparamreq)                  
-              if(Object.keys(goruleres.result).length > 0){                   
+                gparamreq = { session: SessionInfo, ...inputparam }
+              var goruleres = await this.ruleEngine.goRule(rule,gparamreq)
+              if(Object.keys(goruleres.result).length > 0){
                 //zenresult = goruleres.result.output
                  zenresult = goruleres.result
               }else{
@@ -918,63 +880,36 @@ export class CommonService{
       }          
     }
 
-    async PfRuleExtract(rule:any,SessionInfo,HtInputParam){
-      let fieldarr = []
+    async PfRuleExtract(rule:any,SessionInfo,HtInputParam,controllerName){
+      let gparamreq = {}  
        if(rule && Object.keys(rule).length > 0){
           var nodes = rule.nodes     
           if(nodes && nodes.length > 0){
+            if(controllerName){
+              HtInputParam = Object.assign(HtInputParam,{controllerName:controllerName})
+            } 
             for(var c=0;c < nodes.length;c++){
               var content = nodes[c]?.content
               if(content){
                 let inputs = content.inputs
                 if(inputs?.length > 0){
-                  for(let i=0;i < inputs.length;i++){
-                    if(content.inputs[i]?.field)
-                      fieldarr.push(content.inputs[i]?.field)
+                  for(let i=0;i < inputs.length;i++){                    
+                    if(inputs[i]?.field){
+                      gparamreq = { session: SessionInfo, ...HtInputParam }
+                    }else{
+                      gparamreq = HtInputParam
+                    }                   
                   }
                 }      
               }            
-            }   
-            
-            let afpVal:any,data,gparamreq = {}
-            
-            if(fieldarr?.length>0){
-              for(let i=0;i < fieldarr.length;i++){ 
-               
-                let field = fieldarr[i].split('.')
-                let connectedNodeName = field[0]                
-  
-                if(connectedNodeName == 'session'){
-                            
-                  let connectedField = field.join('.')            
-                
-                  if(!connectedField || !connectedNodeName)
-                    throw 'connectedField/ connectedNodeName not found in rule'
-                  
-                  if(SessionInfo[connectedField]){
-                    afpVal = SessionInfo                  
-                  }
-                  data = await this.getNestedValue(afpVal, connectedField)
-                }else if(connectedNodeName && HtInputParam[connectedNodeName]){
-                  data = await this.getNestedValue(HtInputParam, connectedNodeName) 
-                }           
-                
-                if(data)               
-                  await this.setNestedValue(gparamreq, fieldarr[i], data)                 
-                  
-              } 
-            }else{
-              gparamreq = HtInputParam
-            }
-             
-            var goruleres = await this.ruleEngine.goRule(rule, gparamreq)   
-            // console.log('goruleres',goruleres);               
+            }  
+
+            // console.log('gparamreq',gparamreq);
+
+            var goruleres = await this.ruleEngine.goRule(rule, gparamreq) 
             if(Object.keys(goruleres.result).length > 0){  
               return goruleres.result
-            }
-            // else{
-              // throw `Rule doesn't matched with this value ${data}`
-            // }                         
+            }                                   
           }     
         } 
     }
@@ -1460,8 +1395,8 @@ export class CommonService{
         
         if(typeof key != 'string')
         key = 'commonError'
-        tenant=tenant || "CT010"
-        app=app ||  "ITAX"
+        tenant=tenant || "CI001"
+        app=app ||  "A001"
         await this.redisService.setStreamData(tenant+'-'+app+'-TSL',key,JSON.stringify(logs))    
         return logs
 
@@ -2227,99 +2162,139 @@ export class CommonService{
     }
   } 
 
-  async appendWhereClause(baseQuery: string, condition: string) {
-  const query = baseQuery.trim();
-  const lower = query.toLowerCase();
+  async sessionDecode(token,upId){
+    try {
+        let sobj = {},SessionInfo = {}
+        let SessionToken = await this.jwtService.decode(token, { json: true });
+        sobj['session.orgGrpCode'] = SessionToken.orgGrpCode || process.env?.ORGGRPCODE
+        sobj['session.orgCode'] = SessionToken.orgCode || process.env?.ORGCODE
+        sobj['session.roleGrpCode'] = SessionToken.roleGrpCode || process.env?.ROLEGRPCODE
+        sobj['session.roleCode'] = SessionToken.roleCode || process.env?.ROLECODE
+        sobj['session.psGrpCode'] = SessionToken.psGrpCode || process.env?.PSGRPCODE
+        sobj['session.psCode'] = SessionToken.psCode || process.env?.PSCODE
+        sobj['session.selectedAccessProfile'] = SessionToken.selectedAccessProfile || process.env?.ACCESSPROFILE
+        sobj['session.loginId'] = SessionToken.loginId || process.env?.LOGINID
+        sobj['session.orgGrpName'] = SessionToken?.orgGrpName || process.env?.ORGGRPNAME
+        sobj['session.orgName'] = SessionToken?.orgName || process.env?.ORGNAME
+        sobj['session.roleGrpName'] = SessionToken?.roleGrpName || process.env?.ROLEGRPNAME
+        sobj['session.roleName'] = SessionToken?.roleName || process.env?.ROLENAME
+        sobj['session.psGrpName'] = SessionToken?.psGrpName || process.env?.PSGRPNAME
+        sobj['session.psName'] = SessionToken?.psName || process.env?.PSNAME
+        sobj['session.trs_process_id'] = upId
+        sobj['session.userCode'] = SessionToken?.userCode
+        sobj['session.subOrgGrpCode'] = SessionToken?.subOrgGrpCode || process.env?.SUBORGGRPCODE
+        sobj['session.subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME
+        sobj['session.subOrgCode'] = SessionToken?.subOrgCode || process.env?.SUBORGCODE
+        sobj['session.subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME
 
-  // ✅ Detect outer query pattern: ") alias"
-  const outerMatch = query.match(
-     /(\)\s+\w+)((\s+(?:LIMIT|ORDER\s+BY|GROUP\s+BY|OFFSET)\b[\s\S]*)?)$/i,
-   );
+        SessionInfo['loginId'] = SessionToken?.loginId || process.env?.LOGINID || '';
+        SessionInfo['accessProfile'] = SessionToken?.selectedAccessProfile || process.env?.ACCESSPROFILE || '';
+        SessionInfo['orgGrpName'] = SessionToken?.orgGrpName || process.env?.ORGGRPNAME || '';
+        SessionInfo['orgName'] = SessionToken?.orgName || process.env?.ORGNAME || '';
+        SessionInfo['roleGrpName'] = SessionToken?.roleGrpName || process.env?.ROLEGRPNAME || '';
+        SessionInfo['roleName'] = SessionToken?.roleName || process.env?.ROLENAME || '';
+        SessionInfo['psGrpName'] = SessionToken?.psGrpName || process.env?.PSGRPNAME || '';
+        SessionInfo['psName'] = SessionToken?.psName || process.env?.PSNAME || '';
+        SessionInfo['userCode'] = SessionToken?.userCode || ''
+        SessionInfo['subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME || '';
+        SessionInfo['subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME || '';
+        SessionInfo['orgGrpCode'] = SessionToken.orgGrpCode || process.env?.ORGGRPCODE
+        SessionInfo['orgCode'] = SessionToken.orgCode || process.env?.ORGCODE
+        SessionInfo['roleGrpCode'] = SessionToken.roleGrpCode || process.env?.ROLEGRPCODE
+        SessionInfo['roleCode'] = SessionToken.roleCode || process.env?.ROLECODE
+        SessionInfo['psGrpCode'] = SessionToken.psGrpCode || process.env?.PSGRPCODE
+        SessionInfo['psCode'] = SessionToken.psCode || process.env?.PSCODE
+        
+        return {sobj,SessionInfo,SessionToken}
+    } catch (error) {
+    throw error
+    }
+  }
 
-  // 👉 CASE 1: Query has subquery → apply WHERE outside
-  if (outerMatch) {
-    const aliasEnd      = outerMatch.index! + outerMatch[1].length; // right after ") alias"
-    const trailingClause = outerMatch[2] || '';                      // " LIMIT 10 OFFSET 0" or ""
-    const beforeTrailing = query.slice(0, aliasEnd);                 // everything up to and including ") alias"
-    const betweenPart    = query.slice(aliasEnd, query.length - trailingClause.length); // any existing WHERE between alias and trailing
-
-    const hasOuterWhere = /\bwhere\b/i.test(betweenPart);
-
-    if (hasOuterWhere) {
-      return `${beforeTrailing}${betweenPart} AND ${condition}${trailingClause}`;
+ async appendWhereClause(baseQuery: string, condition: string,) {
+    const query = baseQuery.trim();
+    const lower = query.toLowerCase();
+    const keywords = [' order by ', ' group by ', ' limit '];
+    let firstKeywordIndex = -1;
+    let keywordFound = '';
+    for (const keyword of keywords) {
+      const index = lower.lastIndexOf(keyword);
+      if (index !== -1 && (firstKeywordIndex === -1 || index < firstKeywordIndex)) {
+        firstKeywordIndex = index;
+        keywordFound = keyword;
+      }
+    }
+    let modifiedQuery
+    const mainQuery =
+      firstKeywordIndex !== -1 ? query.substring(0, firstKeywordIndex) : query;
+    const trailingQuery =
+      firstKeywordIndex !== -1 ? query.substring(firstKeywordIndex) : '';
+    if (mainQuery.toLowerCase().includes(' where ')) {
+      let str = mainQuery.toLowerCase().split('where')
+      let flg: any = str.includes(')') ? true : false
+      modifiedQuery = flg == false ? `${mainQuery} AND ${condition}`
+        : `${mainQuery} WHERE ${condition}`;
     } else {
-      return `${beforeTrailing} WHERE ${condition}${trailingClause}`;
+      modifiedQuery = `${mainQuery} WHERE ${condition}`;
     }
+
+    return `${modifiedQuery}${trailingQuery}`;
   }
 
-  // 👉 CASE 2: Simple query (your original logic, cleaned)
-  const keywords = [' order by ', ' group by ', ' limit '];
-  let firstKeywordIndex = -1;
+//   async appendWhereClause(baseQuery: string, condition: string) {
+//   const query = baseQuery.trim();
+//   const lower = query.toLowerCase();
 
-  for (const keyword of keywords) {
-    const index = lower.lastIndexOf(keyword);
-    if (index !== -1 && (firstKeywordIndex === -1 || index < firstKeywordIndex)) {
-      firstKeywordIndex = index;
-    }
-  }
+//   // ✅ Detect outer query pattern: ") alias"
+//   const outerMatch = query.match(
+//      /(\)\s+\w+)((\s+(?:LIMIT|ORDER\s+BY|GROUP\s+BY|OFFSET)\b[\s\S]*)?)$/i,
+//    );
 
-  const mainQuery =
-    firstKeywordIndex !== -1 ? query.substring(0, firstKeywordIndex) : query;
+//   // 👉 CASE 1: Query has subquery → apply WHERE outside
+//   if (outerMatch) {
+//     const aliasEnd      = outerMatch.index! + outerMatch[1].length; // right after ") alias"
+//     const trailingClause = outerMatch[2] || '';                      // " LIMIT 10 OFFSET 0" or ""
+//     const beforeTrailing = query.slice(0, aliasEnd);                 // everything up to and including ") alias"
+//     const betweenPart    = query.slice(aliasEnd, query.length - trailingClause.length); // any existing WHERE between alias and trailing
 
-  const trailingQuery =
-    firstKeywordIndex !== -1 ? query.substring(firstKeywordIndex) : '';
+//     const hasOuterWhere = /\bwhere\b/i.test(betweenPart);
 
-  const hasWhere = /\bwhere\b/i.test(mainQuery);
+//     if (hasOuterWhere) {
+//       return `${beforeTrailing}${betweenPart} AND ${condition}${trailingClause}`;
+//     } else {
+//       return `${beforeTrailing} WHERE ${condition}${trailingClause}`;
+//     }
+//   }
 
-  let modifiedQuery;
+//   // 👉 CASE 2: Simple query (your original logic, cleaned)
+//   const keywords = [' order by ', ' group by ', ' limit '];
+//   let firstKeywordIndex = -1;
 
-  if (hasWhere) {
-    modifiedQuery = `${mainQuery} AND ${condition}`;
-  } else {
-    modifiedQuery = `${mainQuery} WHERE ${condition}`;
-  }
+//   for (const keyword of keywords) {
+//     const index = lower.lastIndexOf(keyword);
+//     if (index !== -1 && (firstKeywordIndex === -1 || index < firstKeywordIndex)) {
+//       firstKeywordIndex = index;
+//     }
+//   }
 
-  return `${modifiedQuery}${trailingQuery}`;
-}
+//   const mainQuery =
+//     firstKeywordIndex !== -1 ? query.substring(0, firstKeywordIndex) : query;
 
-//  async appendWhereClause(baseQuery: string, condition: string,) {
-  //   const query = baseQuery.trim();
-  //   const lower = query.toLowerCase();
-  //    const closingIndex = query.lastIndexOf(')');
+//   const trailingQuery =
+//     firstKeywordIndex !== -1 ? query.substring(firstKeywordIndex) : '';
 
-  // // If no subquery, fallback to simple logic
-  // if (closingIndex === -1) {
-  //   return this.simpleAppend(query, condition);
-  // }
-  //   const keywords = [' order by ', ' group by ', ' limit '];
-  //   let firstKeywordIndex = -1;
-  //   let keywordFound = '';
-  //   for (const keyword of keywords) {
-  //     const index = lower.lastIndexOf(keyword);
-  //     if (index !== -1 && (firstKeywordIndex === -1 || index < firstKeywordIndex)) {
-  //       firstKeywordIndex = index;
-  //       keywordFound = keyword;
-  //     }
-  //   }
-  //   let modifiedQuery
-  //   const mainQuery =
-  //     firstKeywordIndex !== -1 ? query.substring(0, firstKeywordIndex) : query;
-  //   const trailingQuery =
-  //     firstKeywordIndex !== -1 ? query.substring(firstKeywordIndex) : '';
-  //   if (mainQuery.toLowerCase().includes(' where ')) {
-  //     let str = mainQuery.toLowerCase().split('where')
-  //     let flg: any = str.includes(')') ? true : false
-  //     console.log("flg",flg);
-  //     //console.log("mainQuery",mainQuery);
-  // flg = true
-  //     modifiedQuery = flg == false ? `${mainQuery} AND ${condition}`
-  //       : `${mainQuery} WHERE ${condition}`;
-  //   } else {
-  //     modifiedQuery = `${mainQuery} WHERE ${condition}`;
-  //   }
+//   const hasWhere = /\bwhere\b/i.test(mainQuery);
 
-  //   return `${modifiedQuery}${trailingQuery}`;
-  // }
+//   let modifiedQuery;
+
+//   if (hasWhere) {
+//     modifiedQuery = `${mainQuery} AND ${condition}`;
+//   } else {
+//     modifiedQuery = `${mainQuery} WHERE ${condition}`;
+//   }
+
+//   return `${modifiedQuery}${trailingQuery}`;
+// }
 
   async checkEncryption(nodeInfo) {
     try {
@@ -2412,6 +2387,40 @@ export class CommonService{
       console.log(error);
       throw error
     }
+  }
+
+   async transform(rawInput: any){
+    const result: any[] = [];
+
+    const documents: any[] = rawInput?.data ?? [];
+
+    for (const document of documents) {
+      const afsk: Record<string, any[]> = document?.AFSK ?? {};
+
+      for (const upId of Object.keys(afsk)) {
+        const logEntries: any[] = afsk[upId] ?? [];
+
+        for (const entry of logEntries) {
+          const processInfo = entry?.processInfo;
+
+          // Skip entries that have no processInfo or no nodeName
+          if (!processInfo?.nodeName) continue;
+
+          // Skip the generic "Start" node that carries no business event
+          // Remove the line below if you want to include it
+          if (processInfo.nodeName === 'Start') continue;
+
+          result.push({
+            nodeName: processInfo.nodeName,
+            event: processInfo.event ?? processInfo.status ?? '',
+            status: processInfo.status ?? '',
+            DateAndTime: entry.DateAndTime ?? '',
+          });
+        }
+      }
+    }
+
+    return  result ;
   }
     
 }

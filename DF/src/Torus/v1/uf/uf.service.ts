@@ -1129,11 +1129,18 @@ getConfig(): FusionAuthConfig {
       // ================= SEARCH =================
       if (searchObj && Object.keys(searchObj).length > 0) {
         const searchKeys = Object.keys(searchObj);
-        const searchVals = Object.values(searchObj);
-
+        let searchVals:any = Object.values(searchObj);       
+        searchVals = searchVals?.flat()        
+        // finalData = finalData.filter((item) =>
+        //   searchKeys.every((k, i) => item[k] == searchVals[i]),
+        // );
         finalData = finalData.filter((item) =>
-          searchKeys.every((k, i) => item[k] == searchVals[i]),
-        );
+        Object.entries(searchObj).every(([key, value]) =>
+          Array.isArray(value)
+            ? value.includes(item[key])
+            : item[key] == value
+        )
+      );
       }
 
       // ================= PAGINATION =================
@@ -1259,9 +1266,32 @@ getConfig(): FusionAuthConfig {
             ); */
           }
           /*---------get dfKey end-------------*/
+          let artfactPFRule={}
+          if("rulekey" in UO.mappedData.artifact?.rule && UO.mappedData.artifact?.rule?.rulekey?.length>0){
+            let RuleKey = UO.mappedData.artifact?.rule?.rulekey[0]?.split(':')
+            if(RuleKey?.length == 7){
+              let pfRuleKey = `CK:${RuleKey[0]}:FNGK:${RuleKey[1]}:FNK:${RuleKey[2]}:CATK:${RuleKey[3]}:AFGK:${RuleKey[4]}:AFK:${RuleKey[5]}:AFVK:${RuleKey[6]}`
+              const tempRule: any = await this.commonService.readAPI(
+                  pfRuleKey + ':NDP',
+                  process.env.CLIENTCODE,
+                  token,
+                );
+              if(tempRule!=null && tempRule!=undefined)
+              {
+                Object.keys(tempRule).map((keys:any)=>{
+                  if(tempRule[keys]?.rule)
+                  {
+                     artfactPFRule=tempRule[keys].rule
+                  }
+                })
+              }
+            }
+          }
+ 
           object = {
             action: UO.mappedData.artifact?.action,
             code: UO.mappedData.artifact?.code,
+            artfactPFRule,
             rule: UO.mappedData.artifact?.rule,
             events: UO.mappedData.artifact?.events,
             mapper: UO.mappedData.artifact?.mapper,

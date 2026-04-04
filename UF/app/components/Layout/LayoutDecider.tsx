@@ -41,15 +41,15 @@ const LayoutDecider = ({
   const { borderColor, bgColor } : { borderColor: string; bgColor: string } = useTheme()
   const { brandColor, hoverColor, selectionColor } : { brandColor: string; hoverColor: string; selectionColor: string } = branding;
   const encryptionFlagApp: boolean = false;    
-  const encryptionDpd: string = "CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:I001:AFGK:ITAX:AFK:ITAX_DPD:AFVK:v1";
+  const encryptionDpd: string = "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1";
   const encryptionMethod: string = "";
-  const logo: string = "torus/9.1/CT010/resources/images/Logo_resize.png"
-  const appLogo: string = "torus/9.1/CT010/resources/images/DTB_Resize_logo.png"
-  const appName: string = "ITAX"
+  const logo: string = "torus/9.1/CI001/resources/images/images.jfif"
+  const appLogo: string = ""
+  const appName: string = "application1"
   const toast: Function = useInfoMsg()
   const [loading, setLoading] = useState<boolean>(true)
   const [updatedNavData, setUpdatedNavData] = useState<MenuItem[]>([])
-  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT010:AFGK:I001:AFK:ITAX:AFVK:v1:bldc"
+  const aKey :string = "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc"
   const [rawNavData, setRawNavData] = useState<MenuItem[] | null>(null);
   const navData: MenuItem[] = [
   {
@@ -77,40 +77,16 @@ const LayoutDecider = ({
     "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
   },
   {
-    "menuGroupLabel": "Transaction",
+    "menuGroupLabel": "test",
     "screenDetails": [
       {
-        "name": "transaction",
-        "key": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_KEDTB_Main_Screen:AFVK:v1",
-        "allowedAccessProfile": [
-          "Branch Officer",
-          "Branch Manager",
-          "Credit Approver",
-          "System Administrator"
-        ],
+        "name": "test",
+        "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1",
+        "allowedAccessProfile": [],
         "static": false
       }
     ],
     "items": []
-  },
-  {
-    "menuGroupLabel": "Dashboard",
-    "screenDetails": [
-      {
-        "name": "dashboard",
-        "key": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:I001:AFGK:ITAX:AFK:ITAX_Dashboard:AFVK:v1",
-        "allowedAccessProfile": [
-          "Branch Officer",
-          "Branch Manager",
-          "Credit Approver",
-          "System Administrator"
-        ],
-        "static": false,
-        "icon": "/torus/9.1/resources/icons/clipboard-list-svgrepo-com.svg"
-      }
-    ],
-    "items": [],
-    "icon": "/torus/9.1/resources/icons/clipboard-list-svgrepo-com.svg"
   }
 ]
   const token:string = getCookie('token'); 
@@ -387,22 +363,15 @@ const LayoutDecider = ({
     'gridRow'?: string
   }[] =[
   {
-    "name": "app logo",
-    "gridColumn": "1/2"
-  },
-  {
     "name": "menu items",
-    "gridColumn": "2/8",
     "gridRow": "1/6"
   },
   {
     "name": "opr matrix",
-    "gridColumn": "9/12",
-    "gridRow": "6/9"
+    "gridRow": "9/12"
   },
   {
     "name": "profile",
-    "gridColumn": "12/13",
     "gridRow": "12/13"
   }
 ]

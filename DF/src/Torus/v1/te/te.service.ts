@@ -27,7 +27,7 @@ export class TeService{
 
     const page = pfdto.page;
     const count = pfdto.count;
-    let nodeInfo,processedKey,currentFabric, failureQueue;
+    let nodeInfo,processedKey,currentFabric, failureQueue,srcStatus;
 
     // OPTIMIZATION: Create cache for this execution
     const executionCache = new Map<string, any>();
@@ -94,7 +94,7 @@ export class TeService{
 
        if (!poNode || poNode.length == 0)
          throw new CustomException('Nodes not found', 404);
-    
+       
        //  Check RollBack enabled
        await this.CommonService.checkRollBack(Ndp,client,'check'); 
        
@@ -146,6 +146,34 @@ export class TeService{
        }
        this.logger.log(pfdto.upId);
       
+      //Artifact RuleCodeMapper
+      
+      let artifactRule = poJson?.mappedData?.artifact?.rule?.rulekey;
+      let {sobj,SessionInfo} = await this.CommonService.sessionDecode(pfdto.token, pfdto.upId);
+      let ifoObj = {}
+      if(artifactRule?.length>0){
+        for(let item of artifactRule){
+          let RuleKey = item.split(':')
+          if(RuleKey.length == 7){
+            let fullRuleKey = `CK:${RuleKey[0]}:FNGK:${RuleKey[1]}:FNK:${RuleKey[2]}:CATK:${RuleKey[3]}:AFGK:${RuleKey[4]}:AFK:${RuleKey[5]}:AFVK:${RuleKey[6]}`
+          
+            let pfRuleValue = await this.redisService.getJsonData(fullRuleKey+':NDP',process.env.CLIENTCODE)    
+            if(pfRuleValue){                                   
+                pfRuleValue = JSON.parse(pfRuleValue)
+                let rule = (Object.values(pfRuleValue)[0])['rule']
+  
+                let RCMresult:any = await this.CommonService.PfRuleExtract(rule,SessionInfo,pfdto.data,pfdto.controllerName);
+                console.log('RCMresult',RCMresult);
+                  
+                if (RCMresult && Object.keys(RCMresult).length > 0) {
+                  pfdto.data = (Object.assign(pfdto.data,RCMresult))
+                  ifoObj = Object.assign(ifoObj,RCMresult) 
+                }
+            }
+          }                         
+        }
+      }
+
        let eventResponse;
        for (var i = 0; i < poNode.length; i++) {
         nodeInfo = poNode[i];
@@ -153,8 +181,7 @@ export class TeService{
         pfdto.nodeType = pfdto.nodeType?pfdto.nodeType:poNode[i].nodeType
         pfdto.nodeName = pfdto.nodeName?pfdto.nodeName:poNode[i].nodeName         
 
-        let srcQueue;
-        let srcStatus;
+        let srcQueue;        
         let targetQueue;
         let staticQueue = currentFabric == 'DF-DFD' ? 'TDH' : 'TPH';
 
@@ -834,12 +861,12 @@ export class TeService{
        if (pfdto.upId) {
          if (error.statusCode) {
            await this.CommonService.getTPL(processedKey, pfdto.upId, nodeInfo, 'Failed', failureQueue,
-             pfdto.token, currentFabric, '', pfdto.data, error);
+             pfdto.token, currentFabric, srcStatus, pfdto.data, error);
            throw new CustomException(error?.message, error.statusCode);
          }
          else {
            await this.CommonService.getTPL(processedKey, pfdto.upId, nodeInfo, 'Failed', failureQueue,
-             pfdto.token, currentFabric, '', pfdto.data, error);
+             pfdto.token, currentFabric, srcStatus, pfdto.data, error);
            throw new CustomException(error.message ? error.message : error.toString(), 500);
          }
 
@@ -1118,6 +1145,7 @@ export class TeService{
         pfdto.lock = input.lockDetails      
         pfdto.childTable = input.childTable 
         pfdto.ssKey =  input.ssKey   
+        pfdto.controllerName =  input.controllerName  
         formdata =  await this.EventEmitter(pfdto)              
       return formdata
   }catch(err){    

@@ -46,6 +46,7 @@ interface TextInputProps {
   require?: boolean
   onChange?: React.ChangeEventHandler<HTMLInputElement> | undefined
   onBlur?: React.FocusEventHandler<HTMLInputElement> | undefined
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement> | undefined
   events?: ComponentEvents[]
   className?: string
   fillContainer?: boolean
@@ -79,6 +80,7 @@ export const TextInput: React.FC<TextInputProps> = ({
   require = false,
   onChange,
   onBlur = () => {},
+  onKeyDown,
   events,
   className = '',
   fillContainer = true,
@@ -371,6 +373,7 @@ export const TextInput: React.FC<TextInputProps> = ({
           name={name}
           value={numberFormat && numberFormat !== 'none' ? formatNumber(internalValue) : internalValue}
           onChange={handleChange}
+          onKeyDown={onKeyDown}
           placeholder={placeholder}
           disabled={disabled}
           readOnly={readOnly}

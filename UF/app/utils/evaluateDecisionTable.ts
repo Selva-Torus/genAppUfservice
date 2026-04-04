@@ -208,6 +208,36 @@ class DecisionTableEvaluator {
   }
 
   /**
+   * Resolve a dot-notation path like "usertable.name" against an object.
+   * Falls back to treating the whole field as a flat key if path traversal yields undefined.
+   */
+  private getValueByPath(obj: Record<string, unknown>, path: string): unknown {
+    if (!path.includes(".")) return obj[path];
+    const parts = path.split(".");
+    let current: unknown = obj;
+    for (const part of parts) {
+      if (current === null || current === undefined || typeof current !== "object") return undefined;
+      current = (current as Record<string, unknown>)[part];
+    }
+    return current;
+  }
+
+  /**
+   * Deep equality check for plain objects/arrays/primitives
+   */
+  private deepEqual(a: unknown, b: unknown): boolean {
+    if (a === b) return true;
+    if (a === null || b === null || typeof a !== "object" || typeof b !== "object") return false;
+    if (Array.isArray(a) !== Array.isArray(b)) return false;
+    const keysA = Object.keys(a as object);
+    const keysB = Object.keys(b as object);
+    if (keysA.length !== keysB.length) return false;
+    return keysA.every((key) =>
+      this.deepEqual((a as Record<string, unknown>)[key], (b as Record<string, unknown>)[key])
+    );
+  }
+
+  /**
    * Check if a single rule matches the input data
    */
   private doesRuleMatch(
@@ -225,16 +255,31 @@ class DecisionTableEvaluator {
         const varName = input.field.substring(1);
         dataValue = this.variableContext[varName];
       } else {
-        dataValue = data[input.field];
+        dataValue = this.getValueByPath(data as Record<string, unknown>, input.field);
         // Fall back to variableContext if field not found in inputData
         if (dataValue === undefined) {
-          dataValue = this.variableContext[input.field];
+          dataValue = this.getValueByPath(this.variableContext, input.field);
         }
       }
 
       // Empty rule value = wildcard (matches anything)
       if (ruleValue === undefined || ruleValue === "" || ruleValue === null) {
         continue;
+      }
+
+      // Handle JSON object condition: deep-compare rule object against data value
+      if (typeof ruleValue === "string" && ruleValue.trim().startsWith("{")) {
+        try {
+          const parsedRuleObj = JSON.parse(ruleValue);
+          if (typeof parsedRuleObj === "object" && !Array.isArray(parsedRuleObj)) {
+            if (!this.deepEqual(parsedRuleObj, dataValue)) {
+              return false;
+            }
+            continue;
+          }
+        } catch {
+          // Not valid JSON object — fall through to standard comparison
+        }
       }
 
       const parsedRuleValue = this.parseRuleValue(ruleValue);
@@ -460,6 +505,154 @@ inputData: any,
   return true
 }
 
+function deepMerge(target:any, source:any) {
+  const result = { ...target };
+  for (const key of Object.keys(source)) {
+    if (
+      source[key] &&
+      typeof source[key] === "object" &&
+      !Array.isArray(source[key]) &&
+      target[key] &&
+      typeof target[key] === "object"
+    ) {
+      result[key] = deepMerge(target[key], source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  return result;
+}
+
+// =======getAftfactLevelRule========
+export async function getAftfactLevelRule(rule: any, sessionData: any = {},mergeObj:any={}) {
+  // Support combined format: { rule: { nodes, edges, ... }, sessionData: { ... } }
+  let actualRule = rule;
+  let actualSessionData = sessionData;
+  if (rule && typeof rule === "object" && rule.rule && rule.sessionData) {
+    actualRule = rule.rule;
+    actualSessionData = rule.sessionData;
+  }
+  if (!actualRule?.nodes) return {};
+  // Force collect hit policy to get all matching rules
+  const collectRuleConfig: RuleNode[] = actualRule.nodes.map((node: RuleNode) => {
+    if (node.type === "decisionTableNode") {
+      return {
+        ...node,
+        content: { ...(node as DecisionTableNode).content, hitPolicy: "collect" as const },
+      };
+    }
+    return node;
+  });
+
+  // Collect all [groupName, controlName] pairs referenced in any rule row
+  // (regardless of whether the condition matches) to determine itsHaveArtifact
+  const artifactControlSet = new Set<string>();
+  for (const node of actualRule.nodes) {
+    if (node.type === "decisionTableNode") {
+      const { outputs, rules: tableRules } = (node as DecisionTableNode).content;
+      const groupNameOutput = outputs.find((o: OutputDefinition) => o.field === "groupName");
+      const controlNameOutput = outputs.find((o: OutputDefinition) => o.field === "controlName");
+      if (groupNameOutput && controlNameOutput) {
+        for (const tableRule of tableRules) {
+          const rawGroup = tableRule[groupNameOutput.id];
+          const rawControl = tableRule[controlNameOutput.id];
+          if (rawGroup && rawControl) {
+            // Strip surrounding quotes (values are stored as `"value"`)
+            const group = rawGroup.replace(/^"|"$/g, "");
+            const control = rawControl.replace(/^"|"$/g, "");
+            if (group && control) {
+              artifactControlSet.add(`${group}::${control}`);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  const evaluator = new DecisionTableEvaluator(collectRuleConfig, actualSessionData);
+  const result = evaluator.evaluate(actualSessionData);
+  const allResults = Array.isArray(result) ? result : [result];
+  // Build nested: { [groupName]: { [controlName]: { show, order? } } }
+  const output: Record<string, Record<string, { show: boolean; order?: number }>> = {};
+
+  for (const r of allResults) {
+    if (Object.keys(r).length === 0) continue;
+
+    const groupName = r["groupName"] as string;
+    const controlName = r["controlName"] as string;
+    const showRaw = r["show"] as string;
+    const orderRaw = r["order"] as string | undefined;
+
+    if (!groupName || !controlName) continue;
+
+    const show = String(showRaw).toLowerCase() === "true";
+    const orderNum = Number(orderRaw);
+    const entry: { show: boolean; order: number; from:string } = { show, order: isNaN(orderNum) ? 0 : orderNum,from:"artifactrule" };
+
+    if (!output[groupName]) output[groupName] = {};
+    output[groupName][controlName] = entry;
+  }
+
+  const merged = deepMerge(mergeObj, output);
+
+  // Annotate every control with itsHaveArtifact:
+  // true if the control is referenced in any rule row definition, false otherwise
+  for (const groupName of Object.keys(merged)) {
+    const group = merged[groupName];
+    if (group && typeof group === "object") {
+      for (const controlName of Object.keys(group)) {
+        group[controlName].itsHaveArtifact =
+          artifactControlSet.has(`${groupName}::${controlName}`);
+      }
+    }
+  }
+
+  return merged;
+}
+
+// ============ group dynamic actions ============
+export function evaluateDecisionForDynamicActions(
+  ruleConfig: RuleNode[],
+  inputData: InputData
+): Record<string, unknown>[] {
+  if (!ruleConfig || ruleConfig.length === 0) {
+    return [];
+  }
+
+  // Force collect hit policy to get all matching rules
+  const collectRuleConfig = ruleConfig.map((node) => {
+    if (node.type === "decisionTableNode") {
+      return { ...node, content: { ...node.content, hitPolicy: "collect" as const } };
+    }
+    return node;
+  });
+
+  const evaluator = new DecisionTableEvaluator(
+    collectRuleConfig,
+    inputData as VariableContext
+  );
+
+  const result = evaluator.evaluate(inputData);
+  const allResults = Array.isArray(result) ? result : [result];
+  // Parse any JSON-string output values and filter out empty results
+  return allResults
+    .filter((r) => Object.keys(r).length > 0)
+    .map((singleResult) => {
+      const parsedResult: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(singleResult)) {
+        if (typeof value === "string") {
+          try {
+            parsedResult[key] = JSON.parse(value);
+          } catch {
+            parsedResult[key] = value;
+          }
+        } else {
+          parsedResult[key] = value;
+        }
+      }
+      return parsedResult;
+    });
+}
 
 export default function evaluateDecisionTable(
   ruleConfig: RuleNode[],
@@ -484,7 +677,7 @@ export function evaluateDecisionTableBoolean(
     return true
   }
   const evaluator = new DecisionTableEvaluator(ruleConfig, variableContext);
-  return evaluator.evaluateBoolean(inputData);
+  return evaluator.evaluateBooleanResult(inputData);
 }
 
 /**

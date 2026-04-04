@@ -2,10 +2,11 @@ import { Injectable, Logger } from "@nestjs/common";
 import { RedisService } from "./redisService";
 import { CommonService } from "./common.Service";
 import { CustomException } from "./customException";
+import { JwtService } from "@nestjs/jwt";
 
 @Injectable()
 export class SecurityService {
-    constructor(private redisService: RedisService, private commonService: CommonService){}
+    constructor(private redisService: RedisService, private commonService: CommonService,private readonly jwtService:JwtService){}
     private readonly logger = new Logger(SecurityService.name);
     
     async getSecurityTemplate(key,token){ 
@@ -22,22 +23,22 @@ export class SecurityService {
             if (security) {
               if (security.accessProfile.length > 0) {
                 // let tokenDecode = await this.commonService.MyAccountForClient(token)
-                let tokenFlg = 0
-                let tenant = await this.commonService.splitcommonkey(key, 'CK')
-                let appgrp = await this.commonService.splitcommonkey(key, 'CATK')
-                let app = await this.commonService.splitcommonkey(key, 'AFGK')
-                let profile = JSON.parse(await this.redisService.getJsonData(`CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${appgrp}:AFK:${app}:AFVK:v1:securityTemplate`, process.env.CLIENTCODE))
-                if (profile?.length > 0) {
-                  for (let a = 0; a < profile.length; a++) {
-                    securityProfile.push(profile[a].accessProfile)
-                  }
-                }else{
-                 throw new CustomException(`CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${appgrp}:AFK:${app}:AFVK:v1:securityTemplate does not exist`, 404)
+                let tokenDecode = this.jwtService.decode(token);
+                let tokenFlg = 0                
+                // let profile = JSON.parse(await this.redisService.getJsonData(`CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${appgrp}:AFK:${app}:AFVK:v1:securityTemplates`, process.env.CLIENTCODE))                
+                // if (profile?.length > 0) {
+                //   for (let a = 0; a < profile.length; a++) {
+                //     securityProfile.push(profile[a].accessProfile)
+                //   }
+                // }else{
+                //  throw new CustomException(`CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${appgrp}:AFK:${app}:AFVK:v1:securityTemplate does not exist`, 404)
+                // }
+                if(tokenDecode?.selectedAccessProfile){
+                  securityProfile.push(tokenDecode.selectedAccessProfile)
                 }
                 for (var i = 0; i < security.accessProfile.length; i++) {
-                  var accessProfile = security.accessProfile[i]
-                  if (securityProfile) {
-                    if (securityProfile.includes(accessProfile.accessProfile)) {
+                  var accessProfile = security.accessProfile[i]                  
+                    if (securityProfile?.includes(accessProfile.accessProfile)) {
                       if (accessProfile.security.artifact.resource) {
                         if (accessProfile.security.artifact.resource == artifact) {
                           if (accessProfile.security.artifact.SIFlag.selectedValue == 'AA' || accessProfile.security.artifact.SIFlag.selectedValue == '') {
@@ -59,8 +60,7 @@ export class SecurityService {
                       }
                     } else {
                       tokenFlg++
-                    }
-                  }
+                    }                  
                 }
                 if (tokenFlg == security.accessProfile.length) {
                   throw new CustomException(`user was not authorized`, 403)

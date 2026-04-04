@@ -1,19 +1,18 @@
 
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT010:AFGK:I001:AFK:ITAX:AFVK:v1:bldc",
-  "deploymentArtifactKey": "CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:I001:AFGK:ITAX:AFK:ITAX_DPD:AFVK:v1",
-  "appGroupDesc": "ITAX",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+  "deploymentArtifactKey": "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
+  "appGroupDesc": "appgroup",
   "logType": "mongodb",
-  "appDesc": "ITAX",
-  "appLogo": "torus/9.1/CT010/resources/images/DTB_Resize_logo.png",
+  "appDesc": "application1",
   "isOld": true,
-  "clientCode": "CT010",
+  "clientCode": "CI001",
   "loginDetails": {
-    "loginId": "Haritha",
-    "firstName": "Haritha",
-    "lastName": "R",
-    "email": "haritha@torus.tech",
-    "mobile": "2356895623",
+    "loginId": "selva",
+    "firstName": "selva",
+    "lastName": "g",
+    "email": "selvakumarg+a@torus.tech",
+    "mobile": "6369726232",
     "2FAFlag": "N",
     "scope": "client_admin",
     "status": "active",
@@ -21,13 +20,19 @@
       "admin"
     ],
     "accessExpires": "",
-    "dateAdded": "2026-03-05T07:42:47.028Z",
+    "dateAdded": "2026-01-23T13:29:31.878Z",
     "isRestricted": false,
-    "userUniqueId": "87cc96dc-ad16-4152-be5e-5c8f528d8ff0",
+    "userUniqueId": "399bb002-571a-4f60-8242-67a2d5d03a4b",
     "touring": {
       "isneedTouring": false,
       "touringData": {
-        "/torus": {
+        "/control-center/storage-configuration": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/control-center/tenant": {
           "stepIndex": 0,
           "isSkipped": true,
           "completed": false,
@@ -35,8 +40,34 @@
         }
       }
     },
-    "lastActive": "2026-03-31T04:32:10.338Z",
-    "client": "CT010"
+    "client": "CI001",
+    "quickLinks": [
+      {
+        "label": "Tenant Profile",
+        "key": "tenantProfile",
+        "routes": "/control-center/tenant"
+      },
+      {
+        "label": "Appearance",
+        "key": "tenantappearance",
+        "routes": "/tenant-settings?tenant=${tenant}"
+      },
+      {
+        "label": "Company Profile",
+        "key": "PersonalcompanyProfile",
+        "routes": "/control-center/company-profile"
+      },
+      {
+        "label": "Notifications",
+        "key": "tenantnotifications",
+        "routes": "/control-center/notifications"
+      },
+      {
+        "label": "User Management",
+        "key": "usermanagement",
+        "routes": "/control-center/user-management"
+      }
+    ]
   }
 } */
 import { NestFactory } from '@nestjs/core';
@@ -69,7 +100,7 @@ async function bootstrap() {
 
   let configData = null;
   try {
-    const redisResult = await redis.call('JSON.GET', "CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:I001:AFGK:ITAX:AFK:ITAX_DPD:AFVK:v1:NDP");
+    const redisResult = await redis.call('JSON.GET', "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1:NDP");
     if (redisResult) {
       const parsed = JSON.parse(redisResult);
       const rootKey = Object.keys(parsed)[0];
@@ -157,7 +188,7 @@ async function bootstrap() {
     { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 
     'JWT-auth',
     )
-    .addServer('https://tgadev.toruslowcode.com/ct010/i001/itax/v1/api','Production Server')
+    .addServer('https://tgadev.toruslowcode.com/&lt;tenantCode&gt;/&lt;AppGroupCode&gt;/&lt;AppCode&gt;/&lt;version&gt;/api','Production Server')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger.json', JSON.stringify(document, null, 2));

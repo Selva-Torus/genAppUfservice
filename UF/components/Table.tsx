@@ -21,6 +21,25 @@ interface RenderRowActionsProps {
   nodeName:string
 }
 
+// Wrapper to support both sync and async renderRowActions
+const RowActionCell: React.FC<{
+  renderFn: (props: RenderRowActionsProps) => React.ReactNode | Promise<React.ReactNode>;
+  props: RenderRowActionsProps;
+}> = ({ renderFn, props }) => {
+  const [node, setNode] = useState<React.ReactNode>(null);
+
+  useEffect(() => {
+    const result = renderFn(props);
+    if (result instanceof Promise) {
+      result.then(setNode);
+    } else {
+      setNode(result);
+    }
+  }, [props.item, props.index, props.nodeName]);
+
+  return <>{node}</>;
+};
+
 interface ColumnType {
   id: string;
   nodeid?: string;
@@ -46,7 +65,7 @@ interface TableProps {
   columns?: ColumnType[];
   onRowClick?: (row: any) => void;
   className?: string;
-  renderRowActions?: (props: RenderRowActionsProps) => React.ReactNode;
+  renderRowActions?: (props: RenderRowActionsProps) => React.ReactNode | Promise<React.ReactNode>;
   selectedIds?: string[];
   onSelectionChange?: (selectedIds: string[]) => void;
   selectionMode?: 'Single' | 'Multi';
@@ -591,7 +610,7 @@ const sortedData = sortColumn
                       className="w-12"
                       onClick={(e) => e.stopPropagation()}
                       >
-                        {renderRowActions({ item: row, index,nodeName:`${"ss"}`})}
+                        <RowActionCell renderFn={renderRowActions} props={{ item: row, index, nodeName: "ss" }} />
                       </td>
                     )
                   }
@@ -606,7 +625,7 @@ const sortedData = sortColumn
                           key={column.id}
                           onClick={(e) => e.stopPropagation()}
                           >
-                          {renderRowActions({ item: row, index,nodeName:`${column?.controlType+column?.id}`})}
+                          <RowActionCell renderFn={renderRowActions} props={{ item: row, index, nodeName: `${column?.controlType + column?.id}` }} />
                           </td>
                           )
                         }

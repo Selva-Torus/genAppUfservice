@@ -83,6 +83,7 @@ export interface te_eventEmitterDto {
   nodeId?:string;
   nodeName?:string;
   nodeType?:string;
+  controllerName?:string;
   upId?:string | string[];
   lock?:any;
   childTables?:string[];
