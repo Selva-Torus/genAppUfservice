@@ -12,7 +12,8 @@ import {
   HttpException,
   HttpStatus,
   Headers,
-  Patch
+  Patch,
+  BadRequestException
 } from '@nestjs/common';
 import { UfService } from './uf.service';
 import {
@@ -161,45 +162,78 @@ export class UfController {
         throw new Error('Request is not multipart');
       }
       const parts = req.parts();
-      const fields : any = {};
-      let fileBuffer: Buffer;
-      let fileMeta: any;
+      const fields: Record<string, string> = {};
+      const files: Array<{
+        filename: string;
+        mimetype: string;
+        size: number;
+        buffer: Buffer;
+      }> = [];
 
       for await (const part of parts) {
         if (part.type === 'file') {
-          // This is a file part
-          fileBuffer = await part.toBuffer();
-          fileMeta = {
+          const buffer = await part.toBuffer();
+          files.push({
             filename: part.filename,
             mimetype: part.mimetype,
-            size: fileBuffer.length,
-          };
+            size: buffer.length,
+            buffer,
+          });
         } else {
-          // This is a regular form field part
-          fields[part.fieldname] = part.value;
+          fields[part.fieldname] = part.value as string;
         }
       }
 
-
-    let { context,dpdKey,method,enableEncryption } = fields
-    const file = {
-          ...fileMeta,
-          buffer: fileBuffer,
-        }
-    const result = await this.appService.uploadFile( 
-      file,
-      context,
-      enableEncryption
-    );
-    let finalresult : any= {file:result}
-    if(dpdKey && method){
-      finalresult["dpdKey"] = dpdKey;
-      finalresult["method"] = method
+    if (files.length === 0) {
+      throw new BadRequestException('No files uploaded');
     }
-    return finalresult;
-  }
+    const { context, dpdKey, method, enableEncryption, returnType } = fields;
 
-  @Post('downloadFile')
+    // Process all files and collect fileIds
+    const fileIds: string[] = [];
+    for (const file of files) {
+      const uploadRes = await this.appService.uploadFile(file, context, enableEncryption);
+      fileIds.push(uploadRes.fileId);
+    }
+
+    // Return based on returnType: 'string' returns single value, 'string[]' returns array
+    const result: any = {
+      success: true,
+      message: 'file saved',
+      fileId: returnType === 'string[]' ? fileIds : fileIds[0],
+    };
+
+    if (dpdKey && method) {
+      result['dpdKey'] = dpdKey;
+      result['method'] = method;
+    }
+    return result;
+  }
+  @Post('download')  
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Bearer token for authentication',
+    required: true,
+  })
+  @ApiOperation({
+    summary: 'Download file from seaweed direct URL',
+    description: 'Download file from the specified path',
+  })                                                                                                                                                                                     
+  async download(@Body() body: any, @Res() res: FastifyReply) {                                                                                                                                            
+    const { id } = body                                                                                                                                                                                      
+                                                                                                                                                                                                            
+    const response = await fetch(id)                                                                                                                                                                         
+    const buffer = await response.arrayBuffer()                                                                                                                                                              
+                                                                                                                                                                                                            
+    const fileName = decodeURIComponent(id.split('/').pop() || 'file')                                                                                                                                       
+                                                                                                                                                                                                            
+    res                                                                                                                                                                                                      
+    .header('Content-Type', 'application/octet-stream')                                                                                                                                                      
+    .header('Content-Disposition', `attachment; filename="${fileName}"`)                                                                                                                                     
+    .send(Buffer.from(buffer))                                                                                                                                                                               
+  }
+  
+  @Post('gridfs')
   @ApiHeader({
     name: 'Authorization',
     description: 'Bearer token for authentication',
@@ -211,15 +245,36 @@ export class UfController {
   })
   async getFile(@Body() body: any,@Res() res: Response) {
     let { context , id ,enableEncryption } = body
-    const file = await this.appService.getFile(id,context,enableEncryption);
-    if (!file) {
+    const result = await this.appService.getFile(id,context,enableEncryption);
+
+    if (!result || !result.res) {
       throw new HttpException('File not found', HttpStatus.NOT_FOUND);
     }
-    res
-    .header('Content-Type', file.file?.contentType || 'application/octet-stream')
-    .header('Content-Disposition', `inline; filename="${file.file?.filename}"`);
 
-    return res.send(file.res);
+    // Handle multiple files - return as JSON
+    if (result.isMultiple && Array.isArray(result.file) && Array.isArray(result.res)) {
+      const buffers = result.res as Buffer[];
+      const filesData = result.file.map((fileMetadata: any, index: number) => ({
+        filename: fileMetadata?.filename || `file_${index}`,
+        contentType: fileMetadata?.contentType || 'application/octet-stream',
+        data: buffers[index] ? Buffer.from(buffers[index]).toString('base64') : ''
+      }));
+
+      res.header('Content-Type', 'application/json');
+      return res.send({ files: filesData });
+    }
+
+    // Handle single file
+    const fileMetadata: any = Array.isArray(result.file) ? result.file[0] : result.file;
+    const buffer: any = Array.isArray(result.res) ? result.res[0] : result.res;
+
+    res
+      .header('Content-Type', fileMetadata?.contentType || 'application/octet-stream')
+      .header('File-Name', fileMetadata?.filename || 'Document')
+      .header('Content-Disposition', `inline; filename="${fileMetadata?.filename || 'file'}"`)
+      .header('Access-Control-Expose-Headers', 'File-Name, Content-Disposition');
+
+    return res.send(buffer);
   }
 
   @Post('setUpKey')
@@ -728,13 +783,13 @@ export class UfController {
     @Body(new ValidationPipe({ transform: true })) body: signinToTorusDto,
     @Req() req: any
   ) {
-    const { username, password, dpdKey, method, ufClientType } = body;
+    const { username, password, dpdKey, method, ufClientType, app_tenant } = body;
     const { DEFAULT_AUTHENTICATION , FUSIONAUTH_TENANTID , FUSIONAUTH_APPLICATIONID,FUSIONAUTH_APPCLIENTSECRET } = process.env;
     let result : any;
     if(DEFAULT_AUTHENTICATION == "fusionauth" &&  FUSIONAUTH_TENANTID && FUSIONAUTH_APPLICATIONID && FUSIONAUTH_APPCLIENTSECRET) {
-       result = await this.appService.signInViaIAM(username, password, ufClientType);
+       result = await this.appService.signInViaIAM(username, password, ufClientType, false , app_tenant);
     }else{
-       result = await this.appService.signIntoTorus(username, password, ufClientType);
+       result = await this.appService.signIntoTorus(username, password, ufClientType, false , app_tenant);
     }
     if(dpdKey && method){
       result["dpdKey"] = dpdKey
@@ -903,7 +958,8 @@ export class UfController {
         input.count,
         input.filterDetails,
         input.searchFilter,
-        token
+        token,
+        input.filterData,
       );
       if(dpdKey && method){
       result["dpdKey"] = dpdKey
@@ -988,14 +1044,17 @@ export class UfController {
   }
 
   @Post('postAppUserList')
-  async postAppUserList(@Body() body) {
+  async postAppUserList(@Body() body:any , @Req() req:any) {
     const { data } = body;
-    return this.appService.postAppUserList(data);
+    const token: string = req?.headers?.authorization?.split(' ')?.[1];
+    return this.appService.postAppUserList(data , token);
   }
+  
   @Post('appSecurityTemplateData')
-  async appSecurityTemplateData(@Body() body) {
+  async appSecurityTemplateData(@Body() body, @Req() req: any) {
+    const token: string = req.headers.authorization.split(' ')[1];
     const {data} = body
-    return this.appService.AppSecurityTemplateData(data);
+    return this.appService.AppSecurityTemplateData(data, token);
   }
 
   @Post('setJson')
@@ -1012,51 +1071,69 @@ export class UfController {
     const { id, enableEncryption } = body
     const decrypted = await this.appService.getDFS(id, enableEncryption)
     const contentType = lookup(id)
+    const fileName = decodeURIComponent(id.split('/').pop() || 'Document')
     res
-      .header('Content-Type', contentType)
-      .header(
-        'Content-Disposition',
-        `inline; filename="${decodeURIComponent(id.split('/').pop() || 'file')}"`,
-      )
+      .header('Content-Type', contentType || 'application/octet-stream')
+      .header('File-Name', fileName)
+      .header('Content-Disposition', `inline; filename="${fileName}"`)
+      .header('Access-Control-Expose-Headers', 'File-Name, Content-Disposition')
       .send(decrypted)
   }
 
+  @Post('getUrlByVgphstdmId')
+  async getUrlByVgphstdmId(@Body() body: any) {
+    const { id } = body;
+    return this.appService.getUrlByVgphstdmId(id);
+  }
+  
   @Post('uploadimg')
    async post_upload(@Req() req: FastifyRequest) {
       if (!req.isMultipart()) {
         throw new Error('Request is not multipart');
       }
-      const parts:any = req.parts();
-      const fields:any ={}
-      let fileBuffer: Buffer;
-      let fileMeta: any;
+      const parts: any = req.parts();
+      const fields: any = {};
+      const files: Array<{
+        filename: string;
+        mimetype: string;
+        size: number;
+        buffer: Buffer;
+      }> = [];
+
       for await (const part of parts) {
         if (part.type === 'file') {
-          // This is a file part
-          fileBuffer = await part.toBuffer();
-          fileMeta = {
+          const buffer = await part.toBuffer();
+          files.push({
             filename: part.filename,
             mimetype: part.mimetype,
-            size: fileBuffer.length,
-          };
+            size: buffer.length,
+            buffer,
+          });
         } else {
-          // This is a regular form field part
           fields[part.fieldname] = part.value;
         }
       }
-     const { bucketFolderame, folderPath , enableEncryption, filename ="" } = fields;
-     const file = {
-          ...fileMeta,
-          buffer: fileBuffer,
-        }
-    const imageUrl = await this.appService.uploadImage(
-      file,
-      bucketFolderame,
-      folderPath,
-      filename,
-      enableEncryption
-    );
-    return { imageUrl };
+    const { bucketFolderame, folderPath, enableEncryption, filename = "", returnType } = fields;
+
+    // Process all files and collect imageUrls
+    const imageUrls: string[] = [];
+    for (const file of files) {
+      const imageUrl = await this.appService.uploadImage(
+        file,
+        bucketFolderame,
+        folderPath,
+        filename || file.filename,
+        enableEncryption
+      );
+      imageUrls.push(imageUrl);
+    }
+
+    // Return based on returnType: 'string' returns single value, 'string[]' returns array
+    return {
+      success: true,
+      message: 'file saved',
+      imageUrl: returnType === 'string[]' ? imageUrls : imageUrls[0],
+    };
   }
 
   @Get('readAMDKey')
@@ -1096,9 +1173,46 @@ export class UfController {
     return this.appService.getNavbarData(key,clientCode,token)
   }
 
+  @Get('app-list')
+  async getAppList(@Req() req: any) {
+    const token: string = req.headers.authorization.split(' ')[1];
+    return this.appService.getAppList(token);
+  }
+
+  @Post('sso')
+  async sso(@Body() body:any) {
+    const { token , ufClientType } = body;
+    return this.appService.sso(token , ufClientType);
+  }
+
   @Post('postTenantUser')
-  async postTenantUsers(@Body() body: any) {
+  async postTenantUsers(@Body() body: any , @Req() req:any) {
     const { data } = body;
-    return this.appService.setTenantUser(data);
+    const token: string = req?.headers?.authorization?.split(' ')?.[1];
+    return this.appService.setTenantUser(data , token);
+  }
+
+  @Post('uploadFromLocalPath')
+   async post_uploadFromLocalPath(@Req() req: FastifyRequest,@Body() body: any) {
+     const { bucketFolderame, folderPath , localPaths,enableEncryption} =body; 
+    const imageUrl = await this.appService.uploadFromLocalPath(
+      localPaths,
+      bucketFolderame,
+      folderPath,
+      enableEncryption
+    );
+    return { imageUrl };
+  }
+
+  @Post('postOrgData')
+  async postOrgData(@Body() body: any , @Req() req: any) {
+    const { masterData , matrixData } = body;
+    const token: string = req?.headers?.authorization?.split(' ')?.[1];
+    return this.appService.postOrgData(masterData, matrixData, token);
+  }
+
+  @Get('app-tenant-app')
+  async getAppTenantsLinkedWithApp(@Req() req: any) {
+    return this.appService.getAppTenantsLinkedWithApp();
   }
 }

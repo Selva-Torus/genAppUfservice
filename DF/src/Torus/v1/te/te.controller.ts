@@ -105,8 +105,25 @@ export class TeController {
     }
 
     // Handle regular event emission
-    if (!pfdto.upId) {
-      const result: any = await this.teService.EventEmitter(pfdto);
+      if (!pfdto.upId) {
+      let result:any,resArr = []
+      if(Array.isArray(pfdto.data) && pfdto.data.length>0){      
+        if(pfdto.data.length == 1){
+          pfdto.data = pfdto.data[0]
+        result = await this.teService.EventEmitter(pfdto);
+        }else{
+           for(let item of pfdto.data){
+          pfdto.data = item
+         result = await this.teService.EventEmitter(pfdto);        
+         if(Array.isArray(result?.data))
+          resArr.push(...result?.data)
+         else
+          resArr.push(result?.data)
+       }
+       result['data'] = resArr
+        }      
+      }else
+       result = await this.teService.EventEmitter(pfdto);
       if (dpdKey && method) {
         result["dpdKey"] = dpdKey
         result["method"] = method
@@ -143,10 +160,20 @@ export class TeController {
     const results = await Promise.all(eventPromises);
     const lastResult = results[results.length - 1];
 
-    const finalres = {
+    let finalres
+    if(lastResult?.node == 'outputnode'){
+       finalres = {
       upId: results.map(res => res?.upId).filter(Boolean),
       message: lastResult?.message,
-      event: lastResult?.event
+      event: lastResult?.event,
+      data:lastResult?.data
+    }
+    }else{
+      finalres = {
+      upId: results.map(res => res?.upId).filter(Boolean),
+      message: lastResult?.message,
+      event: lastResult?.event,     
+    }
     }
 
     if (dpdKey && method) {
@@ -219,7 +246,7 @@ export class TeController {
     const { dpdKey,method } = input  
       
       if (input.data){
-        let result :any = await this.teService.savehandler(input.data, input.key, input.event, input.nodeId, input.nodeName,input.nodeType, token, input.upId,input.sourceId, input.lock,input.childTables)
+        let result :any = await this.teService.savehandler(input,token)
         if(dpdKey && method){
           result["dpdKey"] = dpdKey
           result["method"] = method

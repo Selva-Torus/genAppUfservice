@@ -1,6 +1,6 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
-import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
+// import { CACHE_MANAGER } from '@nestjs/cache-manager';
+// import { Cache } from 'cache-manager';
 const Redis = require('ioredis');
 import 'dotenv/config';
 import { Db, MongoClient } from 'mongodb';
@@ -31,7 +31,7 @@ export class RedisService {
   private readonly BATCH_SIZE = 10000
 
   constructor(
-    @Inject(CACHE_MANAGER) private cacheManager: Cache
+    // @Inject(CACHE_MANAGER) private cacheManager: Cache
   ) {}
 
   //Retrieves JSON data from Redis
@@ -41,7 +41,7 @@ export class RedisService {
    * @returns The JSON data retrieved from Redis.
    * @throws {Error} If there is an error retrieving the JSON data.
    */
-  async getJsonData(key: string, collectionName: string) {
+   async getJsonData(key: string, collectionName: string) {
     try {
       let returnValue: any;
       if(collectionName){
@@ -56,15 +56,16 @@ export class RedisService {
 
       
         // Use CACHE_MANAGER to get cached data
-        let cachedResult = await this.cacheManager.get<string>(key);
+        // let cachedResult = await this.cacheManager.get<string>(key);
        
-        if (cachedResult) {
-          returnValue = cachedResult;
-        } else {         
+        // if (cachedResult) {
+        //   returnValue = cachedResult;
+        // } else {         
           let redisResult = await redis.call('JSON.GET', key);         
-          if (redisResult) {
-            returnValue = redisResult;
-          }else{
+          if (!redisResult) {
+          //   await this.cacheManager.set(key, redisResult);
+          //   returnValue = redisResult;
+          // }else{
             // Queue MongoDB operation to prevent connection exhaustion
             var mongoResult:any = await queueMongoOperation(
               () => this.getDocument(collectionName, key),
@@ -74,14 +75,16 @@ export class RedisService {
             if(mongoResult?.length>0 && mongoResult[0]?.value){
               const jsonValue = JSON.stringify(mongoResult[0]?.value);
               // Use CACHE_MANAGER to set cached data
-              await this.cacheManager.set(key, jsonValue);
+              // await this.cacheManager.set(key, jsonValue);
   
               returnValue = jsonValue;
             }else{
               returnValue = null
             }
+          // }
+          }else{
+            return redisResult
           }
-        }
       }else{
         throw 'client not found'
       }
@@ -99,7 +102,7 @@ export class RedisService {
    * @returns The JSON value at the specified path.
    * @throws {Error} If there is an error retrieving the JSON value.
 +   */
-  async getJsonDataWithPath(key: string, path:any,collectionName: string) {
+   async getJsonDataWithPath(key: string, path:any,collectionName: string) {
     try {
       let returnValue: any;
       if(collectionName){
@@ -113,17 +116,17 @@ export class RedisService {
         });
 
         // Use CACHE_MANAGER to get cached data first
-        let cachedResult = await this.cacheManager.get<string>(key);
-        if (cachedResult) {
-          const parsedCache = JSON.parse(cachedResult);
-          const cleanPath = path.replace('$.', '').replace('$', '');
-          const pathValue = cleanPath ? _.get(parsedCache, cleanPath) : parsedCache;
-          if (pathValue !== undefined) {
-            returnValue = JSON.stringify(pathValue);
-          }
-        }
+        // let cachedResult = await this.cacheManager.get<string>(key);
+        // if (cachedResult) {
+        //   const parsedCache = JSON.parse(cachedResult);
+        //   const cleanPath = path.replace('$.', '').replace('$', '');
+        //   const pathValue = cleanPath ? _.get(parsedCache, cleanPath) : parsedCache;
+        //   if (pathValue !== undefined) {
+        //     returnValue = JSON.stringify(pathValue);
+        //   }
+        // }
 
-        if (!returnValue) {
+        // if (!returnValue) {
           let redisResult = await redis.call('JSON.GET', key, path);
           if (redisResult) {
             returnValue = redisResult;
@@ -137,14 +140,14 @@ export class RedisService {
               // Store in cache for future use
               if(mongoResult[0]?.value){
                 const jsonValue = JSON.stringify(mongoResult[0]?.value);
-                await this.cacheManager.set(key, jsonValue);
+                // await this.cacheManager.set(key, jsonValue);
               }
               returnValue = mongoResult;
             } else {
               returnValue = null;
             }
           }
-        }
+        // }
       } else {
         throw 'client not found';
       }
@@ -164,20 +167,20 @@ export class RedisService {
 
       if(request){
         // Update CACHE_MANAGER - append to cached array
-        let cachedResult = await this.cacheManager.get<string>(key);
-        if (cachedResult) {
-          let parsedValue = JSON.parse(cachedResult);
-          if (path) {
-            let existingArr = _.get(parsedValue, path) || [];
-            existingArr.push(JSON.parse(value));
-            _.set(parsedValue, path, existingArr);
-          } else {
-            if (Array.isArray(parsedValue)) {
-              parsedValue.push(JSON.parse(value));
-            }
-          }
-          await this.cacheManager.set(key, JSON.stringify(parsedValue));
-        }
+        // let cachedResult = await this.cacheManager.get<string>(key);
+        // if (cachedResult) {
+        //   let parsedValue = JSON.parse(cachedResult);
+        //   if (path) {
+        //     let existingArr = _.get(parsedValue, path) || [];
+        //     existingArr.push(JSON.parse(value));
+        //     _.set(parsedValue, path, existingArr);
+        //   } else {
+        //     if (Array.isArray(parsedValue)) {
+        //       parsedValue.push(JSON.parse(value));
+        //     }
+        //   }
+        //   await this.cacheManager.set(key, JSON.stringify(parsedValue));
+        // }
 
         // Queue MongoDB operation
         await queueMongoOperation(
@@ -218,15 +221,15 @@ export class RedisService {
         // await this.exist(key,collectionName)
 
         // Use CACHE_MANAGER to set cached data
-        if (path) {
-          // For path-based updates, get existing value, update path, and set back
-          let existingValue = await this.cacheManager.get<string>(key);
-          let parsedValue = existingValue ? JSON.parse(existingValue) : {};
-          _.set(parsedValue, path, JSON.parse(value));
-          await this.cacheManager.set(key, JSON.stringify(parsedValue));
-        } else {
-          await this.cacheManager.set(key, value);
-        }
+        // if (path) {
+        //   // For path-based updates, get existing value, update path, and set back
+        //   let existingValue = await this.cacheManager.get<string>(key);
+        //   let parsedValue = existingValue ? JSON.parse(existingValue) : {};
+        //   _.set(parsedValue, path, JSON.parse(value));
+        //   await this.cacheManager.set(key, JSON.stringify(parsedValue));
+        // } else {
+        //   await this.cacheManager.set(key, value);
+        // }
 
         const defpath = path ? `.${path}` : "$";
         let redisResult = await redis.call("JSON.SET", key, defpath, value); 
@@ -275,16 +278,16 @@ export class RedisService {
       }
 
       // Update CACHE_MANAGER for all operations
-      for (const op of operations) {
-        if (op.path) {
-          let existingValue = await this.cacheManager.get<string>(op.key);
-          let parsedValue = existingValue ? JSON.parse(existingValue) : {};
-          _.set(parsedValue, op.path, JSON.parse(op.value));
-          await this.cacheManager.set(op.key, JSON.stringify(parsedValue));
-        } else {
-          await this.cacheManager.set(op.key, op.value);
-        }
-      }
+      // for (const op of operations) {
+      //   if (op.path) {
+      //     let existingValue = await this.cacheManager.get<string>(op.key);
+      //     let parsedValue = existingValue ? JSON.parse(existingValue) : {};
+      //     _.set(parsedValue, op.path, JSON.parse(op.value));
+      //     await this.cacheManager.set(op.key, JSON.stringify(parsedValue));
+      //   } else {
+      //     await this.cacheManager.set(op.key, op.value);
+      //   }
+      // }
 
       // Create Redis pipeline
       const pipeline = redis.pipeline();
@@ -379,19 +382,14 @@ export class RedisService {
    * @throws {Error} If there is an error executing the EXISTS command.
    */
 
-  async exist(key,collectionName: string) {
+  async exist(key:string,collectionName: string,isMongo?:boolean) {
     try {
       if(collectionName){
-        // Check CACHE_MANAGER first
-        let cachedResult = await this.cacheManager.get<string>(key);
-        if (cachedResult) {
-          return 1;
-        }
 
         let redisResult = await redis.call('EXISTS', key);
         if(redisResult){
           return redisResult;
-        }else{
+        }else if(isMongo){
           // Queue MongoDB operations
           let mongoResult = await queueMongoOperation(
             () => this.existsDocument(collectionName, key),
@@ -403,11 +401,9 @@ export class RedisService {
               `getDocument:${key}`
             );
             if(doc?.length>0 && doc[0]?.value){
-              const jsonValue = JSON.stringify(doc[0]?.value);
-              // Update CACHE_MANAGER
-              await this.cacheManager.set(key, jsonValue);
-              await redis.call('JSON.SET', key, '$', jsonValue);
-            }
+
+            await redis.call('JSON.SET', key, '$', JSON.stringify(doc[0]?.value));}
+            //await redis.call('JSON.SET', key, '$', JSON.stringify(doc));
             return 1
           }else{
           return mongoResult
@@ -530,11 +526,33 @@ export class RedisService {
    * @returns {Promise<string>} - A promise that resolves to a string indicating the consumer group was created.
    * @throws {Error} - If there is an error creating the consumer group.
   */
-  async createConsumerGroup(streamName, groupName) {
+    async createConsumerGroup(streamName, groupName) {
     try {
-      await redis.xgroup('CREATE', streamName, groupName, '0', 'MKSTREAM');
-      return `consumerGroup was created as ${groupName}`;
+      // Check if the consumer group already exists
+      const grpInfo = await redis.xinfo('GROUPS', streamName).catch(() => []);
+
+      // Check if the group name already exists in any of the groups
+      const groupExists = grpInfo.some((group, index) => {
+        // Group info comes as flat array: [name, value, name, value, ...]
+        // 'name' field is at index 1, 5, 9, etc. for each group
+        if (Array.isArray(group)) {
+          return group.includes(groupName);
+        }
+        // Check if this is the 'name' field with matching value
+        return index % 2 === 1 && group === groupName;
+      });
+
+      if (!groupExists) {
+        await redis.xgroup('CREATE', streamName, groupName, '0', 'MKSTREAM');
+        return `consumerGroup was created as ${groupName}`;
+      }
+
+      return `consumerGroup ${groupName} already exists`;
     } catch (error) {
+      // If error is BUSYGROUP, the group already exists - this is okay
+      if (error.message && error.message.includes('BUSYGROUP')) {
+        return `consumerGroup ${groupName} already exists`;
+      }
       throw error;
     }
   }
@@ -663,11 +681,11 @@ export class RedisService {
         });
 
         // Use CACHE_MANAGER to get cached keys list
-        const cacheKey = `keys:${redisKey}`;
-        let cachedKeys = await this.cacheManager.get<string>(cacheKey);
-        if (cachedKeys) {
-          return JSON.parse(cachedKeys);
-        }
+        // const cacheKey = `keys:${redisKey}`;
+        // let cachedKeys = await this.cacheManager.get<string>(cacheKey);
+        // if (cachedKeys) {
+        //   return JSON.parse(cachedKeys);
+        // }
 
         let keys = await redis.keys(redisKey);
         // let keys = await this.scanKeys(redisKey);
@@ -701,12 +719,12 @@ export class RedisService {
           );
 
           // Store keys in cache if found from MongoDB
-          if (keys && keys.length > 0) {
-            await this.cacheManager.set(cacheKey, JSON.stringify(keys));
-          }
+          // if (keys && keys.length > 0) {
+          //   await this.cacheManager.set(cacheKey, JSON.stringify(keys));
+          // }
         } else {
           // Store keys in cache if found from Redis
-          await this.cacheManager.set(cacheKey, JSON.stringify(keys));
+          // await this.cacheManager.set(cacheKey, JSON.stringify(keys));
         }
         return keys;
       }else{
@@ -743,7 +761,7 @@ export class RedisService {
   async deleteKey(key: any,collectionName: string) {
     try {
       // Delete from CACHE_MANAGER
-      await this.cacheManager.del(key);
+      // await this.cacheManager.del(key);
 
       var response = await redis.del(key);
       //await this.deleteDocument(collectionName,key)
@@ -774,11 +792,11 @@ export class RedisService {
   async renameKey(oldKey, newKey,client) {
     try {
       // Update CACHE_MANAGER - move cached value from old key to new key
-      let cachedResult = await this.cacheManager.get<string>(oldKey);
-      if (cachedResult) {
-        await this.cacheManager.set(newKey, cachedResult);
-        await this.cacheManager.del(oldKey);
-      }
+      // let cachedResult = await this.cacheManager.get<string>(oldKey);
+      // if (cachedResult) {
+      //   await this.cacheManager.set(newKey, cachedResult);
+      //   await this.cacheManager.del(oldKey);
+      // }
 
       var result = await redis.call('RENAME', oldKey, newKey);
       // Queue MongoDB operations
@@ -1279,6 +1297,88 @@ async deleteDocument(collectionName:string,key:any){
     throw err;
   }
 }
+
+async select(db: number) {
+    return redis.select(db);
+  }
+
+  async scan(cursor: string, ...args: any[]) {
+    return redis.scan(cursor, ...args);
+  }
+
+  async ttl(key: string) {
+    return redis.ttl(key);
+  }
+
+  async type(key: string) {
+    return redis.type(key);
+  }
+
+  async call(command: string, ...args: any[]) {
+    return redis.call(command, ...args);
+  }
+
+  async get(key: string) {
+    return redis.get(key);
+  }
+
+  async set(key: string, value: any) {
+    return redis.set(key, value);
+  }
+
+  async del(key: string) {
+    return redis.del(key);
+  }
+
+  
+
+  async hgetall(key: string) {
+    return redis.hgetall(key);
+  }
+
+  async lrange(key: string, start: number, stop: number) {
+    return redis.lrange(key, start, stop);
+  }
+
+  async rpush(key: string, ...values: any[]) {
+    return redis.rpush(key, ...values);
+  }
+
+  async smembers(key: string) {
+    return redis.smembers(key);
+  }
+
+  async sadd(key: string, ...members: any[]) {
+    return redis.sadd(key, ...members);
+  }
+
+  async zrange(key: string, start: number, stop: number, ...args: any[]) {
+    return redis.zrange(key, start, stop, ...args);
+  }
+
+  async zadd(key: string, ...args: any[]) {
+    return redis.zadd(key, ...args);
+  }
+
+  async dump(key: string) {
+    return redis.dump(key);
+  }
+
+  async restore(key: string, ttl: number, value: Buffer, ...args: any[]) {
+    return redis.restore(key, ttl, value, ...args);
+  }
+
+  async pexpire(key: string, ms: number) {
+    return redis.pexpire(key, ms);
+  }
+
+  async exists(key: string) {
+    return redis.exists(key);
+  }
+
+  async ping() {
+    return redis.ping();
+  }
   
 }
 

@@ -1,149 +1,29 @@
-export  async function getDropdownDetails(dfData:any,mapperColumn: string,category: any, bindtranValue: any, code: any) {
-  let codName:any
-    if(!category && dfData && mapperColumn && !bindtranValue && !code){
-      let result = dfData.map((item: any) => item[mapperColumn]);
-      return result;
-    } else if (!category && !bindtranValue && !code) {
-      let data = dfData
-      return data
-    } else if (category && !bindtranValue && !code) {
-      let categoryData: any[] = []
-      let dropdownData: string[] = []
-      for (let i = 0; i < dfData.length; i++) {
-        Object.keys(dfData[i]).map(keyName => {
-          if (category === dfData[i][keyName]) {
-            categoryData.push(dfData[i])
-          }
-        })
-      }
-      for (let i = 0; i < categoryData.length; i++) {
-        Object.keys(categoryData[i]).map(keyName => {
-          if (mapperColumn === keyName) {
-            dropdownData.push(categoryData[i][keyName])
-          }
-        })
-      }
-      return dropdownData
-    } else if (code && bindtranValue) {
-      for (let i = 0; i < dfData.length; i++) {
-        Object.keys(dfData[i]).map(keyName => {
-          if (bindtranValue === dfData[i][keyName]) {
-            codName = dfData[i].code
-          }
-        })
-      }
-      return codName
-    } else if (code) {
-      let categoryData: any[] = []
-      let dropdownData: string[] = []
-      for (let i = 0; i < dfData.length; i++) {
-        Object.keys(dfData[i]).map(keyName => {
-          if (category === dfData[i][keyName]) {
-            categoryData.push(dfData[i])
-          }
-        })
-      }
-      for (let j = 0; j < categoryData.length; j++) {
-        Object.keys(categoryData[j]).map(keyName => {
-          if (
-            categoryData[j].parentcode === code &&
-            mapperColumn === keyName
-          ) {
-            dropdownData.push(categoryData[j][keyName])
-          }
-        })
-      }
-      return dropdownData
-    } else if (bindtranValue) {
-      for (let i = 0; i < dfData.length; i++) {
-        Object.keys(dfData[i]).map(keyName => {
-          if (bindtranValue === dfData[i][keyName]) {
-            codName = dfData[i].code
-          }
-        })
-      }
-      return codName
-    } else {
-      let dropdownData: string[] = []
-      for (let i = 0; i < dfData.length; i++) {
-        Object.keys(dfData[i]).map(keyName => {
-          if (mapperColumn === keyName) {
-            dropdownData.push(dfData[i][keyName])
-          }
-        })
-      }
-      return dropdownData
-    }
+export async function getDropdownDetailsNew(
+  dfData: any, 
+  mapperValue: string, 
+  mapperText: string, 
+  bindtranValue: any, 
+  code: any, 
+  getSourceFilterColumn: string, 
+  copySourceFilterColumn: string) {
+    
+  const findMatch = (val: any) => dfData.find((item: any) => Object.values(item).includes(val));
+
+  if (dfData && mapperValue && !bindtranValue && !code) {
+    return dfData.map((item: any) => item[mapperValue]);
+  } else if (code && bindtranValue && copySourceFilterColumn) {
+    return findMatch(bindtranValue)?.[copySourceFilterColumn];
+  } else if (code && bindtranValue) {
+    return findMatch(bindtranValue)?.[mapperText];
+  } else if (code && getSourceFilterColumn) {
+    return dfData.filter((item: any) => item[getSourceFilterColumn] === code).map((item: any) => item[mapperValue]);
+  } else if (code) {
+    return dfData.filter((item: any) => Object.values(item).includes(code)).map((item: any) => item[mapperValue]);
+  } else if (bindtranValue && copySourceFilterColumn) {
+    return findMatch(bindtranValue)?.[copySourceFilterColumn];
+  } else if (bindtranValue) {
+    return findMatch(bindtranValue)?.[mapperText];
+  } else {
+    return dfData.filter((item: any) => item[mapperValue] !== undefined).map((item: any) => item[mapperValue]);
   }
-
-
-
-
-
-  export  async function getDropdownDetailsNew(dfData:any,mapperColumn: string,mapperText:string,category: any, bindtranValue: any, code: any) {
-  let codName:any
-    if(!category && dfData && mapperColumn && !bindtranValue && !code){
-      let result = dfData.map((item: any) => item[mapperColumn]);
-      return result;
-    } else if (!category && !bindtranValue && !code) {
-      let data = dfData
-      return data
-    } else if (category && !bindtranValue && !code) {
-      let categoryData: any[] = []
-      let dropdownData: string[] = []
-      for (let i = 0; i < dfData.length; i++) {
-        Object.keys(dfData[i]).map(keyName => {
-          if (category === dfData[i][keyName]) {
-            categoryData.push(dfData[i])
-          }
-        })
-      }
-      for (let i = 0; i < categoryData.length; i++) {
-        Object.keys(categoryData[i]).map(keyName => {
-          if (mapperColumn === keyName) {
-            dropdownData.push(categoryData[i][keyName])
-          }
-        })
-      }
-      return dropdownData
-    } else if (code && bindtranValue) {
-      for (let i = 0; i < dfData.length; i++) {
-        Object.keys(dfData[i]).map(keyName => {
-          if (bindtranValue === dfData[i][keyName]) {
-            codName = dfData[i][mapperText]
-          }
-        })
-      }
-      return codName
-    } else if (code) {
-      let dropdownData: string[] = []
-      for (let i = 0; i < dfData.length; i++) {
-        Object.keys(dfData[i]).map(keyName => {
-          if (code === dfData[i][keyName]) {
-            dropdownData.push(dfData[i][mapperColumn])
-          }
-        })
-      }
-      return dropdownData
-    } else if (bindtranValue) {
-      let codename: string ="";
-      for (let i = 0; i < dfData.length; i++) {
-        Object.keys(dfData[i]).map(keyName => {
-          if (bindtranValue === dfData[i][keyName]) {
-            codename = dfData[i][mapperText]
-          }
-        })
-      }
-      return codename;
-    } else {
-      let dropdownData: string[] = []
-      for (let i = 0; i < dfData.length; i++) {
-        Object.keys(dfData[i]).map(keyName => {
-          if (mapperColumn === keyName) {
-            dropdownData.push(dfData[i][keyName])
-          }
-        })
-      }
-      return dropdownData
-    }
-  }
+}

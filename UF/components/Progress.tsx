@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { ProgressTheme, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { getFontSizeClass } from "@/app/utils/branding";
@@ -63,10 +63,17 @@ export const Progress: React.FC<ProgressProps> = ({
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
+  const [hovered, setHovered] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+
   const isDark = theme === "dark" || theme === "dark-hc";
   const clampedValue = Math.min(100, Math.max(0, value));
   const fontSizeClass = getFontSizeClass(branding.fontSize);
   const progressColor = getProgressColor();
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    setTooltipPos({ x: e.clientX, y: e.clientY });
+  };
 
   const progressElement = (
     <div className={`w-full h-full flex flex-col ${className}`}>
@@ -83,20 +90,37 @@ export const Progress: React.FC<ProgressProps> = ({
         )}
       </div>
       <div
-        className={`w-full flex-1 ${isDark ? "bg-gray-700" : "bg-gray-200"} rounded-full overflow-hidden transition-all duration-200`}
-        style={{
-          borderRadius: "var(--border-radius)",
-        }}
+        className="w-full flex-1 relative"
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        onMouseMove={handleMouseMove}
       >
+        {hovered && (
+          <div
+            className="fixed px-2 py-0.5 rounded text-white text-xs font-semibold pointer-events-none whitespace-nowrap z-50 -translate-x-1/2"
+            style={{
+              left: tooltipPos.x,
+              top: tooltipPos.y - 30,
+              backgroundColor: progressColor,
+            }}
+          >
+            {clampedValue}%
+          </div>
+        )}
         <div
-          className="h-full transition-all duration-300 ease-out"
-          style={{
-            width: `${clampedValue}%`,
-            backgroundColor: progressColor,
-            borderRadius: "var(--border-radius)",
-            boxShadow: `0 0 8px ${hexToRgba(progressColor, 0.4)}`,
-          }}
-        />
+          className={`w-full h-full ${isDark ? "bg-gray-700" : "bg-gray-200"} rounded-full overflow-hidden transition-all duration-200`}
+          style={{ borderRadius: "var(--border-radius)" }}
+        >
+          <div
+            className="h-full transition-all duration-300 ease-out"
+            style={{
+              width: `${clampedValue}%`,
+              backgroundColor: progressColor,
+              borderRadius: "var(--border-radius)",
+              boxShadow: `0 0 8px ${hexToRgba(progressColor, 0.4)}`,
+            }}
+          />
+        </div>
       </div>
     </div>
   );

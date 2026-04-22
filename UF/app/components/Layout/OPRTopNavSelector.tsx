@@ -722,7 +722,7 @@ const OPRTopNavSelector = ({
   const orgPopupRef = React.useRef<HTMLButtonElement>(null)
   const prodPopupRef = React.useRef<HTMLButtonElement>(null)
   const rolePopupRef = React.useRef<HTMLButtonElement>(null)
-  const { currentToken, setCurrentToken , matchedAccessProfileData , setMatchedAccessProfileData } = useContext(
+  const { currentToken, setCurrentToken, matchedAccessProfileData, setMatchedAccessProfileData } = useContext(
     TotalContext
   ) as TotalContextProps
   const tp_ps = getCookie('tp_ps')
@@ -820,7 +820,7 @@ const OPRTopNavSelector = ({
         })
       }
     }
-    if(!Object.keys(matchedAccessProfileData).length){
+    if (!Object.keys(matchedAccessProfileData).length) {
       getSecurityTemplate()
     }
   }, [])
@@ -1026,15 +1026,16 @@ const OPRTopNavSelector = ({
     getAccessToken(role, currentOrg, currentSubOrg, currentProd)
   }
 
+  const handleStageClick = (stage: 'org' | 'prod' | 'role') => {
+    setActiveStage(prev => (prev === stage ? null : stage))
+  }
+
   return (
     <div className={clsx(`h-full flex gap-2 px-4 ${fullView ? "justify-evenly" : "justify-around"} `, className)}>
       <>
         <button
           ref={orgPopupRef}
-          onClick={() => {
-            setActiveStage('org')
-          }}
-          disabled={activeStage != null}
+          onClick={() => handleStageClick('org')}
           className={clsx(
             'flex items-center justify-center gap-2 rounded-full border px-3 py-1 hover:bg-[var(--hover-color)]',
             borderColor,
@@ -1044,20 +1045,20 @@ const OPRTopNavSelector = ({
               'max-w-36': fullView
             }
           )}
-          title={selectedOrg?.orgName  ? `Organization: \n${selectedOrg?.orgName}`: 'Select Organization'}
+          title={selectedOrg?.orgName ? `Organization: \n${selectedOrg?.orgName}` : 'Select Organization'}
         >
           {fullView ? (
             <>
               <div className='w-[90%]'>
                 <div className='flex items-center gap-1'>
                   <OrgStructure />
-                  <Text variant='caption-2' contentAlign='left'>
+                  <Text contentAlign='left' className='!text-xs'>
                     Organization
                   </Text>
                 </div>
                 <Text
                   contentAlign='left'
-                  className='block w-full truncate text-left'
+                  className='block w-full truncate text-left !text-sm'
                 >
                   {selectedOrg?.orgName}
                 </Text>
@@ -1080,10 +1081,7 @@ const OPRTopNavSelector = ({
       <>
         <button
           ref={prodPopupRef}
-          onClick={() => {
-            setActiveStage('prod')
-          }}
-          disabled={activeStage != null}
+          onClick={() => handleStageClick('prod')}
           className={clsx(
             'flex items-center justify-center gap-2 rounded-full border px-3 py-1 hover:bg-[var(--hover-color)]',
             borderColor,
@@ -1093,20 +1091,20 @@ const OPRTopNavSelector = ({
               'max-w-36': fullView
             }
           )}
-          title={selectedProd?.psName  ? `Product: \n${selectedProd?.psName}`: 'Select Product'}
+          title={selectedProd?.psName ? `Product: \n${selectedProd?.psName}` : 'Select Product'}
         >
           {fullView ? (
             <>
               <div className='w-[90%]'>
                 <div className='flex items-center gap-1'>
                   <ProdStructure />
-                  <Text variant='caption-2' contentAlign='left'>
+                  <Text contentAlign='left' className='!text-xs'>
                     Products
                   </Text>
                 </div>
                 <Text
                   contentAlign='left'
-                  className='block w-full truncate text-left'
+                  className='block w-full truncate text-left !text-sm'
                 >
                   {selectedProd?.psName}
                 </Text>
@@ -1129,10 +1127,7 @@ const OPRTopNavSelector = ({
       <>
         <button
           ref={rolePopupRef}
-          onClick={() => {
-            setActiveStage('role')
-          }}
-          disabled={activeStage != null}
+          onClick={() => handleStageClick('role')}
           className={clsx(
             'flex items-center justify-center gap-2 rounded-full border px-3 py-1 hover:bg-[var(--hover-color)]',
             borderColor,
@@ -1142,20 +1137,20 @@ const OPRTopNavSelector = ({
               'max-w-36 min-w-36': fullView
             }
           )}
-          title={selectedRole?.roleName  ? `Role: \n${selectedRole?.roleName}`: 'Select Role'}
+          title={selectedRole?.roleName ? `Role: \n${selectedRole?.roleName}` : 'Select Role'}
         >
           {fullView ? (
             <>
               <div className='w-[90%]'>
                 <div className='flex items-center gap-1'>
                   <RoleStructure />
-                  <Text variant='caption-2' contentAlign='left'>
+                  <Text contentAlign='left' className='!text-xs'>
                     Roles
                   </Text>
                 </div>
                 <Text
                   contentAlign='left'
-                  className='block w-full truncate text-left'
+                  className='block w-full truncate text-left !text-sm'
                 >
                   {selectedRole?.roleName}
                 </Text>
@@ -1176,21 +1171,25 @@ const OPRTopNavSelector = ({
         </button>
       </>
       {selectedProd?.psLogo && (
-          <img
-            className='h-[50px] min-w-[100px] px-2 border-l'
-            width={100}
-            height={100}
-            src={getCdnImage(selectedProd?.psLogo)}
-            alt='appLogo'
-          />
+        <img
+          className={clsx('h-fit w-fit ', {
+            'border-l px-2': fullView,
+            'border-t py-2': !fullView,
+          })}
+          width={100}
+          height={100}
+          src={getCdnImage(selectedProd?.psLogo)}
+          alt='appLogo'
+        />
       )}
       <Popup
+        key={activeStage}
         anchorRef={
           activeStage == 'role'
             ? rolePopupRef
             : activeStage == 'prod'
-            ? prodPopupRef
-            : orgPopupRef
+              ? prodPopupRef
+              : orgPopupRef
         }
         open={activeStage !== null}
         onClose={() => setActiveStage(null)}
@@ -1199,13 +1198,12 @@ const OPRTopNavSelector = ({
           popupPlacement
             ? popupPlacement
             : activeStage == 'role'
-            ? 'bottom-start'
-            : activeStage == 'prod'
-            ? 'bottom'
-            : 'bottom-end'
+              ? 'bottom-start'
+              : activeStage == 'prod'
+                ? 'bottom'
+                : 'bottom-end'
         }
         hasArrow={false}
-        autoClose={false}
       >
         {activeStage === 'role' && (
           <>

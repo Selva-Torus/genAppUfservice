@@ -48,7 +48,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
         borderColor
       )}
     >
-      <Text contentAlign='left' variant='body-1' className='font-semibold'>
+      <Text contentAlign='left' className='font-semibold'>
         {title}
       </Text>
       <div className='h-6'>
@@ -508,7 +508,7 @@ const OPRList = ({
                     </React.Fragment>
                   ))
               ) : (
-                <Text variant='body-1' color='secondary'>
+                <Text color='secondary'>
                   Please select an access profile to continue
                 </Text>
               )}
@@ -579,7 +579,7 @@ const OPRList = ({
                   </React.Fragment>
                 ))
               ) : (
-                <Text variant='body-1' color='secondary'>
+                <Text color='secondary'>
                   Please select a organization to continue
                 </Text>
               )}
@@ -642,7 +642,7 @@ const OPRList = ({
                   </React.Fragment>
                 ))
               ) : (
-                <Text variant='body-1' color='secondary'>
+                <Text color='secondary'>
                   Please select a product/service to continue
                 </Text>
               )}

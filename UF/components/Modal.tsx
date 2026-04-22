@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useTheme } from "@/hooks/useTheme";
+import { eventBus } from "@/app/eventBus";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { Button } from "./Button";
@@ -39,6 +40,7 @@ interface ModalProps {
   className?: string;
   position?: ModalPosition;
   showOverlay?: boolean;
+  modalName?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -58,6 +60,7 @@ export const Modal: React.FC<ModalProps> = ({
   className = "",
   position = "center",
   showOverlay = true,
+  modalName,
 }) => {
   const { isDark, isHighContrast, branding } = useTheme();
 
@@ -87,6 +90,22 @@ export const Modal: React.FC<ModalProps> = ({
       document.body.style.overflow = "unset";
     };
   }, [open]);
+
+  // Listen for closeModal event and close if modalName matches
+  useEffect(() => {
+    if (!modalName) return;
+
+    const handleCloseModal = (name: string) => {
+      if (name === modalName) {
+        onClose();
+      }
+    };
+
+    eventBus.on('closeModal', handleCloseModal);
+    return () => {
+      eventBus.off('closeModal', handleCloseModal);
+    };
+  }, [modalName, onClose]);
 
   if (!open) return null;
 
@@ -163,7 +182,8 @@ export const Modal: React.FC<ModalProps> = ({
           <div
             className={`
               flex items-center justify-between
-            
+              mt-4
+              px-6
               backdrop-blur-sm
             `}
             style={{
@@ -175,7 +195,7 @@ export const Modal: React.FC<ModalProps> = ({
           >
             {title && (
               <h2
-                className={`${getFontSizeClass(branding.fontSize)} font-semibold`}
+                className={`text-xl font-semibold`}
                 style={{ color: isDark ? "#F9FAFB" : "#111827" }}
               >
                 {title}
@@ -186,18 +206,11 @@ export const Modal: React.FC<ModalProps> = ({
               <button
                 onClick={onClose}
                 className={`
-  
+                  p-1
                   ${getBorderRadiusClass(branding.borderRadius)}
                   transition-all duration-200
                   ${isDark ? "hover:bg-gray-700 hover:shadow-lg" : "hover:bg-gray-100 hover:shadow-md"}
-                  hover:scale-110
-                  active:scale-95
-                `}
-                style={{
-                  boxShadow: isDark
-                    ? "0 2px 4px rgba(0, 0, 0, 0.2)"
-                    : "0 2px 4px rgba(0, 0, 0, 0.1)",
-                }}
+                `}                
                 aria-label="Close modal"
               >
                 <Icon data="FaTimes" size={20} />

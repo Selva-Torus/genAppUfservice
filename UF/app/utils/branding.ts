@@ -1,4 +1,4 @@
-import { FontSize, BorderRadiusSize, Branding } from "@/types/global";
+import { FontSize, BorderRadiusSize, Branding, TextVariant } from '@/types/global'
 
 export const getFontSizeClass = (fontSize: FontSize): string => {
   switch (fontSize) {
@@ -11,7 +11,46 @@ export const getFontSizeClass = (fontSize: FontSize): string => {
     case "Extra Large":
       return "text-xl";
   }
-};
+}
+
+export const getFontSizeForHeader = (fontSize: FontSize): TextVariant => {
+  switch (fontSize) {
+    case 'Small':
+      return 'body-1'
+    case 'Medium':
+      return 'body-3'
+    case 'Large':
+      return 'header-1'
+    case 'Extra Large':
+      return 'header-2'
+  }
+}
+
+export const getFontSizeForSubHeader = (fontSize: FontSize): TextVariant => {
+  switch (fontSize) {
+    case 'Small':
+      return 'body-1'
+    case 'Medium':
+      return 'body-3'
+    case 'Large':
+      return 'subheader-3'
+    case 'Extra Large':
+      return 'subheader-2'
+  }
+}
+
+export const getFontSizeForDisplay = (fontSize: FontSize): TextVariant => {
+  switch (fontSize) {
+    case 'Small':
+      return 'body-1'
+    case 'Medium':
+      return 'body-3'
+    case 'Large':
+      return 'display-1'
+    case 'Extra Large':
+      return 'display-2'
+  }
+}
 
 export const getBorderRadiusClass = (borderRadius: BorderRadiusSize): string => {
   switch (borderRadius) {
@@ -64,4 +103,3 @@ export const darkenColor = (color: string, amount: number = 0.1): string => {
   const b = Math.max(0, parseInt(hex.substring(4, 6), 16) - amount * 255);
   return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
 };
- 

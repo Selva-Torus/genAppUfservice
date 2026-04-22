@@ -21,6 +21,7 @@ interface TabItem {
 
 interface TabsProps {
   items: TabItem[];
+  security:any[],
   direction?: TabDirection;
   disabled?: boolean;
   needTooltip?: boolean;
@@ -29,6 +30,7 @@ interface TabsProps {
   headerPosition?: HeaderPosition;
   headerAlignment?: HeaderAlignment;
   defaultActiveId?: string;
+  activeTab?: string;
   onChange?: (id: any) => void;
   className?: string;
   tabHeaders?: TabItem[];
@@ -36,6 +38,7 @@ interface TabsProps {
 
 export const Tabs: React.FC<TabsProps> = ({
   items,
+  security,
   direction,
   disabled = false,
   needTooltip = false,
@@ -44,12 +47,15 @@ export const Tabs: React.FC<TabsProps> = ({
   headerPosition = "top",
   headerAlignment = "full",
   defaultActiveId,
+  activeTab: activeTabProp,
   onChange=()=>{},
   className = "",
   tabHeaders=[],
 }) => {
   const { theme, branding } = useGlobal();
   const [activeTab, setActiveTab] = useState(defaultActiveId || items[0]?.id || "");
+
+  const currentActiveTab = activeTabProp ?? activeTab;
 
   const handleTabClick = (id: string) => {
       onChange(id);
@@ -64,7 +70,7 @@ export const Tabs: React.FC<TabsProps> = ({
 
   const isDark = theme === "dark" || theme === "dark-hc";
 
-  const activeContent = items.find(item => item.id === activeTab)?.content;
+  const activeContent = items.find(item => item.id === currentActiveTab)?.content;
 
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
@@ -113,52 +119,56 @@ export const Tabs: React.FC<TabsProps> = ({
           `}
         >
         {items.map((item) => {
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={()=> handleTabClick(item.id)}
-              disabled={disabled}
-              className={`
-                ${getSizeClasses()}
-                rounded-full
-                flex items-center justify-center gap-2
-                font-medium
-                whitespace-nowrap
-                transition-all
-                ${direction === "vertical" ? "" : headerAlignment === "full" ? "flex-1" : ""}
-                ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-                ${isActive
-                  ? "text-white shadow-sm"
-                  : isDark ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-gray-900"
-                }
-              `}
-              style={{
-                backgroundColor: isActive ? branding.brandColor : "transparent",
-              }}
-              onMouseEnter={(e) => {
-                if (!disabled && !isActive) {
-                  e.currentTarget.style.backgroundColor = hexToRgba(branding.hoverColor, 0.25);
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!disabled && !isActive) {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                }
-              }}
-              onFocus={(e) => {
-                if (!isActive) {
-                  e.currentTarget.style.boxShadow = `0 0 0 2px ${hexToRgba(branding.selectionColor, 0.3)}`;
-                }
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.boxShadow = "none";
-              }}
-            >
-              {item.icon && <Icon data={item.icon} size={16} />}
-              {item.title}
-            </button>
-          );
+          const isActive = currentActiveTab === item.id;
+          if(security?.includes(item.id))
+          {
+            
+            return (
+              <button
+                key={item.id}
+                onClick={()=> handleTabClick(item.id)}
+                disabled={disabled}
+                className={`
+                  ${getSizeClasses()}
+                  rounded-full
+                  flex items-center justify-center gap-2
+                  font-medium
+                  whitespace-nowrap
+                  transition-all
+                  ${direction === "vertical" ? "" : headerAlignment === "full" ? "flex-1" : ""}
+                  ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                  ${isActive
+                    ? "text-white shadow-sm"
+                    : isDark ? "text-gray-300 hover:text-white" : "text-gray-700 hover:text-gray-900"
+                  }
+                `}
+                style={{
+                  backgroundColor: isActive ? branding.brandColor : "transparent",
+                }}
+                onMouseEnter={(e) => {
+                  if (!disabled && !isActive) {
+                    e.currentTarget.style.backgroundColor = hexToRgba(branding.hoverColor, 0.25);
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!disabled && !isActive) {
+                    e.currentTarget.style.backgroundColor = "transparent";
+                  }
+                }}
+                onFocus={(e) => {
+                  if (!isActive) {
+                    e.currentTarget.style.boxShadow = `0 0 0 2px ${hexToRgba(branding.selectionColor, 0.3)}`;
+                  }
+                }}
+                onBlur={(e) => {
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                {item.icon && <Icon data={item.icon} size={16} />}
+                {item.title}
+              </button>
+            );
+          }
         })}
         </div>
         {tabHeaders && tabHeaders.length > 0 && (
@@ -166,9 +176,12 @@ export const Tabs: React.FC<TabsProps> = ({
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(24, 1fr)',
-              gridTemplateRows: 'repeat(auto-fill, minmax(8px, 1fr))',
+              gridTemplateRows: 'repeat(auto-fill, 4px)',
               columnGap: '8px',
-              flex: 1
+              flex: 1,
+              placeItems:'stretch',
+              gridAutoRows:'4px',
+              overflow:'hidden'
             }}
           >
             {tabHeaders.map((header) => (

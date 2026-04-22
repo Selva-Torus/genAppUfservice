@@ -27,7 +27,7 @@ export class TeService{
 
     const page = pfdto.page;
     const count = pfdto.count;
-    let nodeInfo,processedKey,currentFabric, failureQueue;
+    let nodeInfo,processedKey,currentFabric, failureQueue,srcStatus;
 
     // OPTIMIZATION: Create cache for this execution
     const executionCache = new Map<string, any>();
@@ -61,7 +61,7 @@ export class TeService{
          d_Pfo = 'DFO';
        }
        if (currentFabric == 'PF-PFD' && (!pfdto.data || pfdto.data.length == 0 || Object.keys(pfdto.data).length == 0))
-         throw new CustomException('data not found', 404);
+         throw new CustomException('Data not found', 404);
        let tokenDecode = this.jwtService.decode(pfdto.token, { json: true })
        if (!tokenDecode || !tokenDecode.loginId)
          throw new CustomException('Invalid token', 401);
@@ -79,8 +79,11 @@ export class TeService{
      
       let logicCenter
        if (afi && afi.hasOwnProperty('logicCenter')) {
-       if(currentFabric == 'DF-DFD')
-       logicCenter = afi?.logicCenter
+       if(currentFabric == 'DF-DFD'){
+        logicCenter = afi?.logicCenter
+        if(!logicCenter && pfdto.afiflag != 'Y')
+           return { status: 'Success', statusCode: 201, processKey: dstkey, message: 'Success', dataset:'Bulk Data Processing'};
+        }
       }else{
         logicCenter = true
       }
@@ -94,7 +97,7 @@ export class TeService{
 
        if (!poNode || poNode.length == 0)
          throw new CustomException('Nodes not found', 404);
-    
+       
        //  Check RollBack enabled
        await this.CommonService.checkRollBack(Ndp,client,'check'); 
        
@@ -138,23 +141,53 @@ export class TeService{
        if (flg == poNode.length) {
          throw new CustomException('Invalid nodeId', 400);
        }
-       if (pfdto.upId) {
-        //  if (pfdto.nodeId == poNode[1].nodeId) {
-        //    pfdto.upId = null;
-        //  }
+      if (pfdto.upId) {
+         if (pfdto.nodeId == poNode[1].nodeId && currentFabric == 'PF-PFD') {
+           pfdto.upId = null;
+         }
         pid = pfdto.upId;
        }
        this.logger.log(pfdto.upId);
       
+      //Artifact RuleCodeMapper
+      
+      let artifactRule = poJson?.mappedData?.artifact?.rule?.rulekey;
+      let {sobj,SessionInfo} = await this.CommonService.sessionDecode(pfdto.token, pfdto.upId);
+      let ifoObj = {}
+      if(artifactRule?.length>0){
+        for(let item of artifactRule){
+          let RuleKey = item.split(':')
+          if(RuleKey.length == 7){
+            let fullRuleKey = `CK:${RuleKey[0]}:FNGK:${RuleKey[1]}:FNK:${RuleKey[2]}:CATK:${RuleKey[3]}:AFGK:${RuleKey[4]}:AFK:${RuleKey[5]}:AFVK:${RuleKey[6]}`
+          
+            let pfRuleValue = await this.redisService.getJsonData(fullRuleKey+':NDP',process.env.CLIENTCODE)    
+            if(pfRuleValue){                                   
+                pfRuleValue = JSON.parse(pfRuleValue)
+                let rule = (Object.values(pfRuleValue)[0])['rule']
+  
+                let RCMresult:any = await this.CommonService.PfRuleExtract(rule,SessionInfo,pfdto.data,pfdto.controlName);
+                console.log('RCMresult',RCMresult);
+                  
+                if (RCMresult && Object.keys(RCMresult).length > 0) {
+                  pfdto.data = (Object.assign(pfdto.data,RCMresult))
+                  ifoObj = Object.assign(ifoObj,RCMresult) 
+                }
+            }
+          }                         
+        }
+      }
+
        let eventResponse;
        for (var i = 0; i < poNode.length; i++) {
+        if(Object.keys(ifoObj).length>0){
+          this.redisService.setJsonData(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', JSON.stringify(ifoObj), client, 'ifo')
+        }
         nodeInfo = poNode[i];
         pfdto.nodeId = pfdto.nodeId?pfdto.nodeId:poNode[i].nodeId;
         pfdto.nodeType = pfdto.nodeType?pfdto.nodeType:poNode[i].nodeType
         pfdto.nodeName = pfdto.nodeName?pfdto.nodeName:poNode[i].nodeName         
 
-        let srcQueue;
-        let srcStatus;
+        let srcQueue;        
         let targetQueue;
         let staticQueue = currentFabric == 'DF-DFD' ? 'TDH' : 'TPH';
 
@@ -197,9 +230,16 @@ export class TeService{
                 srcStatus = poNode[i].events[0].source.status.trim();
                 if (pfdto.event == null && event == srcStatus) {
                   // OPTIMIZATION: Remove redundant exist() check - get() returns null if not exists
+                  if(poNode[i-1].nodeName == 'outputnode'){
+                    let pfresponse = eventResponse;
+                    if (!pfresponse)
+                    pfresponse = await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i-1].nodeName  + '.PRO', '.response', client);
+                  pfresponse = pfresponse.data && pfresponse.data[poNode[i-1].nodeName] ? pfresponse.data[poNode[i-1].nodeName] : pfresponse.data; 
+                   return { upId: pfdto.upId, message: `Awaiting for: ${poNode[i].nodeName}`, event: event, data: pfresponse,node:'outputnode' };
+                  } 
                   const data = await this.redisService.getJsonData(processedKey + pfdto.upId + ':previousResponse', client);
                   const npvdata = data ? JSON.parse(data) : undefined;
-                  return { upId: pfdto.upId, message: `Awaiting for: ${poNode[i].nodeName}`, event: event, insertedData: npvdata };
+                  return { upId: pfdto.upId, message: `Awaiting for: ${poNode[i].nodeName}`, event: event, data: npvdata };
                 } else if (poNode[i].nodeId == poNode[1].nodeId) {
                   throw new CustomException('Sourceid not found', 404)
                 }
@@ -245,9 +285,9 @@ export class TeService{
                   // Event Emmiting logic
                 //  pfdto.data = pfdto.data['childData'] ? pfdto.data : { [poNode[i].nodeName]: pfdto.data }
               
-                  // pfdto.data = { [poNode[i].nodeName]: pfdto.data }                
+                  // pfdto.data = { [poNode[i].nodeName]: pfdto.data } 
                   eventResponse = await firstValueFrom(this.poClient.send(
-                    ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + pfdto.event,
+                    (ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + pfdto.event).replace(/\s/g, "") ,
                     new PoEvent(pfdto, pfdto.event, pfjson, pfo, poJson, Ndp, refflag, page, count)
                   ))
                   if (!eventResponse.status && eventResponse.status != 200) {
@@ -305,23 +345,23 @@ export class TeService{
             pfdto.data = mergearr;
           }
 
-          let nodeObjArr = {
-            nodeName: poNode[i].nodeName,
-            nodeId: poNode[i].nodeId,
-            nodeType: poNode[i].nodeType,
-            sourceStatus: event,
-            //timeStamp: new Date().toString(),
-            currentStatus: 'Failed',
-          }
-
-          // OPTIMIZATION: Use helper method (eliminates exist + get + loop)
-          await this.addNodeToResponse(processedKey, pfdto.upId, client, nodeObjArr, executionCache);
-        
+          
           if (event === srcStatus) {
+            let nodeObjArr = {
+              nodeName: poNode[i].nodeName,
+              nodeId: poNode[i].nodeId,
+              nodeType: poNode[i].nodeType,
+              sourceStatus: event,
+              //timeStamp: new Date().toString(),
+              currentStatus: 'Failed',
+            }
+  
+            // OPTIMIZATION: Use helper method (eliminates exist + get + loop)
+            await this.addNodeToResponse(processedKey, pfdto.upId, client, nodeObjArr, executionCache);
             let msgPattern = currentFabric == 'DF-DFD'?artifact + '_' + poNode[i].nodeId + '_' + event:ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event;
           
             eventResponse = await firstValueFrom(this.poClient.send(
-              msgPattern,
+              msgPattern.replace(/\s/g, ""),
               new PoEvent(pfdto, event, pfjson, pfo, poJson, Ndp, refflag, page, count)
             ))           
            
@@ -385,9 +425,9 @@ export class TeService{
 
             if (event === srcStatus) {
               let msgPattern = currentFabric == 'DF-DFD'? artifact + '_' + poNode[i].nodeId + '_' + event:ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event;
-             
+              
               eventResponse = await firstValueFrom(this.poClient.send(
-                msgPattern,
+                msgPattern.replace(/\s/g, ""),
                 new PoEvent(pfdto, event, pfjson, pfo, poJson, Ndp, refflag, page, count)
               ))               
 
@@ -446,7 +486,7 @@ export class TeService{
            
             if (event === srcStatus) {
               eventResponse = await firstValueFrom(this.poClient.send(
-                ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event,
+                (ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event).replace(/\s/g, ""),
                 new PoEvent(pfdto, event, pfjson, pfo, poJson, Ndp, refflag, page, count)
               ))
 
@@ -512,7 +552,7 @@ export class TeService{
            
             if (event === srcStatus) {
               eventResponse = await firstValueFrom(this.poClient.send(
-                ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event,
+                (ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event).replace(/\s/g, ""),
                 new PoEvent(pfdto, event, pfjson, pfo, poJson, Ndp, refflag, page, count)
               ))
 
@@ -582,31 +622,37 @@ export class TeService{
                            // await this.redisService.setStreamData(srcQueue, 'TASK - ' + pfdto.upId, JSON.stringify({ PID: pfdto.upId, TID: pfdto.nodeId, EVENT: 'ProcessCompleted' }));
                             await this.CommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', '',pfdto.token, currentFabric);
                             if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL') {
-                              pfresponse = pfresponse.data && pfresponse.data[pfjson[pfs].nodeName] ? pfresponse.data[pfjson[pfs].nodeName] : pfresponse;
+                             if(Array.isArray(pfresponse?.data) && pfresponse?.data.length>0 && currentFabric == 'PF-SFD')
+                              pfresponse = pfresponse.data && pfresponse.data[0][pfjson[pfs].nodeName] ? pfresponse.data[0][pfjson[pfs].nodeName] : pfresponse.data[0];
+                              else
+                              pfresponse = pfresponse.data && pfresponse.data[pfjson[pfs].nodeName] ? pfresponse.data[pfjson[pfs].nodeName] : pfresponse.data; 
                               
                               // OPTIMIZATION: Parallelize cleanup operations with concurrency limiting
-                              const [processedNodes, processedQueues] = await Promise.all([
-                                this.redisService.getKeys(processedKey + pfdto.upId, client),
-                                this.redisService.getKeys(client + '_*_ProcessStatus', client)
-                              ]);
+                              // const [processedNodes, processedQueues] = await Promise.all([
+                              //   this.redisService.getKeys(processedKey + pfdto.upId, client),
+                              //   this.redisService.getKeys(client + '_*_ProcessStatus', client)
+                              // ]);
 
-                              // Batch delete with chunking to prevent connection pool exhaustion
-                              const allKeysToDelete = [
-                                ...(processedNodes || []),
-                                ...(processedQueues || [])
-                              ];
+                              // // Batch delete with chunking to prevent connection pool exhaustion
+                              // const allKeysToDelete = [
+                              //   ...(processedNodes || []),
+                              //   ...(processedQueues || [])
+                              // ];
 
-                              if(allKeysToDelete.length > 0){
-                                // Delete in chunks of 10 to avoid overwhelming connection pool
-                                await this.executeInChunks(
-                                  allKeysToDelete,
-                                  (key) => this.redisService.deleteKey(key, client),
-                                  10
-                                );
-                                this.logger.log(`✅ Cleaned up ${allKeysToDelete.length} keys in chunks`);
-                              }  
+                              // if(allKeysToDelete.length > 0){
+                              //   // Delete in chunks of 10 to avoid overwhelming connection pool
+                              //   await this.executeInChunks(
+                              //     allKeysToDelete,
+                              //     (key) => this.redisService.deleteKey(key, client),
+                              //     10
+                              //   );
+                              //   this.logger.log(`✅ Cleaned up ${allKeysToDelete.length} keys in chunks`);
+                              // }  
                              
                               this.logger.log('Event Emmiter Completed....');                             
+                              if(pfjson[pfs].nodeType == 'outputnode' && (Array.isArray(pfresponse) && pfresponse?.length>0 || Object.keys(pfresponse).length>0))
+                                return { statusCode: 201, message: 'Success', key: pfdto.key, upId: pfdto.upId, event: event, data: pfresponse,node:'outputnode'};                              
+                              else                                                    
                               return { statusCode: 201, message: 'Success', key: pfdto.key, upId: pfdto.upId, event: event, data: pfresponse};
                             } else {
                               let obj = {};
@@ -623,7 +669,7 @@ export class TeService{
                                 } else {
                                   obj['data'] = eventResponse;
                                 }
-                                 if(logicCenter){
+                                //if(logicCenter){
                                   // OPTIMIZATION: Keep parallel delete operations for performance
                                   let keys = await this.redisService.getKeys(dstkey+ tokenDecode.loginId + '_DS_Object',client)
                                   if(keys && keys.length > 0){
@@ -632,11 +678,33 @@ export class TeService{
                                     ));
                                   }
                                   await this.redisService.sethash(obj['data'],dstkey+ tokenDecode.loginId + '_DS_Object')
-                                }                                
+                               // }    
+                                
+                               // OPTIMIZATION: Parallelize cleanup operations with concurrency limiting
+                                const [processedNodes, processedQueues] = await Promise.all([
+                                  this.redisService.getKeys(processedKey + pfdto.upId, client),
+                                  this.redisService.getKeys(client + '_*_ProcessStatus', client)
+                                ]);
+
+                                // Batch delete with chunking to prevent connection pool exhaustion
+                                const allKeysToDelete = [
+                                  ...(processedNodes || []),
+                                  ...(processedQueues || [])
+                                ];
+
+                                if(allKeysToDelete.length > 0){
+                                  // Delete in chunks of 10 to avoid overwhelming connection pool
+                                  await this.executeInChunks(
+                                    allKeysToDelete,
+                                    (key) => this.redisService.deleteKey(key, client),
+                                    10
+                                  );
+                                  this.logger.log(`✅ Cleaned up ${allKeysToDelete.length} keys in chunks`);
+                                }  
                                
-                                if(obj['data'] == 'logicCenter' && !logicCenter)
-                                  return { status: 'Success', statusCode: 201, processKey: dstkey, upId: pfdto.upId, message: 'Success', event: FinalEvent};
-                                else
+                                //if(obj['data'] == 'logicCenter' && !logicCenter)
+                                 // return { status: 'Success', statusCode: 201, processKey: dstkey, upId: pfdto.upId, message: 'Success', event: FinalEvent,dataset:'Bulk Data Processing'};
+                                //else
                                   return { status: 'Success', statusCode: 201, processKey: dstkey, upId: pfdto.upId, message: 'Success', event: FinalEvent, dataset: obj };
                               }
                             }
@@ -702,7 +770,7 @@ export class TeService{
                       }                      
                       pfdto.data = { data: mergearr[m] };                      
                       eventResponse = await firstValueFrom(this.poClient.send(
-                        artifact + '_' + poNode[i].nodeId + '_' + event,
+                        (artifact + '_' + poNode[i].nodeId + '_' + event).replace(/\s/g, ""),
                         new PoEvent(pfdto, event, pfjson, pfo, poJson, Ndp, refflag, page, count)
                       ))
 
@@ -726,10 +794,10 @@ export class TeService{
                     if (currentFabric == 'DF-DFD') {   
                        pfdto['logicCenter'] = logicCenter                   
                       eventResponse = await firstValueFrom(this.poClient.send(
-                        artifact + '_' + poNode[i].nodeId + '_' + event,
+                        (artifact + '_' + poNode[i].nodeId + '_' + event).replace(/\s/g, ""),
                         new PoEvent(pfdto, event, pfjson, pfo, poJson, Ndp, refflag, page, count)
                       ))
-                      if (!eventResponse.status && eventResponse.status != 200 && logicCenter) {
+                      if (!eventResponse.status && eventResponse.status != 200 ) { //&& logicCenter
                         throw eventResponse;
                       }
                       console.log(`${eventResponse.targetStatus} Event emitted successfully by ${poNode[i].nodeName}`);                       
@@ -742,12 +810,13 @@ export class TeService{
 
                     } else {                     
                       eventResponse = await firstValueFrom(this.poClient.send(
-                        ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event,
+                        (ufname + '_' + poNode[i].nodeId + '_' + sourceId + '_' + event).replace(/\s/g, ""),
                         new PoEvent(pfdto, event, pfjson, pfo, poJson, Ndp, refflag, page, count)
                       ))
                       
-                      if (eventResponse.data && pfdto.nodeType == 'apinode') {
-                        prevres[poNode[i].nodeId] = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', '.response', client))
+                      if (eventResponse.data && pfdto.nodeType == 'apinode' && eventResponse?.method == 'post') {
+                        //prevres[poNode[i].nodeId] = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', '.response', client))
+                        prevres = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', '.response', client))
                         await this.redisService.setJsonData(processedKey + pfdto.upId + ':previousResponse', JSON.stringify(prevres), client);
                       }
                       if (!eventResponse.status && eventResponse.status != 200 ) {
@@ -798,12 +867,12 @@ export class TeService{
        if (pfdto.upId) {
          if (error.statusCode) {
            await this.CommonService.getTPL(processedKey, pfdto.upId, nodeInfo, 'Failed', failureQueue,
-             pfdto.token, currentFabric, '', pfdto.data, error);
+             pfdto.token, currentFabric, srcStatus, pfdto.data, error);
            throw new CustomException(error?.message, error.statusCode);
          }
          else {
            await this.CommonService.getTPL(processedKey, pfdto.upId, nodeInfo, 'Failed', failureQueue,
-             pfdto.token, currentFabric, '', pfdto.data, error);
+             pfdto.token, currentFabric, srcStatus, pfdto.data, error);
            throw new CustomException(error.message ? error.message : error.toString(), 500);
          }
 
@@ -969,7 +1038,7 @@ export class TeService{
           if (fabric == 'DF-DFD') {
             placeholder = { request: {},response: {}, exception: {}, event: {}, customResponse: {}};            
           } else {
-            placeholder = {request: {}, response: {}, exception: {}, event: {}, ifo: {}, code: {}};
+            placeholder = {request: {}, response: {}, exception: {}, event: {}, ifo: {}, code: {}, rollback:{}};
           }          
           await this.redisService.setJsonData(processedKey + upId + ':NPV:' + pfjson[i].nodeName + '.PRO',JSON.stringify(placeholder), client);
         }
@@ -1042,12 +1111,12 @@ export class TeService{
   }
 
   // Handler
-  async savehandler(data,key,event,nodeId,nodeName,nodeType,token,upId,sourceId, lockDetails,childTable?) {
+   async savehandler(input,token) {
     try {
       this.logger.log('SaveHandler service started...');
-      var formdata;     
-      if (data && nodeId && nodeName && nodeType && event) {
-        var formdata = await this.TEcall(token, key, upId, data,nodeId, nodeName, nodeType, event, sourceId, lockDetails,childTable);
+      var formdata;
+      if (input.data && input.nodeId && input.nodeName && input.nodeType && input.event) {
+        var formdata = await this.TEcall(token,input);
         return formdata;
       }else{
         throw new CustomException('data/nodeId/nodeName/nodeType/event is not found',404)
@@ -1061,7 +1130,7 @@ export class TeService{
     }
   }   
 
-  async TEcall(token,key,upId,data,nodeId,nodeName,nodeType,event,sourceId, lockDetails, childTable?){
+  async TEcall(token,input){
     try{
     var pfdto:any = new pfDto()
     var formdata:any
@@ -1071,16 +1140,18 @@ export class TeService{
         Authorization: `Bearer ${token}`
       }
     };      
-        pfdto.key = key
-        pfdto.upId = upId
+        pfdto.key = input.key
+        pfdto.upId = input.upId
         pfdto.token = token 
-        pfdto.data = data
-        pfdto.event = event
-        pfdto.nodeId = nodeId         
-        pfdto.nodeType = nodeType 
-        pfdto.sourceId = sourceId
-        pfdto.lock = lockDetails      
-        pfdto.childTable = childTable     
+        pfdto.data = input.data
+        pfdto.event = input.event
+        pfdto.nodeId = input.nodeId         
+        pfdto.nodeType = input.nodeType 
+        pfdto.sourceId = input.sourceId
+        pfdto.lock = input.lockDetails      
+        pfdto.childTable = input.childTable 
+        pfdto.ssKey =  input.ssKey   
+        pfdto.controlName =  input.controlName  
         formdata =  await this.EventEmitter(pfdto)              
       return formdata
   }catch(err){    

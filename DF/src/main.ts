@@ -1,19 +1,18 @@
 
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT005:AFGK:V001:AFK:VGPH001:AFVK:v1:bldc",
-  "deploymentArtifactKey": "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:V001:AFGK:VGPH001:AFK:VGPH_DPD:AFVK:v1",
-  "appGroupDesc": "VGPH",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+  "deploymentArtifactKey": "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
+  "appGroupDesc": "appgroup",
   "logType": "mongodb",
-  "appDesc": "VGPH",
-  "appLogo": "torus/9.1/CT005/resources/images/veraciousLogo.png",
+  "appDesc": "application1",
   "isOld": true,
-  "clientCode": "CT005",
+  "clientCode": "CI001",
   "loginDetails": {
-    "loginId": "guru",
-    "firstName": "Guru",
-    "lastName": "Krishnan",
-    "email": "cgkrishnan@gsstvl.com",
-    "mobile": "8190002700",
+    "loginId": "selva",
+    "firstName": "selva",
+    "lastName": "g",
+    "email": "selvakumarg+a@torus.tech",
+    "mobile": "6369726232",
     "2FAFlag": "N",
     "scope": "client_admin",
     "status": "active",
@@ -21,9 +20,9 @@
       "admin"
     ],
     "accessExpires": "",
-    "dateAdded": "2026-01-21T06:18:59.283Z",
+    "dateAdded": "2026-01-23T13:29:31.878Z",
     "isRestricted": false,
-    "userUniqueId": "60c8940f-8aa1-485d-9b53-dc20e43cc584",
+    "userUniqueId": "399bb002-571a-4f60-8242-67a2d5d03a4b",
     "touring": {
       "isneedTouring": false,
       "touringData": {
@@ -33,13 +32,7 @@
           "completed": false,
           "notVisited": []
         },
-        "/home": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "artifactselector": {
+        "/control-center/tenant": {
           "stepIndex": 0,
           "isSkipped": true,
           "completed": false,
@@ -47,12 +40,35 @@
         }
       }
     },
-    "lastActive": "2026-02-06T04:34:29.830Z",
-    "client": "CT005",
-    "users": "guruGuru Krishnan",
-    "profile": "",
-    "edit": "",
-    "noOfProductsService": 0
+    "client": "CI001",
+    "quickLinks": [
+      {
+        "label": "Tenant Profile",
+        "key": "tenantProfile",
+        "routes": "/control-center/tenant"
+      },
+      {
+        "label": "Appearance",
+        "key": "tenantappearance",
+        "routes": "/tenant-settings?tenant=${tenant}"
+      },
+      {
+        "label": "Company Profile",
+        "key": "PersonalcompanyProfile",
+        "routes": "/control-center/company-profile"
+      },
+      {
+        "label": "Notifications",
+        "key": "tenantnotifications",
+        "routes": "/control-center/notifications"
+      },
+      {
+        "label": "User Management",
+        "key": "usermanagement",
+        "routes": "/control-center/user-management"
+      }
+    ],
+    "lastActive": "2026-04-21T12:15:26.545Z"
   }
 } */
 import { NestFactory } from '@nestjs/core';
@@ -67,18 +83,71 @@ import * as fs from 'fs';
 import DecryptPayloadMiddleware from './decryptPayloadMiddleware';
 import multipart from '@fastify/multipart';
 import { BigIntInterceptor } from './bigint.interceptor';
-
+import { EnvData } from './envData/envData.service';
+//import { envData as mongoClientEnvData } from './mongoClient';
+import { decrypt } from './decrypt';
+import { Logger } from '@nestjs/common';
+const Redis = require('ioredis');
 
 async function bootstrap() {
-    const fastifyAdapter = new FastifyAdapter({
+  const logger = new Logger('Redis');
+  const redis = new Redis({
+    host: process.env.HOST,
+    port: parseInt(process.env.PORT),
+  }).on('error', (err:any) => {
+    console.log('Redis Client Error', err);
+    throw err;
+  });
+
+  let configData = null;
+  try {
+    const redisResult = await redis.call('JSON.GET', "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1:NDP");
+    if (redisResult) {
+      const parsed = JSON.parse(redisResult);
+      const rootKey = Object.keys(parsed)[0];
+      const encryptedPayload = parsed[rootKey];
+      const decryptedData = decrypt<{ data: any }>(encryptedPayload);
+      configData = decryptedData.data;
+
+      if (configData) {
+        logger.log('✅ Config fetched from Redis');
+      } else {
+        throw new Error('Config structure Redis - No DPD data found');
+      }
+    } else {
+      logger.warn('⚠️ No config found in Redis for key');
+    }
+  } catch (error) {
+    logger.error('Error loading config from Redis:', error);
+  }
+
+   //if (configData) {
+   // mongoClientEnvData.setConfig(configData);
+ // }
+
+  const fastifyAdapter = new FastifyAdapter({
     bodyLimit: 500 * 1024 * 1024, // 500MB limit
     logger: true,
   });
-  
+  if (configData) {
+    EnvData.preloadConfig(configData);
+    logger.log('✅ Config preloaded into EnvData before bootstrap');
+  }
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     fastifyAdapter,
   );
+
+  const envData = app.get(EnvData);
+
+  if (!configData) {
+    console.error('❌EndDetails Not Initialized');
+    throw new Error('DPD config data is required for application startup');
+  }
+
+  envData.setConfig(configData);
+  console.log('✅ Config loaded into EndDetails');
+
     // Global interceptor for BigInt serialization
   app.useGlobalInterceptors(new BigIntInterceptor());
   //app.use(
@@ -115,11 +184,12 @@ async function bootstrap() {
     .setVersion('0.1')
     .addTag('ERD API')
     .addTag('Torus API')
+    .addTag('Scheduler API')
     .addBearerAuth(
     { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 
     'JWT-auth',
     )
-    .addServer('https://tgadev.toruslowcode.com/ct005/v001/vgph001/v1/api','Production Server')
+    .addServer('https://tgadev.toruslowcode.com/&lt;tenantCode&gt;/&lt;AppGroupCode&gt;/&lt;AppCode&gt;/&lt;version&gt;/api','Production Server')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger.json', JSON.stringify(document, null, 2));

@@ -36,6 +36,7 @@ import i18n from '../../components/i18n'
 import { Tabs } from '@/components/Tabs'
 import OrganizationLink from './OrganizationLink'
 import clsx from 'clsx'
+import { getFontSizeForHeader } from '@/app/utils/branding'
 
 type SettingTabs = 'org' | 'st' | 'user' | 'general'
 
@@ -139,7 +140,9 @@ const SetupScreen = ({
     return i18n.keyset('language')
   }, [currentLang]) // i18n.keyset('language')
   const [orgMasterData, setOrgMasterData] = useState([])
-  let srcOrgIds: Array<string> = []
+  let srcOrgIds: Array<string> = useMemo(() => {
+    return collectUniqueSrcIds(orgGrpData)
+  }, [orgGrpData])
 
   const onUpdateSecurityData = (updatedData: any[]) => {
     setSecurityData(updatedData)
@@ -235,7 +238,6 @@ const SetupScreen = ({
           Array.isArray(response?.data?.orgMatrix)
         ) {
           setOrgGrpData(response?.data?.orgMatrix)
-          srcOrgIds = collectUniqueSrcIds(response?.data.orgMatrix ?? [])
           setMasterState(prev => ({
             ...prev,
             org: response?.data?.orgMatrix
@@ -245,6 +247,7 @@ const SetupScreen = ({
         }
         if (response.data.users && Array.isArray(response.data.users)) {
           const result = response.data.users.map((item: any, i: number) => ({
+            ...item,
             user: '',
             email: item.email,
             profile: item?.profile ?? '',
@@ -348,26 +351,25 @@ const SetupScreen = ({
   }
 
   const masterSave = async (isDeletion: boolean = false) => {
-    if (!isDeletion && selectedMenuItem === 'org') {
-      if (findPath(orgGrpData, '')) {
-        toast(
-          'Please fill all the fields to save organization matrix',
-          'warning'
-        )
-        return
-      }
-    }
-
-    const orgKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:orgMatrix`
-    const orgMasterKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:orgMaster`
-
     try {
-      const results = await Promise.all([
-        saveJson(orgKey, orgGrpData),
-        saveJson(orgMasterKey, orgMasterData)
-      ])
+      const response = await AxiosService.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/postOrgData`,
+        {
+          masterData : orgMasterData,
+          matrixData : orgGrpData
+        },
+        {
+          headers : {
+            Authorization: `Bearer ${getCookie('token')}`
+          }
+        }
+      )
+      // const results = await Promise.all([
+      //   saveJson(orgKey, orgGrpData),
+      //   saveJson(orgMasterKey, orgMasterData)
+      // ])
 
-      if (results.every(Boolean)) {
+      if (response.status == 201) {
         setRefetch(prev => !prev)
         toast(
           `Data ${isDeletion ? 'Deleted' : 'Saved'} Successfully`,
@@ -469,12 +471,13 @@ const SetupScreen = ({
         }
       )
       if (res.status === 200) {
-        const oprList = await getAssignedOPRList(res.data)
+        const oprList = getAssignedOPRList(res.data)
         if (oprList) {
           setAssignedOPRList(oprList)
         }
         const result: any[] = res.data.map((item: any) => {
           return {
+            ...item,
             accessProfile: item.accessProfile,
             dap: item.dap ?? '',
             organization: item.organization ?? [],
@@ -615,24 +618,6 @@ const SetupScreen = ({
 
   const handleDeleteButtonClick = () => {
     switch (selectedMenuItem) {
-      case 'org':
-        if (orgGrpData.length === 1) {
-          toast(`You can't delete the last organization matrix`, 'danger')
-          return
-        }
-        const deleteResponse = handleDeleteGroupAndMembers(
-          orgGrpData,
-          selectedItems,
-          setSelectedItems,
-          setOrgGrpData,
-          masterSave
-        )
-        if (deleteResponse.success) {
-          toast(`ORP Deleted Successfully`, 'success')
-        } else {
-          toast(`ORP Deletion Failed`, 'danger')
-        }
-        break
       case 'st':
         let updatedSelectedRows = selectedRows
         if (selectedRows.has('all')) {
@@ -720,8 +705,8 @@ const SetupScreen = ({
               {/* LEFT : TITLE */}
               <Text
                 contentAlign='left'
-                variant='header-1'
-                className='whitespace-nowrap'
+                variant={getFontSizeForHeader(branding.fontSize)}
+                className='whitespace-nowrap font-semibold'
               >
                 {keyset('User Management')}
               </Text>
@@ -827,7 +812,7 @@ const SetupScreen = ({
                   >
                     <div className='flex items-center justify-between'>
                       <Text
-                        variant='header-1'
+                        variant={getFontSizeForHeader(branding.fontSize)}
                         contentAlign='left'
                         className='flex items-center gap-2 text-nowrap text-[#EB5757]'
                       >
@@ -847,7 +832,6 @@ const SetupScreen = ({
                     <hr className={twMerge('w-full', borderColor)} />
                     <div className='flex w-full flex-col gap-2 p-2'>
                       <Text
-                        variant='body-3'
                         className='text-nowrap'
                         contentAlign='left'
                       >
@@ -861,7 +845,6 @@ const SetupScreen = ({
                             )}
                       </Text>
                       <Text
-                        variant='body-1'
                         color='secondary'
                         className='text-nowrap'
                         contentAlign='left'
@@ -914,6 +897,7 @@ const SetupScreen = ({
               {/* RIGHT : TABS */}
               {selectedMenuItem === 'org' && (
                 <Tabs
+                  security={['orgsetup' , 'oprmatrix']}
                   direction='horizontal'
                   items={[
                     { id: 'orgsetup', title: 'Organization Setup' },
@@ -954,12 +938,12 @@ const SetupScreen = ({
                         setSearchTerm('')
                       }}
                     >
-                      <span title={keyset(item.name)}>{keyset(item.name)}</span>
+                      <Text contentAlign='left'>{(item.name)}</Text>
                     </Menu.Item>
                   ))}
                 </Menu>
               </div>
-              <div className='flex h-full w-full px-2 py-3'>
+              <div className='flex-1 min-w-0 overflow-auto px-2 py-3'>
                 {selectedMenuItem == 'general' ? (
                   <GeneralSettings
                     currentLang={currentLang}

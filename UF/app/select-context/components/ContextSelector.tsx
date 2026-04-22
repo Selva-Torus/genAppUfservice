@@ -1,3 +1,4 @@
+
 'use client'
 import React, {
   useContext,
@@ -32,6 +33,7 @@ const ContextSelector = () => {
   const [selectedAccessProfile, setSelectedAccessProfile] = useState<string[]>(
     []
   )
+  const [navigationStyles] = useState<'vertical' | 'horizontal'>("vertical");
   const { userDetails, setUserDetails , setMatchedAccessProfileData } = useContext(
     TotalContext
   ) as TotalContextProps
@@ -39,7 +41,7 @@ const ContextSelector = () => {
   const tp_ps: any = getCookie('tp_ps')
   const toast = useInfoMsg()
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
-  const appName = 'VGPH'
+  const appName = 'application1'
   const [accessProfiles, setAccessProfiles] = useState<any[]>([])
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -54,23 +56,13 @@ const ContextSelector = () => {
   const [selectedRole, setSelectedRole] = useState<Record<string, string>>({})
   const [orgGrpData, setOrgGrpData] = useState<any>([])
   const [isPending, startTransition] = useTransition();  
-  let landingScreen:string = 'CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1';
+  let landingScreen:string = 'User Screen';
   let screenDetails: any = {
            keys:[
   {
-    "screenName": "transaction",
-    "screensName": "transaction-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
-  },
-  {
-    "screenName": "system setup",
-    "screensName": "system_setup-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"
-  },
-  {
-    "screenName": "checkerapproval",
-    "screensName": "checkerapproval-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1"
+    "screenName": "test",
+    "screensName": "test-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   }
 ]
   }
@@ -145,7 +137,19 @@ const ContextSelector = () => {
                 ? selectedCombinationData.subOrgName
                 : selectedCombinationData.orgName,
               path: selectedCombinationData?.orgPath,
-              id: selectedCombinationData?.id
+              id: selectedCombinationData?.id,
+              mainOrgGrpCode: selectedCombinationData?.subOrgGrpCode
+                ? selectedCombinationData.orgGrpCode
+                : undefined,
+              mainOrgCode: selectedCombinationData?.subOrgCode
+                ? selectedCombinationData.orgCode
+                : undefined,
+              mainOrgGrpName: selectedCombinationData?.subOrgGrpName
+                ? selectedCombinationData.orgGrpName
+                : undefined,
+              mainOrgName: selectedCombinationData?.subOrgName
+                ? selectedCombinationData.orgName
+                : undefined
             }
           : {}
       )
@@ -300,30 +304,23 @@ const ContextSelector = () => {
     name: string
     'gridColumn'?: string
     'gridRow'?: string
-  }[] =[
-  {
-    "name": "app logo",
-    "gridColumn": "1/2"
-  },
+  }[] = [
   {
     "name": "menu items",
-    "gridColumn": "2/7",
     "gridRow": "1/6"
   },
   {
     "name": "opr matrix",
-    "gridColumn": "9/12",
-    "gridRow": "6/9"
+    "gridRow": "9/12"
   },
   {
     "name": "profile",
-    "gridColumn": "12/13",
     "gridRow": "12/13"
   }
 ]
 
-  const logo: string = "torus/9.1/CT005/resources/images/vgph-final-logo-fw@4x.png"
-  const appLogo: string = "torus/9.1/CT005/resources/images/veraciousLogo.png"
+  const logo: string = "torus/9.1/CI001/resources/images/images.jfif"
+  const appLogo: string = ""
 
   return (
     <div className='h-full w-full  bg-cover bg-center' style={{ backgroundImage: 'var(--app-bg-image)' }}>
@@ -334,14 +331,14 @@ const ContextSelector = () => {
         brandColor={brandColor}
         mode='closed'
         listMenuItems={false}
-        navBarItemsOrder={navBarItemsOrder}
+        navBarItemsOrder={navigationStyles === 'vertical' ? [] :navBarItemsOrder}
         appLogo={appLogo}
         logo={logo}
       />
 
       <hr className={twMerge('w-full border', borderColor)} />
       <div className='px-5 py-2.5'>
-        <div className='flex w-full items-center justify-end gap-5'>
+        <div className='flex w-full items-center justify-end gap-1'>
           <div title={selectedAccessProfile.length ? selectedAccessProfile[0] : "Select Access Profile"} className='w-[12vw]'>
             <Dropdown
               placeholder='Select Access Profile'
@@ -370,7 +367,7 @@ const ContextSelector = () => {
           </div>
           <div className='flex gap-2 py-2'>
             <Button
-              className='flex items-center rounded-md px-5 py-2 disabled:opacity-50'
+              className='flex items-center rounded-md px-5 py-2.5 disabled:opacity-50'
               icon={'MdArrowForward'}
               onClick={handleNavigationClick}
               disabled={
@@ -425,20 +422,17 @@ const ContextSelector = () => {
                     {/* Texts */}
                     <div className='flex w-full flex-col items-center'>
                       <Text
-                        variant='body-1'
                         className={`w-full truncate text-nowrap text-center`}
                       >
                         {block?.group}
                       </Text>
                       <Text
-                        variant='body-2'
                         className='w-full truncate text-nowrap text-center font-semibold'
                       >
                         {block?.title}
                       </Text>
                       <Text
-                        variant='body-1'
-                        className='w-full truncate text-nowrap text-center'
+                        className='w-full truncate text-nowrap text-center !min-h-4'
                         color='secondary'
                       >
                         {block.subtitle}

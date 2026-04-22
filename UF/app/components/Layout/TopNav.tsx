@@ -129,7 +129,7 @@ const TopNav = ({
   async function logout() {
     localStorage.clear()
     deleteAllCookies()
-    window.location.href = '/ct005/v001/vgph001/v1'
+    window.location.href = '/ci001/ag001/a001/v1'
   }
   const hasMatchingName = (obj: any, input: string): boolean => {
     if (typeof obj !== 'object' || obj === null) return false
@@ -360,7 +360,7 @@ const TopNav = ({
           <hr className={twMerge('mt-1 w-full border', borderColor)} />
 
           <div className='mt-2 flex flex-col gap-2'>
-            <Text variant='body-1' contentAlign='left'>
+            <Text contentAlign='left'>
               ORGANIZATION MATRIX
             </Text>
             <div className='flex items-center gap-1'>
@@ -369,7 +369,7 @@ const TopNav = ({
                 width='20'
                 fill={isDark ? 'white' : 'black'}
               />
-              <Text variant='body-2' contentAlign='left'>
+              <Text contentAlign='left'>
                 Organization
               </Text>
             </div>
@@ -386,7 +386,7 @@ const TopNav = ({
                 width='20'
                 fill={isDark ? 'white' : 'black'}
               />
-              <Text variant='body-2' contentAlign='left'>
+              <Text contentAlign='left'>
                 Products
               </Text>
             </div>
@@ -403,7 +403,7 @@ const TopNav = ({
                 width='20'
                 fill={isDark ? 'white' : 'black'}
               />
-              <Text variant='body-2' contentAlign='left'>
+              <Text contentAlign='left'>
                 Roles
               </Text>
             </div>
@@ -426,19 +426,31 @@ const TopNav = ({
               >
                 <RotateIcon fill={isDark ? 'white' : 'black'} />
                 <div>
-                  <Text variant='code-inline-2'>Change Profile</Text>
+                  <Text>Change Profile</Text>
                 </div>
               </div>
             )}
 
-            {pathname !== '/select-context' && pathname !== '/user' && (
+            {pathname !== '/app-hub' && (
+            <div
+              onClick={() => router.push('/app-hub')}
+              className='flex cursor-pointer items-center gap-2'
+            >
+              <RotateIcon fill={isDark ? 'white' : 'black'} />
+               <div>
+                <Text>Switch Application</Text>
+               </div>
+               </div>
+               )}
+
+            {pathname !== '/select-context' && pathname !== '/user' && pathname !== '/app-hub' && (
               <div
                 onClick={() => router.push('/user')}
                 className='flex cursor-pointer items-center gap-2'
               >
                 <SettingsIcon fill={isDark ? 'white' : 'black'} />
                 <div>
-                  <Text variant='code-inline-2'>Settings</Text>
+                  <Text>Settings</Text>
                 </div>
               </div>
             )}
@@ -448,7 +460,7 @@ const TopNav = ({
             >
               <LogoutIcon />
               <div>
-                <Text variant='code-inline-2' className='text-[#F44336]'>
+                <Text className='text-[#F44336]'>
                   Log out
                 </Text>
               </div>
@@ -490,7 +502,7 @@ const TopNav = ({
           </>
         )}
         {
-          pathname === '/select-context' &&
+          pathname === '/select-context' || pathname == '/app-hub' &&
           ( <ProfileSection />)
         }
       </div>
@@ -519,7 +531,7 @@ const TopNav = ({
         </>
       )}
       {
-        pathname === '/select-context' &&
+        pathname === '/select-context' || pathname == '/app-hub' &&
         ( <ProfileSection />)
       }
     </div>

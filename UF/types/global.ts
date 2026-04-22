@@ -123,6 +123,7 @@ export interface GlobalProps {
   direction: Direction;
   branding: Branding;
   typography: Typography;
+  displayFormat:any;
 }
 
 export type ButtonView =

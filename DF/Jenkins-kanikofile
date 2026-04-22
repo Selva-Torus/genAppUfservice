@@ -10,7 +10,7 @@ pipeline {
     APP_NAME = "kaniko-nest-mappdf"
     IMAGE_NAME = "${DOCKER_REGISTRY}/${APP_NAME}"
     IMAGE_TAG = "${BUILD_NUMBER}"
-    GITHUB_CREDENTIALS = "GIT_HUB_PAT"
+    GITHUB_CREDENTIALS = "GIT_HUB_PAT_torus9x"
     KUBECONFIG = '/root/.kube/config'
     MINIO_ALIAS = "minio"
     MINIO_URL = "https://minioapi.gsstvl.com:9000/"
@@ -28,7 +28,7 @@ pipeline {
  
     stage("Checkout from SCM") {
       steps {
-        git branch: 'master', credentialsId: 'GIT_HUB_PAT', url: 'https://github.com/TorusDev2023/Claims7DF.git'
+        git branch: 'master', credentialsId: 'GIT_HUB_PAT_torus9x', url: 'https://github.com/TorusDev2023/Claims7DF.git'
       }
     }
     stage("Replace Kubernetes Folder From MinIO") {

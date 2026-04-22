@@ -5,6 +5,7 @@ import { Tooltip } from '@/components/Tooltip';
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { Cell, Legend, Pie, PieChart as RechartsPieChart, ResponsiveContainer, Tooltip as TooltipDisplay } from 'recharts';
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip';
+import i18n from '@/app/components/i18n';
 
 type ContentAlign = "left" | "center" | "right";
 
@@ -23,12 +24,14 @@ export interface PieChartProps {
   tooltipProps?: TooltipPropsType;
   headerText?: string;
   headerPosition?: HeaderPosition;
+  className?: string;
   colors?: string[];
 }
 
 export const PieChart: React.FC<PieChartProps> =({
   data,
   title = "",
+  className = "",
   showCurrencySign = "",
   fillContainer = true,
   contentAlign = "right",
@@ -36,16 +39,10 @@ export const PieChart: React.FC<PieChartProps> =({
   tooltipProps,
   headerText = "",
   headerPosition = "top",
-  colors = [
-    '#FF9F40',
-    '#FF6B6B',
-    '#36A2EB',
-    '#4CAF50',
-    '#9C27B0',
-    '#00BCD4'
-  ]
+  colors = []
 }) => {
   const { theme } = useGlobal();
+  const keyset:any=i18n.keyset("language"); 
 
   const getFillClasses = () => {
     if (!fillContainer) return "";
@@ -122,8 +119,8 @@ export const PieChart: React.FC<PieChartProps> =({
 
 
   const chartElement = (
-    <div className="w-full h-full">
-      {title && <h3 className='text-base font-semibold'>{title}</h3>}
+    <div className={`w-full h-full ${className}`}>
+      {title && <h3 className='font-semibold'>{title}</h3>}
       {parsedExpenseData.length > 0 ? (
         <ResponsiveContainer width='100%' height={title ? '90%' : '100%'}>
           <RechartsPieChart>
@@ -143,7 +140,8 @@ export const PieChart: React.FC<PieChartProps> =({
               ))}
             </Pie>
             <TooltipDisplay
-              formatter={(value, name) => [`${showCurrencySign}${value}`, name]}
+              labelFormatter={(label) => keyset(label)}
+              formatter={(value, name) => [`${showCurrencySign}${value}`, `${keyset(name)}`]}
               contentStyle={{
                 backgroundColor: isDark ? '#1f2937' : '#ffffff',
                 border: '1px solid',
@@ -176,7 +174,7 @@ export const PieChart: React.FC<PieChartProps> =({
                 const formattedValue = Number(entry?.payload?.value).toLocaleString("en-IN");
                 return (
                   <span style={{ color: entry.color }}>
-                    {value} - {showCurrencySign}{formattedValue}
+                    {`${keyset(value)}`} - {showCurrencySign}{formattedValue}
                   </span>
                 );
               }}
@@ -189,7 +187,7 @@ export const PieChart: React.FC<PieChartProps> =({
               fill={isDark ? "#fff" : "#000"}
               fontSize='16'
             >
-              Total: {showCurrencySign}{formattedTotalExpenses}
+              {`${keyset("Total")}`}: {showCurrencySign}{formattedTotalExpenses}
             </text>
           </RechartsPieChart>
         </ResponsiveContainer>

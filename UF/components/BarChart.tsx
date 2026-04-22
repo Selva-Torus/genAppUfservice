@@ -14,6 +14,7 @@ import {
   YAxis
 } from 'recharts';
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip';
+import i18n from '@/app/components/i18n';
 
 type ContentAlign = "left" | "center" | "right";
 
@@ -32,6 +33,7 @@ export interface BarChartProps {
   tooltipProps?: TooltipPropsType;
   headerText?: string;
   headerPosition?: HeaderPosition;
+  className?: string;
   colors?: string[];
 }
 
@@ -39,22 +41,17 @@ export const BarChart: React.FC<BarChartProps> = ({
   data,
   title = "",
   showCurrencySign = "",
+  className = "",
   fillContainer = true,
   contentAlign = "left",
   needTooltip = false,
   tooltipProps,
   headerText = "",
   headerPosition = "top",
-  colors = [
-    '#FF9F40',
-    '#FF6B6B',
-    '#36A2EB',
-    '#4CAF50',
-    '#9C27B0',
-    '#00BCD4'
-  ]
+  colors = [] 
 }) => {
   const { theme } = useGlobal();
+  const keyset:any=i18n.keyset("language"); 
 
   const getFillClasses = () => {
     if (!fillContainer) return "";
@@ -99,8 +96,8 @@ export const BarChart: React.FC<BarChartProps> = ({
   const isDark = theme === "dark" || theme === "dark-hc";
 
   const chartElement = (
-    <div className="w-full h-full">
-      {title && <h3 className='text-base font-semibold'>{title}</h3>}
+    <div className={`w-full h-full ${className}`}>
+      {title && <h3 className='font-semibold'>{title}</h3>}
       {parsedExpenseData.length > 0 ? (
         <ResponsiveContainer width='100%' height={title ? '90%' : '100%'}>
           <RechartsBarChart data={parsedExpenseData}>
@@ -110,9 +107,10 @@ export const BarChart: React.FC<BarChartProps> = ({
               className="text-xs"
               tickFormatter={(value) => {
                 const maxLength = 6;
-                return value && value.length > maxLength
-                  ? `${value.substring(0, maxLength)}...`
-                  : value;
+                const values=`${keyset(value)}`
+                return values && values.length > maxLength
+                  ? `${values.substring(0, maxLength)}...`
+                  : values;
               }}
               interval={0}
             />
@@ -120,13 +118,15 @@ export const BarChart: React.FC<BarChartProps> = ({
               className="text-xs"
               tickFormatter={(value) => {
                 const maxLength = 6;
-                return value && value.length > maxLength
-                  ? `${value.substring(0, maxLength)}...`
-                  : `${value}`;
+                const values=`${keyset(value)}`
+                return values && values.length > maxLength
+                  ? `${values.substring(0, maxLength)}...`
+                  : `${values}`;
               }}
             />
            <TooltipDisplay
-              formatter={(value, name) => [`${showCurrencySign}${value}`, name]}
+              labelFormatter={(label) => keyset(label)}
+              formatter={(value, name) => [`${showCurrencySign}${value}`, `${keyset(name)}`]}
               contentStyle={{
                 backgroundColor: isDark ? '#1f2937' : '#ffffff',
                 border: '1px solid',
@@ -158,6 +158,7 @@ export const BarChart: React.FC<BarChartProps> = ({
                 <Bar
                   key={key}
                   dataKey={key}
+                  name={keyset(key)}
                   fill={colors[index % colors.length]}
                 />
               ))}

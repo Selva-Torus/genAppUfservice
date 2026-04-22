@@ -1,26 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerCookie, deleteServerCookie } from '@/app/components/cookieMgment'
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('token')?.value
+  const token = getServerCookie(request, 'token')
   const path = request.nextUrl.pathname
   const isAuthRoute = ["/" , "/forgot-password"].includes(path);
-   let screenName:string = 'CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1';
+   let screenName:string = 'User Screen';
     let screenDetails: any = {
         keys:[
   {
-    "screenName": "transaction",
-    "screensName": "transaction-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
-  },
-  {
-    "screenName": "system setup",
-    "screensName": "system_setup-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"
-  },
-  {
-    "screenName": "checkerapproval",
-    "screensName": "checkerapproval-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1"
+    "screenName": "test",
+    "screensName": "test-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   }
 ]
     }
@@ -68,7 +59,7 @@ export function middleware(request: NextRequest) {
         )
       }
     } catch (error) {
-      request.cookies.delete('token')
+      deleteServerCookie(request, 'token')
       return NextResponse.redirect(
         new URL(`${process.env.NEXT_PUBLIC_BASE_PATH}`, request.url)
       )
@@ -80,7 +71,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|robots.txt|public|images|manifest.json|sw.js|favicon.ico|workbox-*).*)',
+    '/((?!api/|next-api/|_next/static|_next/image|robots.txt|public|images|manifest.json|sw.js|favicon.ico|workbox-*).*)',
     '/'
   ]
 }

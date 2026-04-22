@@ -18,6 +18,9 @@ import { useTheme } from '@/hooks/useTheme'
 import { twMerge } from 'tailwind-merge'
 import { RangeCalendar } from '@/components/RangeCalendar'
 import { getCdnImage } from '@/app/utils/getAssets'
+import { getFontSizeForSubHeader } from '@/app/utils/branding'
+import { get } from 'lodash'
+import clsx from 'clsx'
 
 const FilterModal = ({
   range,
@@ -27,7 +30,9 @@ const FilterModal = ({
   setFabrics,
   user,
   setUser,
-  activeTab
+  activeTab,
+  localSortOrder,
+  setLocalSortOrder
 }: {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
   range: any
@@ -37,6 +42,8 @@ const FilterModal = ({
   user: Array<string>
   setUser: React.Dispatch<React.SetStateAction<Array<string>>>
   activeTab: string
+  localSortOrder: string
+  setLocalSortOrder: React.Dispatch<React.SetStateAction<string>>
 }) => {
   const [isDateRangeOpen, setDateRangeOpen] = useState(false)
   const [selectedDateRange, setSelectedDateRange] = useState<any>(range)
@@ -51,6 +58,7 @@ const FilterModal = ({
   const { isDark, borderColor, textColor, bgColor, branding } = useTheme()
 
   const calendarTriggerRef = useRef<HTMLDivElement>(null)
+  const sortbutton = ['Newest', 'Oldest']
 
   const fabricList = [
     { key: 'DF', label: 'Data Fabric' },
@@ -61,12 +69,38 @@ const FilterModal = ({
     { key: 'CDF', label: 'Deployment Fabric' }
   ]
 
+  const formatDate = (d: any) => ({
+    year: d.year,
+    month: String(d.month).padStart(2, "0"),
+    day: String(d.day).padStart(2, "0"),
+  });
+
+  const normalizeRange = (range: any) => ({
+  start: {
+    year: Number(range.start.year),
+    month: Number(range.start.month),
+    day: Number(range.start.day),
+  },
+  end: {
+    year: Number(range.end.year),
+    month: Number(range.end.month),
+    day: Number(range.end.day),
+  },
+});
+
   const handleUpdateFilterInputs = () => {
-    setRange(selectedDateRange)
-    setFabrics(selectedKeys)
-    setUser(selectedUsers)
-    setOpen(false)
-  }
+    const formattedRange = selectedDateRange
+      ? {
+        start: formatDate(selectedDateRange.start),
+        end: formatDate(selectedDateRange.end),
+      }
+      : null;
+
+    setRange(formattedRange);
+    setFabrics(selectedKeys);
+    setUser(selectedUsers);
+    setOpen(false);
+  };
 
   const getOrgAndUserData = async () => {
     setuserList([])
@@ -100,7 +134,9 @@ const FilterModal = ({
   const showDate = (date: any) => {
     if (!date) return ''
     const { year, month, day } = date
-    return `${day}/${month}/${year}`
+    const formttedDay = day < 10 ? `0${day}` : day
+    const formttedMonth = month < 10 ? `0${month}` : month
+    return `${formttedDay}/${formttedMonth}/${year}`
   }
 
   const toggleFabric = (key: string) => {
@@ -114,8 +150,8 @@ const FilterModal = ({
       <div className='flex w-full items-center justify-between px-2 py-1'>
         <Text
           contentAlign='left'
-          variant='subheader-2'
-          className='flex !w-fit gap-2'
+          variant={getFontSizeForSubHeader(branding.fontSize)}
+          className='flex !w-fit gap-2 items-center'
         >
           <FilterIcon fill={isDark ? '#fff' : '#000'} /> Filter
         </Text>
@@ -128,9 +164,38 @@ const FilterModal = ({
         </Button>
       </div>
       <hr className={`w-full ${borderColor}`} />
+      <div className='flex flex-col gap-[1.24vh] px-[0.58vw] py-[1.24vh]'>
+        <Text
+          contentAlign='left'
+          variant={getFontSizeForSubHeader(branding.fontSize)}
+          className='flex !w-fit items-center gap-2'
+        >
+          SORT BY
+        </Text>
+        <div className='flex flex-wrap gap-[0.58vw] text-nowrap'>
+          {sortbutton.map(item => (
+            <button
+              onClick={() => setLocalSortOrder(item)}
+              key={item}
+              style={{
+                backgroundColor:
+                localSortOrder == item ? branding.brandColor : "#fff",
+              }}
+              className={clsx(
+                `text-torus-text flex rounded-md border px-[0.29vw] py-[0.62vh] leading-[2.22vh] outline-none`,
+                {
+                  'text-white': localSortOrder == item
+                }
+              )}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </div>
       {/* Date Range Selection */}
       <div className='flex flex-col gap-3 px-2 py-3'>
-        <Text contentAlign='left' variant='subheader-1'>
+        <Text contentAlign='left' variant={getFontSizeForSubHeader(branding.fontSize)}>
           SORT BY DATE
         </Text>
         <div
@@ -145,12 +210,12 @@ const FilterModal = ({
           )}
         >
           <div className='flex flex-col gap-1'>
-            <Text contentAlign='left' variant='body-2' color='secondary'>
+            <Text contentAlign='left' color='secondary'>
               Select Date{' '}
             </Text>
-            <Text contentAlign='left' variant='body-2'>
-              {showDate(selectedDateRange?.start)} -{' '}
-              {showDate(selectedDateRange?.end)}
+            <Text contentAlign='left'>
+              {showDate(normalizeRange(selectedDateRange).start)} -{' '}
+              {showDate(normalizeRange(selectedDateRange).end)}
             </Text>
           </div>
           <span className='flex self-end'>
@@ -164,7 +229,7 @@ const FilterModal = ({
           size='xl'
         >
           <RangeCalendar
-            value={selectedDateRange}
+            value={selectedDateRange ? normalizeRange(selectedDateRange) : undefined}
             onChange={val => setSelectedDateRange(val)}
             maxValue={{
               year: new Date().getFullYear(),
@@ -182,7 +247,7 @@ const FilterModal = ({
 
       {/* Fabric Selection */}
       <div className='flex flex-col gap-3 px-2 py-3'>
-        <Text contentAlign='left' variant='subheader-1'>
+        <Text contentAlign='left' variant={getFontSizeForSubHeader(branding.fontSize)}>
           FABRICS
         </Text>
 
@@ -211,7 +276,7 @@ const FilterModal = ({
       {/* if admin User  */}
       {isAdminUser && (
         <div className='flex flex-col gap-3 px-2 py-3'>
-          <Text contentAlign='left' variant='subheader-1'>
+          <Text contentAlign='left' variant={getFontSizeForSubHeader(branding.fontSize)}>
             USERS
           </Text>
           {/* Search section */}
@@ -298,11 +363,10 @@ const FilterModal = ({
                         <Text
                           className='text-nowrap'
                           contentAlign='left'
-                          variant='body-2'
                         >
                           {userObj?.firstName + ' ' + userObj?.lastName}
                         </Text>
-                        <Text contentAlign='left' variant='body-1'>
+                        <Text contentAlign='left'>
                           {userObj?.loginId}
                         </Text>
                       </div>

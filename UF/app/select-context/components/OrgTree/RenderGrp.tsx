@@ -4,6 +4,7 @@ import { useOPRList } from '../OprList'
 import { useGlobal } from '@/context/GlobalContext'
 import { useTheme } from '@/hooks/useTheme'
 import { hexWithOpacity } from '@/app/components/utils'
+import { Text } from '@/components/Text'
 
 // ============= RENDER GROUP (REUSABLE) =============
 const RenderGroup = ({
@@ -53,13 +54,12 @@ const RenderGroup = ({
             <DownArrow fill={isDark ? "white" : "black"} />
           </span>
           <FaRegFolderOpen />
-          <span className='text-xs'>
+          <Text className='flex gap-2'>
             {displayName} -{' '}
-            <span
-            >
-              {displayCode.replace(codePrefix, '')}
-            </span>
-          </span>
+            <div className='flex text-nowrap'>
+              <Text>{displayCode.replace(codePrefix, '')}</Text>
+            </div>
+          </Text>
         </div>
       </div>
       {isOpen && children}

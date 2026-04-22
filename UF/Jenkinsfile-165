@@ -8,10 +8,10 @@ pipeline {
     }
     environment {
         DOCKERHUB_USERNAME = "192.168.2.164:5000"
-        APP_NAME = "vgph001-uf-v1"
+        APP_NAME = "a001-uf-v1"
         IMAGE_NAME = "${DOCKERHUB_USERNAME}/${APP_NAME}"
         BUILD_NUMBER = "${BUILD_NUMBER}"
-        GITHUB_CREDENTIALS = "GIT_HUB_PAT"
+        GITHUB_CREDENTIALS = "GIT_HUB_PAT_torus9x"
         IMAGE_TAG = "${BUILD_NUMBER}"
         SCANNER_HOME = tool 'sonar-scanner'
     }
@@ -26,21 +26,21 @@ pipeline {
         stage('Code Checkout') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${GITHUB_CREDENTIALS}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/kuttit/VGPH.git'
+                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/TorusDev2023/Claims5UF.git'
                 }
             }
         }
 
-        stage('Detect Changes in CT005 App') {
+        stage('Detect Changes in CI001 App') {
             steps {
                 script {
                     def diff = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
-                    if (diff.split('\n').any { it.startsWith('apps/CT005/V001/VGPH001/v1/Next-uf/') }) {
+                    if (diff.split('\n').any { it.startsWith('apps/CI001/AG001/A001/v1/Next-uf/') }) {
                         env.NEXT_UF_CHANGED = "true"
-                        echo "Changes detected in apps/CT005/V001/VGPH001/v1/Next-uf"
+                        echo "Changes detected in apps/CI001/AG001/A001/v1/Next-uf"
                     } else {
                         env.NEXT_UF_CHANGED = "false"
-                        echo "No changes in apps/CT005/V001/VGPH001/v1/Next-uf. Skipping build and deployment stages."
+                        echo "No changes in apps/CI001/AG001/A001/v1/Next-uf. Skipping build and deployment stages."
                     }
                 }
             }
@@ -54,7 +54,7 @@ pipeline {
                 script {
                     docker.withRegistry("http://${DOCKERHUB_USERNAME}", '') {
                         sh """
-                        docker build -t ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG} -f apps/CT005/V001/VGPH001/v1/Next-uf/Dockerfile apps/CT005/V001/VGPH001/v1/Next-uf
+                        docker build -t ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG} -f apps/CI001/AG001/A001/v1/Next-uf/Dockerfile apps/CI001/AG001/A001/v1/Next-uf
                         docker push ${DOCKERHUB_USERNAME}/${APP_NAME}:${IMAGE_TAG}
                         """
                     }
@@ -68,7 +68,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CT005/V001/VGPH001/v1/Next-uf/kubernetes/deploymentservice.yaml"
+                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CI001/AG001/A001/v1/Next-uf/kubernetes/deploymentservice.yaml"
                 }
             }
         }
@@ -80,7 +80,7 @@ pipeline {
             steps {
                 script {
                     withKubeConfig(credentialsId: 'kubernetes-165', serverUrl: 'https://lb.kubesphere.local:6443') {
-                        sh "kubectl apply -f apps/CT005/V001/VGPH001/v1/Next-uf/kubernetes/deploymentservice.yaml"
+                        sh "kubectl apply -f apps/CI001/AG001/A001/v1/Next-uf/kubernetes/deploymentservice.yaml"
                     }
                 }
             }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
@@ -25,6 +25,8 @@ interface ListProps {
   className?: string;
   fillContainer?: boolean;
   contentAlign?: ContentAlign;
+  onLoadMore?: () => void;
+  isLoadingMore?: boolean;
 }
 type ContentAlign = "left" | "center" | "right";
 export const List: React.FC<ListProps> = ({
@@ -41,8 +43,11 @@ export const List: React.FC<ListProps> = ({
   className = "",
   fillContainer = true,
   contentAlign = "center",
+  onLoadMore,
+  isLoadingMore = false,
 }) => {
   const { theme } = useGlobal();
+  const listRef = useRef<HTMLUListElement>(null);
   const [items, setItems] = useState(initialItems);
   const [selectedIndex, setSelectedIndex] = useState(selectedItemIndex);
   const [searchQuery, setSearchQuery] = useState("");
@@ -68,6 +73,22 @@ export const List: React.FC<ListProps> = ({
   useEffect(() => {
     setItems(initialItems);
   }, [initialItems]);
+
+  // Infinite scroll: fire onLoadMore only when scrolling DOWN and reaching the bottom
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el || !onLoadMore) return;
+    let prevScrollTop = el.scrollTop;
+    const handleScroll = () => {
+      const isScrollingDown = el.scrollTop > prevScrollTop;
+      prevScrollTop = el.scrollTop;
+      if (isScrollingDown && el.scrollTop + el.clientHeight >= el.scrollHeight - 10) {
+        onLoadMore();
+      }
+    };
+    el.addEventListener('scroll', handleScroll);
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [onLoadMore]);
 
   const isDark = theme === "dark" || theme === "dark-hc";
 
@@ -126,6 +147,7 @@ export const List: React.FC<ListProps> = ({
     <div className={`${fillContainer ? "flex" : "inline-flex"} flex-col ${getFillClasses()}`}>
       {searchInput}
       <ul
+        ref={listRef}
         className={`
           overflow-auto
           ${isDark ? "bg-gray-800" : "bg-white"}
@@ -169,6 +191,11 @@ export const List: React.FC<ListProps> = ({
             </li>
           );
         })}
+        {isLoadingMore && (
+          <li className={`px-4 py-2 text-center text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            Loading...
+          </li>
+        )}
       </ul>
     </div>
   );

@@ -2,6 +2,9 @@
 
 
 
+
+
+
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import axios from 'axios';
 import * as fs from 'fs';
@@ -17,35 +20,10 @@ export class AppService implements OnModuleInit{
 
   async onModuleInit() {
     console.log('Application started, calling API...');
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJjbGllbnQiOiJDVDAwNSIsImxvZ2luSWQiOiJndXJ1Iiwic2lkIjoiOTNmNGQ0MGQtNTFlZi00N2MxLWJlMDMtMzhmZTMyYzMzY2UzIiwibG9nVHlwZSI6Im1vbmdvZGIiLCJ0eXBlIjoiYyIsImlhdCI6MTc3MDM1MjU5MCwiZXhwIjoxNzcwMzUzNzkwfQ.AuSKTLRdB8HRwu5IEWsRaOIreDStwviWuq9x_XZw8mU';
+    console.log('DDL changes update started.');
+    console.log('DDL changes update completed.');    
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoic2VsdmEiLCJjbGllbnQiOiJDSTAwMSIsInR5cGUiOiJjIiwibG9nVHlwZSI6Im1vbmdvZGIiLCJzaWQiOiJiMGM3YTNlYi0wMjBkLTQ0MGMtYWJlYS01ZGFmODU1ZjNlYmYiLCJpYXQiOjE3NzY3NzM3MjYsImV4cCI6MTc3Njc3NDkyNn0.MBUcK8D4Ig_Y7QKuLWEBascUr-Zn8R_PwpfG7aqtVZc';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
-    if(Object.keys(preParedData).includes('erdWithData'))
-      {
-      let endPointData : any = {};
-      let erdDatas: any = {};
-      endPointData.data = preParedData?.erdWithData||{}
-      endPointData.type =  "json";
-      let res =  await this.ufservice.getEndPoints(endPointData);
-      //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData,{
-      //  headers: {
-      //    Authorization: `Bearer ${token}`, 
-      //  }
-      //});
-      erdDatas.endpoint = res;
-      erdDatas.tenant =  "CT005";
-      erdDatas.domain = "VGPH";
-      erdDatas.collection = "VGPH";
-      erdDatas.data = preParedData?.erdWithData||{}
-      erdDatas.fabric = 'API-APIPD';
-      erdDatas.loginId = "guru";    
-      erdDatas.erdFlag = true;  
-      await this.ufservice.createApiCollection(erdDatas,this.clientcode);
-      //await axios.post(this.apiUrl+'/createApiCollection', erdDatas,{
-      //  headers: {
-      //    Authorization: `Bearer ${token}`, 
-      //  }
-      //});
-      }
     if(Object.keys(preParedData).includes('torusApis'))
     {
       let torusData: any = {};
@@ -54,12 +32,12 @@ export class AppService implements OnModuleInit{
       //endPointData.type =  "json";
       //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData);
       //torusData.endpoint = res.data;
-      torusData.tenant =  "CT005";
-      torusData.domain = "VGPH"; 
-      torusData.collection = "VGPH";
+      torusData.tenant =  "CI001";
+      torusData.domain = "appgroup"; 
+      torusData.collection = "application1";
       torusData.fabric = 'API-APIPD-TORUS';
       torusData.data = preParedData?.torusApis||{}
-      torusData.loginId = "guru";    
+      torusData.loginId = "selva";    
       //await axios.post(this.apiUrl, torusData);
     }
   }

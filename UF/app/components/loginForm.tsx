@@ -21,15 +21,18 @@ import i18n from './i18n'
 import TorusFooter from '../utils/TorusFooter.png'
 import Image from 'next/image'
 import { getCdnImage } from '../utils/getAssets'
+import { getFontSizeForDisplay, getFontSizeForHeader } from '../utils/branding'
+import { Dropdown } from '@/components/Dropdown'
 
 interface LoginProps {
   logo?: string
   appName?: string
   loginType?: 'standard' | 'rightAligned' | 'leftAligned'
   image?: string
+  appTenantList?: any[]
 }
 
-const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: LoginProps) => {
+const LoginForm = ({ logo, appName = "application1", loginType = "standard", image, appTenantList }: LoginProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     password: ''
@@ -42,12 +45,14 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
   const { branding } = useGlobal()
   const { brandColor } = branding
   const { bgColor, borderColor, textColor } = useTheme()
-  const onBoardingKey : string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
+  const onBoardingKey : string = "User Screen"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
+  const isSaasApp = process.env.NEXT_PUBLIC_IS_SAAS_APPLICATION;
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
     logo: logo ? true : false
   })
+  const [selectedAppTenant , setSelectedAppTenant] = useState('')
   const keyset: any = i18n.keyset('language')
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,8 +71,9 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT005:AFGK:V001:AFK:VGPH001:AFVK:v1:bldc",
-          ufClientType: 'UFW'
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+          ufClientType: 'UFW',
+          app_tenant: selectedAppTenant ? appTenantList?.find(item => item.tenant_name == selectedAppTenant)?.tenant_id : undefined
         }
         const api_signin = await axios.post(
           `${baseUrl}/UF/signin`,
@@ -90,25 +96,15 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
             setLoading(false)
             return
           }
-          setCookie('token', api_signin.data.token)
+          setCookie("token", api_signin.data.token, 10, "/");
           setCookie('tenant', tenant)
-          document.cookie = `language=${'en'}`
+          setCookie('language', 'en')
           let screenDetails: any = {
             keys:[
   {
-    "screenName": "transaction",
-    "screensName": "transaction-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
-  },
-  {
-    "screenName": "system setup",
-    "screensName": "system_setup-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"
-  },
-  {
-    "screenName": "checkerapproval",
-    "screensName": "checkerapproval-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1"
+    "screenName": "test",
+    "screensName": "test-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   }
 ]
           }
@@ -141,7 +137,7 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
               '_' +
               defaultScreen.split('-').at(-1)
           }
-          document.cookie = `currentPage=${JSON.stringify(defaultScreen)}`
+          setCookie('currentPage', JSON.stringify(defaultScreen))
           if (api_signin?.data?.redirectToORPSelector) {
             router.push('/select-context')
           } else {
@@ -231,8 +227,8 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
               ) : (
                 <></>
               )}
-              <Text variant='display-3'>
-                <div className='text-2xl font-bold'>{appName}</div>
+              <Text variant={getFontSizeForDisplay(branding.fontSize)} className='text-center font-bold'>
+                {appName}
               </Text>
             </div>
             <div
@@ -244,19 +240,30 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
               )}
             >
               <div className='flex flex-col items-center'>
-                <Text variant='header-2' className='py-2'>
-                  <div className='text-xl font-bold'>
+                <Text variant={getFontSizeForHeader(branding.fontSize)} className='py-2 font-bold'>
                     Log in to your account
-                  </div>
                 </Text>
-                <Text variant='body-1' color='secondary'>
+                <Text color='secondary'>
                   Enter your details to continue
                 </Text>
               </div>
+              {isSaasApp == 'true' &&
+                <div className='flex flex-col gap-2'>
+                  <Dropdown 
+                    staticProps={
+                      appTenantList?.map((item: any) => item?.tenant_name)
+                    } 
+                    value={selectedAppTenant}  
+                    onChange={(val) => setSelectedAppTenant(val as string)} 
+                    placeholder={keyset('Select Tenant')}
+                    static 
+                    />
+                </div>}
               <div className='flex flex-col gap-2'>
                 <input
                   type='text'
                   name='email'
+                  style={{ fontSize: branding.fontSize }}
                   className={twMerge(
                     'rounded-lg border p-1.5 text-sm 2xl:text-base outline-none 2xl:p-3',
                     borderColor
@@ -274,6 +281,7 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
                 <input
                   type={showPassword ? 'text' : 'password'}
                   name='password'
+                  style={{ fontSize: branding.fontSize }}
                   className={twMerge(
                     'rounded-lg border p-1.5 text-sm 2xl:text-base outline-none 2xl:p-3',
                     borderColor
@@ -299,7 +307,7 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
                 </button>
               </div>
               <Link href='/forgot-password' className='self-end'>
-                <Text color='brand' className="text-sm 2xl:text-base" variant='body-2'>Forgot Password</Text>
+                <Text color='brand'>Forgot Password</Text>
               </Link>
               <Button
                 onClick={handleFormSubmit}
@@ -333,14 +341,14 @@ const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image }: Lo
               )}
 
               <div className='flex justify-center pb-2'>
-                <Text className='flex items-center gap-1 text-nowrap text-sm 2xl:text-base' variant='body-2'>
+                <Text className='flex items-center gap-1 text-nowrap'>
                   Don&apos;t have an account?{' '}
                   <a
                     href='https://outlook.office.com/mail/deeplink/compose?to=support@torus.tech'
                     target='_blank'
                     rel='noopener noreferrer'
                   >
-                    <Text color='brand' className="text-sm 2xl:text-base" variant='body-2'>Contact Admin</Text>
+                    <Text color='brand'>Contact Admin</Text>
                   </a>
                 </Text>
               </div>

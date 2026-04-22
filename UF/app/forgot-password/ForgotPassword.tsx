@@ -10,6 +10,7 @@ import { Text } from '@/components/Text'
 import { useTheme } from '@/hooks/useTheme'
 import { useGlobal } from '@/context/GlobalContext'
 import { getCdnImage } from '../utils/getAssets'
+import { getFontSizeForHeader } from '../utils/branding'
 
 interface Props {
   logo: string
@@ -70,7 +71,7 @@ const ForgotPassword = ({
       ) : (
         <div className='flex h-[550px] w-full flex-col items-center justify-center gap-[20px]'>
           <div className='flex w-full flex-col items-center justify-center gap-[2px]'>
-            <Text variant='header-1' className='text-3xl font-semibold'>Forgot Password?</Text>
+            <Text variant={getFontSizeForHeader(branding.fontSize)} className='font-semibold'>Forgot Password?</Text>
             <Text color='secondary'>
               No worries, we&apos;ll send you instructions
             </Text>

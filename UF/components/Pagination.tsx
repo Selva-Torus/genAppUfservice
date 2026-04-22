@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import { Icon } from "./Icon";
 import clsx from "clsx";
 import { useGlobal } from "@/context/GlobalContext";
+import i18n from "@/app/components/i18n";
 export interface PaginationProps {
   /**
    * Current page number (1-based)
@@ -52,6 +53,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   showButtonText=false
 }) => {
   const { theme, branding } = useGlobal();
+  const keyset:any=i18n.keyset("language"); 
 
   // Calculate total pages
   const pageCount = Math.ceil(total / pageSize);
@@ -123,9 +125,7 @@ export const Pagination: React.FC<PaginationProps> = ({
         setPaginationHeight(paginationRef.current.offsetHeight);
       }
     }
-  }, [])
-
-  console.log(paginationHeight);
+  }, []);
   
 
   return (
@@ -177,7 +177,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             aria-label="Previous page"
           >
             <Icon data="FaArrowLeft" fillContainer={false} size={12} />
-            <span className="text-sm font-medium leading-none">Previous</span>
+            <span className="text-sm font-medium leading-none">{`${keyset("Previous")}`}</span>
           </button>
         ) : (
           <div style={{ width: paginationHeight, height: paginationHeight, paddingTop: "0.5rem" }}>
@@ -293,7 +293,7 @@ export const Pagination: React.FC<PaginationProps> = ({
             className="h-9 p-5 flex items-center justify-center gap-2 border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
             aria-label="Next page"
           >
-            <span className="text-sm font-medium leading-none">Next</span>
+            <span className="text-sm font-medium leading-none">{`${keyset("Next")}`}</span>
             <Icon data="FaArrowRight" fillContainer={false} size={12} />
           </button>
         ) : (
@@ -315,11 +315,17 @@ export const Pagination: React.FC<PaginationProps> = ({
                 }
               }}
             >
-              <Icon data="FaStepForward" size={paginationHeight ? paginationHeight * 0.5 : 16} />
+              <Icon data="FaStepForward" fillContainer={false} size={paginationHeight ? paginationHeight * 0.5 : 16} />
             </button>
           </div>
         )}
-
+          <button
+            disabled={page >= pageCount}
+            className="h-9 p-5 flex items-center justify-center gap-2 border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+            aria-label="Next page"
+          >
+            <span className="text-sm font-medium leading-none">{`${keyset("Total "+total||0)}`}</span>
+          </button>
         {/* Last Page */}
         {/* {pageCount > 5 && (
           <Button

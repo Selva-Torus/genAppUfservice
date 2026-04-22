@@ -1,11 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import Redlock from 'redlock';
 import Redis from "ioredis";
+// import { connectToRedis, getRedis } from './mongoClient';
 
-const redisClient = new Redis({
-  host: process.env.HOST,
-  port: parseInt(process.env.PORT),       
-});
+ let redis 
+ if (!redis) {
+    redis = new Redis({
+      host: process.env.HOST,
+      port: parseInt(process.env.PORT),      
+    }).on('error', (err) => {
+      console.log('Redis Client Error', err);
+      throw err;
+    });
+  }
+  //  connectToRedis().then(() => { 
+  //   redis = getRedis();
+  //   console.log('Redis initialized'); 
+  // }).catch((error) => {
+  //   console.error('Error connecting to Redis:', error);
+  // });
 
 @Injectable()
 export class LockService {
@@ -13,7 +26,7 @@ export class LockService {
 
   constructor() {    
 
-    this.redlock = new Redlock([redisClient], {
+    this.redlock = new Redlock([redis], {
       retryCount:  parseInt(process.env.RETRYCOUNT || '3'),
       retryDelay:  parseInt(process.env.RETRYDELAY || '200'), // time in ms
       retryJitter:  parseInt(process.env.RETRYJITTER || '100'), // time in ms

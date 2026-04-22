@@ -1,64 +1,9 @@
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT005:AFGK:V001:AFK:VGPH001:AFVK:v1:bldc",
-  "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1",
-  "screenName": "transaction",
-  "screenLabel": "transaction",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+  "ufKey": "Logs Screen",
+  "screenName": "logs",
+  "screenLabel": "logs",
   "navbarData": [
-    {
-      "menuGroupLabel": "Transaction",
-      "screenDetails": [
-        {
-          "name": "transaction",
-          "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1",
-          "allowedAccessProfile": [
-            "Operation Team",
-            "Business Team",
-            "IT Team"
-          ],
-          "static": false,
-          "icon": "/torus/9.1/resources/icons/home-4-svgrepo-com.svg"
-        }
-      ],
-      "items": [],
-      "icon": "/torus/9.1/resources/icons/home-4-svgrepo-com.svg"
-    },
-    {
-      "menuGroup": "mastersetup",
-      "menuGroupLabel": "MasterSetup",
-      "screenDetails": [
-        {
-          "name": "system setup",
-          "label": "System Setup",
-          "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1",
-          "allowedAccessProfile": [
-            "Operation Team",
-            "Business Team",
-            "IT Team"
-          ],
-          "static": false
-        }
-      ],
-      "items": [],
-      "icon": "/torus/9.1/CT005/resources/images/Master Setup.png"
-    },
-    {
-      "menuGroupLabel": "CheckerApproval",
-      "screenDetails": [
-        {
-          "name": "checkerapproval",
-          "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1",
-          "allowedAccessProfile": [
-            "Operation Team",
-            "Business Team",
-            "IT Team"
-          ],
-          "static": false,
-          "icon": "/torus/9.1/CT005/resources/images/Checker approval.png"
-        }
-      ],
-      "items": [],
-      "icon": "/torus/9.1/CT005/resources/images/Checker approval.png"
-    },
     {
       "menuGroup": "admin",
       "menuGroupLabel": "Admin",
@@ -82,36 +27,149 @@
       ],
       "items": [],
       "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
+    },
+    {
+      "menuGroupLabel": "test",
+      "screenDetails": [
+        {
+          "name": "test",
+          "key": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1",
+          "allowedAccessProfile": [],
+          "static": false
+        }
+      ],
+      "items": []
     }
   ],
   "setupData": {
     "appInfo": {
-      "name": "VGPH",
-      "code": "VGPH001",
-      "deploymentArtifactKey": "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:V001:AFGK:VGPH001:AFK:VGPH_DPD:AFVK:v1",
+      "name": "application1",
+      "code": "A001",
+      "logType": "mongodb",
+      "deploymentArtifactKey": "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
+      "applicationUniqueId": "9cef7d6e-cf51-4b98-af18-5b28c0572833",
+      "lastBuildVersion": "v1",
+      "lastBuildOn": "2026-04-15T06:42:26.520Z",
+      "accessUrl": "https://tgadev.toruslowcode.com/<tenantCode>/<AppGroupCode>/<AppCode>/<version>",
+      "logo": "torus/9.1/CI001/resources/images/images.jfif",
       "encryption": {
         "type": ""
       },
-      "applicationUniqueId": "0c70f27e-6eae-4f9d-b2c2-d3b912d71e0b",
-      "lastBuildVersion": "v1",
-      "lastBuildOn": "2026-02-05T11:59:31.860Z",
-      "accessUrl": "https://tgadev.toruslowcode.com/ct005/v001/vgph001/v1",
-      "logo": "torus/9.1/CT005/resources/images/vgph-final-logo-fw@4x.png",
-      "appLogo": "torus/9.1/CT005/resources/images/veraciousLogo.png",
-      "appGrpName": "VGPH",
-      "appGrpCode": "V001",
-      "fusionAuthAppClientSecret": "PxMTdZPDtGXPZ5TPGmIZYTqllCujW4xNpm-wBCKNnFY"
+      "isSaasApplication": true,
+      "subTenants": [
+        {
+          "st_id": 10,
+          "tenant_id": "hello",
+          "tenant_name": "hello",
+          "created_at": "2026-04-03T00:22:18.461Z"
+        },
+        {
+          "st_id": 17,
+          "tenant_id": "cba",
+          "tenant_name": "abc",
+          "created_at": "2026-04-03T04:10:43.091Z"
+        }
+      ],
+      "appTenants": [
+        {
+          "at_id": 4,
+          "tenant_id": "ke_eqb",
+          "tenant_name": "Equity Bank Kenya",
+          "created_at": "2026-04-07T05:23:06.050Z",
+          "trs_access_profile": null,
+          "trs_app_code": "00000",
+          "trs_created_by": null,
+          "trs_created_date": "2026-04-14T00:19:27.715Z",
+          "trs_event_process_status": null,
+          "trs_event_status": null,
+          "trs_locked_by": null,
+          "trs_locked_time": null,
+          "trs_modified_by": null,
+          "trs_modified_date": null,
+          "trs_org_code": null,
+          "trs_org_grp_code": null,
+          "trs_process_id": null,
+          "trs_product_code": "00000_00000",
+          "trs_ps_code": null,
+          "trs_ps_grp_code": null,
+          "trs_role_code": null,
+          "trs_role_grp_code": null,
+          "trs_sub_org_code": null,
+          "trs_sub_org_grp_code": null,
+          "trs_tenant_id": "00000",
+          "trs_token_id": null
+        },
+        {
+          "at_id": 5,
+          "tenant_id": "ug_eqb",
+          "tenant_name": "Equity Bank Uganda",
+          "created_at": "2026-04-07T05:23:06.056Z",
+          "trs_access_profile": null,
+          "trs_app_code": "00000",
+          "trs_created_by": null,
+          "trs_created_date": "2026-04-14T00:19:27.715Z",
+          "trs_event_process_status": null,
+          "trs_event_status": null,
+          "trs_locked_by": null,
+          "trs_locked_time": null,
+          "trs_modified_by": null,
+          "trs_modified_date": null,
+          "trs_org_code": null,
+          "trs_org_grp_code": null,
+          "trs_process_id": null,
+          "trs_product_code": "00000_00000",
+          "trs_ps_code": null,
+          "trs_ps_grp_code": null,
+          "trs_role_code": null,
+          "trs_role_grp_code": null,
+          "trs_sub_org_code": null,
+          "trs_sub_org_grp_code": null,
+          "trs_tenant_id": "00000",
+          "trs_token_id": null
+        },
+        {
+          "at_id": 6,
+          "tenant_id": "in_ib",
+          "tenant_name": "Indian Bank",
+          "created_at": "2026-04-07T05:32:23.102Z",
+          "trs_access_profile": null,
+          "trs_app_code": "00000",
+          "trs_created_by": null,
+          "trs_created_date": "2026-04-14T00:19:27.715Z",
+          "trs_event_process_status": null,
+          "trs_event_status": null,
+          "trs_locked_by": null,
+          "trs_locked_time": null,
+          "trs_modified_by": null,
+          "trs_modified_date": null,
+          "trs_org_code": null,
+          "trs_org_grp_code": null,
+          "trs_process_id": null,
+          "trs_product_code": "00000_00000",
+          "trs_ps_code": null,
+          "trs_ps_grp_code": null,
+          "trs_role_code": null,
+          "trs_role_grp_code": null,
+          "trs_sub_org_code": null,
+          "trs_sub_org_grp_code": null,
+          "trs_tenant_id": "00000",
+          "trs_token_id": null
+        }
+      ],
+      "appGrpName": "appgroup",
+      "appGrpCode": "AG001",
+      "fusionAuthAppClientSecret": "2XQt7BDl1Ozkx_BglytBp-J88OwXFSWH9PtePcdEVCQ"
     },
-    "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CT005:AFK:PROFILE:AFVK:v1:appearance",
+    "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CI001:AFK:PROFILE:AFVK:v1:appearance",
     "selectedPresetKey": "default",
-    "fontSize": "Small",
+    "fontSize": "Large",
     "direction": "LTR",
     "brandColor": "#0737c9",
     "selectionColor": "#579eff",
     "hoverColor": "#d5eeff",
     "borderRadius": "xl",
     "sidebarStyle": "",
-    "navigationStyles": "horizontal",
+    "navigationStyles": "vertical",
     "theme": "light",
     "layoutMode": "detached",
     "mobileAppearance": {
@@ -165,28 +223,26 @@
     "language": "English",
     "fontFamily": [
       {
-        "label": "Inter",
-        "fontUrl": "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+        "fontUrl": "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap",
+        "label": "Inter"
       }
     ],
-    "text-body-font": "",
-    "text-header-font": "",
-    "text-display-font": "",
+    "text-body-font": "Inter",
+    "text-header-font": "Inter",
+    "text-display-font": "Inter",
     "name": "default",
-    "appBackgroundImage": "torus/9.1/CT005/resources/images/vivid-blurred-colorful-wallpaper-background_58702-3883.avif"
+    "appBackgroundImage": "torus/9.1/CI001/resources/images/simple-background-yixvlrrhdncvb736.jpg"
   },
-  "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT005:AFGK:V001:AFK:VGPH001:AFVK:v1:appearance",
+  "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:appearance",
   "allKeys": [
-    "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1",
-    "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1",
-    "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1"
+    "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   ],
   "loginDetails": {
-    "loginId": "guru",
-    "firstName": "Guru",
-    "lastName": "Krishnan",
-    "email": "cgkrishnan@gsstvl.com",
-    "mobile": "8190002700",
+    "loginId": "selva",
+    "firstName": "selva",
+    "lastName": "g",
+    "email": "selvakumarg+a@torus.tech",
+    "mobile": "6369726232",
     "2FAFlag": "N",
     "scope": "client_admin",
     "status": "active",
@@ -194,9 +250,9 @@
       "admin"
     ],
     "accessExpires": "",
-    "dateAdded": "2026-01-21T06:18:59.283Z",
+    "dateAdded": "2026-01-23T13:29:31.878Z",
     "isRestricted": false,
-    "userUniqueId": "60c8940f-8aa1-485d-9b53-dc20e43cc584",
+    "userUniqueId": "399bb002-571a-4f60-8242-67a2d5d03a4b",
     "touring": {
       "isneedTouring": false,
       "touringData": {
@@ -206,13 +262,7 @@
           "completed": false,
           "notVisited": []
         },
-        "/home": {
-          "stepIndex": 0,
-          "isSkipped": true,
-          "completed": false,
-          "notVisited": []
-        },
-        "artifactselector": {
+        "/control-center/tenant": {
           "stepIndex": 0,
           "isSkipped": true,
           "completed": false,
@@ -220,33 +270,49 @@
         }
       }
     },
-    "lastActive": "2026-02-06T04:34:29.830Z",
-    "client": "CT005",
-    "users": "guruGuru Krishnan",
-    "profile": "",
-    "edit": "",
-    "noOfProductsService": 0
+    "client": "CI001",
+    "quickLinks": [
+      {
+        "label": "Tenant Profile",
+        "key": "tenantProfile",
+        "routes": "/control-center/tenant"
+      },
+      {
+        "label": "Appearance",
+        "key": "tenantappearance",
+        "routes": "/tenant-settings?tenant=${tenant}"
+      },
+      {
+        "label": "Company Profile",
+        "key": "PersonalcompanyProfile",
+        "routes": "/control-center/company-profile"
+      },
+      {
+        "label": "Notifications",
+        "key": "tenantnotifications",
+        "routes": "/control-center/notifications"
+      },
+      {
+        "label": "User Management",
+        "key": "usermanagement",
+        "routes": "/control-center/user-management"
+      }
+    ],
+    "lastActive": "2026-04-21T12:15:26.545Z"
   },
   "webOnBoarding": {
     "navBarStyle": {
       "activeItems": [
         {
-          "name": "app logo",
-          "gridColumn": "1/2"
-        },
-        {
           "name": "menu items",
-          "gridColumn": "2/7",
           "gridRow": "1/6"
         },
         {
           "name": "opr matrix",
-          "gridColumn": "9/12",
-          "gridRow": "6/9"
+          "gridRow": "9/12"
         },
         {
           "name": "profile",
-          "gridColumn": "12/13",
           "gridRow": "12/13"
         }
       ],
@@ -254,35 +320,28 @@
         {
           "name": "logo",
           "gridColumn": "1/2"
+        },
+        {
+          "name": "app logo",
+          "gridColumn": "2/4"
         }
       ]
     },
-    "landingScreen": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
+    "landingScreen": "User Screen"
   },
   "allKeyswithScreenNames": [
     {
-      "screenName": "transaction",
-      "screensName": "transaction-v1",
-      "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
-    },
-    {
-      "screenName": "system setup",
-      "screensName": "system_setup-v1",
-      "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"
-    },
-    {
-      "screenName": "checkerapproval",
-      "screensName": "checkerapproval-v1",
-      "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1"
+      "screenName": "test",
+      "screensName": "test-v1",
+      "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
     }
   ],
-  "deploymentArtifactKey": "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:V001:AFGK:VGPH001:AFK:VGPH_DPD:AFVK:v1",
-  "appGroupDesc": "VGPH",
+  "deploymentArtifactKey": "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
+  "appGroupDesc": "appgroup",
   "logType": "mongodb",
-  "appDesc": "VGPH",
-  "appLogo": "torus/9.1/CT005/resources/images/veraciousLogo.png",
+  "appDesc": "application1",
   "isOld": true,
-  "clientCode": "CT005"
+  "clientCode": "CI001"
 } */
 import './globals.css';
 import type { Metadata } from 'next';
@@ -294,8 +353,8 @@ import { GlobalProvider } from '@/context/GlobalContext';
 import { EventBusProvider } from '@/context/EventBusContext';
 import { ThemeWrapper } from '@/components/ThemeWrapper';
 export const metadata: Metadata = {
-  title: 'VGPH',
-  description: 'VGPH Generated by Torus'
+  title: 'application1',
+  description: 'application1 Generated by Torus'
 }
 
 export default function RootLayout({

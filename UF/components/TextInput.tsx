@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useGlobal } from '@/context/GlobalContext'
 import { useEventBus } from '@/context/EventBusContext'
+import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { Tooltip } from './Tooltip'
 import { Icon } from './Icon'
 import {
@@ -48,6 +49,7 @@ interface TextInputProps {
   className?: string
   fillContainer?: boolean
   contentAlign?: ContentAlign
+  itsHaveCurrency?: boolean
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -79,9 +81,11 @@ export const TextInput: React.FC<TextInputProps> = ({
   events,
   className = '',
   fillContainer = true,
-  contentAlign = 'left'
+  contentAlign = 'left',
+  itsHaveCurrency=false
 }) => {
-  const { theme, direction, branding } = useGlobal()
+  const [onloadType,setOnloadType]=useState("text")
+  const { theme, direction, branding,displayFormat } = useGlobal()
   const eventBus = useEventBus()
   const [internalValue, setInternalValue] = useState(value)
   const [isDisabled, setIsDisabled] = useState(disabled)
@@ -90,6 +94,16 @@ export const TextInput: React.FC<TextInputProps> = ({
   const [rightWidth, setRightWidth] = useState(0)
   const leftContentRef = useRef<HTMLDivElement>(null)
   const rightContentRef = useRef<HTMLDivElement>(null)
+  const [alteredType,setAlteredType]=useState("text")
+  const prevRefreshRef = useRef(false);
+    const showToast = useInfoMsg()                                                                                                                                                    
+       const prevValidationState = useRef(validationState)                                                                                                                               
+                                                                                                                                                                                       
+      useEffect(() => {                                                                                                                                                                 
+       if (validationState === 'invalid' && errorMessage ) {                                                                               
+         showToast(errorMessage, 'danger')                                                                                                                                             
+         }                                                                                                                                                                                                                                                                                                              
+       }, [validationState, errorMessage])   
 
   // Measure left and right content widths
   useEffect(() => {
@@ -105,12 +119,23 @@ export const TextInput: React.FC<TextInputProps> = ({
   useEffect(() => {
     setInternalValue(value)
   }, [value])
-
+  const toast : Function = useInfoMsg()
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    prevRefreshRef.current= true
     const newValue = e.target.value
+    if(type=="number")
+    { setOnloadType("number")
+      if (!isNaN(+newValue)) {
+          onChange?.(e)
+      }else{
+        toast("please enter numbers only","danger")
+        return
+      }
+    }else
+    {
+      onChange?.(e)
+    }
     setInternalValue(newValue)
-    onChange?.(e)
-
     // Emit rise events when onChange occurs
     const onChangeEvent = events?.find(e => e.name === 'onChange')
     if (onChangeEvent?.enabled && onChangeEvent.rise && nodeId) {
@@ -196,21 +221,25 @@ export const TextInput: React.FC<TextInputProps> = ({
     const baseRadius = getBorderRadiusClass(branding.borderRadius)
 
     if (pin === 'clear-clear') {
-      return baseRadius
+      return 'rounded-lg'
     }
 
     const [left, right] = pin.split('-')
-    const leftRadius =
+    const leftRadius =    
       left === 'round'
-        ? 'rounded-l-full'
+        ? 'rounded-l-3xl'
         : left === 'brick'
         ? 'rounded-l-none'
+        :left === 'clear'
+        ? 'rounded-l-lg'
         : `rounded-l${baseRadius.replace('rounded', '')}`
     const rightRadius =
       right === 'round'
-        ? 'rounded-r-full'
+        ? 'rounded-r-3xl'
         : right === 'brick'
         ? 'rounded-r-none'
+        :right === 'clear'
+        ? 'rounded-r-lg'
         : `rounded-r${baseRadius.replace('rounded', '')}`
 
     return `${leftRadius} ${rightRadius}`
@@ -258,10 +287,50 @@ export const TextInput: React.FC<TextInputProps> = ({
     const b = parseInt(hex?.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
+  const customeOnBlur=(e:any)=>{
+    onBlur(e)
+    if(type=='number')
+    {
+      setOnloadType("text")
+      let formatted = Number(e.target.value).toLocaleString();
+      if(itsHaveCurrency)
+      {
+        formatted=(displayFormat?.textInputProperty?.currencyDisplayFormat||"₹")+formatted
+      }
+      setInternalValue(formatted)
+    }
+  }
+  const customeOnFocus=(e:any)=>{
+    if(type=='number')
+    {
+      setOnloadType("text")
+      let temp:any=e.target.value.replace(/,/g, "")
+      if(itsHaveCurrency)
+      {
+        temp=temp?.replace((displayFormat?.textInputProperty?.currencyDisplayFormat||"₹"), "")
+      }
+      let formatted:any = Number(temp);
+      setInternalValue(formatted)
+    }
+  }
+  useEffect(()=>{
+    if (prevRefreshRef.current==false) {
+      if(type=='number')
+      {
+        setOnloadType("text")
+        let formatted = Number(value).toLocaleString();
+        if(itsHaveCurrency)
+        {
+          formatted=(displayFormat?.textInputProperty?.currencyDisplayFormat||"₹")+formatted
+        }
+        setInternalValue(formatted)
+      }
+    }
+  },[value,type])
 
   const inputElement = (
     <div
-      className={`${getFillClasses()} ${getFontSizeClass(branding.fontSize)}`}
+      className={`${getFillClasses()} ${getFontSizeClass(branding.fontSize)} relative`}
     >
       {label && topContent && (
         <label
@@ -291,7 +360,7 @@ export const TextInput: React.FC<TextInputProps> = ({
         )}
 
         <input
-          type={type}
+          type={onloadType}
           name={name}
           value={internalValue}
           onChange={handleChange}
@@ -353,6 +422,7 @@ export const TextInput: React.FC<TextInputProps> = ({
                 e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(branding.selectionColor, 0.2)}`
               }
             }
+            customeOnFocus(e)
           }}
           onBlur={e => {
             if (!errorMessage && !validationState) {
@@ -366,7 +436,7 @@ export const TextInput: React.FC<TextInputProps> = ({
                 e.currentTarget.style.boxShadow = 'none'
               }
             }
-            onBlur(e)
+            customeOnBlur(e)
           }}
         />
 
@@ -404,20 +474,6 @@ export const TextInput: React.FC<TextInputProps> = ({
           </div>
         )}
       </div>
-
-      {(note || errorMessage || validationState === 'invalid') && (
-        <div
-          className={`mt-1 text-sm ${
-            validationState === 'invalid' || errorMessage
-              ? 'text-red-500'
-              : isDark
-              ? 'text-gray-400'
-              : 'text-gray-600'
-          }`}
-        >
-          {errorMessage || note}
-        </div>
-      )}
     </div>
   )
 
@@ -429,6 +485,7 @@ export const TextInput: React.FC<TextInputProps> = ({
         headerPosition={headerPosition}
         className={className}
         fillContainer={fillContainer}
+        required={require}
       >
         {inputElement}
       </CommonHeaderAndTooltip>

@@ -8,6 +8,7 @@ import { Text } from '@/components/Text'
 import i18n from '../../../components/i18n'
 import { hexWithOpacity } from '../../../components/utils'
 import { Table } from '@/components/Table'
+import { getFontSizeForHeader } from '@/app/utils/branding'
 
 const CustomTable = Table
 
@@ -169,7 +170,6 @@ const ViewSecurityTemplate = ({
         <div className='flex w-[30%] items-center gap-[.8vw]'>
           <div>
             <Text
-              variant='body-3'
               color='secondary'
               className='flex items-center gap-2 text-nowrap'
             >
@@ -178,12 +178,12 @@ const ViewSecurityTemplate = ({
             </Text>
           </div>
           <div>
-            <Text variant='header-2' color='primary'>
+            <Text variant={getFontSizeForHeader(branding.fontSize)} color='primary'>
               {'>'}
             </Text>
           </div>
 
-          <Text contentAlign='left' variant='body-3'>
+          <Text contentAlign='left'>
             {templateToBeUpdated?.accessProfile}
           </Text>
         </div>
@@ -200,7 +200,7 @@ const ViewSecurityTemplate = ({
             <ArrowBackward fill={isDark ? 'white' : 'black'} />
           </button>
           <div className='flex gap-2'>
-            <Text variant='header-1'>{templateToBeUpdated?.accessProfile}</Text>
+            <Text variant={getFontSizeForHeader(branding.fontSize)}>{templateToBeUpdated?.accessProfile}</Text>
           </div>
         </div>
         <div className='flex gap-2 px-4'>

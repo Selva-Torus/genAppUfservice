@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 import { Theme, Language, Direction, GlobalProps, Branding, Typography } from "@/types/global";
+import { getCookie, setCookie } from "@/app/components/cookieMgment";
 
 interface GlobalContextType extends GlobalProps {
   setTheme: (theme: Theme) => void;
@@ -13,47 +14,34 @@ interface GlobalContextType extends GlobalProps {
   updateTypography: (updates: Partial<Typography>) => void;
   appBackgroundImage: string | undefined;
   setAppBackgroundImage: (image: string | undefined) => void;
+  setDisplayFormat:(data:any)=>void;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
-
-// Helper to get cookie value
-const getCookie = (name: string): string | null => {
-  if (typeof window === 'undefined') return null;
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-  return null;
-};
-
-// Helper to set cookie
-const setCookie = (name: string, value: string, days: number = 365) => {
-  if (typeof window === 'undefined') return;
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${value}; expires=${expires}; path=/`;
-};
 
 export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   // Initialize theme from cookie or default to "light"
   const [theme, setThemeState] = useState<Theme>(() => {
-    if (typeof window !== 'undefined') {
-      const savedTheme = getCookie('cfg_theme');
-      return (savedTheme as Theme) || "light";
-    }
-    return "light";
+    const savedTheme = getCookie('cfg_theme');
+    return (savedTheme as Theme) || "light";
   });
 
   const [language, setLanguage] = useState<Language>("English");
 
   // Initialize direction from cookie or default to "LTR"
   const [direction, setDirectionState] = useState<Direction>(() => {
-    if (typeof window !== 'undefined') {
-      const savedDirection = getCookie('cfg_direction');
-      return (savedDirection as Direction) || "LTR";
+    const savedDirection = getCookie('cfg_direction');
+    return (savedDirection as Direction) || "LTR";
+  });
+  const [displayFormat,setDisplayFormat] = useState<any>({
+    datePickerProperty:{
+      dateDisplayFormat: "DD-MM-YYYY",
+    },
+    textInputProperty:{
+      currencyDisplayFormat: "DD-MM-YYYY",
     }
-    return "LTR";
   });
   const [branding, setBrandingState] = useState<Branding>({
     fontSize: "Medium",
@@ -73,13 +61,13 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
   // Wrapper to save theme to cookie when it changes
   const setTheme = (newTheme: Theme) => {
     setThemeState(newTheme);
-    setCookie('cfg_theme', newTheme);
+    setCookie('cfg_theme', newTheme, 365);
   };
 
   // Wrapper to save direction to cookie when it changes
   const setDirection = (newDirection: Direction) => {
     setDirectionState(newDirection);
-    setCookie('cfg_direction', newDirection);
+    setCookie('cfg_direction', newDirection, 365);
   };
 
   const setBranding = (newBranding: Branding) => {
@@ -114,6 +102,7 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
         branding,
         typography,
         appBackgroundImage,
+        displayFormat,
         setTheme,
         setLanguage,
         setDirection,
@@ -122,6 +111,7 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
         setTypography,
         updateTypography,
         setAppBackgroundImage,
+        setDisplayFormat,
       }}
     >
       {children}

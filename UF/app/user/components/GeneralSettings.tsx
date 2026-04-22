@@ -14,6 +14,7 @@ import { Select } from '@/components/Select'
 import { Text } from '@/components/Text'
 import i18n from '../../components/i18n'
 import { twMerge } from 'tailwind-merge'
+import { getFontSizeForHeader, getFontSizeForSubHeader } from '@/app/utils/branding'
 
 const GeneralSettings = ({ currentLang, setCurrentLang }: {
   currentLang: string
@@ -89,8 +90,8 @@ const GeneralSettings = ({ currentLang, setCurrentLang }: {
     <div className={`g-root h-full w-full overflow-auto`}>
       <div className='flex w-full items-center justify-between'>
         <div className='flex flex-col gap-2'>
-          <Text contentAlign='left' variant='header-1'>{keyset('General')}</Text>
-          <Text variant='body-2' color='secondary'>
+          <Text contentAlign='left' variant={getFontSizeForHeader(branding.fontSize)}>{keyset('General')}</Text>
+          <Text color='secondary'>
             {' '}
             {keyset('Manage appearance, language, and basic preferences.')}
           </Text>
@@ -101,8 +102,8 @@ const GeneralSettings = ({ currentLang, setCurrentLang }: {
       {/* Theme Selection */}
       <div className='flex flex-col gap-4'>
         <div className='flex flex-col gap-2'>
-          <Text contentAlign='left' variant='subheader-2'>{keyset('Interface Theme')}</Text>
-          <Text contentAlign='left' variant='body-2' color='secondary'>
+          <Text contentAlign='left' variant={getFontSizeForSubHeader(branding.fontSize)}>{keyset('Interface Theme')}</Text>
+          <Text contentAlign='left' color='secondary'>
             {keyset('Select the Theme of the application.')}
           </Text>
         </div>
@@ -140,7 +141,7 @@ const GeneralSettings = ({ currentLang, setCurrentLang }: {
                   )}
                 </div>
               </div>
-              <Text variant='body-1' color='secondary'>
+              <Text color='secondary'>
                 {keyset(val.label)}
               </Text>
             </div>
@@ -152,8 +153,8 @@ const GeneralSettings = ({ currentLang, setCurrentLang }: {
       {/* Language Selection */}
       <div className='flex flex-wrap items-center'>
         <div className='flex flex-col w-1/3'>
-          <Text contentAlign='left' variant='subheader-2'>{keyset('Language')}</Text>
-          <Text contentAlign='left' variant='body-2' color='secondary' className='text-nowrap'>
+          <Text contentAlign='left' variant={getFontSizeForSubHeader(branding.fontSize)}>{keyset('Language')}</Text>
+          <Text contentAlign='left' color='secondary' className='text-nowrap'>
             {keyset('Select the language of the application.')}
           </Text>
         </div>

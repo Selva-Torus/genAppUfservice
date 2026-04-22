@@ -25,7 +25,7 @@ let isConnecting = false;
 
 export const connectToMongo = async (attemptCount = 0): Promise<Db> => {
   // If already connected, return existing connection
- if (db && client) {
+if (db && client) {
     try {
       // Ping the database to check if connection is alive
       await client.db('admin').admin().ping();
@@ -50,15 +50,15 @@ export const connectToMongo = async (attemptCount = 0): Promise<Db> => {
     }
 
     // Create new client with automatic reconnection options
-    
+
     await client.connect();
     db = client.db(process.env.MONGODB_NAME);
-    
+
     //logger.log('MongoDB connected successfully');
 
     // Setup event listeners for connection monitoring
     setupConnectionListeners();
-    
+
     isConnecting = false;
     return db;
 
@@ -110,7 +110,7 @@ const handleReconnection = async () => {
   if (isConnecting) return;
 
   logger.log('🔄 Attempting to reconnect to MongoDB...');
-  
+
   try {
     await connectToMongo();
   } catch (error) {

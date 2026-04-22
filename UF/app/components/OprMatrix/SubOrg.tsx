@@ -204,7 +204,7 @@ const RenderSubOrg: React.FC<RenderSubOrgProps> = ({
           {/* Add Modal */}
           <Modal
             showCloseButton={false}
-            className='w-[400px]'
+            className='w-[500px]'
             onClose={() => setIsAddModalOpen(false)}
             open={isAddModalOpen}
           >
@@ -224,7 +224,7 @@ const RenderSubOrg: React.FC<RenderSubOrgProps> = ({
           {/* Edit Modal */}
           <Modal
             showCloseButton={false}
-            className='w-[400px]'
+            className='w-[500px]'
             onClose={() => setIsEditModalOpen(false)}
             open={isEditModalOpen}
           >

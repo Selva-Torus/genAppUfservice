@@ -13,6 +13,7 @@ import { twMerge } from 'tailwind-merge'
 import i18n from '../../../components/i18n'
 import clsx from 'clsx'
 import { ArrowBackward } from '@/app/utils/svgApplications'
+import { getFontSizeForHeader } from '@/app/utils/branding'
 
 const OrgMatrixTreeComponent = ({
   isView = false,
@@ -257,7 +258,6 @@ const OrgMatrixTreeComponent = ({
           <div className='flex w-[30%] items-center gap-[.8vw]'>
             <div>
               <Text
-                variant='body-3'
                 color='secondary'
                 className='flex items-center gap-2 text-nowrap'
               >
@@ -266,12 +266,12 @@ const OrgMatrixTreeComponent = ({
               </Text>
             </div>
             <div>
-              <Text variant='header-2' color='primary'>
+              <Text variant={getFontSizeForHeader(branding.fontSize)} color='primary'>
                 {'>'}
               </Text>
             </div>
 
-            <Text contentAlign='left' variant='body-3'>{templateToBeUpdated?.accessProfile}</Text>
+            <Text contentAlign='left'>{templateToBeUpdated?.accessProfile}</Text>
           </div>
 
           <div>
@@ -316,7 +316,7 @@ const OrgMatrixTreeComponent = ({
             })}
           >
             {!isEdit ? (
-              <Text variant='header-1'>
+              <Text variant={getFontSizeForHeader(branding.fontSize)}>
                 {templateToBeUpdated?.accessProfile}
               </Text>
             ) : (
@@ -356,8 +356,8 @@ const OrgMatrixTreeComponent = ({
       <div className='flex h-full w-full gap-4 '>
         <div className='flex h-full w-1/3 flex-col gap-3'>
           <span className='flex flex-col'>
-            <Text contentAlign='left' variant='header-1'>{keyset('Organization Matrix')}</Text>
-            <Text contentAlign='left' variant='body-1' color='secondary'>
+            <Text contentAlign='left' variant={getFontSizeForHeader(branding.fontSize)}>{keyset('Organization Matrix')}</Text>
+            <Text contentAlign='left' color='secondary'>
               {keyset('Interact with the tree to modify')}
             </Text>
           </span>

@@ -22,6 +22,12 @@ import { Queue,QueueEvents } from 'bullmq';
 import { EventEmitterProcessor } from "./event-emitter.processor";
 import { ListenerService } from "./listener.service";
 import { CompressionTypes, EachMessagePayload } from 'kafkajs';
+import { EnvData } from "src/envData/envData.service";
+import { decrypt } from "src/decrypt";
+import * as https from 'https';
+import * as http from 'http';
+import * as fs from 'fs';
+import { format } from "date-fns";
 
 type MappingValue = string | { sourcePath: string; arrayMap: Record< string, string> };
 type MappingConfig = Record< string, MappingValue>;
@@ -35,13 +41,14 @@ export class DynamicFlowService {
     private ajv = new Ajv();  
     private statickeyword = ['get', 'post', 'patch', '200', '201', '202', '204', '400', '401', '403', '404', '500','requestBody', '*/*', 'responses', 'content', 'application/json', 'application/xml', 'text/plain', 'application/jwt', 'application/json; charset=utf-8', 'schema', 'properties', 'allOf', 'oneOf', 'inputschema', 'outputschema',];//"parameters",
     private numberArr: string[] = Array.from({ length: 101 }, (_, i) => i.toString());  
-
+    private ruleParams={}
     constructor(
     private readonly redisService:RedisService,
     private readonly listenerService:ListenerService,
     private readonly jwtService:JwtService,  
     private readonly CommonService: CommonService,
     private readonly lockservice: LockService,
+    private readonly envData:EnvData,
     @Inject(forwardRef(() => EventEmitterProcessor)) private readonly processor: EventEmitterProcessor
    ){}
    private readonly logger = new Logger(DynamicFlowService.name)
@@ -110,40 +117,8 @@ export class DynamicFlowService {
        
         let SessionToken = await this.jwtService.decode(token, { json: true });
        // let tokenDecode = await this.CommonService.MyAccountForClient(token);  
-        let sobj = {},SessionInfo = {}    
         
-        sobj['session.orgGrpCode'] = SessionToken.orgGrpCode || process.env?.ORGGRPCODE
-        sobj['session.orgCode'] = SessionToken.orgCode || process.env?.ORGCODE
-        sobj['session.roleGrpCode'] = SessionToken.roleGrpCode || process.env?.ROLEGRPCODE
-        sobj['session.roleCode'] = SessionToken.roleCode || process.env?.ROLECODE
-        sobj['session.psGrpCode'] = SessionToken.psGrpCode || process.env?.PSGRPCODE
-        sobj['session.psCode'] = SessionToken.psCode || process.env?.PSCODE
-        sobj['session.selectedAccessProfile'] = SessionToken.selectedAccessProfile || process.env?.ACCESSPROFILE
-        sobj['session.loginId'] = SessionToken.loginId || process.env?.LOGINID
-        sobj['session.orgGrpName'] = SessionToken?.orgGrpName || process.env?.ORGGRPNAME
-        sobj['session.orgName'] = SessionToken?.orgName || process.env?.ORGNAME
-        sobj['session.roleGrpName'] = SessionToken?.roleGrpName || process.env?.ROLEGRPNAME
-        sobj['session.roleName'] = SessionToken?.roleName || process.env?.ROLENAME
-        sobj['session.psGrpName'] = SessionToken?.psGrpName || process.env?.PSGRPNAME
-        sobj['session.psName'] = SessionToken?.psName || process.env?.PSNAME
-        sobj['session.trs_process_id'] = upId
-        sobj['session.userCode'] = SessionToken?.userCode
-        sobj['session.subOrgGrpCode'] = SessionToken?.subOrgGrpCode || process.env?.SUBORGGRPCODE
-        sobj['session.subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME
-        sobj['session.subOrgCode'] = SessionToken?.subOrgCode || process.env?.SUBORGCODE
-        sobj['session.subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME
-
-        SessionInfo['loginId'] = SessionToken?.loginId || process.env?.LOGINID || '';
-        SessionInfo['accessProfile'] = SessionToken?.selectedAccessProfile || process.env?.ACCESSPROFILE || '';
-        SessionInfo['orgGrpName'] = SessionToken?.orgGrpName || process.env?.ORGGRPNAME || '';
-        SessionInfo['orgName'] = SessionToken?.orgName || process.env?.ORGNAME || '';
-        SessionInfo['roleGrpName'] = SessionToken?.roleGrpName || process.env?.ROLEGRPNAME || '';
-        SessionInfo['roleName'] = SessionToken?.roleName || process.env?.ROLENAME || '';
-        SessionInfo['psGrpName'] = SessionToken?.psGrpName || process.env?.PSGRPNAME || '';
-        SessionInfo['psName'] = SessionToken?.psName || process.env?.PSNAME || '';
-        SessionInfo['userCode'] = SessionToken?.userCode || ''
-        SessionInfo['subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME || '';
-        SessionInfo['subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME || '';
+        let {sobj,SessionInfo} = await this.CommonService.sessionDecode(token, upId);
 
         let sourceStatus, srcQueue, targetStatus, targetQueue, failureQueue, failureTargetStatus, suspiciousStatus, suspiciousQueue, errorStatus, errorQueue;
         for (var j = 0; j < poNode.length; j++) {
@@ -186,12 +161,45 @@ export class DynamicFlowService {
             if (nodeType == 'humantasknode' && poNode[j].nodeId == nodeId) {
                 try {
                     this.logger.log('HumanTask node Started');
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                    this.ruleParams[nodeName] = Array.isArray(inputparam)?inputparam[0]:inputparam
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
                     }
-                    ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId)
+                    console.log('RCMresult', RCMresult)
+                    let nodeIfo = poNode[j].ifo
+                    let pfRuleResult = {}
+                        if(nodeIfo?.length>0){
+                        for (const item of nodeIfo) {
+                            if(item.variableType == "ProcessVariable" && item.type == "pfrule"){                              
+                                let pfRuleValue
+                                let id = (item.path).split('|ifo|')[0] 
+                                if(id == pfdto?.sourceId){                                    
+                                 pfRuleValue = await this.redisService.getJsonData(item.value+':NDP',process.env.CLIENTCODE)                                
+                                if(pfRuleValue){                                   
+                                    pfRuleValue = JSON.parse(pfRuleValue)
+                                    let rule = (Object.values(pfRuleValue)[0])['rule']
+
+                                    let RCMresult:any = await this.CommonService.PfRuleExtract(rule,SessionInfo,inputparam,pfdto.controlName);
+                                    
+                                    if (RCMresult) {
+                                        if(!inputparam) inputparam = {}
+                                                                
+                                        inputparam = Object.assign(inputparam,RCMresult) 
+                                        pfRuleResult = Object.assign(pfRuleResult,RCMresult)                               
+                                    }
+                                }
+                                }                                   
+                            }
+                        }  
+                        if(Object.keys(pfRuleResult).length>0)                            
+                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(pfRuleResult), collectionName, 'ifo');
+                        
+                        }
+                    if(zenresult && Object.keys(zenresult).length>0 && zenresult[nodeName])
+                    inputparam = await this.codeORifoAndInputparamAssign(zenresult[nodeName], inputparam)
+                    ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
                    
                     if (customcoderesult && customcoderesult != undefined && customcoderesult != null) {
                         codeObj = await this.codeAssign(customcoderesult)
@@ -207,17 +215,23 @@ export class DynamicFlowService {
                             ifoObj = Object.assign(ifoObj, codeObj)
                     }
                        
-                    
-                    if(ifoObj)
-                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
+                    if (inputparam && ifoObj)
+                        inputparam = await this.codeORifoAndInputparamAssign(ifoObj, inputparam)
 
+                    ifoObj = Object.assign(ifoObj,pfRuleResult)
+                    if(ifoObj){
+                        await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
+                    }
+                    inputparam =  Array.isArray(inputparam) && inputparam.length == 1?inputparam[0]:inputparam
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(inputparam), collectionName, 'response',);
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: inputparam, response: inputparam } }),);
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(pfdto.sourceId), collectionName, 'sourceid',);
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam,);
-                    inputparam = { [nodeName]: inputparam }
+                     inputparam = { [nodeName]: inputparam }
                     this.logger.log('HumanTask node completed');
                     return { status: 200, targetStatus: targetStatus, data: inputparam };
                 } catch (error) {
+                    console.log('HumanTask node error', error);
                     await this.exceptionhandler(failureQueue, suspiciousQueue, errorQueue, error, upId, nodeId, failureTargetStatus, inputparam)
                 }
             }
@@ -230,9 +244,16 @@ export class DynamicFlowService {
                         throw new CustomException('Rule is required for decision node', 404);
                     }
                     let decisionRes
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                      
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    
                     if (RCMresult) {
-                        zenresult = RCMresult.rule;
+                        let ruleRes = RCMresult.rule//.output;
+                        if(ruleRes && typeof ruleRes == 'object'){
+                            zenresult = Object.values(ruleRes)[0]
+                        }else if(ruleRes && typeof ruleRes == 'string'){
+                            zenresult = ruleRes
+                        } 
                         customcoderesult = RCMresult.code;
                     }
                     if (zenresult) {
@@ -257,6 +278,8 @@ export class DynamicFlowService {
                     if (decisionRes) {
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(decisionRes), collectionName, 'response',);
                     }
+                    this.ruleParams[nodeName] = decisionRes
+
                     this.logger.log('Decision node completed');
                     return { status: 200, targetStatus: zenresult, data: inputparam };
                 } catch (error) {
@@ -264,8 +287,8 @@ export class DynamicFlowService {
                 }
             }
 
-             //Api Node
-            if ((nodeType == 'apinode' || nodeType == 'googlefileapinode') && poNode[j].nodeId == nodeId) {
+              //Api Node
+             if ((nodeType == 'apinode' || nodeType == 'googlefileapinode') && poNode[j].nodeId == nodeId) {
                 let lock: any, rollbackConfig, apichildResult: any = []
                 try {
                     if (currentFabric == 'PF-SCDL' && poNode[j].nodeId == poNode[1].nodeId) {
@@ -282,6 +305,7 @@ export class DynamicFlowService {
                         rollbackConfig = ndp[poNode[j].nodeId]
                         let customConfig = ndp[poNode[j].nodeId]
                         let referenceKey = customConfig?.apiKey;
+                        let customConfigPro = customConfig?.data?.pro;
                         let SessionfilterParams = customConfig?.data?.pro?.filterParams//?.items;
                         let filterParams = customConfig?.data?.pro?.request?.filterParams?.items;
                         let requestContentType = customConfig?.data?.pro?.request?.content_type?.value;
@@ -289,9 +313,10 @@ export class DynamicFlowService {
                         let nodeVersion = customConfig?.nodeVersion;
                         let rollback = customConfig?.rollback
                         let rule = customConfig?.rule
-
+                      
+                        let methodName, parameterQuery, parameter, contentType, serverUrl, endPoint, headerParams = {},httpAgentParams = {},httpAgentType,httpAgent, encCredentials, codeObj;
                         if (!referenceKey)
-                            throw new CustomException('Reference key not found', 404);
+                           throw new CustomException('Reference key not found', 404);
 
                         let ApiConfig: any = JSON.parse(await this.redisService.getJsonData(referenceKey, collectionName));
 
@@ -300,26 +325,115 @@ export class DynamicFlowService {
 
                         let apiVal = Object.values(ApiConfig)[0];
                         customConfig = apiVal;
-                        let methodName, parameterQuery, parameter, contentType, serverUrl, endPoint, encCredentials, codeObj;
+
+                        let oprname: any = customConfig?.data?.method;
+                        if (!oprname) throw new CustomException('Method Name not found', 404);
+                        methodName = oprname.toLowerCase();
+                        parameterQuery = customConfig?.data?.[methodName]?.parameters;
+                        parameter = customConfig?.data[methodName];
+
+                        serverUrl = customConfig?.data?.serverUrl 
+                        endPoint = customConfig?.data?.endPoint;
+
                         if (nodeVersion?.toLowerCase() == 'v1') {
-                            let oprname: any = customConfig?.data?.method;
-                            if (!oprname)
-                                throw new CustomException('Method Name not found', 404);
-                            methodName = oprname.toLowerCase();
-                            parameterQuery = customConfig.data?.[methodName]?.parameters;
-                            parameter = customConfig.data[methodName];
                             if (methodName == 'get') {
                                 let responsekey = Object.keys(parameter?.responses)[0];
                                 contentType = parameter?.responses[responsekey]?.content ? Object.keys(parameter.responses[responsekey]?.content)[0] : '';
                             } else {
                                 contentType = parameter?.requestBody?.content ? Object.keys(parameter.requestBody.content)[0] : '';
-                            }
-                            serverUrl = customConfig.data?.serverUrl //customConfig.data?.apiUrl ? customConfig.data?.apiUrl : customConfig.data?.serverUrl;
-                            endPoint = customConfig.data?.endPoint;
+                            }                           
+                        }
+                        else if (nodeVersion?.toLowerCase() == 'v2') {                             
+                          
+                            let dpdKey = customConfigPro?.apiConfigName?.value;
+                            let apiName = customConfigPro?.apiConfigName?.subSelection?.value;
+                            if(!dpdKey || !apiName) throw new CustomException('DPD Key/Api Name not found', 404);
+
+                            let dpdValue:any =  JSON.parse(await this.redisService.getJsonData(dpdKey+'NDP', collectionName));
+                            if(!dpdValue) throw new CustomException('DPD value not found', 404); //|| Object.keys(dpdValue).length == 0
+                            
+                            // let dpdData = (Object.values(dpdValue)[0])?.['data']  
+                            let encDpdData:any = (Object.values(dpdValue))[0]   
+                           
+                            let dpdData:any = decrypt(encDpdData);
+                            dpdData = dpdData?.data
+                            
+                            let apiSecurityItems = dpdData?.apiConfig?.items
+                            if(apiSecurityItems?.length>0){
+                                for(let item of apiSecurityItems){
+                                    let api_name = item?.api_name?.value
+                                    if(api_name == apiName){
+
+                                        //Header Params
+                                        let headerItems = item?.headers?.items                          
+                                        if(headerItems?.length > 0){
+                                            for(let item of headerItems){                                  
+                                                headerParams[item.key?.value] = item.value?.value
+                                            }
+                                        }
+
+                                        //Auth 
+                                        let authType = item?.authentication?.value?.type?.value
+                                        let authValue = item?.authentication?.value?.type?.subSelection[authType]?.value
+                                        if(authType == "Bearer Token")
+                                            headerParams['Authorization'] = `Bearer ${authValue}`; 
+                                        if(authType == "API Key")
+                                            headerParams['Authorization'] = `Bearer ${authValue}`; 
+
+                                        //TLS 
+                                        let tlsEnabled = item?.tls?.value
+                                        let pfxFile,pfxPassphrase,rejectUnauthorized
+                                        if(tlsEnabled){
+                                            let tlsSubSelection = item?.tls?.subSelection?._true
+                                            let host = tlsSubSelection?.host?.value
+                                            let port = tlsSubSelection?.port?.value
+                                            if(!host || !port) throw new CustomException('Invalid connection details',402)
+                                            
+                                            httpAgentParams['host']  = host
+                                            httpAgentParams['port']  = port
+
+                                            pfxFile = tlsSubSelection?.pfxFile?.value                                           
+                                            
+                                            if(pfxFile.endsWith('.pfx')){
+                                                pfxFile = pfxFile.slice(0,-4)
+                                            } 
+                                            
+                                             //? pfxFile : pfxFile + '.pfx'                                           
+                                            pfxPassphrase = tlsSubSelection?.pfxPassphrase?.value
+                                            rejectUnauthorized = tlsSubSelection?.rejectUnauthorized?.value  
+
+                                            if(!pfxFile || !pfxPassphrase) throw new CustomException('Invalid tls details',402)   
+
+                                            let url = this.envData.getSeaweedOutputHost() //process.env.SEAWEED_OUTPUT_HOST
+                                            let userName = this.envData.getSeaweedUsername()//process.env.SEAWEED_USERNAME
+                                            let password = this.envData.getSeaweedPassword()//process.env.SEAWEED_PASSWORD
+
+                                            const seaWeedConfig = {
+                                                url: url,
+                                                username: userName,
+                                                password: password,
+                                            };
+                                            
+                                            let pfxFileContent = await this.CommonService.setfileKeys(seaWeedConfig, 'read', '', pfxFile, 'pfx');
+                                            pfxFileContent = Buffer.from(pfxFileContent);
+                                            
+                                            if (!Buffer.isBuffer(pfxFileContent)) {
+                                            throw new Error("PFX file must be returned as Buffer");
+                                            }
+
+                                            httpAgentParams['pfx'] =  pfxFileContent //Buffer.from(pfxFileContent, 'base64')//fs.readFileSync(pfxFile)
+                                            httpAgentParams['passphrase'] = pfxPassphrase
+                                            httpAgentParams['rejectUnauthorized'] = rejectUnauthorized?false:true 
+
+                                            httpAgent = new https.Agent(httpAgentParams);
+                                        }
+                                    }
+                                }
+                            }                          
                         }
 
                         let apires: any,headerRole
-                        if (customConfig) {  
+                        if (customConfig) {                        
                            if(rule?.approvalProcess){
                             let rulekey = rule?.ruleKey                           
                             if (!rulekey) throw new CustomException(pfjson[i].nodeName+' rulekey key not found', 404);
@@ -327,13 +441,13 @@ export class DynamicFlowService {
                             if (!ruleConfig || Object.keys(ruleConfig).length == 0)
                                 throw new CustomException(pfjson[i].nodeName +' Reference key value not found', 404);
                             let rulejson: any = Object.values(ruleConfig)[0]; 
-                            let rulecheck:any = await this.CommonService.getRuleCodeMapper(rulejson, inputparam, processedKey + upId, currentFabric, SessionInfo);
+                            let rulecheck:any = await this.CommonService.getRuleCodeMapper(rulejson, this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                             headerRole = rulecheck?.rule
                            }
                             encCredentials = await this.CommonService.checkEncryption(poNode[j]);
-                            ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId)
+                            
                             if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL') {
-                                RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                                RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                                 if (RCMresult) {
                                     zenresult = RCMresult.rule;
                                     customcoderesult = RCMresult.code;
@@ -346,6 +460,9 @@ export class DynamicFlowService {
                                 if (ifoObj && Object.keys(ifoObj).length > 0)
                                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
                             }
+
+                            ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
+
                             let childInsertArr, textobj, mapObj = {}, tempQryVal = []
                             if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
                                 let currentNodeEdge = internalEdges[poNode[j].nodeId];
@@ -359,13 +476,13 @@ export class DynamicFlowService {
                                     tempQryVal = mappedData.tempQryVal
                                     textobj = mappedData.textobj
                                 }
-                            }
-                            
+                            }                           
                             if (childInsertArr?.length == 0 && currentFabric == 'PF-SFD') {
                                 childInsertArr = inputparam?.mapObj;
                                 tempQryVal = inputparam?.tempQryVal
                             }
-
+                           
+                            
                             if (currentFabric == 'DF-DFD') {
                                 let apiUrl = serverUrl + endPoint;
                                 let queryArr = []
@@ -430,17 +547,20 @@ export class DynamicFlowService {
                                             const requestConfig: AxiosRequestConfig = {
                                                 headers: {
                                                     Authorization: `Bearer ${token}`
-                                                }
+                                                },timeout: 300000 
                                             }
+                                             console.log("apiUrl",apiUrl)
                                             let postres = await this.executeApiCall(methodName, apiUrl, requestConfig)
-                                            if (flag != 'N' && postres?.result?.length == 0) {
+                                            if (flag != 'N' && postres?.result?.length == 0 && logicCenter) {
                                                 await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: apiUrl, response: postres } }));
+                                                await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(apiUrl), collectionName, 'request');
+                                                await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(postres?.result), collectionName, 'response');
                                                 return {
                                                     status: 200,
                                                     targetStatus: targetStatus,
                                                     data: postres?.result,
                                                 };
-                                            } else if (postres?.status != 'Success' || postres?.result?.length == 0) {
+                                            } else if (postres?.status != 'Success' || postres?.result?.length == 0 && logicCenter) {
                                                 throw new CustomException('Data not found', 404);
                                             } else {
                                                 apires = postres.result;
@@ -511,21 +631,12 @@ export class DynamicFlowService {
                                         }
                                         apires = fillarr;
                                     }
-
-                                    if (!logicCenter && currentFabric == 'DF-DFD') {
-                                        let keys = await this.redisService.getKeys(dstkey + SessionToken.loginId + '_DS_Object', collectionName)
-                                        if (keys.length > 0) {
-                                            for (let a = 0; a < keys.length; a++) {
-                                                await this.redisService.deleteKey(keys[a], collectionName)
-                                            }
-                                        }
-                                        this.redisService.sethash(apires, dstkey + SessionToken.loginId + '_DS_Object')
-                                        return { data: 'logicCenter' }
-                                    }
+                                    
                                     inputparam = await this.assignToInputParam(inputparam, nodeName, apires)
                                     if (!inputparam || inputparam?.length == 0) {
+                                        //this.ruleParams[nodeName] = apires
                                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(apires), collectionName, 'customResponse',);
-                                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], apires, processedKey + upId, currentFabric, SessionInfo);
+                                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                                     }
                                     if (RCMresult) {
                                         zenresult = RCMresult.rule;
@@ -547,6 +658,7 @@ export class DynamicFlowService {
                                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(apires), collectionName, 'response',);
                                 }
                             } else if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL') {
+                                let staticSchedulerArtifact = await this.CommonService.splitcommonkey(referenceKey, 'AFK')
                                 let apiUrl = serverUrl + endPoint;
                                 let apiResult, DecapiResult, EncapiResult, EncryptedRqst
                                 if (childInsertArr?.length > 0) {
@@ -558,110 +670,195 @@ export class DynamicFlowService {
                                         if (methodName) {
                                             if (methodName == 'get') {
                                                 if (apiUrl) {
+                                                    let requestConfig: AxiosRequestConfig
                                                     let params = await this.buildRequestComponents(apiUrl, tempQryVal, mapObj);
-                                                    params.headers['Authorization'] = `Bearer ${token}`;                                                    
                                                     apiUrl = params?.apiUrl;
-                                                    const requestConfig: AxiosRequestConfig = {
-                                                        headers: params.headers,
-                                                    };
+
+                                                    if (nodeVersion?.toLowerCase() == 'v1') {
+                                                        params.headers['Authorization'] = `Bearer ${token}`;                                                    
+                                                        requestConfig = {
+                                                            headers: params.headers,
+                                                            timeout: 300000 
+                                                        };                                                       
+                                                        
+                                                    }else if(nodeVersion?.toLowerCase() == 'v2'){
+                                                        if(params.headers && Object.keys(params.headers).length>0){
+                                                            headerParams = Object.assign(headerParams,params.headers)
+                                                        }
+                                                        requestConfig = {
+                                                            headers:headerParams,
+                                                            timeout: 300000 
+                                                        }
+                                                        if(Object.keys(httpAgentParams).length>0){    
+                                                            requestConfig['httpsAgent'] = httpAgent
+                                                        }
+                                                    }
                                                     apiResult = await this.executeApiCall(methodName, apiUrl, requestConfig)
-                                                    if (apiResult.statusCode == 201 || apiResult.statusCode == 200) {
-                                                        apiResult = apiResult?.result;
+
+                                                    if (apiResult.statusCode == 201 || apiResult.statusCode == 200 )  {
+                                                        if(apiResult?.result && Array.isArray(apiResult?.result) && apiResult?.result.length >0)
+                                                          apiResult = apiResult?.result;
+                                                        else if(apiResult?.result && Object.keys(apiResult?.result).length >0 )
+                                                             apiResult = apiResult?.result;
+                                                        else{
+                                                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(apiUrl), collectionName, 'request');
+                                                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(apiResult), collectionName, 'response');
+                                                            return apiResult
+                                                        }
                                                     } else {
                                                         throw apiResult;
                                                     }
+                                                     RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                                                    if (RCMresult) {
+                                                        zenresult = RCMresult.rule;
+                                                        customcoderesult = RCMresult.code;
+                                                    }
+                                                    if (customcoderesult && customcoderesult != undefined && customcoderesult != null) {
+                                                        codeObj = await this.codeAssign(customcoderesult)
+                                                        if (codeObj)
+                                                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(codeObj), collectionName, 'code',);
+                                                    }
+                                                    ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
+                                                    if (ifoObj && Object.keys(ifoObj).length > 0)
+                                                        await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
                                                     let assigndata = await this.assign(apiResult, ifoObj, codeObj, inputparam, nodeName, mapObj)
-                                                    apichildResult = assigndata.apichildResult
+                                                    if(Array.isArray(assigndata.apiResult))
+                                                    apichildResult = assigndata.apiResult
+                                                    else
+                                                    apichildResult.push(assigndata.apiResult)
                                                     inputparam = assigndata.inputparam
                                                 } else {
                                                     throw new CustomException('API Endpoint does not exist', 404);
                                                 }
-                                            } else if (methodName == 'post') {
+                                            } else if (methodName == 'post') { 
                                                 if (apiUrl) {
                                                     let params = await this.buildRequestComponents(apiUrl, tempQryVal, mapObj);
-                                                    params.headers['Authorization'] = `Bearer ${token}`; 
-                                                     if(headerRole){
-                                                    params.headers['xCdcaRole'] = headerRole;
-                                                    params.headers['xCdcaUsername'] = SessionToken?.loginId;
-                                                    }                                                                                                      
                                                     apiUrl = params?.apiUrl;
-                                                    if (contentType == 'application/json' && mapObj && Object.keys(mapObj).length > 0) {
-                                                        if (referenceKey.includes(':FNK:API-APIPD:')) {
-                                                            mapObj['trs_status'] = sourceStatus;
-                                                            mapObj['trs_process_id'] = upId;
-                                                            mapObj['trs_created_by'] = SessionToken?.loginId;
-                                                            mapObj['trs_access_profile'] = SessionToken?.selectedAccessProfile;
-                                                            mapObj['trs_org_grp_code'] = SessionToken?.orgGrpCode;
-                                                            mapObj['trs_org_code'] = SessionToken?.orgCode;
-                                                            mapObj['trs_role_grp_code'] = SessionToken?.roleGrpCode;
-                                                            mapObj['trs_role_code'] = SessionToken?.roleCode;
-                                                            mapObj['trs_ps_code'] = SessionToken?.psCode;
-                                                            mapObj['trs_ps_grp_code'] = SessionToken?.psGrpCode;
-                                                           // mapObj['trs_creator_email'] = tokenDecode?.email;
-                                                            mapObj['trs_sub_org_grp_code'] = SessionToken?.subOrgGrpCode;
-                                                            mapObj['trs_sub_org_code'] = SessionToken?.subOrgCode;
-                                                        }
-                                                        const requestConfig: AxiosRequestConfig = {
-                                                            headers: params.headers,
-                                                        };
-                                                        if (encCredentials?.selectedDpd && encCredentials?.encryptionMethod) {
-                                                            let obj = {}
-                                                            if (childtable?.length > 0) {
-                                                                for (let i = 0; i < childtable.length; i++) {
-                                                                    if (Array.isArray(mapObj[childtable[i]])) {
-                                                                        let s = {}
-                                                                        s['create'] = mapObj[childtable[i]]
-                                                                        obj[childtable[i]] = s
-                                                                    } else {
-                                                                        obj[childtable[i]] = mapObj[childtable[i]]
+                                                    
+                                                    if (nodeVersion?.toLowerCase() == 'v1') {
+                                                        const agent = new https.Agent({
+                                                            rejectUnauthorized: false
+                                                        });
+                                                        params.headers['Authorization'] = `Bearer ${token}`; 
+                                                         if(headerRole){
+                                                        params.headers['xCdcaRole'] = headerRole;
+                                                        params.headers['xCdcaUsername'] = SessionToken?.loginId;
+                                                        } 
+                                                        if (contentType == 'application/json' && mapObj && Object.keys(mapObj).length > 0) {
+                                                            if (referenceKey.includes(':FNK:API-APIPD:')) {
+                                                                mapObj['trs_event_process_status'] = sourceStatus;
+                                                                mapObj['trs_process_id'] = upId;
+                                                                mapObj['trs_created_by'] = SessionToken?.loginId;
+                                                                mapObj['trs_access_profile'] = SessionToken?.selectedAccessProfile;
+                                                                mapObj['trs_org_grp_code'] = SessionToken?.orgGrpCode;
+                                                                mapObj['trs_org_code'] = SessionToken?.orgCode;
+                                                                mapObj['trs_role_grp_code'] = SessionToken?.roleGrpCode;
+                                                                mapObj['trs_role_code'] = SessionToken?.roleCode;
+                                                                mapObj['trs_ps_code'] = SessionToken?.psCode;
+                                                                mapObj['trs_ps_grp_code'] = SessionToken?.psGrpCode;
+                                                                // mapObj['trs_creator_email'] = tokenDecode?.email;
+                                                                mapObj['trs_sub_org_grp_code'] = SessionToken?.subOrgGrpCode;
+                                                                mapObj['trs_sub_org_code'] = SessionToken?.subOrgCode;                                                               
+                                                            }
+                                                            
+                                                            if([
+                                                                'post_scheduler_startAllScheduler','post_scheduler_startSpecificScheduler',
+                                                                'post_scheduler_stopAllScheduler','post_scheduler_stopSpecificScheduler'
+                                                               ].includes(staticSchedulerArtifact)){
+                                                                const keyArr = key.split(':');                                                           
+                                                                const jobname = ((keyArr[1] + keyArr[5] + keyArr[7] + keyArr[9]).replace(/[-_]/g, '')).replace(/\s+/g, '');
+                                                                mapObj['pf_key'] = jobname;
+                                                            }
+                                                            const requestConfig: AxiosRequestConfig = {
+                                                                headers: params.headers,
+                                                                timeout: 300000,
+                                                                httpsAgent:agent
+                                                            };
+                                                            if (encCredentials?.selectedDpd && encCredentials?.encryptionMethod) {
+                                                                let obj = {}
+                                                                if (childtable?.length > 0) {
+                                                                    for (let i = 0; i < childtable.length; i++) {
+                                                                        if (Array.isArray(mapObj[childtable[i]])) {
+                                                                            let s = {}
+                                                                            s['create'] = mapObj[childtable[i]]
+                                                                            obj[childtable[i]] = s
+                                                                        } else {
+                                                                            obj[childtable[i]] = mapObj[childtable[i]]
+                                                                        }
                                                                     }
                                                                 }
-                                                            }
-                                                            if (obj && Object.keys(obj).length > 0)
-                                                                mapObj = Object.assign(mapObj, obj)
-                                                            mapObj = await this.CommonService.commonEncryption(encCredentials.selectedDpd, encCredentials.encryptionMethod, mapObj, 'secretkey',);
-                                                            EncryptedRqst = mapObj;
-                                                            EncapiResult = await this.executeApiCall(methodName, apiUrl, requestConfig, { data: mapObj })
-                                                            DecapiResult = await this.CommonService.commondecryption(encCredentials.selectedDpd, encCredentials.encryptionMethod, EncapiResult.result, 'secretkey',);
-
-                                                            apiResult = JSON.parse(DecapiResult);
-                                                        } else {
-                                                            let obj = {}
-                                                            if (childtable?.length > 0) {
-                                                                for (let i = 0; i < childtable.length; i++) {
-                                                                    if (Array.isArray(mapObj[childtable[i]])) {
-                                                                        let s = {}
-                                                                        s['create'] = mapObj[childtable[i]]
-                                                                        obj[childtable[i]] = s
-                                                                    } else {
-                                                                        obj[childtable[i]] = mapObj[childtable[i]]
+                                                                if (obj && Object.keys(obj).length > 0)
+                                                                    mapObj = Object.assign(mapObj, obj)
+                                                                mapObj = await this.CommonService.commonEncryption(encCredentials.selectedDpd, encCredentials.encryptionMethod, mapObj, 'secretkey',);
+                                                                EncryptedRqst = mapObj;
+                                                                EncapiResult = await this.executeApiCall(methodName, apiUrl, requestConfig, { data: mapObj })
+                                                                DecapiResult = await this.CommonService.commondecryption(encCredentials.selectedDpd, encCredentials.encryptionMethod, EncapiResult.result, 'secretkey',);
+    
+                                                                apiResult = JSON.parse(DecapiResult);
+                                                            } else {
+                                                                let obj = {}
+                                                                if (childtable?.length > 0) {
+                                                                    for (let i = 0; i < childtable.length; i++) {
+                                                                        if (Array.isArray(mapObj[childtable[i]])) {
+                                                                            let s = {}
+                                                                            s['create'] = mapObj[childtable[i]]
+                                                                            obj[childtable[i]] = s
+                                                                        } else {
+                                                                            obj[childtable[i]] = mapObj[childtable[i]]
+                                                                        }
                                                                     }
                                                                 }
+                                                                if (obj && Object.keys(obj).length > 0)
+                                                                    mapObj = Object.assign(mapObj, obj)
+    
+                                                                if(Object.keys(httpAgentParams).length>0){                                                        
+                                                                    if(httpAgentType == 'http')
+                                                                        requestConfig['httpAgent'] = httpAgent
+                                                                    else if (httpAgentType == 'https')
+                                                                        requestConfig['httpsAgent'] = httpAgent
+                                                                }
+    
+                                                               console.log("mapObj",JSON.stringify(mapObj))
+                                                                // apiUrl = 'http://192.168.2.96:6000/scheduler/startSpecificScheduler'
+                                                                apiResult = await this.executeApiCall(methodName, apiUrl, requestConfig, mapObj)
+                                                                 console.log("apiResult",JSON.stringify(apiResult))
                                                             }
-                                                            if (obj && Object.keys(obj).length > 0)
-                                                                mapObj = Object.assign(mapObj, obj)
-                                                            apiResult = await this.executeApiCall(methodName, apiUrl, requestConfig, mapObj)
+                                                        } else if (contentType == 'text/plain') {
+                                                            const requestConfig: AxiosRequestConfig = {
+                                                                headers: {
+                                                                    'Content-Type': contentType
+                                                                },timeout: 300000 
+                                                            };
+                                                            let textdata = textobj.replace(/\\n/g, '\n');
+                                                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(textdata), collectionName, 'request');
+                                                            apiResult = await this.executeApiCall(methodName, apiUrl, requestConfig, textdata)
+    
+                                                        } else if (contentType == 'application/xml') {
+                                                            const requestConfig: AxiosRequestConfig = {
+                                                                headers: {
+                                                                    'Content-Type': contentType
+                                                                },timeout: 300000 
+                                                            };
+                                                            const jsonString = JSON.stringify(textobj);
+                                                            const xml = json2xml(jsonString, { compact: true, spaces: 4 });
+                                                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(xml), collectionName, 'request');
+                                                            apiResult = await this.executeApiCall(methodName, apiUrl, requestConfig, xml)
                                                         }
-                                                    } else if (contentType == 'text/plain') {
+                                                        
+                                                    }else if (nodeVersion?.toLowerCase() == 'v2') {
+                                                        if(params.headers && Object.keys(params.headers).length>0){
+                                                            headerParams = Object.assign(headerParams,params.headers)
+                                                        }
                                                         const requestConfig: AxiosRequestConfig = {
-                                                            headers: {
-                                                                'Content-Type': contentType
-                                                            }
-                                                        };
-                                                        let textdata = textobj.replace(/\\n/g, '\n');
-                                                        await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(textdata), collectionName, 'request');
-                                                        apiResult = await this.executeApiCall(methodName, apiUrl, requestConfig, textdata)
-
-                                                    } else if (contentType == 'application/xml') {
-                                                        const requestConfig: AxiosRequestConfig = {
-                                                            headers: {
-                                                                'Content-Type': contentType
-                                                            }
-                                                        };
-                                                        const jsonString = JSON.stringify(textobj);
-                                                        const xml = json2xml(jsonString, { compact: true, spaces: 4 });
-                                                        await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(xml), collectionName, 'request');
-                                                        apiResult = await this.executeApiCall(methodName, apiUrl, requestConfig, xml)
+                                                            headers:headerParams,
+                                                            timeout: 300000 
+                                                        }
+                                                        if(Object.keys(httpAgentParams).length>0){   
+                                                            requestConfig['httpsAgent'] = httpAgent
+                                                        }                                                      
+                                                        // apiUrl = 'http://192.168.2.96:6000/scheduler/startSpecificScheduler'
+                                                        apiResult = await this.executeApiCall(methodName, apiUrl, requestConfig, mapObj)
+                                                     
                                                     }
                                                     if (apiResult) {
                                                         if (apiResult.statusCode == 201 || apiResult.statusCode == 200) {
@@ -670,14 +867,15 @@ export class DynamicFlowService {
                                                             throw apiResult;
                                                         }
                                                         let assigndata = await this.assign(apiResult, ifoObj, codeObj, inputparam, nodeName, mapObj)
-                                                        apichildResult = assigndata.apichildResult
+                                                        apichildResult.push(assigndata.apiResult)
                                                         inputparam = assigndata.inputparam
                                                     }
-                                                } else {
+                                                }
+                                                else {
                                                     throw new CustomException('Method name not found', 404);
                                                 }
                                             } else if (methodName == 'patch' || methodName == 'put') {
-                                                if (serverUrl && endPoint) {
+                                                if (serverUrl && endPoint) {                                                    
                                                    let params = await this.buildRequestComponents(apiUrl, tempQryVal, mapObj);
                                                     params.headers['Authorization'] = `Bearer ${token}`;
                                                      if(headerRole){
@@ -687,16 +885,26 @@ export class DynamicFlowService {
                                                     apiUrl = params?.apiUrl;
                                                     const requestConfig: AxiosRequestConfig = {
                                                         headers: params.headers,
+                                                        timeout: 300000 
                                                     };
                                                     if (mapObj && Object.keys(mapObj).length > 0) {
                                                         if (referenceKey.includes(':FNK:API-APIPD:')) {
-                                                            mapObj['trs_status'] = sourceStatus;
+                                                            mapObj['trs_event_process_status'] = sourceStatus;
                                                             mapObj['trs_modified_by'] = SessionToken?.loginId;
                                                             mapObj['trs_process_id'] = upId;
                                                         }
                                                     } else {
                                                         throw 'MappingObject is empty';
                                                     }
+                                                    if([
+                                                        'post_scheduler_startAllScheduler','post_scheduler_startSpecificScheduler',
+                                                        'post_scheduler_stopAllScheduler','post_scheduler_stopSpecificScheduler'
+                                                        ].includes(staticSchedulerArtifact)){
+                                                        const keyArr = key.split(':');                                                           
+                                                        const jobname = ((keyArr[1] + keyArr[5] + keyArr[7] + keyArr[9]).replace(/[-_]/g, '')).replace(/\s+/g, '');
+                                                        mapObj['pf_key'] = jobname;
+                                                    }
+
                                                     let tempEndpoint = endPoint.replace(/{(.*?)}/g, (_, key) => mapObj[key] || '',);
                                                     let primaryKey
                                                     if (tempQryVal?.length > 0) {
@@ -785,7 +993,8 @@ export class DynamicFlowService {
                                                     }
 
                                                     let assigndata = await this.assign(apiResult, ifoObj, codeObj, inputparam, nodeName, mapObj)
-                                                    apichildResult = assigndata.apichildResult
+                                                    //apichildResult = assigndata.apichildResult
+                                                    apichildResult.push(assigndata.apiResult)
                                                     inputparam = assigndata.inputparam
 
                                                 } else {
@@ -802,6 +1011,7 @@ export class DynamicFlowService {
                                                     apiUrl = params?.apiUrl;
                                                     const requestConfig: AxiosRequestConfig = {
                                                         headers: params.headers,
+                                                        timeout: 300000 
                                                     };
                                                     apiResult = await this.executeApiCall(methodName, apiUrl, requestConfig)
                                                     if (apiResult.statusCode == 201 || apiResult.statusCode == 200) {
@@ -810,7 +1020,7 @@ export class DynamicFlowService {
                                                         throw apiResult;
                                                     }
                                                     let assigndata = await this.assign(apiResult, ifoObj, codeObj, inputparam, nodeName, mapObj)
-                                                    apichildResult = assigndata.apichildResult
+                                                    apichildResult.push(assigndata.apiResult)
                                                     inputparam = assigndata.inputparam
                                                 } else {
                                                     throw new CustomException('API Endpoint does not exist', 404);
@@ -820,21 +1030,54 @@ export class DynamicFlowService {
                                     }
                                 } else if (methodName == 'get') {
                                     if (apiUrl) {
+                                        let requestConfig:AxiosRequestConfig
+
                                         let params = await this.buildRequestComponents(apiUrl, tempQryVal, mapObj);
                                         apiUrl = params?.apiUrl;
-                                        params.headers['Authorization'] = `Bearer ${token}`;
-                                        const requestConfig: AxiosRequestConfig = {
-                                            headers: params.headers,
-                                        };
+
+                                        if (nodeVersion?.toLowerCase() == 'v1') {                                            
+                                            params.headers['Authorization'] = `Bearer ${token}`;
+                                            requestConfig = {
+                                                headers: params.headers,
+                                                timeout: 300000 
+                                            };                                            
+                                        }else if(nodeVersion?.toLowerCase() == 'v2'){
+                                            if(params.headers && Object.keys(params.headers).length>0){
+                                                headerParams = Object.assign(headerParams,params.headers)
+                                            }
+                                            requestConfig = {
+                                                headers:headerParams,
+                                                timeout: 300000 
+                                            }
+                                            if(Object.keys(httpAgentParams).length>0){ 
+                                                requestConfig['httpsAgent'] = httpAgent
+                                            }                                            
+                                        }
                                         apiResult = await this.executeApiCall(methodName, apiUrl, requestConfig)
+                                        
                                         if (apiResult.statusCode == 201 || apiResult.statusCode == 200) {
                                             apiResult = apiResult?.result;
                                         } else {
                                             throw apiResult;
                                         }
-
+                                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                                        if (RCMresult) {
+                                            zenresult = RCMresult.rule;
+                                            customcoderesult = RCMresult.code;
+                                        }
+                                        if (customcoderesult && customcoderesult != undefined && customcoderesult != null) {
+                                            codeObj = await this.codeAssign(customcoderesult)
+                                            if (codeObj)
+                                                await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(codeObj), collectionName, 'code',);
+                                        }
+                                        ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
+                                        if (ifoObj && Object.keys(ifoObj).length > 0)
+                                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
                                         let assigndata = await this.assign(apiResult, ifoObj, codeObj, inputparam, nodeName, mapObj)
-                                        apichildResult = assigndata.apichildResult
+                                        if(Array.isArray(assigndata.apiResult))
+                                        apichildResult = assigndata.apiResult
+                                        else
+                                        apichildResult.push(assigndata.apiResult)
                                         inputparam = assigndata.inputparam
                                     } else {
                                         throw new CustomException('API Endpoint does not exist', 404);
@@ -849,6 +1092,7 @@ export class DynamicFlowService {
                                             headarr['Content-Type'] = 'text/plain';
                                             const requestConfig: AxiosRequestConfig = {
                                                 headers: headarr,
+                                                timeout: 300000 
                                             };
 
                                             let textdata = textobj.replace(/\\n/g, '\n');
@@ -859,6 +1103,7 @@ export class DynamicFlowService {
                                             headarr['Content-Type'] = 'application/xml';
                                             const requestConfig: AxiosRequestConfig = {
                                                 headers: headarr,
+                                                timeout: 300000 
                                             };
                                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(textobj), collectionName, 'request');
                                             apiResult = await this.executeApiCall(methodName, apiUrl, requestConfig, textobj)
@@ -873,13 +1118,15 @@ export class DynamicFlowService {
                                                 throw apiResult;
                                             }
                                             let assigndata = await this.assign(apiResult, ifoObj, codeObj, inputparam, nodeName, mapObj)
-                                            apichildResult.push(assigndata.apichildResult)
+                                            apichildResult.push(assigndata.apiResult)
                                             inputparam = await this.assignToInputParam(inputparam, nodeName, apichildResult)
                                         }
                                     } else {
                                         throw new CustomException('API Endpoint does not exist', 404);
                                     }
                                 }
+                                if(childInsertArr?.length == 1 && methodName != 'get')
+                                    apichildResult = apichildResult[0]
                                 await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: inputparam, response: apichildResult } }));
                                 await this.redisService.setStreamData(targetQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: inputparam, response: apichildResult } }),);
                                 if (EncapiResult?.result) {
@@ -890,22 +1137,27 @@ export class DynamicFlowService {
                                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(apichildResult), collectionName, 'response',);
                                         await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, apichildResult);
                                         apires = apichildResult;
+                                        this.ruleParams[nodeName] = Array.isArray(apichildResult)?apichildResult[0]:apichildResult
                                     } else {
                                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(apiResult), collectionName, 'response',);
                                         await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, apiResult,);
                                         apires = apiResult;
+                                        this.ruleParams[nodeName] = Array.isArray(apiResult)?apiResult[0]:apiResult                                        
                                     }
+                                    
                                 }
                             }
                         }
+                       
+                        
                         this.logger.log('Api node completed');
                         if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL')
-                            return { status: 200, targetStatus: targetStatus, data: inputparam, };
+                            return { status: 200, targetStatus: targetStatus, data: inputparam,method:methodName};
                         else
                             return { status: 200, targetStatus: targetStatus, data: apires };
                     }
                 } catch (error) {
-                    // console.log('API ERROR', error);
+                     console.log('API ERROR', error);
                     await this.CommonService.checkRollBack(ndp, collectionName, 'rollback', {
                         key: processedKey + upId,
                         nodeid: rollbackConfig.nodeId,
@@ -923,7 +1175,8 @@ export class DynamicFlowService {
             if (nodeType == 'automationnode' && poNode[j].nodeId == nodeId) {
                 try {
                     this.logger.log('Automation Node Started');
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                    
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -948,7 +1201,8 @@ export class DynamicFlowService {
                     }
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(res), collectionName, 'response');
                     if (res)
-                        await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, res);
+                        await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, res);                          
+                    this.ruleParams[nodeName] = Array.isArray(res) ? res[0] : res
                     this.logger.log('Automation node completed');
                     return { status: 200, targetStatus: targetStatus };
                 } catch (error) {
@@ -964,15 +1218,39 @@ export class DynamicFlowService {
                     let qryres: any;
                     let customConfig = ndp[poNode[j].nodeId]
                     rollbackConfig = ndp[poNode[j].nodeId]
-                    let client, Querystr, oprname, filterParams, sessionParams, manualQuery,rule
+                    let client, oprname, manualQuery,rule
                     let dbconfig = await this.CommonService.dbconfig(customConfig, collectionName)
-                    oprname = dbconfig?.oprname
                     client = dbconfig.client
-                    filterParams = dbconfig?.filterParams
-                    sessionParams = dbconfig?.sessionParams
-                    manualQuery = dbconfig?.manualQuery
+                    let nodeVersion = customConfig?.nodeVersion;
+                    if (nodeVersion?.toLowerCase() == 'v1' || nodeVersion?.toLowerCase() == 'v2') {
+                        oprname = dbconfig?.oprname                        
+                        manualQuery = dbconfig?.manualQuery
+                    }else if (nodeVersion?.toLowerCase() == 'v3') {
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                        let queryName
+                        let ruleRes = RCMresult?.rule                        
+                        if(ruleRes && typeof ruleRes == 'object'){
+                            queryName = Object.values(ruleRes)[0]
+                        }else if(ruleRes && typeof ruleRes == 'string'){
+                            queryName = ruleRes
+                        }    
+                        let qryfield = dbconfig?.qrydata
+                        if(qryfield?.length>0){
+                        for(let item of qryfield){
+                        if(queryName){
+                        if(item.value.queryname.value == queryName){
+                            manualQuery = item.value.query.value
+                        }
+                        }else if(qryfield.length == 1){
+                            manualQuery = item.value.query.value
+                        }
+                        }
+                        }  
+                        
+                                  
+                    }
                     //rule = dbconfig?.rule
-                    let qry,headerRole;
+                    let qry, mapObj = {};
                     let str = [];
                     // if(rule?.approvalProcess){
                         // let rulekey = rule?.ruleKey                           
@@ -985,31 +1263,28 @@ export class DynamicFlowService {
                         //headerRole = rulecheck?.rule
                         //str.push({'xCdcaRole':headerRole,'xCdcaUsername':SessionToken?.loginId})
                      //}
-                    if (sessionParams?.length > 0) {
-                        for (let i = 0; i < sessionParams.length; i++) {
-                            var filcol = sessionParams[i].name;
-                            var filval = sessionParams[i].value;
-                            if (filval) {
-                                if ((Object.keys(sobj)).includes(filval)) {
-                                    let strobj = ` ${filcol} = '${sobj[filval]}' `
-                                    str.push(strobj);
-                                }
-                            }
-                        }
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    console.log("RCMresult",RCMresult);
+                    let ruleRes = RCMresult.rule
+                    let appendQry
+                    if(ruleRes){
+                        if(typeof ruleRes == 'object'){
+                            appendQry = Object.values(ruleRes)[0]
+                        }else if(typeof ruleRes == 'string'){
+                            appendQry = ruleRes
+                        }                                        
                     }
+                    
+                    if (manualQuery.endsWith(';')) {
+                        manualQuery = manualQuery.slice(0, -1);
+                    }                    
 
-                    if (filterParams?.length > 0) {
-                        for (let i = 0; i < filterParams.length; i++) {
-                            var filcol = filterParams[i].key;
-                            var filval = filterParams[i].value.value;
-                            if (filval && filval.includes('session.') && filcol)
-                                str.push(` ${filcol} = '${sobj[filval]}' `);
-                            else if (filcol && filval)
-                                str.push(` ${filcol} = '${filval}' `);
+                    if (manualQuery.includes('$where') && appendQry) {                       
+                        manualQuery = manualQuery.replace('$where', () => appendQry);                       
+                    }                                                     
 
-                        }
-                    }
-                    let childInsertArr, mapObj = {}, tempQryVal = []
+                    let childInsertArr, tempQryVal = []
+                    let qryarr =[]
                     if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
                         let currentNodeEdge = internalEdges[poNode[j].nodeId];
                         if (currentFabric == 'DF-DFD') {
@@ -1017,34 +1292,72 @@ export class DynamicFlowService {
                             mapObj = DfmappedData.mapObj
                             tempQryVal = DfmappedData.tempQryVal
                         } else {
-                            let mappedData = await this.mapEdgeValuesToParams(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName,  '', '', pfo)
+                            let mappedData = await this.mapEdgeValuesToParams(pfdto, currentNodeEdge, inputparam, processedKey, upId, collectionName,  '', '', pfo)
                             childInsertArr = mappedData.childInsertArr
                             tempQryVal = mappedData.tempQryVal
-                        }
-
+                        }                      
+                        
                         if (childInsertArr?.length > 0) {
                             for (let i = 0; i < childInsertArr.length; i++) {
                                 mapObj = childInsertArr[i]
-                                if (mapObj && Object.keys(mapObj).length > 0) {
-                                    let mapcol = Object.keys(mapObj)
-                                    let mapval = Object.values(mapObj)
-                                    for (let i = 0; i < mapcol.length; i++) {
-                                        str.push(` ${mapcol[i]} = '${mapval[i]}' `);
-                                    }
-                                }
-                            }
-                        } else {
+                                 mapObj = Object.assign(mapObj,sobj)
+                                // if (mapObj && Object.keys(mapObj).length > 0) {
+                                //     let mapcol = Object.keys(mapObj)
+                                //     let mapval = Object.values(mapObj)
+                                //     for (let i = 0; i < mapcol.length; i++) {
+                                //         str.push(` ${mapcol[i]} = '${mapval[i]}' `);
+                                //     }
+                                // }  
+                                let replaceQry = manualQuery                            
                             if (mapObj && Object.keys(mapObj).length > 0) {
-                                let mapcol = Object.keys(mapObj)
-                                let mapval = Object.values(mapObj)
-                                for (let i = 0; i < mapcol.length; i++) {
-                                    str.push(` ${mapcol[i]} = '${mapval[i]}' `);
-                                }
+                                Object.keys(mapObj).forEach(key => {
+                                    const regex = new RegExp(`\\$\\$${key}`, 'g');
+                                    const value = typeof mapObj[key] === 'string' ? `'${mapObj[key]}'` : mapObj[key];
+                                    replaceQry = replaceQry.replace(regex, value);
+                                });
+                            }
+                            if(childInsertArr.length ==1)
+                                manualQuery = replaceQry
+                            else
+                             qryarr.push(replaceQry)
+                            }
+                           
+
+                        } else {
+                             mapObj = sobj
+                            if (mapObj && Object.keys(mapObj).length > 0) {
+                                 Object.keys(mapObj).forEach(key => {
+                                    const regex = new RegExp(`\\$\\$${key}`, 'g');
+                                    const value = typeof mapObj[key] === 'string' ? `'${mapObj[key]}'` : mapObj[key];
+                                    manualQuery = manualQuery.replace(regex, value);
+                                });
                             }
                         }
+                    } else{
+                          mapObj = sobj
+                        if (mapObj && Object.keys(mapObj).length > 0) {
+                                Object.keys(mapObj).forEach(key => {
+                                    const regex = new RegExp(`\\$\\$${key}`, 'g');
+                                    const value = typeof mapObj[key] === 'string' ? `'${mapObj[key]}'` : mapObj[key];
+                                    manualQuery = manualQuery.replace(regex, value);
+                                });
+                            }                    
+                    }                    
+                    if(qryarr?.length>0){
+                    let resdbarr =[]
+                    await client.connect();
+                    for(let item of qryarr){
+                     if (item) qryres = await client.query(item);                   
+                    if (qryres) dbres = qryres.rows; 
+                        resdbarr.push(dbres)
                     }
-
-                    if (manualQuery) {
+                    await client.end();
+                    if(resdbarr?.length>0)
+                    dbres = resdbarr
+                    qry = qryarr
+                    }
+                   
+                    else if (manualQuery) {
                         qry = manualQuery;
                         if (qry.toLowerCase().includes('insert into')) {
                             oprname = 'insert'
@@ -1062,9 +1375,10 @@ export class DynamicFlowService {
                             }
                             if (page && count) {
                                 const cleanedQuery = qry.trim();
-                                if (/limit\s+\d+/i.test(cleanedQuery)) {
-                                    throw new Error('LIMIT clause detected. Please do not include it.');
-                                }
+                                if (/limit\s+\d+/i.test(cleanedQuery)) 
+                                    qry = cleanedQuery
+                                  // throw new Error('LIMIT clause detected. Please do not include it.');                                   
+                                else
                                 qry = `${cleanedQuery} LIMIT ${count} OFFSET ${offset}`;
                             }
 
@@ -1111,51 +1425,65 @@ export class DynamicFlowService {
                                     formKey = formKey.slice(0, -4);
                                 }
                             }
-
-                            if (formKey) str.push(formKey)
-                            if (str.length > 0) {
-                                Querystr = str.join('AND');
-                                qry = await this.CommonService.appendWhereClause(qry, Querystr);
-                            }
+                           
+                            if (formKey) qry = await this.CommonService.appendWhereClause(qry, formKey);
+                            //str.push(formKey)
+                            // if (str.length > 0) { 
+                            //     Querystr = str.join('AND');
+                            //     qry = await this.CommonService.appendWhereClause(qry, Querystr);
+                            // }
                         }
-                    }
-                    // console.log("qry",qry);
-
+                    console.log("qry",qry);
+                    qry = qry.replace(/\u2003/g, ' ');                  
                     await client.connect();
-                    if (qry) qryres = await client.query(qry);
+                    if (qry) qryres = await client.query(qry);                   
                     if (qryres) dbres = qryres.rows;
+                     console.log("dbres",dbres.length);
                     await client.end();
-                    if (flag != 'N' && dbres?.length == 0) {
+                    }else{
+                        throw new CustomException('Query is Required', 404);
+                    }                     
+                    if (flag != 'N' && dbres?.length == 0 && logicCenter) {
                         await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: qry, response: dbres } }));
                         await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, qry, dfoSchema);
                         return { status: 200, targetStatus: targetStatus, data: dbres };
-                    } else if (oprname == 'select' && dbres?.length == 0) {
+                    } else if (oprname == 'select' && dbres?.length == 0 && currentFabric == 'DF-DFD' && logicCenter) {
                         throw new CustomException('No Records Found', 404);
+                    }else if(currentFabric == 'PF-PFD' && dbres?.length == 0){                       
+                        let responseData = await this.CommonService.responseData(200,dbres)
+                        responseData = Object.assign(responseData,{targetStatus})
+                        await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(qry), collectionName, 'request');
+                        await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(dbres), collectionName, 'response');
+                        return responseData
                     }
 
-                    if (!logicCenter && currentFabric == 'DF-DFD') {
-                        let keys = await this.redisService.getKeys(dstkey + SessionToken.loginId + '_DS_Object', collectionName)
-                        if (keys.length > 0) {
-                            for (let a = 0; a < keys.length; a++) {
-                                await this.redisService.deleteKey(keys[a], collectionName)
-                            }
-                        }
-                        this.redisService.sethash(dbres, dstkey + SessionToken.loginId + '_DS_Object')
-                        return { data: 'logicCenter' }
-                    }
-
-                    if (inputparam) {
+                    // if (!logicCenter && currentFabric == 'DF-DFD') {
+                    //     let keys = await this.redisService.getKeys(dstkey + SessionToken.loginId + '_DS_Object', collectionName)
+                    //     if (keys.length > 0) {
+                    //         for (let a = 0; a < keys.length; a++) {
+                    //             await this.redisService.deleteKey(keys[a], collectionName)
+                    //         }
+                    //     }
+                    //     this.redisService.sethash(dbres, dstkey + SessionToken.loginId + '_DS_Object')
+                    //     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, qry, '');
+                    //     return { status:200,targetStatus: targetStatus,data: 'logicCenter' }
+                    // }
+                     if(dbres && currentFabric == 'PF-PFD')
+                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(dbres), collectionName, 'response');
+                    
+                     if (inputparam) {
                         inputparam = await this.assignToInputParam(inputparam, nodeName, dbres)
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
-                    } else {
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], dbres, processedKey + upId, currentFabric, SessionInfo);
+                        this.ruleParams[nodeName] = Array.isArray(dbres)?dbres[0]:dbres
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    } else {   
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     }
-
+                    console.log("RCMresult2",RCMresult);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
                     }
-                    ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId)
+                    ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
                     if (ifoObj && Object.keys(ifoObj).length > 0) {
                         if (currentFabric == 'PF-PFD')
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
@@ -1172,15 +1500,19 @@ export class DynamicFlowService {
                         }
                     }
 
-                    if (upId && currentFabric == 'PF-PFD') {
+                    if (upId) {
                         await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: qry, response: dbres } }));
                         await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, qry, dbres);
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(qry), collectionName, 'request');
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(dbres), collectionName, 'response');
+                        
                     }
 
                     this.logger.log('DB Node execution completed');
+                    if(currentFabric == 'DF-DFD')
                     return { status: 200, targetStatus: targetStatus, data: dbres };
+                    else
+                    return { status: 200, targetStatus: targetStatus, data:inputparam };
                    } catch (error) {
                     console.log(error);
                     await this.CommonService.checkRollBack(ndp, collectionName, 'rollback', {
@@ -1244,7 +1576,7 @@ export class DynamicFlowService {
                                 tempQryVal = DfmappedData.tempQryVal
                                 childInsertArr.push(mapObj)
                             } else {
-                                let mappedData = await this.mapEdgeValuesToParams(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName,  '', '', pfo)
+                                let mappedData = await this.mapEdgeValuesToParams(pfdto, currentNodeEdge, inputparam, processedKey, upId, collectionName,  '', '', pfo)
                                 childInsertArr = mappedData.childInsertArr
                                 tempQryVal = mappedData.tempQryVal
                             }
@@ -1355,33 +1687,33 @@ export class DynamicFlowService {
                             await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: manualQry, response: mongoDbarr } }),);
                             await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, mongoQry, mongoDbarr,);
                             return { status: 200, targetStatus: targetStatus, data: mongoDbarr };
-                        } else if (!mongoDbarr || mongoDbarr?.length == 0 || Object.keys(mongoDbarr).length == 0) {
+                        } else if ((!mongoDbarr || mongoDbarr?.length == 0 || Object.keys(mongoDbarr).length == 0) && currentFabric == 'DF-DFD') {
                             await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: manualQry, response: mongoDbarr } }),
                             );
                             throw new CustomException('No Records Found', 404);
+                        }else if(currentFabric == 'PF-PFD' && mongoDbarr?.length == 0){ 
+                            let responseData = await this.CommonService.responseData(200,mongoDbarr)
+                            responseData = Object.assign(responseData,{targetStatus})
+                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(manualQry), collectionName, 'request');
+                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(mongoDbarr), collectionName, 'response');
+                            return responseData
                         }
                     }
-                    if (!logicCenter && currentFabric == 'DF-DFD') {
-                        let keys = await this.redisService.getKeys(dstkey + SessionToken.loginId + '_DS_Object', collectionName)
-                        if (keys.length > 0) {
-                            for (let a = 0; a < keys.length; a++) {
-                                await this.redisService.deleteKey(keys[a], collectionName)
-                            }
-                        }
-                        this.redisService.sethash(mongoDbarr, dstkey + SessionToken.loginId + '_DS_Object')
-                        return { data: 'logicCenter' }
-                    }
+                   
+                    this.ruleParams[nodeName] = Array.isArray(mongoDbarr)?mongoDbarr[0]:mongoDbarr
                     if (inputparam) {
+                        
                         inputparam = await this.assignToInputParam(inputparam, nodeName, mongoDbarr)
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     } else {
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], mongoDbarr, processedKey + upId, currentFabric, SessionInfo);
+                        
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     }
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
                     }
-                    ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId)
+                    ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
                     if (ifoObj && Object.keys(ifoObj).length > 0) {
                         if (currentFabric == 'PF-PFD')
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
@@ -1404,6 +1736,7 @@ export class DynamicFlowService {
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(manualQry), collectionName, 'request');
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(mongoDbarr), collectionName, 'response',);
                     }
+                     
                     this.logger.log('Mongo DB Node execution completed');
                     return { status: 200, targetStatus: targetStatus, data: mongoDbarr };
                 } catch (error) {
@@ -1457,7 +1790,7 @@ export class DynamicFlowService {
                         let childInsertArr, textobj, tempQryVal = []
                         if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
                             let currentNodeEdge = internalEdges[poNode[j].nodeId];
-                            let mappedData = await this.mapEdgeValuesToParams(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName, '', '', pfo)
+                            let mappedData = await this.mapEdgeValuesToParams(pfdto, currentNodeEdge, inputparam, processedKey, upId, collectionName, '', '', pfo)
                             childInsertArr = mappedData.childInsertArr
                             tempQryVal = mappedData.tempQryVal
                             textobj = mappedData.textobj
@@ -1536,8 +1869,15 @@ export class DynamicFlowService {
                                                 await redis.xack(streamName, consumerGroupName, msgid);
                                             }
 
-                                        } else {
+                                        } else if(currentFabric == 'DF-DFD') {
                                             throw streamData + '_' + poNode[j].nodeName
+                                           
+                                        }else{                                            
+                                            let responseData = await this.CommonService.responseData(200,streamData)
+                                            responseData = Object.assign(responseData,{targetStatus})
+                                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(streamName), collectionName, 'request');
+                                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(streamData), collectionName, 'response');
+                                            return responseData
                                         }
                                     }
                                 } else if (!useAsConsumer && childInsertArr?.length > 0) {
@@ -1554,8 +1894,15 @@ export class DynamicFlowService {
                                     streamArr = entryArr
                                 }
 
-                                if (streamArr?.length == 0)
+                                if (streamArr?.length == 0 && currentFabric == 'DF-DFD')
                                     throw new CustomException('No Data available to read from Processor', 404)
+                                else if(streamArr?.length == 0 && currentFabric == 'PF-PFD'){                                   
+                                    let responseData = await this.CommonService.responseData(200,streamArr)
+                                    responseData = Object.assign(responseData,{targetStatus})
+                                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(streamName), collectionName, 'request');
+                                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(streamArr), collectionName, 'response');
+                                    return responseData
+                                }
 
                             } else if (oprname == 'write') {
                                 if (!fieldName)
@@ -1574,9 +1921,6 @@ export class DynamicFlowService {
                         } else {
                             if (oprname == 'read') {                               
                                 if (!streamName) throw new CustomException('Stream RequestParams were empty', 404);
-                                
-                                if(poNode[j].nodeName == "Consume_Channel_Data")
-                                    streamName = 'listnerTest'
                                  
                                 if (ConsumerBasedOnJob) {
                                     let EntryIdFromHash = await this.redisService.hget(upId, streamName)
@@ -1623,8 +1967,14 @@ export class DynamicFlowService {
                                                 if (streamArr?.length > 0)
                                                     await this.redisService.ackMessage(streamName, consumerGroupName, msgid)
                                             }
-                                        } else {
-                                            throw result + '_' + poNode[j].nodeName
+                                        } else if(currentFabric == 'DF-DFD') {
+                                            throw result + '_' + poNode[j].nodeName                                           
+                                        }else{                                           
+                                            let responseData = await this.CommonService.responseData(200,result)
+                                            responseData = Object.assign(responseData,{targetStatus})
+                                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(streamName), collectionName, 'request');
+                                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(result), collectionName, 'response');
+                                            return responseData
                                         }
                                     }
                                 } else if (!useAsConsumer && childInsertArr?.length > 0) {
@@ -1641,13 +1991,17 @@ export class DynamicFlowService {
                                     streamArr = entryArr
                                 }
 
-                                if (streamArr?.length == 0)
+                                 if (streamArr?.length == 0 && currentFabric == 'DF-DFD')
                                     throw new CustomException(`No Data available to read in ${streamName}, ${poNode[j].nodeName}`, 404)
+                                else if(streamArr?.length == 0 && currentFabric == 'PF-PFD'){                                    
+                                    let responseData = await this.CommonService.responseData(200,streamArr)
+                                    responseData = Object.assign(responseData,{targetStatus})
+                                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(streamName), collectionName, 'request');
+                                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(streamArr), collectionName, 'response');
+                                    return responseData
+                                }
 
-                            } else if (oprname == 'write') {    
-                                if(poNode[j].nodeName == "Generate_and_place_to_Stream")
-                                    streamName = 'listnerTest'   
-                                                        
+                            } else if (oprname == 'write') { 
                                 if (!fieldName)
                                     fieldName = streamName
                                 let idarr = []
@@ -1778,26 +2132,20 @@ export class DynamicFlowService {
                                 }
                             }
                         }
-                        if (!logicCenter && currentFabric == 'DF-DFD') {
-                            let keys = await this.redisService.getKeys(dstkey + SessionToken.loginId + '_DS_Object', collectionName)
-                            if (keys.length > 0) {
-                                for (let a = 0; a < keys.length; a++) {
-                                    await this.redisService.deleteKey(keys[a], collectionName)
-                                }
-                            }
-                            this.redisService.sethash(streamArr, dstkey + SessionToken.loginId + '_DS_Object')
-                            return { data: 'logicCenter' }
-                        }
-                        if (inputparam && Object.keys(inputparam).length > 0) {                                                       
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                       
+                        this.ruleParams[nodeName] = Array.isArray(streamArr)?streamArr[0]:streamArr
+                        if (inputparam && Object.keys(inputparam).length > 0) {
+                                                                                  
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                         } else {
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], streamArr, processedKey + upId, currentFabric, SessionInfo);
+                            
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                         }
                         if (RCMresult) {
                             zenresult = RCMresult.rule;
                             customcoderesult = RCMresult.code;
                         }
-                        ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId)
+                        ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
                         if (ifoObj && Object.keys(ifoObj).length > 0) {
                             if (currentFabric == 'PF-PFD')
                                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
@@ -1824,6 +2172,7 @@ export class DynamicFlowService {
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(streamName), collectionName, 'request');
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(streamArr), collectionName, 'response');
                         }
+                        
                         this.logger.log('Stream Node execution completed');
                         if(currentFabric == 'PF-SFD' || currentFabric == 'PF-PFD' || currentFabric == 'PF-SCDL')                           
                             return { status: 200, targetStatus: targetStatus, data:inputparam};
@@ -1927,7 +2276,7 @@ export class DynamicFlowService {
                 // Handle edge mappings for dynamic data
                 if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
                     let currentNodeEdge = internalEdges[poNode[j].nodeId];
-                    let mappedData = await this.mapEdgeValuesToParams(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName, '', '', pfo);
+                    let mappedData = await this.mapEdgeValuesToParams(pfdto, currentNodeEdge, inputparam, processedKey, upId, collectionName, '', '', pfo);
                     childInsertArr = mappedData.childInsertArr;
                     tempQryVal = mappedData.tempQryVal;
                     textobj = mappedData.textobj;
@@ -1958,9 +2307,12 @@ export class DynamicFlowService {
 
                 if (storageType?.toLowerCase() == 'external') {
                     if (!dpdkey) throw new CustomException('DPD key not found', 404);
-                    let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
-                    let nodedata = Object.keys(extdata)[0];
-                    let configConnectors = extdata[nodedata].data['externalConnectors-KAFKA']?.items;
+                    // let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+                    let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];      
+                    let dpdData      
+                    dpdData = decrypt(extdata)
+                    //let nodedata = Object.keys(extdata)[0];
+                    let configConnectors = dpdData.data['externalConnectors-KAFKA']?.items;
                     if (configConnectors?.length > 0) {
                     for (let i = 0; i < configConnectors.length; i++) {
                         if (configConnectors[i].connectorName == connectorName) {
@@ -1973,7 +2325,8 @@ export class DynamicFlowService {
                     }
                     }
                 }else{
-                    kafkaBrokers = (process.env.KAFKA_BROKER).split(',');
+                    //kafkaBrokers = (process.env.KAFKA_BROKER).split(',');
+                     kafkaBrokers = (this.envData.getKafkaBroker()).split(',');
                 }
 
                 // Initialize Kafka client
@@ -2111,6 +2464,7 @@ export class DynamicFlowService {
                     throw new CustomException(`Kafka consume error: ${consumerError?.message || consumerError}`, 500);
                     }
                 }
+                this.ruleParams[nodeName] = Array.isArray(kafkaResultArr)?kafkaResultArr[0]:kafkaResultArr
                 if (inputparam) {
                     if (Object.keys(inputparam).length > 0) {
                     if (Array.isArray(inputparam) && inputparam.length > 0) {
@@ -2124,13 +2478,15 @@ export class DynamicFlowService {
                     } else {
                     inputparam = Object.assign(inputparam, { [poNode[j].nodeName]: kafkaResultArr });
                     }
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                 } else {
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], kafkaResultArr, processedKey + upId, currentFabric, SessionInfo);
+                       
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                 }
                 // Store results in Redis
                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify({ topic: topicName, operation: oprname }), collectionName, 'request');
                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(kafkaResultArr), collectionName, 'response');
+                
 
                 this.logger.log('Kafka Stream first node Completed');
                 // if (semarc)
@@ -2170,7 +2526,7 @@ export class DynamicFlowService {
                     let childInsertArr, textobj, tempQryVal = []
                     if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
                         let currentNodeEdge = internalEdges[poNode[j].nodeId];
-                        let mappedData = await this.mapEdgeValuesToParams(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName, '', '', pfo)
+                        let mappedData = await this.mapEdgeValuesToParams(pfdto, currentNodeEdge, inputparam, processedKey, upId, collectionName, '', '', pfo)
                         childInsertArr = mappedData.childInsertArr
                         tempQryVal = mappedData.tempQryVal
                         textobj = mappedData.textobj
@@ -2214,6 +2570,12 @@ export class DynamicFlowService {
 
                             if (!fileres || (Array.isArray(fileres) && fileres.length == 0) || (typeof fileres == 'object' && Object.keys(fileres).length == 0)) {
                                 throw new CustomException('Data not found', 404);
+                            }else if(currentFabric == 'PF-PFD' && (!fileres || (Array.isArray(fileres) && fileres.length == 0) || (typeof fileres == 'object' && Object.keys(fileres).length == 0))){                                
+                                let responseData = await this.CommonService.responseData(200,fileres)
+                                responseData = Object.assign(responseData,{targetStatus})
+                                await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(fileName), collectionName, 'request');
+                                await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(fileres), collectionName, 'response');
+                                return responseData
                             }
                             // let encCredentials = await this.CommonService.checkEncryption(poNode[j]);
                             // console.log('encCredentials', encCredentials);
@@ -2341,28 +2703,21 @@ export class DynamicFlowService {
                                 }
                             }
                         }
-
-                        if (!logicCenter && currentFabric == 'DF-DFD') {
-                            let keys = await this.redisService.getKeys(dstkey + SessionToken.loginId + '_DS_Object', collectionName)
-                            if (keys.length > 0) {
-                                for (let a = 0; a < keys.length; a++) {
-                                    await this.redisService.deleteKey(keys[a], collectionName)
-                                }
-                            }
-                            this.redisService.sethash(fileres, dstkey + SessionToken.loginId + '_DS_Object')
-                            return { data: 'logicCenter' }
-                        }
-                        if (inputparam) {                           
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                       
+                        this.ruleParams[nodeName] = Array.isArray(fileres)?fileres[0]:fileres
+                        if (inputparam) {    
+                                               
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                         } else {
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], fileres, processedKey + upId, currentFabric, SessionInfo);
+                           
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                         }
                         if (RCMresult) {
                             zenresult = RCMresult.rule;
                             customcoderesult = RCMresult.code;
                         }
 
-                        ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId)
+                        ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
                         if (ifoObj && Object.keys(ifoObj).length > 0) {
                             if (currentFabric == 'PF-PFD')
                                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
@@ -2388,6 +2743,7 @@ export class DynamicFlowService {
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(fullPath), collectionName, 'request');
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(fileres), collectionName, 'response');
                         }
+                        
                         this.logger.log('File Node execution completed');
                         if(currentFabric == 'PF-PFD'|| currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL')
                             return { status: 200, targetStatus: targetStatus, data: inputparam };
@@ -2423,7 +2779,7 @@ export class DynamicFlowService {
                             throw new CustomException('Node version not found', 404);
                         if (!PfdKey) throw new CustomException('PFD key not found', 404);
 
-                        ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId)
+                        ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
                         if (ifoObj && Object.keys(ifoObj).length > 0)
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
 
@@ -2448,7 +2804,7 @@ export class DynamicFlowService {
                             let currentNodeEdge = internalEdges[poNode[j].nodeId];
                             
                             
-                            let mappedData = await this.mapEdgeValuesToParams(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName,  parameter, '', pfo)
+                            let mappedData = await this.mapEdgeValuesToParams(pfdto, currentNodeEdge, inputparam, processedKey, upId, collectionName,  parameter, '', pfo)
                             // console.log('mappedData',mappedData);
                             
                             mapObj = mappedData.childInsertArr
@@ -2457,7 +2813,7 @@ export class DynamicFlowService {
 
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
                         let subPoResult, pfExecutedSet, pfExecutedEvent;
-                        let pfdto = new pfDto();
+                        pfdto = new pfDto();
                         pfdto.key = PfdKey + ':';
                         pfdto.upId = '';
                         if (tempQryVal && Object.keys(tempQryVal).length > 0)
@@ -2553,12 +2909,13 @@ export class DynamicFlowService {
                             const requestConfig: AxiosRequestConfig = {
                                 headers: {
                                     Authorization: `Bearer ${token}`,
-                                },
+                                },timeout: 300000 
                             };
 
-                            if (!process.env.BE_URL) throw new CustomException('Server Url not found', 404);
-                            subPoResult = await this.executeApiCall('post', process.env.BE_URL + '/te/eventEmitter', requestConfig, pfdto)
-                            //subPoResult = await this.CommonService.postCall(process.env.BE_URL + '/te/eventEmitter', pfdto, requestConfig,);
+                            //if (!process.env.BE_URL) throw new CustomException('Server Url not found', 404);
+                            if (!this.envData.getBeUrl()) throw new CustomException('Server Url not found', 404);
+                            //subPoResult = await this.executeApiCall('post', process.env.BE_URL + '/te/eventEmitter', requestConfig, pfdto)
+                            subPoResult = await this.executeApiCall('post', this.envData.getBeUrl() + '/te/eventEmitter', requestConfig, pfdto)
                         }
 
                         if (subPoResult?.statusCode == 201 && subPoResult?.status == 'Success') {
@@ -2586,8 +2943,10 @@ export class DynamicFlowService {
                                     inputparam = await this.assignToInputParam(inputparam, nodeName, pfExecutedSet)
                                     pfExecutedSet = Object.assign(inputparam, pfExecutedSet,);
                                 }
+                                 this.ruleParams[nodeName] = Array.isArray(pfExecutedSet)?pfExecutedSet[0]:pfExecutedSet
                                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(pfExecutedSet), collectionName, 'request',);
                             } else {
+                                 this.ruleParams[nodeName] = Array.isArray(inputparam)?inputparam[0]:inputparam
                                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(inputparam), collectionName, 'request',);
                             }
 
@@ -2596,6 +2955,7 @@ export class DynamicFlowService {
                                 await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, pfdto, subPoResult);
                                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(pfExecutedSet), collectionName, 'response',);
                             }
+                            
                             this.logger.log('Sub Flow Node Completed');
                             return { status: 200, targetStatus: targetStatus, data: inputparam };
                         } else {
@@ -2616,7 +2976,8 @@ export class DynamicFlowService {
                     if (!nodeVersion) {
                         throw new CustomException('nodeVersion not found', 404);
                     }
-                    let connectorType, storageType, dpdkey, conncectorName, responseNodeName, tableName, fileType, fileName, folderPath, streamName, fieldName;
+                    let extdata,nodedata,connectorType, storageType, dpdkey, conncectorName, responseNodeName, tableName, fileType, fileName, folderPath, streamName, fieldName,dpdKeyValue,output_type;
+                    
                     if (nodeVersion.toLowerCase() == 'v1') {
                         connectorType = customConfig?.data?.connector?.value;
                         storageType = customConfig?.data?.connector?._selection?._selection?.value;
@@ -2630,11 +2991,17 @@ export class DynamicFlowService {
                         streamName = customConfig.data?.pro?.stream?.write?.streamName;
                         fieldName = customConfig.data?.pro?.stream?.write?.field;
                     }
-                    if (!dpdkey) throw new CustomException('DPD key not found', 404);
-                    let extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
-                    if (!extdata) throw new CustomException('DPD value not found', 404);
-                    let nodedata = Object.keys(extdata)[0];
-                    let dpdKeyValue = extdata[nodedata].data;
+                    else if (nodeVersion.toLowerCase() == 'v2') {
+                        responseNodeName = customConfig?.outputDataNodes;
+                        output_type = customConfig.data?.pro?.output_type?.value
+                    }
+                   // if (!dpdkey) throw new CustomException('DPD key not found', 404);
+                    if(dpdkey){
+                        extdata = JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName));
+                        if (!extdata) throw new CustomException('DPD value not found', 404);
+                        nodedata = Object.keys(extdata)[0];
+                        dpdKeyValue = extdata[nodedata].data;
+                    }                    
                     if (responseNodeName?.length == 0) throw new CustomException('outputDataNodes not found', 404);
                     for (let p = 0; p < pfjson.length; p++) {
                         if (responseNodeName.includes(pfjson[p].nodeId)) {
@@ -2647,12 +3014,14 @@ export class DynamicFlowService {
                     if (inputData) {
                         let client, db, redis
                         let logReq;
-                        if (inputparam) {
-                            inputparam = await this.assignToInputParam(inputparam, nodeName, inputData)
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
-                        } else {
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputData, processedKey + upId, currentFabric, SessionInfo);
-                        }
+                        // this.ruleParams[nodeName] = Array.isArray(subPoResult) ? {...this.ruleParams , ...subPoResult[0]} : {...this.ruleParams , ...subPoResult}
+                        // if (inputparam) {
+                        //     inputparam = await this.assignToInputParam(inputparam, nodeName, inputData)
+                        //     RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                        // } else {
+                            
+                        //     RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                        // }
                         if (RCMresult) {
                             zenresult = RCMresult.rule;
                             customcoderesult = RCMresult.code;
@@ -2664,8 +3033,15 @@ export class DynamicFlowService {
                                 if (inputData)
                                     inputData = await this.codeORifoAndInputparamAssign(codeObj, inputData)
                             }
-                        }
+                        }  
 
+                        if(output_type && output_type == 'array'){
+                            inputData = [inputData]
+                        }else if(output_type && output_type == 'object'){
+                            inputData = inputData[0]
+                        }   
+
+                        if(dpdKeyValue){
                         if (connectorType == 'database') {
                             let dbconfig;
                             let dbFlg;
@@ -2780,12 +3156,12 @@ export class DynamicFlowService {
                         } else if (connectorType == 'file') {
                             let seaWeedConfig, OPFileRes, conncectorname;
                             if (storageType == 'internal') {
-                                if (!process.env.SEAWEED_OUTPUT_HOST || !process.env.SEAWEED_USERNAME || !process.env.SEAWEED_PASSWORD)
+                                if (!this.envData.getSeaweedOutputHost() || !this.envData.getSeaweedUsername() || !this.envData.getSeaweedPassword())
                                     throw 'Invalid File Credentials';
                                 seaWeedConfig = {
-                                    url: process.env.SEAWEED_OUTPUT_HOST,
-                                    username: process.env.SEAWEED_USERNAME,
-                                    password: process.env.SEAWEED_PASSWORD,
+                                    url: this.envData.getSeaweedOutputHost(),//process.env.SEAWEED_OUTPUT_HOST,
+                                    username: this.envData.getSeaweedUsername(),//process.env.SEAWEED_USERNAME,
+                                    password: this.envData.getSeaweedPassword(),//process.env.SEAWEED_PASSWORD,
                                 };
                             } else if (storageType == 'external') {
                                 let nodedata = Object.keys(extdata)[0];
@@ -2849,11 +3225,15 @@ export class DynamicFlowService {
                                 throw new CustomException('streamName or fieldName not found', 404);
                             await redis.call('XADD', streamName, '*', fieldName, JSON.stringify(inputData));
                         }
+                    }
                         if (upId) {
+                           if(!logReq)
+                            logReq = connectedNodeName                            
                             await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: streamName, response: inputData } }));
                             await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, logReq);
-                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(logReq), collectionName, 'request');
-                        }
+                           await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(logReq), collectionName, 'request');
+                        }                        
+
                     } else {
                         throw new CustomException('Data not found', 404);
                     }
@@ -2864,11 +3244,13 @@ export class DynamicFlowService {
                 }
             }
 
+
             //API input Node
             if (nodeType == 'api_inputnode' && poNode[j].nodeId == nodeId) {
                 try {
                     this.logger.log('.....api_inputnode Started')
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo)
+                    this.ruleParams[nodeName] = Array.isArray(inputparam)?inputparam[0]:inputparam
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
@@ -2886,6 +3268,7 @@ export class DynamicFlowService {
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(event), collectionName, 'event')
                     await this.redisService.setStreamData(srcQueue, collectionName + 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: inputparam } }))
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, { "PID": upId, "TID": nodeId, "EVENT": targetStatus })
+                    //this.ruleParams[nodeName] = Array.isArray(inputparam) ? {...this.ruleParams , ...inputparam[0]} : {...this.ruleParams , ...inputparam}
                     inputparam = { [nodeName]: inputparam }
                     this.logger.log('api_inputnode Completed')
                     return { status: 200, targetStatus: targetStatus, data: inputparam }
@@ -2910,14 +3293,14 @@ export class DynamicFlowService {
                     } else if (!inputparam || (Array.isArray(inputparam) && inputparam.length == 0) || (inputparam && Object.keys(inputparam).length == 0)) {
                         throw new CustomException('Data not found', 404);
                     }
-                    if (customConfig) {
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo)
+                    if (customConfig) {                        
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
                         if (RCMresult) {
                             zenresult = RCMresult.rule
                             customcoderesult = RCMresult.code
                         }
 
-                        ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId)
+                        ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
                         if (ifoObj && Object.keys(ifoObj).length > 0) {
                             if (currentFabric == 'PF-PFD')
                                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
@@ -2949,7 +3332,7 @@ export class DynamicFlowService {
                                 sourcekey.push(edgesarr[j].source);
                                 let sourceNodeId = edgesarr[j].source;
                                 for (let c = 0; c < poNode.length; c++) {
-                                    if (sourceNodeId != poNode[1].nodeId || currentFabric == 'PF-SFD') {
+                                    if (sourceNodeId != poNode[1].nodeId || currentFabric == 'PF-SFD' || currentFabric == 'PF-PFD') {
                                         if (sourceNodeId == poNode[c].nodeId) {
                                             srcNodename = poNode[c].nodeName;
                                         }
@@ -2958,7 +3341,7 @@ export class DynamicFlowService {
 
                                 let srcHandle = edgesarr[j].sourceHandle.split('|');
                                 if (srcHandle) {
-                                    if (currentFabric != 'PF-SFD' && srcHandle.includes('ifo')) {
+                                    if ((currentFabric != 'PF-SFD' || currentFabric != 'PF-PFD') && srcHandle.includes('ifo')) {
                                         srcNodename = null;
                                     }
                                     dstVariable = srcHandle.includes('HeaderParams') ? srcHandle[1] : srcHandle[srcHandle.length - 1];
@@ -3213,6 +3596,7 @@ export class DynamicFlowService {
                                         }
                                     }
                                 }
+                                this.ruleParams[nodeName] = Array.isArray(datasetSchemaRes)?datasetSchemaRes[0]:datasetSchemaRes
                                 return { status: 200, targetStatus: targetStatus, data: datasetSchemaRes };
                             }
                             else
@@ -3250,20 +3634,22 @@ export class DynamicFlowService {
                             const requestConfig: AxiosRequestConfig = {
                             headers: {
                                 Authorization: `Bearer ${token}`
-                            }
+                            },timeout: 300000 
                             };
-                            if (!(process.env.BE_URL)) throw new CustomException('Server Url not found', 404)              
-                        DfExecutedResult = await this.executeApiCall('post',process.env.BE_URL + '/te/eventEmitter',requestConfig,{ "key": DfdKey })
+                            if (!(this.envData.getBeUrl())) throw new CustomException('Server Url not found', 404)              
+                        DfExecutedResult = await this.executeApiCall('post',this.envData.getBeUrl() + '/te/eventEmitter',requestConfig,{ "key": DfdKey })
                             if (DfExecutedResult?.status == 'Success' && DfExecutedResult?.statusCode == 201) {
                             DfExecutedDataSet = DfExecutedResult?.result?.dataset?.data
                             }
                         } else if (executionMode == 'refer') {
                             let DstKey = DfdKey.replace('AF', 'AFP').replace('DF-DFD', 'DF-DST')
-                            let dsObject = JSON.parse(await this.redisService.getJsonData(DstKey + SessionToken.loginId + '_DS_Object', collectionName))
-                            DfExecutedDataSet = dsObject?.data
+                            // dsObject = JSON.parse(await this.redisService.getJsonData(DstKey + SessionToken.loginId + '_DS_Object', collectionName))
+                            let dsObject = await this.redisService.getAllRecordshash(DstKey + SessionToken.loginId+'_DS_Object')
+                            DfExecutedDataSet = dsObject
                             if (!DfExecutedDataSet || DfExecutedDataSet.length == 0) throw new CustomException(`Dataset not found ${DstKey + 'DS_Object'}`, 404)
                         }
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], DfExecutedDataSet, processedKey, currentFabric, SessionInfo)
+                        
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey, currentFabric, SessionInfo)
                         if (RCMresult) {
                             zenresult = RCMresult.rule
                             customcoderesult = RCMresult.code
@@ -3511,6 +3897,7 @@ export class DynamicFlowService {
                             }
 
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(rootpatharr ? [finalRes] : finalRes), collectionName, 'response')
+                            this.ruleParams[nodeName] = Array.isArray(finalRes)?finalRes[0]:finalRes
                             this.logger.log('DataSet Node Completed');
                             if (currentFabric == 'DF-DFD')
                             return { status: 200, targetStatus: targetStatus, data: rootpatharr ? [finalRes] : finalRes };
@@ -3552,7 +3939,8 @@ export class DynamicFlowService {
                     let queryarr = [], headersarr = [], patharr = []
 
                     let edgesarr
-                    let RCMresult: any = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo)
+                    
+                    let RCMresult: any = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
                     let customcoderesult, zenresult
                     if (RCMresult) {
                         zenresult = RCMresult.rule
@@ -3691,7 +4079,8 @@ export class DynamicFlowService {
                         edgesarr = internalEdges[poNode[j].nodeId];
                     }
                     else if (methodName == 'post' || methodName == 'patch' || methodName == 'put' || methodName == 'delete') {
-                        return { status: returnStscode, targetStatus: targetStatus, data: { description: returnDescription || [] } }
+                        // return { status: returnStscode, targetStatus: targetStatus, data: { description: returnDescription || [] } }
+                        return { status: 200, targetStatus: targetStatus, data: {data:{ status: returnStscode,description: returnDescription || [] }} }
                     }
                     else {
                         throw new CustomException(`Edges not found in ${poNode[j].nodeId}`, 404)
@@ -3770,6 +4159,7 @@ export class DynamicFlowService {
                         let targetHandle = targetsplit.includes('HeaderParams') ? targetsplit[2] : targetsplit[targetsplit.length - 1]
                         if (targetHandle.includes('.')) {
                             let targetVaribale = targetHandle.split('.')
+                             this.statickeyword.push('items')
                             let staticRemove: any = targetVaribale.filter(item => !this.statickeyword.includes(item));
                             rootarr.push(staticRemove.join('.'))
                             staticRemove = staticRemove.map((item) => {
@@ -4008,6 +4398,7 @@ export class DynamicFlowService {
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(inputparam), collectionName, 'request')
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(finalobj), collectionName, 'response')
                     }
+                    this.ruleParams[nodeName] = Array.isArray(finalobj)?finalobj[0]:finalobj
                     this.logger.log(`Api output node Completed`)
                     return { status: returnStscode, targetStatus: targetStatus, data: finalobj || { description: returnDescription } }
                 } catch (error) {
@@ -4165,7 +4556,7 @@ export class DynamicFlowService {
                             const requestConfig: AxiosRequestConfig = {
                                 headers: {
                                     Authorization: `Bearer ${token}`
-                                }
+                                },timeout: 300000 
                             }
                             apiResult = await this.executeApiCall(methodName, apiurl, requestConfig)
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(apiResult), collectionName, 'request');
@@ -4179,6 +4570,7 @@ export class DynamicFlowService {
                     }
                     inputparam = await this.assignToInputParam(inputparam, nodeName, mapObj)
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(mapObj), collectionName, 'response');
+                    this.ruleParams[nodeName] = Array.isArray(mapObj)?mapObj[0]:mapObj
                     RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
@@ -4192,6 +4584,7 @@ export class DynamicFlowService {
                     }
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', token, targetQueue, currentFabric, sourceStatus, inputparam, inputparam);
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: inputparam, response: inputparam } }));
+                    
 
                     this.logger.log('jsonparser node completed');
                     if (currentFabric == 'PF-PFD')
@@ -4281,7 +4674,8 @@ export class DynamicFlowService {
                     const xmlData = json2xml(jsonString, { compact: true, spaces: 4 });
                     inputparam = await this.assignToInputParam(inputparam, nodeName, { json2xmldata: xmlData })
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify({ json2xmldata: xmlData }), collectionName, 'response')
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                    this.ruleParams[nodeName] = { json2xmldata: xmlData }
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -4293,6 +4687,7 @@ export class DynamicFlowService {
                     }
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam)
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: { json2xmldata: xmlData } } }))
+                    
                     this.logger.log('json2xmlnode node completed')
                     return { status: 200, targetStatus: targetStatus, data: inputparam }
                 } catch (error) {
@@ -4377,7 +4772,8 @@ export class DynamicFlowService {
                     let jsonData = await parseStringPromise(parsedXml);
                     inputparam = await this.assignToInputParam(inputparam, nodeName, { xml2jsondata: jsonData })
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify({ xml2jsondata: jsonData }), collectionName, 'response')
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                    this.ruleParams[nodeName] = { xml2jsondata: jsonData }
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -4389,6 +4785,7 @@ export class DynamicFlowService {
                     }
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam)
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: { xml2jsondata: jsonData } } }))
+                    
 
                     this.logger.log('xml2jsonnode node completed')
                     if (currentFabric == 'PF-PFD')
@@ -4592,34 +4989,68 @@ export class DynamicFlowService {
                                                 sourceFilteredVal = sourceFilteredVal.trim();
                                                 _.set(mapObj, targetVal, _.get(inputCollection, sourceFilteredVal));
                                             }
-                                            if (b > 0) {
-                                                let obj = {};
-                                                if (pfo?.length > 0) {
-                                                    for (let p = 0; p < pfo.length; p++) {
-                                                        if (pfo[p].nodeId == connectedid) {
-                                                            let schema = pfo[p]?.schema?.['requestBody']['content']['application/json']['schema'];
-                                                            var res = await this.generateMockData(schema);
-                                                            let keys = Object.keys(res);
-                                                            for (let item of keys) {
-                                                                if (Array.isArray(inputparam) && inputparam?.length > 0) {
-                                                                    let tempobj
-                                                                    for (let r = 0; r < inputparam.length; r++) {
-                                                                        tempobj = {}
-                                                                        _.set(tempobj, item, _.get(inputparam[r], item));
-                                                                        obj = Object.assign(obj, tempobj);
-                                                                    }
-                                                                } else if (typeof inputparam == 'object') {
-                                                                    _.set(obj, item, _.get(inputparam, item));
+                                        if (b > 0) {
+                                        let obj = {};
+                                        let type,body,schema 
+                                        if (pfo?.length > 0) {
+                                            for (let p = 0; p < pfo.length; p++) {
+                                                if (pfo[p].nodeId == connectedid) {
+                                                     if(srcVal.includes('responses')){
+                                                         body = 'responses'
+                                                         let code = Object.keys(pfo[p]?.schema?.[body])[0]
+                                                        if (pfo[p]?.schema?.[body]?.[code]['content']?.['application/json']?.['schema']) {
+                                                        type = 'application/json'
+                                                    } else if (pfo[p]?.schema?.[body]?.[code]['content']?.['application/xml']?.['schema']) {
+                                                        type = 'application/xml'
+                                                    }
+                                                    else if (pfo[p]?.schema?.[body]?.[code]['content']?.['text/plain']?.['schema']) {
+                                                        type = 'text/plain'
+                                                    } else if (pfo[p]?.schema?.[body]?.[code]['content']?.['*/*']?.['schema']) {
+                                                        type = '*/*'
+                                                    }
+                                                    schema = pfo[p]?.schema?.[body][code]['content'][type]['schema'];
+                                                    inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.response', collectionName))
+                                                     }else{
+                                                         body = 'requestBody'
+                                                        if (pfo[p]?.schema?.[body]?.['content']?.['application/json']?.['schema']) {
+                                                        type = 'application/json'
+                                                    } else if (pfo[p]?.schema?.[body]?.['content']?.['application/xml']?.['schema']) {
+                                                        type = 'application/xml'
+                                                    }
+                                                    else if (pfo[p]?.schema?.[body]?.['content']?.['text/plain']?.['schema']) {
+                                                        type = 'text/plain'
+                                                    } else if (pfo[p]?.schema?.[body]?.['content']?.['*/*']?.['schema']) {
+                                                        type = '*/*'
+                                                    }
+                                                    schema = pfo[p]?.schema?.[body]['content'][type]['schema'];
+                                                    inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.request', collectionName))
+                                                     } 
+                                                    var res = await this.generateMockData(schema);
+                                                    let keys = Object.keys(res);
+                                                    for (let item of keys) {
+                                                        if (inputparam) {
+                                                            if (Array.isArray(inputparam) && inputparam?.length > 0) {
+                                                                let tempobj
+                                                                for (let r = 0; r < inputparam.length; r++) {
+                                                                    tempobj = {}
+                                                                    _.set(tempobj, item, _.get(inputparam[r], item));
+                                                                    obj = Object.assign(obj, tempobj);
                                                                 }
+                                                            } else if (typeof inputparam == 'object') {
+                                                                _.set(obj, item, _.get(inputparam, item));
+                                                            } else if (typeof inputparam == 'string') {
+                                                                obj = inputparam
                                                             }
                                                         }
                                                     }
-                                                    schemaRes[targetFilteredVal] = obj;
-                                                }
-                                                if (schemaRes && Object.keys(schemaRes).length > 0) {
-                                                    mapObj = Object.assign(mapObj, schemaRes);
                                                 }
                                             }
+                                            schemaRes[targetFilteredVal] = obj;
+                                        }
+                                        if (schemaRes && Object.keys(schemaRes).length > 0) {
+                                            mapObj = Object.assign(mapObj, schemaRes);
+                                        }
+                                    }
                                         }
                                     }
                                 }
@@ -4632,7 +5063,8 @@ export class DynamicFlowService {
                     if (childInsertArr?.length == 0) throw new CustomException(`Mapping was required in ${poNode[j].nodeName}`, 404)
                     inputparam = await this.assignToInputParam(inputparam, nodeName, childInsertArr)
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(childInsertArr), collectionName, 'response')
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                    this.ruleParams[nodeName] = Array.isArray(childInsertArr)?childInsertArr[0]:childInsertArr
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -4644,6 +5076,7 @@ export class DynamicFlowService {
                     }
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, childInsertArr)
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: childInsertArr } }))
+                    
 
                     this.logger.log('xlparsernode node completed')
                     return { status: 200, targetStatus: targetStatus, data: inputparam }
@@ -4670,7 +5103,158 @@ export class DynamicFlowService {
                     let childInsertArr = []
                     if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
                         let currentNodeEdge = internalEdges[poNode[j].nodeId];
-                        let mappedData = await this.mapEdgeValuesToParams(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName, '', '', pfo)
+                        let mappedData = await this.mapEdgeValuesToParams(pfdto, currentNodeEdge, inputparam, processedKey, upId, collectionName, '', '', pfo)
+                        childInsertArr = mappedData.childInsertArr
+                    }
+                    if (childInsertArr?.length > 0) {
+                        for (let i = 0; i < childInsertArr.length; i++) {
+                            mapobj = childInsertArr[i]
+                            if (params?.length > 0) {
+                                for (let a = 0; a < params.length; a++) {
+                                    let key = params[a]?.key?.value
+                                    let value = params[a]?.value?.value
+                                    if (value?.includes("session.")) {
+                                        value = sobj[value]
+                                    }
+                                    if (key && value)
+                                        mapobj[key] = value
+                                }
+                            }
+                            if (mapobj && Object.keys(mapobj).length > 0) {
+                                Object.keys(mapobj).forEach(key => {
+                                    const regex = new RegExp(`\\$\\$${key}`, 'g');
+                                    const value = typeof mapobj[key] === 'string' ? `'${mapobj[key]}'` : mapobj[key];
+                                    executecommand = executecommand.replace(regex, value);
+                                });
+                            } else {
+                                throw new CustomException('params was required in ' + nodeName, 400)
+                            }
+                        }
+                    } else {
+                        if (params?.length > 0) {
+                            for (let a = 0; a < params.length; a++) {
+                                let key = params[a]?.key?.value
+                                let value = params[a]?.value?.value
+                                if (value?.includes("session.")) {
+                                    value = sobj[value]
+                                }
+                                if (key && value)
+                                    mapobj[key] = value
+                            }
+                        }
+                        if (mapobj && Object.keys(mapobj).length > 0) {
+                            Object.keys(mapobj).forEach(key => {
+                                const regex = new RegExp(`\\$\\$${key}`, 'g');
+                                const value = typeof mapobj[key] === 'string' ? `'${mapobj[key]}'` : mapobj[key];
+                                executecommand = executecommand.replace(regex, value);
+                            });
+                        }
+                    }
+                    if (filterData && Array.isArray(filterData) && filterData.length > 0) {
+                        filterData.forEach((filterObj) => {
+                            if (filterObj.nodeId == poNode[j].nodeId) {
+                                const entries = Object.entries(filterObj).filter(([key]) => key !== 'nodeId',);
+                                entries.forEach(([key, value]) => {
+                                    let removedVal;
+                                    if (key.includes('.')) {
+                                        let s_item = key.split('.');
+                                        removedVal = s_item.filter((item) => !this.statickeyword.includes(item)).join('.');
+                                        if (removedVal.includes('.') && removedVal.startsWith('items.')) {
+                                            removedVal = removedVal.replace('items.', '');
+                                        }
+                                    } else {
+                                        removedVal = key
+                                    }
+                                    const regex = new RegExp(`\\$\\$\\$${removedVal}`, 'g');
+                                    if (typeof value == 'number')
+                                        executecommand = executecommand.replace(regex, `${value}`);
+                                    else if (typeof value == 'string')
+                                        executecommand = executecommand.replace(regex, `'${value}'`);
+                                });
+                            }
+                        });
+                    }
+                    if (executecommand.includes('$$$') || executecommand.includes('$$'))
+                        executecommand = executecommand.replace(/\${2,3}[a-zA-Z0-9_]+/g, 'NULL');
+                    await client.connect();
+                     client.on('notice', (msg) => {
+                    console.log('PG NOTICE:', msg.message);
+                    });
+                    await client.query(procedurequery)
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(executecommand), collectionName, 'request')
+                    const result = await client.query(`${executecommand}`);
+                    await client.end();
+                    if ((result.rows)?.length > 0) {
+                        status = result.rows
+                    } else if (result && currentFabric == 'PF-PFD') {
+                        status = 'Success'
+                    } else {
+                        status = result.rows
+                    }
+                    
+                    inputparam = await this.assignToInputParam(inputparam, nodeName, status)
+                       
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
+                    if (RCMresult) {
+                        zenresult = RCMresult.rule
+                        customcoderesult = RCMresult.code
+                    }
+
+                    ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
+                    if (ifoObj && Object.keys(ifoObj).length > 0) {
+                        if (currentFabric == 'PF-PFD')
+                            await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
+                        status = await this.codeORifoAndInputparamAssign(ifoObj, status)
+                    }
+
+                    if (customcoderesult && customcoderesult != undefined && customcoderesult != null) {
+                        codeObj = await this.codeAssign(customcoderesult)
+                        if (codeObj) {
+                            if (currentFabric == 'PF-PFD')
+                                await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(codeObj), collectionName, 'code',);
+                            status = await this.codeORifoAndInputparamAssign(codeObj, status)
+                        }
+                    }
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(status), collectionName, 'response')
+                    await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam)
+                    await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: status } }))
+                    this.ruleParams[nodeName] = Array.isArray(status)?status[0]:status
+                    this.logger.log('procedureExecution node completed')
+                    if (currentFabric == 'PF-PFD')
+                        return { status: 200, targetStatus: targetStatus, data: inputparam }
+                    else
+                        return { status: 200, targetStatus: targetStatus, data: status }
+                } catch (error) {
+                    // console.log("error",error);
+                    await this.CommonService.checkRollBack(ndp, collectionName, 'rollback', {
+                        key: processedKey + upId,
+                        nodeid: rollbackConfig.nodeId,
+                        nodename: rollbackConfig.nodeName,
+                        savepoint: rollbackConfig.savePoint,
+                        data: status
+                    }
+                    );
+                    await this.exceptionhandler(failureQueue, suspiciousQueue, errorQueue, error, upId, nodeId, failureTargetStatus, inputparam)
+                }
+            }
+
+            //changeStatus node
+            if (nodeType == 'change_status_node' && poNode[j].nodeId == nodeId) {
+                let rollbackConfig, status
+                try {
+                    this.logger.log(`${poNode[j].nodeName} Change Status node Started`)
+                    let mapobj = {}, params, customConfig, procedurequery, client, executecommand
+                    customConfig = ndp[poNode[j].nodeId]
+                    rollbackConfig = ndp[poNode[j].nodeId]
+                    let prcConf = await this.CommonService.procedureConfig(customConfig, collectionName)
+                    client = prcConf.client
+                    procedurequery = prcConf.procedurequery
+                    params = prcConf.params
+                    executecommand = prcConf.executecommand
+                    let childInsertArr = []
+                    if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
+                        let currentNodeEdge = internalEdges[poNode[j].nodeId];
+                        let mappedData = await this.mapEdgeValuesToParams(pfdto, currentNodeEdge, inputparam, processedKey, upId, collectionName, '', '', pfo)
                         childInsertArr = mappedData.childInsertArr
                     }
                     if (childInsertArr?.length > 0) {
@@ -4745,6 +5329,8 @@ export class DynamicFlowService {
                         executecommand = executecommand.replace(/\${2,3}[a-zA-Z0-9_]+/g, 'NULL');
                     await client.connect();
                     await client.query(procedurequery)
+                    console.log("executecommand",executecommand);
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(executecommand), collectionName, 'request')
                     const result = await client.query(`${executecommand}`);
                     await client.end();
                     if ((result.rows)?.length > 0) {
@@ -4754,24 +5340,16 @@ export class DynamicFlowService {
                     } else {
                         status = result.rows
                     }
-                    if (!logicCenter && currentFabric == 'DF-DFD') {
-                        let keys = await this.redisService.getKeys(dstkey + SessionToken.loginId + '_DS_Object', collectionName)
-                        if (keys.length > 0) {
-                            for (let a = 0; a < keys.length; a++) {
-                                await this.redisService.deleteKey(keys[a], collectionName)
-                            }
-                        }
-                        this.redisService.sethash(status, dstkey + SessionToken.loginId + '_DS_Object')
-                        return { data: 'logicCenter' }
-                    }
+                    
                     inputparam = await this.assignToInputParam(inputparam, nodeName, status)
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo)
+                    
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
                     }
 
-                    ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId)
+                    ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
                     if (ifoObj && Object.keys(ifoObj).length > 0) {
                         if (currentFabric == 'PF-PFD')
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
@@ -4790,7 +5368,7 @@ export class DynamicFlowService {
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam)
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: status } }))
 
-                    this.logger.log('procedureExecution node completed')
+                    this.logger.log('Change Status node completed')
                     if (currentFabric == 'PF-PFD')
                         return { status: 200, targetStatus: targetStatus, data: inputparam }
                     else
@@ -4825,7 +5403,7 @@ export class DynamicFlowService {
                     let childInsertArr = []
                     if (internalEdges && internalEdges.hasOwnProperty(poNode[j].nodeId)) {
                         let currentNodeEdge = internalEdges[poNode[j].nodeId];
-                        let mappedData = await this.mapEdgeValuesToParams(poNode, currentNodeEdge, inputparam, processedKey, upId, collectionName,  '', '', pfo)
+                        let mappedData = await this.mapEdgeValuesToParams(pfdto, currentNodeEdge, inputparam, processedKey, upId, collectionName,  '', '', pfo)
                         childInsertArr = mappedData.childInsertArr
                     }
                     if (childInsertArr?.length > 0) {
@@ -4935,24 +5513,15 @@ export class DynamicFlowService {
                     }
                     // console.log("status", status);
 
-                    if (!logicCenter && currentFabric == 'DF-DFD') {
-                        let keys = await this.redisService.getKeys(dstkey + SessionToken.loginId + '_DS_Object', collectionName)
-                        if (keys.length > 0) {
-                            for (let a = 0; a < keys.length; a++) {
-                                await this.redisService.deleteKey(keys[a], collectionName)
-                            }
-                        }
-                        this.redisService.sethash(status, dstkey + SessionToken.loginId + '_DS_Object')
-                        return { data: 'logicCenter' }
-                    }
+                    
                     // inputparam = await this.assignToInputParam(inputparam,nodeName,status)
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo)
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
                     }
 
-                    ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId)
+                    ifoObj = await this.ifoAssign(poJson?.internalMappingNodes, poNode[j].nodeId,sobj,zenresult,processedKey + upId,inputparam,pfdto)
                     if (ifoObj && Object.keys(ifoObj).length > 0) {
                         if (currentFabric == 'PF-PFD')
                             await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(ifoObj), collectionName, 'ifo',);
@@ -4972,6 +5541,7 @@ export class DynamicFlowService {
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(status), collectionName, 'response')
                     await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, inputparam)
                     await this.redisService.setStreamData(srcQueue, 'TASK - ' + upId, JSON.stringify({ "PID": upId, "TID": nodeId, "EVENT": targetStatus, data: { request: inputparam, response: status } }))
+                    this.ruleParams[nodeName] = Array.isArray(status)?status[0]:status
                     this.logger.log('functionnode node completed')
                     if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD')
                         return { status: 200, targetStatus: targetStatus, data: inputparam }
@@ -4995,56 +5565,21 @@ export class DynamicFlowService {
         }
     }
 
-    async sessionDecode(token,upId){
-    try {
-        let sobj = {},SessionInfo = {}
-        let SessionToken = await this.jwtService.decode(token, { json: true });
-        sobj['session.orgGrpCode'] = SessionToken.orgGrpCode || process.env?.ORGGRPCODE
-        sobj['session.orgCode'] = SessionToken.orgCode || process.env?.ORGCODE
-        sobj['session.roleGrpCode'] = SessionToken.roleGrpCode || process.env?.ROLEGRPCODE
-        sobj['session.roleCode'] = SessionToken.roleCode || process.env?.ROLECODE
-        sobj['session.psGrpCode'] = SessionToken.psGrpCode || process.env?.PSGRPCODE
-        sobj['session.psCode'] = SessionToken.psCode || process.env?.PSCODE
-        sobj['session.selectedAccessProfile'] = SessionToken.selectedAccessProfile || process.env?.ACCESSPROFILE
-        sobj['session.loginId'] = SessionToken.loginId || process.env?.LOGINID
-        sobj['session.orgGrpName'] = SessionToken?.orgGrpName || process.env?.ORGGRPNAME
-        sobj['session.orgName'] = SessionToken?.orgName || process.env?.ORGNAME
-        sobj['session.roleGrpName'] = SessionToken?.roleGrpName || process.env?.ROLEGRPNAME
-        sobj['session.roleName'] = SessionToken?.roleName || process.env?.ROLENAME
-        sobj['session.psGrpName'] = SessionToken?.psGrpName || process.env?.PSGRPNAME
-        sobj['session.psName'] = SessionToken?.psName || process.env?.PSNAME
-        sobj['session.trs_process_id'] = upId
-        sobj['session.userCode'] = SessionToken?.userCode
-        sobj['session.subOrgGrpCode'] = SessionToken?.subOrgGrpCode || process.env?.SUBORGGRPCODE
-        sobj['session.subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME
-        sobj['session.subOrgCode'] = SessionToken?.subOrgCode || process.env?.SUBORGCODE
-        sobj['session.subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME 
-
-        SessionInfo['loginId'] = SessionToken?.loginId || process.env?.LOGINID || '';
-        SessionInfo['accessProfile'] = SessionToken?.selectedAccessProfile || process.env?.ACCESSPROFILE || '';
-        SessionInfo['orgGrpName'] = SessionToken?.orgGrpName || process.env?.ORGGRPNAME || '';
-        SessionInfo['orgName'] = SessionToken?.orgName || process.env?.ORGNAME || '';
-        SessionInfo['roleGrpName'] = SessionToken?.roleGrpName || process.env?.ROLEGRPNAME || '';
-        SessionInfo['roleName'] = SessionToken?.roleName || process.env?.ROLENAME || '';
-        SessionInfo['psGrpName'] = SessionToken?.psGrpName || process.env?.PSGRPNAME || '';
-        SessionInfo['psName'] = SessionToken?.psName || process.env?.PSNAME || '';
-        SessionInfo['userCode'] = SessionToken?.userCode || ''
-        SessionInfo['subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME || '';
-        SessionInfo['subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME || '';
-
-        return {sobj,SessionInfo,SessionToken}
-    } catch (error) {
-    throw error
-    }
-    }
-
-    async assign(apiResult, ifoObj, codeObj, inputparam, nodeName, mapObj) {
+    async assign(apiResult, ifoObj, codeObj, inputparam, nodeName, mapObj,) {
         try {
-            let apichildResult:any
+            let apichildResult:any            
             if (typeof apiResult == 'string' || typeof apiResult == 'number' || typeof apiResult == 'boolean') {
-                apichildResult = apiResult;
-            } else if (apiResult && Array.isArray(apiResult) && apiResult.length > 0) {
-                 apichildResult = []
+                //apichildResult = apiResult;
+                if (inputparam) {
+                        if (Array.isArray(inputparam) && inputparam.length > 0) {
+                            for (let i = 0; i < inputparam.length; i++) {
+                                inputparam[i] = Object.assign(inputparam[i], { [nodeName]: apiResult });
+                            }
+                        } else if (typeof inputparam == 'object') {
+                            inputparam = Object.assign(inputparam, { [nodeName]: apiResult });
+                        }
+                    }
+            } else if (apiResult && Array.isArray(apiResult) && apiResult.length > 0) {                
                 for (let a = 0; a < apiResult.length; a++) {
                     if (codeObj && Object.keys(codeObj).length > 0)
                         apiResult[a] = Object.assign(apiResult[a], codeObj);
@@ -5063,8 +5598,9 @@ export class DynamicFlowService {
                         }
                     }
                 }
-                apichildResult.push(apiResult);
+               // apichildResult = apiResult;
             } else if (apiResult && Object.keys(apiResult).length > 0) {
+                apichildResult = []
                 if (codeObj && Object.keys(codeObj).length > 0)
                     apiResult = Object.assign(apiResult, codeObj);
 
@@ -5080,10 +5616,10 @@ export class DynamicFlowService {
                     } else if (typeof inputparam == 'object') {
                         inputparam = Object.assign(inputparam, { [nodeName]: apiResult });
                     }
-                }
-                apichildResult = apiResult;
+                }              
+              //  apichildResult.push(apiResult);                
             }
-            return { apichildResult, inputparam }
+            return { apiResult, inputparam }
         } catch (error) {
             throw error
         }
@@ -5117,15 +5653,91 @@ export class DynamicFlowService {
         }
     }
 
-    ifoAssign(internalMappingNodes, nodeId) {
-        const internalMappedObj = {};
+    async ifoAssign(internalMappingNodes, nodeId,sobj,zenresult,processedKey,InputParam,pfdto) {
+        let internalMappedObj = {};
 
         const node = internalMappingNodes?.find(n => n.nodeId === nodeId);
+        let humantasknodeInfo = internalMappingNodes?.find(n => n.nodeType === "humantasknode")
+       
+        let humantasknodeName,humantasknodeType,humantasknodeId
+        if(humantasknodeInfo){
+            humantasknodeName = humantasknodeInfo.nodeName
+            humantasknodeId = humantasknodeInfo.nodeId
+            humantasknodeType = humantasknodeInfo.nodeType
+        }      
+
         if (!node?.ifo?.length) return internalMappedObj;
 
         for (const item of node.ifo) {
-            if (item.path?.includes('|ifo|')) {
-                internalMappedObj[item.key.toLowerCase()] = item.value || '';
+            let src_ufMainKey = pfdto.sourceId? ((pfdto.sourceId).split('|'))[0]:''
+            let con_ufMainKey = ((item.path).split('|'))[0]
+
+            let formedSsKey = []
+            if(pfdto?.ssKey){
+                let sKeyArr = pfdto.ssKey
+                for(let i=0;i< sKeyArr.length;i++){
+                    let subkeyval = (sKeyArr[i]).split(':')
+                    if(subkeyval.length == 7)                          
+                    formedSsKey.push(`CK:${subkeyval[0]}:FNGK:${subkeyval[1]}:FNK:${subkeyval[2]}:CATK:${subkeyval[3]}:AFGK:${subkeyval[4]}:AFK:${subkeyval[5]}:AFVK:${subkeyval[6]}`)
+                }
+            }
+
+            if (item.path?.includes('|ifo|') || item.path?.includes('UF_Processvariable')) { 
+                //Session Params
+
+                if(item.type == 'session'){   
+                    if(sobj[`session.${item.value}`]){
+                        internalMappedObj[item.key.toLowerCase()] = sobj[`session.${item.value}`]
+                    }
+                }else if (item.type == 'date'){
+                    const formatMap = {
+                        "YYYY-MM-DDTHH:mm:ss.sssZ": "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'",
+                        "YYYY-MM-DDTHH:mm:ss": "yyyy-MM-dd'T'HH:mm:ss",
+                        "YYYY-MM-DD": "yyyy-MM-dd",
+                        "YYYY-MM-DDTHH:mm:ss.sss.": "yyyy-MM-dd'T'HH:mm:ss.SSS.",
+                        "YYYY-MM-DDTHH:mm:ss.sss": "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                    };
+
+                    item.value = formatMap[item.value] ?? item.value; 
+                    let formatttedDate = format(new Date(), item.value);
+                    internalMappedObj[item.key.toLowerCase()] = formatttedDate
+                }else if(item.type == 'rule'){
+                    if(zenresult?.[item.value]){
+                    internalMappedObj[item.key.toLowerCase()] = zenresult[item.value]
+                    }
+                }else if(item.type == 'pfrule' && item.value){   
+                    let nodeId = item.nodeId  
+                    let nodeName = (internalMappingNodes?.find(n => n.nodeId === nodeId)).nodeName;   
+                          
+                    let ht_afpVal:any = await this.redisService.getJsonDataWithPath(processedKey+':NPV:'+ nodeName + '.PRO', '.ifo',process.env.CLIENTCODE)               
+                    if(ht_afpVal){
+                        ht_afpVal = JSON.parse(ht_afpVal)
+                        internalMappedObj[item.key.toLowerCase()] = ht_afpVal[item.value]  
+                    }
+                }
+                else{
+                    if(humantasknodeType == "humantasknode" && (formedSsKey.includes(item.artifact) || con_ufMainKey == src_ufMainKey)){
+                        const requiredKeys = ['CK:',':FNGK:', ':FNK:',':CATK:', ':AFGK:',':AFK:',':AFVK:'];
+                    if (requiredKeys.every((key) => item.key.includes(key),) && item.key.includes('UF_Processvariable')) {
+                        let splitkey = item.key.split('|')
+                        item.key = splitkey[splitkey.length -1]
+                     }
+                        if(item.value)
+                            internalMappedObj[item.key.toLowerCase()] = item.value
+                        else if(InputParam[item.key])
+                            internalMappedObj[item.key.toLowerCase()] = InputParam[item.key]
+                        else
+                            internalMappedObj[item.key.toLowerCase()] = ''
+                    }else{
+                        if(item.value)
+                            internalMappedObj[item.key.toLowerCase()] = item.value
+                        else if(InputParam[item.key])
+                            internalMappedObj[item.key.toLowerCase()] = InputParam[item.key]
+                        else
+                            internalMappedObj[item.key.toLowerCase()] = ''
+                    }
+
+                }
             }
         }
 
@@ -5136,6 +5748,10 @@ export class DynamicFlowService {
         if (Array.isArray(data)) {
             return data.map(item => this.codeAssign(item));
         }
+
+         if (data instanceof Date || typeof data === 'string') {
+            return data; // keep date unchanged
+        } 
         if (data !== null && typeof data === 'object') {
             return Object.fromEntries(
                 Object.entries(data).map(([key, value]) => [
@@ -5904,7 +6520,7 @@ export class DynamicFlowService {
         }
     }
 
-    async DFDMapEdgeValues(poNode: any[], currentNodeEdge: any, inputparam: any, processedKey: string, upId: string, collectionName: string,  parameter: any, codeObj: any, pfo: any, fabric: any) {
+     async DFDMapEdgeValues(poNode: any[], currentNodeEdge: any, inputparam: any, processedKey: string, upId: string, collectionName: string,  parameter: any, codeObj: any, pfo: any, fabric: any) {
         var mapObj = {};
         var textobj;
         var tempQryVal = [];
@@ -6180,46 +6796,67 @@ export class DynamicFlowService {
                                 );
                         }
                     }
-                    if (b > 0) {
-                        let obj = {};
-                        let type
-                        if (pfo?.length > 0) {
-                            for (let p = 0; p < pfo.length; p++) {
-                                if (pfo[p].nodeId == connectedid) {
-                                    if (pfo[p]?.schema?.['requestBody']?.['content']?.['application/json']?.['schema']) {
-                                        type = 'application/json'
-                                    } else if (pfo[p]?.schema?.['requestBody']?.['content']?.['application/xml']?.['schema']) {
-                                        type = 'application/xml'
-                                    } else if (pfo[p]?.schema?.['requestBody']?.['content']?.['text/plain']?.['schema']) {
-                                        type = 'text/plain'
-                                    }
-                                    let schema = pfo[p]?.schema?.['requestBody']['content'][type]['schema'];
-                                    var res = await this.generateMockData(schema);
-                                    let keys = Object.keys(res);
-                                    inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.request', collectionName))
-                                    for (let item of keys) {
-                                        if (inputparam) {
-                                            if (Array.isArray(inputparam) && inputparam?.length > 0) {
-                                                let tempobj
-                                                for (let r = 0; r < inputparam.length; r++) {
-                                                    tempobj = {}
-                                                    _.set(tempobj, item, _.get(inputparam[r], item));
-                                                    obj = Object.assign(obj, tempobj);
+                     if (b > 0) {
+                                        let obj = {};
+                                        let type,body,schema 
+                                        if (pfo?.length > 0) {
+                                            for (let p = 0; p < pfo.length; p++) {
+                                                if (pfo[p].nodeId == connectedid) {
+                                                     if(srcVal.includes('responses')){
+                                                         body = 'responses'
+                                                         let code = Object.keys(pfo[p]?.schema?.[body])[0]
+                                                        if (pfo[p]?.schema?.[body]?.[code]['content']?.['application/json']?.['schema']) {
+                                                        type = 'application/json'
+                                                    } else if (pfo[p]?.schema?.[body]?.[code]['content']?.['application/xml']?.['schema']) {
+                                                        type = 'application/xml'
+                                                    }
+                                                    else if (pfo[p]?.schema?.[body]?.[code]['content']?.['text/plain']?.['schema']) {
+                                                        type = 'text/plain'
+                                                    } else if (pfo[p]?.schema?.[body]?.[code]['content']?.['*/*']?.['schema']) {
+                                                        type = '*/*'
+                                                    }
+                                                    schema = pfo[p]?.schema?.[body][code]['content'][type]['schema'];
+                                                    inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.response', collectionName))
+                                                     }else{
+                                                         body = 'requestBody'
+                                                        if (pfo[p]?.schema?.[body]?.['content']?.['application/json']?.['schema']) {
+                                                        type = 'application/json'
+                                                    } else if (pfo[p]?.schema?.[body]?.['content']?.['application/xml']?.['schema']) {
+                                                        type = 'application/xml'
+                                                    }
+                                                    else if (pfo[p]?.schema?.[body]?.['content']?.['text/plain']?.['schema']) {
+                                                        type = 'text/plain'
+                                                    } else if (pfo[p]?.schema?.[body]?.['content']?.['*/*']?.['schema']) {
+                                                        type = '*/*'
+                                                    }
+                                                    schema = pfo[p]?.schema?.[body]['content'][type]['schema'];
+                                                    inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.request', collectionName))
+                                                     } 
+                                                    var res = await this.generateMockData(schema);
+                                                    let keys = Object.keys(res);
+                                                    for (let item of keys) {
+                                                        if (inputparam) {
+                                                            if (Array.isArray(inputparam) && inputparam?.length > 0) {
+                                                                let tempobj
+                                                                for (let r = 0; r < inputparam.length; r++) {
+                                                                    tempobj = {}
+                                                                    _.set(tempobj, item, _.get(inputparam[r], item));
+                                                                    obj = Object.assign(obj, tempobj);
+                                                                }
+                                                            } else if (typeof inputparam == 'object') {
+                                                                _.set(obj, item, _.get(inputparam, item));
+                                                            } else if (typeof inputparam == 'string') {
+                                                                obj = inputparam
+                                                            }
+                                                        }
+                                                    }
                                                 }
-                                            } else if (typeof inputparam == 'object') {
-                                                _.set(obj, item, _.get(inputparam, item));
-                                            } else if (typeof inputparam == 'string') {
-                                                obj = inputparam
                                             }
+                                            schemaRes[targetFilteredVal] = obj;
                                         }
-                                    }
-                                }
-                            }
-                            schemaRes[targetFilteredVal] = obj;
-                        }
-                        if (schemaRes && Object.keys(schemaRes).length > 0) {
-                            mapObj = Object.assign(mapObj, schemaRes);
-                        }
+                                        if (schemaRes && Object.keys(schemaRes).length > 0) {
+                                            mapObj = Object.assign(mapObj, schemaRes);
+                                        }
                     }
                 }
             }
@@ -6227,12 +6864,661 @@ export class DynamicFlowService {
         return { mapObj, tempQryVal }
     }
 
-    async mapEdgeValuesToParams(pfdto: any, currentNodeEdge: any, inputparam: any, processedKey: string, upId: string, collectionName: string,  parameter: any, codeObj: any, pfo: any, childtable?): Promise<any> {
+     //  async mapEdgeValuesToParams(pfdto: any, currentNodeEdge: any, inputparam: any, processedKey: string, upId: string, collectionName: string,  parameter: any, codeObj: any, pfo: any, childtable?): Promise<any> {
+    //         try {
+    //             let childInsertArr = []
+    //             let srcIdArr = []
+    //             let mapObj, tempQryVal, targetVal, staticRemove, textobj
+    //             if(currentNodeEdge?.length>0){    
+    //             for (let s = 0; s < currentNodeEdge.length; s++) {
+    //                 let source = currentNodeEdge[s].source
+    //                 let sourceHandle = currentNodeEdge[s].sourceHandle
+    //                 sourceHandle = (sourceHandle.split('|')).find(item => item.startsWith('responses.') || item.startsWith('requestBody.') || item == 'ifo');
+    
+    //                 if (!sourceHandle || sourceHandle.startsWith('responses.')) {
+    //                     sourceHandle = 'responses'
+    //                 } else if (sourceHandle.startsWith('requestBody.')) {
+    //                     sourceHandle = 'requestBody'
+    //                 } else if (sourceHandle == 'ifo') {
+    //                     sourceHandle = 'ifo'
+    //                 }
+    //                 let existing = srcIdArr.find(item => item.source === source);
+    
+    //                 if (existing) {
+    //                     existing.sourceHandle.push(sourceHandle);
+    //                 } else {
+    //                     srcIdArr.push({
+    //                         source: source,
+    //                         sourceHandle: [sourceHandle]
+    //                     });
+    //                 }
+    //             }
+    //             let nodesArr = []
+    //             let filteredIds = [];
+    //             for (let s = 0; s < srcIdArr.length; s++) {
+    //                 let connectedid = srcIdArr[s].source
+    //                 let connectedHandle = srcIdArr[s].sourceHandle
+    
+    //                 for (var h = 0; h < pfo.length; h++) {
+    //                     if (connectedid == pfo[h].nodeId) {
+    //                         let tempArr = []
+    //                         var conncectedNodename = pfo[h].nodeName
+    //                         var conncectedNodeType = pfo[h].nodeType
+    //                         let innerpathVal
+    
+    //                         let afpValue = JSON.parse(await this.redisService.getJsonData(processedKey + upId + ':NPV:' + conncectedNodename + '.PRO', collectionName))
+    
+    
+    //                         if (connectedHandle.includes('requestBody')) {
+    //                             innerpathVal = afpValue.request
+    //                             if (conncectedNodeType == 'api_inputnode') {
+    //                                 innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)
+    //                             }
+    //                             tempArr = await this.combineData(innerpathVal, tempArr)
+    //                         }
+    //                         if (connectedHandle.includes('responses')) {
+    
+    //                             innerpathVal = afpValue.response
+    //                             if (conncectedNodeType == 'api_inputnode') {
+    //                                 innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)
+    //                             }
+    //                             tempArr = await this.combineData(innerpathVal, tempArr)
+    //                         }
+    //                         if (connectedHandle.includes('ifo')) {
+    //                             //innerpathVal = afpValue.ifo
+    //                              innerpathVal = Object.assign(afpValue.ifo,afpValue.response)
+    //                             if (conncectedNodeType == 'api_inputnode') {
+    //                                 innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)
+    //                             }
+    //                             tempArr = await this.combineData(innerpathVal, tempArr)
+    
+    //                             innerpathVal = afpValue.code
+    //                             if (conncectedNodeType == 'api_inputnode') {
+    //                                 innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)
+    //                             }
+    //                             tempArr = await this.combineData(innerpathVal, tempArr)
+    //                         }
+    //                         if (codeObj) {
+    //                             innerpathVal = codeObj
+    //                             if (conncectedNodeType == 'api_inputnode') {
+    //                                 innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)
+    //                             }
+    //                             tempArr = await this.combineData(innerpathVal, tempArr)
+    //                         }
+                           
+    //                         if (tempArr.length > 0) {
+    //                             nodesArr.push(tempArr)
+    //                             filteredIds.push(connectedid)
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //             srcIdArr = filteredIds;
+    //             let mergedRecords = await this.getCombinations(srcIdArr, nodesArr)
+                
+               
+                
+    //             for (let m = 0; m < mergedRecords.length; m++) {
+    //                 mapObj = {};
+    //                 tempQryVal = [];
+    //                 let inputCollection = mergedRecords[m]
+    //                 //console.log("inputCollection",inputCollection);
+    
+    //                 currentNodeEdge = await this.getSchemaType(pfo,currentNodeEdge)
+    //                 // console.log('currentNodeEdge',currentNodeEdge);
+    //                 let formarr = []
+                    
+    //                 for (let e = 0; e < currentNodeEdge.length; e++) {
+    //                     let schemaRes = {};
+    //                     let b = 0;
+    //                     let duptarget
+    //                     let childName
+    //                     let sourceFilteredVal, targetFilteredVal
+    //                     let srcHandle = currentNodeEdge[e].sourceHandle;
+    //                     let targetHandle = currentNodeEdge[e].targetHandle;
+    //                     let targetType = currentNodeEdge[e].targetType
+    //                     let connectedid = currentNodeEdge[e].source;                    
+    //                     let connectedType
+    //                     if (pfo?.length > 0) {
+    //                         for (let p = 0; p < pfo.length; p++) {
+    //                             if (connectedid == pfo[p].nodeId) {
+    //                                 connectedType = pfo[p].nodeType                                
+    //                                 break;
+    //                             }
+    //                         }
+    //                     }
+    
+    //                     let childid, childnodeType
+    //                      let srcarr = [] 
+    //                      let keys = []                    
+    //                     if (srcIdArr.includes(connectedid)) {
+    //                         if (srcHandle) {
+    //                             let srcSplit = srcHandle.split('|');                           
+    //                              if(connectedType == 'humantasknode' )//&& srcSplit[0].includes(':FNK:UF-UFWS:')
+    //                              duptarget = await this.checkTarget(currentNodeEdge,staticRemove,parameter)                           
+    //                             if (srcSplit.length > 3 && childtable) {
+    //                                 childid = srcSplit[srcSplit.length - 2]
+    //                             }
+    //                             if (pfo?.length > 0 && childid && childtable) {
+    //                                 for (let p = 0; p < pfo.length; p++) {
+    //                                     if (connectedid == pfo[p].nodeId) {
+    //                                         childnodeType = pfo[p].nodeType
+    //                                         let data = pfo[p].schema[srcSplit[0]][srcSplit[1]]
+    //                                         if (data?.length > 0) {
+    //                                             for (let i = 0; i < data.length; i++) {
+    //                                                 if (data[i].id == childid) {
+    //                                                     childName = data[i].name
+    //                                                 }
+    //                                             }
+    //                                         }
+    //                                     }
+    //                                 }
+    //                             }
+    
+    //                             let srcVal = srcSplit.includes('HeaderParams') ? srcSplit[1] : srcSplit[srcSplit.length - 1];
+    //                             // if (srcVal.includes('.') && !srcVal.includes('text/plain') && !srcVal.includes('*/*')) {
+    //                             if (srcVal.includes('.') && !srcVal.includes('*/*')) {
+    //                                 let src = srcSplit[1].split('.');
+    //                                 if (src[src.length - 1] == 'schema') {
+    //                                     b++;
+    //                                 }
+    //                             }
+                               
+                                
+    //                             if (srcVal.includes('.')) {
+    //                                 let staticRemove = srcVal.split('.');
+    //                                 sourceFilteredVal = staticRemove.filter((item) => !this.statickeyword.includes(item));
+    //                                 if (sourceFilteredVal?.length > 0) {
+    //                                     sourceFilteredVal = sourceFilteredVal.join('.');
+    //                                     if (sourceFilteredVal.includes('.') && sourceFilteredVal.startsWith('parameters.')) {
+    //                                         sourceFilteredVal = _.get(parameter, sourceFilteredVal);
+    //                                     }
+    //                                     if (sourceFilteredVal.startsWith('items.')) {
+    //                                         sourceFilteredVal = sourceFilteredVal.replace('items.', '',);
+    //                                     }
+    //                                     sourceFilteredVal = sourceFilteredVal.toLowerCase();
+    
+    //                                     if (sourceFilteredVal.includes('.items.')) {
+    //                                       let spilt = sourceFilteredVal.split('.items.');                                                                        
+    //                                       var getdata = _.get(inputCollection[connectedid], spilt[0]);
+    //                                     }                                   
+                                       
+    
+    //                                     // if (sourceFilteredVal.includes('.items.')) {
+    //                                     //     sourceFilteredVal = sourceFilteredVal.replace('.items.', '[0]',);
+    //                                     // }
+    
+    //                                     if (sourceFilteredVal && sourceFilteredVal.includes('.')) {
+    //                                         let dst = sourceFilteredVal.split('.')
+    //                                         sourceFilteredVal = (dst.filter(item => !this.numberArr.includes(item))).join('.');
+    //                                     }
+    //                                     sourceFilteredVal = sourceFilteredVal.trim();
+    
+    //                                     if (childnodeType != 'humantasknode' && !childName && !childid)
+    //                                         sourceFilteredVal = connectedid + '.' + sourceFilteredVal
+    //                                 }
+    //                             } else {
+                                  
+    //                                 sourceFilteredVal = srcVal.toLowerCase();
+    //                                 sourceFilteredVal = srcVal.trim();
+    //                                 if (childnodeType != 'humantasknode' && !childName && !childid)
+    //                                     sourceFilteredVal = connectedid + '.' + sourceFilteredVal
+    //                             } 
+    //                             if (targetHandle) {
+    //                                 let targetSplit = targetHandle.split('|');
+    //                                 if (pfdto?.sourceId && connectedType == "humantasknode") {
+    //                                     let srcId = pfdto?.sourceId.split('|').shift()                                    
+    //                                     let formedSsKey = []
+    //                                     if(pfdto?.ssKey?.length>0){
+    //                                         let sKeyArr = pfdto?.ssKey
+    //                                         for(let i=0;i< sKeyArr.length;i++){
+    //                                             let subkeyval = (sKeyArr[i]).split(':')
+    //                                             if(subkeyval.length == 7)                          
+    //                                             formedSsKey.push(`CK:${subkeyval[0]}:FNGK:${subkeyval[1]}:FNK:${subkeyval[2]}:CATK:${subkeyval[3]}:AFGK:${subkeyval[4]}:AFK:${subkeyval[5]}:AFVK:${subkeyval[6]}`)
+    //                                         }
+    //                                     }     
+                                       
+    //                                     let previousHandlerId = JSON.parse(await this.redisService.getJsonData(processedKey + upId + ':NPV:' + conncectedNodename + '.PRO', collectionName))
+    //                                     if(previousHandlerId?.sourceid)
+    //                                         previousHandlerId = previousHandlerId.sourceid.split('|').shift() 
+                                       
+    //                                     if ((srcId == srcSplit[0] || previousHandlerId == srcSplit[0]) || formedSsKey.includes(srcSplit[0])) {  //|| srcSplit[0].includes(':FNK:UF-UFWS:')     //|| ssKey == srcSplit[0]                                                      
+    //                                         targetVal = targetSplit.includes('HeaderParams') ? targetSplit[1] : targetSplit[targetSplit.length - 1];
+    //                                      if (targetVal.includes('.')) {
+    //                                             staticRemove = targetVal.split('.');
+    //                                             targetFilteredVal = staticRemove.filter((item) => !this.statickeyword.includes(item));                                         
+                                                
+                                                
+    //                                             if (targetFilteredVal && targetFilteredVal.length > 0) {
+    //                                                 let tempobj = {};
+    //                                                 targetFilteredVal = targetFilteredVal.join('.');
+    //                                                 if (targetFilteredVal.includes('.') && targetFilteredVal.startsWith('parameters.')) {
+    //                                                     var parameterPathValue = _.get(parameter, targetFilteredVal.replace('.name', '.in'));
+    //                                                     tempobj['key'] = _.get(parameter, targetFilteredVal);
+    //                                                     tempobj['type'] = parameterPathValue;
+    //                                                     targetFilteredVal = _.get(parameter, targetFilteredVal,);
+    //                                                     tempQryVal.push(tempobj);
+    //                                                 }
+    //                                                 targetFilteredVal = targetFilteredVal.split('.');
+    //                                                 targetFilteredVal = targetFilteredVal.filter((item) => !this.numberArr.includes(item));
+    //                                                 targetFilteredVal = targetFilteredVal.join('.');
+    
+    //                                                 if (targetFilteredVal.includes('.items.')) {
+    //                                                     targetFilteredVal = targetFilteredVal.replace('.items.', '[0]',);
+    //                                                 }
+    //                                                 if (targetFilteredVal.startsWith('items.')) {
+    //                                                     targetFilteredVal = targetFilteredVal.replace('items.', '',);
+    //                                                 }
+    
+    //                                                 if (mapObj) {
+    //                                                     var setdata = _.get(mapObj, targetFilteredVal);
+    //                                                     if (setdata?.length) {
+    //                                                         targetFilteredVal = targetFilteredVal.replace('[0]', '[' + setdata.length + ']');
+    //                                                     }
+    //                                                 } 
+    //                                                 if (sourceFilteredVal && sourceFilteredVal.length > 0) {
+    //                                                     sourceFilteredVal = sourceFilteredVal.toLowerCase();
+    //                                                     sourceFilteredVal = sourceFilteredVal.trim();   
+                                                        
+    //                                                     if (childnodeType == 'humantasknode' && childName && childid) {
+    //                                                         let childdata = inputCollection[connectedid][childName.toLowerCase()]
+    //                                                         if (childdata?.length > 0) {
+    //                                                             let temptargetFilteredVal = targetFilteredVal
+    //                                                             for (let i = 0; i < childdata.length; i++) {
+    //                                                                 if (targetFilteredVal.includes('[0]')) {
+    //                                                                     temptargetFilteredVal = targetFilteredVal.replace('[0]', [i] + '.',);
+    //                                                                     _.set(mapObj, temptargetFilteredVal, _.get(childdata[i], sourceFilteredVal));
+    //                                                                 }
+    //                                                             }
+    //                                                         }
+    //                                                     } else{      
+                                                                                                                                                 
+    //                                                         if(srcSplit.length == 2 && connectedType == 'humantasknode'){
+    //                                                             let filterinput = await this.checkData(pfo,inputCollection,srcSplit[0],connectedid)                                                          
+    //                                                             _.set(mapObj, targetFilteredVal, filterinput);
+    //                                                         }
+    //                                                         else{  
+    //                                                             let srcData = _.get(inputCollection, sourceFilteredVal)
+                                                                
+    //                                                             let objVal = sourceFilteredVal
+    //                                                             if(sourceFilteredVal.includes('.')){
+    //                                                                 let srcFilArr = sourceFilteredVal.split('.')
+    //                                                                 objVal = srcFilArr[srcFilArr.length-1]
+    //                                                             }  
+    //                                                             if(srcData){
+    //                                                                 if (targetType === 'number' && typeof srcData === 'string') {
+    //                                                                     let num = Number(srcData)
+    //                                                                     if (!Number.isNaN(num)) {
+    //                                                                         srcData = num
+    //                                                                     }
+    //                                                                 } else if (targetType === 'string' && typeof srcData === 'number') {
+    //                                                                     srcData = String(srcData)
+    //                                                                 }
+        
+    //                                                                 if(typeof mapObj[targetFilteredVal] == 'object' && Object.keys(mapObj[targetFilteredVal]).length>0){                                                                
+    //                                                                     let assignData = Object.assign(mapObj[targetFilteredVal],{[objVal]:srcData})
+    //                                                                     _.set(mapObj, targetFilteredVal, assignData);
+    //                                                                 }else{                                                                 
+    //                                                                     if(targetType == 'object' && typeof srcData == 'object'){
+    //                                                                         _.set(mapObj, targetFilteredVal, srcData);
+    //                                                                     }
+    //                                                                     else if(targetType == 'object' && ['string','number','boolean','date','integer','array'].includes(typeof srcData)){
+    //                                                                         _.set(mapObj, targetFilteredVal, {[objVal]:srcData});
+    //                                                                     }else if(['string','number','boolean','date','integer','array'].includes(targetType) && (typeof srcData != 'object' || Array.isArray(srcData) && srcData?.length>0)){
+    //                                                                         _.set(mapObj, targetFilteredVal, srcData);
+    //                                                                     }
+    //                                                                     else{
+    //                                                                         throw new CustomException(`Invalid data type for ${srcData}`,400)
+    //                                                                     }                                              
+    //                                                                 }     
+    //                                                             }                                                            
+    //                                                         }
+    //                                                     }                                                     
+                                                           
+    //                                                 } else if (b == 0) {
+    //                                                     // let testdata: any = inputCollection;                                        
+    //                                                     let testdata = _.get(inputCollection, connectedid + '.schema')
+    //                                                     testdata = testdata.replace(/\\n/g, '\n');
+    //                                                     mapObj[targetFilteredVal] = testdata;
+    //                                                 }
+    //                                             } else if (sourceFilteredVal && sourceFilteredVal.length > 0) {
+    //                                                 sourceFilteredVal = sourceFilteredVal.toLowerCase();
+    //                                                 sourceFilteredVal = sourceFilteredVal.trim();
+    //                                                 textobj = _.get(inputCollection, sourceFilteredVal);
+    //                                             }
+    //                                         } else {
+    //                                             sourceFilteredVal = sourceFilteredVal.toLowerCase();
+    //                                             sourceFilteredVal = sourceFilteredVal.trim();
+    //                                             if (childnodeType == 'humantasknode' && childName && childid) {
+    //                                                 let childdata = inputCollection[connectedid][childName.toLowerCase()]
+    //                                                 if (childdata?.length > 0) {
+    //                                                     let temptargetFilteredVal = targetVal
+    //                                                     for (let i = 0; i < childdata.length; i++) {
+    //                                                         if (targetFilteredVal.includes('[0]')) {//&& !(_.get(childdata[i], targetFilteredVal))
+    //                                                             temptargetFilteredVal = targetFilteredVal.replace('[0]', '.' + [i] + '.',);
+    //                                                             _.set(mapObj, temptargetFilteredVal, _.get(childdata[i], sourceFilteredVal));
+    //                                                         }
+    
+    //                                                     }
+    //                                                 }
+    //                                             }
+    //                                             else{                                                
+    //                                                 if(srcSplit.length == 2 && connectedType == 'humantasknode'){   
+                                                                                                                
+    //                                                     let filterinput = await this.checkData(pfo,inputCollection,srcSplit[0],connectedid)
+                                                        
+    //                                                         _.set(mapObj, targetFilteredVal, filterinput);
+    //                                                 }
+    //                                                 else{
+    //                                                     let srcData = _.get(inputCollection, sourceFilteredVal)
+    //                                                     let objVal = sourceFilteredVal
+    //                                                     if(sourceFilteredVal.includes('.')){
+    //                                                         let srcFilArr = sourceFilteredVal.split('.')
+    //                                                         objVal = srcFilArr[srcFilArr.length-1]
+    //                                                     }
+    //                                                     if(srcData){
+    //                                                         if (targetType === 'number' && typeof srcData === 'string') {
+    //                                                             let num = Number(srcData)
+    //                                                             if (!Number.isNaN(num)) {
+    //                                                                 srcData = num
+    //                                                             }
+    //                                                         } else if (targetType === 'string' && typeof srcData === 'number') {
+    //                                                             srcData = String(srcData)
+    //                                                         }
+        
+    //                                                         if(typeof mapObj[targetVal] == 'object' && Object.keys(mapObj[targetVal]).length>0){                                                                
+    //                                                             let assignData = Object.assign(mapObj[targetVal],{[objVal]:srcData})
+    //                                                             _.set(mapObj, targetVal, assignData);
+    //                                                         }else{                                                         
+    //                                                             if(targetType == 'object' && typeof srcData == 'object'){
+    //                                                                 _.set(mapObj, targetVal, srcData);
+    //                                                             }
+    //                                                             else if(targetType == 'object' && ['string','number','boolean','date','integer','array'].includes(typeof srcData)){
+    //                                                                _.set(mapObj, targetVal, {[objVal]:srcData});
+    //                                                             }else if(['string','number','boolean','date','integer','array'].includes(targetType) && (typeof srcData != 'object' || Array.isArray(srcData) && srcData?.length>0)){
+    //                                                                 _.set(mapObj, targetVal, srcData);
+    //                                                             }
+    //                                                             else{
+    //                                                                 throw new CustomException(`Invalid data type for ${srcData}`,400)
+    //                                                             }                                                         
+    //                                                         }
+    //                                                     }
+    //                                                 }
+    //                                             }
+                                                    
+    //                                         }
+    //                                         if (b > 0) {
+    //                                         let obj = {};
+    //                                         let type,body,schema 
+    //                                         if (pfo?.length > 0) {
+    //                                             for (let p = 0; p < pfo.length; p++) {
+    //                                                 if (pfo[p].nodeId == connectedid) {
+    //                                                      if(srcVal.includes('responses')){
+    //                                                          body = 'responses'
+    //                                                          let code = Object.keys(pfo[p]?.schema?.[body])[0]
+    //                                                         if (pfo[p]?.schema?.[body]?.[code]['content']?.['application/json']?.['schema']) {
+    //                                                         type = 'application/json'
+    //                                                     } else if (pfo[p]?.schema?.[body]?.[code]['content']?.['application/xml']?.['schema']) {
+    //                                                         type = 'application/xml'
+    //                                                     }
+    //                                                     else if (pfo[p]?.schema?.[body]?.[code]['content']?.['text/plain']?.['schema']) {
+    //                                                         type = 'text/plain'
+    //                                                     } else if (pfo[p]?.schema?.[body]?.[code]['content']?.['*/*']?.['schema']) {
+    //                                                         type = '*/*'
+    //                                                     }
+    //                                                     schema = pfo[p]?.schema?.[body][code]['content'][type]['schema'];
+    //                                                     inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.response', collectionName))
+    //                                                      }else{
+    //                                                          body = 'requestBody'
+    //                                                         if (pfo[p]?.schema?.[body]?.['content']?.['application/json']?.['schema']) {
+    //                                                         type = 'application/json'
+    //                                                     } else if (pfo[p]?.schema?.[body]?.['content']?.['application/xml']?.['schema']) {
+    //                                                         type = 'application/xml'
+    //                                                     }
+    //                                                     else if (pfo[p]?.schema?.[body]?.['content']?.['text/plain']?.['schema']) {
+    //                                                         type = 'text/plain'
+    //                                                     } else if (pfo[p]?.schema?.[body]?.['content']?.['*/*']?.['schema']) {
+    //                                                         type = '*/*'
+    //                                                     }
+    //                                                     schema = pfo[p]?.schema?.[body]['content'][type]['schema'];
+    //                                                     inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.request', collectionName))
+    //                                                      } 
+    //                                                     var res = await this.generateMockData(schema);
+    //                                                     let keys = Object.keys(res);
+    //                                                     for (let item of keys) {
+    //                                                         if (inputparam) {
+    //                                                             if (Array.isArray(inputparam) && inputparam?.length > 0) {
+    //                                                                 let tempobj
+    //                                                                 for (let r = 0; r < inputparam.length; r++) {
+    //                                                                     tempobj = {}
+    //                                                                     _.set(tempobj, item, _.get(inputparam[r], item));
+    //                                                                     obj = Object.assign(obj, tempobj);
+    //                                                                 }
+    //                                                             } else if (typeof inputparam == 'object') {
+    //                                                                 _.set(obj, item, _.get(inputparam, item));
+    //                                                             } else if (typeof inputparam == 'string') {
+    //                                                                 obj = inputparam
+    //                                                             }
+    //                                                         }
+    //                                                     }
+    //                                                 }
+    //                                             }
+    //                                             schemaRes[targetFilteredVal] = obj;
+    //                                         }
+    //                                         if (schemaRes && Object.keys(schemaRes).length > 0) {
+    //                                             mapObj = Object.assign(mapObj, schemaRes);
+    //                                         }
+    //                                     }
+    //                                     }
+    //                                 } else {                                    
+    //                                     targetVal = targetSplit.includes('HeaderParams') ? targetSplit[1] : targetSplit[targetSplit.length - 1];
+    //                                     // if(targetSplit.includes('HeaderParams')){
+    //                                     //     targetVal = targetSplit[1]
+    //                                     //     if(this.statickeyword.includes('parameters')){
+    //                                     //        this.statickeyword = this.statickeyword.splice(this.statickeyword.indexOf('parameters'), 1);
+    //                                     //     }
+    //                                     // }else{
+    //                                     //     targetVal = targetSplit[targetSplit.length - 1];
+    //                                     // }
+    //                                     //console.log("sourceFilteredVal",sourceFilteredVal);
+    //                                        // console.log("targetVal",targetVal);
+    //                                        // console.log("inputCollection",inputCollection);
+    //                                     if (targetVal.includes('.')) {
+    //                                         staticRemove = targetVal.split('.');
+    //                                         targetFilteredVal = staticRemove.filter((item) => !this.statickeyword.includes(item));
+    //                                         if (targetFilteredVal && targetFilteredVal.length > 0) {
+    //                                             let tempobj = {};
+    //                                             targetFilteredVal = targetFilteredVal.join('.');                                                    
+    //                                             if (targetFilteredVal.includes('.') && targetFilteredVal.startsWith('parameters.')) {
+    //                                                 var parameterPathValue = _.get(parameter, targetFilteredVal.replace('.name', '.in'));
+    //                                                 tempobj['key'] = _.get(parameter, targetFilteredVal);
+    //                                                 tempobj['type'] = parameterPathValue;
+    //                                                 targetFilteredVal = _.get(parameter, targetFilteredVal,);
+    //                                                 tempQryVal.push(tempobj);
+    //                                             }
+    //                                             targetFilteredVal = targetFilteredVal.split('.');
+    //                                             targetFilteredVal = targetFilteredVal.filter((item) => !this.numberArr.includes(item));
+    //                                             targetFilteredVal = targetFilteredVal.join('.');
+    
+    //                                             if (targetFilteredVal.includes('.items.')) {
+    //                                                 targetFilteredVal = targetFilteredVal.replace('.items.', '[0]',);
+    //                                             }
+    //                                             if (targetFilteredVal.startsWith('items.')) {
+    //                                                 targetFilteredVal = targetFilteredVal.replace('items.', '',);
+    //                                             }
+    
+    //                                             if (mapObj) {
+    //                                                 var setdata = _.get(mapObj, targetFilteredVal);
+    //                                                 if (setdata?.length) {
+    //                                                     targetFilteredVal = targetFilteredVal.replace('[0]', '[' + setdata.length + ']');
+    //                                                 }
+    //                                             }
+                                               
+    //                                             // 1. Loop through getdata and dynamically create paths in srcarr
+    //                                             if (getdata?.length > 0) {
+    //                                             for (let a = 0; a < getdata.length; a++) {
+    //                                                 // Assuming sourceFilteredVal is something like 'loan.repayment_schedule.items.'
+    //                                                 let dynamicPath = sourceFilteredVal.replace('.items', '[' + a + ']');
+    //                                                 srcarr.push(dynamicPath);
+    //                                             }
+    //                                             }
+                                                 
+    
+    //                                             if (sourceFilteredVal && sourceFilteredVal.length > 0) {
+    //                                                 sourceFilteredVal = sourceFilteredVal.toLowerCase();
+    //                                                 sourceFilteredVal = sourceFilteredVal.trim();
+                                                   
+    //                                                 if (childnodeType == 'humantasknode' && childName && childid) {
+    //                                                     let childdata = inputCollection[connectedid][childName.toLowerCase()]
+    //                                                     if (childdata?.length > 0) {
+    //                                                         let temptargetFilteredVal = targetFilteredVal
+    //                                                         for (let i = 0; i < childdata.length; i++) {
+    //                                                             if (targetFilteredVal.includes('[0]')) {
+    //                                                                 temptargetFilteredVal = targetFilteredVal.replace('[0]', '.' + [i] + '.',);
+    //                                                                 _.set(mapObj, temptargetFilteredVal, _.get(childdata[i], sourceFilteredVal));
+    //                                                             }
+    //                                                         }
+    //                                                     }
+    //                                                 } else if(srcarr?.length>0){
+    //                                                     let dataarr = []
+    //                                                     for(let a = 0; a < srcarr.length; a++){
+    //                                                         let Obj = {};                                                       
+    //                                                      _.set(Obj, targetFilteredVal, _.get(inputCollection, srcarr[a]));
+    //                                                      dataarr.push(Obj)
+    //                                                     }                                                  
+    //                                                     formarr.push({[targetFilteredVal]:dataarr})                                                  
+    //                                                    childInsertArr = formarr.reduce((acc, curr) => {
+    //                                                     const key = Object.keys(curr)[0];      
+    //                                                     const arr = curr[key]; 
+    //                                                     arr.forEach((item, i) => {
+    //                                                         if (!acc[i]) acc[i] = {};
+    //                                                         acc[i][key] = item[key];
+    //                                                     });
+    
+    //                                                     return acc;
+    //                                                     }, []);
+    //                                                 }else
+    //                                                     _.set(mapObj, targetFilteredVal, _.get(inputCollection, sourceFilteredVal));
+    //                                             } else if (b == 0) {
+    //                                                 // let testdata: any = inputCollection;  
+                                                   
+    //                                                 let testdata = _.get(inputCollection, connectedid + '.schema')
+    //                                                 testdata = testdata.replace(/\\n/g, '\n');
+    //                                                 mapObj[targetFilteredVal] = testdata;
+    //                                             }
+    //                                         } else if (sourceFilteredVal && sourceFilteredVal.length > 0) {
+    //                                             sourceFilteredVal = sourceFilteredVal.toLowerCase();
+    //                                             sourceFilteredVal = sourceFilteredVal.trim();
+    //                                             textobj = _.get(inputCollection, sourceFilteredVal);
+    //                                         } else {
+    //                                             textobj = _.get(inputCollection, connectedid + '.schema');
+    //                                         }
+    //                                     } else {
+    //                                         sourceFilteredVal = sourceFilteredVal.toLowerCase();
+    //                                         sourceFilteredVal = sourceFilteredVal.trim();
+    //                                         if (childnodeType == 'humantasknode' && childName && childid) {
+    //                                             let childdata = inputCollection[connectedid][childName.toLowerCase()]
+    //                                             if (childdata?.length > 0) {
+    //                                                 let temptargetFilteredVal = targetVal
+    //                                                 for (let i = 0; i < childdata.length; i++) {
+    //                                                     if (targetFilteredVal.includes('[0]')) {//&& !(_.get(childdata[i], targetFilteredVal))
+    //                                                         temptargetFilteredVal = targetFilteredVal.replace('[0]', '.' + [i] + '.',);
+    //                                                         _.set(mapObj, temptargetFilteredVal, _.get(childdata[i], sourceFilteredVal));
+    //                                                     }
+    
+    //                                                 }
+    //                                             }
+    //                                         }
+    //                                         else
+    //                                             _.set(mapObj, targetVal, _.get(inputCollection, sourceFilteredVal));
+                                         
+    //                                     }
+    //                                     if (b > 0) {
+    //                                         let obj = {};
+    //                                         let type,body,schema 
+    //                                         if (pfo?.length > 0) {
+    //                                             for (let p = 0; p < pfo.length; p++) {
+    //                                                 if (pfo[p].nodeId == connectedid) {
+    //                                                      if(srcVal.includes('responses')){
+    //                                                          body = 'responses'
+    //                                                          let code = Object.keys(pfo[p]?.schema?.[body])[0]
+    //                                                         if (pfo[p]?.schema?.[body]?.[code]['content']?.['application/json']?.['schema']) {
+    //                                                         type = 'application/json'
+    //                                                     } else if (pfo[p]?.schema?.[body]?.[code]['content']?.['application/xml']?.['schema']) {
+    //                                                         type = 'application/xml'
+    //                                                     }
+    //                                                     else if (pfo[p]?.schema?.[body]?.[code]['content']?.['text/plain']?.['schema']) {
+    //                                                         type = 'text/plain'
+    //                                                     } else if (pfo[p]?.schema?.[body]?.[code]['content']?.['*/*']?.['schema']) {
+    //                                                         type = '*/*'
+    //                                                     }
+    //                                                     schema = pfo[p]?.schema?.[body][code]['content'][type]['schema'];
+    //                                                     inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.response', collectionName))
+    //                                                      }else{
+    //                                                          body = 'requestBody'
+    //                                                         if (pfo[p]?.schema?.[body]?.['content']?.['application/json']?.['schema']) {
+    //                                                         type = 'application/json'
+    //                                                     } else if (pfo[p]?.schema?.[body]?.['content']?.['application/xml']?.['schema']) {
+    //                                                         type = 'application/xml'
+    //                                                     }
+    //                                                     else if (pfo[p]?.schema?.[body]?.['content']?.['text/plain']?.['schema']) {
+    //                                                         type = 'text/plain'
+    //                                                     } else if (pfo[p]?.schema?.[body]?.['content']?.['*/*']?.['schema']) {
+    //                                                         type = '*/*'
+    //                                                     }
+    //                                                     schema = pfo[p]?.schema?.[body]['content'][type]['schema'];
+    //                                                     inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.request', collectionName))
+    //                                                      } 
+    //                                                     var res = await this.generateMockData(schema);
+    //                                                     let keys = Object.keys(res);
+    //                                                     for (let item of keys) {
+    //                                                         if (inputparam) {
+    //                                                             if (Array.isArray(inputparam) && inputparam?.length > 0) {
+    //                                                                 let tempobj
+    //                                                                 for (let r = 0; r < inputparam.length; r++) {
+    //                                                                     tempobj = {}
+    //                                                                     _.set(tempobj, item, _.get(inputparam[r], item));
+    //                                                                     obj = Object.assign(obj, tempobj);
+    //                                                                 }
+    //                                                             } else if (typeof inputparam == 'object') {
+    //                                                                 _.set(obj, item, _.get(inputparam, item));
+    //                                                             } else if (typeof inputparam == 'string') {
+    //                                                                 obj = inputparam
+    //                                                             }
+    //                                                         }
+    //                                                     }
+    //                                                 }
+    //                                             }
+    //                                             schemaRes[targetFilteredVal] = obj;
+    //                                         }
+    //                                         if (schemaRes && Object.keys(schemaRes).length > 0) {
+    //                                             mapObj = Object.assign(mapObj, schemaRes);
+    //                                         }
+    //                                     }
+    //                                 }
+    //                             }
+    //                         }
+    //                     }
+    //                 }                
+    
+    //                 if (Object.keys(mapObj).length > 0) {
+    //                     childInsertArr.push(mapObj);
+    //                 }
+    //             }
+    //             }
+    //             return { childInsertArr, tempQryVal, textobj }
+    //         } catch (error) {
+    //             console.log('Error', error);        
+    //             throw error
+    //         }
+    // }
+    
+    ​async mapEdgeValuesToParams(pfdto: any, currentNodeEdge: any, inputparam: any, processedKey: string, upId: string, collectionName: string,  parameter: any, codeObj: any, pfo: any, childtable?): Promise<any> {
         try {
             let childInsertArr = []
             let srcIdArr = []
             let mapObj, tempQryVal, targetVal, staticRemove, textobj
-
+            if(currentNodeEdge?.length>0){    
             for (let s = 0; s < currentNodeEdge.length; s++) {
                 let source = currentNodeEdge[s].source
                 let sourceHandle = currentNodeEdge[s].sourceHandle
@@ -6280,6 +7566,7 @@ export class DynamicFlowService {
                             tempArr = await this.combineData(innerpathVal, tempArr)
                         }
                         if (connectedHandle.includes('responses')) {
+
                             innerpathVal = afpValue.response
                             if (conncectedNodeType == 'api_inputnode') {
                                 innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)
@@ -6287,7 +7574,8 @@ export class DynamicFlowService {
                             tempArr = await this.combineData(innerpathVal, tempArr)
                         }
                         if (connectedHandle.includes('ifo')) {
-                            innerpathVal = afpValue.ifo
+                            //innerpathVal = afpValue.ifo
+                             innerpathVal = Object.assign(afpValue.ifo,afpValue.response)
                             if (conncectedNodeType == 'api_inputnode') {
                                 innerpathVal = await this.keysToLowerCaseOnly(innerpathVal)
                             }
@@ -6316,40 +7604,42 @@ export class DynamicFlowService {
             }
             srcIdArr = filteredIds;
             let mergedRecords = await this.getCombinations(srcIdArr, nodesArr)
-
-          
+                       
+            
             for (let m = 0; m < mergedRecords.length; m++) {
                 mapObj = {};
                 tempQryVal = [];
                 let inputCollection = mergedRecords[m]
-                //console.log("inputCollection",inputCollection);
-
+                currentNodeEdge = await this.getSchemaType(pfo,currentNodeEdge)
+                // console.log('currentNodeEdge',currentNodeEdge);
+                let formarr = []
+                
                 for (let e = 0; e < currentNodeEdge.length; e++) {
-                    let schemaRes = {};
-                    let b = 0;
-                    let childName
-                    let sourceFilteredVal, targetFilteredVal
+                    let schemaRes = {}, b = 0, duptarget, childName, sourceFilteredVal, targetFilteredVal
                     let srcHandle = currentNodeEdge[e].sourceHandle;
                     let targetHandle = currentNodeEdge[e].targetHandle;
-                    let connectedid = currentNodeEdge[e].source;
+                    let targetType = currentNodeEdge[e].targetType
+                    let connectedid = currentNodeEdge[e].source;                    
                     let connectedType
                     if (pfo?.length > 0) {
                         for (let p = 0; p < pfo.length; p++) {
                             if (connectedid == pfo[p].nodeId) {
-                                connectedType = pfo[p].nodeType
+                                connectedType = pfo[p].nodeType                                
                                 break;
                             }
                         }
                     }
 
-                    let childid, childnodeType
+                    let childid, childnodeType, srcarr = [] 
+                                       
                     if (srcIdArr.includes(connectedid)) {
                         if (srcHandle) {
-                            let srcSplit = srcHandle.split('|');
+                            let srcSplit = srcHandle.split('|');                           
+                             if(connectedType == 'humantasknode' )//&& srcSplit[0].includes(':FNK:UF-UFWS:')
+                             duptarget = await this.checkTarget(currentNodeEdge,staticRemove,parameter)                           
                             if (srcSplit.length > 3 && childtable) {
                                 childid = srcSplit[srcSplit.length - 2]
-                            }
-
+                            } 
                             if (pfo?.length > 0 && childid && childtable) {
                                 for (let p = 0; p < pfo.length; p++) {
                                     if (connectedid == pfo[p].nodeId) {
@@ -6374,6 +7664,8 @@ export class DynamicFlowService {
                                     b++;
                                 }
                             }
+                           
+                            
                             if (srcVal.includes('.')) {
                                 let staticRemove = srcVal.split('.');
                                 sourceFilteredVal = staticRemove.filter((item) => !this.statickeyword.includes(item));
@@ -6387,20 +7679,11 @@ export class DynamicFlowService {
                                     }
                                     sourceFilteredVal = sourceFilteredVal.toLowerCase();
 
-                                    // if (sourceFilteredVal.includes('.items.')) {
-                                    //   let spilt = sourceFilteredVal.split('.items.');
-                                    //   var getdata = _.get(inputparam, spilt[0]);
-                                    // }
-                                    // if (getdata?.length > 0) {
-                                    //   for (let a = 0; a < getdata.length; a++) {
-                                    //     sourceFilteredVal = sourceFilteredVal.replace('.items.', '[' + a + ']',);
-                                    //   }
-                                    // }
-
                                     if (sourceFilteredVal.includes('.items.')) {
-                                        sourceFilteredVal = sourceFilteredVal.replace('.items.', '[0]',);
-                                    }
-
+                                      let spilt = sourceFilteredVal.split('.items.');                                                                        
+                                      var getdata = _.get(inputCollection[connectedid], spilt[0]);
+                                    }  
+                                    
                                     if (sourceFilteredVal && sourceFilteredVal.includes('.')) {
                                         let dst = sourceFilteredVal.split('.')
                                         sourceFilteredVal = (dst.filter(item => !this.numberArr.includes(item))).join('.');
@@ -6415,16 +7698,36 @@ export class DynamicFlowService {
                                 sourceFilteredVal = srcVal.trim();
                                 if (childnodeType != 'humantasknode' && !childName && !childid)
                                     sourceFilteredVal = connectedid + '.' + sourceFilteredVal
-                            }
-                          
+                            } 
                             if (targetHandle) {
-                                let targetSplit = targetHandle.split('|');
-                                if (pfdto?.sourceId && connectedType == "humantasknode") {
-                                    let srcId = pfdto?.sourceId.split('|').shift()
-                                    if (srcId == srcSplit[0]) {
-                                        // console.log(1234);                        
+                                let targetSplit = targetHandle.split('|');                               
+                                targetVal = targetSplit.includes('HeaderParams') ? targetSplit[1] : targetSplit[targetSplit.length - 1];
+                                
+                                // if (pfdto?.sourceId && connectedType == "humantasknode") {
+                                    let srcId = pfdto?.sourceId.split('|').shift()                                    
+                                    let formedSsKey = []
+                                    if(pfdto?.ssKey?.length>0){
+                                        let sKeyArr = pfdto?.ssKey
+                                        for(let i=0;i< sKeyArr.length;i++){
+                                            let subkeyval = (sKeyArr[i]).split(':')
+                                            if(subkeyval.length == 7)                          
+                                            formedSsKey.push(`CK:${subkeyval[0]}:FNGK:${subkeyval[1]}:FNK:${subkeyval[2]}:CATK:${subkeyval[3]}:AFGK:${subkeyval[4]}:AFK:${subkeyval[5]}:AFVK:${subkeyval[6]}`)
+                                        }
+                                    }     
+                                   
+                                    let previousHandlerId = JSON.parse(await this.redisService.getJsonData(processedKey + upId + ':NPV:' + conncectedNodename + '.PRO', collectionName))
+                                    if(previousHandlerId?.sourceid)
+                                        previousHandlerId = previousHandlerId.sourceid.split('|').shift() 
+                                    
+                                    let handlerCheck      
+                                    if(connectedType == "humantasknode")
+                                        handlerCheck = srcId == srcSplit[0] || previousHandlerId == srcSplit[0]
+                                    else
+                                        handlerCheck = true
+                                   
+                                    if (handlerCheck || formedSsKey.includes(srcSplit[0])) {  //|| srcSplit[0].includes(':FNK:UF-UFWS:')     //|| ssKey == srcSplit[0]                                                      
                                         targetVal = targetSplit.includes('HeaderParams') ? targetSplit[1] : targetSplit[targetSplit.length - 1];
-                                        if (targetVal.includes('.')) {
+                                     if (targetVal.includes('.')) {
                                             staticRemove = targetVal.split('.');
                                             targetFilteredVal = staticRemove.filter((item) => !this.statickeyword.includes(item));
                                             if (targetFilteredVal && targetFilteredVal.length > 0) {
@@ -6453,28 +7756,91 @@ export class DynamicFlowService {
                                                     if (setdata?.length) {
                                                         targetFilteredVal = targetFilteredVal.replace('[0]', '[' + setdata.length + ']');
                                                     }
-                                                }
-                                                // console.log("sourceFilteredVal",sourceFilteredVal);
-                                                // console.log("targetFilteredVal",targetFilteredVal);
-
+                                                } 
                                                 if (sourceFilteredVal && sourceFilteredVal.length > 0) {
                                                     sourceFilteredVal = sourceFilteredVal.toLowerCase();
                                                     sourceFilteredVal = sourceFilteredVal.trim();
 
-
+                                                    if (getdata?.length > 0) {
+                                                            for (let a = 0; a < getdata.length; a++) {
+                                                                // Assuming sourceFilteredVal is something like 'loan.repayment_schedule.items.'
+                                                                let dynamicPath = sourceFilteredVal.replace('.items', '[' + a + ']');
+                                                                srcarr.push(dynamicPath);
+                                                            }
+                                                            } 
+                                                    
                                                     if (childnodeType == 'humantasknode' && childName && childid) {
                                                         let childdata = inputCollection[connectedid][childName.toLowerCase()]
                                                         if (childdata?.length > 0) {
                                                             let temptargetFilteredVal = targetFilteredVal
                                                             for (let i = 0; i < childdata.length; i++) {
                                                                 if (targetFilteredVal.includes('[0]')) {
-                                                                    temptargetFilteredVal = targetFilteredVal.replace('[0]', '.' + [i] + '.',);
+                                                                    temptargetFilteredVal = targetFilteredVal.replace('[0]', [i] + '.',);
                                                                     _.set(mapObj, temptargetFilteredVal, _.get(childdata[i], sourceFilteredVal));
                                                                 }
                                                             }
                                                         }
-                                                    } else
-                                                        _.set(mapObj, targetFilteredVal, _.get(inputCollection, sourceFilteredVal));
+                                                    } else if(srcarr?.length>0){                                                        
+                                                        let dataarr = []
+                                                        for(let a = 0; a < srcarr.length; a++){
+                                                            let Obj = {};                                                       
+                                                         _.set(Obj, targetFilteredVal, _.get(inputCollection, srcarr[a]));
+                                                         dataarr.push(Obj)
+                                                        }                                                  
+                                                        formarr.push({[targetFilteredVal]:dataarr})                                                  
+                                                       childInsertArr = formarr.reduce((acc, curr) => {
+                                                        const key = Object.keys(curr)[0];      
+                                                        const arr = curr[key]; 
+                                                        arr.forEach((item, i) => {
+                                                            if (!acc[i]) acc[i] = {};
+                                                            acc[i][key] = item[key];
+                                                        });
+    
+                                                        return acc;
+                                                        }, []);                                                      
+                                                    }else{                                                                        
+                                                        if(srcSplit.length == 2 && connectedType == 'humantasknode'){
+                                                            let filterinput = await this.checkData(pfo,inputCollection,srcSplit[0],connectedid)                                                          
+                                                            _.set(mapObj, targetFilteredVal, filterinput);
+                                                        }
+                                                        else{  
+                                                            let srcData = _.get(inputCollection, sourceFilteredVal)
+                                                            
+                                                            let objVal = sourceFilteredVal
+                                                            if(sourceFilteredVal.includes('.')){
+                                                                let srcFilArr = sourceFilteredVal.split('.')
+                                                                objVal = srcFilArr[srcFilArr.length-1]
+                                                            }  
+                                                            if(srcData){
+                                                                if (targetType === 'number' && typeof srcData === 'string') {
+                                                                    let num = Number(srcData)
+                                                                    if (!Number.isNaN(num)) {
+                                                                        srcData = num
+                                                                    }
+                                                                } else if (targetType === 'string' && typeof srcData === 'number') {
+                                                                    srcData = String(srcData)
+                                                                }
+    
+                                                                if(typeof mapObj[targetFilteredVal] == 'object' && Object.keys(mapObj[targetFilteredVal]).length>0){                                                                
+                                                                    let assignData = Object.assign(mapObj[targetFilteredVal],{[objVal]:srcData})
+                                                                    _.set(mapObj, targetFilteredVal, assignData);
+                                                                }else{                                                                 
+                                                                    if(targetType == 'object' && typeof srcData == 'object'){
+                                                                        _.set(mapObj, targetFilteredVal, srcData);
+                                                                    }
+                                                                    else if(targetType == 'object' && ['string','number','boolean','date','integer','array'].includes(typeof srcData)){
+                                                                        _.set(mapObj, targetFilteredVal, {[objVal]:srcData});
+                                                                    }else if(['string','number','boolean','date','integer','array'].includes(targetType) && (typeof srcData != 'object' || Array.isArray(srcData) && srcData?.length>0)){
+                                                                        _.set(mapObj, targetFilteredVal, srcData);
+                                                                    }
+                                                                    else{
+                                                                        throw new CustomException(`Invalid data type for ${srcData}`,400)
+                                                                    }                                              
+                                                                }     
+                                                            }                                                            
+                                                        }
+                                                    }                                                     
+                                                       
                                                 } else if (b == 0) {
                                                     // let testdata: any = inputCollection;                                        
                                                     let testdata = _.get(inputCollection, connectedid + '.schema')
@@ -6501,166 +7867,105 @@ export class DynamicFlowService {
 
                                                     }
                                                 }
+                                            }else if(srcarr?.length>0){                                                        
+                                                let dataarr = []
+                                                for(let a = 0; a < srcarr.length; a++){
+                                                    let Obj = {};                                                       
+                                                    _.set(Obj, targetFilteredVal, _.get(inputCollection, srcarr[a]));
+                                                    dataarr.push(Obj)
+                                                }                                                  
+                                                formarr.push({[targetFilteredVal]:dataarr})                                                  
+                                                childInsertArr = formarr.reduce((acc, curr) => {
+                                                const key = Object.keys(curr)[0];      
+                                                const arr = curr[key]; 
+                                                arr.forEach((item, i) => {
+                                                    if (!acc[i]) acc[i] = {};
+                                                    acc[i][key] = item[key];
+                                                });
+
+                                                return acc;
+                                                }, []);                                                      
+                                            }else{                                                
+                                                if(srcSplit.length == 2 && connectedType == 'humantasknode'){ 
+                                                    let filterinput = await this.checkData(pfo,inputCollection,srcSplit[0],connectedid)                                                    
+                                                        _.set(mapObj, targetFilteredVal, filterinput);
+                                                }
+                                                else{
+                                                    let srcData = _.get(inputCollection, sourceFilteredVal)
+                                                    let objVal = sourceFilteredVal
+                                                    if(sourceFilteredVal.includes('.')){
+                                                        let srcFilArr = sourceFilteredVal.split('.')
+                                                        objVal = srcFilArr[srcFilArr.length-1]
+                                                    }
+                                                    if(srcData){
+                                                        if (targetType === 'number' && typeof srcData === 'string') {
+                                                            let num = Number(srcData)
+                                                            if (!Number.isNaN(num)) {
+                                                                srcData = num
+                                                            }
+                                                        } else if (targetType === 'string' && typeof srcData === 'number') {
+                                                            srcData = String(srcData)
+                                                        }
+    
+                                                        if(typeof mapObj[targetVal] == 'object' && Object.keys(mapObj[targetVal]).length>0){                                                                
+                                                            let assignData = Object.assign(mapObj[targetVal],{[objVal]:srcData})
+                                                            _.set(mapObj, targetVal, assignData);
+                                                        }else{                                                         
+                                                            if(targetType == 'object' && typeof srcData == 'object'){
+                                                                _.set(mapObj, targetVal, srcData);
+                                                            }
+                                                            else if(targetType == 'object' && ['string','number','boolean','date','integer','array'].includes(typeof srcData)){
+                                                               _.set(mapObj, targetVal, {[objVal]:srcData});
+                                                            }else if(['string','number','boolean','date','integer','array'].includes(targetType) && (typeof srcData != 'object' || Array.isArray(srcData) && srcData?.length>0)){
+                                                                _.set(mapObj, targetVal, srcData);
+                                                            }
+                                                            else{
+                                                                throw new CustomException(`Invalid data type for ${srcData}`,400)
+                                                            }                                                         
+                                                        }
+                                                    }
+                                                }
                                             }
-                                            else
-                                                _.set(mapObj, targetVal, _.get(inputCollection, sourceFilteredVal));
+                                                
                                         }
                                         if (b > 0) {
-                                            let obj = {};
-                                            let type
-                                            if (pfo?.length > 0) {
-                                                for (let p = 0; p < pfo.length; p++) {
-                                                    if (pfo[p].nodeId == connectedid) {
-                                                        if (pfo[p]?.schema?.['requestBody']?.['content']?.['application/json']?.['schema']) {
-                                                            type = 'application/json'
-                                                        } else if (pfo[p]?.schema?.['requestBody']?.['content']?.['application/xml']?.['schema']) {
-                                                            type = 'application/xml'
-                                                        }
-                                                        let schema = pfo[p]?.schema?.['requestBody']['content'][type]['schema'];
-                                                        var res = await this.generateMockData(schema);
-                                                        let keys = Object.keys(res);
-                                                        inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.request', collectionName))
-                                                        for (let item of keys) {
-                                                            if (inputparam) {
-                                                                if (Array.isArray(inputparam) && inputparam?.length > 0) {
-                                                                    let tempobj
-                                                                    for (let r = 0; r < inputparam.length; r++) {
-                                                                        tempobj = {}
-                                                                        _.set(tempobj, item, _.get(inputparam[r], item));
-                                                                        obj = Object.assign(obj, tempobj);
-                                                                    }
-                                                                } else if (typeof inputparam == 'object') {
-                                                                    _.set(obj, item, _.get(inputparam, item));
-                                                                } else if (typeof inputparam == 'string') {
-                                                                    obj = inputparam
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                }
-                                                schemaRes[targetFilteredVal] = obj;
-                                            }
-                                            if (schemaRes && Object.keys(schemaRes).length > 0) {
-                                                mapObj = Object.assign(mapObj, schemaRes);
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    targetVal = targetSplit.includes('HeaderParams') ? targetSplit[1] : targetSplit[targetSplit.length - 1];
-                                    // if(targetSplit.includes('HeaderParams')){
-                                    //     targetVal = targetSplit[1]
-                                    //     if(this.statickeyword.includes('parameters')){
-                                    //        this.statickeyword = this.statickeyword.splice(this.statickeyword.indexOf('parameters'), 1);
-                                    //     }
-                                    // }else{
-                                    //     targetVal = targetSplit[targetSplit.length - 1];
-                                    // }
-
-                                    if (targetVal.includes('.')) {
-                                        staticRemove = targetVal.split('.');
-                                        
-                                        
-
-                                        targetFilteredVal = staticRemove.filter((item) => !this.statickeyword.includes(item));
-                                        if (targetFilteredVal && targetFilteredVal.length > 0) {
-                                            let tempobj = {};
-                                            targetFilteredVal = targetFilteredVal.join('.');                                                    
-                                            if (targetFilteredVal.includes('.') && targetFilteredVal.startsWith('parameters.')) {
-                                                var parameterPathValue = _.get(parameter, targetFilteredVal.replace('.name', '.in'));
-                                                tempobj['key'] = _.get(parameter, targetFilteredVal);
-                                                tempobj['type'] = parameterPathValue;
-                                                targetFilteredVal = _.get(parameter, targetFilteredVal,);
-                                                tempQryVal.push(tempobj);
-                                            }
-                                            targetFilteredVal = targetFilteredVal.split('.');
-                                            targetFilteredVal = targetFilteredVal.filter((item) => !this.numberArr.includes(item));
-                                            targetFilteredVal = targetFilteredVal.join('.');
-
-                                            if (targetFilteredVal.includes('.items.')) {
-                                                targetFilteredVal = targetFilteredVal.replace('.items.', '[0]',);
-                                            }
-                                            if (targetFilteredVal.startsWith('items.')) {
-                                                targetFilteredVal = targetFilteredVal.replace('items.', '',);
-                                            }
-
-                                            if (mapObj) {
-                                                var setdata = _.get(mapObj, targetFilteredVal);
-                                                if (setdata?.length) {
-                                                    targetFilteredVal = targetFilteredVal.replace('[0]', '[' + setdata.length + ']');
-                                                }
-                                            }
-                                            
-                                            if (sourceFilteredVal && sourceFilteredVal.length > 0) {
-                                                sourceFilteredVal = sourceFilteredVal.toLowerCase();
-                                                sourceFilteredVal = sourceFilteredVal.trim();
-                                               
-                                                if (childnodeType == 'humantasknode' && childName && childid) {
-                                                    let childdata = inputCollection[connectedid][childName.toLowerCase()]
-                                                    if (childdata?.length > 0) {
-                                                        let temptargetFilteredVal = targetFilteredVal
-                                                        for (let i = 0; i < childdata.length; i++) {
-                                                            if (targetFilteredVal.includes('[0]')) {
-                                                                temptargetFilteredVal = targetFilteredVal.replace('[0]', '.' + [i] + '.',);
-                                                                _.set(mapObj, temptargetFilteredVal, _.get(childdata[i], sourceFilteredVal));
-                                                            }
-                                                        }
-                                                    }
-                                                } else
-                                                    _.set(mapObj, targetFilteredVal, _.get(inputCollection, sourceFilteredVal));
-                                            } else if (b == 0) {
-                                                // let testdata: any = inputCollection;  
-                                               
-                                                let testdata = _.get(inputCollection, connectedid + '.schema')
-                                                testdata = testdata.replace(/\\n/g, '\n');
-                                                mapObj[targetFilteredVal] = testdata;
-                                            }
-                                        } else if (sourceFilteredVal && sourceFilteredVal.length > 0) {
-                                            sourceFilteredVal = sourceFilteredVal.toLowerCase();
-                                            sourceFilteredVal = sourceFilteredVal.trim();
-                                            textobj = _.get(inputCollection, sourceFilteredVal);
-                                        } else {
-                                            textobj = _.get(inputCollection, connectedid + '.schema');
-                                        }
-                                    } else {
-                                        sourceFilteredVal = sourceFilteredVal.toLowerCase();
-                                        sourceFilteredVal = sourceFilteredVal.trim();
-                                        if (childnodeType == 'humantasknode' && childName && childid) {
-                                            let childdata = inputCollection[connectedid][childName.toLowerCase()]
-                                            if (childdata?.length > 0) {
-                                                let temptargetFilteredVal = targetVal
-                                                for (let i = 0; i < childdata.length; i++) {
-                                                    if (targetFilteredVal.includes('[0]')) {//&& !(_.get(childdata[i], targetFilteredVal))
-                                                        temptargetFilteredVal = targetFilteredVal.replace('[0]', '.' + [i] + '.',);
-                                                        _.set(mapObj, temptargetFilteredVal, _.get(childdata[i], sourceFilteredVal));
-                                                    }
-
-                                                }
-                                            }
-                                        }
-                                        else
-                                            _.set(mapObj, targetVal, _.get(inputCollection, sourceFilteredVal));
-                                     
-                                    }
-                                    if (b > 0) {
                                         let obj = {};
-                                        let type
+                                        let type,body,schema 
                                         if (pfo?.length > 0) {
                                             for (let p = 0; p < pfo.length; p++) {
                                                 if (pfo[p].nodeId == connectedid) {
-                                                    if (pfo[p]?.schema?.['requestBody']?.['content']?.['application/json']?.['schema']) {
+                                                     if(srcVal.includes('responses')){
+                                                         body = 'responses'
+                                                         let code = Object.keys(pfo[p]?.schema?.[body])[0]
+                                                        if (pfo[p]?.schema?.[body]?.[code]['content']?.['application/json']?.['schema']) {
                                                         type = 'application/json'
-                                                    } else if (pfo[p]?.schema?.['requestBody']?.['content']?.['application/xml']?.['schema']) {
+                                                    } else if (pfo[p]?.schema?.[body]?.[code]['content']?.['application/xml']?.['schema']) {
                                                         type = 'application/xml'
                                                     }
-                                                    else if (pfo[p]?.schema?.['requestBody']?.['content']?.['text/plain']?.['schema']) {
+                                                    else if (pfo[p]?.schema?.[body]?.[code]['content']?.['text/plain']?.['schema']) {
                                                         type = 'text/plain'
-                                                    } else if (pfo[p]?.schema?.['requestBody']?.['content']?.['*/*']?.['schema']) {
+                                                    } else if (pfo[p]?.schema?.[body]?.[code]['content']?.['*/*']?.['schema']) {
                                                         type = '*/*'
                                                     }
-                                                    let schema = pfo[p]?.schema?.['requestBody']['content'][type]['schema'];
+                                                    schema = pfo[p]?.schema?.[body][code]['content'][type]['schema'];
+                                                    inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.response', collectionName))
+                                                     }else{
+                                                         body = 'requestBody'
+                                                        if (pfo[p]?.schema?.[body]?.['content']?.['application/json']?.['schema']) {
+                                                        type = 'application/json'
+                                                    } else if (pfo[p]?.schema?.[body]?.['content']?.['application/xml']?.['schema']) {
+                                                        type = 'application/xml'
+                                                    }
+                                                    else if (pfo[p]?.schema?.[body]?.['content']?.['text/plain']?.['schema']) {
+                                                        type = 'text/plain'
+                                                    } else if (pfo[p]?.schema?.[body]?.['content']?.['*/*']?.['schema']) {
+                                                        type = '*/*'
+                                                    }
+                                                    schema = pfo[p]?.schema?.[body]['content'][type]['schema'];
+                                                    inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.request', collectionName))
+                                                     } 
                                                     var res = await this.generateMockData(schema);
                                                     let keys = Object.keys(res);
-                                                    inputparam = JSON.parse(await this.redisService.getJsonDataWithPath(processedKey + upId + ':NPV:' + pfo[p].nodeName + '.PRO', '.request', collectionName))
                                                     for (let item of keys) {
                                                         if (inputparam) {
                                                             if (Array.isArray(inputparam) && inputparam?.length > 0) {
@@ -6685,19 +7990,182 @@ export class DynamicFlowService {
                                             mapObj = Object.assign(mapObj, schemaRes);
                                         }
                                     }
-                                }
+                                    }
+                                // }
                             }
                         }
                     }
-                }
+                }                
 
                 if (Object.keys(mapObj).length > 0) {
                     childInsertArr.push(mapObj);
                 }
             }
+            }
             return { childInsertArr, tempQryVal, textobj }
         } catch (error) {
-            // console.log('Error', error);        
+            console.log('Error', error);        
+            throw error
+        }
+ }
+
+    async getSchemaType(pfo,currentNodeEdge){
+        try {
+            if(currentNodeEdge?.length>0){
+                let targetNodeArr = {}
+                for(let i=0;i< currentNodeEdge.length;i++){
+                    let targetId = currentNodeEdge[i].target
+                    let targetHandle = currentNodeEdge[i].targetHandle
+                    let targetNode
+                    if(targetNodeArr[targetId]){                       
+                        targetNode  = targetNode[targetId]
+                    }else{   
+                        targetNode = pfo.find(f => f.nodeId == targetId)                      
+                        targetNodeArr = {srcId:targetNode}
+                    }
+
+                    if(targetNode.schema){
+                        let schemaField = targetHandle.split('|')
+                        if(schemaField.includes('HeaderParams')){
+                            schemaField = (schemaField[1]).split('.')
+                            schemaField.pop()
+                            schemaField.push('schema')
+                            schemaField = schemaField.join('.')
+                        }
+                        else
+                            schemaField = schemaField[schemaField.length-1]
+                        
+                        let key = schemaField.split('.')
+                        key = key[key.length-1]                      
+                        let getValue = _.get(targetNode.schema,schemaField)                       
+                        let values:any = Object.values(getValue)[0]
+                        let keys = Object.keys(getValue)[0]
+                        let targetType
+                      
+                        if(getValue?.type){
+                            targetType = getValue?.type
+                        }
+                        else if(['allOf','oneOf'].includes(keys)){
+                            if(values?.length>0){
+                                for(let item of values){
+                                    if(item['keyName'] == key){
+                                        targetType = item['type']
+                                    }else{
+                                        targetType = item['type']
+                                    }
+                                }
+                            }
+                        }
+
+                        currentNodeEdge[i] = Object.assign(currentNodeEdge[i],{targetType})                      
+                    }
+                }
+
+                return currentNodeEdge
+            }else
+                return []
+            
+        } catch (error) {
+            throw error
+        }
+    }
+    
+        async checkTarget(currentNodeEdge,staticRemove,parameter){
+        try {       
+            let targetarr = [] 
+            let srcarr = [] 
+            if(currentNodeEdge?.length>0){
+                for (let e = 0; e < currentNodeEdge.length; e++) {                   
+                    let targetFilteredVal
+                    let srcHandle = currentNodeEdge[e].sourceHandle;
+                    let targetHandle = currentNodeEdge[e].targetHandle;                   
+                    let targetVal              
+                    if (srcHandle) {  
+                        let srcsplit =  srcHandle.split('|')[1]   
+                        if (targetHandle) {
+                            let targetSplit = targetHandle.split('|');
+                            targetVal = targetSplit.includes('HeaderParams') ? targetSplit[1] : targetSplit[targetSplit.length - 1];
+                            if (targetVal.includes('.')) {
+                                    staticRemove = targetVal.split('.');
+                                    targetFilteredVal = staticRemove.filter((item) => !this.statickeyword.includes(item));
+                                    if (targetFilteredVal && targetFilteredVal.length > 0) {
+                                        let tempobj = {};
+                                        targetFilteredVal = targetFilteredVal.join('.');                                                    
+                                        if (targetFilteredVal.includes('.') && targetFilteredVal.startsWith('parameters.')) {
+                                            var parameterPathValue = _.get(parameter, targetFilteredVal.replace('.name', '.in'));
+                                            tempobj['key'] = _.get(parameter, targetFilteredVal);
+                                            tempobj['type'] = parameterPathValue;
+                                            targetFilteredVal = _.get(parameter, targetFilteredVal,);
+                                            // tempQryVal.push(tempobj);
+                                        }
+                                        targetFilteredVal = targetFilteredVal.split('.');
+                                        targetFilteredVal = targetFilteredVal.filter((item) => !this.numberArr.includes(item));
+                                        targetFilteredVal = targetFilteredVal.join('.');
+
+                                        if (targetFilteredVal.includes('.items.')) {
+                                            targetFilteredVal = targetFilteredVal.replace('.items.', '[0]',);
+                                        }
+                                        if (targetFilteredVal.startsWith('items.')) {
+                                            targetFilteredVal = targetFilteredVal.replace('items.', '',);
+                                        }                                       
+                                    } 
+                            }else{
+                                targetFilteredVal = targetVal
+                            }                    
+                            targetarr.push(srcsplit+'_'+targetFilteredVal)  
+                        }
+                    }                  
+                }                 
+                // let remove:any = [...new Set(targetarr.filter((item, index) => targetarr.indexOf(item) !== index))]; 
+                // console.log("remove",remove);                                     
+                return [...new Set(targetarr.filter((item, index) => targetarr.indexOf(item) !== index))];
+                
+            }
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async checkData(pfo, inputCollection, sskey, connectedid) {
+        try {
+           
+            let inputarr = []
+            let filteredData
+            if (pfo?.length > 0) {
+                for (let a = 0; a < pfo.length; a++) {
+                    if (pfo[a].nodeId == connectedid) {
+                        let schema: any = Object.values(pfo[a].schema[sskey])
+                        schema = schema?.flat()
+                      
+                        if (schema?.length > 0) {
+                            for (let a = 0; a < schema.length; a++) {
+                                if(schema[a]?.name)
+                                    inputarr.push((schema[a].name).toLowerCase())
+                                else{                                   
+                                    let dynamicJsonArr:any = (Object.values(schema[a]))[0]                                   
+                                    dynamicJsonArr.forEach((item) => {
+                                        if (item?.['name'])
+                                            inputarr.push((item['name']).toLowerCase())
+                                    })
+                                }
+                            }
+                        }
+                    }
+                }
+             
+                console.log('inputCollection',inputCollection);
+                console.log('connectedid',connectedid);
+                // { type: 'ewe', email: 'fds@gmail.com', mobile_number: '9639874563' }
+                
+                if (inputarr?.length > 0) {
+                    filteredData = Object.fromEntries(
+                        Object.entries(inputCollection[connectedid]).filter(([key]) => inputarr.includes(key))
+                    );
+                }
+                return filteredData
+
+            }
+        } catch (error) {
             throw error
         }
     }
@@ -6916,10 +8384,13 @@ export class DynamicFlowService {
         const unwrapSingleValue = (value: any) => {
             if (Array.isArray(value) && value.length === 1 && typeof value[0] === 'object') {
                 const innerObj = value[0];
-                const keys = Object.keys(innerObj);
+                if(innerObj){
+                    const keys = Object.keys(innerObj);
                 if (keys.length === 1) {
                     return innerObj[keys[0]];
                 }
+                }
+                
             }
             return value;
         };

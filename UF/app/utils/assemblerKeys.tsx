@@ -1,19 +1,12 @@
+import UOmapperData from '@/context/dfdmapperContolnames.json'
+
+
 export function getRouteScreenDetails(key: string, artfactName: string): string {
   let assemblerKeys: any = [
   {
-    "screenName": "transaction",
-    "screensName": "transaction-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Transaction:AFVK:v1"
-  },
-  {
-    "screenName": "system setup",
-    "screensName": "system_setup-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:Master_System_Setup:AFVK:v1"
-  },
-  {
-    "screenName": "checkerapproval",
-    "screensName": "checkerapproval-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:V001:AFGK:VGPH001:AFK:CDC_Checker_Action_Screen:AFVK:v1"
+    "screenName": "test",
+    "screensName": "test-v1",
+    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   }
 ]
 
@@ -30,11 +23,16 @@ export function getRouteScreenDetails(key: string, artfactName: string): string 
 
 export function getFilterProps(filterProps:any=[],mainData:any={}) {
   let result:any = [];  
-  filterProps.map((dfdData:any)=>{
-    dfdData.nodeBasedData.map((nodes:any)=>{
-      let filterObj=nodes?.object||{}
-      Object.keys(nodes?.object).map((keys)=>{
-        filterObj[keys]=mainData[filterObj[keys]] || ""
+  try{
+  filterProps?.map((dfdData:any)=>{
+    dfdData?.nodeBasedData?.map((nodes:any)=>{
+      let filterObj:any = {}
+      Object.keys(nodes?.object||{}).map((keys:any)=>{
+        const mapperEntry = nodes?.object[keys]
+        const mapperData = (UOmapperData as Record<string, any>)[mapperEntry]
+        if (!mapperData) return
+        const value = mainData[mapperData["source"]]
+        if (value !== undefined) filterObj[keys] = value
       })
       result.push({
       DFDkey:dfdData.key,
@@ -44,5 +42,8 @@ export function getFilterProps(filterProps:any=[],mainData:any={}) {
     }) 
   })
   return result;
+}catch(e){
+  console.log(e);
+}
 }
 
