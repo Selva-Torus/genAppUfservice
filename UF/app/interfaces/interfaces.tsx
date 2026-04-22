@@ -140,6 +140,7 @@ export interface api_signinDto {
     key?:string;
     ufClientType?:string
     app_tenant?:string
+    app_tenant_id?:number
 }
 
 export interface api_screenRouteDto {

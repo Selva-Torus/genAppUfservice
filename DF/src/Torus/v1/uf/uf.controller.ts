@@ -783,13 +783,13 @@ export class UfController {
     @Body(new ValidationPipe({ transform: true })) body: signinToTorusDto,
     @Req() req: any
   ) {
-    const { username, password, dpdKey, method, ufClientType, app_tenant } = body;
+    const { username, password, dpdKey, method, ufClientType, app_tenant, app_tenant_id } = body;
     const { DEFAULT_AUTHENTICATION , FUSIONAUTH_TENANTID , FUSIONAUTH_APPLICATIONID,FUSIONAUTH_APPCLIENTSECRET } = process.env;
     let result : any;
     if(DEFAULT_AUTHENTICATION == "fusionauth" &&  FUSIONAUTH_TENANTID && FUSIONAUTH_APPLICATIONID && FUSIONAUTH_APPCLIENTSECRET) {
-       result = await this.appService.signInViaIAM(username, password, ufClientType, false , app_tenant);
+       result = await this.appService.signInViaIAM(username, password, ufClientType, false , app_tenant, app_tenant_id);
     }else{
-       result = await this.appService.signIntoTorus(username, password, ufClientType, false , app_tenant);
+       result = await this.appService.signIntoTorus(username, password, ufClientType, false , app_tenant, app_tenant_id);
     }
     if(dpdKey && method){
       result["dpdKey"] = dpdKey

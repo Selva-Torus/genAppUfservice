@@ -73,7 +73,8 @@ const LoginForm = ({ logo, appName = "application1", loginType = "standard", ima
           password: formData.password,
           key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
           ufClientType: 'UFW',
-          app_tenant: selectedAppTenant ? appTenantList?.find(item => item.tenant_name == selectedAppTenant)?.tenant_id : undefined
+          app_tenant: selectedAppTenant ? appTenantList?.find(item => item.tenant_name == selectedAppTenant)?.tenant_id : undefined,
+          app_tenant_id: selectedAppTenant ? appTenantList?.find(item => item.tenant_name == selectedAppTenant)?.at_id : undefined
         }
         const api_signin = await axios.post(
           `${baseUrl}/UF/signin`,

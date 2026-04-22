@@ -397,3 +397,53 @@ export const FusionAuthUserGet = async (
   const data = await userResponse.json();
   return data;
 };
+
+export const FusionAuthGetTenantList = async (
+  config: Record<string, string>,
+) => {
+  const tenantListResponse = await fetch(
+    config.name ?
+      `${config.fusionAuthBaseUrl}/api/tenant/search?name=${config.name}`
+      : `${config.fusionAuthBaseUrl}/api/tenant/search`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: config.fusionAuthApiKey,
+        'Content-Type': 'application/json',
+      },
+    },
+  );
+
+  if (!tenantListResponse.ok) {
+    const errorText = await tenantListResponse.text();
+    throw errorText;
+  }
+  const val = await tenantListResponse.json();
+  return val?.tenants ?? [];
+};
+
+export const FusionAuthGetApplicationList = async (
+  tenantId: string,
+  config: Record<string, string>,
+) => {
+  const applicationListResponse = await fetch(
+    config.name ?
+      `${config.fusionAuthBaseUrl}/api/application/search?name=${config.name}`
+      : `${config.fusionAuthBaseUrl}/api/application/search`,
+    {
+      method: 'GET',
+      headers: {
+        Authorization: config.fusionAuthApiKey,
+        'Content-Type': 'application/json',
+        'X-FusionAuth-TenantId': tenantId
+      },
+    },
+  );
+
+  if (!applicationListResponse.ok) {
+    const errorText = await applicationListResponse.text();
+    throw errorText;
+  }
+  const val = await applicationListResponse.json();
+  return val?.applications ?? [];
+};

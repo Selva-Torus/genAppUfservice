@@ -598,6 +598,9 @@ export class signinToTorusDto{
 
   @ApiPropertyOptional({description: 'app_tenant'})
   app_tenant?:string
+
+  @ApiPropertyOptional({description: 'app_tenant_id'})
+  app_tenant_id?:number
 }
 
 export interface errorObj{

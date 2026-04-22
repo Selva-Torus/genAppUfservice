@@ -27,7 +27,7 @@ import * as FormData from 'form-data'; // Use this
 import { Readable } from 'stream';
 import { Pool } from 'pg';
 //import { v4 as uuidv4 } from 'uuid';
-import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet, FusionAuthUserCreation } from 'src/fusionAuth.api';
+import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet, FusionAuthUserCreation, FusionAuthGetTenantList, FusionAuthGetApplicationList } from 'src/fusionAuth.api';
 import { EnvData } from 'src/envData/envData.service';
 import { decrypt } from 'src/decrypt';
 // import { RuleService } from 'src/ruleService';
@@ -4194,13 +4194,18 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async fusionAuthVerifyRefreshToken(refreshToken: string): Promise<any> {
+  async fusionAuthVerifyRefreshToken(refreshToken: string, tenantId?: string): Promise<any> {
     try {
       const config = this.getConfig();
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+      let ApplicationTenantDetails : any
      
       // prepare the tenant id ,application id and secret from the client tpc
       const url = `${fusionAuthBaseUrl}/oauth2/token`;
+
+      if(tenantId){
+        ApplicationTenantDetails = await this.getApplicationTenantFusionauthDetails(tenantId)
+      }
 
       const params = new URLSearchParams();
       params.append('grant_type', 'refresh_token');
@@ -4211,9 +4216,10 @@ getConfig(): FusionAuthConfig {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           Authorization:
-            'Basic ' +
-            btoa(fusionAuthApplicationId + ':' + fusionAuthAppClientSecret),
-          'X-FusionAuth-TenantId': fusionAuthTenantId,
+            tenantId ? 
+            'Basic ' + btoa(ApplicationTenantDetails.fusionAuthApplicationTenantId + ':' + ApplicationTenantDetails.fusionAuthApplicationTenantClientSecret) : 
+            'Basic ' + btoa(fusionAuthApplicationId + ':' + fusionAuthAppClientSecret),
+          'X-FusionAuth-TenantId': tenantId ? ApplicationTenantDetails.applicationTenantUniqueId : fusionAuthTenantId,
         },
         body: params.toString(),
       });
@@ -4474,7 +4480,7 @@ getConfig(): FusionAuthConfig {
       }
       // if currentSession has refreshTokenId this token is from fusionAuth and we need to verify with fusionauth
       if(currentSession['refreshTokenId']){
-        const value = await this.fusionAuthVerifyRefreshToken(refreshToken);
+        const value = await this.fusionAuthVerifyRefreshToken(refreshToken, payload?.tenantId );
         if (value) {
           currentSession = {
             ...currentSession,
@@ -4606,6 +4612,7 @@ getConfig(): FusionAuthConfig {
     ufClientType: string,
     isOauthUser: boolean = false,
     app_tenant : string | undefined = undefined,
+    app_tenant_id: number | undefined = undefined,
     fusionAuthLoginResponse?: any | undefined,
   ) {
     try {
@@ -4613,50 +4620,65 @@ getConfig(): FusionAuthConfig {
       const auth_secret = config.authSecret
       const accessTokenExpiryTime = config.authAccessTokenExpiryTime 
       const refreshTokenExpiryTime = config.authRefreshTokenExpiryTime 
-      const tenantUser = await this.query(`SELECT
-            au.org_au_id,
-            tu.user_unique_id AS "userUniqueId",
-            tu.email,
-            tu.password,
-            tu.first_name AS "firstName",
-            tu.last_name AS "lastName",
-            tu.login_id AS "loginId",
-            tu.user_code AS "userCode",
-            tu.trs_created_date::text AS "dateAdded",
-            tu.status,
-            au.is_app_admin as "isAppAdmin",
-            au.no_of_products_service AS "noOfProductsService",
-            au.access_profile AS "accessProfile",
-            au.last_active AS "lastActive"
-          FROM ${tenant}.tenant_user tu
-          JOIN ${tenant}.app_user au
-            ON au.org_tu_id = tu.org_tu_id
-          WHERE au.tenant_code = $1
-            AND au.ag_code     = $2
-            AND au.app_code    = $3 AND login_id=$4 or email=$4` , [tenant , ag , app ,username])
 
-       let tenantId = undefined;      
+      let query = `
+        SELECT
+          au.org_au_id,
+          tu.user_unique_id AS "userUniqueId",
+          tu.email,
+          tu.password,
+          tu.first_name AS "firstName",
+          tu.last_name AS "lastName",
+          tu.login_id AS "loginId",
+          tu.user_code AS "userCode",
+          tu.trs_created_date::text AS "dateAdded",
+          tu.status,
+          au.is_app_admin as "isAppAdmin",
+          au.no_of_products_service AS "noOfProductsService",
+          au.access_profile AS "accessProfile",
+          au.last_active AS "lastActive"
+        FROM ${tenant}.tenant_user tu
+        JOIN ${tenant}.app_user au
+          ON au.org_tu_id = tu.org_tu_id
+        WHERE au.tenant_code = $1
+          AND au.ag_code     = $2
+          AND au.app_code    = $3 
+          AND (tu.login_id = $4 OR tu.email = $4)
+      `;
 
-      if(app_tenant){
-        // check user have app_sub_tenant access to work on it
-        try {   
-          const app_sub_tenant_exist = await this.query(`SELECT * 
-              FROM ${tenant.toLowerCase()}.app_user_app_tenant auat
-              JOIN ${tenant.toLowerCase()}.app_tenant at ON auat.at_id = at.at_id
-              WHERE auat.org_au_id = ${tenantUser[0].org_au_id} AND at.tenant_id = '${app_tenant}';`)
-          if(app_sub_tenant_exist.length > 0){
-            tenantId = app_tenant
-          }else{
-            throw `${tenantUser[0].org_au_id} , ${app_tenant} Not Found`
-          }
-        } catch (error) {
-          console.log(error);
-          
-          throw new NotAcceptableException(`User lacks the access to the selected Tenant`)
+        let values = [tenant, ag, app, username];
+
+        if (app_tenant_id) {
+          query += ` AND tu.at_id = $5`;
+          values.push(String(app_tenant_id));
+        } else {
+          query += ` AND tu.at_id IS NULL`;
         }
-      }else{
-        tenantId = undefined
-      }    
+
+      const tenantUser = await this.query(query, values);
+
+       let tenantId = app_tenant;      
+
+      // if(app_tenant){
+      //   // check user have app_sub_tenant access to work on it
+      //   try {   
+      //     const app_sub_tenant_exist = await this.query(`SELECT * 
+      //         FROM ${tenant.toLowerCase()}.app_user_app_tenant auat
+      //         JOIN ${tenant.toLowerCase()}.app_tenant at ON auat.at_id = at.at_id
+      //         WHERE auat.org_au_id = ${tenantUser[0].org_au_id} AND at.tenant_id = '${app_tenant}';`)
+      //     if(app_sub_tenant_exist.length > 0){
+      //       tenantId = app_tenant
+      //     }else{
+      //       throw `${tenantUser[0].org_au_id} , ${app_tenant} Not Found`
+      //     }
+      //   } catch (error) {
+      //     console.log(error);
+          
+      //     throw new NotAcceptableException(`User lacks the access to the selected Tenant`)
+      //   }
+      // }else{
+      //   tenantId = undefined
+      // }    
 
       const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
 
@@ -4905,16 +4927,77 @@ getConfig(): FusionAuthConfig {
     }
   }
 
+  async getApplicationTenantFusionauthDetails (app_tenant : string | undefined = undefined) {
+      const config = this.getConfig();
+      const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+      const fusionAuthApiKey = config.fusionAuthApiKey;
+      let applicationTenantUniqueId = ''
+      let fusionAuthApplicationTenantId = '';
+      let fusionAuthApplicationTenantClientSecret = '';
+      
+      const possible_FA_tenant_name = `${tenant}-apptenant-${app_tenant}`;
+        // CHECK EXISTENCE OF THE APPLICATION TENANT IN FUSIONAUTH
+          const tenantList = await FusionAuthGetTenantList({
+            name: possible_FA_tenant_name,
+            fusionAuthBaseUrl: fusionAuthBaseUrl,
+            fusionAuthApiKey: fusionAuthApiKey,
+          });
+
+       const isTenantExist = tenantList.find(
+        (a) => a.name == possible_FA_tenant_name,
+      );
+
+      if(isTenantExist.id){
+        applicationTenantUniqueId = isTenantExist.id
+      } else {
+        return 'Application Tenant does not exist'
+      }
+
+
+      // step 2 => check for application existence , create if not exist and return application id
+      const possibleApplicationNameInFusionAuth = `${app_tenant}-defaultApplication`;
+      const applicationList = await FusionAuthGetApplicationList(
+        applicationTenantUniqueId,
+        {
+          fusionAuthBaseUrl: fusionAuthBaseUrl,
+          fusionAuthApiKey: fusionAuthApiKey,
+          name: possibleApplicationNameInFusionAuth,
+        },
+      )
+      
+      const isApplicationExist = applicationList.find(
+        (a) => a.name == possibleApplicationNameInFusionAuth,
+      );
+      if(isApplicationExist.id){
+        fusionAuthApplicationTenantId = isApplicationExist.id;
+        fusionAuthApplicationTenantClientSecret = isApplicationExist.oauthConfiguration.clientSecret;
+      } else {
+        return 'Application does not exist'
+      }
+
+      return {
+        applicationTenantUniqueId,
+        fusionAuthApplicationTenantId,
+        fusionAuthApplicationTenantClientSecret
+      }
+  }
+
   async signInViaIAM(
     username: string,
     password: string,
     ufClientType: string,
     isOauthUser: boolean = false,
     app_tenant : string | undefined = undefined,
+    app_tenant_id : number | undefined = undefined
   ) {
     try {
       const config = this.getConfig();
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+      let ApplicationTenantDetails : any
+
+      if(app_tenant){
+        ApplicationTenantDetails = await this.getApplicationTenantFusionauthDetails(app_tenant)
+      }
 
       const url = `${fusionAuthBaseUrl}/oauth2/token`;
       const params = new URLSearchParams();
@@ -4922,16 +5005,17 @@ getConfig(): FusionAuthConfig {
       params.append('username', username);
       params.append('password', password);
       params.append('scope', 'offline_access');
-      params.append('client_id', fusionAuthApplicationId);
+      params.append('client_id', app_tenant ? ApplicationTenantDetails.fusionAuthApplicationTenantId : fusionAuthApplicationId);
 
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           Authorization:
-            'Basic ' +
-            btoa(fusionAuthApplicationId + ':' + fusionAuthAppClientSecret),
-          'X-FusionAuth-TenantId': fusionAuthTenantId,
+          app_tenant ? 
+            'Basic ' + btoa(ApplicationTenantDetails.fusionAuthApplicationTenantId + ':' + ApplicationTenantDetails.fusionAuthApplicationTenantClientSecret) : 
+            'Basic ' + btoa(fusionAuthApplicationId + ':' + fusionAuthAppClientSecret),
+          'X-FusionAuth-TenantId': app_tenant ? ApplicationTenantDetails.applicationTenantUniqueId : fusionAuthTenantId,
         },
         body: params.toString(),
       });
@@ -4947,6 +5031,7 @@ getConfig(): FusionAuthConfig {
         ufClientType,
         isOauthUser,
         app_tenant,
+        app_tenant_id,
         fusionAuthLoginResponse,
       );
       return torusSignIn;

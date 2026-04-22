@@ -335,7 +335,14 @@
         },
         "responses": {
           "200": {
-            "description": "Common Details Fetched"
+            "description": "Returns a list of all payments made by users.\n\nCommon Details Fetched",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
           "201": {
             "description": "Returns a list of all payments made by users.",
@@ -348,7 +355,7 @@
             }
           },
           "400": {
-            "description": "Bad Request"
+            "description": "Invalid request parameters\n\nBad Request"
           },
           "500": {
             "description": "Internal Server Error"
@@ -401,7 +408,14 @@
         },
         "responses": {
           "200": {
-            "description": "Get Mapper Details Completed"
+            "description": "Returns a list of all payments made by users.\n\nGet Mapper Details Completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
           "201": {
             "description": "Returns a list of all payments made by users.",
@@ -414,7 +428,7 @@
             }
           },
           "400": {
-            "description": "Bad Request"
+            "description": "Invalid request parameters\n\nBad Request"
           },
           "500": {
             "description": "Internal Server Error"
@@ -494,7 +508,14 @@
         ],
         "responses": {
           "200": {
-            "description": "Get DFKey Completed"
+            "description": "Returns a list of all payments made by users.\n\nGet DFKey Completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
           "201": {
             "description": "Returns a list of all payments made by users.",
@@ -546,7 +567,14 @@
         },
         "responses": {
           "200": {
-            "description": "Data PaginationDataFilter Completed"
+            "description": "Returns a list of all payments made by users.\n\nData PaginationDataFilter Completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           },
           "201": {
             "description": "Returns a list of all payments made by users.",
@@ -559,7 +587,7 @@
             }
           },
           "400": {
-            "description": "Bad Request"
+            "description": "Invalid request parameters\n\nBad Request"
           },
           "500": {
             "description": "Internal Server Error"
@@ -1847,6 +1875,10 @@
           "app_tenant": {
             "type": "string",
             "description": "app_tenant"
+          },
+          "app_tenant_id": {
+            "type": "number",
+            "description": "app_tenant_id"
           }
         },
         "required": [
