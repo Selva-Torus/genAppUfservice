@@ -1,24 +1,31 @@
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
 metadata:
-  name: ci001-a001-uf-v1-ingress
-  namespace: ci001-a001-uf-v1
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  name: ct005-vgph-uf-generator-virtualservice
+  namespace: ct005-vgph-uf-v1
 spec:
-  ingressClassName: nginx
-  tls:
-    - hosts:
-        - tgadev.toruslowcode.com
-      secretName: ci001-a001-uf-v1-tls
-  rules:
-    - host: tgadev.toruslowcode.com
-      http:
-        paths:
-          - path: /ci001/ag001/a001/v1
-            pathType: Prefix
-            backend:
-              service:
-                name: ci001-a001-uf-generator
-                port:
-                  number: 443
+  hosts:
+    - "tgadev2.toruslowcode.com"
+  gateways:
+    - istio-system/wp-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /ct005/gss/vgph/v1
+      route:
+        - destination:
+            host: ct005-vgph-uf-generator
+            port:
+              number: 443 
+    - match:
+        - uri:
+            prefix: /ct005/gss/vgph/v1
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: ct005-vgph-uf-generator
+            port:
+              number: 443
+ 
+ 

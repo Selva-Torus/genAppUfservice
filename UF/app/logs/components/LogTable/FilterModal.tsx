@@ -20,6 +20,7 @@ import { RangeCalendar } from '@/components/RangeCalendar'
 import { getCdnImage } from '@/app/utils/getAssets'
 import { getFontSizeForSubHeader } from '@/app/utils/branding'
 import { get } from 'lodash'
+import clsx from 'clsx'
 
 const FilterModal = ({
   range,
@@ -29,7 +30,9 @@ const FilterModal = ({
   setFabrics,
   user,
   setUser,
-  activeTab
+  activeTab,
+  localSortOrder,
+  setLocalSortOrder
 }: {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
   range: any
@@ -39,6 +42,8 @@ const FilterModal = ({
   user: Array<string>
   setUser: React.Dispatch<React.SetStateAction<Array<string>>>
   activeTab: string
+  localSortOrder: string
+  setLocalSortOrder: React.Dispatch<React.SetStateAction<string>>
 }) => {
   const [isDateRangeOpen, setDateRangeOpen] = useState(false)
   const [selectedDateRange, setSelectedDateRange] = useState<any>(range)
@@ -53,6 +58,7 @@ const FilterModal = ({
   const { isDark, borderColor, textColor, bgColor, branding } = useTheme()
 
   const calendarTriggerRef = useRef<HTMLDivElement>(null)
+  const sortbutton = ['Newest', 'Oldest']
 
   const fabricList = [
     { key: 'DF', label: 'Data Fabric' },
@@ -158,6 +164,35 @@ const FilterModal = ({
         </Button>
       </div>
       <hr className={`w-full ${borderColor}`} />
+      <div className='flex flex-col gap-[1.24vh] px-[0.58vw] py-[1.24vh]'>
+        <Text
+          contentAlign='left'
+          variant={getFontSizeForSubHeader(branding.fontSize)}
+          className='flex !w-fit items-center gap-2'
+        >
+          SORT BY
+        </Text>
+        <div className='flex flex-wrap gap-[0.58vw] text-nowrap'>
+          {sortbutton.map(item => (
+            <button
+              onClick={() => setLocalSortOrder(item)}
+              key={item}
+              style={{
+                backgroundColor:
+                localSortOrder == item ? branding.brandColor : "#fff",
+              }}
+              className={clsx(
+                `text-torus-text flex rounded-md border px-[0.29vw] py-[0.62vh] leading-[2.22vh] outline-none`,
+                {
+                  'text-white': localSortOrder == item
+                }
+              )}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </div>
       {/* Date Range Selection */}
       <div className='flex flex-col gap-3 px-2 py-3'>
         <Text contentAlign='left' variant={getFontSizeForSubHeader(branding.fontSize)}>

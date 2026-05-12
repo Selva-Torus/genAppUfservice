@@ -63,7 +63,7 @@ interface TableProps {
   emptyMessage?:string | React.ReactNode;
   data?: Record<string, string | number | boolean | null>[];
   columns?: ColumnType[];
-  onRowClick?: (row: any) => void;
+  onRowClick?: (row: any, index: any) => void;
   className?: string;
   renderRowActions?: (props: RenderRowActionsProps) => React.ReactNode | Promise<React.ReactNode>;
   selectedIds?: string[];
@@ -122,9 +122,11 @@ export const Table: React.FC<TableProps> = ({
   fillContainer = true,
   headerButtonsRenders=<></>
 }) => {
-  const { theme, branding,direction } = useGlobal();
+  const { theme, branding,direction,displayFormat } = useGlobal();
   const { borderColor } = useTheme()
   const [searchTerm, setSearchTerm] = useState("");
+  const [clickedRowId, setClickedRowId] = useState<string | null>(null);
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [showColumnModal, setShowColumnModal] = useState(false);
@@ -268,6 +270,27 @@ const sortedData = sortColumn
     const b = parseInt(hex?.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
+    
+  const formatDateDisplay = (dateStr: string): string => {
+    if (!dateStr) return "";
+    const parts = dateStr.split("-");
+    if (parts.length !== 3) return dateStr;
+    const [year, month, day] = parts;
+    switch (displayFormat?.datePickerProperty?.dateDisplayFormat||"DD-MM-YYYY") {
+      case "DD-MM-YYYY": return `${day}-${month}-${year}`;
+      case "d,M,yyyy":      return `${parseInt(day)},${parseInt(month)},${year}`;
+      default:           return `${year}-${month}-${day}`;
+    }
+  };
+  const convertToformat=(data:any)=>{
+    function isValidDate(dateString:any) {
+      return !isNaN(Date.parse(dateString));
+    }
+    if(isValidDate(data))
+      return formatDateDisplay(data?.split("T")?.at(0))
+
+    return data
+  }
 
   const tableElement = (
      <div className={`w-full h-full flex flex-col ${edgePadding ? "" : ""} ${className}`}>
@@ -555,14 +578,14 @@ const sortedData = sortColumn
                 </tr>
               ) : (displayData.map((row, index) => {
               const rowId = getRowIdHelper(row, index);
-              const isSelected = selectedIds.includes(rowId);
+              const isSelected = selectedIds.includes(rowId) || clickedRowId === rowId;
 
               return (
                 <tr
                   key={rowId}
                   onClick={() => {
-                    if(isRowclick){
-                      onRowClick?.(row);
+                    if(isRowclick){                      
+                      onRowClick?.(row,rowId);
                       handleRowSelection(row, index);
                     }
                   }}
@@ -574,18 +597,17 @@ const sortedData = sortColumn
                     ${isRowclick ? "cursor-pointer" : ""}
                   `}
                   style={{
-                    backgroundColor: isSelected ? hexToRgba(branding.selectionColor, 0.15) : undefined,
+                    backgroundColor: isSelected
+                      ? branding.selectionColor : 'transparent',
                   }}
                   onMouseEnter={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.backgroundColor = hexToRgba(branding.hoverColor, 0.1);
-                    }
+                    e.currentTarget.style.backgroundColor = branding.hoverColor;
                   }}
                   onMouseLeave={(e) => {
-                    if (!isSelected) {
+                    if (isSelected){
+                      e.currentTarget.style.backgroundColor = branding.selectionColor;
+                    }else{
                       e.currentTarget.style.backgroundColor = 'transparent';
-                    } else {
-                      e.currentTarget.style.backgroundColor = hexToRgba(branding.selectionColor, 0.15);
                     }
                   }}
                 >
@@ -642,7 +664,7 @@ const sortedData = sortColumn
                               ${column?.className}
                             `}
                           >
-                            {row[column.id]}
+                            {convertToformat(row[column.id])}
                           </td>
                           )
                         }

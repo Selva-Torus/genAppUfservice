@@ -17,12 +17,16 @@ interface Props {
   email: string
   brandColor?: string
   setIsOtpReceive: React.Dispatch<React.SetStateAction<boolean>>
+  selectedAppTenant?: string
+  appTenantList?: any
 }
 
 const OtpVerification = ({
   email,
   brandColor = '#76C432',
-  setIsOtpReceive
+  setIsOtpReceive,
+  selectedAppTenant,
+  appTenantList
 }: Props) => {
   const router = useRouter()
   const inputRefs = useRef<Array<HTMLInputElement | null>>([])
@@ -65,7 +69,8 @@ const OtpVerification = ({
     try {
       const res = await AxiosService.get(`UF/getResetPasswordOtp`, {
         params: {
-          email: email
+          email: email,
+          tenantId: selectedAppTenant ? appTenantList?.find((item: any) => item.tenant_name == selectedAppTenant)?.at_id : undefined
         }
       })
       if (res.status === 200) {
@@ -137,7 +142,9 @@ const OtpVerification = ({
     try {
       const res = await AxiosService.patch(`UF/resetPassword`, {
         email: email,
-        password: formData.password
+        password: formData.password,
+        app_tenant: selectedAppTenant ? appTenantList?.find((item: any) => item.tenant_name == selectedAppTenant)?.tenant_id : undefined,
+        tenantId: selectedAppTenant ? appTenantList?.find((item: any) => item.tenant_name == selectedAppTenant)?.at_id : undefined
       })
       if (res.status == 200) {
         toast(typeof res.data == "string" ? res.data : 'Password updated successfully', 'success')

@@ -11,28 +11,34 @@ import { useTheme } from '@/hooks/useTheme'
 import { useGlobal } from '@/context/GlobalContext'
 import { getCdnImage } from '../utils/getAssets'
 import { getFontSizeForHeader } from '../utils/branding'
+import { Dropdown } from '@/components/Dropdown'
+import i18n from '../components/i18n'
 
 interface Props {
   logo: string
   appName: string
+  appTenantList?: any[]
 }
 
-const ForgotPassword = ({
-  logo,
-  appName ,
-}: Props) => {
-  const [formData, setFormData] = useState<Record<string, string>>({email: ''})
+const ForgotPassword = ({ logo, appName, appTenantList }: Props) => {
+  const [formData, setFormData] = useState<Record<string, string>>({
+    email: ''
+  })
   const toast = useInfoMsg()
   const [isOtpReceive, setIsOtpReceive] = useState(false)
   const { isDark } = useTheme()
-  const {branding} = useGlobal()
-  const {brandColor} = branding
+  const { branding } = useGlobal()
+  const { brandColor } = branding
+  const isSaasApp = process.env.NEXT_PUBLIC_IS_SAAS_APPLICATION
+  const [selectedAppTenant , setSelectedAppTenant] = useState('')
+  const keyset: any = i18n.keyset('language')
 
   const handleGetOtp = async () => {
     try {
       const res = await AxiosService.get(`UF/getResetPasswordOtp`, {
         params: {
-          email: formData.email
+          email: formData.email,
+          tenantId: selectedAppTenant ? appTenantList?.find(item => item.tenant_name == selectedAppTenant)?.at_id : undefined
         }
       })
       if (res.status === 200) {
@@ -66,7 +72,12 @@ const ForgotPassword = ({
       </div>
       {isOtpReceive ? (
         <div>
-          <OtpVerification email={formData.email} setIsOtpReceive={setIsOtpReceive} />
+          <OtpVerification
+            email={formData.email}
+            setIsOtpReceive={setIsOtpReceive}
+            selectedAppTenant={selectedAppTenant}
+            appTenantList={appTenantList}
+          />
         </div>
       ) : (
         <div className='flex h-[550px] w-full flex-col items-center justify-center gap-[20px]'>
@@ -77,6 +88,20 @@ const ForgotPassword = ({
             </Text>
           </div>
           <>
+            {isSaasApp == 'true' && (
+              <div className='flex flex-col gap-2 w-[300px]'>
+                <Dropdown
+                  staticProps={appTenantList?.map(
+                    (item: any) => item?.tenant_name
+                  )}
+                  value={selectedAppTenant}
+                  onChange={val => setSelectedAppTenant(val as string)}
+                  placeholder={keyset('Select Tenant')}
+                  hasClear
+                  static
+                />
+              </div>
+            )}
             <label className='flex w-[300px] flex-col gap-[10px] text-[15px]'>
               Email
               <input

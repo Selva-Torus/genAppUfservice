@@ -7,6 +7,7 @@ import { CronJob } from 'cron';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { JobProcessor } from './processors/job.processor';
 import { EnvData } from 'src/envData/envData.service';
+import { CustomException } from 'src/customException';
 const  Xid = require('xid-js');
 
 @Injectable()
@@ -22,95 +23,119 @@ export class SchedulerService {
     ) {} 
    
 
-    async startScheduler(input,token) {          
-        let scheduledJobs       
-        if(input) {
-            if(Array.isArray(input) && input.length > 0){
-                scheduledJobs = []
-                for(let i=0;i < input.length;i++){
-                    scheduledJobs.push(await this.getDataFromTable(token,'GET',"sch_scheduled_job",'',{path:input[i]?.id}))
+    async startScheduler(input,token) {   
+        try {            
+            let scheduledJobs       
+            if(input) {
+                if(Array.isArray(input) && input.length > 0){
+                    scheduledJobs = []
+                    for(let i=0;i < input.length;i++){
+                        scheduledJobs.push(await this.getDataFromTable(token,'GET',"sch_scheduled_job",'',{path:input[i]?.id}))
+                    }
+                }else if(typeof input == "object" && Object.keys(input).length > 0){                
+                    scheduledJobs = await this.getDataFromTable(token,'GET',"sch_scheduled_job",'',{path:input?.id});
                 }
-            }else if(typeof input == "object" && Object.keys(input).length > 0){                
-                scheduledJobs = await this.getDataFromTable(token,'GET',"sch_scheduled_job",'',{path:input?.id});
+            }       
+            //console.log('scheduledJobs',scheduledJobs);      
+    
+            if(scheduledJobs) {
+                if(Array.isArray(scheduledJobs) && scheduledJobs.length > 0){                
+                    for (const schedule of scheduledJobs) {
+                        await this.checkAndExecute(token,schedule,input.pf_key);
+                    }
+                }else if(typeof scheduledJobs === 'object' && Object.keys(scheduledJobs).length > 0){
+                    await this.checkAndExecute(token,scheduledJobs,input.pf_key);
+                }
             }
+        } catch (error:any) {
+            throw new CustomException(error?.message || error, 400)
         }       
-        //console.log('scheduledJobs',scheduledJobs);      
-
-        if(scheduledJobs) {
-            if(Array.isArray(scheduledJobs) && scheduledJobs.length > 0){                
-                for (const schedule of scheduledJobs) {
-                    await this.checkAndExecute(token,schedule,input.pf_key);
-                }
-            }else if(typeof scheduledJobs === 'object' && Object.keys(scheduledJobs).length > 0){
-                await this.checkAndExecute(token,scheduledJobs,input.pf_key);
-            }
-        }
     }   
 
     async checkAndExecute(token,Job,pf_key){
-        this.logger.log('checkAndExecute Started');        
-       
-        let run_category = Job.scheduler_info.run_category;       
-        let j_start_date = Job.scheduler_info.job_start_date
-        let j_end_date = Job.scheduler_info.job_end_date        
-        let isRepeat = false
-                        
-        if (Job.status == "ACTIVE") {
-            if(run_category == "Multiple"){ 
-                isRepeat = true
+        try {            
+            this.logger.log('checkAndExecute Started');        
+           
+            let run_category = Job.scheduler_info.run_category;       
+            let j_start_date = Job.scheduler_info.job_start_date
+            let j_end_date = Job.scheduler_info.job_end_date        
+            let isRepeat = false
+                            
+            if (Job.status == "ACTIVE") {
+                if(run_category == "Multiple"){ 
+                    isRepeat = true
+                }
+                
+                // let isCurrentTime = await this.checkWindowAndCurrent("current",j_start_date,j_end_date);
+
+                let isCurrentTime = await this.checkWindowAndCurrent(j_start_date,j_end_date);
+                if(isCurrentTime)
+                    await this.addBullJob(Job,isRepeat,token,pf_key);   
+                
             }
-            
-            let isCurrentTime = await this.checkWindowAndCurrent("current",j_start_date,j_end_date);
-            await this.addBullJob(Job,isRepeat,isCurrentTime.delayMs,token,pf_key);   
+        } catch (error:any) {          
+            let errorDetails , status
+            if (error?.response?.data) {
+                errorDetails = error.response.data.message || error.response.data;
+                status = error.response.data.statusCode || error.response.status
+            } else if (error?.message) {
+                errorDetails = error.message;
+                status = error?.status || 500;
+            }   
+            throw new CustomException(errorDetails || error, status || 500)
             
         }
        
     }  
 
-    async addBullJob(sch_job_data: any,isRepeat,delayMs,token,pf_key) {
-        
-        console.log(`Executing schedule: ${sch_job_data.name}`);
-        let scheduler_info = sch_job_data.scheduler_info
-        const opts: any = {
-            jobId: sch_job_data.trs_process_id
-        };     
-        
-        if(isRepeat){
-            let cronExpression = await this.buildCron(scheduler_info.frequency_type,scheduler_info.frequency);
-            opts.repeat = {
-                pattern: cronExpression,
-                tz: sch_job_data.timezone || 'UTC',
-                startDate:new Date(scheduler_info.job_start_date),
-                endDate:new Date(scheduler_info.job_end_date)
-            };
+    async addBullJob(sch_job_data: any,isRepeat,token,pf_key) {
+        try {            
+            
+            console.log(`Executing schedule: ${sch_job_data.name}`);
+            let scheduler_info = sch_job_data.scheduler_info
+            const opts: any = {
+                jobId: sch_job_data.trs_process_id
+            };     
+            
+            if(isRepeat){
+                let cronExpression = await this.buildCron(scheduler_info.frequency_type,scheduler_info.frequency);
+                opts.repeat = {
+                    pattern: cronExpression,
+                    tz: sch_job_data.timezone || 'UTC',
+                    startDate:new Date(scheduler_info.job_start_date),
+                    endDate:new Date(scheduler_info.job_end_date)
+                };
+            }
+            // if(delayMs){
+            //     opts.delay = delayMs;
+            // }
+            else if(scheduler_info.delay_time && scheduler_info.delay_type){
+                opts.delay = await this.delayToMs(scheduler_info.delay_time,scheduler_info.delay_type);
+            }
+            //console.log('opts',opts); 
+    
+            let sch_job_log_res = await this.getDataFromTable(token,'POST',"sch_job_log",{            
+                status: "ACTIVE"                      
+            }); 
+    
+            const queue = this.getQueue(pf_key);
+            const bullJob = await queue.add( 
+                sch_job_data.name, 
+                {               
+                    schjt_id : sch_job_data.schjt_id, 
+                    schsj_id : sch_job_data.schsj_id, 
+                    schjl_id : sch_job_log_res.schjl_id,
+                    token: token,
+                    data: sch_job_data.job_data 
+                }, 
+                opts
+            ); 
+            sch_job_data.bullmqJobId = bullJob.repeatJobKey;          
+    
+            this.logger.log(`Created scheduled job: ${sch_job_data.name} [${sch_job_data.trs_process_id}]`); 
+        } catch (error) {
+            throw error
         }
-        if(delayMs){
-            opts.delay = delayMs;
-        }
-        else if(scheduler_info.delay_time && scheduler_info.delay_type){
-            opts.delay = await this.delayToMs(scheduler_info.delay_time,scheduler_info.delay_type);
-        }
-        //console.log('opts',opts); 
-
-        let sch_job_log_res = await this.getDataFromTable(token,'POST',"sch_job_log",{            
-            status: "ACTIVE"                      
-        }); 
-
-        const queue = this.getQueue(pf_key);
-        const bullJob = await queue.add( 
-            sch_job_data.name, 
-            {               
-                schjt_id : sch_job_data.schjt_id, 
-                schsj_id : sch_job_data.schsj_id, 
-                schjl_id : sch_job_log_res.schjl_id,
-                token: token,
-                data: sch_job_data.job_data 
-            }, 
-            opts
-        ); 
-        sch_job_data.bullmqJobId = bullJob.repeatJobKey;          
-
-        this.logger.log(`Created scheduled job: ${sch_job_data.name} [${sch_job_data.trs_process_id}]`); 
     } 
    
     getQueue(queueName: string): Queue {
@@ -158,96 +183,79 @@ export class SchedulerService {
         }
     }
 
-    async checkWindowAndCurrent(
-        Flg: string,
-        StartTime: string,
-        EndTime: string,
-        nows = new Date()
-    ) {
-        // Ensure now is a Date object
-        let now = new Date(nows);
-        console.log('now',now);
-        console.log("StartTime",StartTime);
-        console.log('EndTime',EndTime);
+    // async checkWindowAndCurrent(
+    //     Flg: string,
+    //     StartTime: string,
+    //     EndTime: string,
+    //     nows = new Date()
+    // ) {
+    //     // Ensure now is a Date object
+    //     let now = new Date(nows);
+    //     // console.log('now',now);
+    //     // console.log("StartTime",StartTime);
+    //     // console.log('EndTime',EndTime);
         
-        // Default result
-        let result = {
-            shouldRunNow: false,
-            delayMs: 0
-        };
+    //     // Default result
+    //     let result = {
+    //         shouldRunNow: false,
+    //         delayMs: 0
+    //     };
 
-        if(!StartTime || !EndTime){return result}
+    //     if(!StartTime || !EndTime){return result}        
 
-        // ---------------- WINDOW MODE ----------------
-        if (Flg === "window") {
-            const [startH, startM] = StartTime.split(':').map(Number);
-            const [endH, endM] = EndTime.split(':').map(Number);
+    //     // ---------------- CURRENT MODE ----------------
+    //     if (Flg === "current") {
+    //         if (StartTime && EndTime) {
+    //             const startDate = new Date(StartTime);
+    //             const endDate = new Date(EndTime);
 
-            const start = startH * 60 + startM;
-            const end = endH * 60 + endM;
-            const current = now.getUTCHours() * 60 + now.getUTCMinutes(); // UTC-safe
+    //             // Run now if inside the window
+    //             if (now >= startDate && now <= endDate) {
+    //                 return { shouldRunNow: true, delayMs: 0 };
+    //             }
 
-            // Same-day window
-            if (start <= end) {
-                if (current >= start && current <= end) {
-                    return { shouldRunNow: true, delayMs: 0 };
-                }
+    //             // Delay until start
+    //             if (now < startDate) {
+    //                 const delayMs = Math.max(0, startDate.getTime() - now.getTime());
+    //                 return { shouldRunNow: false, delayMs };
+    //             }
 
-                // Delay until today's start
-                if (current < start) {
-                    const delayMs = (start - current) * 60 * 1000;
-                    return { shouldRunNow: false, delayMs };
-                }
+    //             // After end → schedule for next day's start
+    //             const nextStart = new Date(startDate);
+    //             nextStart.setUTCDate(nextStart.getUTCDate() + 1); // UTC-safe
+    //             const delayMs = Math.max(0, nextStart.getTime() - now.getTime());
+    //             return { shouldRunNow: false, delayMs };
+    //         }
 
-                // Delay until next day's start
-                const delayMs = ((24 * 60 - current) + start) * 60 * 1000;
-                return { shouldRunNow: false, delayMs };
-            }
+    //         // Only StartTime provided
+    //         if (StartTime) {
+    //             const startDate = new Date(StartTime);
 
-            // Overnight window (e.g. 22:00 → 02:00)
-            // return current >= start || current <= end;
+    //             if (now >= startDate) {
+    //                 return { shouldRunNow: true, delayMs: 0 };
+    //             }
+
+    //             const delayMs = Math.max(0, startDate.getTime() - now.getTime());
+    //             return { shouldRunNow: false, delayMs };
+    //         }
+    //     }
+
+    //     return result;
+    // }
+
+    async checkWindowAndCurrent(StartTime: string,EndTime: string) {             
+       
+        if (StartTime && EndTime) {
+            const startDate = new Date(StartTime);
+            const endDate = new Date(EndTime);
+
+            // Run now if inside the window
+            if (startDate <= endDate) {
+                return true
+            }           
         }
-
-        // ---------------- CURRENT MODE ----------------
-        if (Flg === "current") {
-            if (StartTime && EndTime) {
-                const startDate = new Date(StartTime);
-                const endDate = new Date(EndTime);
-
-                // Run now if inside the window
-                if (now >= startDate && now <= endDate) {
-                    return { shouldRunNow: true, delayMs: 0 };
-                }
-
-                // Delay until start
-                if (now < startDate) {
-                    const delayMs = Math.max(0, startDate.getTime() - now.getTime());
-                    return { shouldRunNow: false, delayMs };
-                }
-
-                // After end → schedule for next day's start
-                const nextStart = new Date(startDate);
-                nextStart.setUTCDate(nextStart.getUTCDate() + 1); // UTC-safe
-                const delayMs = Math.max(0, nextStart.getTime() - now.getTime());
-                return { shouldRunNow: false, delayMs };
-            }
-
-            // Only StartTime provided
-            if (StartTime) {
-                const startDate = new Date(StartTime);
-
-                if (now >= startDate) {
-                    return { shouldRunNow: true, delayMs: 0 };
-                }
-
-                const delayMs = Math.max(0, startDate.getTime() - now.getTime());
-                return { shouldRunNow: false, delayMs };
-            }
-        }
-
-        return result;
+            
     }
-
 
     async getDataFromTable(token,method,tableName,data,params?): Promise<any> {
         try {         
@@ -314,7 +322,7 @@ export class SchedulerService {
                 if (results.removed.length === 0) {
                     results.failed.push({ name: input.name, reason: 'No repeatable job found with this name' });
                 }
-            } catch (error) {
+            } catch (error:any) {
                 results.failed.push({ name: input.name, reason: error.message });
             }
             return results;
@@ -344,7 +352,7 @@ export class SchedulerService {
                 results.removed.push(job.id);
                 this.logger.log(`Removed job: ${job.id}`);
             }
-        } catch (error) {
+        } catch (error:any) {
             results.failed.push({ reason: error.message });
         }
 

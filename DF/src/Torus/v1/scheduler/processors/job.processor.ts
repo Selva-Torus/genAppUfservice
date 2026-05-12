@@ -70,7 +70,7 @@ export class JobProcessor{
                     
                     let execution;         
                     try {     
-                        let isWithinWindow
+                        let isWithinWindow = true
                         const JobTemplate = await this.getDataFromTable(job.data.token,'GET',"sch_job_template","",{path:schjt_id});
                         const scheduledJob = await this.getDataFromTable(job.data.token,'GET',"sch_scheduled_job","",{path:schsj_id});
                         const now = new Date();

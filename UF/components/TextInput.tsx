@@ -19,7 +19,6 @@ import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
 import { RiCloseCircleLine } from 'react-icons/ri'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 type ContentAlign = 'center' | 'left' | 'right'
-type NumberFormatStyle = 'none' | 'Indian' | 'International' | 'European'
 interface TextInputProps {
   nodeId?: string
   disabled?: boolean
@@ -46,12 +45,11 @@ interface TextInputProps {
   require?: boolean
   onChange?: React.ChangeEventHandler<HTMLInputElement> | undefined
   onBlur?: React.FocusEventHandler<HTMLInputElement> | undefined
-  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement> | undefined
   events?: ComponentEvents[]
   className?: string
   fillContainer?: boolean
   contentAlign?: ContentAlign
-  numberFormat?: NumberFormatStyle
+  itsHaveCurrency?: boolean
 }
 
 export const TextInput: React.FC<TextInputProps> = ({
@@ -80,14 +78,14 @@ export const TextInput: React.FC<TextInputProps> = ({
   require = false,
   onChange,
   onBlur = () => {},
-  onKeyDown,
   events,
   className = '',
   fillContainer = true,
   contentAlign = 'left',
-  numberFormat
+  itsHaveCurrency=false
 }) => {
-  const { theme, direction, branding } = useGlobal()
+  const [onloadType,setOnloadType]=useState("text")
+  const { theme, direction, branding,displayFormat } = useGlobal()
   const eventBus = useEventBus()
   const [internalValue, setInternalValue] = useState(value)
   const [isDisabled, setIsDisabled] = useState(disabled)
@@ -96,49 +94,9 @@ export const TextInput: React.FC<TextInputProps> = ({
   const [rightWidth, setRightWidth] = useState(0)
   const leftContentRef = useRef<HTMLDivElement>(null)
   const rightContentRef = useRef<HTMLDivElement>(null)
-  const showToast = useInfoMsg()
-
-  // Number formatting functions
-  const formatNumber = (val: any): string => {
-    if (!numberFormat || numberFormat === 'none') return val?.toString() ?? ''
-    if (val === null || val === undefined || val === '') return ''
-    const num = typeof val === 'string' ? parseFloat(val.replace(/[,.\s]/g, (match) => {
-      if (numberFormat === 'European' && match === '.') return ''
-      if (numberFormat !== 'European' && match === ',') return ''
-      return match
-    })) : val
-    if (isNaN(num) || !isFinite(num)) return val?.toString() ?? ''
-
-    switch (numberFormat) {
-      case 'Indian':
-        return num.toLocaleString('en-IN')
-      case 'International':
-        return num.toLocaleString('en-US')
-      case 'European':
-        return num.toLocaleString('de-DE')
-      default:
-        return val?.toString() ?? ''
-    }
-  }
-
-  const parseNumber = (val: string): string => {
-    if (!numberFormat || numberFormat === 'none') return val
-    if (val === '') return ''
-    let cleanedValue = val
-    switch (numberFormat) {
-      case 'European':
-        // European: . is thousand separator, , is decimal
-        cleanedValue = val.replace(/\./g, '').replace(',', '.')
-        break
-      case 'Indian':
-      case 'International':
-      default:
-        // Indian/International: , is thousand separator
-        cleanedValue = val.replace(/,/g, '')
-        break
-    }
-    return cleanedValue
-  }                                                                                                                                                    
+  const [alteredType,setAlteredType]=useState("text")
+  const prevRefreshRef = useRef(false);
+    const showToast = useInfoMsg()                                                                                                                                                    
        const prevValidationState = useRef(validationState)                                                                                                                               
                                                                                                                                                                                        
       useEffect(() => {                                                                                                                                                                 
@@ -161,31 +119,24 @@ export const TextInput: React.FC<TextInputProps> = ({
   useEffect(() => {
     setInternalValue(value)
   }, [value])
-
+  const toast : Function = useInfoMsg()
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value
-
-    // If numberFormat is set, parse and validate
-    if (numberFormat && numberFormat !== 'none') {
-      const parsedValue = parseNumber(rawValue)
-      // Only allow valid number characters
-      if (parsedValue !== '' && !/^-?\d*\.?\d*$/.test(parsedValue)) {
-        return // Block invalid input
+    prevRefreshRef.current= true
+    const newValue = e.target.value
+    if(type=="number")
+    { setOnloadType("number")
+      if (!isNaN(+newValue)) {
+          onChange?.(e)
+      }else{
+        toast("please enter numbers only","danger")
+        return
       }
-      setInternalValue(rawValue)
-      // Pass parsed value to parent
-      const modifiedEvent = {
-        ...e,
-        target: { ...e.target, value: parsedValue }
-      } as React.ChangeEvent<HTMLInputElement>
-      onChange?.(modifiedEvent)
-    } else {
-      setInternalValue(rawValue)
+    }else
+    {
       onChange?.(e)
     }
-
+    setInternalValue(newValue)
     // Emit rise events when onChange occurs
-    const newValue = numberFormat && numberFormat !== 'none' ? parseNumber(rawValue) : rawValue
     const onChangeEvent = events?.find(e => e.name === 'onChange')
     if (onChangeEvent?.enabled && onChangeEvent.rise && nodeId) {
       onChangeEvent.rise.forEach(riseEvent => {
@@ -336,6 +287,46 @@ export const TextInput: React.FC<TextInputProps> = ({
     const b = parseInt(hex?.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
+  const customeOnBlur=(e:any)=>{
+    onBlur(e)
+    if(type=='number')
+    {
+      setOnloadType("text")
+      let formatted = Number(e.target.value).toLocaleString();
+      if(itsHaveCurrency)
+      {
+        formatted=(displayFormat?.textInputProperty?.currencyDisplayFormat||"₹")+formatted
+      }
+      setInternalValue(formatted)
+    }
+  }
+  const customeOnFocus=(e:any)=>{
+    if(type=='number')
+    {
+      setOnloadType("text")
+      let temp:any=e.target.value.replace(/,/g, "")
+      if(itsHaveCurrency)
+      {
+        temp=temp?.replace((displayFormat?.textInputProperty?.currencyDisplayFormat||"₹"), "")
+      }
+      let formatted:any = Number(temp);
+      setInternalValue(formatted)
+    }
+  }
+  useEffect(()=>{
+    if (prevRefreshRef.current==false) {
+      if(type=='number')
+      {
+        setOnloadType("text")
+        let formatted = Number(value).toLocaleString();
+        if(itsHaveCurrency)
+        {
+          formatted=(displayFormat?.textInputProperty?.currencyDisplayFormat||"₹")+formatted
+        }
+        setInternalValue(formatted)
+      }
+    }
+  },[value,type])
 
   const inputElement = (
     <div
@@ -369,11 +360,10 @@ export const TextInput: React.FC<TextInputProps> = ({
         )}
 
         <input
-          type={numberFormat && numberFormat !== 'none' ? 'text' : type}
+          type={onloadType}
           name={name}
-          value={numberFormat && numberFormat !== 'none' ? formatNumber(internalValue) : internalValue}
+          value={internalValue}
           onChange={handleChange}
-          onKeyDown={onKeyDown}
           placeholder={placeholder}
           disabled={disabled}
           readOnly={readOnly}
@@ -432,6 +422,7 @@ export const TextInput: React.FC<TextInputProps> = ({
                 e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(branding.selectionColor, 0.2)}`
               }
             }
+            customeOnFocus(e)
           }}
           onBlur={e => {
             if (!errorMessage && !validationState) {
@@ -445,7 +436,7 @@ export const TextInput: React.FC<TextInputProps> = ({
                 e.currentTarget.style.boxShadow = 'none'
               }
             }
-            onBlur(e)
+            customeOnBlur(e)
           }}
         />
 

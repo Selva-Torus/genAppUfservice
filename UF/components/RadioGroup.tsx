@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useGlobal } from "@/context/GlobalContext";
+import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { Tooltip } from "./Tooltip";
 import { Radio } from "./Radio";
 import { CheckboxSize, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
@@ -19,8 +20,14 @@ interface RadioGroupProps {
   direction?: "horizontal" | "vertical";
   items: RadioGroupItem[];
   value?: string;
+  defaultValue?: string;
   content?: string;
   contentAlign?: ContentAlign;
+  // validation
+  validationState?: 'valid' | 'invalid';
+  errorMessage?: string;
+  require?: boolean;
+
   needTooltip?: boolean;
   tooltipProps?: TooltipPropsType;
   headerText?: string;
@@ -34,8 +41,12 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
   direction = "vertical",
   items,
   value = "",
+  defaultValue = "",
   content = "",
   contentAlign = "center",
+  validationState,
+  errorMessage,
+  require = false,
   needTooltip = false,
   tooltipProps,
   headerText,
@@ -44,7 +55,23 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
   className = "",
 }) => {
   const { theme, direction: globalDirection, branding } = useGlobal();
-  const [selectedValue, setSelectedValue] = useState(value);
+  const showToast = useInfoMsg();
+  const [selectedValue, setSelectedValue] = useState(value || defaultValue);
+
+  // Sync internal value when prop changes — mirrors TextInput's value sync useEffect
+  useEffect(() => {
+    // Only sync if value is actually provided (not empty string)
+    if (value) {
+      setSelectedValue(value);
+    }
+  }, [value]);
+
+  // Show danger toast when validation fails — mirrors TextInput's validationState useEffect
+  useEffect(() => {
+    if (validationState === 'invalid' && errorMessage) {
+      showToast(errorMessage, 'danger');
+    }
+  }, [validationState, errorMessage]);
 
   const handleChange = (newValue: string) => {
     setSelectedValue(newValue);
@@ -65,7 +92,9 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
   };
   const radioGroupElement = (
     <div
-      className={`w-full h-full flex gap-2 overflow-hidden ${direction === "horizontal" ? "flex-row flex-auto shrink " : "flex-col"}`}
+      className={`w-full h-full flex gap-2 overflow-hidden ${direction === "horizontal" ? "flex-row flex-auto shrink" : "flex-col"} 
+        p-2 rounded-md border transition-colors
+        ${validationState === 'invalid' ? 'border-red-500' : 'border-transparent'}`}
     >
       {items.map((item) => (
         <Radio
@@ -83,14 +112,15 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
   );
 
   return (
-     <CommonHeaderAndTooltip
-       needTooltip={needTooltip}
-       tooltipProps={tooltipProps}
-       headerText={headerText}
-       headerPosition={headerPosition}
-       className={className}
-     >
-       {radioGroupElement}
-     </CommonHeaderAndTooltip>
-   )
+    <CommonHeaderAndTooltip
+      needTooltip={needTooltip}
+      tooltipProps={tooltipProps}
+      headerText={headerText}
+      headerPosition={headerPosition}
+      className={className}
+      required={require}
+    >
+      {radioGroupElement}
+    </CommonHeaderAndTooltip>
+  );
 };

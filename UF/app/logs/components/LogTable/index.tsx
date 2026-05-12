@@ -41,6 +41,8 @@ interface TableHeaderProps {
   setUser: React.Dispatch<React.SetStateAction<Array<string>>>
   jsonViewerData: any
   setJsonViewerData: React.Dispatch<React.SetStateAction<any>>
+  localSortOrder: string
+  setLocalSortOrder: React.Dispatch<React.SetStateAction<string>>  
 }
 
 const TableHeader: React.FC<TableHeaderProps> = ({
@@ -59,7 +61,9 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   user,
   setUser,
   jsonViewerData,
-  setJsonViewerData
+  setJsonViewerData,
+  localSortOrder,
+  setLocalSortOrder
 }) => {
   const headerProcessRowsItem = [
     'artifactName',
@@ -405,6 +409,8 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                     user={user}
                     setUser={setUser}
                     activeTab={activeTab}
+                    localSortOrder={localSortOrder}
+                    setLocalSortOrder={setLocalSortOrder}
                   />
                 </Modal>
               </div>

@@ -191,8 +191,28 @@ export const Combobox: React.FC<ComboboxProps> = ({
     }
   };
 
+const containerRef = useRef<HTMLDivElement>(null);
+
+useEffect(() => {
+  const handleClickOutside = (e: MouseEvent) => {
+    if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      setIsOpen(false);
+      setSearch("");
+    }
+  };
+
+  if (isOpen) {
+    document.addEventListener("mousedown", handleClickOutside);
+  }
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, [isOpen]);
+
   const comboboxElement = (
     <div
+    ref={containerRef}   // add this
       className={`relative ${getContentAlignClass()} w-full h-full ${className}`}
       tabIndex={-1}
     >

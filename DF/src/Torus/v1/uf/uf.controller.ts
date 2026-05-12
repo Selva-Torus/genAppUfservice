@@ -310,10 +310,15 @@ export class UfController {
       },
     },
   })
-  async setUpKey(@Body() body: setUpKeyDto, @Req() req: any) {
+    async setUpKey(@Body() body: setUpKeyDto, @Req() req: any) {
     const token: string = req?.headers?.authorization?.split(' ')[1];
-    const { key,dpdKey,method } = body;
-    let result : any = await this.appService.setUpKey(key,token);
+    const { key,dpdKey,method,tag } = body;
+    let result : any 
+    if (tag) {
+      result = await this.appService.setUpKey(key,token,tag);      
+    }else{
+      result = await this.appService.setUpKey(key,token);
+    }
     if(dpdKey && method){
       result["dpdKey"] = dpdKey
       result["method"] = method
@@ -321,6 +326,27 @@ export class UfController {
     return result;
   }
 
+  @Post('batch')
+  async orchestrationBatch(@Body() body: any, @Req() req: any) {
+    const token = req.headers.authorization?.split(' ')[1];
+    return this.appService.OrchestrationAll(
+      body.key,  token, body.accessProfile
+    );
+  }
+  
+  @Post('OrchestrationBatch')
+  @ApiHeader({
+    name: 'Authorization',
+    description: 'Bearer token for authentication',
+    required: true,
+  })
+  async OrchestrationBatch(@Body() body: any, @Req() req: any) {
+    const token = req.headers.authorization?.split(' ')[1];
+    return this.appService.OrchestrationBatch(
+      body.key,  token, body.accessProfile
+    );
+  }
+  
   @Post('Orchestration')
   @ApiResponse({ status: 200, description: 'Common Details Fetched' })
   @ApiResponse({ status: 400, description: 'Bad Request' })
@@ -783,13 +809,13 @@ export class UfController {
     @Body(new ValidationPipe({ transform: true })) body: signinToTorusDto,
     @Req() req: any
   ) {
-    const { username, password, dpdKey, method, ufClientType } = body;
+    const { username, password, dpdKey, method, ufClientType, app_tenant, app_tenant_id } = body;
     const { DEFAULT_AUTHENTICATION , FUSIONAUTH_TENANTID , FUSIONAUTH_APPLICATIONID,FUSIONAUTH_APPCLIENTSECRET } = process.env;
     let result : any;
     if(DEFAULT_AUTHENTICATION == "fusionauth" &&  FUSIONAUTH_TENANTID && FUSIONAUTH_APPLICATIONID && FUSIONAUTH_APPCLIENTSECRET) {
-       result = await this.appService.signInViaIAM(username, password, ufClientType);
+       result = await this.appService.signInViaIAM(username, password, ufClientType, false , app_tenant, app_tenant_id);
     }else{
-       result = await this.appService.signIntoTorus(username, password, ufClientType);
+       result = await this.appService.signIntoTorus(username, password, ufClientType, false , app_tenant, app_tenant_id);
     }
     if(dpdKey && method){
       result["dpdKey"] = dpdKey
@@ -1143,8 +1169,8 @@ export class UfController {
   }
   @Get('getResetPasswordOtp')
   async getResetPasswordOtp(@Query() query: any) {
-    const { email }  = query;
-    return this.appService.getResetPasswordOtp(email);
+    const { email, tenantId }  = query;
+    return this.appService.getResetPasswordOtp(email, tenantId);
   }
 
   @Get('verifyOtp')
@@ -1155,8 +1181,8 @@ export class UfController {
 
   @Patch('resetPassword')
   async resetPassword(@Body() body: any) {
-    const { email, password } = body;
-    return this.appService.resetPassword(email, password);
+    const { email, password, app_tenant, tenantId } = body;
+    return this.appService.resetPassword(email, password, app_tenant, tenantId);
   }
 
   @Post("oauthSignIn")
@@ -1209,5 +1235,10 @@ export class UfController {
     const { masterData , matrixData } = body;
     const token: string = req?.headers?.authorization?.split(' ')?.[1];
     return this.appService.postOrgData(masterData, matrixData, token);
+  }
+
+  @Get('app-tenant-app')
+  async getAppTenantsLinkedWithApp(@Req() req: any) {
+    return this.appService.getAppTenantsLinkedWithApp();
   }
 }

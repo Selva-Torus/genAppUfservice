@@ -1,18 +1,19 @@
 
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
-  "deploymentArtifactKey": "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
-  "appGroupDesc": "appgroup",
-  "logType": "mongodb",
-  "appDesc": "application1",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT005:AFGK:GSS:AFK:VGPH:AFVK:v1:bldc",
+  "deploymentArtifactKey": "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:GSS:AFGK:VGPH:AFK:VGPH_DPD:AFVK:v1",
+  "appGroupDesc": "GSS",
+  "logType": "dfs",
+  "appDesc": "VGPH",
+  "appLogo": "torus/9.1/CT005/resources/images/White global payment hub.png",
   "isOld": true,
-  "clientCode": "CI001",
+  "clientCode": "CT005",
   "loginDetails": {
-    "loginId": "selva",
-    "firstName": "selva",
-    "lastName": "g",
-    "email": "selvakumarg+a@torus.tech",
-    "mobile": "6369726232",
+    "loginId": "guru",
+    "firstName": "Guru",
+    "lastName": "Krishnan",
+    "email": "cgkrishnan@gsstvl.com",
+    "mobile": "8190002700",
     "2FAFlag": "N",
     "scope": "client_admin",
     "status": "active",
@@ -20,9 +21,9 @@
       "admin"
     ],
     "accessExpires": "",
-    "dateAdded": "2026-01-23T13:29:31.878Z",
+    "dateAdded": "2026-01-21T06:18:59.283Z",
     "isRestricted": false,
-    "userUniqueId": "399bb002-571a-4f60-8242-67a2d5d03a4b",
+    "userUniqueId": "60c8940f-8aa1-485d-9b53-dc20e43cc584",
     "touring": {
       "isneedTouring": false,
       "touringData": {
@@ -32,7 +33,13 @@
           "completed": false,
           "notVisited": []
         },
-        "/control-center/tenant": {
+        "/home": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "artifactselector": {
           "stepIndex": 0,
           "isSkipped": true,
           "completed": false,
@@ -40,34 +47,103 @@
         }
       }
     },
-    "client": "CI001",
-    "quickLinks": [
-      {
-        "label": "Tenant Profile",
-        "key": "tenantProfile",
-        "routes": "/control-center/tenant"
+    "lastActive": "2026-05-12T10:38:00.899Z",
+    "client": "CT005",
+    "users": "guruGuru Krishnan",
+    "profile": "",
+    "edit": "",
+    "noOfProductsService": 0
+  },
+  "setupData": {
+    "appInfo": {
+      "name": "VGPH",
+      "code": "VGPH",
+      "deploymentArtifactKey": "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:GSS:AFGK:VGPH:AFK:VGPH_DPD:AFVK:v1",
+      "encryption": {
+        "type": ""
       },
-      {
-        "label": "Appearance",
-        "key": "tenantappearance",
-        "routes": "/tenant-settings?tenant=${tenant}"
+      "applicationUniqueId": "ae093d5d-f44a-444b-afab-9476f31e7dca",
+      "lastBuildVersion": "v1",
+      "lastBuildOn": "2026-05-06T13:41:41.101Z",
+      "accessUrl": "https://tgadev2.toruslowcode.com/ct005/gss/vgph/v1",
+      "logo": "torus/9.1/CT005/resources/images/Blue Logo.png",
+      "appLogo": "torus/9.1/CT005/resources/images/White global payment hub.png",
+      "appGrpName": "GSS",
+      "appGrpCode": "GSS",
+      "fusionAuthAppClientSecret": "AKE3Mkrdhezw9vln9mTV-Wnb8WVEivZ3BY0KTxqtmbc"
+    },
+    "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CT005:AFK:PROFILE:AFVK:v1:appearance",
+    "selectedPresetKey": "default",
+    "fontSize": "Small",
+    "direction": "LTR",
+    "brandColor": "#0737c9",
+    "selectionColor": "#579eff",
+    "hoverColor": "#d5eeff",
+    "borderRadius": "xl",
+    "sidebarStyle": "",
+    "navigationStyles": "horizontal",
+    "theme": "light",
+    "layoutMode": "detached",
+    "mobileAppearance": {
+      "language": "English",
+      "direction": "LTR",
+      "theme": "light",
+      "brandColors": {
+        "primary": "#0025dd",
+        "secondary": "#000e51",
+        "tertiary": "#000000"
       },
-      {
-        "label": "Company Profile",
-        "key": "PersonalcompanyProfile",
-        "routes": "/control-center/company-profile"
+      "accentColors": {
+        "accentOne": "#f4f5ff",
+        "accentTwo": "#ffffff"
       },
-      {
-        "label": "Notifications",
-        "key": "tenantnotifications",
-        "routes": "/control-center/notifications"
+      "utilityColors": {
+        "lightMode": {
+          "primaryText": "#14181b",
+          "secondaryText": "#57636c",
+          "primaryBackground": "#f1f4f8",
+          "secondaryBackground": "#ffffff"
+        },
+        "darkMode": {
+          "primaryText": "#ffffff",
+          "secondaryText": "#95a1ac",
+          "primaryBackground": "#1d2428",
+          "secondaryBackground": "#14181b"
+        }
       },
+      "fontSize": {
+        "displayLarge": "64",
+        "displayMedium": "44",
+        "displaySmall": "36",
+        "headlineLarge": "32",
+        "headlineMedium": "28",
+        "headlineSmall": "24",
+        "titleLarge": "20",
+        "titleMedium": "18",
+        "titleSmall": "16",
+        "labelLarge": "16",
+        "labelMedium": "14",
+        "labelSmall": "12",
+        "bodyLarge": "16",
+        "bodyMedium": "14",
+        "bodySmall": "12"
+      },
+      "fontFamily": "Roboto",
+      "navigationStyle": "Bottom Navigation",
+      "drawerStyle": ""
+    },
+    "language": "English",
+    "fontFamily": [
       {
-        "label": "User Management",
-        "key": "usermanagement",
-        "routes": "/control-center/user-management"
+        "label": "Inter",
+        "fontUrl": "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
       }
-    ]
+    ],
+    "text-body-font": "",
+    "text-header-font": "",
+    "text-display-font": "",
+    "name": "default",
+    "appBackgroundImage": "torus/9.1/CT005/resources/images/vivid-blurred-colorful-wallpaper-background_58702-3883.avif"
   }
 } */
 import { NestFactory } from '@nestjs/core';
@@ -100,7 +176,7 @@ async function bootstrap() {
 
   let configData = null;
   try {
-    const redisResult = await redis.call('JSON.GET', "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1:NDP");
+    const redisResult = await redis.call('JSON.GET', "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:GSS:AFGK:VGPH:AFK:VGPH_DPD:AFVK:v1:NDP");
     if (redisResult) {
       const parsed = JSON.parse(redisResult);
       const rootKey = Object.keys(parsed)[0];
@@ -188,7 +264,7 @@ async function bootstrap() {
     { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, 
     'JWT-auth',
     )
-    .addServer('https://tgadev.toruslowcode.com/&lt;tenantCode&gt;/&lt;AppGroupCode&gt;/&lt;AppCode&gt;/&lt;version&gt;/api','Production Server')
+    .addServer('https://tgadev2.toruslowcode.com/ct005/gss/vgph/v1/api','Production Server')
     .build();
   const document = SwaggerModule.createDocument(app, config);
   fs.writeFileSync('./swagger.json', JSON.stringify(document, null, 2));

@@ -1,6 +1,6 @@
 pipeline {
     agent {
-        label 'slave-224'
+        label 'slave-195'
     }
     tools {
         jdk 'jdk17' 
@@ -8,12 +8,15 @@ pipeline {
     }
     environment {
         DOCKERHUB_USERNAME = "192.168.2.164:5000"
-        APP_NAME = "ci001-a001-uf-v1"
+        APP_NAME = "ct005-vgph-uf-v1"
         IMAGE_NAME = "${DOCKERHUB_USERNAME}/${APP_NAME}"
         BUILD_NUMBER = "${BUILD_NUMBER}"
         GITHUB_CREDENTIALS = "GIT_HUB_PAT"
         IMAGE_TAG = "${BUILD_NUMBER}"
-        SCANNER_HOME = tool 'sonar-scanner'
+    }
+
+    triggers {
+        githubPush() 
     }
 
     stages {
@@ -26,21 +29,21 @@ pipeline {
         stage('Code Checkout') {
             steps {
                 withCredentials([usernamePassword(credentialsId: "${GITHUB_CREDENTIALS}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/TorusDev2023/Claims5UF.git'
+                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/Torus9x/VGPH_PROD.git'
                 }
             }
         }
 
-        stage('Detect Changes in ci001 App') {
+        stage('Detect Changes in CT005 App') {
             steps {
                 script {
                     def diff = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
-                    if (diff.split('\n').any { it.startsWith('apps/CI001/AG001/A001/v1/Next-uf/') }) {
+                    if (diff.split('\n').any { it.startsWith('apps/CT005/GSS/VGPH/v1/Next-uf/') }) {
                         env.NEXT_UF_CHANGED = "true"
-                        echo "Changes detected in apps/CI001/AG001/A001/v1/Next-uf"
+                        echo "Changes detected in apps/CT005/GSS/VGPH/v1/Next-uf"
                     } else {
                         env.NEXT_UF_CHANGED = "false"
-                        echo "No changes in apps/CI001/AG001/A001/v1/Next-uf. Skipping build and deployment stages."
+                        echo "No changes in apps/CT005/GSS/VGPH/v1/Next-uf. Skipping build and deployment stages."
                     }
                 }
             }
@@ -60,8 +63,8 @@ pipeline {
                         docker buildx build \
                           --build-arg BUILDKIT_INLINE_CACHE=1 \
                           --tag ${IMAGE_NAME}:${IMAGE_TAG} \
-                          --file apps/CI001/AG001/A001/v1/Next-uf/Dockerfile \
-                          apps/CI001/AG001/A001/v1/Next-uf \
+                          --file apps/CT005/GSS/VGPH/v1/Next-uf/Dockerfile \
+                          apps/CT005/GSS/VGPH/v1/Next-uf \
                           --push
                         """
                     }
@@ -75,7 +78,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CI001/AG001/A001/v1/Next-uf/kubernetes/deploymentservice.yaml"
+                    sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CT005/GSS/VGPH/v1/Next-uf/kubernetes/deploymentservice.yaml"
                 }
             }
         }
@@ -86,10 +89,10 @@ pipeline {
             }
             steps {
                 script {
-                    withKubeConfig(credentialsId: 'kubernetes-224', serverUrl: 'https://lb.kubesphere.local:6443') {
-                        sh "kubectl get ns ci001-a001-uf-v1 || kubectl create ns ci001-a001-uf-v1"
-                        sh "kubectl apply -f apps/CI001/AG001/A001/v1/Next-uf/kubernetes/deploymentservice.yaml"
-                        sh "kubectl apply -f apps/CI001/AG001/A001/v1/Next-uf/kubernetes/uf-ingress.yaml"
+                    withKubeConfig(credentialsId: 'kubernetes-195', serverUrl: 'https://lb.kubesphere.local:6443') {
+                        sh "kubectl get ns ct005-vgph-uf-v1 || kubectl create ns ct005-vgph-uf-v1"
+                        sh "kubectl apply -f apps/CT005/GSS/VGPH/v1/Next-uf/kubernetes/deploymentservice.yaml"
+                        sh "kubectl apply -f apps/CT005/GSS/VGPH/v1/Next-uf/kubernetes/uf-ingress.yaml"
                     }
                 }
             }

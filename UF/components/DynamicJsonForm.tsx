@@ -104,6 +104,7 @@ export default function DynamicContentFields({
   const [values, setValues] = useState<FieldValues>({});
   const [expandedSections, setExpandedSections] = useState<Record<string, boolean>>({});
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [openDropdownKey, setOpenDropdownKey] = useState<string | null>(null);
   const [openTableName, setOpenTableName] = useState<string>('');
   const [dropdownPages, setDropdownPages] = useState<Record<string, number>>({});
@@ -196,19 +197,40 @@ export default function DynamicContentFields({
 
     setValues(initialValues);
     setExpandedSections(initialExpanded);
-    const checkRequiredFields = (fields: MetadataConfig): boolean => {
-      return Object.values(fields).some((config) => {
-        if (isFieldMetadata(config) && config.validation?.required === true) return true;
-        if (isNestedMetadata(config)) return checkRequiredFields(config.fields);
-        if (isArrayMetadata(config)) return checkRequiredFields(config.items.fields);
-        if (isFixedArrayMetadata(config)) return config.items.some(item => checkRequiredFields(item.fields));
-        return false;
+    setTouchedFields(new Set());
+
+    // Pre-populate validationErrors for required fields that start empty so
+    // onValidationChange stays correct even before the user touches anything.
+    const initErrors: Record<string, string> = {};
+    const collectInitErrors = (fields: MetadataConfig, prefix?: string) => {
+      Object.entries(fields).forEach(([key, config]) => {
+        if (isFieldMetadata(config) && config.validation?.required) {
+          const fullKey = prefix ? `${prefix}.${key}` : key;
+          const val = config.defaultValue ?? null;
+          if (val === null || val === '' || val === undefined) {
+            initErrors[fullKey] = `${config.label} is required`;
+          }
+        } else if (isNestedMetadata(config)) {
+          collectInitErrors(config.fields, key);
+        }
+        // Array items: required check is deferred until the user interacts
+        // (no stable key without an index), but the array itself marks invalid below.
       });
     };
+    collectInitErrors(metadata);
 
-  if (checkRequiredFields(metadata)) {
-    onValidationChange?.(false);
-  }
+    const hasRequiredInArrays = (fields: MetadataConfig): boolean =>
+      Object.values(fields).some(config => {
+        if (isArrayMetadata(config)) return Object.values(config.items.fields).some(f => isFieldMetadata(f) && !!f.validation?.required);
+        if (isFixedArrayMetadata(config)) return config.items.some(item => Object.values(item.fields).some(f => isFieldMetadata(f) && !!f.validation?.required));
+        if (isNestedMetadata(config)) return hasRequiredInArrays(config.fields);
+        return false;
+      });
+
+    setValidationErrors(initErrors);
+    if (Object.keys(initErrors).length > 0 || hasRequiredInArrays(metadata)) {
+      onValidationChange?.(false);
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(metadata)]);
 
@@ -364,9 +386,7 @@ export default function DynamicContentFields({
     const rules = fieldConfig.validation || {};
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let schema: any = v.number();
-    if (rules.required) {
-      schema = v.nonNullable(v.number(), `${fieldConfig.label} is required`);
-    }
+    // required is handled explicitly in onChange/onBlur (null check before this schema runs)
     if (rules.min !== undefined) {
       schema = v.pipe(schema, v.minValue(rules.min, `Minimum value is ${rules.min}`));
     }
@@ -455,7 +475,10 @@ export default function DynamicContentFields({
     const value = currentValue ?? "";
     const error = validationErrors[errorKey];
 
+    const markTouched = () => setTouchedFields(prev => new Set(prev).add(errorKey));
+
     const handleChange = (newValue: FieldValue) => {
+      markTouched();
       if(fieldConfig?.type =="dropdown") {
         updateValue(key, fieldConfig.saveAs ?? nestedKey, newValue);
         const errorMsg = validateField(fieldConfig, newValue);
@@ -504,6 +527,13 @@ export default function DynamicContentFields({
       onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB';
         e.currentTarget.style.boxShadow = 'none';
+        markTouched();
+        // Only SET an error on blur — never clear one (clearing is onChange's job).
+        const blurVal = e.currentTarget.value;
+        const blurErr = fieldConfig.type === 'number'
+          ? (blurVal === '' && fieldConfig.validation?.required ? `${fieldConfig.label} is required` : null)
+          : validateField(fieldConfig, blurVal as FieldValue);
+        if (blurErr) updateError(errorKey, blurErr);
       },
       style: { fontFamily: 'var(--font-body)' }
     };
@@ -537,11 +567,16 @@ export default function DynamicContentFields({
             max={numRules.max}
             required={numRules.required}
             onChange={(e) => {
+              markTouched();
               const val = e.target.value;
               const numericValue = val === "" ? null : Number(val);
               updateValue(key, nestedKey, numericValue);
-              const result = v.safeParse(numSchema, numericValue);
-              updateError(errorKey, result.success ? null : (result.issues[0]?.message ?? 'Invalid value'));
+              if (numericValue === null) {
+                updateError(errorKey, numRules.required ? `${fieldConfig.label} is required` : null);
+              } else {
+                const result = v.safeParse(numSchema, numericValue);
+                updateError(errorKey, result.success ? null : (result.issues[0]?.message ?? 'Invalid value'));
+              }
             }}
             placeholder={fieldConfig.placeholder || "Value"}
             className={inputClassName}
@@ -584,7 +619,7 @@ export default function DynamicContentFields({
             type="date"
             value={String(value)}
             onChange={(e) => handleChange(e.target.value)}
-            className={`${inputClassName} ${error ? 'border-red-500' : ''}`}
+            className={`${inputClassName} ${touchedFields.has(errorKey) && error ? 'border-red-500' : ''}`}
             {...commonHandlers}
           />
         );
@@ -741,7 +776,7 @@ export default function DynamicContentFields({
               className={inputClassName}
               {...commonHandlers}
             >
-              <option value="">Value</option>
+              <option value="">{fieldConfig.placeholder || 'Select...'}</option>
               {optionsArr.map((option) => (
                 <option key={option} value={option}>
                   {option}
@@ -759,7 +794,7 @@ export default function DynamicContentFields({
               className={inputClassName}
               {...commonHandlers}
             >
-              <option value="">Value</option>
+              <option value="">{fieldConfig.placeholder || 'Select...'}</option>
               {plainOptions.map((option) => (
                 <option key={option} value={option}>
                   {option}
@@ -816,6 +851,7 @@ export default function DynamicContentFields({
             maxLength={textRules.maxLength}
             required={textRules.required}
             onChange={(e) => {
+              markTouched();
               const val = e.target.value;
               updateValue(key, nestedKey, val);
               const result = v.safeParse(textSchema, val);
@@ -832,7 +868,7 @@ export default function DynamicContentFields({
     return (
       <>
         {inputElement}
-        {error && (
+        {touchedFields.has(errorKey) && error && (
           <p className={`text-xs mt-1 ${isDark ? 'text-red-400' : 'text-red-500'}`}>
             {error}
           </p>

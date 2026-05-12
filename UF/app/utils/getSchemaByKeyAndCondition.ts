@@ -43,8 +43,8 @@ export async function getSchemaByKeyAndCondition(
     const redisData = await getData(mainRuleKey, 'ReJSON-RL')
     let pfRuleData: any = {}
     Object.keys(redisData)?.map(eachKey => {
-      if (redisData[eachKey]?.dataset) {
-        pfRuleData = redisData[eachKey]?.dataset
+      if (redisData[eachKey]?.json) {
+        pfRuleData = redisData[eachKey]?.json
       }
     })
 
@@ -91,7 +91,7 @@ export async function getSchemaByKeyAndCondition(
           const conditionValue = valueItem.condition?.value || 'all';
           result[conditionValue] = redisData;
           let nodeID:any = Object.values(redisData)[0];
-          res = nodeID?.dataset;
+          res = nodeID?.json;
           break; // Take the first schema and exit
         }
       }
@@ -125,7 +125,7 @@ else{
         const redisData = await getData(schemaValue, 'ReJSON-RL');
         result[conditionValue] = redisData;
         let nodeID:any = Object.values(redisData)[0];
-        res =  nodeID?.dataset;
+        res =  nodeID?.json;
       }
     }}
   }

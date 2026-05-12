@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useContext, useEffect, useState } from "react";
 import { AxiosService } from "../components/axiosService";
 import { TotalContext, TotalContextProps } from '@/app/globalContext';
@@ -30,7 +31,7 @@ const languageMap = {
 
 export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
   const { property, setProperty } = useContext(TotalContext) as TotalContextProps;
-  const { setTheme, setLanguage, setDirection, updateBranding, setAppBackgroundImage } = useGlobal();
+  const { setTheme, setLanguage, setDirection, updateBranding, setAppBackgroundImage,setDisplayFormat } = useGlobal();
 
   interface SetupKeyData {
     direction: string;
@@ -48,17 +49,19 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
     theme?: string;
     'page-bg-color':string;
     'group-bg-color':string;
-    appBackgroundImage : string | undefined
+    appBackgroundImage : string | undefined;
+    localization:any
   }
 
   const [data, setData] = useState<SetupKeyData | null>(null);
   const token:string = getCookie('token'); 
   const encryptionFlagApp: boolean = true;
-  const encryptionDpd: string = "CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1";
+  const encryptionDpd: string = "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:GSS:AFGK:VGPH:AFK:VGPH_DPD:AFVK:v1";
   const encryptionMethod: string = "";
   const fetchSetupKey = async () => {
     try {
-      let setUpKeyDto:any = {key:"CK:TGA:FNGK:SETUP:FNK:SF:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:appearance"};
+      let setUpKeyDto:any = {key:"CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT005:AFGK:GSS:AFK:VGPH:AFVK:v1:appearance"
+};
       if (encryptionFlagApp) {
         setUpKeyDto["dpdKey"] = encryptionDpd;
         setUpKeyDto["method"] = encryptionMethod;
@@ -85,6 +88,8 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
       const borderRadius = borderRadiusMap[data?.borderRadius] || '3px';
       const fontSize = fontSizeMap[data?.fontSize] || '13px';
       const language = languageMap[data?.language] || 'en';
+      const dateDisplayData=data?.localization?.datetime?.display||{}
+      const timeDisplayData=data?.localization?.currency?.display||{}
       const bgImage = `url("${process.env.NEXT_PUBLIC_FTP_OUTPUT_HOST}/${data['appBackgroundImage']}")`;
       // Set CSS variables for legacy components
       document.documentElement.style.setProperty('--brand-color', brandColor);
@@ -116,6 +121,25 @@ export const GetSetupKey = ({ children }: { children: React.ReactNode }) => {
       }else{
         setTheme(getCookie('cfg_theme') as any);
       }
+      /////////////
+      let localizationdata={
+        datedisplay:"DD-MM-YYYY",
+        currencyDisplayFormat:"₹"
+      }
+      if("date" in dateDisplayData)
+      {
+        localizationdata={...localizationdata,datedisplay:dateDisplayData?.date?.value||"DD-MM-YYYY"}
+      }
+      if("symbol" in timeDisplayData)
+      {
+        localizationdata={...localizationdata,currencyDisplayFormat:timeDisplayData?.symbol||"DD-MM-YYYY"}
+      }
+      setDisplayFormat((pre:any)=>({
+        ...pre,
+        datePickerProperty:{...pre.datePickerProperty, dateDisplayFormat:localizationdata?.datedisplay},
+        textInputProperty:{...pre.datePickerProperty, currencyDisplayFormat:localizationdata?.currencyDisplayFormat}
+      }))
+      //////////////
 
       // Set language
       if (data.language) {

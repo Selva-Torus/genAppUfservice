@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback } from "react";
+import { string } from "valibot";
 
 type ToastType = "success" | "danger" | "info" | "warning";
 
@@ -11,7 +12,12 @@ interface ToastConfig {
 }
 
 export const useInfoMsg = () => {
-  const showToast = useCallback((message: string, type: ToastType) => {
+  const showToast = useCallback((message: string | string[], type: ToastType) => {
+    if (Array.isArray(message)) {
+      message.forEach((msg) => showToast(msg, type));
+      return;
+    }
+
     // Create toast container if it doesn't exist
     let container = document.getElementById("toast-container");
     if (!container) {

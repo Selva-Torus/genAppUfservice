@@ -153,7 +153,9 @@ export class readAPIDTO {
       schedulerStatus?:string
       parentUpId?:string
       ssKey?:string
-      controllerName?:string
+      controlName?:string
+      afiflag?:string
+      searchFilter?:object
     }
   
     export class pageDto { 
@@ -217,6 +219,102 @@ export class RawProcessLogInputDto {
   data: any[];
 }
 
+  export class sessionDto { 
+    user:string
+  }
+
+  export class PrcnestedValue { 
+    sessionInfo: sessionDto
+    processInfo: object
+  }
+
+  export class ExpnestedValue { 
+    sessionInfo: sessionDto
+    errorDetails: object
+  }  
+
+  export class nestedData {
+    @ApiProperty({ example: "2026-04-15T08:19:02.651Z" })
+    currentDate: Date
+    @ApiProperty({ example: "CK:TT001:FNGK:AFP:FNK:PF-PFD:CATK:Torus20261:AFGK:Torus202601:AFK:Stop_Specificscheduler_Flow:AFVK:v1:d7g9g3ghr5pg008bsbqg" })
+    field: string
+    @ApiProperty({ example: {} })
+    value: PrcnestedValue
+  }
+
+  export class PrcLogInputDto {
+  @ApiProperty({ example: "TT001-T001-TPL" })
+  streamname: string;
+
+  @ApiProperty({ 
+    type: [nestedData],
+    example: 
+    [{
+      "currentDate": "2026-04-15T08:19:02.651Z",
+      "field": "CK:TT001:FNGK:AFP:FNK:PF-PFD:CATK:Torus20261:AFGK:Torus202601:AFK:Stop_Specificscheduler_Flow:AFVK:v1:d7g9g3ghr5pg008bsbqg",
+      "value": {
+          "sessionInfo": {
+              "user": "sri"
+          },
+          "processInfo": {
+              "key": "CK:TT001:FNGK:AFP:FNK:PF-PFD:CATK:Torus20261:AFGK:Torus202601:AFK:Stop_Specificscheduler_Flow:AFVK:v1:",
+              "upId": "d7g9g3ghr5pg008bsbqg",
+              "status": "Success",
+              "nodeName": "Post_Stop_SpecificScheduler",
+              "nodeId": "b88ac92eac404d3c919c623925fc6741",
+              "nodeType": "apinode",
+              "event": "RequestCompleted",
+              "queue": "TEH",
+              "request": {},
+              "response": {}
+          }
+      }
+    }]    
+  })
+  data: nestedData[];
+  
+}
+
+export class ExpLogInputDto {
+  @ApiProperty({ example: "TT001-T001-TSL" })
+  streamname: string;
+
+  @ApiProperty({ 
+    type: [nestedData],
+    example: 
+    [{
+      "currentDate": "2026-04-15T08:19:02.651Z",
+      "field": "CK:TT001:FNGK:AFP:FNK:PF-PFD:CATK:Torus20261:AFGK:Torus202601:AFK:Stop_Specificscheduler_Flow:AFVK:v1:",
+      "value": {
+          "sessionInfo": {
+              "user": "sri"
+          },
+          "errorDetails": {
+              "T_ErrorSource": "TG",
+              "T_ErrorGroup": "Technical",
+              "T_ErrorCategory": "AK",
+              "T_ErrorType": "Fatal",
+              "T_ErrorCode": "TG023",
+              "errorCode": 500,
+              "errorDetail": {
+                  "code": "GenericFailure",
+                  "clientVersion": "6.19.3"
+              }
+          }
+      }
+    } ]   
+  })
+  data: nestedData[];
+  
+}
+
+  export class LogOutputDto {
+    @ApiProperty({   
+      example: 'success',    
+    })
+    status: string
+  }
+
   export class dataGet { 
     @IsNotEmpty()
     @IsString()
@@ -238,6 +336,7 @@ export class setUpKeyDto{
   @ApiProperty({example: "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:TT001:AFK:PROFILE:AFVK:v1:tpc"})
   @IsNotEmpty()
   key:string
+  tag?:string
   dpdKey?:string
   method?:string
 }
@@ -498,6 +597,12 @@ export class signinToTorusDto{
 
   @ApiProperty({description: 'ufClientType'})
   ufClientType?:string
+
+  @ApiPropertyOptional({description: 'app_tenant'})
+  app_tenant?:string
+
+  @ApiPropertyOptional({description: 'app_tenant_id'})
+  app_tenant_id?:number
 }
 
 export interface errorObj{

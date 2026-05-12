@@ -22,15 +22,17 @@ import TorusFooter from '../utils/TorusFooter.png'
 import Image from 'next/image'
 import { getCdnImage } from '../utils/getAssets'
 import { getFontSizeForDisplay, getFontSizeForHeader } from '../utils/branding'
+import { Dropdown } from '@/components/Dropdown'
 
 interface LoginProps {
   logo?: string
   appName?: string
   loginType?: 'standard' | 'rightAligned' | 'leftAligned'
   image?: string
+  appTenantList?: any[]
 }
 
-const LoginForm = ({ logo, appName = "application1", loginType = "standard", image }: LoginProps) => {
+const LoginForm = ({ logo, appName = "VGPH", loginType = "standard", image, appTenantList }: LoginProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     password: ''
@@ -43,12 +45,14 @@ const LoginForm = ({ logo, appName = "application1", loginType = "standard", ima
   const { branding } = useGlobal()
   const { brandColor } = branding
   const { bgColor, borderColor, textColor } = useTheme()
-  const onBoardingKey : string = "User Screen"
+  const onBoardingKey : string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:VGPH:AFK:transaction:AFVK:v1"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
+  const isSaasApp = process.env.NEXT_PUBLIC_IS_SAAS_APPLICATION;
   const [imageandLogoValid, setImageandLogoValid] = useState({
     image: image ? true : false,
     logo: logo ? true : false
   })
+  const [selectedAppTenant , setSelectedAppTenant] = useState('')
   const keyset: any = i18n.keyset('language')
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,8 +71,10 @@ const LoginForm = ({ logo, appName = "application1", loginType = "standard", ima
           client: tenant,
           username: formData.email,
           password: formData.password,
-          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CI001:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
-          ufClientType: 'UFW'
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT005:AFGK:GSS:AFK:VGPH:AFVK:v1:bldc",
+          ufClientType: 'UFW',
+          app_tenant: selectedAppTenant ? appTenantList?.find(item => item.tenant_name == selectedAppTenant)?.tenant_id : undefined,
+          app_tenant_id: selectedAppTenant ? appTenantList?.find(item => item.tenant_name == selectedAppTenant)?.at_id : undefined
         }
         const api_signin = await axios.post(
           `${baseUrl}/UF/signin`,
@@ -97,9 +103,9 @@ const LoginForm = ({ logo, appName = "application1", loginType = "standard", ima
           let screenDetails: any = {
             keys:[
   {
-    "screenName": "test",
-    "screensName": "test-v1",
-    "ufKey": "CK:CI001:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
+    "screenName": "my transaction",
+    "screensName": "my_transaction-v1",
+    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:VGPH:AFK:transaction:AFVK:v1"
   }
 ]
           }
@@ -194,7 +200,7 @@ const LoginForm = ({ logo, appName = "application1", loginType = "standard", ima
         style={{
           backgroundImage:
             loginType === 'standard' && image
-              ? ` url(${bgImage})`
+              ? `url('${bgImage}')`
               : `linear-gradient(to bottom, ${brandColor}, #ffffff)`,
           backgroundSize:
             loginType === 'standard' && image ? 'cover' : undefined,
@@ -242,6 +248,19 @@ const LoginForm = ({ logo, appName = "application1", loginType = "standard", ima
                   Enter your details to continue
                 </Text>
               </div>
+              {isSaasApp == 'true' &&
+                <div className='flex flex-col gap-2'>
+                  <Dropdown 
+                    staticProps={
+                      appTenantList?.map((item: any) => item?.tenant_name)
+                    } 
+                    value={selectedAppTenant}  
+                    onChange={(val) => setSelectedAppTenant(val as string)} 
+                    placeholder={keyset('Select Tenant')}
+                    hasClear
+                    static 
+                    />
+                </div>}
               <div className='flex flex-col gap-2'>
                 <input
                   type='text'

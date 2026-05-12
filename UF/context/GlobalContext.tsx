@@ -14,6 +14,7 @@ interface GlobalContextType extends GlobalProps {
   updateTypography: (updates: Partial<Typography>) => void;
   appBackgroundImage: string | undefined;
   setAppBackgroundImage: (image: string | undefined) => void;
+  setDisplayFormat:(data:any)=>void;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -33,6 +34,14 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
   const [direction, setDirectionState] = useState<Direction>(() => {
     const savedDirection = getCookie('cfg_direction');
     return (savedDirection as Direction) || "LTR";
+  });
+  const [displayFormat,setDisplayFormat] = useState<any>({
+    datePickerProperty:{
+      dateDisplayFormat: "DD-MM-YYYY",
+    },
+    textInputProperty:{
+      currencyDisplayFormat: "DD-MM-YYYY",
+    }
   });
   const [branding, setBrandingState] = useState<Branding>({
     fontSize: "Medium",
@@ -93,6 +102,7 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
         branding,
         typography,
         appBackgroundImage,
+        displayFormat,
         setTheme,
         setLanguage,
         setDirection,
@@ -101,6 +111,7 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
         setTypography,
         updateTypography,
         setAppBackgroundImage,
+        setDisplayFormat,
       }}
     >
       {children}

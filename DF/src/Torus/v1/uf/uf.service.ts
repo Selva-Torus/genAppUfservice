@@ -18,7 +18,6 @@ import * as nodemailer from 'nodemailer';
 import { JwtService } from '@nestjs/jwt';
 import { JwtServices } from 'src/jwt.services';
 import { RuleService } from 'src/ruleService';
-import { MongoService } from 'src/mongoService';
 const jsonata = require('jsonata');
 import * as fs from 'fs';
 import * as path from 'path';
@@ -27,7 +26,7 @@ import * as FormData from 'form-data'; // Use this
 import { Readable } from 'stream';
 import { Pool } from 'pg';
 //import { v4 as uuidv4 } from 'uuid';
-import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet, FusionAuthUserCreation } from 'src/fusionAuth.api';
+import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet, FusionAuthUserCreation, FusionAuthGetTenantList, FusionAuthGetApplicationList } from 'src/fusionAuth.api';
 import { EnvData } from 'src/envData/envData.service';
 import { decrypt } from 'src/decrypt';
 // import { RuleService } from 'src/ruleService';
@@ -72,7 +71,6 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
     private readonly gorule: RuleService,
     private readonly redisService: RedisService,
     private readonly commonService: CommonService,
-    private readonly mongoService: MongoService,
     private readonly envData: EnvData
   ) {}
     private pool : Pool;
@@ -129,39 +127,53 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async updateTable(
-    tableName: string,
-    data: Record<string, any>,
-    primaryKey: string,
-  ) {
-    try {
-      if (!tableName) throw new Error('Table name missing');
- 
-      const columns = Object.keys(data).filter((col) => col !== primaryKey);
- 
-      const setClause = columns.map((col, i) => `${col}=$${i + 1}`).join(',');
- 
-      const values = columns.map((col) => data[col]);
- 
-      const whereValue = data[primaryKey];
- 
-      const query = `
-      UPDATE ${tenant}.${tableName}
+ async updateTable(
+  tableName: string,
+  data: Record<string, any>,
+  primaryKey: string,
+  tenantId?: string
+) {
+  try {
+    if (!tableName) throw new Error('Table name missing');
+
+    const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
+
+    const columns = Object.keys(data).filter((col) => col !== primaryKey);
+
+    const setClause = columns
+      .map((col, i) => `${col} = $${i + 1}`)
+      .join(', ');
+
+    const values = columns.map((col) => data[col]);
+
+    const whereValue = data[primaryKey];
+
+    let whereClause = `${primaryKey} = $${columns.length + 1}`;
+    let params = [...values, whereValue];
+
+    // 👉 Tenant condition
+    if (tenantId) {
+      whereClause += ` AND at_id = $${params.length + 1}`;
+      params.push(tenantId);
+    }
+
+    const query = `
+      UPDATE ${schemaName}.${tableName}
       SET ${setClause}
-      WHERE ${primaryKey}=$${columns.length + 1}
+      WHERE ${whereClause}
       RETURNING *;
     `;
- 
-      const result = await this.query(query, [...values, whereValue]);
- 
-      return {
-        message: `${tableName} updated successfully`,
-        data: result,
-      };
-    } catch (error) {
-      throw error;
-    }
+
+    const result = await this.query(query, params);
+
+    return {
+      message: `${tableName} updated successfully`,
+      data: result,
+    };
+  } catch (error) {
+    throw error;
   }
+}
 
   async insertIntoTable(
     tableName: string,
@@ -169,6 +181,7 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
   ) {
     try {
       if (!tableName) throw new Error('Table or schema missing');
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
  
       // Column names
       const columns = Object.keys(data);
@@ -179,7 +192,7 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
  
       // Final query
       const query = `
-      INSERT INTO ${tenant}.${tableName} (${columns.join(',')})
+      INSERT INTO ${schemaName}.${tableName} (${columns.join(',')})
       VALUES (${placeholders.join(',')})
       RETURNING *;
     `;
@@ -257,15 +270,15 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async insertDocToVgphSourceTranDocMain(category: string, doc_name: string, url: string, size?: number): Promise<any> {
+ async insertDocToVgphSourceTranDocMain(category: string, doc_name: string, url: string, size?: number): Promise<any> {
     try {
-      const insertUrl = 'https://tgadev.toruslowcode.com/ct005/v001/vgph001/v1/api/vgph_source_tran_doc_main';
-      const vgphstm_uuid = uuid();
+      const insertUrl = `${process.env.APP_MANAGER_URL}/ct001/attachments`;
+      //const vgphstm_uuid = uuid();
       const currentDate = new Date().toISOString().slice(0, 19) + '+00:00';
 
-      const payload = {
+      const payload = { 
         category: category,
-        vgphstm_uuid: vgphstm_uuid,
+        //vgphstm_uuid: vgphstm_uuid,
         doc_name: doc_name,
         doc_size: `${Math.ceil((size ?? 0) / 1024)}`,
         url: url,
@@ -279,7 +292,7 @@ getConfig(): FusionAuthConfig {
         },
       });
 
-      return response.data.vgphstdm_id;
+      return response.data.attachment_id;
     } catch (error) {
       throw error;
     }
@@ -287,7 +300,7 @@ getConfig(): FusionAuthConfig {
 
   async getUrlByVgphstdmId(vgphstdm_id: any): Promise<string> {
     try {
-      const getUrl = `https://tgadev.toruslowcode.com/ct005/v001/vgph001/v1/api/vgph_source_tran_doc_main/${vgphstdm_id}`;
+      const getUrl = `${process.env.APP_MANAGER_URL}/ct001/attachments/${vgphstdm_id}`;
 
       const response = await axios.get(getUrl, {
         headers: {
@@ -295,12 +308,12 @@ getConfig(): FusionAuthConfig {
         },
       });
 
-      return response.data.url;
+      return response.data.data.url;
     } catch (error) {
       throw error;
     }
   }
-
+  
   async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number }, context: string, enableEncryption: string): Promise<any> {
     try {
       const res = await this.commonService.uploadFile(file, context, enableEncryption);
@@ -452,14 +465,14 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async setUpKey(key: string, token: string) {
+   async setUpKey(key: string, token: string,tag?: string) {
     try {
       const sKey: any = await this.commonService.readAPI(
         key,
         process.env.CLIENTCODE,
         token,
       );
-      if (sKey) {
+      if (sKey ) {
         if (sKey?.tenantAppearancekey) {
           const presetData: any = await this.commonService.readAPI(
             sKey?.tenantAppearancekey,
@@ -467,9 +480,15 @@ getConfig(): FusionAuthConfig {
             token,
           );
           if (sKey?.selectedPresetKey) {
-            return presetData[sKey?.selectedPresetKey] || {};
+            return {...presetData[sKey?.selectedPresetKey] || {},localization:sKey?.appInfo?.localization||{}};
           } else {
-            return presetData['default'] || {};
+            return {...presetData['default'] || {},localization:sKey?.appInfo?.localization||{}};
+          }
+        }else{
+          if (sKey?.tag) {
+            return {...sKey[tag] || {},localization:sKey?.appInfo?.localization||{}};
+          } else {
+            return {...sKey['default'] || {},localization:sKey?.appInfo?.localization||{}};
           }
         }
         return sKey || {};
@@ -635,7 +654,7 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-   async getpaginationwithLogicCenter(
+    async getpaginationwithLogicCenter(
     key: any,
     page,
     count,
@@ -647,16 +666,18 @@ getConfig(): FusionAuthConfig {
     try {
       
       let filterobj = {}
-      let afkey = key.replace(':FNGK:AFP:FNK:DF-DST:',':FNGK:AF:FNK:DF-DFD:')     
+      let afkey = key.replace(':FNGK:AFP:FNK:DF-DST:',':FNGK:AF:FNK:DF-DFD:')  
+         
         let dbnodeid = Object.keys(JSON.parse(await this.redisService.getJsonData(afkey+'NDP',process.env.CLIENTCODE)))[0]
-      if(filterData && Object.keys(filterData).length > 0){
-        filterobj = filterData?.find(n => n.nodeId === dbnodeid);
-        if(!filterobj) filterobj = {}
-      }else{        
-        filterobj['nodeId'] = dbnodeid;
-      }
+        if(filterData && Object.keys(filterData).length > 0){
+          filterobj = filterData?.find(n => n.nodeId === dbnodeid);
+          if(!filterobj) filterobj = {}
+        }else if((filter && Object.keys(filter).length > 0) || (searchObj && Object.keys(searchObj).length > 0)){        
+          filterobj['nodeId'] = dbnodeid;
+        }
         
-        filterobj = Object.assign(filterobj,searchObj)     
+      if(searchObj) filterobj = Object.assign(filterobj,searchObj)  
+
       if (!page) page = 1;
       let rule: any;       
       let start,end;
@@ -664,15 +685,16 @@ getConfig(): FusionAuthConfig {
         start = (page - 1) * count;
         end = start + count;
       }       
-       let payload = { key: afkey, count: count, page: page };
+       let payload = { key: afkey, count: count, page: page, afiflag:'Y' };
         const requestConfig: AxiosRequestConfig = {
               headers: {
                 Authorization: `Bearer ${token}`,
               },
               timeout: 300000,
-            };
-         
+            };        
           
+            
+
       if (filter) {
         var json = JSON.parse(await this.redisService.getJsonDataWithPath(filter.ufKey,'.mappedData.artifact.node',process.env.CLIENTCODE,));
         if(json){
@@ -701,15 +723,17 @@ getConfig(): FusionAuthConfig {
             filterobj = Object.assign(filterobj,ruleobj)               
           }
         }          
-      }
+      }  
+      
+
       if (Object.keys(filterobj)?.length > 0) {
             payload['filterData'] = [filterobj];
         } 
       console.log('payload',JSON.stringify(payload));
-         
+          
        await this.commonService.postCall(
               //process.env.BE_URL + '/te/eventEmitter',
-              this.envData.getBeUrl() + '/te/eventEmitter',
+              this.envData.getBeUrl() + '/te/eventEmitter',            
               payload,
               requestConfig,
             );
@@ -717,10 +741,11 @@ getConfig(): FusionAuthConfig {
             if(!tokenDecode?.loginId) throw 'loginId not found'
             //return await this.redisService.getAllRecordshash(key + tokenDecode.loginId+'_DS_Object') 
            let data =  await this.redisService.getAllRecordshash(key + tokenDecode.loginId+'_DS_Object') 
-          return { records: data, totalRecords: data.length } 
+          return { records: data, totalRecords: Number(data?.[0]?.total_records) || data.length } 
       
        
-    } catch (err) {
+    } catch (err:any) {
+      //console.log("err",err.response.data.message)
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -730,6 +755,7 @@ getConfig(): FusionAuthConfig {
         key,
         token,
       );
+       throw err?.response?.data ?  err?.response?.data : err;
     }
   }
 
@@ -969,7 +995,7 @@ getConfig(): FusionAuthConfig {
   //   }
   // }
 
-  async getpagination(
+   async getpagination(
     key: any,
     page,
     count,
@@ -1017,7 +1043,7 @@ getConfig(): FusionAuthConfig {
         await this.redisService.getJsonData(afkey + 'AFI', process.env.CLIENTCODE),
       );
 
-      if (!afi.logicCenter) {
+      if (!afi.logicCenter) {       
         return await this.getpaginationwithLogicCenter(
           key,
           page,
@@ -1026,7 +1052,7 @@ getConfig(): FusionAuthConfig {
           searchObj,
           token,
           filterData
-        );
+        );     
       }
 
       // ✅ Get dataset
@@ -1145,7 +1171,7 @@ getConfig(): FusionAuthConfig {
 
       // ================= PAGINATION =================
       return await this.filterpagination(start, end, finalData);
-    } catch (err) {
+    } catch (err:any) {      
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -1155,7 +1181,8 @@ getConfig(): FusionAuthConfig {
         key,
         token,
       );
-      throw err;
+      //throw err;
+      throw new CustomException(err.message,err.statusCode)
     }
   }
 
@@ -1172,7 +1199,8 @@ getConfig(): FusionAuthConfig {
         }
       }
 
-      return { records: filArray, totalRecords: searcharr.length };
+     // return { records: filArray, totalRecords: searcharr.length };
+     return { records: filArray, totalRecords: searcharr?.[0]?.total_records || searcharr.length };
     } catch (error) {
       throw new BadGatewayException(error);
     }
@@ -1184,16 +1212,170 @@ getConfig(): FusionAuthConfig {
       .reduce((acc, key) => acc?.[key], obj);
   }
 
-  async Orchestration(
+  async OrchestrationAll(
+    key: string,
+    token: string,
+    accessProfile?: any[],
+  ): Promise<{ pageData: any; groupData: Record<string, any>; controlData: Record<string, Record<string, any>> }> {
+    // 1. Read UO once to get nodeTree
+    const UO: any = await this.commonService.readAPI(
+      key + ':UO',
+      process.env.CLIENTCODE,
+      token,
+    );
+
+    if (!UO) {
+      return { pageData: null, groupData: {}, controlData: {} };
+    }
+
+    // 2. Preload common data (UFS, NDP) to avoid redundant reads in control processing
+    const [UFSData, NDPData] = await Promise.all([
+      this.commonService.readAPI(key + ':UFS', process.env.CLIENTCODE, token),
+      this.commonService.readAPI(key + ':NDP', process.env.CLIENTCODE, token),
+    ]);
+
+    // 3. Get page-level data (pass preloaded UO to avoid redundant read)
+    const pageData = await this.Orchestration(key, null, null, token, false, accessProfile, UO, UFSData, NDPData);
+
+    // 4. Extract groups/controls from mappedData.artifact.node (flat array with parentId)
+    const groupBatches: { componentId: string; controlIds: string[] }[] = [];
+    const nodes: any[] = UO.mappedData?.artifact?.node || [];
+
+    // Find all group nodes
+    const groupNodes = nodes.filter((node: any) => node.nodeType === 'group');
+
+    for (const groupNode of groupNodes) {
+      const componentId = groupNode.nodeId;
+
+      // Controls are stored in objElements array of the group node, not as separate nodes
+      const ctrlIds: string[] = [];
+      if (groupNode.objElements && Array.isArray(groupNode.objElements)) {
+        for (const element of groupNode.objElements) {
+          if (element.elementId) {
+            ctrlIds.push(element.elementId);
+          }
+        }
+      }
+
+      // Always add the group to groupBatches (even if no controls)
+      groupBatches.push({
+        componentId,
+        controlIds: ctrlIds,
+      });
+    }
+
+    // 5. Process all groups using existing Orchestration function (group-level)
+    // Pass preloaded data to avoid redundant API calls
+    const groupData: Record<string, any> = {};
+
+    await Promise.all(
+      groupBatches.map(async (batch) => {
+        const { componentId } = batch;
+        const result = await this.Orchestration(
+          key,
+          componentId,
+          null,
+          token,
+          false,
+          accessProfile,
+          UO,
+          UFSData,
+          NDPData,
+        );
+        groupData[componentId] = result;
+      }),
+    );
+
+    // 6. Process ALL controls in parallel (not sequentially per group)
+    // Pass preloaded data to avoid redundant API calls
+    const controlData: Record<string, Record<string, any>> = {};
+
+    // Initialize controlData structure
+    for (const batch of groupBatches) {
+      controlData[batch.componentId] = {};
+    }
+
+    // Flatten all control calls into a single parallel batch
+    const allControlCalls: { componentId: string; controlId: string }[] = [];
+    for (const batch of groupBatches) {
+      for (const controlId of batch.controlIds) {
+        allControlCalls.push({ componentId: batch.componentId, controlId });
+      }
+    }
+
+    // Process all controls in parallel
+    await Promise.all(
+      allControlCalls.map(async ({ componentId, controlId }) => {
+        const result = await this.Orchestration(
+          key,
+          componentId,
+          controlId,
+          token,
+          false,
+          accessProfile,
+          UO,
+          UFSData,
+          NDPData,
+        );
+        controlData[componentId][controlId] = result;
+      }),
+    );
+
+    console.log("🚀 ~ UfService ~ OrchestrationAll ~ controlData:", JSON.stringify(controlData));
+    return { pageData, groupData, controlData };
+  }
+  async OrchestrationBatch(key: string, token: string, accessProfile: any[]) {
+  
+    const UO: any = await this.commonService.readAPI(
+      key + ':UO',
+      process.env.CLIENTCODE,
+      token,
+    );
+
+    if (!UO) return "UO not found";
+    
+    const pageData = await this.Orchestration(key, null, null, token, false, accessProfile, UO);
+    const groupData: Record<string, any> = {};
+    const controlData: Record<string, Record<string, any>> = {};
+    const [UFSData, NDPData] = await Promise.all([
+      this.commonService.readAPI(key + ':UFS', process.env.CLIENTCODE, token),
+      this.commonService.readAPI(key + ':NDP', process.env.CLIENTCODE, token),
+    ]);
+
+    if (!Array.isArray(UFSData)) {
+      throw new Error(`Expected UFSData to be an array, got: ${typeof UFSData}`);
+    }
+
+    for(const UFS of UFSData){
+      if(UFS.type==="Canvas"){
+        continue;
+      }
+      if(UFS.groupType == 'group' || UFS.type === 'tab_group' || UFS.type === 'stepper_group' || UFS.type === "stepper_header" || UFS.groupType == 'table' || UFS.type === 'tab_header' || UFS.groupType == 'dynamictable' || UFS.groupType == 'dynamicactions'){
+        const isTable = UFS.groupType === 'table';
+        const result = await this.Orchestration(key, UFS.id, null, token, isTable, accessProfile, UO, UFSData, NDPData);
+        groupData[UFS.id] = result;
+      }else{
+        const result = await this.Orchestration(key, UFS.T_parentId, UFS.id, token, false, accessProfile, UO, UFSData, NDPData);
+        controlData[UFS.T_parentId] = { ...controlData[UFS.T_parentId], [UFS.id]: result };
+      }
+    }
+    
+    return {pageData, groupData, controlData};
+  }
+
+  async Orchestration(  
     key: string,
     componentId: string,
     controlId: string,
     token: string,
     isTable?: boolean,
     accessProfile?: any[],
+    preloadedUO?: any,
+    preloadedUFS?: any,
+    preloadedNDP?: any,
   ) {
     try {
-      const UO: any = await this.commonService.readAPI(
+      const UO: any = preloadedUO ?? await this.commonService.readAPI(
         key + ':UO',
         process.env.CLIENTCODE,
         token,
@@ -1567,7 +1749,7 @@ getConfig(): FusionAuthConfig {
                 action: mappedData[i]?.action,
                 code: mappedData[i]?.code,
                 rule: mappedData[i]?.rule,
-                events: mappedData[i]?.events,
+                events:  { eventSummary: mappedData[i].events?.eventSummary },
                 mapper: mappedData[i]?.mapper,
                 GoRuleData:controllerRule
               };
@@ -1666,6 +1848,17 @@ getConfig(): FusionAuthConfig {
               mappperNodeId:mappperNodeId
             };
           }
+          // Fallback: if no security entry found for this componentId, return basic object
+          if (Object.keys(object).length === 0) {
+            object = {
+              componentId,
+              security: [],
+              allowedGroups: [],
+              readableControls: [],
+              dfKey: '',
+              noSecurityEntry: true  // flag to indicate no security config exists for this group
+            };
+          }
           return object;
         } else if (key && componentId && controlId) {
           for (let i = 0; i < mappedData.length; i++) {
@@ -1675,7 +1868,7 @@ getConfig(): FusionAuthConfig {
                 if (controlId === mappedData[i].objElements[j].elementId) {
                   if (mappedData[i].objElements[j].mapper.length == 0) {
                     dfData = [];
-                    let UFSData =await this.commonService.readAPI(
+                    const UFSData = preloadedUFS ?? await this.commonService.readAPI(
                                   key + ':UFS',
                                   process.env.CLIENTCODE,
                                   token,
@@ -1738,10 +1931,15 @@ getConfig(): FusionAuthConfig {
                       }
                     }
                   } else {
-                    let dfdKey: string =
-                      mappedData[i].objElements[j].mapper[0].sourceKey[0].split(
-                        '|',
-                      )[0];
+                    if(mappedData[i].objElements[j].elementType == "dropdown"){
+                      for(let k=0;k<mappedData[i].objElements[j].mapper.length;k++){
+                        if(mappedData[i].objElements[j].mapper[k].targetKey.split('|').at(-1) == "value"){
+                          dfKey = mappedData[i].objElements[j].mapper[k].sourceKey[0].split('|')[0];
+                        }
+                      }
+                    }else{
+                      dfKey = mappedData[i].objElements[j].mapper[0].sourceKey[0].split('|')[0];
+                    }
                     let dfdNode: string =
                       mappedData[i].objElements[j].mapper[0].sourceKey[0].split(
                         '|',
@@ -1754,7 +1952,7 @@ getConfig(): FusionAuthConfig {
                         '|',
                       )[2];
                     let dfSchemaKey = await this.commonService.readAPI(
-                      dfdKey + ':DFO',
+                      dfKey + ':DFO',
                       process.env.CLIENTCODE,
                       token,
                     );
@@ -1800,7 +1998,7 @@ getConfig(): FusionAuthConfig {
                   {
                     let ruleKey:string =''
                     let pfRuleData:any={}
-                    let NDPData =await this.commonService.readAPI(
+                    const NDPData = preloadedNDP ?? await this.commonService.readAPI(
                                   key + ':NDP',
                                   process.env.CLIENTCODE,
                                   token,
@@ -1828,8 +2026,9 @@ getConfig(): FusionAuthConfig {
                               code: mappedData[i].objElements[j]?.code,
                               pfRuleData:pfRuleData,
                               rule: mappedData[i].objElements[j]?.rule,
-                              events: mappedData[i].objElements[j]?.events,
-                              mapper: mappedData[i].objElements[j]?.mapper,
+                              events: {
+                                eventSummary: mappedData[i].objElements[j]?.events?.eventSummary
+                              },                              mapper: mappedData[i].objElements[j]?.mapper,
                               // dstData: DS_Object?.data || [],
                               schemaData,
                             };
@@ -1840,8 +2039,9 @@ getConfig(): FusionAuthConfig {
                       action: mappedData[i].objElements[j]?.action,
                       code: mappedData[i].objElements[j]?.code,
                       rule: mappedData[i].objElements[j]?.rule,
-                      events: mappedData[i].objElements[j]?.events,
+                      events: { eventSummary: mappedData[i].objElements[j]?.events?.eventSummary },
                       mapper: mappedData[i].objElements[j]?.mapper,
+                      dfdKey: dfKey + ':',
                       // dstData: DS_Object?.data || [],
                       schemaData,
                       dataType
@@ -1888,6 +2088,7 @@ getConfig(): FusionAuthConfig {
       );
     }
   }
+
 
   async elementsFilter(
     key: string,
@@ -2429,6 +2630,9 @@ getConfig(): FusionAuthConfig {
                 if (POdata.mappedData.artifact.node[i].nodeId == findingkey) {
                   if (POdata.mappedData.artifact.node[i].ifo) {
                     let filterItems: any = {};
+                    if("_groupArrays_" in formData){
+                      filterItems=[]
+                    }
                     for (
                       let j = 0;
                       j < POdata.mappedData.artifact.node[i].ifo.length;
@@ -2439,14 +2643,28 @@ getConfig(): FusionAuthConfig {
                           '.',
                         )[0];
                       if (NodeId == controlId) {
-                        let nodeName: string =
-                          POdata.mappedData.artifact.node[i].ifo[
-                            j
-                          ].name.toLocaleLowerCase();
-                        if (formData[nodeName] != undefined) {
-                          filterItems[nodeName] = formData[nodeName];
-                        } else {
-                          filterItems[nodeName] = '';
+                        if("_groupArrays_" in formData){
+                          formData[formData._groupArrays_].map((groupArrayItems:any,index:number)=>{
+
+                            let nodeName: string =
+                              POdata.mappedData.artifact.node[i].ifo[
+                                j
+                              ].name.toLocaleLowerCase();
+                            if (groupArrayItems[nodeName] != undefined) {
+                              filterItems[index] ={...filterItems[index]||{} ,[nodeName]:groupArrayItems[nodeName]};
+                            } 
+
+                          })
+                        }else{
+                          let nodeName: string =
+                            POdata.mappedData.artifact.node[i].ifo[
+                              j
+                            ].name;
+                          if (formData[nodeName] != undefined) {
+                            filterItems[nodeName] = formData[nodeName];
+                          } else {
+                            filterItems[nodeName] = '';
+                          }
                         }
                       }
                     }
@@ -3277,7 +3495,7 @@ getConfig(): FusionAuthConfig {
           token,
         );
       }
-    } catch (error) {
+    } catch (error:any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -3890,6 +4108,7 @@ getConfig(): FusionAuthConfig {
       const config = this.getConfig()
       const auth_secret = config.authSecret
       const accessTokenExpiryTime = config.authAccessTokenExpiryTime 
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
 
        const accessProfileList = await this.query(`select 
         opr_ap_id ,
@@ -3901,7 +4120,7 @@ getConfig(): FusionAuthConfig {
         role_unique_id as "roleUniqueId" ,
         assigned_keys as "assignedKeys"
         from 
-        ${tenant}.opr_access_profile 
+        ${schemaName}.tam_opr_access_profile 
         where 
         tenant_code=$1 and ag_code=$2 and app_code=$3`
           , [tenant , ag , app])
@@ -3928,7 +4147,7 @@ getConfig(): FusionAuthConfig {
         dap: filteredCombination[0]?.dap,
       };
       const payload = await this.jwt.decode(token);
-      const { type, client, loginId, isAppAdmin, userUniqueId, sid, userCode } = payload;
+      const { type, client, loginId, isAppAdmin, userUniqueId, sid, userCode, tenantId } = payload;
       const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
 
       const updatedToken = await this.jwt.signAsync(
@@ -3945,6 +4164,7 @@ getConfig(): FusionAuthConfig {
           ...accessObj,
           userUniqueId,
           sid,
+          tenantId
         },
         {
           secret: auth_secret,
@@ -4118,6 +4338,7 @@ getConfig(): FusionAuthConfig {
     try {
       const accountDetails = await this.MyAccountForClient(token, 's', true);
       const { client, accessProfile } = accountDetails;
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
       const accessProfileList = await this.query(`select 
         opr_ap_id ,
         access_profile as "accessProfile" ,
@@ -4128,7 +4349,7 @@ getConfig(): FusionAuthConfig {
         role_unique_id as "roleUniqueId" ,
         assigned_keys as "assignedKeys"
         from 
-        ${tenant}.opr_access_profile 
+        ${schemaName}.tam_opr_access_profile 
         where 
         tenant_code=$1 and ag_code=$2 and app_code=$3`
           , [tenant , ag , app])
@@ -4161,13 +4382,18 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async fusionAuthVerifyRefreshToken(refreshToken: string): Promise<any> {
+  async fusionAuthVerifyRefreshToken(refreshToken: string, tenantId?: string): Promise<any> {
     try {
       const config = this.getConfig();
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+      let ApplicationTenantDetails : any
      
       // prepare the tenant id ,application id and secret from the client tpc
       const url = `${fusionAuthBaseUrl}/oauth2/token`;
+
+      if(tenantId){
+        ApplicationTenantDetails = await this.getApplicationTenantFusionauthDetails(tenantId)
+      }
 
       const params = new URLSearchParams();
       params.append('grant_type', 'refresh_token');
@@ -4178,9 +4404,10 @@ getConfig(): FusionAuthConfig {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           Authorization:
-            'Basic ' +
-            btoa(fusionAuthApplicationId + ':' + fusionAuthAppClientSecret),
-          'X-FusionAuth-TenantId': fusionAuthTenantId,
+            tenantId ? 
+            'Basic ' + btoa(ApplicationTenantDetails.fusionAuthApplicationTenantId + ':' + ApplicationTenantDetails.fusionAuthApplicationTenantClientSecret) : 
+            'Basic ' + btoa(fusionAuthApplicationId + ':' + fusionAuthAppClientSecret),
+          'X-FusionAuth-TenantId': tenantId ? ApplicationTenantDetails.applicationTenantUniqueId : fusionAuthTenantId,
         },
         body: params.toString(),
       });
@@ -4278,6 +4505,7 @@ getConfig(): FusionAuthConfig {
   async MyAccountForClient(token: string, key: string, authorization: any) {
     if (authorization) {
       try {
+        const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
         const payload: any = this.jwt.decode(token);
         if (!payload) {
           await this.commonService.errorLog(
@@ -4304,8 +4532,8 @@ getConfig(): FusionAuthConfig {
             au.no_of_products_service AS "noOfProductsService",
             au.access_profile AS "accessProfile",
             au.last_active AS "lastActive"
-          FROM ${tenant}.tenant_user tu
-          JOIN ${tenant}.app_user au
+          FROM ${schemaName}.tam_tenant_user tu
+          JOIN ${schemaName}.tam_app_user au
             ON au.org_tu_id = tu.org_tu_id
           WHERE au.tenant_code = $1
             AND au.ag_code     = $2
@@ -4441,7 +4669,7 @@ getConfig(): FusionAuthConfig {
       }
       // if currentSession has refreshTokenId this token is from fusionAuth and we need to verify with fusionauth
       if(currentSession['refreshTokenId']){
-        const value = await this.fusionAuthVerifyRefreshToken(refreshToken);
+        const value = await this.fusionAuthVerifyRefreshToken(refreshToken, payload?.tenantId );
         if (value) {
           currentSession = {
             ...currentSession,
@@ -4572,6 +4800,8 @@ getConfig(): FusionAuthConfig {
     password: string,
     ufClientType: string,
     isOauthUser: boolean = false,
+    app_tenant : string | undefined = undefined,
+    app_tenant_id: number | undefined = undefined,
     fusionAuthLoginResponse?: any | undefined,
   ) {
     try {
@@ -4579,27 +4809,66 @@ getConfig(): FusionAuthConfig {
       const auth_secret = config.authSecret
       const accessTokenExpiryTime = config.authAccessTokenExpiryTime 
       const refreshTokenExpiryTime = config.authRefreshTokenExpiryTime 
-      const tenantUser = await this.query(`SELECT
-            au.org_au_id,
-            tu.user_unique_id AS "userUniqueId",
-            tu.email,
-            tu.password,
-            tu.first_name AS "firstName",
-            tu.last_name AS "lastName",
-            tu.login_id AS "loginId",
-            tu.user_code AS "userCode",
-            tu.trs_created_date::text AS "dateAdded",
-            tu.status,
-            au.is_app_admin as "isAppAdmin",
-            au.no_of_products_service AS "noOfProductsService",
-            au.access_profile AS "accessProfile",
-            au.last_active AS "lastActive"
-          FROM ${tenant}.tenant_user tu
-          JOIN ${tenant}.app_user au
-            ON au.org_tu_id = tu.org_tu_id
-          WHERE au.tenant_code = $1
-            AND au.ag_code     = $2
-            AND au.app_code    = $3 AND login_id=$4 or email=$4` , [tenant , ag , app ,username])
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
+
+      let query = `
+        SELECT
+          au.org_au_id,
+          tu.user_unique_id AS "userUniqueId",
+          tu.email,
+          tu.password,
+          tu.first_name AS "firstName",
+          tu.last_name AS "lastName",
+          tu.login_id AS "loginId",
+          tu.user_code AS "userCode",
+          tu.trs_created_date::text AS "dateAdded",
+          tu.status,
+          au.is_app_admin as "isAppAdmin",
+          au.no_of_products_service AS "noOfProductsService",
+          au.access_profile AS "accessProfile",
+          au.last_active AS "lastActive"
+        FROM ${schemaName}.tam_tenant_user tu
+        JOIN ${schemaName}.tam_app_user au
+          ON au.org_tu_id = tu.org_tu_id
+        WHERE au.tenant_code = $1
+          AND au.ag_code     = $2
+          AND au.app_code    = $3 
+          AND (tu.login_id = $4 OR tu.email = $4)
+      `;
+
+        let values = [tenant, ag, app, username];
+
+        if (app_tenant_id) {
+          query += ` AND tu.at_id = $5`;
+          values.push(String(app_tenant_id));
+        } else {
+          query += ` AND tu.at_id IS NULL`;
+        }
+
+      const tenantUser = await this.query(query, values);
+
+       let tenantId = app_tenant;      
+
+      // if(app_tenant){
+      //   // check user have app_sub_tenant access to work on it
+      //   try {   
+      //     const app_sub_tenant_exist = await this.query(`SELECT * 
+      //         FROM ${tenant.toLowerCase()}.tam_app_user_app_tenant auat
+      //         JOIN ${tenant.toLowerCase()}.app_tenant at ON auat.at_id = at.at_id
+      //         WHERE auat.org_au_id = ${tenantUser[0].org_au_id} AND at.tenant_id = '${app_tenant}';`)
+      //     if(app_sub_tenant_exist.length > 0){
+      //       tenantId = app_tenant
+      //     }else{
+      //       throw `${tenantUser[0].org_au_id} , ${app_tenant} Not Found`
+      //     }
+      //   } catch (error) {
+      //     console.log(error);
+          
+      //     throw new NotAcceptableException(`User lacks the access to the selected Tenant`)
+      //   }
+      // }else{
+      //   tenantId = undefined
+      // }    
 
       const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
 
@@ -4645,7 +4914,7 @@ getConfig(): FusionAuthConfig {
           );
         }
 
-        await this.query(`update ${tenant}.app_user set last_active=$1 where org_au_id=$2`, [new Date().toISOString() , loggedInUser?.org_au_id])
+        await this.query(`update ${schemaName}.tam_app_user set last_active=$1 where org_au_id=$2`, [new Date().toISOString() , loggedInUser?.org_au_id])
 
 
         delete loggedInUser.password;
@@ -4661,6 +4930,7 @@ getConfig(): FusionAuthConfig {
             isAppAdmin: loggedInUser?.isAppAdmin ?? undefined,
             userCode: loggedInUser?.userCode ?? undefined,
             sid: sid,
+            tenantId
           },
           {
             secret: auth_secret,
@@ -4712,7 +4982,7 @@ getConfig(): FusionAuthConfig {
           role_unique_id as "roleUniqueId" ,
           assigned_keys as "assignedKeys"
           from 
-          ${tenant}.opr_access_profile 
+          ${schemaName}.tam_opr_access_profile 
           where 
           tenant_code=$1 and ag_code=$2 and app_code=$3`
            , [tenant , ag , app])
@@ -4777,6 +5047,7 @@ getConfig(): FusionAuthConfig {
                   userCode: loggedInUser?.userCode ?? undefined,
                   ...orpAccessObj,
                  sid:sid,
+                 tenantId
                 },
                 {
                   secret: auth_secret,
@@ -4846,15 +5117,77 @@ getConfig(): FusionAuthConfig {
     }
   }
 
+  async getApplicationTenantFusionauthDetails (app_tenant : string | undefined = undefined) {
+      const config = this.getConfig();
+      const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+      const fusionAuthApiKey = config.fusionAuthApiKey;
+      let applicationTenantUniqueId = ''
+      let fusionAuthApplicationTenantId = '';
+      let fusionAuthApplicationTenantClientSecret = '';
+      
+      const possible_FA_tenant_name = `${tenant}-apptenant-${app_tenant}`;
+        // CHECK EXISTENCE OF THE APPLICATION TENANT IN FUSIONAUTH
+          const tenantList = await FusionAuthGetTenantList({
+            name: possible_FA_tenant_name,
+            fusionAuthBaseUrl: fusionAuthBaseUrl,
+            fusionAuthApiKey: fusionAuthApiKey,
+          });
+
+       const isTenantExist = tenantList.find(
+        (a) => a.name == possible_FA_tenant_name,
+      );
+
+      if(isTenantExist.id){
+        applicationTenantUniqueId = isTenantExist.id
+      } else {
+        return 'Application Tenant does not exist'
+      }
+
+
+      // step 2 => check for application existence , create if not exist and return application id
+      const possibleApplicationNameInFusionAuth = `${app_tenant}-defaultApplication`;
+      const applicationList = await FusionAuthGetApplicationList(
+        applicationTenantUniqueId,
+        {
+          fusionAuthBaseUrl: fusionAuthBaseUrl,
+          fusionAuthApiKey: fusionAuthApiKey,
+          name: possibleApplicationNameInFusionAuth,
+        },
+      )
+      
+      const isApplicationExist = applicationList.find(
+        (a) => a.name == possibleApplicationNameInFusionAuth,
+      );
+      if(isApplicationExist.id){
+        fusionAuthApplicationTenantId = isApplicationExist.id;
+        fusionAuthApplicationTenantClientSecret = isApplicationExist.oauthConfiguration.clientSecret;
+      } else {
+        return 'Application does not exist'
+      }
+
+      return {
+        applicationTenantUniqueId,
+        fusionAuthApplicationTenantId,
+        fusionAuthApplicationTenantClientSecret
+      }
+  }
+
   async signInViaIAM(
     username: string,
     password: string,
     ufClientType: string,
     isOauthUser: boolean = false,
+    app_tenant : string | undefined = undefined,
+    app_tenant_id : number | undefined = undefined
   ) {
     try {
       const config = this.getConfig();
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+      let ApplicationTenantDetails : any
+
+      if(app_tenant){
+        ApplicationTenantDetails = await this.getApplicationTenantFusionauthDetails(app_tenant)
+      }
 
       const url = `${fusionAuthBaseUrl}/oauth2/token`;
       const params = new URLSearchParams();
@@ -4862,16 +5195,17 @@ getConfig(): FusionAuthConfig {
       params.append('username', username);
       params.append('password', password);
       params.append('scope', 'offline_access');
-      params.append('client_id', fusionAuthApplicationId);
+      params.append('client_id', app_tenant ? ApplicationTenantDetails.fusionAuthApplicationTenantId : fusionAuthApplicationId);
 
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           Authorization:
-            'Basic ' +
-            btoa(fusionAuthApplicationId + ':' + fusionAuthAppClientSecret),
-          'X-FusionAuth-TenantId': fusionAuthTenantId,
+          app_tenant ? 
+            'Basic ' + btoa(ApplicationTenantDetails.fusionAuthApplicationTenantId + ':' + ApplicationTenantDetails.fusionAuthApplicationTenantClientSecret) : 
+            'Basic ' + btoa(fusionAuthApplicationId + ':' + fusionAuthAppClientSecret),
+          'X-FusionAuth-TenantId': app_tenant ? ApplicationTenantDetails.applicationTenantUniqueId : fusionAuthTenantId,
         },
         body: params.toString(),
       });
@@ -4886,6 +5220,8 @@ getConfig(): FusionAuthConfig {
         password,
         ufClientType,
         isOauthUser,
+        app_tenant,
+        app_tenant_id,
         fusionAuthLoginResponse,
       );
       return torusSignIn;
@@ -4971,7 +5307,8 @@ getConfig(): FusionAuthConfig {
   // static screen's apis
   async getTenantUser() {
     try {
-      const res = await this.query(`select * from ${tenant}.tenant_user tu where tenant_code=$1` , [tenant])
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
+      const res = await this.query(`select * from ${schemaName}.tam_tenant_user tu where tenant_code=$1` , [tenant])
       return res || [];
     } catch (err: any) {
       throw new UnauthorizedException('Invalid tenant key');
@@ -4988,6 +5325,7 @@ getConfig(): FusionAuthConfig {
       if (!tenant || !ag || !app || !client) {
         return [];
       }
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
       const tenantUserList = await this.query(`SELECT
             au.org_au_id,
             tu.user_unique_id AS "userUniqueId",
@@ -5003,8 +5341,8 @@ getConfig(): FusionAuthConfig {
             au.no_of_products_service AS "noOfProductsService",
             au.access_profile AS "accessProfile",
             au.last_active AS "lastActive"
-          FROM ${tenant}.tenant_user tu
-          JOIN ${tenant}.app_user au
+          FROM ${schemaName}.tam_tenant_user tu
+          JOIN ${schemaName}.tam_app_user au
             ON au.org_tu_id = tu.org_tu_id
           WHERE au.tenant_code = $1
             AND au.ag_code     = $2
@@ -5039,6 +5377,7 @@ getConfig(): FusionAuthConfig {
 
   async getAppSecurityData() {
     try {
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
       const actions = [
         {
           code : "orgMatrix",
@@ -5050,7 +5389,7 @@ getConfig(): FusionAuthConfig {
             org_grp_id AS "orgGrpId",
             src_id AS "srcId",
             org
-          FROM ${tenant}.opr_org_matrix
+          FROM ${schemaName}.tam_opr_org_matrix
           WHERE tenant_code = $1
             AND ag_code = $2
             AND app_code = $3`,
@@ -5065,7 +5404,7 @@ getConfig(): FusionAuthConfig {
             org_grp_name AS "orgGrpName",
             org_grp_id   AS "orgGrpId",
             org
-         FROM   ${tenant}.opr_org_master
+         FROM   ${schemaName}.tam_opr_org_master
          WHERE  tenant_code = $1
            AND  ag_code     = $2
            AND  app_code    = $3`,
@@ -5097,8 +5436,8 @@ getConfig(): FusionAuthConfig {
               else false
             end as "isAssigned"
           from
-            ${tenant}.tenant_user tu
-          left join ${tenant}.app_user au
+            ${schemaName}.tam_tenant_user tu
+          left join ${schemaName}.tam_app_user au
               on
             au.org_tu_id = tu.org_tu_id
             and au.ag_code = $2
@@ -5151,6 +5490,7 @@ getConfig(): FusionAuthConfig {
 
   async getAPPSecurityTemplateData() {
     try {
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
       let securityTemplateData = await this.query(`select 
         opr_ap_id ,
         access_profile as "accessProfile" ,
@@ -5161,7 +5501,7 @@ getConfig(): FusionAuthConfig {
         role_unique_id as "roleUniqueId" ,
         assigned_keys as "assignedKeys"
         from 
-        ${tenant}.opr_access_profile 
+        ${schemaName}.tam_opr_access_profile 
         where 
         tenant_code=$1 and ag_code=$2 and app_code=$3`
           , [tenant , ag , app]);
@@ -5184,8 +5524,8 @@ getConfig(): FusionAuthConfig {
             au.no_of_products_service AS "noOfProductsService",
             au.access_profile AS "accessProfile",
             au.last_active AS "lastActive"
-          FROM ${tenant}.tenant_user tu
-          JOIN ${tenant}.app_user au
+          FROM ${schemaName}.tam_tenant_user tu
+          JOIN ${schemaName}.tam_app_user au
             ON au.org_tu_id = tu.org_tu_id
           WHERE au.tenant_code = $1
             AND au.ag_code     = $2
@@ -5230,6 +5570,7 @@ getConfig(): FusionAuthConfig {
           'Either AppGroup or Application not available',
         );
       }
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
    
       const accessProfileArray = [];
       const accessProfileWithProductAndService = {};
@@ -5243,7 +5584,7 @@ getConfig(): FusionAuthConfig {
         role_unique_id as "roleUniqueId" ,
         assigned_keys as "assignedKeys"
         from 
-        ${tenant}.opr_access_profile 
+        ${schemaName}.tam_opr_access_profile 
         where 
         tenant_code=$1 and ag_code=$2 and app_code=$3`
           , [tenant , ag , app]);
@@ -5286,6 +5627,7 @@ getConfig(): FusionAuthConfig {
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
       const fusionAuthApiKey = config.fusionAuthApiKey;
       const auth_secret = config.authSecret
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
 
       if (
         !data ||
@@ -5299,11 +5641,11 @@ getConfig(): FusionAuthConfig {
       });
       
       const userResponseFromDB = await this.query(
-        `select * from ${tenant}.app_user au where org_tu_id=$1 and tenant_code=$2 and ag_code=$3 and app_code=$4`,
+        `select * from ${schemaName}.tam_app_user au where org_tu_id=$1 and tenant_code=$2 and ag_code=$3 and app_code=$4`,
         [data?.org_tu_id , tenant , ag , app]
        )
 
-      const app_user_data = {
+      const tam_app_user_data = {
         user_unique_id: data?.userUniqueId ?? '',
         no_of_products_service: String(data?.['noOfProductsService']) ?? '',
         access_profile: data?.['accessProfile'] ?? [],
@@ -5381,8 +5723,8 @@ getConfig(): FusionAuthConfig {
         
         // Torus API OPR Table entry
         await this.insertIntoTable(
-          'app_user',
-          app_user_data
+          'tam_app_user',
+          tam_app_user_data
         );
       } else {
         let userExist: boolean = false;
@@ -5448,7 +5790,7 @@ getConfig(): FusionAuthConfig {
               data['accessExpires'] !== equivalentDataInRedis['access_expires']
             ) {
               await this.updateTable(
-                'app_user',
+                'tam_app_user',
                 {
                   org_au_id : org_au_id,
                   no_of_products_service: data?.['noOfProductsService'] ?? '',
@@ -5468,8 +5810,8 @@ getConfig(): FusionAuthConfig {
           } else {
             // insert record
             await this.insertIntoTable(
-              'app_user',
-              app_user_data,
+              'tam_app_user',
+              tam_app_user_data,
             )
           }
         } else {
@@ -5497,8 +5839,8 @@ getConfig(): FusionAuthConfig {
           }
         // insert record
         await this.insertIntoTable(
-              'app_user',
-              app_user_data,
+              'tam_app_user',
+              tam_app_user_data,
             )
         }
       }
@@ -5524,8 +5866,8 @@ getConfig(): FusionAuthConfig {
               else false
             end as "isAssigned"
           from
-            ${tenant}.tenant_user tu
-          left join ${tenant}.app_user au
+            ${schemaName}.tam_tenant_user tu
+          left join ${schemaName}.tam_app_user au
               on
             au.org_tu_id = tu.org_tu_id
             and au.ag_code = $2
@@ -5698,11 +6040,13 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async getResetPasswordOtp(email: string) {
+  async getResetPasswordOtp(email: string, tenantId: string | undefined = undefined) {
     try {
       if (!email) throw new BadRequestException('email is required');
       const otpCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:otp`;
-      const userList: any[] = await this.query(`SELECT
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
+      let query = 
+        `SELECT
             au.org_au_id,
             tu.user_unique_id AS "userUniqueId",
             tu.email,
@@ -5717,12 +6061,23 @@ getConfig(): FusionAuthConfig {
             au.no_of_products_service AS "noOfProductsService",
             au.access_profile AS "accessProfile",
             au.last_active AS "lastActive"
-          FROM ${tenant}.tenant_user tu
-          JOIN ${tenant}.app_user au
+          FROM ${schemaName}.tam_tenant_user tu
+          JOIN ${schemaName}.tam_app_user au
             ON au.org_tu_id = tu.org_tu_id
           WHERE au.tenant_code = $1
             AND au.ag_code     = $2
-            AND au.app_code    = $3` , [tenant , ag , app ]);
+            AND au.app_code    = $3`
+        
+            const values = [tenant , ag , app ]
+
+        if (tenantId) {
+          query += ` AND tu.at_id = $4`;
+          values.push(tenantId);
+        } else {
+          query += ` AND tu.at_id IS NULL`;
+        }
+            
+      const userList: any[] = await this.query(query, values);
       const foundedUser = userList.find(
         (user) => user.email.toLowerCase() === email.toLowerCase(),
       );
@@ -5843,16 +6198,29 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async resetPassword(email: string, password: string) {
+  async resetPassword(email: string, password: string, app_tenant: string | undefined = undefined, tenantId: string | undefined = undefined) {
     try {
       if (!email || !password) {
       throw new BadRequestException('Please provide valid email and password');
       }
+      let ApplicationTenantDetails : any
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
 
-      const tenantList: any[] = await this.query(`SELECT
+      let query = `SELECT
             *
-          FROM ${tenant}.tenant_user tu
-         where tu.email=$1`, [email])
+          FROM ${schemaName}.tam_tenant_user tu
+         where tu.email=$1`
+
+         const values = [email]
+
+        if (tenantId) {
+          query += ` AND tu.at_id = $2`;
+          values.push(tenantId);
+        } else {
+          query += ` AND tu.at_id IS NULL`;
+        }
+
+      const tenantList: any[] = await this.query(query, values);
       const index = tenantList.findIndex(
         (user) => user.email.toLowerCase() === email.toLowerCase(),
       );
@@ -5867,7 +6235,11 @@ getConfig(): FusionAuthConfig {
 
       // --- FusionAuth flow ---
       if (process.env.DEFAULT_AUTHENTICATION === 'fusionauth') {
-        const fusionAuthTenantId = process.env.FUSIONAUTH_TENANTID;
+        if(app_tenant){
+          ApplicationTenantDetails = await this.getApplicationTenantFusionauthDetails(app_tenant)
+        }
+        
+        const fusionAuthTenantId = app_tenant ? ApplicationTenantDetails?.applicationTenantUniqueId : process.env.FUSIONAUTH_TENANTID;
         const uniqueId = tenantUser.user_unique_id;
 
         if (!fusionAuthTenantId || !uniqueId) {
@@ -5889,10 +6261,10 @@ getConfig(): FusionAuthConfig {
       }
 
       // --- Update Redis only after FusionAuth success (or if not fusionauth) ---
-      await this.updateTable('tenant_user' , {
+      await this.updateTable('tam_tenant_user' , {
         password : this.hashPassword(password),
         email
-      } , 'email')
+      } , 'email', tenantId)
       // tenantUser.password = this.hashPassword(password);
       // tenantList.splice(index, 1, tenantUser);
       // await this.redisService.setJsonData(
@@ -7905,6 +8277,7 @@ getConfig(): FusionAuthConfig {
       const config = this.getConfig();
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
       const fusionAuthApiKey = config.fusionAuthApiKey;
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
 
       if (!user) {
         throw new BadRequestException('Account details not enough to continue');
@@ -7928,7 +8301,7 @@ getConfig(): FusionAuthConfig {
         user['userUniqueId']=tempId
         const tenatUserAddedResponse = await this.postTenantUser(user)
         let temp: string = user?.email?.split('@').at(0) || '';
-         const app_user_data = {
+         const tam_app_user_data = {
               user_unique_id: user?.userUniqueId ?? '',
               no_of_products_service: '',
               access_profile: [],
@@ -7956,12 +8329,12 @@ getConfig(): FusionAuthConfig {
               trs_sub_org_code: '',
               trs_app_code: '',
             };
-        await this.insertIntoTable('app_user' , app_user_data)
+        await this.insertIntoTable('tam_app_user' , tam_app_user_data)
         const userList = await this.query(`select
                           tu.email 
                         from
-                          app_user au
-                        join tenant_user tu on
+                          ${schemaName}.tam_app_user au
+                        join ${schemaName}.tam_tenant_user tu on
                           tu.org_tu_id = au.org_tu_id
                         where
                           au.is_app_admin=$1
@@ -8000,6 +8373,7 @@ getConfig(): FusionAuthConfig {
   ) {
     try {
       if (tenant && data) {
+        const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
         let existingRoles: any[] =
          await this.getAPPSecurityTemplateData()
          data = data.map(t => {
@@ -8040,7 +8414,7 @@ getConfig(): FusionAuthConfig {
          }
 
          if (secDataObj?.opr_ap_id) {
-          const currentAccessTemplate = await this.query(`select * from ${tenant}.opr_access_profile where opr_ap_id=$1` , [secDataObj?.opr_ap_id])
+          const currentAccessTemplate = await this.query(`select * from ${schemaName}.tam_opr_access_profile where opr_ap_id=$1` , [secDataObj?.opr_ap_id])
           
           if (currentAccessTemplate && Array.isArray(currentAccessTemplate) && currentAccessTemplate.length) {
             const prevData = currentAccessTemplate?.[0];
@@ -8052,7 +8426,7 @@ getConfig(): FusionAuthConfig {
               continue;
             } else {
               // patch this record
-              await this.updateTable('opr_access_profile' , 
+              await this.updateTable('tam_opr_access_profile' , 
                 {
                   ...security_data,
                   opr_ap_id : secDataObj?.opr_ap_id,
@@ -8064,7 +8438,7 @@ getConfig(): FusionAuthConfig {
           continue;
         } else {
           await this.insertIntoTable(
-            'opr_access_profile',
+            'tam_opr_access_profile',
             security_data,
           )
         }
@@ -8072,7 +8446,7 @@ getConfig(): FusionAuthConfig {
 
       // delete records from torus which are deleted from incoming data 
       for (const masterId of securityDataIdsToDelete) {
-        await this.query(`DELETE FROM ${tenant}.opr_access_profile WHERE opr_ap_id=$1` , [masterId])
+        await this.query(`DELETE FROM ${schemaName}.tam_opr_access_profile WHERE opr_ap_id=$1` , [masterId])
       }
       //Torus API OPR Table entry End
       } else {
@@ -8297,7 +8671,7 @@ getConfig(): FusionAuthConfig {
     
       let temp: string = userDetail?.email?.split('@').at(0) || '';
 
-       const tenant_user_payload = {
+       const tam_tenant_user_payload = {
         user_unique_id : userDetail?.providerAccountId || userDetail?.userUniqueId,
         email : userDetail?.email,
         password : '',
@@ -8325,7 +8699,7 @@ getConfig(): FusionAuthConfig {
       }
 
       if (!isExists) {
-        return await this.insertIntoTable('tenant_user' ,tenant_user_payload)
+        return await this.insertIntoTable('tam_tenant_user' ,tam_tenant_user_payload)
       }
   }
 
@@ -8344,6 +8718,8 @@ getConfig(): FusionAuthConfig {
         app: currentApp,
       } = payload;
       const tenantProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`;
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
+
     
       const tenantProfileResponse = await this.redisService.getJsonData(
         tenantProfileCacheKey,
@@ -8352,7 +8728,7 @@ getConfig(): FusionAuthConfig {
       const tenantProfile = tenantProfileResponse
         ? JSON.parse(tenantProfileResponse)
         : {};
-      const foundUser = await this.query(`select * from ${tenant}.tenant_user tu where tu.tenant_code=$1 and tu.login_id=$2` , [tenant , loginId])
+      const foundUser = await this.query(`select * from ${schemaName}.tam_tenant_user tu where tu.tenant_code=$1 and tu.login_id=$2` , [tenant , loginId])
    
       const appGroupInfo =
         tenantProfile?.AG?.find((group: any) => group?.code == ag) ?? {};
@@ -8367,7 +8743,7 @@ getConfig(): FusionAuthConfig {
            userList = await this.query(`select
                               *
                             from
-                              ${tenant}.app_user au
+                              ${schemaName}.tam_app_user au
                             where
                               au.tenant_code =$1
                               and au.ag_code =$2
@@ -8452,11 +8828,12 @@ getConfig(): FusionAuthConfig {
 
   async sso(sourceToken: string , ufClientType:string) {
     try {
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
       const payload = await this.jwt.decode(sourceToken);
       const { loginId } = payload;
       let tenantUserList = []
       try {
-        tenantUserList = await this.query(`select tu.email , tu.login_id from ${tenant}.tenant_user tu where tu.login_id=$1` , [loginId])
+        tenantUserList = await this.query(`select tu.email , tu.login_id from ${schemaName}.tam_tenant_user tu where tu.login_id=$1` , [loginId])
       } catch (error) {
         tenantUserList = []
       }
@@ -8499,7 +8876,7 @@ getConfig(): FusionAuthConfig {
       let existUser: any[] = await this.getTenantUser();
       let userUniqueId = uuid();
 
-      const tenant_user_payload = {
+      const tam_tenant_user_payload = {
         user_unique_id : userUniqueId,
         email : content?.email,
         password : this.hashPassword(content?.password),
@@ -8526,10 +8903,10 @@ getConfig(): FusionAuthConfig {
         trs_sub_org_code: tokenDecode?.subOrgCode ?? ""
       }
 
-      if(existUser.find((u) => u.email == tenant_user_payload.email)){
+      if(existUser.find((u) => u.email == tam_tenant_user_payload.email)){
         throw new NotAcceptableException('Email already taken , please add another email')
       }
-      if(existUser.find((u) => u.login_id == tenant_user_payload.login_id)){
+      if(existUser.find((u) => u.login_id == tam_tenant_user_payload.login_id)){
         throw new NotAcceptableException('Username already taken , please choose different name')
       }
 
@@ -8539,18 +8916,18 @@ getConfig(): FusionAuthConfig {
             fusionAuthBaseUrl,
             fusionAuthApiKey,
             fusionAuthTenantId,
-            tenant_user_payload.user_unique_id,
-            tenant_user_payload.first_name,
-            tenant_user_payload.last_name,
-            tenant_user_payload.login_id,
-            tenant_user_payload.email,
+            tam_tenant_user_payload.user_unique_id,
+            tam_tenant_user_payload.first_name,
+            tam_tenant_user_payload.last_name,
+            tam_tenant_user_payload.login_id,
+            tam_tenant_user_payload.email,
             content?.password,
             'POST',
             '',
           );
         }
-       const userAddedResponse = await this.insertIntoTable('tenant_user' ,{
-          ...tenant_user_payload ,
+       const userAddedResponse = await this.insertIntoTable('tam_tenant_user' ,{
+          ...tam_tenant_user_payload ,
           trs_created_by : tokenDecode?.loginId 
         })
         
@@ -8732,6 +9109,7 @@ getConfig(): FusionAuthConfig {
     try {
       const config = this.getConfig()
       const auth_secret = config.authSecret
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
 
       if (!token) throw new BadRequestException('Token is required');
       const payload = await this.jwt.verifyAsync(token, {
@@ -8758,8 +9136,8 @@ getConfig(): FusionAuthConfig {
       // Torus API OPR Table entry start
       // loop thorugh masterData
       for (const masterDataItem of incomingMasterData) {
-        // prepare data for opr_org_master table in torus
-        const opr_org_master_data = {
+        // prepare data for tam_opr_org_master table in torus
+        const tam_opr_org_master_data = {
           org_grp_code: masterDataItem?.orgGrpCode,
           org_grp_name: masterDataItem?.orgGrpName,
           org_grp_id: masterDataItem?.orgGrpId,
@@ -8786,19 +9164,19 @@ getConfig(): FusionAuthConfig {
         };
         // if opr_om_id exist then patch else post
         if (masterDataItem?.opr_om_id) {
-          const mstrData :any[] = await this.query(`select * from ${tenant}.opr_org_master where opr_om_id=$1` , [masterDataItem?.opr_om_id])
+          const mstrData :any[] = await this.query(`select * from ${schemaName}.tam_opr_org_master where opr_om_id=$1` , [masterDataItem?.opr_om_id])
           if (mstrData && Array.isArray(mstrData) && mstrData.length) {
             if (
-              mstrData?.[0].org_grp_name == opr_org_master_data.org_grp_name &&
+              mstrData?.[0].org_grp_name == tam_opr_org_master_data.org_grp_name &&
               (mstrData?.[0].org ?? {}) ==      //this is already in stringified format
-                opr_org_master_data.org
+                tam_opr_org_master_data.org
             ) {
               continue;
             } else {
               // patch this record
-              await this.updateTable('opr_org_master' , 
+              await this.updateTable('tam_opr_org_master' , 
                 {
-                ...opr_org_master_data ,
+                ...tam_opr_org_master_data ,
                 opr_om_id : masterDataItem?.opr_om_id,
                 trs_created_by: mstrData?.[0].trs_created_by ?? ''
                 } 
@@ -8807,16 +9185,16 @@ getConfig(): FusionAuthConfig {
           }
           continue;
         } else {
-          await this.insertIntoTable('opr_org_master' , 
-            {...opr_org_master_data }
+          await this.insertIntoTable('tam_opr_org_master' , 
+            {...tam_opr_org_master_data }
           )
         }
       }
 
       // loop thorugh matrixData
       for (const matrixDataItem of incomingMatrixData) {
-        // prepare data for opr_org_matrix table in torus
-        const opr_org_matrix_data = {
+        // prepare data for tam_opr_org_matrix table in torus
+        const tam_opr_org_matrix_data = {
           org_grp_code: matrixDataItem?.orgGrpCode,
           org_grp_name: matrixDataItem?.orgGrpName,
           org_grp_id: matrixDataItem?.orgGrpId,
@@ -8844,20 +9222,20 @@ getConfig(): FusionAuthConfig {
         };
         // if opr_mx_id exist then patch else post
         if (matrixDataItem?.opr_mx_id) {
-          const mtrxData : any[] = await this.query(`select * from ${tenant}.opr_org_matrix where opr_mx_id=$1` , [matrixDataItem?.opr_mx_id])
+          const mtrxData : any[] = await this.query(`select * from ${schemaName}.tam_opr_org_matrix where opr_mx_id=$1` , [matrixDataItem?.opr_mx_id])
          
           if (mtrxData && Array.isArray(mtrxData) && mtrxData.length) {
             if (
-              mtrxData?.[0].org_grp_name == opr_org_matrix_data.org_grp_name &&
+              mtrxData?.[0].org_grp_name == tam_opr_org_matrix_data.org_grp_name &&
               (mtrxData?.[0].org ?? {}) ==
-                opr_org_matrix_data.org
+                tam_opr_org_matrix_data.org
             ) {
               continue;
             } else {
              // patch this record
-              await this.updateTable('opr_org_matrix' , 
+              await this.updateTable('tam_opr_org_matrix' , 
                 {
-                  ...opr_org_matrix_data,
+                  ...tam_opr_org_matrix_data,
                   opr_mx_id : matrixDataItem?.opr_mx_id,
                    trs_created_by: mtrxData?.[0].trs_created_by
                   } 
@@ -8866,8 +9244,8 @@ getConfig(): FusionAuthConfig {
           }
           continue;
         } else {
-          await this.insertIntoTable('opr_org_matrix' , 
-            {...opr_org_matrix_data }
+          await this.insertIntoTable('tam_opr_org_matrix' , 
+            {...tam_opr_org_matrix_data }
           )
         }
       }
@@ -8875,11 +9253,11 @@ getConfig(): FusionAuthConfig {
 
       // delete records from torus which are deleted from incoming data 
       for (const masterId of masterDataIdsToDelete) {
-        await this.query(`DELETE FROM ${tenant}.opr_org_master WHERE opr_om_id=$1` , [masterId])
+        await this.query(`DELETE FROM ${schemaName}.tam_opr_org_master WHERE opr_om_id=$1` , [masterId])
       }
 
       for (const matrixId of matrixDataIdsToDelete) {
-        await this.query(`DELETE FROM ${tenant}.opr_org_matrix WHERE opr_mx_id=$1` , [matrixId])
+        await this.query(`DELETE FROM ${schemaName}.tam_opr_org_matrix WHERE opr_mx_id=$1` , [matrixId])
       }
       
       return { message: 'Organization data saved successfully' };
@@ -8898,6 +9276,30 @@ getConfig(): FusionAuthConfig {
         },
       );
       await this.throwCustomException(error);
+    }
+  }
+  
+  async getAppTenantsLinkedWithApp() {
+    try {
+      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
+      const result = await this.query(`select
+              *
+            from
+              ${schemaName}.tam_tenant at
+            join ${schemaName}.tam_tenant_app aat on
+              at.at_id = aat.at_id
+            where
+              aat.tenant_code =$1
+              and aat.ag_code =$2
+              and aat.app_code =$3
+            ` , [tenant, ag, app]);
+      if (result) {
+        return JSON.parse(JSON.stringify(result ?? []));
+      } else {
+        return []
+      }
+    } catch (error) {
+     return [];
     }
   }
 }

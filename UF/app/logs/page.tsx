@@ -17,12 +17,12 @@ const ParentComponent = () => {
   const [nodeData, setNodeData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [app, setApp] = useState({
-    code: 'A001',
-    name: 'application1'
+    code: 'VGPH',
+    name: 'VGPH'
   })
   const [appGroup, setappGroup] = useState({
-    code: 'AG001',
-    name: 'appgroup'
+    code: 'GSS',
+    name: 'GSS'
   })
   const token: string = getCookie('token')
   const decodedToken: any = decodeToken(token)
@@ -49,7 +49,7 @@ const ParentComponent = () => {
   const [ fabrics , setFabrics ] = useState<Array<string>>([])
   const [jsonViewerData, setJsonViewerData] = useState({})
   const router = useRouter()
-  let landingScreen:string = 'User Screen';
+  let landingScreen:string = 'CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:VGPH:AFK:transaction:AFVK:v1';
   const encryptionFlagApp: boolean = false;    
   const [jsonData, setJsonData] = useState({
     data: [],
@@ -67,6 +67,7 @@ const ParentComponent = () => {
     AIF: ['AIFD'],
     CDF: ['DPD', 'IFD']
   };
+  const [localSortOrder, setLocalSortOrder] = useState<string>('Newest')
   const getDate = (date: any) =>{
     if(!date) return ""
     const { year, month, day } = date
@@ -74,7 +75,7 @@ const ParentComponent = () => {
   }
   let payload:any = useMemo(() => {
     return {
-      tenant: 'CI001',
+      tenant: 'CT005',
        fabric: fabrics.length > 0 ? fabrics.flatMap((prefix: any) =>
             suffixes[prefix]
               ? suffixes[prefix].map((suffix: any) => `${prefix}-${suffix}`)
@@ -87,9 +88,10 @@ const ParentComponent = () => {
       ToDate: range && range?.end ? getDate(range.end) : '',
       page: jsonData.page,
       limit: jsonData.limit,
+      sortOrder: localSortOrder.toLowerCase(),
       searchParam: search
     }
-  }, [activeTab, jsonData, search , range , fabrics, user])
+  }, [activeTab, jsonData, search , range , fabrics, user, localSortOrder])
 
   const fetchData = async (signal: AbortSignal) => {
     try {
@@ -271,7 +273,7 @@ const ParentComponent = () => {
   const securityCheck = async () => {
   try {
     const encryptionDpd: string =
-      'CK:CI001:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1'
+      'CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:GSS:AFGK:VGPH:AFK:VGPH_DPD:AFVK:v1'
     const encryptionMethod: string = ''
     let introspect: any
     if (encryptionFlagApp) {
@@ -338,6 +340,8 @@ const ParentComponent = () => {
           setUser={setUser}
           jsonViewerData={jsonViewerData}
           setJsonViewerData={setJsonViewerData}
+          localSortOrder={localSortOrder}
+          setLocalSortOrder={setLocalSortOrder}
         />
       )}
     </>

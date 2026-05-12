@@ -83,7 +83,7 @@ export interface te_eventEmitterDto {
   nodeId?:string;
   nodeName?:string;
   nodeType?:string;
-  controllerName?:string;
+  controlName?:string;
   upId?:string | string[];
   lock?:any;
   childTables?:string[];
@@ -139,6 +139,8 @@ export interface api_signinDto {
     password: string;
     key?:string;
     ufClientType?:string
+    app_tenant?:string
+    app_tenant_id?:number
 }
 
 export interface api_screenRouteDto {

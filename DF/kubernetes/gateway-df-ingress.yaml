@@ -1,0 +1,32 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ct005-vgph-df-generator-virtualservice
+  namespace: ct005-vgph-df-v1
+spec:
+  hosts:
+    - "tgadev2.toruslowcode.com"
+  gateways:
+    - istio-system/wp-gateway 
+  http:
+    - match:
+        - uri:
+            prefix: /ct005/gss/vgph/v1/api/
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: ct005-vgph-df-generator
+            port:
+              number: 443 
+    - match:
+        - uri:
+            exact: /ct005/gss/vgph/v1/api
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: ct005-vgph-df-generator
+            port:
+              number: 443
+

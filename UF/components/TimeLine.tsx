@@ -130,7 +130,7 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                 <>
                   {/* Horizontal Layout */}
                   <time
-                    className={`mb-4 text-center text-lg sm:text-sm ${
+                    className={`mb-4 w-full break-all px-1 text-center text-lg sm:text-sm ${
                       isDark ? 'text-gray-200' : 'text-gray-600'
                     }`}
                   >
@@ -159,7 +159,7 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                     )}
                   </div>
 
-                  <div className='flex flex-col gap-1 text-center'>
+                  <div className='flex w-full flex-col gap-1 break-all px-1 text-center'>
                     <Text
                       fillContainer={false}
                       className={`text-lg sm:text-sm ${
@@ -168,22 +168,14 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                     >
                       {step[title]}
                     </Text>
-                    <Text
-                      fillContainer={false}
-                      className={`text-lg sm:text-sm ${
-                        isDark ? 'text-gray-200' : 'text-gray-600'
-                      }`}
-                    >
-                      {step[status]}
-                    </Text>
                   </div>
                 </>
               ) : (
                 <>
                   {/* Vertical Layout */}
-                  <div className='basis-1/3 p-2 text-center'>
+                  <div className='min-w-0 basis-1/3 p-2 text-center'>
                     <time
-                      className={`overflow-hidden text-lg sm:text-sm ${
+                      className={`break-all text-lg sm:text-sm ${
                         isDark ? 'text-gray-200' : 'text-gray-700'
                       }`}
                     >
@@ -214,12 +206,12 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                   </div>
 
                   <div
-                    className={`flex basis-1/3 flex-col overflow-hidden p-2 text-center ${
+                    className={`flex min-w-0 basis-1/3 flex-col break-all p-2 text-center ${
                       isDark ? 'text-gray-200' : 'text-gray-700'
                     }`}
                   >
                     <Text fillContainer={false} className='text-lg sm:text-sm'>{step[title]}</Text>
-                    <Text fillContainer={false} className='text-lg sm:text-sm'>{step[status]}</Text>
+                    
                   </div>
                 </>
               )}
