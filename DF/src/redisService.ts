@@ -1,58 +1,49 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-const Redis = require('ioredis');
-import 'dotenv/config';
-const _ = require("lodash")
+import { Injectable, Logger, Inject } from '@nestjs/common';
 // import { CACHE_MANAGER } from '@nestjs/cache-manager';
 // import { Cache } from 'cache-manager';
-import axios from 'axios';
-import { Readable } from 'stream';
-import * as FormData from 'form-data';
-import * as stream from 'stream';
-import { EnvData } from './envData/envData.service';
-//import { connectToRedis, getRedis } from './mongoClient';
- 
+const Redis = require('ioredis');
+import 'dotenv/config';
+import { Db, MongoClient } from 'mongodb';
+const _ = require("lodash")
+import { connectToMongo, connectToRedis, getDb, getRedis } from './mongoClient';
+import { queueMongoOperation } from './mongoQueue-dynamic';
 
+let db: Db;
 let redis
 
-  // connectToMongo().then(async () => { 
-  //   db = await getDb();
-  //   console.log('Database initialized'); 
-  // }).catch((error) => {
-  //   console.error('Error connecting to MongoDB:', error);    
-  //   throw new Error('Error connecting to MongoDB:' + error);
-  // }); 
+  connectToMongo().then(async () => { 
+    db = await getDb();
+    console.log('Database initialized'); 
+  }).catch((error) => {
+    console.error('Error connecting to MongoDB:', error);
+  }); 
 
-  // connectToRedis().then(() => { 
-  //   redis = getRedis();
-  //   console.log('Redis initialized'); 
-  // }).catch((error) => {
-  //   console.error('Error connecting to Redis:', error);
-  // });
-   if (!redis) {
-    redis = new Redis({
-      host: process.env.HOST,
-      port: parseInt(process.env.PORT),      
-    }).on('error', (err) => {
-      console.log('Redis Client Error', err);
-      throw err;
-    });
-  }
+   connectToRedis().then(() => { 
+    redis = getRedis();
+    console.log('Redis initialized'); 
+  }).catch((error) => {
+    console.error('Error connecting to Redis:', error);
+  });
+
 
 @Injectable()
 export class RedisService {
-  private readonly BATCH_SIZE = 10000 
-  constructor(private readonly envData: EnvData) {}
+  private readonly BATCH_SIZE = 10000
 
-  // constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {}
+  constructor(
+    // @Inject(CACHE_MANAGER) private cacheManager: Cache
+  ) {}
+
+  //Retrieves JSON data from Redis
    /**
    * Retrieves JSON data from Redis.
    * @param key The key used to identify the JSON data in Redis.
    * @returns The JSON data retrieved from Redis.
    * @throws {Error} If there is an error retrieving the JSON data.
    */
-  async getJsonData(key: string, collectionName: string) {
+   async getJsonData(key: string, collectionName: string) {
     try {
-      let returnValue: any;      
+      let returnValue: any;
       if(collectionName){
         const parts = key.split(":");
         const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
@@ -62,28 +53,38 @@ export class RedisService {
             throw new Error(`Invalid Redis key`);
           }
         });
+
+      
         // Use CACHE_MANAGER to get cached data
         // let cachedResult = await this.cacheManager.get<string>(key);
        
         // if (cachedResult) {
         //   returnValue = cachedResult;
-        // }else{
-          let redisResult = await redis.call('JSON.GET', key);    
+        // } else {         
+          let redisResult = await redis.call('JSON.GET', key);         
           if (!redisResult) {
           //   await this.cacheManager.set(key, redisResult);
           //   returnValue = redisResult;
-          // } else{
-            var dfsResult = await this.getdfsData(key,collectionName)
-           if(dfsResult && ((Array.isArray(dfsResult) && dfsResult.length>0) || (typeof dfsResult == 'object' && Object.keys(dfsResult).length>0))){
-              await redis.call('JSON.SET', key, '$', JSON.stringify(dfsResult));
-              returnValue = JSON.stringify(dfsResult);
+          // }else{
+            // Queue MongoDB operation to prevent connection exhaustion
+            var mongoResult:any = await queueMongoOperation(
+              () => this.getDocument(collectionName, key),
+              `getDocument:${key}`
+            );
+  
+            if(mongoResult?.length>0 && mongoResult[0]?.value){
+              const jsonValue = JSON.stringify(mongoResult[0]?.value);
+              // Use CACHE_MANAGER to set cached data
+              // await this.cacheManager.set(key, jsonValue);
+  
+              returnValue = jsonValue;
             }else{
-               returnValue = null
+              returnValue = null
             }
+          // }
           }else{
             return redisResult
           }
-        // }
       }else{
         throw 'client not found'
       }
@@ -92,6 +93,7 @@ export class RedisService {
       throw error;
     }
   }
+
   
    /**
    * Retrieves JSON data from Redis with a specified path.
@@ -100,10 +102,10 @@ export class RedisService {
    * @returns The JSON value at the specified path.
    * @throws {Error} If there is an error retrieving the JSON value.
 +   */
-  async getJsonDataWithPath(key: string, path:any,collectionName: string) {   
-    if(collectionName){ 
-      try { 
-        let returnValue
+   async getJsonDataWithPath(key: string, path:any,collectionName: string) {
+    try {
+      let returnValue: any;
+      if(collectionName){
         const parts = key.split(":");
         const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
         requiredMarkers.forEach(marker => {
@@ -111,7 +113,8 @@ export class RedisService {
           if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === "undefined" || parts.length <= 14) {
             throw new Error(`Invalid Redis key`);
           }
-        });   
+        });
+
         // Use CACHE_MANAGER to get cached data first
         // let cachedResult = await this.cacheManager.get<string>(key);
         // if (cachedResult) {
@@ -122,29 +125,47 @@ export class RedisService {
         //     returnValue = JSON.stringify(pathValue);
         //   }
         // }
-        // if(!returnValue){          
-          return await redis.call('JSON.GET', key, path);    
-        // }else{
-        //   return returnValue
+
+        // if (!returnValue) {
+          let redisResult = await redis.call('JSON.GET', key, path);
+          if (redisResult) {
+            returnValue = redisResult;
+          } else {
+            // Queue MongoDB operation
+            let mongoResult = await queueMongoOperation(
+              () => this.getDocument(collectionName, key, path),
+              `getDocumentWithPath:${key}`
+            );
+            if(mongoResult && mongoResult?.length>0){
+              // Store in cache for future use
+              if(mongoResult[0]?.value){
+                const jsonValue = JSON.stringify(mongoResult[0]?.value);
+                // await this.cacheManager.set(key, jsonValue);
+              }
+              returnValue = mongoResult;
+            } else {
+              returnValue = null;
+            }
+          }
         // }
-      } catch (error) {
-        console.log('ERROR',error.message);        
-          return await this.getdfsData(key,collectionName,path)   
-        // throw error;
+      } else {
+        throw 'client not found';
       }
-   }else{
-      throw 'client not found'
+      return returnValue;
+    } catch (error) {
+      throw error;
     }
   }
 
-  async AppendJsonArr(key: string, value: any,path?: string) {
+  async AppendJsonArr(key: string, value: any,collectionName:string, path?: string) {
     try {
       if(path){
-        var request = await redis.call('JSON.ARRAPPEND', key, '$.'+path, value)   
+        var request = await redis.call('JSON.ARRAPPEND', key, '$.'+path, value)
       }else{
-        var request = await redis.call('JSON.ARRAPPEND', key, '$', value)   
-      }           
-      // if(request){
+        var request = await redis.call('JSON.ARRAPPEND', key, '$', value)
+      }
+
+      if(request){
         // Update CACHE_MANAGER - append to cached array
         // let cachedResult = await this.cacheManager.get<string>(key);
         // if (cachedResult) {
@@ -159,14 +180,23 @@ export class RedisService {
         //     }
         //   }
         //   await this.cacheManager.set(key, JSON.stringify(parsedValue));
-        // }        
-      // }    
+        // }
+
+        // Queue MongoDB operation
+        await queueMongoOperation(
+          () => this.appendDocumentData(collectionName, key, JSON.parse(value)),
+          `appendDocumentData:${key}`
+        );
+      }
       return request;
+
     } catch (error) {
       throw error
-    }    
+    }
   }
   
+
+  //To store JSON data in redis
   /**
    * Stores JSON data in Redis.
    * @param key The key used to identify the JSON data in Redis.
@@ -175,43 +205,49 @@ export class RedisService {
    * @returns A string indicating that the value was stored.
    * @throws {Error} If there is an error storing the JSON data.
    */
- 
- async setJsonData(key: string, value: any, collectionName: string, path?: string) {
+   async setJsonData(key: string, value: any, collectionName:string, path?: string) {
     try {
-     if (!collectionName && !key) throw "client/key not found";
-    // validate key segments inline 
-      const parts = key.split(":");
-      const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
-      requiredMarkers.forEach(marker => {
-        const idx = parts.indexOf(marker);
-        if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === "undefined" || parts.length <= 14) {
-          throw new Error(`Invalid Redis key`);
-        }
-      });
+      if (!collectionName && !key) throw "client/key not found";
 
-      // Use CACHE_MANAGER to set cached data
-      // if (path) {
-      //   // For path-based updates, get existing value, update path, and set back
-      //   let existingValue = await this.cacheManager.get<string>(key);
-      //   let parsedValue = existingValue ? JSON.parse(existingValue) : {};
-      //   _.set(parsedValue, path, JSON.parse(value));
-      //   await this.cacheManager.set(key, JSON.stringify(parsedValue));
-      // } else {
-      //   await this.cacheManager.set(key, value);
-      // }
-      
-      const defpath = path ? `.${path}` : "$";
-      let redisResult =    await redis.call("JSON.SET", key, defpath, value);     
-       if(redisResult == 'OK'){
-        var dfsResult = await this.setdfsData(key,collectionName,JSON.parse(value),path)
-        if(dfsResult?.status)
-        return 'Value Stored'
-      }
-           
-   } catch (error) {
-    throw error;
-   }
- }
+        const parts = key.split(":");
+        const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+        requiredMarkers.forEach(marker => {
+          const idx = parts.indexOf(marker);
+          if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === "undefined" || parts.length <= 14) {
+            throw new Error(`Invalid Redis key`);
+          }
+        });
+
+        // await this.exist(key,collectionName)
+
+        // Use CACHE_MANAGER to set cached data
+        // if (path) {
+        //   // For path-based updates, get existing value, update path, and set back
+        //   let existingValue = await this.cacheManager.get<string>(key);
+        //   let parsedValue = existingValue ? JSON.parse(existingValue) : {};
+        //   _.set(parsedValue, path, JSON.parse(value));
+        //   await this.cacheManager.set(key, JSON.stringify(parsedValue));
+        // } else {
+        //   await this.cacheManager.set(key, value);
+        // }
+
+        const defpath = path ? `.${path}` : "$";
+        let redisResult = await redis.call("JSON.SET", key, defpath, value); 
+        if(redisResult == 'OK'){  
+          // Queue MongoDB operation to prevent connection pool exhaustion
+          var mongoResult:any = await queueMongoOperation(
+            () => this.setDocument(collectionName, key, JSON.parse(value), path),
+            `setDocument:${key}`
+          );
+
+          if(mongoResult?.value)
+            return 'Value Stored';
+        }
+
+    } catch (error) {
+      throw error;
+    }
+  }
 
   async setIfNotExist(key:string,value:any,ttl:any){
     try {
@@ -220,10 +256,579 @@ export class RedisService {
       throw error;
     }
   }
+  
+  async setJsonDataBatch(
+    operations: Array<{ key: string; value: any; path?: string }>,
+    collectionName: string
+  ): Promise<void> {
+    try {
+      if (!collectionName) throw new Error('client not found');
+      if (!operations || operations.length === 0) return;
+
+      // Validate all keys first
+      for (const op of operations) {
+        const parts = op.key.split(':');
+        const requiredMarkers = ['CK', 'FNGK', 'FNK', 'CATK', 'AFGK', 'AFK', 'AFVK'];
+        requiredMarkers.forEach(marker => {
+          const idx = parts.indexOf(marker);
+          if (idx === -1 || !parts[idx + 1] || parts[idx + 1] === 'undefined' || parts.length <= 14) {
+            throw new Error(`Invalid Redis key: ${op.key}`);
+          }
+        });
+      }
+
+      // Update CACHE_MANAGER for all operations
+      // for (const op of operations) {
+      //   if (op.path) {
+      //     let existingValue = await this.cacheManager.get<string>(op.key);
+      //     let parsedValue = existingValue ? JSON.parse(existingValue) : {};
+      //     _.set(parsedValue, op.path, JSON.parse(op.value));
+      //     await this.cacheManager.set(op.key, JSON.stringify(parsedValue));
+      //   } else {
+      //     await this.cacheManager.set(op.key, op.value);
+      //   }
+      // }
+
+      // Create Redis pipeline
+      const pipeline = redis.pipeline();
+
+      // Add all operations to pipeline
+      for (const op of operations) {
+        const defpath = op.path ? `.${op.path}` : '$';
+        pipeline.call('JSON.SET', op.key, defpath, op.value);
+      }
+
+      // Execute pipeline (single network round-trip)
+      const results = await pipeline.exec();
+
+      // Check for errors
+      if (results) {
+        for (let i = 0; i < results.length; i++) {
+          const [error, result] = results[i];
+          if (error) {
+            throw new Error(`Pipeline command ${i} failed: ${error.message}`);
+          }
+        }
+      }
+
+      // WRITE-BEHIND: Fire-and-forget MongoDB operations
+      // Don't await - let them process in background via batched queue
+      // Promise.all(
+      //   operations.map(op =>
+      //     this.writeBehindBuffer.addOperation({
+      //       type: 'SET_DOCUMENT',
+      //       collectionName,
+      //       key: op.key,
+      //       value: JSON.parse(op.value),
+      //       path: op.path,
+      //     })
+      //   )
+      // ).catch(err => {
+      //   console.error('Batch write-behind queue error:', err.message);
+      // });
+
+    } catch (error) {
+      console.error('Batch setJsonData error:', error);
+      throw error;
+    }
+  }
+
+  //To store Stream data in redis
+ /**
+   * Stores stream data in Redis.
+   * @param streamName The name of the Redis stream.
+   * @param key The key used to identify the stream data.
+   * @param strValue The stream data to be stored.
+   * @returns The ID of the added message.
+   * @throws {Error} If there is an error storing the stream data.
+   */
+
+  async setStreamData(streamName: string, key: string, strValue: any) {
+    try {   
+      streamName = streamName?.trim()  
+      if(streamName && streamName != '' && key && strValue) {
+        var result = await redis.xadd(streamName, '*', key, strValue);
+       if(result){     
+        await redis.call('EXPIRE', key, 86400);
+       } 
+      return result;
+      }
+      
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async hset(hashName,field, value){
+    try {
+      return await redis.hset(hashName, field, value)
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async hget(hashName,field){
+    try {
+      return await redis.hget(hashName,field);
+    } catch (error) {
+      throw error
+    }
+  }
+
+  /**
+   * Checks if a key exists in Redis.
+   * @param key The key to check in Redis.
+   * @returns The result of the EXISTS command (0 or 1).
+   * @throws {Error} If there is an error executing the EXISTS command.
+   */
+
+  async exist(key:string,collectionName: string,isMongo?:boolean) {
+    try {
+      if(collectionName){
+
+        let redisResult = await redis.call('EXISTS', key);
+        if(redisResult){
+          return redisResult;
+        }else if(isMongo){
+          // Queue MongoDB operations
+          let mongoResult = await queueMongoOperation(
+            () => this.existsDocument(collectionName, key),
+            `existsDocument:${key}`
+          );
+          if(mongoResult){
+            let doc = await queueMongoOperation(
+              () => this.getDocument(collectionName, key),
+              `getDocument:${key}`
+            );
+            if(doc?.length>0 && doc[0]?.value){
+
+            await redis.call('JSON.SET', key, '$', JSON.stringify(doc[0]?.value));}
+            //await redis.call('JSON.SET', key, '$', JSON.stringify(doc));
+            return 1
+          }else{
+          return mongoResult
+          }
+        }
+      }else{
+        throw 'client not found'
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
 
   async quit(){
      await redis.quit();
   }
+ 
+   /**
+   * Retrieves stream data from Redis.
+   * @param streamName The name of the Redis stream.
+   * @returns An array of messages in the stream.
+   * @throws {Error} If there is an error retrieving the stream data.
+   */
+  
+  async getStreamData(streamName) {
+    try {
+      var messages = await redis.xread('STREAMS', streamName, 0);     
+      if(messages && messages != null){
+        return messages;        
+      }else{
+        return await this.convertStreamStruct(streamName)
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+
+   /**
+   * Retrieves stream data from Redis using XRANGE command.
+   * 
+   * @param {string} streamName - The name of the Redis stream.
+   * @returns {Promise<string[][]>} - An array of messages in the stream.
+   * @throws {Error} - If there is an error retrieving the stream data.
+   */
+
+   async getStreamRange(streamName,end?,start?){
+    try {
+      let messages;
+      if(start && !end) 
+        end = '+'
+      if(end && !start)
+        start = '-'
+       if(end && start){
+       messages = await redis.call('XRANGE', streamName, start, end);
+       }else
+         messages = await redis.call('XRANGE', streamName, '-', '+');
+      // if(messages?.length == 0){    
+      //   return await this.convertStreamRangeStruct(streamName)
+      // }else{
+        return messages;
+      // }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Retrieves stream data from Redis using XREVRANGE command.
+   * 
+   * @param {string} streamName - The name of the Redis stream.
+   * @param {number} count - The number of messages to retrieve.
+   * @returns {Promise<string[][]>} - An array of messages in the stream.
+   * @throws {Error} - If there is an error retrieving the stream data.
+   */
+   async getStreamRevRange(streamName, end?,start?,count?) {
+    try {    
+      if(end && start){
+        var messages = await redis.xrevrange(streamName,end, start,'COUNT',count);
+      }else{
+        var messages = await redis.xrevrange(streamName,'+', '-', 'COUNT',count);
+      }
+      return messages;
+    } catch (error) {
+      throw error;
+    }
+  }
+  
+  //Retrieves stream data from Redis with count
+  /**
+   * Retrieves stream data from Redis with count.
+   * 
+   * @param {number} count - The number of messages to retrieve.
+   * @param {string} streamName - The name of the Redis stream.
+   * @returns {Promise<string[][]>} - An array of messages in the stream.
+   * @throws {Error} - If there is an error retrieving the stream data.
+   */
+  async getStreamDatawithCount(count, streamName) {
+    try {
+      var messages = await redis.xread(
+        'COUNT',
+        count,
+        'STREAMS',
+        streamName,
+        0,
+      );
+      return messages;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //To create a consumer group for a given stream in Redis
+  /**
+   * Creates a consumer group for a given stream in Redis.
+   *
+   * @param {string} streamName - The name of the Redis stream.
+   * @param {string} groupName - The name of the consumer group.
+   * @returns {Promise<string>} - A promise that resolves to a string indicating the consumer group was created.
+   * @throws {Error} - If there is an error creating the consumer group.
+  */
+    async createConsumerGroup(streamName, groupName) {
+    try {
+      // Check if the consumer group already exists
+      const grpInfo = await redis.xinfo('GROUPS', streamName).catch(() => []);
+
+      // Check if the group name already exists in any of the groups
+      const groupExists = grpInfo.some((group, index) => {
+        // Group info comes as flat array: [name, value, name, value, ...]
+        // 'name' field is at index 1, 5, 9, etc. for each group
+        if (Array.isArray(group)) {
+          return group.includes(groupName);
+        }
+        // Check if this is the 'name' field with matching value
+        return index % 2 === 1 && group === groupName;
+      });
+
+      if (!groupExists) {
+        await redis.xgroup('CREATE', streamName, groupName, '0', 'MKSTREAM');
+        return `consumerGroup was created as ${groupName}`;
+      }
+
+      return `consumerGroup ${groupName} already exists`;
+    } catch (error) {
+      // If error is BUSYGROUP, the group already exists - this is okay
+      if (error.message && error.message.includes('BUSYGROUP')) {
+        return `consumerGroup ${groupName} already exists`;
+      }
+      throw error;
+    }
+  }
+
+  //To create a consumer within a consumer group in Redis
+  /**
+   * Creates a consumer within a consumer group in Redis.
+   * @param {string} streamName - The name of the Redis stream.
+   * @param {string} groupName - The name of the consumer group.
+   * @param {string} consumerName - The name of the consumer.
+   * @returns {Promise<string>} - A promise that resolves to a string indicating the consumer was created.
+   * @throws {Error} - If there is an error creating the consumer.
+   */
+  async createConsumer(streamName, groupName, consumerName) {
+    try {
+      var result = await redis.xgroup(
+        'CREATECONSUMER',
+        streamName,
+        groupName,
+        consumerName,
+      );
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //To reads messages from a Redis stream for a specific consumer group.
+  /**
+   * Reads messages from a Redis stream for a specific consumer group.
+   * @param {string} streamName - The name of the Redis stream.
+   * @param {string} groupName - The name of the consumer group.
+   * @param {string} consumerName - The name of the consumer.
+   * @returns {Promise<Array>} - A promise that resolves to an array of objects containing the message ID and data.
+   * @throws {Error} - If there is an error reading the messages.
+   */
+  async readConsumerGroup(streamName, groupName, consumerName) {
+    try {     
+      var res = [];
+      var result = await redis.xreadgroup('GROUP',groupName,consumerName,'STREAMS',streamName,'>');
+      
+      if (result) {
+        result.forEach(([key, message]) => {
+          message.forEach(([messageId, data]) => {           
+            var obj = {};
+            obj['msgid'] = messageId;
+            obj['data'] = data;
+            res.push(obj);
+          });
+        });
+        return res;
+      } else {
+        return 'No Data available to read';
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Acknowledges a message in a Redis stream using the XACK command.
+   * @param {string} streamName - The name of the Redis stream.
+   * @param {string} groupName - The name of the consumer group.
+   * @param {string} msgId - The message ID to acknowledge.
+   * @returns {Promise<string>} - A promise that resolves to the result of the XACK command.
+   * @throws {Error} - If there is an error acknowledging the message.
+   */
+  async ackMessage(streamName, groupName, msgId) {
+    try {
+      let result = await redis.xack(streamName, groupName, msgId);
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async deleteWithEntryId(streamName, msgId) {
+    try {      
+      return await redis.call('XDEL',streamName,msgId) 
+    } catch (error) {
+      throw error;
+    }
+  }
+
+
+
+   /**
+   * Retrieves information about a consumer group in Redis.
+   * @param {string} groupName - The name of the consumer group.
+   * @returns {Promise<Array>} - A promise that resolves to an array of information about the consumer group.
+   * @throws {Error} - If there is an error retrieving the information.
+   */
+  async getInfoGrp(groupName){
+    try {     
+      let result = await redis.xinfo('GROUPS', groupName);   
+      return result
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  //To acknowledge a message in a Redis stream
+  /**
+   * Retrieves all keys in Redis that match a given pattern.
+   * @param {string} key - The pattern to match against Redis keys.
+   * @returns {Promise<Array>} - A promise that resolves to an array of keys that match the pattern.
+   * @throws {Error} - If there is an error retrieving the keys.
+   */
+  
+  async getKeys(key: string , collectionName: string, isKeySuffix = false) {
+    try {
+      let redisKey
+      if(collectionName){
+        if(key.endsWith(':'))
+          redisKey = isKeySuffix ? '*:'+ key : key + '*';
+        else
+          redisKey = isKeySuffix ? '*:'+ key : key + ':*';
+
+        const parts = key.split(":").map(p => p.trim());
+        const KeyrequiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+        KeyrequiredMarkers.forEach(marker => {
+          const idx = parts.indexOf(marker);
+          if (parts[idx + 1] === "undefined" || parts[idx + 1] === '') {
+            throw new Error(`Invalid Redis key`);
+          }
+        });
+
+        // Use CACHE_MANAGER to get cached keys list
+        // const cacheKey = `keys:${redisKey}`;
+        // let cachedKeys = await this.cacheManager.get<string>(cacheKey);
+        // if (cachedKeys) {
+        //   return JSON.parse(cachedKeys);
+        // }
+
+        let keys = await redis.keys(redisKey);
+        // let keys = await this.scanKeys(redisKey);
+
+        if(keys?.length == 0) {
+          const arrID: string[] = [];
+          const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+          for (const item of keys) {
+            const _id = item
+            const parts = _id.split(":").map(p => p.trim());
+              let isValid = true;
+              for (const marker of requiredMarkers) {
+                const idx = parts.indexOf(marker);
+
+                const next = parts[idx + 1];
+                if (idx === -1 ||next === undefined ||next === null ||next.trim?.() === "" ||next.toLowerCase?.() === "undefined" || parts.length <= 14) {
+                  isValid = false;
+                  await this.deleteKey(_id,collectionName)
+                  break;
+                }
+              }
+              if (isValid && !arrID.includes(_id)) {
+                arrID.push(_id);
+              }
+          }
+          if(arrID.length>0)  keys = arrID
+          // Queue MongoDB operation
+          keys = await queueMongoOperation(
+            () => this.getDocumentKeys(collectionName, key),
+            `getDocumentKeys:${key}`
+          );
+
+          // Store keys in cache if found from MongoDB
+          // if (keys && keys.length > 0) {
+          //   await this.cacheManager.set(cacheKey, JSON.stringify(keys));
+          // }
+        } else {
+          // Store keys in cache if found from Redis
+          // await this.cacheManager.set(cacheKey, JSON.stringify(keys));
+        }
+        return keys;
+      }else{
+        throw 'client not found'
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async scanKeys(pattern) {
+    try {    
+      let cursor = '0';
+      const allKeys = [];
+    
+      do {
+        const [nextCursor, keys] = await redis.scan(cursor,'MATCH',pattern,'COUNT',100);     
+        cursor = nextCursor;
+        allKeys.push(...keys);
+      } while (cursor !== '0');
+    
+      return allKeys;
+    } catch (error) {
+      throw error
+    }
+  }
+  
+  /**
+   * Deletes a key in Redis.
+   * @param {string} key - The key to delete.
+   * @returns {Promise<void>} - A promise that resolves when the key is deleted.
+   * @throws {Error} - If there is an error deleting the key.
+   */
+  async deleteKey(key: any,collectionName: string) {
+    try {
+      // Delete from CACHE_MANAGER
+      // await this.cacheManager.del(key);
+
+      var response = await redis.del(key);
+      //await this.deleteDocument(collectionName,key)
+      return response
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  /**
+   * Sets an expiration time for a Redis key.
+   *
+   * @param {string} key - The key to set the expiration time for.
+   * @param {number} seconds - The number of seconds before the key expires.
+   * @returns {Promise<number>} - A promise that resolves to the number of seconds
+   * before the key expires, or 0 if the key does not exist.
+   * @throws {Error} - If there is an error setting the expiration time.
+   */
+  async expire(key, seconds) {
+    try {
+      var result = await redis.call('EXPIRE', key, seconds);
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async renameKey(oldKey, newKey,client) {
+    try {
+      // Update CACHE_MANAGER - move cached value from old key to new key
+      // let cachedResult = await this.cacheManager.get<string>(oldKey);
+      // if (cachedResult) {
+      //   await this.cacheManager.set(newKey, cachedResult);
+      //   await this.cacheManager.del(oldKey);
+      // }
+
+      var result = await redis.call('RENAME', oldKey, newKey);
+      // Queue MongoDB operations
+      let mongoResult = await queueMongoOperation(
+        () => this.existsDocument(client, oldKey),
+        `existsDocument:${oldKey}`
+      );
+      if(mongoResult){
+        await queueMongoOperation(
+          () => this.renameDocumentId(client, oldKey, newKey),
+          `renameDocumentId:${oldKey}`
+        );
+      }
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  }  
+
+  async getstreamKey(key: string) {
+    try {
+      let keys
+       keys = await redis.keys(key); 
+      if(keys?.length == 0){
+        keys = await this.getDocumentKeys(key)
+      }
+      return keys;
+    } catch (error) {
+      throw error;
+    }
+  }
+
 
    async sethash(records,key){
     try {
@@ -277,633 +882,423 @@ export class RedisService {
     return allRecords;
   }
 
-   async hset(hashName,field, value){
-    try {
-      return await redis.hset(hashName, field, value)
-    } catch (error) {
-      throw error;
-    }
-  }
+ 
+  //------------------------ MONGO DB ----------------------------//
 
-  async hget(hashName,field){
+  async setDocument(collectionName: string, key: string, value: any,path?:any,filter?:object){
     try {
-      return await redis.hget(hashName,field);
+      if(key && collectionName){
+        let collection;
+        if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
+          collection = db.collection('TORUS_AMDKEYS'); 
+        else
+          collection = db.collection(collectionName+'_AMDKEYS');
+ 
+        let customId:any = { _id:key}
+      
+        let customVal:any = { $set: { value } }      
+      
+        if(filter)    
+          customId = Object.assign(customId,filter) 
+
+        if(path){
+          if(path.includes('[') && path.includes(']')){ 
+            path = path.replace(']', '');
+            path = path.replace('[', '');
+          }
+          path = 'value.'+path
+          customVal = { $set: { [path]:value } }
+        }
+      
+        var result = await collection.findOneAndUpdate(customId,customVal,{ upsert: true, returnDocument: 'after' })
+    
+        if (result) {
+          return result
+        } else {
+          return 0
+        }
+      }else{
+        throw 'key/client not found'
+      }      
     } catch (error) {
       throw error
     }
-  }
- 
- /**
-   * Stores stream data in Redis.
-   * @param streamName The name of the Redis stream.
-   * @param key The key used to identify the stream data.
-   * @param strValue The stream data to be stored.
-   * @returns The ID of the added message.
-   * @throws {Error} If there is an error storing the stream data.
-   */
+  }  
 
-  async setStreamData(streamName: string, key: string, strValue: any, type?) {
-    try { 
-      var result = await redis.xadd(streamName, '*', key, strValue);     
-     // if(result){ 
-         //result = await this.setdfsData(streamName,streamName,strValue)    
-       // result = await this.structuredExcepLogs(streamName,'',key,strValue,result)        
-     // }
-      return result;
-    } catch (error) {
-      throw error;
-    }
-  }
-  
-  /**
-   * Checks if a key exists in Redis.
-   * @param key The key to check in Redis.
-   * @returns The result of the EXISTS command (0 or 1).
-   * @throws {Error} If there is an error executing the EXISTS command.
-   */
-  
-  async exist(key,collectionName: string) {
-    try {     
-      if(collectionName){
-        // Check CACHE_MANAGER first
-        // let cachedResult = await this.cacheManager.get<string>(key);
-        // if (cachedResult) {
-        //   return 1;
-        // }
-
-        let redisResult = await redis.call('EXISTS', key);
-        if(redisResult){
-          return redisResult;
-        }       
-        else {
-          let dfsResult = await this.getdfsData(key,collectionName)
-          if(dfsResult?.length>0){
-            await redis.call('JSON.SET', key, '$', JSON.stringify(dfsResult));
-            return 1          
-          }else{
-            return dfsResult
-          }
-        }
-      }else{
-        throw 'client not found'
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
- 
- 
-   /**
-   * Retrieves stream data from Redis.
-   * @param streamName The name of the Redis stream.
-   * @returns An array of messages in the stream.
-   * @throws {Error} If there is an error retrieving the stream data.
-   */
-  
-    async getStreamData(streamName) {
+  async getDocumentKeys(collectionName: string, key?: string){
     try {
-      var messages = await redis.xread('STREAMS', streamName, 0);     
-      if(messages && messages != null){
-        return messages;        
-      }else{
-         return await this.getdfsData(streamName,streamName)
-       // return await this.convertStreamStruct(streamName)
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
-  
-   /**
-   * Retrieves stream data from Redis using XRANGE command.
-   * 
-   * @param {string} streamName - The name of the Redis stream.
-   * @returns {Promise<string[][]>} - An array of messages in the stream.
-   * @throws {Error} - If there is an error retrieving the stream data.
-   */
-  
-   async getStreamRange(streamName,end?,start?){
-    try {
-      let messages;
-      if(start && !end) 
-        end = '+'
-      if(end && !start)
-        start = '-'
-       if(end && start){
-       messages = await redis.call('XRANGE', streamName, start, end);
-       }else
-         messages = await redis.call('XRANGE', streamName, '-', '+');
-      // if(messages?.length == 0){    
-      //   return await this.convertStreamRangeStruct(streamName)
-      // }else{
-        return messages;
-      // }
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Retrieves stream data from Redis using XREVRANGE command.
-   * 
-   * @param {string} streamName - The name of the Redis stream.
-   * @param {number} count - The number of messages to retrieve.
-   * @returns {Promise<string[][]>} - An array of messages in the stream.
-   * @throws {Error} - If there is an error retrieving the stream data.
-   */
-   async getStreamRevRange(streamName, end?,start?,count?) {
-    try {    
-      if(end && start){
-        var messages = await redis.xrevrange(streamName,end, start,'COUNT',count);
-      }else{
-        var messages = await redis.xrevrange(streamName,'+', '-', 'COUNT',count);
-      }
-      return messages;
-    } catch (error) {
-      throw error;
-    }
-  }
-   
-  /**
-   * Retrieves stream data from Redis with count.
-   * 
-   * @param {number} count - The number of messages to retrieve.
-   * @param {string} streamName - The name of the Redis stream.
-   * @returns {Promise<string[][]>} - An array of messages in the stream.
-   * @throws {Error} - If there is an error retrieving the stream data.
-   */
-  async getStreamDatawithCount(count, streamName) {
-    try {
-      var messages = await redis.xread('COUNT',count,'STREAMS', streamName, 0);
-      return messages;
-    } catch (error) {
-      throw error;
-    }
-  }
- 
-  /**
-   * Creates a consumer group for a given stream in Redis.
-   *
-   * @param {string} streamName - The name of the Redis stream.
-   * @param {string} groupName - The name of the consumer group.
-   * @returns {Promise<string>} - A promise that resolves to a string indicating the consumer group was created.
-   * @throws {Error} - If there is an error creating the consumer group.
-  */
-    async createConsumerGroup(streamName, groupName) {
-    try {
-      // Check if the consumer group already exists
-      const grpInfo = await redis.xinfo('GROUPS', streamName).catch(() => []);
-
-      // Check if the group name already exists in any of the groups
-      const groupExists = grpInfo.some((group, index) => {
-        // Group info comes as flat array: [name, value, name, value, ...]
-        // 'name' field is at index 1, 5, 9, etc. for each group
-        if (Array.isArray(group)) {
-          return group.includes(groupName);
-        }
-        // Check if this is the 'name' field with matching value
-        return index % 2 === 1 && group === groupName;
-      });
-
-      if (!groupExists) {
-        await redis.xgroup('CREATE', streamName, groupName, '0', 'MKSTREAM');
-        return `consumerGroup was created as ${groupName}`;
-      }
-
-      return `consumerGroup ${groupName} already exists`;
-    } catch (error) {
-      // If error is BUSYGROUP, the group already exists - this is okay
-      if (error.message && error.message.includes('BUSYGROUP')) {
-        return `consumerGroup ${groupName} already exists`;
-      }
-      throw error;
-    }
-  }
-  
-  /**
-   * Creates a consumer within a consumer group in Redis.
-   * @param {string} streamName - The name of the Redis stream.
-   * @param {string} groupName - The name of the consumer group.
-   * @param {string} consumerName - The name of the consumer.
-   * @returns {Promise<string>} - A promise that resolves to a string indicating the consumer was created.
-   * @throws {Error} - If there is an error creating the consumer.
-   */
-  async createConsumer(streamName, groupName, consumerName) {
-    try {
-      var result = await redis.xgroup('CREATECONSUMER',streamName,groupName,consumerName);
-      return result;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Reads messages from a Redis stream for a specific consumer group.
-   * @param {string} streamName - The name of the Redis stream.
-   * @param {string} groupName - The name of the consumer group.
-   * @param {string} consumerName - The name of the consumer.
-   * @returns {Promise<Array>} - A promise that resolves to an array of objects containing the message ID and data.
-   * @throws {Error} - If there is an error reading the messages.
-   */
-  async readConsumerGroup(streamName, groupName, consumerName) {
-    try {     
-      var res = [];
-      var result = await redis.xreadgroup('GROUP',groupName,consumerName,'STREAMS',streamName, '>');      
-      if (result) {
-        result.forEach(([key, message]) => {
-          message.forEach(([messageId, data]) => {           
-            var obj = {};
-            obj['msgid'] = messageId;
-            obj['data'] = data;
-            res.push(obj);
-          });
-        });
-        return res;
-      } else {
-        return 'No Data available to read';
-      }
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Acknowledges a message in a Redis stream using the XACK command.
-   * @param {string} streamName - The name of the Redis stream.
-   * @param {string} groupName - The name of the consumer group.
-   * @param {string} msgId - The message ID to acknowledge.
-   * @returns {Promise<string>} - A promise that resolves to the result of the XACK command.
-   * @throws {Error} - If there is an error acknowledging the message.
-   */
-  async ackMessage(streamName, groupName, msgId) {
-    try {
-      let result = await redis.xack(streamName, groupName, msgId);
-      return result;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-   /**
-   * Retrieves information about a consumer group in Redis.
-   * @param {string} groupName - The name of the consumer group.
-   * @returns {Promise<Array>} - A promise that resolves to an array of information about the consumer group.
-   * @throws {Error} - If there is an error retrieving the information.
-   */
-  async getInfoGrp(groupName){
-    try {     
-      let result = await redis.xinfo('GROUPS', groupName);   
-      return result
-    } catch (error) {
-      throw error;
-    }
-  }
- 
-  /**
-   * Retrieves all keys in Redis that match a given pattern.
-   * @param {string} key - The pattern to match against Redis keys.
-   * @returns {Promise<Array>} - A promise that resolves to an array of keys that match the pattern.
-   * @throws {Error} - If there is an error retrieving the keys.
-   */
-  
-  async getKeys(key: string , collectionName: string, isKeySuffix = false) {
-    try {
-       let redisKey
-       let mkeys       
-       if(collectionName){
-        if(key.endsWith(':'))
-          redisKey = isKeySuffix ? '*:'+ key : key + '*';
+      if (!collectionName) throw 'client not found';
+      let collection;
+      let result
+      if (key) {
+        if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
+          collection = db.collection('TORUS_AMDKEYS'); 
         else
-          redisKey = isKeySuffix ? '*:'+ key : key + ':*';
-       
+          collection = db.collection(collectionName+'_AMDKEYS');
+
         const parts = key.split(":").map(p => p.trim());
         const KeyrequiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
         KeyrequiredMarkers.forEach(marker => {
           const idx = parts.indexOf(marker);
           if (parts[idx + 1] === "undefined" || parts[idx + 1] === '') {
-            throw new Error(`Invalid Redis key`);
+            throw new Error(`Invalid Redis key: missing value for ${marker}`);
           }
         });
-
-        // Use CACHE_MANAGER to get cached keys list
-        // const cacheKey = `keys:${redisKey}`;
-        // let cachedKeys = await this.cacheManager.get<string>(cacheKey);
-        // if (cachedKeys) {
-        //   return JSON.parse(cachedKeys);
-        // }
-
-        let keys = await redis.keys(redisKey);
+      
+        if (key.includes(':*:')) {
+          key = key.replaceAll(':*', '.*?')
+        }
+        result = await collection.find({ _id: { $regex: (`${key}`) } }).toArray();
+      }
+      else {
+        collection = db.collection(collectionName);
+        result = await collection.find().toArray();
+      }  
+        
+      let arrID=[]
+      if (result && result.length>0) {       
         const arrID: string[] = [];
         const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
-        for (const item of keys) {
-          const _id = item         
-          const parts = _id.split(":").map(p => p.trim()); 
-            let isValid = true;  
-            for (const marker of requiredMarkers) {
-              const idx = parts.indexOf(marker);
-              
-              const next = parts[idx + 1];                
-              if (idx === -1 ||next === undefined ||next === null ||next.trim?.() === "" ||next.toLowerCase?.() === "undefined" || parts.length <= 14) {
-                isValid = false;
-                await this.deleteKey(_id,collectionName)
-                break;
-              }
-            }  
-            if (isValid && !arrID.includes(_id)) {
-              arrID.push(_id);
-            }                 
+        for (const item of result) {
+          const _id = item?._id;
+          if (!_id || typeof _id !== "string") continue;
+
+          const parts = _id.split(":").map(p => p.trim());         
+        
+          let isValid = true;  
+          for (const marker of requiredMarkers) {
+            const idx = parts.indexOf(marker);
+            const next = parts[idx + 1];  
+            if (idx === -1 ||next === undefined ||next === null ||next.trim?.() === "" ||next.toLowerCase?.() === "undefined" || parts.length <= 14) {
+              isValid = false;
+              await this.deleteKey(_id,collectionName)
+              break;
+            }
+          }
+
+          if (isValid && !arrID.includes(_id)) {
+            arrID.push(_id);
+          }                  
         }
-        if(arrID.length>0)  keys = arrID        
-          mkeys = await this.listdfsKeys(key,collectionName)      
-       
-        if(keys?.length == mkeys?.length){
-          return keys
-        }else{
-         if(mkeys?.length > keys?.length)
-          return mkeys;
-         else
-          return keys;
-       }
-     }else{
-      throw 'client not found'
-    }
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Deletes a key in Redis.
-   * @param {string} key - The key to delete.
-   * @returns {Promise<void>} - A promise that resolves when the key is deleted.
-   * @throws {Error} - If there is an error deleting the key.
-   */
-  async deleteKey(key: any,collectionName: string) {
-    try {    
-      if(collectionName){     
-        // Delete from CACHE_MANAGER
-        // await this.cacheManager.del(key);
-
-        var response = await redis.del(key);         
-        await this.deletedfskey(key,collectionName)    
-        return response
-      }else{
-       throw 'client not found'
+        return arrID
+      } else {
+        return arrID
       }
     } catch (error) {
-      throw error;
+      throw error
     }
   }
 
-  async deleteWithEntryId(streamName, msgId) {
-    try {      
-      return await redis.call('XDEL',streamName,msgId)
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  /**
-   * Sets an expiration time for a Redis key.
-   *
-   * @param {string} key - The key to set the expiration time for.
-   * @param {number} seconds - The number of seconds before the key expires.
-   * @returns {Promise<number>} - A promise that resolves to the number of seconds
-   * before the key expires, or 0 if the key does not exist.
-   * @throws {Error} - If there is an error setting the expiration time.
-   */
-  async expire(key, seconds) {
+  async getDocument(collectionName: string, key: string, path?:any,filter?:object){
     try {
-      var result = await redis.call('EXPIRE', key, seconds);
-      return result;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-   async renameKey(oldKey, newKey,collectionName) {
-    try {     
-      if(collectionName){
-      var result = await redis.call('RENAME', oldKey, newKey);     
-        let dfsResult = await this.getdfsData(oldKey,collectionName)
-        if(dfsResult){
-          await this.renamedfskey(oldKey,newKey,collectionName)
+      if(!collectionName)  throw 'client not found'
+      let collection;
+      if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
+        collection = db.collection('TORUS_AMDKEYS'); 
+      else
+        collection = db.collection(collectionName+'_AMDKEYS');
+     
+      const parts = key.split(":").map(p => p.trim());
+      const KeyrequiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+      KeyrequiredMarkers.forEach(marker => {
+        const idx = parts.indexOf(marker);
+        if (parts[idx + 1] === "undefined" || parts[idx + 1] === '' || parts.length <= 14) {
+          throw new Error(`Invalid Redis key: missing value for ${marker}`);
         }
-            
-      return result;
-     }else{
-      throw 'client not found'
-     }
+      });
+
+      // ✅ PERFORMANCE FIX: Use exact match instead of case-insensitive regex
+      // Regex queries with 'i' flag can't use indexes efficiently and cause 10-30 second delays
+      let customId:any = {
+        _id: key  // Exact match - uses index, completes in milliseconds
+      }
+
+      var result = await collection.find(customId).toArray();  
+     // console.log(1,JSON.stringify(result));     
+      if (result?.length>0) { 
+        const arrID: string[] = [];
+        const requiredMarkers = ["CK", "FNGK", "FNK", "CATK", "AFGK", "AFK", "AFVK"];
+        for (const item of result) {
+          const _id = item?._id;
+          if (!_id || typeof _id !== "string") continue;
+          const parts = _id.split(":").map(p => p.trim());  
+          let isValid = true;  
+          for (const marker of requiredMarkers) {
+            const idx = parts.indexOf(marker);
+            const next = parts[idx + 1];  
+            if (idx === -1 ||next === undefined ||next === null ||next.trim?.() === "" ||next.toLowerCase?.() === "undefined" || parts.length <= 14) {
+              isValid = false;
+              await this.deleteKey(_id,collectionName)
+              break;
+            }
+          }
+
+          if (isValid) {//&& !arrID.includes(_id)
+            arrID.push(item);
+          }                  
+        }       
+        
+        if(arrID.length>0) result = arrID
+              
+        if(path){   
+          return await _.get(result?.[0],'value'+path)         
+        }
+        return result
+      } else {
+        return 0
+      }
     } catch (error) {
-      throw error;
+      throw error
     }
   }
 
-  async copyData(sourceKey: string, destinationKey: string,collectionName) {
-    try {
-      if(collectionName){
-      const destinationExist = await this.exist(destinationKey,collectionName);
-      if(destinationExist){
-        await this.deleteKey(destinationKey,collectionName);
-      } 
-      var result = await redis.call('COPY', sourceKey, destinationKey);  
-      return result;
-      }else{
-      throw 'client not found'
-     }
+  async getCollection(collectionName: string){
+    try {     
+      const collection = db.collection(collectionName+'_AMDKEYS'); 
+      var result = await collection.find().toArray();  
+       
+      if (result?.length>0) { 
+        return result
+      } else {
+        return 0
+      }
     } catch (error) {
-      throw error;
+      throw error
+    }
+  }
+
+  async listCollections(collectionName?:string){
+    try {
+      let collections = []
+      let collectionList = await db.listCollections().toArray();
+      collectionList.forEach(collection => {
+        if(collectionName){
+          if(collection.name.includes(collectionName)){
+            collections.push(collection.name);
+          }
+        }else{
+          collections.push(collection.name);
+        }
+      });
+      if(collections.length > 0){
+        return collections
+      }else{
+        return 0
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async existsDocument(collectionName: string, key: string){
+    try {  
+      if(!collectionName) throw 'client not found'    
+      let collection;
+      if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
+        collection = db.collection('TORUS_AMDKEYS'); 
+      else
+        collection = db.collection(collectionName+'_AMDKEYS');
+
+      let customId:any = {_id:key}  
+     
+      var result = await collection.findOne(customId,{ projection: { _id: 1 } })   
+       
+      if (result) {
+        return result
+      } else {
+        return 0
+      }
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async appendDocumentData(collectionName: string, key: string,AppendValue:any){
+    try {
+      if(!collectionName)  throw 'client not found'
+       let collection;
+      if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
+        collection = db.collection('TORUS_AMDKEYS'); 
+      else
+        collection = db.collection(collectionName+'_AMDKEYS');
+
+      let customId:any = {_id:key}
+
+      var result:any = await collection.find(customId).toArray()
+     
+      if(result?.length>0){                
+        let pushQry = { $push: { ['value'] : AppendValue } }               
+        return await collection.updateOne(customId, pushQry);             
+      }else{  
+        return await this.setDocument(collectionName,key,[AppendValue])
+      }
+
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async appendStreamDocument(collectionName: string, key: string,AppendValue:any){
+    try {
+      const collection:any = db.collection(collectionName); 
+      let customId:any = {_id:key}
+
+      var result:any = await collection.find(customId).toArray()
+     
+      if(result?.length>0){                
+        let pushQry = { $push: { ['value'] : AppendValue } }
+               
+        return await collection.updateOne(customId, pushQry);
+             
+      }else{  
+        return await this.setStreamDocument(collectionName,key,[AppendValue])
+      }
+
+    } catch (error) {
+      throw error
+    }
+  }
+
+  async setStreamDocument(collectionName: string, key: string, value: any,path?:any,filter?:object){
+    try {
+     
+      const collection = db.collection(collectionName);
+ 
+      let customId:any = { _id:key}
+     
+      let customVal:any = { $set: { value } }      
+     
+      if(filter)    
+        customId = Object.assign(customId,filter) 
+
+      if(path){
+        if(path.includes('[') && path.includes(']')){ 
+          path = path.replace(']', '');
+          path = path.replace('[', '');
+        }
+        path = 'value.'+path
+        customVal = { $set: { [path]:value } }
+      }
+     
+      var result = await collection.findOneAndUpdate(customId,customVal,{ upsert: true, returnDocument: 'after' })
+   
+      if (result) {
+        return result
+      } else {
+        return 0
+      }
+    } catch (error) {
+      throw error
     }
   }  
 
-  async getstreamKey(key: string) {
-    try {
-      let keys
-       keys = await redis.keys(key);      
-      return keys;
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  //  async getLogType(client:string){
-  //   let key = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:CLIENT:AFGK:${client}:AFK:PROFILE:AFVK:v1:cpc`  
-  //   let redisResult:any = JSON.parse(await redis.call('JSON.GET', key)); 
-  //    return redisResult?.logType
-  // }
-
-
-  //------------------------ DFS ----------------------------//
-
-   async getdfsconfig(){
-     const seaWeedConfig = {
-       url: this.envData.getSeaweedOutputHost(),//process.env.SEAWEED_OUTPUT_HOST,
-       username: this.envData.getSeaweedUsername(),//process.env.SEAWEED_USERNAME,
-       password: this.envData.getSeaweedPassword()//process.env.SEAWEED_PASSWORD,
-     };
-      return seaWeedConfig
-   }
-
-   async getdfsData(key,collectionName,path?){
-    try {
-      let existing,fileUrl,fileContent,jsonData
-      if(!key || !collectionName)
-        throw 'invalid payload'      
-      let config = await this.getdfsconfig()
-      if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
-        fileUrl = `${config.url}/TORUS_AMDKEYS/${key}.json` 
-      else    
-      fileUrl = `${config.url}/${collectionName}_AMDKEYS/${key}.json`      
-       let auth = {
-          username: config.username,
-          password: config.password
-        }  
-
-      existing = await axios.get(fileUrl, {responseType: 'stream',auth , validateStatus: () => true,  });
-      if(existing?.data){
-      fileContent = await this.streamToString(existing.data);
-       jsonData = JSON.parse(fileContent);
-      }      
-      if (jsonData){
-        if (path) {
-          return await _.get(jsonData, path)
-        } 
-      } 
-      if(jsonData)               
-      return jsonData
-      else
-      return null
-
-    } catch (error) {
-      //console.log(`key doesn't exist`)
-      return null
-     // throw error
-    }
-   }
-
-   streamToString = async (readableStream: stream.Readable): Promise<string> => {
-      const chunks: Uint8Array[] = [];
-      for await (const chunk of readableStream) {
-        chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
-      }
-      return Buffer.concat(chunks).toString('utf-8');
-    };
-
-   async setdfsData(key,collectionName,value,path?){
-    try {
-      let fileUrl
-      if(!key || !collectionName)
-        throw 'invalid payload'      
-      let config = await this.getdfsconfig()
-      if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
-        fileUrl = `${config.url}/TORUS_AMDKEYS/${key}.json`
-      else
-      fileUrl = `${config.url}/${collectionName}_AMDKEYS/${key}.json`      
-       let auth = {
-          username: config.username,
-          password: config.password
-        } 
-        if (path) {
-          let existing = await axios.get(fileUrl, {
-            responseType: 'stream',
-            auth,
-            validateStatus: () => true,
-          });
-          if (existing?.data) {
-            let fileContent = await this.streamToString(existing.data);
-            let jsonData = JSON.parse(fileContent);
-            if (jsonData) jsonData = _.set(jsonData, path, value);
-            value = jsonData;
-          }
-        }
-         const buffer = Buffer.from(JSON.stringify(value, null, 2), 'utf-8');      
-          const form = new FormData();
-          form.append('file', Readable.from(buffer), {
-            filename: key+'.json',
-            contentType: `application/json`,
-          });
-
-          const response = await axios.post(fileUrl, form, {
-            headers: { ...form.getHeaders() },
-            auth,
-            maxContentLength: Infinity,
-            maxBodyLength: Infinity,
-          });       
-          return {
-            status: response.status,
-            fileName: key
-          };
-    } catch (error) {
-     // throw error
-    }
-   }
-
-   async listdfsKeys(key,collectionName): Promise<string[]> { 
-    try {
-      let config = await this.getdfsconfig()
-      let url
-     let auth = {
-          username: config.username,
-          password: config.password
-        } 
-    if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
-     url = `${config.url}/TORUS_AMDKEYS/${key}/?prefix=${key}&limit=10000`; 
-    else
-    url = `${config.url}/${collectionName}_AMDKEYS/${key}/?prefix=${key}&limit=10000`;   
-      const response = await axios.get(url,{
-        auth,
-         headers: {
-          'Accept': 'application/json' // This is crucial!
-        }
-      });
-      let resarr = []
-      let entries = response.data.Entries
-      if(entries?.length>0){
-        for(let i=0;i< entries.length;i++){
-          resarr.push(entries[i].FullPath)
-        }
-      }
-      return resarr;
-    } catch (error) {      
-      return []; // Directory not found 
-    }
-  }
-
-  async deletedfskey(key,collectionName) {
-    try {
-      let config = await this.getdfsconfig()
-      let url
-     let auth = {
-          username: config.username,
-          password: config.password
-        } 
-    if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
-     url = `${config.url}/TORUS_AMDKEYS/${key}.json`; 
-    else
-    url = `${config.url}/${collectionName}_AMDKEYS/${key}.json`; 
-    const response = await axios.delete(url, { auth });
-    return response.data
-    } catch (error) {
-      throw error
-    }
+  async convertStreamStruct(collectionName){
+    try {   
+    const collection = db.collection(collectionName); 
+    let docs: any =  await collection.find().toArray();  
+      
+    let FinalArr = [];  
     
-  }
+    if (docs?.length > 0) {
+      let EntryIdArr = []
+      for (let d = 0; d < docs.length; d++) {
+        let singleDoc = docs[d];
+        let singleDocId = singleDoc._id;
+        let singleDocValArr = singleDoc.value;
 
-  async renamedfskey(oldkey,newKey,collectionName){
-    try {
-      let data = await this.getdfsData(oldkey,collectionName)
-      if(data?.length>0){
-        let res = await this.setdfsData(newKey,collectionName,data) 
-        if(res.status)
-          await this.deletedfskey(oldkey,collectionName)    
+       
+        for(let v = 0; v < singleDocValArr.length; v++){
+          let fieldKeyArr = [];
+          let EntryId = singleDocValArr[v].EntryId
+          delete singleDocValArr[v].EntryId
+      
+          await redis.xadd(collectionName, EntryId, singleDocId, JSON.stringify(singleDocValArr[v]));
+
+          fieldKeyArr.push(EntryId,[singleDocId,JSON.stringify(singleDocValArr[v])]);
+        
+          EntryIdArr.push(fieldKeyArr);
+        }      
+
       }
+      FinalArr.push([collectionName,EntryIdArr]);
+      return FinalArr
+     
+    }
+
     } catch (error) {
       throw error
     }
   }
 
+   async convertStreamRangeStruct(collectionName){
+    try {   
+    const collection = db.collection(collectionName); 
+    let docs: any =  await collection.find().toArray(); 
+    
+    if (docs?.length > 0) {
+      let EntryIdArr = []
+      for (let d = 0; d < docs.length; d++) {
+        let singleDoc = docs[d];
+        let singleDocId = singleDoc._id;
+        let singleDocValArr = singleDoc.value;
 
-  async select(db: number) {
+       
+        for(let v = 0; v < singleDocValArr.length; v++){
+          let fieldKeyArr = [];
+          let EntryId = singleDocValArr[v].EntryId
+          delete singleDocValArr[v].EntryId
+      
+          await redis.xadd(collectionName, EntryId, singleDocId, JSON.stringify(singleDocValArr[v]));
+
+          fieldKeyArr.push(EntryId,[singleDocId,JSON.stringify(singleDocValArr[v])]);
+        
+          EntryIdArr.push(fieldKeyArr);
+        }      
+       
+      }     
+      return EntryIdArr
+     
+    }
+
+    } catch (error) {
+      throw error
+    }
+  }
+   
+
+ async renameDocumentId(collectionName: string,oldId: string,newId: string): Promise<string> {
+  try {    
+    const collection = db.collection<any>(collectionName +'_AMDKEYS');    
+    const doc = await collection.findOne({ _id: oldId });
+    if (!doc) {
+      throw (`_id "${oldId}" not found`);
+    }    
+    doc._id = newId;
+    await collection.insertOne(doc);  
+    return newId;
+  } catch (error) {
+    throw error
+  }
+}
+
+
+async deleteDocument(collectionName:string,key:any){
+  try{
+    if(!collectionName) throw 'client not found'
+      let collection;
+      if(key.includes(':FNGK:AFR:') || key.includes(':FNGK:AFRS:'))
+        collection = db.collection('TORUS_AMDKEYS'); 
+      else
+        collection = db.collection(collectionName+'_AMDKEYS');
+
+      let res = await collection.deleteOne({_id:key} )
+      return res;
+  }catch(err){
+    throw err;
+  }
+}
+
+async select(db: number) {
     return redis.select(db);
   }
 
@@ -986,3 +1381,5 @@ export class RedisService {
   }
   
 }
+
+

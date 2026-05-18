@@ -110,7 +110,7 @@ export const TimeLine: React.FC<TimeLineProps> = ({
         }
         style={isHorizontal ? { scrollBehavior: 'smooth' } : undefined}
       >
-        {steps.map((step, idx) => {
+        {Array.isArray(steps) && steps.map((step, idx) => {
           const isLeft = idx % 2 === 0
           const statusStyles = statusMap[step[status]] || {
             icon: null,

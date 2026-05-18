@@ -1,8 +1,8 @@
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: ct005-vgph-uf-generator-virtualservice
-  namespace: ct005-vgph-uf-v1
+  name: ct010-a001-uf-generator-virtualservice
+  namespace: ct010-a001-uf-v1
 spec:
   hosts:
     - "tgadev2.toruslowcode.com"
@@ -11,20 +11,20 @@ spec:
   http:
     - match:
         - uri:
-            prefix: /ct005/gss/vgph/v1
+            prefix: /ct010/ag001/a001/v1
       route:
         - destination:
-            host: ct005-vgph-uf-generator
+            host: ct010-a001-uf-generator
             port:
               number: 443 
     - match:
         - uri:
-            prefix: /ct005/gss/vgph/v1
+            prefix: /ct010/ag001/a001/v1
       rewrite:
         uri: /
       route:
         - destination:
-            host: ct005-vgph-uf-generator
+            host: ct010-a001-uf-generator
             port:
               number: 443
  

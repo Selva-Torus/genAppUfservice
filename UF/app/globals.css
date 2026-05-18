@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap');  
+@import url('https://fonts.googleapis.com/css2?family=Diplomata&amp;display=swap');  
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;display=swap');  
+@import url('https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap');  
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
 
@@ -26,7 +28,9 @@
 /* CSS Variables for Typography - These will be set dynamically by setUpKey.tsx */
 :root {
   --g-font-family-sans: "Inter", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
-  --g-font-family-Inter:"Inter", sans-serif;
+  --g-font-family-DiplomataStatic:"Diplomata Static", sans-serif;
+  --g-font-family-BebasNeue:"Bebas Neue", sans-serif;
+  --g-font-family-LobsterTwo:"Lobster Two", sans-serif;
   --font-body:var(--g-font-family-sans);
   --font-header:var(--g-font-family-monospace);  
   --font-display:var(--g-font-family-sans);}

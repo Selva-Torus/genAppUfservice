@@ -18,6 +18,7 @@ import * as nodemailer from 'nodemailer';
 import { JwtService } from '@nestjs/jwt';
 import { JwtServices } from 'src/jwt.services';
 import { RuleService } from 'src/ruleService';
+import { MongoService } from 'src/mongoService';
 const jsonata = require('jsonata');
 import * as fs from 'fs';
 import * as path from 'path';
@@ -71,6 +72,7 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
     private readonly gorule: RuleService,
     private readonly redisService: RedisService,
     private readonly commonService: CommonService,
+    private readonly mongoService: MongoService,
     private readonly envData: EnvData
   ) {}
     private pool : Pool;
@@ -270,15 +272,15 @@ getConfig(): FusionAuthConfig {
     }
   }
 
- async insertDocToVgphSourceTranDocMain(category: string, doc_name: string, url: string, size?: number): Promise<any> {
+ async insertDocToVgphSourceTranDocMain(category: string, doc_name: string, url: string, size?: number, doc_group?: string): Promise<any> {
     try {
-      const insertUrl = `${process.env.APP_MANAGER_URL}/ct001/attachments`;
+      const insertUrl = `${process.env.APP_MANAGER_URL}/ct010/attachments`;
       //const vgphstm_uuid = uuid();
       const currentDate = new Date().toISOString().slice(0, 19) + '+00:00';
 
       const payload = { 
         category: category,
-        //vgphstm_uuid: vgphstm_uuid,
+        doc_group: doc_group,
         doc_name: doc_name,
         doc_size: `${Math.ceil((size ?? 0) / 1024)}`,
         url: url,
@@ -300,7 +302,7 @@ getConfig(): FusionAuthConfig {
 
   async getUrlByVgphstdmId(vgphstdm_id: any): Promise<string> {
     try {
-      const getUrl = `${process.env.APP_MANAGER_URL}/ct001/attachments/${vgphstdm_id}`;
+      const getUrl = `${process.env.APP_MANAGER_URL}/ct010/attachments/${vgphstdm_id}`;
 
       const response = await axios.get(getUrl, {
         headers: {
@@ -314,12 +316,12 @@ getConfig(): FusionAuthConfig {
     }
   }
   
-  async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number }, context: string, enableEncryption: string): Promise<any> {
+  async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number }, context: string, enableEncryption: string, doc_group?: string): Promise<any> {
     try {
       const res = await this.commonService.uploadFile(file, context, enableEncryption);
 
       // Insert the URL into vgph_source_tran_doc_main
-      const vgphstdm_id = await this.insertDocToVgphSourceTranDocMain("front", file.filename, res.fileId,file.size);
+      const vgphstdm_id = await this.insertDocToVgphSourceTranDocMain("front", file.filename, res.fileId,file.size,doc_group);
 
       res.fileId = `${vgphstdm_id}`;
       return res;
@@ -375,7 +377,8 @@ getConfig(): FusionAuthConfig {
     bucketFoldername?: string,
     folderPath?: string,
     filename?: string,
-    enableEncryption?: string
+    enableEncryption?: string,
+    doc_group?: string
   ): Promise<string> {
     try {
       const fileName = filename || file.filename;
@@ -416,7 +419,7 @@ getConfig(): FusionAuthConfig {
 
       if (res.status === 201) {
         const res = `${bucket}/${subFolder}/${fileName}`;
-        const responce = await this.insertDocToVgphSourceTranDocMain("front",fileName,res,file.size);
+        const responce = await this.insertDocToVgphSourceTranDocMain("front",fileName,res,file.size,doc_group);
         return `${responce}`;
       } else {
         throw new ConflictException(
@@ -676,7 +679,7 @@ getConfig(): FusionAuthConfig {
           filterobj['nodeId'] = dbnodeid;
         }
         
-      if(searchObj) filterobj = Object.assign(filterobj,searchObj)  
+      //if(searchObj) filterobj = Object.assign(filterobj,searchObj)    
 
       if (!page) page = 1;
       let rule: any;       
@@ -685,7 +688,7 @@ getConfig(): FusionAuthConfig {
         start = (page - 1) * count;
         end = start + count;
       }       
-       let payload = { key: afkey, count: count, page: page, afiflag:'Y' };
+       let payload = { key: afkey, count: count, page: page, afiflag:'Y',searchFilter:searchObj};
         const requestConfig: AxiosRequestConfig = {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -1154,18 +1157,33 @@ getConfig(): FusionAuthConfig {
 
       // ================= SEARCH =================
       if (searchObj && Object.keys(searchObj).length > 0) {
-        const searchKeys = Object.keys(searchObj);
-        let searchVals:any = Object.values(searchObj);       
-        searchVals = searchVals?.flat()        
-        // finalData = finalData.filter((item) =>
-        //   searchKeys.every((k, i) => item[k] == searchVals[i]),
+         //   finalData = finalData.filter((item) =>
+      //   Object.entries(searchObj).every(([key, value]) =>
+      //     Array.isArray(value)
+      //       ? value.includes(item[key])
+      //       : item[key] == value
+      //   )
         // );
+      
+       // ================= EXACTSEARCH =================
         finalData = finalData.filter((item) =>
-        Object.entries(searchObj).every(([key, value]) =>
-          Array.isArray(value)
-            ? value.includes(item[key])
-            : item[key] == value
-        )
+          Object.entries(searchObj).every(([key, value]) => {
+          const itemVal = item[key];
+ 
+          if (Array.isArray(value)) {
+            return value.some(v =>
+              typeof v === "string" && typeof itemVal === "string"
+                ? itemVal.toLowerCase().includes(v.toLowerCase())
+                : v === itemVal
+            );
+          }
+ 
+          if (typeof value === "string" && typeof itemVal === "string") {
+            return itemVal.toLowerCase().includes(value.toLowerCase());
+          }
+ 
+          return itemVal == value;
+        })
       );
       }
 
@@ -1350,7 +1368,7 @@ getConfig(): FusionAuthConfig {
       if(UFS.type==="Canvas"){
         continue;
       }
-      if(UFS.groupType == 'group' || UFS.type === 'tab_group' || UFS.type === 'stepper_group' || UFS.type === "stepper_header" || UFS.groupType == 'table' || UFS.type === 'tab_header' || UFS.groupType == 'dynamictable' || UFS.groupType == 'dynamicactions'){
+      if(UFS.groupType == 'group'|| UFS?.groupType=="subscreen" || UFS?.groupType=="artifactgroup"  || UFS.type === 'tab_group' || UFS.type === 'stepper_group' || UFS.type === "stepper_header" || UFS.groupType == 'table' || UFS.type === 'tab_header' || UFS.groupType == 'dynamictable' || UFS.groupType == 'dynamicactions'){
         const isTable = UFS.groupType === 'table';
         const result = await this.Orchestration(key, UFS.id, null, token, isTable, accessProfile, UO, UFSData, NDPData);
         groupData[UFS.id] = result;

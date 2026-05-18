@@ -20,7 +20,7 @@ export default function RootLayout({
       <div className=' relative h-[100vh] w-[100vw]  overflow-hidden'>
         <ThemeWrapper>
           <LayoutDecider
-            mode='detached' 
+            mode='fluid' 
             navigationStyles='horizontal' 
           >
             <main className="h-full w-full">{children}</main>

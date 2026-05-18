@@ -81,6 +81,7 @@ interface DynamicContentFieldsProps {
   className?: string;
   contentAlign?: ContentAlign;
   getPaginationData?: (value?: any, page?: number, dfd?: string) => void;
+  revalidate?: number;
 }
 
 
@@ -98,6 +99,7 @@ export default function DynamicContentFields({
   className = "",
   contentAlign = 'left',
   getPaginationData,
+  revalidate,
 }: DynamicContentFieldsProps) {
   const { theme, branding } = useGlobal();
   const isDark = theme === "dark" || theme === "dark-hc";
@@ -115,6 +117,7 @@ export default function DynamicContentFields({
   const listDivRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const loadPreLengthRef = useRef<Record<string, number>>({});
   const noMorePagesRef = useRef<Set<string>>(new Set());
+  const isInitializedRef = useRef(false);
 
   const updateError = (fieldId: string, error: string | null) => {
     setValidationErrors(prev => {
@@ -133,7 +136,8 @@ export default function DynamicContentFields({
   useEffect(() => {
     const initialValues: FieldValues = {};
     const initialExpanded: Record<string, boolean> = {};
-
+  // if (isInitializedRef.current) return;
+  // isInitializedRef.current = true;
     Object.entries(metadata).forEach(([key, config]) => {
       if (isFixedArrayMetadata(config)) {
         initialValues[key] = config.items.map((itemConfig) => {
@@ -228,9 +232,8 @@ export default function DynamicContentFields({
       });
 
     setValidationErrors(initErrors);
-    if (Object.keys(initErrors).length > 0 || hasRequiredInArrays(metadata)) {
-      onValidationChange?.(false);
-    }
+    const isValid = Object.keys(initErrors).length === 0 && !hasRequiredInArrays(metadata);
+    onValidationChange?.(isValid);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(metadata)]);
 
@@ -240,6 +243,18 @@ export default function DynamicContentFields({
       setValues(externalValues);
     }
   }, [externalValues]);
+
+  // When external revalidation triggers, mark all fields with errors as touched
+  useEffect(() => {
+    if (revalidate && revalidate > 0) {
+      setTouchedFields(prev => {
+        const next = new Set(prev);
+        Object.keys(validationErrors).forEach(key => next.add(key));
+        return next;
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revalidate]);
 
   // Detect "no more pages" after each load attempt completes
   useEffect(() => {
@@ -499,6 +514,9 @@ export default function DynamicContentFields({
       return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     };
 
+    const hasError = touchedFields.has(errorKey) && error;
+    const errorBorderColor = '#ef4444';
+
     const inputClassName = `
       w-full px-3 py-2
       ${getFontSizeClass(branding.fontSize)}
@@ -506,18 +524,19 @@ export default function DynamicContentFields({
       ${getTextAlignClasses()}
       border-2 transition-all
       ${isDark ? 'bg-gray-800 text-white border-gray-600' : 'bg-white text-gray-900 border-gray-300'}
+      ${hasError ? 'border-red-500' : ''}
       focus:outline-none focus:ring-2
     `.trim();
 
     const commonHandlers = {
       onMouseEnter: (e: React.MouseEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        if (document.activeElement !== e.currentTarget) {
+        if (document.activeElement !== e.currentTarget && !hasError) {
           e.currentTarget.style.borderColor = branding.hoverColor;
         }
       },
       onMouseLeave: (e: React.MouseEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         if (document.activeElement !== e.currentTarget) {
-          e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB';
+          e.currentTarget.style.borderColor = hasError ? errorBorderColor : '';
         }
       },
       onFocus: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -525,7 +544,7 @@ export default function DynamicContentFields({
         e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(branding.selectionColor, 0.2)}`;
       },
       onBlur: (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-        e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB';
+        e.currentTarget.style.borderColor = hasError ? errorBorderColor : '';
         e.currentTarget.style.boxShadow = 'none';
         markTouched();
         // Only SET an error on blur — never clear one (clearing is onChange's job).
@@ -619,7 +638,7 @@ export default function DynamicContentFields({
             type="date"
             value={String(value)}
             onChange={(e) => handleChange(e.target.value)}
-            className={`${inputClassName} ${touchedFields.has(errorKey) && error ? 'border-red-500' : ''}`}
+            className={inputClassName}
             {...commonHandlers}
           />
         );

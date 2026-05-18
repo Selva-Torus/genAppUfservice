@@ -22,35 +22,8 @@ export class AppService implements OnModuleInit{
     console.log('Application started, calling API...');
     console.log('DDL changes update started.');
     console.log('DDL changes update completed.');    
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiZ3VydSIsImNsaWVudCI6IkNUMDA1IiwidHlwZSI6ImMiLCJsb2dUeXBlIjoiZGZzIiwic2lkIjoiOTNlM2I1MDEtNjY3Ny00YTdhLWJhYzQtZGM0YzRjYjJiZTEwIiwiaWF0IjoxNzc4NTgyMjgwLCJleHAiOjE3Nzg1ODM0ODB9.XH1IlrfTApc9VLBRl3iBLS7GfaJuxFLogvilf_M5zpg';
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoic2VsdmEiLCJjbGllbnQiOiJDVDAxMCIsInR5cGUiOiJjIiwibG9nVHlwZSI6Im1vbmdvZGIiLCJzaWQiOiI0OWNiNWNkMi00MTE2LTQyMTktOGNmZC05NjEwODczNjdjYTkiLCJpYXQiOjE3NzkwODM4NDYsImV4cCI6MTc3OTA4NTA0Nn0.fGijMydkoRbQyzqJpJJa3iiVcBqc68hAy75S3ymuNXg';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
-    if(Object.keys(preParedData).includes('erdWithData'))
-      {
-      let endPointData : any = {};
-      let erdDatas: any = {};
-      endPointData.data = preParedData?.erdWithData||{}
-      endPointData.type =  "json";
-      let res =  await this.ufservice.getEndPoints(endPointData);
-      //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData,{
-      //  headers: {
-      //    Authorization: `Bearer ${token}`, 
-      //  }
-      //});
-      erdDatas.endpoint = res;
-      erdDatas.tenant =  "CT005";
-      erdDatas.domain = "GSS";
-      erdDatas.collection = "VGPH";
-      erdDatas.data = preParedData?.erdWithData||{}
-      erdDatas.fabric = 'API-APIPD';
-      erdDatas.loginId = "guru";    
-      erdDatas.erdFlag = true;  
-      await this.ufservice.createApiCollection(erdDatas,this.clientcode);
-      //await axios.post(this.apiUrl+'/createApiCollection', erdDatas,{
-      //  headers: {
-      //    Authorization: `Bearer ${token}`, 
-      //  }
-      //});
-      }
     if(Object.keys(preParedData).includes('torusApis'))
     {
       let torusData: any = {};
@@ -59,12 +32,12 @@ export class AppService implements OnModuleInit{
       //endPointData.type =  "json";
       //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData);
       //torusData.endpoint = res.data;
-      torusData.tenant =  "CT005";
-      torusData.domain = "GSS"; 
-      torusData.collection = "VGPH";
+      torusData.tenant =  "CT010";
+      torusData.domain = "appgroup"; 
+      torusData.collection = "application";
       torusData.fabric = 'API-APIPD-TORUS';
       torusData.data = preParedData?.torusApis||{}
-      torusData.loginId = "guru";    
+      torusData.loginId = "selva";    
       //await axios.post(this.apiUrl, torusData);
     }
   }

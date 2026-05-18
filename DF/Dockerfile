@@ -7,10 +7,10 @@ COPY package*.json ./
 RUN npm install
  
 # Copy Prisma schema and generate client
-COPY src/erd/prisma ./prisma
+#COPY src/erd/prisma ./prisma
 
 COPY .env .env
- RUN npx prisma generate
+# RUN npx prisma generate
 
 # Stage 2: Build the application
 FROM docker.io/library/node:20-alpine AS builder

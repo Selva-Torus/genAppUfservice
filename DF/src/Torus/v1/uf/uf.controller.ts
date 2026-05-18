@@ -168,6 +168,7 @@ export class UfController {
         mimetype: string;
         size: number;
         buffer: Buffer;
+        doc_group: string;
       }> = [];
 
       for await (const part of parts) {
@@ -178,6 +179,7 @@ export class UfController {
             mimetype: part.mimetype,
             size: buffer.length,
             buffer,
+            doc_group: fields?.doc_group||""
           });
         } else {
           fields[part.fieldname] = part.value as string;
@@ -192,7 +194,7 @@ export class UfController {
     // Process all files and collect fileIds
     const fileIds: string[] = [];
     for (const file of files) {
-      const uploadRes = await this.appService.uploadFile(file, context, enableEncryption);
+      const uploadRes = await this.appService.uploadFile(file, context, enableEncryption, fields.doc_group||"");
       fileIds.push(uploadRes.fileId);
     }
 
@@ -1124,16 +1126,18 @@ export class UfController {
         mimetype: string;
         size: number;
         buffer: Buffer;
+        doc_group: string;
       }> = [];
 
       for await (const part of parts) {
         if (part.type === 'file') {
           const buffer = await part.toBuffer();
-          files.push({
+            files.push({
             filename: part.filename,
             mimetype: part.mimetype,
             size: buffer.length,
             buffer,
+            doc_group: part?.fields?.doc_group?.value||"", // Assuming doc_group is sent as a field in the multipart form
           });
         } else {
           fields[part.fieldname] = part.value;
@@ -1149,7 +1153,8 @@ export class UfController {
         bucketFolderame,
         folderPath,
         filename || file.filename,
-        enableEncryption
+        enableEncryption,
+        file?.doc_group||""
       );
       imageUrls.push(imageUrl);
     }

@@ -165,7 +165,7 @@ export class DynamicFlowService {
                 try {
                     this.logger.log('HumanTask node Started');
                     this.ruleParams[nodeName] = Array.isArray(inputparam)?inputparam[0]:inputparam
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
@@ -248,7 +248,7 @@ export class DynamicFlowService {
                     }
                     let decisionRes
                       
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     
                     if (RCMresult) {
                         let ruleRes = RCMresult.rule//.output;
@@ -446,13 +446,13 @@ export class DynamicFlowService {
                             if (!ruleConfig || Object.keys(ruleConfig).length == 0)
                                 throw new CustomException(pfjson[i].nodeName +' Reference key value not found', 404);
                             let rulejson: any = Object.values(ruleConfig)[0]; 
-                            let rulecheck:any = await this.CommonService.getRuleCodeMapper(rulejson, this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                            let rulecheck:any = await this.CommonService.getRuleCodeMapper(rulejson, this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                             headerRole = rulecheck?.rule
                            }
                             encCredentials = await this.CommonService.checkEncryption(poNode[j]);
                             
                             if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL') {
-                                RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                                RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                                 if (RCMresult) {
                                     zenresult = RCMresult.rule;
                                     customcoderesult = RCMresult.code;
@@ -662,7 +662,7 @@ export class DynamicFlowService {
                                     if (!inputparam || inputparam?.length == 0) {
                                         //this.ruleParams[nodeName] = apires
                                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + poNode[j].nodeName + '.PRO', JSON.stringify(apires), collectionName, 'customResponse',);
-                                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                                     }
                                     if (RCMresult) {
                                         zenresult = RCMresult.rule;
@@ -737,7 +737,7 @@ export class DynamicFlowService {
                                                     } else {
                                                         throw apiResult;
                                                     }
-                                                     RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                                                     RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                                                     if (RCMresult) {
                                                         zenresult = RCMresult.rule;
                                                         customcoderesult = RCMresult.code;
@@ -1082,7 +1082,7 @@ export class DynamicFlowService {
                                         } else {
                                             throw apiResult;
                                         }
-                                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                                         if (RCMresult) {
                                             zenresult = RCMresult.rule;
                                             customcoderesult = RCMresult.code;
@@ -1198,7 +1198,7 @@ export class DynamicFlowService {
                 try {
                     this.logger.log('Automation Node Started');
                     
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -1245,7 +1245,7 @@ export class DynamicFlowService {
                     client = dbconfig.client
                     let nodeVersion = customConfig?.nodeVersion;
                     if (nodeVersion?.toLowerCase() == 'v1') {
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                         let queryName
                         let ruleRes = RCMresult?.rule                        
                         if(ruleRes && typeof ruleRes == 'object'){
@@ -1278,11 +1278,11 @@ export class DynamicFlowService {
                        // if (!ruleConfig || Object.keys(ruleConfig).length == 0)
                            // throw new CustomException(pfjson[i].nodeName +' rulekey key value not found', 404);
                         //let rulejson: any = Object.values(ruleConfig)[0]; 
-                        //let rulecheck:any = await this.CommonService.getRuleCodeMapper(rulejson, inputparam, processedKey + upId, currentFabric, SessionInfo);
+                        //let rulecheck:any = await this.CommonService.getRuleCodeMapper(rulejson, inputparam, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                         //headerRole = rulecheck?.rule
                         //str.push({'xCdcaRole':headerRole,'xCdcaUsername':SessionToken?.loginId})
                      //}
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     console.log("RCMresult",RCMresult);
                     let ruleRes = RCMresult.rule
                     let appendQry
@@ -1319,99 +1319,29 @@ export class DynamicFlowService {
                         if (childInsertArr?.length > 0) {
                             for (let i = 0; i < childInsertArr.length; i++) {
                                 mapObj = childInsertArr[i]
-                                 mapObj = Object.assign(mapObj,sobj)
-                                // if (mapObj && Object.keys(mapObj).length > 0) {
-                                //     let mapcol = Object.keys(mapObj)
-                                //     let mapval = Object.values(mapObj)
-                                //     for (let i = 0; i < mapcol.length; i++) {
-                                //         str.push(` ${mapcol[i]} = '${mapval[i]}' `);
-                                //     }
-                                // }  
+                                mapObj = Object.assign(mapObj,sobj)                                
                                 let replaceQry = manualQuery                            
-                            if (mapObj && Object.keys(mapObj).length > 0) {
-                                // Object.keys(mapObj).forEach(key => {
-                                //     const regex = new RegExp(`\\$\\$${key}`, 'g');
-                                //     const value = typeof mapObj[key] === 'string' ? `'${mapObj[key]}'` : mapObj[key];
-                                //     replaceQry = replaceQry.replace(regex, value);
-                                // });
-                                 Object.keys(mapObj).forEach(key => {
-                                const regex = new RegExp(`\\$\\$${key}`, 'g');
+                           
+                                replaceQry = await this.replaceQuery(replaceQry,mapObj)
 
-                                let value = mapObj[key];
-
-                                if (value === null || value === undefined) {
-                                    value = 'NULL';
-                                }
-                                else if (typeof value === 'object') {
-                                    value = `'${JSON.stringify(value)}'`;
-                                }
-                                else if (typeof value === 'string') {
-                                    value = `'${value.replace(/'/g, "''")}'`;
-                                }
-
-                                replaceQry = replaceQry.replace(regex, value);
-                            });
-                            }
-                            if(childInsertArr.length ==1)
-                                manualQuery = replaceQry
-                            else
-                             qryarr.push(replaceQry)
+                                if(childInsertArr.length ==1)
+                                    manualQuery = replaceQry
+                                else
+                                    qryarr.push(replaceQry)
                             }
                            
 
                         } else {
                              mapObj = sobj
-                            if (mapObj && Object.keys(mapObj).length > 0) {
-                                 // Object.keys(mapObj).forEach(key => {
-                                //     const regex = new RegExp(`\\$\\$${key}`, 'g');
-                                //     const value = typeof mapObj[key] === 'string' ? `'${mapObj[key]}'` : mapObj[key];
-                                //     manualQuery = manualQuery.replace(regex, value);
-                                // });
-                                 Object.keys(mapObj).forEach(key => {
-                                const regex = new RegExp(`\\$\\$${key}`, 'g');
-
-                                let value = mapObj[key];
-
-                                if (value === null || value === undefined) {
-                                    value = 'NULL';
-                                }
-                                else if (typeof value === 'object') {
-                                    value = `'${JSON.stringify(value)}'`;
-                                }
-                                else if (typeof value === 'string') {
-                                    value = `'${value.replace(/'/g, "''")}'`;
-                                }
-
-                                manualQuery = manualQuery.replace(regex, value);
-                            });
+                            if (mapObj && Object.keys(mapObj).length > 0) {                                            
+                                manualQuery = await this.replaceQuery(manualQuery,mapObj)                            
                             }
                         }
                     } else{
-                          mapObj = sobj
+                        mapObj = sobj
                         if (mapObj && Object.keys(mapObj).length > 0) {
-                                // Object.keys(mapObj).forEach(key => {
-                                //     const regex = new RegExp(`\\$\\$${key}`, 'g');
-                                //     const value = typeof mapObj[key] === 'string' ? `'${mapObj[key]}'` : mapObj[key];
-                                //     manualQuery = manualQuery.replace(regex, value);
-                                // });
-                                 Object.keys(mapObj).forEach(key => {
-                                const regex = new RegExp(`\\$\\$${key}`, 'g');
-
-                                let value = mapObj[key];
-
-                                if (value === null || value === undefined) {
-                                    value = 'NULL';
-                                }
-                                else if (typeof value === 'object') {
-                                    value = `'${JSON.stringify(value)}'`;
-                                }
-                                else if (typeof value === 'string') {
-                                    value = `'${value.replace(/'/g, "''")}'`;
-                                }
-
-                                manualQuery = manualQuery.replace(regex, value);
-                            });
-                            }                    
+                            manualQuery = await this.replaceQuery(manualQuery,mapObj)  
+                        }                    
                     }                    
                     if(qryarr?.length>0){
                     let resdbarr =[]
@@ -1514,7 +1444,7 @@ export class DynamicFlowService {
                                     }
                                     const value = searchParamsObjvalues[p];
                                     if (typeof value == 'number') {
-                                        formKey = formKey + ` ${removedVal} LIKE ${value}% AND`;
+                                         formKey = formKey + ` ${removedVal}::TEXT LIKE '${value}%' AND`;
                                     } else if (typeof value == 'string') {
                                         formKey = formKey + ` ${removedVal} LIKE '${value}%' AND`;
                                     } else if (Array.isArray(value) && value.length > 0) {
@@ -1553,13 +1483,14 @@ export class DynamicFlowService {
                     }                     
                     if (flag != 'N' && dbres?.length == 0 && logicCenter) {
                         await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: qry, response: dbres } }));
-                        await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, qry, dfoSchema);
+                        await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, qry, dbres);
                         return { status: 200, targetStatus: targetStatus, data: dbres };
                     } else if (oprname == 'select' && dbres?.length == 0 && currentFabric == 'DF-DFD' && logicCenter) {
                         throw new CustomException('No Records Found', 404);
                     }else if(currentFabric == 'PF-PFD' && dbres?.length == 0){                       
                         let responseData = await this.CommonService.responseData(200,dbres)
                         responseData = Object.assign(responseData,{targetStatus})
+                        await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, qry, dbres);
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(qry), collectionName, 'request');
                         await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(dbres), collectionName, 'response');
                         return responseData
@@ -1582,9 +1513,9 @@ export class DynamicFlowService {
                      if (inputparam) {
                         inputparam = await this.assignToInputParam(inputparam, nodeName, dbres)
                         this.ruleParams[nodeName] = Array.isArray(dbres)?dbres[0]:dbres
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     } else {   
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     }
                     console.log("RCMresult2",RCMresult);
                     if (RCMresult) {
@@ -1812,10 +1743,10 @@ export class DynamicFlowService {
                     if (inputparam) {
                         
                         inputparam = await this.assignToInputParam(inputparam, nodeName, mongoDbarr)
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     } else {
                         
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     }
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
@@ -2244,10 +2175,10 @@ export class DynamicFlowService {
                         this.ruleParams[nodeName] = Array.isArray(streamArr)?streamArr[0]:streamArr
                         if (inputparam && Object.keys(inputparam).length > 0) {
                                                                                   
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                         } else {
                             
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                         }
                         if (RCMresult) {
                             zenresult = RCMresult.rule;
@@ -2586,10 +2517,10 @@ export class DynamicFlowService {
                     } else {
                     inputparam = Object.assign(inputparam, { [poNode[j].nodeName]: kafkaResultArr });
                     }
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                 } else {
                        
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                 }
                 // Store results in Redis
                 await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify({ topic: topicName, operation: oprname }), collectionName, 'request');
@@ -2815,10 +2746,10 @@ export class DynamicFlowService {
                         this.ruleParams[nodeName] = Array.isArray(fileres)?fileres[0]:fileres
                         if (inputparam) {    
                                                
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                         } else {
                            
-                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                            RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                         }
                         if (RCMresult) {
                             zenresult = RCMresult.rule;
@@ -3123,10 +3054,10 @@ export class DynamicFlowService {
                         // this.ruleParams[nodeName] = Array.isArray(subPoResult) ? {...this.ruleParams , ...subPoResult[0]} : {...this.ruleParams , ...subPoResult}
                         // if (inputparam) {
                         //     inputparam = await this.assignToInputParam(inputparam, nodeName, inputData)
-                        //     RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                        //     RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                         // } else {
                             
-                        //     RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                        //     RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                         // }
                         if (RCMresult) {
                             zenresult = RCMresult.rule;
@@ -3356,7 +3287,7 @@ export class DynamicFlowService {
                 try {
                     this.logger.log('.....api_inputnode Started')
                     this.ruleParams[nodeName] = Array.isArray(inputparam)?inputparam[0]:inputparam
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName)
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
@@ -3400,7 +3331,7 @@ export class DynamicFlowService {
                         throw new CustomException('Data not found', 404);
                     }
                     if (customConfig) {                        
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName)
                         if (RCMresult) {
                             zenresult = RCMresult.rule
                             customcoderesult = RCMresult.code
@@ -3755,7 +3686,7 @@ export class DynamicFlowService {
                             if (!DfExecutedDataSet || DfExecutedDataSet.length == 0) throw new CustomException(`Dataset not found ${DstKey + 'DS_Object'}`, 404)
                         }
                         
-                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey, currentFabric, SessionInfo)
+                        RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey, currentFabric, SessionInfo,pfdto.controlName)
                         if (RCMresult) {
                             zenresult = RCMresult.rule
                             customcoderesult = RCMresult.code
@@ -4046,7 +3977,7 @@ export class DynamicFlowService {
 
                     let edgesarr
                     
-                    let RCMresult: any = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
+                    let RCMresult: any = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName)
                     let customcoderesult, zenresult
                     if (RCMresult) {
                         zenresult = RCMresult.rule
@@ -4677,7 +4608,7 @@ export class DynamicFlowService {
                     inputparam = await this.assignToInputParam(inputparam, nodeName, mapObj)
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(mapObj), collectionName, 'response');
                     this.ruleParams[nodeName] = Array.isArray(mapObj)?mapObj[0]:mapObj
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], inputparam, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -4781,7 +4712,7 @@ export class DynamicFlowService {
                     inputparam = await this.assignToInputParam(inputparam, nodeName, { json2xmldata: xmlData })
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify({ json2xmldata: xmlData }), collectionName, 'response')
                     this.ruleParams[nodeName] = { json2xmldata: xmlData }
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -4879,7 +4810,7 @@ export class DynamicFlowService {
                     inputparam = await this.assignToInputParam(inputparam, nodeName, { xml2jsondata: jsonData })
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify({ xml2jsondata: jsonData }), collectionName, 'response')
                     this.ruleParams[nodeName] = { xml2jsondata: jsonData }
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j],  this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -5170,7 +5101,7 @@ export class DynamicFlowService {
                     inputparam = await this.assignToInputParam(inputparam, nodeName, childInsertArr)
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(childInsertArr), collectionName, 'response')
                     this.ruleParams[nodeName] = Array.isArray(childInsertArr)?childInsertArr[0]:childInsertArr
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -5227,28 +5158,7 @@ export class DynamicFlowService {
                                 }
                             }
                             if (mapobj && Object.keys(mapobj).length > 0) {
-                                // Object.keys(mapobj).forEach(key => {
-                                //     const regex = new RegExp(`\\$\\$${key}`, 'g');
-                                //     const value = typeof mapobj[key] === 'string' ? `'${mapobj[key]}'` : mapobj[key];
-                                //     executecommand = executecommand.replace(regex, value);
-                                // });
-                                 Object.keys(mapobj).forEach(key => {
-                                const regex = new RegExp(`\\$\\$${key}`, 'g');
-
-                                let value = mapobj[key];
-
-                                if (value === null || value === undefined) {
-                                    value = 'NULL';
-                                }
-                                else if (typeof value === 'object') {
-                                    value = `'${JSON.stringify(value)}'`;
-                                }
-                                else if (typeof value === 'string') {
-                                    value = `'${value.replace(/'/g, "''")}'`;
-                                }
-
-                                executecommand = executecommand.replace(regex, value);
-                            });
+                                executecommand = await this.replaceQuery(executecommand,mapobj)                              
                             } else {
                                 throw new CustomException('params was required in ' + nodeName, 400)
                             }
@@ -5266,28 +5176,7 @@ export class DynamicFlowService {
                             }
                         }
                         if (mapobj && Object.keys(mapobj).length > 0) {
-                            // Object.keys(mapobj).forEach(key => {
-                                //     const regex = new RegExp(`\\$\\$${key}`, 'g');
-                                //     const value = typeof mapobj[key] === 'string' ? `'${mapobj[key]}'` : mapobj[key];
-                                //     executecommand = executecommand.replace(regex, value);
-                                // });
-                                 Object.keys(mapobj).forEach(key => {
-                                const regex = new RegExp(`\\$\\$${key}`, 'g');
-
-                                let value = mapobj[key];
-
-                                if (value === null || value === undefined) {
-                                    value = 'NULL';
-                                }
-                                else if (typeof value === 'object') {
-                                    value = `'${JSON.stringify(value)}'`;
-                                }
-                                else if (typeof value === 'string') {
-                                    value = `'${value.replace(/'/g, "''")}'`;
-                                }
-
-                                executecommand = executecommand.replace(regex, value);
-                            });
+                            executecommand = await this.replaceQuery(executecommand,mapobj)    
                         }
                     }
                     if (filterData && Array.isArray(filterData) && filterData.length > 0) {
@@ -5342,7 +5231,7 @@ export class DynamicFlowService {
                     
                     inputparam = await this.assignToInputParam(inputparam, nodeName, status)
                        
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName)
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
@@ -5491,7 +5380,7 @@ export class DynamicFlowService {
                     
                     inputparam = await this.assignToInputParam(inputparam, nodeName, status)
                     
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName)
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
@@ -5663,7 +5552,7 @@ export class DynamicFlowService {
 
                     
                     // inputparam = await this.assignToInputParam(inputparam,nodeName,status)
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo)
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName)
                     if (RCMresult) {
                         zenresult = RCMresult.rule
                         customcoderesult = RCMresult.code
@@ -5710,21 +5599,21 @@ export class DynamicFlowService {
                 }
             }
 
-              //communication node
+               //communication node
             if (nodeType == 'communicationnode' && poNode[j].nodeId == nodeId) {
                 try {
                     this.logger.log('communication Node Started');
-                    let customConfig,dpdkey,schemaname,dpdData,dbUrl,client,templateKey,communicationType,qry,dbres,qryres,mapobj,emailConfig,subject,to,sendResponse
+                    let customConfig,dpdkey,html,dpdData,templateKey,communicationType,mapobj,emailConfig,subject,to,sendResponse,cc,bcc
                     customConfig = ndp[poNode[j].nodeId]
                     dpdkey = customConfig?.data?.pro?.dpdKey?.value
-                    communicationType = customConfig?.data?.pro?.channels?.value                    
-                    let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];                          
+                    communicationType = customConfig?.data?.pro?.channels?.value 
+                    let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey, collectionName)))[0];                          
                     dpdData = decrypt(extdata)  
                     let communicationConfig = dpdData?.data?.communicationConfig
                     if(communicationType == 'email'){
                         templateKey = customConfig?.data?.pro?.channels?.subSelection?.email?.template?.value
                     }
-                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo);
+                    RCMresult = await this.CommonService.getRuleCodeMapper(poNode[j], this.ruleParams, processedKey + upId, currentFabric, SessionInfo,pfdto.controlName);
                     if (RCMresult) {
                         zenresult = RCMresult.rule;
                         customcoderesult = RCMresult.code;
@@ -5736,7 +5625,7 @@ export class DynamicFlowService {
                             if (inputparam)
                                 inputparam = await this.codeORifoAndInputparamAssign(codeObj, inputparam)
                         }
-                    }   
+                    }                      
                     let templateJson = JSON.parse(await this.redisService.getJsonData(templateKey,collectionName))  
                     let content_info = templateJson?.content_info
                      let childInsertArr = []
@@ -5747,38 +5636,41 @@ export class DynamicFlowService {
                     }
                     if(childInsertArr?.length>0){
                     for(let i=0;i< childInsertArr.length;i++){
-                        mapobj = childInsertArr[i]
+                        mapobj = childInsertArr[i]                       
                         if (mapobj && Object.keys(mapobj).length > 0) {
                             Object.keys(mapobj).forEach(key => {
                                 const regex = new RegExp(`\\$\\$${key}`, 'g');
-                                const value = typeof mapobj[key] === 'string' ? `'${mapobj[key]}'` : mapobj[key];
+                                const value = mapobj[key]//typeof mapobj[key] === 'string' ? `'${mapobj[key]}'` : mapobj[key];
                                 content_info = content_info.replace(regex, value);
                             });
-                        }                       
+                        }                                            
                         if(communicationType == 'email'){
-                        let to = mapobj['to']
-                        let subject = mapobj['subject']
-                        let provider = communicationConfig?.email?.value?.provider?.value
+                         to = mapobj?.['to']                       
+                         subject = templateJson?.contact_info?.subject
+                         cc = mapobj?.['cc']
+                         bcc = mapobj?.['bcc']
+                        let provider = communicationConfig?.email?.value?.provider?.value                       
                         if(provider == 'smtp'){
-                         emailConfig = communicationConfig?.email?.value?.provider?.subSelection?.provider?.settings?.value
-                        this.transporter = this.getTransport(emailConfig);
-                        sendResponse = this.transporter.sendMail({from:{name:emailConfig?.fromName?.value,address:emailConfig?.fromAddress?.value},to,subject,content_info,});
-                        }
+                         emailConfig = communicationConfig?.email?.value?.provider?.subSelection?.[provider]?.settings?.value                       
+                        //this.transporter = this.getTransport(emailConfig); 
+                         html = content_info
+                        sendResponse = await this.sendEmail(to,subject,html,emailConfig,cc,bcc);
+                        }                      
+                       
                     }
                     }
-                    }                                     
-                   // }                   
-                    await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: {from:{name:emailConfig?.fromName?.value,address:emailConfig?.fromAddress?.value},to,subject,content_info,}, response: inputparam } }));
-                    await this.redisService.setStreamData(targetQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: {from:{name:emailConfig?.fromName?.value,address:emailConfig?.fromAddress?.value},to,subject,content_info,}, response: inputparam } }));
+                    }          
+                    await this.redisService.setStreamData(srcQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: {from:{name:emailConfig?.fromName?.value,address:emailConfig?.fromAddress?.value},to,subject,html,cc,bcc}, response: inputparam } }));
+                    await this.redisService.setStreamData(targetQueue, collectionName + '-TASK - ' + upId, JSON.stringify({ PID: upId, TID: nodeId, EVENT: targetStatus, data: { request: {from:{name:emailConfig?.fromName?.value,address:emailConfig?.fromAddress?.value},to,subject,html,cc,bcc,}, response: inputparam } }));
                                        
-                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify({from:emailConfig?.fromAddress?.value,to,subject,content_info,}), collectionName, 'request');
+                    await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify({from:{name:emailConfig?.fromName?.value,address:emailConfig?.fromAddress?.value},to,subject,html,cc,bcc}), collectionName, 'request');
                     await this.redisService.setJsonData(processedKey + upId + ':NPV:' + nodeName + '.PRO', JSON.stringify(sendResponse?.response), collectionName, 'response');
                     if (sendResponse?.response)
                         await this.CommonService.getTPL(processedKey, upId, poNode[j], 'Success', targetQueue, token, currentFabric, sourceStatus, inputparam, sendResponse?.response);                          
                     this.ruleParams[nodeName] = Array.isArray(sendResponse?.response) ? sendResponse?.response[0] : sendResponse?.response
                     this.logger.log('communication node completed');
                     return { status: 200, targetStatus: targetStatus };
-                } catch (error) {
+                } catch (error) {                   
                     await this.exceptionhandler(failureQueue, suspiciousQueue, errorQueue, error, upId, nodeId, failureTargetStatus, inputparam)
                 }
             }
@@ -5786,9 +5678,81 @@ export class DynamicFlowService {
         }
     }
 
+    async replaceQuery(replaceQry,mapObj){
+        try {           
+           const matches = [...replaceQry.matchAll(/\$\$([a-zA-Z0-9_.]+)/g)];
+            const variables = matches.map(match => match[1]);
+            console.log(variables);
+            function getValueByKey(obj, key) {
+                if (typeof obj !== 'object' || obj === null) {
+                    return undefined;
+                }
+
+                // Check current level
+                if (key in obj) {
+                    return obj[key];
+                }
+
+                // Check nested levels
+                for (const value of Object.values(obj)) {
+                    if (typeof value === 'object') {
+                    const result = getValueByKey(value, key);
+
+                    if (result !== undefined) {
+                        return result;
+                    }
+                    }
+                }
+
+                return undefined;
+            }
+            if(variables?.length>0){
+                for(let item of variables){
+                    let value = getValueByKey(mapObj, item);
+                    // console.log('value',value);
+                    const regex = new RegExp(`\\$\\$${item}`, 'g');
+                    if (value === null || value === undefined) {
+                        value = 'NULL';
+                    }
+                    else if (typeof value === 'object') {
+                        value = `'${JSON.stringify(value)}'`;
+                    }
+                    else if (typeof value === 'string') {
+                        value = `'${value.replace(/'/g, "''")}'`;
+                    }
+                    // console.log('value',value);
+                    // console.log('regex',regex);
+                    
+                    replaceQry = replaceQry.replace(regex, value);                                    
+                }
+            }
+            return replaceQry
+        } catch (error) {
+            throw error
+        }
+    }
+
+
+    async sendEmail(to: string | string[],subject: string, html: string, emailConfig:any,cc?: string | string[],bcc?:string | string[]) {
+    this.transporter = this.getTransport(emailConfig);        
+    return this.transporter.sendMail({
+        from: {
+        name: emailConfig?.fromName?.value,
+        address: emailConfig?.fromAddress?.value,
+        },
+        replyTo:emailConfig?.fromAddress?.value,
+        to,
+        cc,
+        bcc,
+        subject,
+        html        
+    });
+    }
+
      private createTransport(emailConfig) {
         return nodemailer.createTransport({
           host: emailConfig?.smtpHost?.value,
+           port: emailConfig?.smtpPort?.value,
           secure: false,
           requireTLS: true, 
           auth: {

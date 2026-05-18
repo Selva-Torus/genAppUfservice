@@ -162,84 +162,91 @@ export const ProgressBar: React.FC<ProgressProps> = ({
       )}
 
       {/* ========================= */}
-      {/* CIRCULAR PROGRESS */}
-      {/* ========================= */}
-      {progressType === "circular" && (
-        <div
-          className="relative flex items-center justify-center"
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          onMouseMove={handleMouseMove}
+{/* CIRCULAR PROGRESS */}
+{/* ========================= */}
+{progressType === "circular" && (
+  <div
+    className="relative flex items-center justify-center w-full h-full"
+    onMouseEnter={() => setHovered(true)}
+    onMouseLeave={() => setHovered(false)}
+    onMouseMove={handleMouseMove}
+  >
+    {hovered && (
+      <div
+        className="fixed px-2 py-0.5 rounded text-white text-xs font-semibold pointer-events-none whitespace-nowrap z-50 -translate-x-1/2"
+        style={{
+          left: tooltipPos.x,
+          top: tooltipPos.y - 30,
+          backgroundColor: progressColor,
+        }}
+      >
+        {clampedValue}%
+      </div>
+    )}
+
+    <svg
+      viewBox="0 0 100 100"
+      className="w-full h-full"
+      preserveAspectRatio="xMidYMid meet"
+    >
+      {/* Background Circle */}
+      <circle
+        stroke={isDark ? "#374151" : "#E5E7EB"}
+        fill="transparent"
+        strokeWidth="8"
+        r="40"
+        cx="50"
+        cy="50"
+      />
+
+      {/* Progress Circle */}
+      <circle
+        stroke={progressColor}
+        fill="transparent"
+        strokeWidth="8"
+        strokeLinecap="round"
+        strokeDasharray={`${2 * Math.PI * 40}`}
+        strokeDashoffset={`${
+          2 * Math.PI * 40 -
+          (clampedValue / 100) * (2 * Math.PI * 40)
+        }`}
+        r="40"
+        cx="50"
+        cy="50"
+        style={{
+          transition: "stroke-dashoffset 0.35s",
+          transform: "rotate(-90deg)",
+          transformOrigin: "50% 50%",
+          filter: `drop-shadow(0 0 6px ${hexToRgba(
+            progressColor,
+            0.5
+          )})`,
+        }}
+      />
+    </svg>
+
+    {/* Center Value */}
+    <div className="absolute flex flex-col items-center justify-center">
+      <span
+        className={`font-bold text-[clamp(12px,2vw,28px)] ${
+          isDark ? "text-white" : "text-gray-900"
+        }`}
+      >
+        {clampedValue}%
+      </span>
+
+      {isDynamic && (
+        <span
+          className={`text-[clamp(8px,1vw,14px)] ${
+            isDark ? "text-gray-300" : "text-gray-500"
+          }`}
         >
-          {hovered && (
-            <div
-              className="fixed px-2 py-0.5 rounded text-white text-xs font-semibold pointer-events-none whitespace-nowrap z-50 -translate-x-1/2"
-              style={{
-                left: tooltipPos.x,
-                top: tooltipPos.y - 30,
-                backgroundColor: progressColor,
-              }}
-            >
-              {clampedValue}%
-            </div>
-          )}
-
-          <svg height={radius * 2} width={radius * 2}>
-            {/* Background Circle */}
-            <circle
-              stroke={isDark ? "#374151" : "#E5E7EB"}
-              fill="transparent"
-              strokeWidth={strokeWidth}
-              r={normalizedRadius}
-              cx={radius}
-              cy={radius}
-            />
-
-            {/* Progress Circle */}
-            <circle
-              stroke={progressColor}
-              fill="transparent"
-              strokeWidth={strokeWidth}
-              strokeLinecap="round"
-              strokeDasharray={`${circumference} ${circumference}`}
-              strokeDashoffset={strokeDashoffset}
-              r={normalizedRadius}
-              cx={radius}
-              cy={radius}
-              style={{
-                transition: "stroke-dashoffset 0.35s",
-                transform: "rotate(-90deg)",
-                transformOrigin: "50% 50%",
-                filter: `drop-shadow(0 0 6px ${hexToRgba(
-                  progressColor,
-                  0.5
-                )})`,
-              }}
-            />
-          </svg>
-
-          {/* Center Value */}
-          <div className="absolute flex flex-col items-center justify-center">
-            <span
-              className={`font-bold text-lg ${
-                isDark ? "text-white" : "text-gray-900"
-              }`}
-            >
-              {clampedValue}%
-            </span>
-
-            {isDynamic && (
-              <span
-                className={`text-xs ${
-                  isDark ? "text-gray-300" : "text-gray-500"
-                }`}
-              >
-                Progress
-              </span>
-            )}
-          </div>
-        </div>
+          Progress
+        </span>
       )}
+    </div>
+  </div>
+)}
     </div>
   );
 
