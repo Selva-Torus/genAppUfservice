@@ -6,7 +6,7 @@ import { useGlobal } from "@/context/GlobalContext";
 import { useEventBus } from "@/context/EventBusContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType, ComponentEvents } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
+import { getBorderRadiusClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 export interface SignatureRef {
@@ -197,7 +197,7 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
     <div className={`w-full h-full flex flex-col overflow-hidden  ${className}`}>
       {title && (
         <h3
-          className={`mb-2 ${getFontSizeClass(branding.fontSize)} font-semibold ${
+          className={`mb-2 font-semibold ${
             isDark ? "text-gray-200" : "text-gray-700"
           }`}
           style={{ fontFamily: "var(--font-body)" }}
@@ -269,7 +269,6 @@ export const Signature = forwardRef<SignatureRef, SignatureProps>(({
             mt-2
             px-4
             py-2
-            ${getFontSizeClass(branding.fontSize)}
             font-medium
             ${getBorderRadiusClass(branding.borderRadius)}
             transition-all duration-200

@@ -12,7 +12,6 @@ import {
   TooltipProps as TooltipPropsType
 } from '@/types/global'
 import { useGlobal } from '@/context/GlobalContext'
-import { getFontSizeClass } from '@/app/utils/branding'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 
 type ContentAlign = 'left' | 'center' | 'right'
@@ -42,7 +41,7 @@ export function SpeechToTextInput(props: SpeechToTextInputProps) {
     className = '',
     ...restProps
   } = props
-  const { theme, direction, branding } = useGlobal()
+  const { theme, direction } = useGlobal()
   const { transcript, resetTranscript, browserSupportsSpeechRecognition } =
     useSpeechRecognition()
   const [openMic, setOpenMic] = useState<any>(true)

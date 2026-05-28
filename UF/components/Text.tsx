@@ -5,7 +5,7 @@ import { useGlobal } from '@/context/GlobalContext'
 import { Icon } from './Icon'
 import { Tooltip } from './Tooltip'
 import { TooltipProps as TooltipPropsType } from '@/types/global'
-import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
+import { getBorderRadiusClass } from '@/app/utils/branding'
 type TextVariant =
   | 'display-4'
   | 'display-3'
@@ -102,54 +102,54 @@ export const Text: React.FC<TextProps> = ({
   fillContainer = true,
   contentAlign = 'center'
 }) => {
-  const { theme, branding, direction } = useGlobal()
+  const { theme, direction } = useGlobal()
 
   const getVariantClasses = (): string => {
     if (!variant) {
-      return getFontSizeClass(branding.fontSize)
+      return ""
     }
     switch (variant) {
       case 'display-4':
-        return 'text-6xl font-bold'
+        return 'text-[clamp(30px,4.167vw,60px)] font-bold'
       case 'display-3':
-        return 'text-5xl font-bold'
+        return 'text-[clamp(24px,3.333vw,48px)] font-bold'
       case 'display-2':
-        return 'text-4xl font-bold'
+        return 'text-[clamp(20px,2.5vw,36px)] font-bold'
       case 'display-1':
-        return 'text-3xl font-bold'
+        return 'text-[clamp(18px,2.083vw,30px)] font-bold'
       case 'header-2':
-        return 'text-2xl font-semibold'
+        return 'text-[clamp(16px,1.667vw,24px)] font-semibold'
       case 'header-1':
-        return 'text-xl font-semibold'
+        return 'text-[clamp(14px,1.389vw,20px)] font-semibold'
       case 'subheader-3':
-        return 'text-lg font-medium'
+        return 'text-[clamp(13px,1.25vw,18px)] font-medium'
       case 'subheader-2':
-        return 'text-base font-medium'
+        return 'text-[clamp(12px,1.111vw,16px)] font-medium'
       case 'subheader-1':
-        return 'text-sm font-medium'
+        return 'text-[clamp(11px,0.972vw,14px)] font-medium'
       case 'body-3':
-        return 'text-lg'
+        return 'text-[clamp(13px,1.25vw,18px)]'
       case 'body-2':
-        return 'text-base'
+        return 'text-[clamp(12px,1.111vw,16px)]'
       case 'body-1':
-        return 'text-sm'
+        return 'text-[clamp(11px,0.972vw,14px)]'
       case 'body-short':
-        return 'text-sm'
+        return 'text-[clamp(11px,0.972vw,14px)]'
       case 'caption-2':
-        return 'text-xs'
+        return 'text-[clamp(10px,0.833vw,12px)]'
       case 'caption-1':
-        return 'text-xs opacity-75'
+        return 'text-[clamp(10px,0.833vw,12px)] opacity-75'
       case 'code-3':
       case 'code-inline-3':
-        return 'text-lg font-mono'
+        return 'text-[clamp(13px,1.25vw,18px)] font-mono'
       case 'code-2':
       case 'code-inline-2':
-        return 'text-base font-mono'
+        return 'text-[clamp(12px,1.111vw,16px)] font-mono'
       case 'code-1':
       case 'code-inline-1':
-        return 'text-sm font-mono'
+        return 'text-[clamp(11px,0.972vw,14px)] font-mono'
       default:
-        return 'text-base'
+        return 'text-[clamp(12px,1.111vw,16px)]'
     }
   }
 
@@ -302,4 +302,4 @@ if (iconDisplay === 'End with Icon' && icon) {
   }
 
   return textElement
-}
+}  

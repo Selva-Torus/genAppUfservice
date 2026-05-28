@@ -1,52 +1,52 @@
 let data:any ={
-  "defaultDPD": {
-    "encryptionInfo": {
-      "name": "encryptionInfo",
-      "_type": "array",
-      "items": [
-        {
-          "key": "",
-          "url": "",
-          "type": "vault",
-          "token": ""
-        },
-        {
-          "Key": "",
-          "mode": "aes-256-gcm",
-          "type": "AESGCM",
-          "IVlength": ""
-        },
-        {
-          "Key": "",
-          "mode": "aes-256-ctr",
-          "type": "AESCTR",
-          "IVlength": ""
-        },
-        {
-          "type": "RSA",
-          "publicKey": "",
-          "privateKey": ""
-        },
-        {
-          "type": "PKI",
-          "publicKey": "",
-          "privateKey": ""
-        }
-      ],
-      "enabled": true
-    },
+  "RTGS_DPD": {
     "encryptionType": {
       "name": "encryptionType",
       "_type": "select",
-      "value": "",
-      "enabled": true,
       "selectionList": [
         "vault",
         "AESGCM",
         "AESCTR",
         "RSA",
         "PKI"
-      ]
+      ],
+      "value": "",
+      "enabled": true
+    },
+    "encryptionInfo": {
+      "name": "encryptionInfo",
+      "_type": "array",
+      "items": [
+        {
+          "type": "vault",
+          "url": "",
+          "key": "",
+          "token": ""
+        },
+        {
+          "type": "AESGCM",
+          "mode": "aes-256-gcm",
+          "Key": "",
+          "IVlength": ""
+        },
+        {
+          "type": "AESCTR",
+          "mode": "aes-256-ctr",
+          "Key": "",
+          "IVlength": ""
+        },
+        {
+          "type": "RSA",
+          "privateKey": "",
+          "publicKey": ""
+        },
+        {
+          "type": "PKI",
+          "privateKey": "",
+          "publicKey": ""
+        }
+      ],
+      "enabled": true
     }
   }
 };

@@ -11,7 +11,7 @@ import {
   TooltipProps as TooltipPropsType
 } from '@/types/global'
 import { useGlobal } from '@/context/GlobalContext'
-import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
+import { getBorderRadiusClass } from '@/app/utils/branding'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 type ContentAlign = 'center' | 'left' | 'right'
 interface TimePickerProps {
@@ -121,7 +121,6 @@ const TimePicker: React.FC<TimePickerProps> = ({
     <div
       className={`
         flex h-full w-full flex-col overflow-hidden
-        ${getFontSizeClass(branding.fontSize)}
         ${
           isDark
             ? 'border-gray-600 bg-gray-800 text-white'
@@ -172,7 +171,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
             ))}
           </select>
           <span className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2'>
-            ▼
+            â–¼
           </span>
         </div>
         {/* Minute Selector */}
@@ -207,7 +206,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
             ))}
           </select>
           <span className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2'>
-            ▼
+            â–¼
           </span>
         </div>
 
@@ -244,7 +243,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
               ))}
             </select>
             <span className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm'>
-              ▼
+              â–¼
             </span>
           </div>
         )}
@@ -282,7 +281,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
               ))}
             </select>
             <span className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2'>
-              ▼
+              â–¼
             </span>
           </div>
         )}

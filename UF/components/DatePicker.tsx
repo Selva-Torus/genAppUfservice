@@ -4,7 +4,6 @@ import React, { useState, useRef } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 
@@ -125,15 +124,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   };
 
   const isDark = theme === "dark" || theme === "dark-hc";
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
 
   const datePickerElement = (
     <div
-      className={`flex flex-col ${getContentAlignClasses()} ${fillContainer ? "w-full h-full" : ""} ${fontSizeClass} overflow-hidden`}
+      className={`flex flex-col ${getContentAlignClasses()} ${fillContainer ? "w-full h-full" : ""}  overflow-hidden`}
       style={style}
     >
       {label && (
-        <label className={`${fontSizeClass} ${getContentAlignClasses()} block mb-2 font-medium flex-shrink-0 ${isDark ? "text-gray-200" : "text-gray-700"} ${className}`}>
+        <label className={`${getContentAlignClasses()} block mb-2 font-medium flex-shrink-0 ${isDark ? "text-gray-200" : "text-gray-700"} ${className}`}>
           {label}
         </label>
       )}
@@ -149,7 +147,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           ${validationState === "invalid" ? "border-red-500" : isDark ? "border-gray-600" : "border-gray-300"}
           ${isDark ? "bg-gray-800 text-white" : "bg-white text-gray-900"}
           ${fillContainer ? "w-full h-full" : ""}
-          ${fontSizeClass} ${getContentAlignClasses()}
+          ${getContentAlignClasses()}
           transition-colors
           ${className}
         `}

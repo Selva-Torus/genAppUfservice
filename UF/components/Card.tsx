@@ -5,7 +5,6 @@ import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 type CardTheme = "normal" | "info" | "success" | "warning" | "danger" | "utility" | "brand";
@@ -56,7 +55,7 @@ export const Card: React.FC<CardProps> = ({
   fillContainer = true,
   contentAlign = "center"
 }) => {
-  const { theme, direction, branding } = useGlobal();
+  const { theme, direction } = useGlobal();
 
   const getThemeColors = () => {
     const isDark = theme === "dark" || theme === "dark-hc";
@@ -98,26 +97,9 @@ export const Card: React.FC<CardProps> = ({
       default:
         return "justify-center";
     }
-  };
+  }; 
 
-  const getIconSize = () => {
-    if (fillContainer) {
-      // When fillContainer is true, scale icon with branding fontSize
-      const baseFontSize = fontSizeClass;
-      switch (baseFontSize) {
-        case "text-sm":
-          return 22;
-        case "text-base":
-          return 30;
-        case "text-lg":
-          return 38;
-        case "text-xl":
-          return 46;
-      }
-    }
-  };
 
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
 
   const cardElement = (
     <div
@@ -130,7 +112,6 @@ export const Card: React.FC<CardProps> = ({
         ${type === "selection" && selected ? "border-2" : ""}
         transition-all duration-200
         ${getContentAlignClasses()}
-        ${fontSizeClass}
         ${getFillClasses()}
         ${className}
       `}
@@ -165,7 +146,9 @@ export const Card: React.FC<CardProps> = ({
           {icon && (
             <div className="flex items-center justify-center flex-shrink-0">
               {typeof icon === "string" ? (
-                <Icon data={icon} fillContainer={false} size={getIconSize()} className="flex-shrink-0 align-middle" />
+                <span style={{ width: "1em", height: "1em", fontSize: "var(--font-size-base)", display: "inline-flex" }}>
+                  <Icon data={icon} fillContainer className="flex-shrink-0" />
+                </span>
               ) : (
                 icon
               )}

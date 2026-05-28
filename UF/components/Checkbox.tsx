@@ -7,7 +7,6 @@ import {
   HeaderPosition,
   TooltipProps as TooltipPropsType,
 } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 type ContentAlign = "left" | "center" | "right";
@@ -45,7 +44,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
   fillContainer = true,
   contentAlign = "center"
 }) => {
-  const { theme, direction, branding } = useGlobal();
+  const { theme, direction } = useGlobal();
 
   const getCheckboxStyles = (): React.CSSProperties => {
     const styles: React.CSSProperties = {};
@@ -91,7 +90,6 @@ export const Checkbox: React.FC<CheckboxProps> = ({
     }
   };
 
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
   
   const checkboxElement = (
     <label
@@ -99,7 +97,6 @@ export const Checkbox: React.FC<CheckboxProps> = ({
       flex items-center
       ${disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"}
       ${getContentAlignClasses()}
-      ${fontSizeClass}
       ${getFillClasses()}
       ${fillContainer ? "h-full max-h-full overflow-hidden" : ""}
       ${className}

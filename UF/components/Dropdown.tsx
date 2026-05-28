@@ -5,7 +5,6 @@ import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 
@@ -283,24 +282,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
     }
   };
 
-  const getIconSize = () => {
-    if (fillContainer) {
-      // When fillContainer is true, scale icon with branding fontSize
-      const baseFontSize = fontSizeClass;
-      switch (baseFontSize) {
-        case "text-sm":
-          return 22;
-        case "text-base":
-          return 30;
-        case "text-lg":
-          return 38;
-        case "text-xl":
-          return 46;
-      }
-    }
-  };
-
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
 
   const dropdownElement = (
     <div 
@@ -331,7 +312,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
               ${hasClear && selectedValues.length > 0 ? "pr-16" : "pr-10"}
               border-2
               ${getBorderColor()}
-              ${fontSizeClass}
               ${isDark ? "bg-gray-800 text-white placeholder-white" : "bg-white text-black placeholder-black"}
               ${disabled ? "opacity-50 cursor-not-allowed" : ""}
               transition-colors
@@ -367,7 +347,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 style={{ borderRadius: "var(--border-radius)" }}
                 type="button"
               >
-                <Icon data="IoIosClose" size={getIconSize()} />
+                <Icon data="IoIosClose" fillContainer={false} />
               </button>
             )}
             <button
@@ -376,7 +356,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
               type="button"
               disabled={disabled}
             >
-              <Icon data={isOpen ? "IoIosArrowUp" : "IoIosArrowDown"} size={getIconSize()}  />
+              <Icon data={isOpen ? "IoIosArrowUp" : "IoIosArrowDown"} fillContainer={false} />
             </button>
           </div>
         </div>
@@ -393,7 +373,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
             ${isDark ? "bg-gray-800 text-white" : "bg-white text-black"}
             ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
             transition-colors
-            ${fontSizeClass}
             ${className}
           `}
           style={{
@@ -426,10 +405,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
                 style={{ borderRadius: "var(--border-radius)" }}
               >
-                <Icon data="IoIosClose" size={getIconSize()} />
+                <Icon data="IoIosClose" fillContainer={false} />
               </div>
             )}
-            <Icon data={isOpen ? "IoIosArrowUp" : "IoIosArrowDown"} size={getIconSize()}  />
+            <Icon data={isOpen ? "IoIosArrowUp" : "IoIosArrowDown"} fillContainer={false} />
           </div>
         </button>
       )}
@@ -469,7 +448,6 @@ export const Dropdown: React.FC<DropdownProps> = ({
                     ? `text-white`
                     : isDark ? "text-gray-200" : "text-gray-700"
                   }
-                  ${fontSizeClass}
                   ${className}
                 `}
                 style={{
@@ -481,7 +459,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 }}
               >
                 <span>{option}</span>
-                {isMultiple && isSelected && <Icon fillContainer={false} data="FaCheck" size={getIconSize()} />}
+                {isMultiple && isSelected && <Icon fillContainer={false} data="FaCheck" />}
               </div>
             );
           })}

@@ -6,7 +6,6 @@ import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { Tooltip } from "./Tooltip";
 import { Radio } from "./Radio";
 import { CheckboxSize, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 type ContentAlign = "left" | "center" | "right";
@@ -54,7 +53,7 @@ export const RadioGroup: React.FC<RadioGroupProps> = ({
   onChange,
   className = "",
 }) => {
-  const { theme, direction: globalDirection, branding } = useGlobal();
+  const { theme, direction: globalDirection } = useGlobal();
   const showToast = useInfoMsg();
   const [selectedValue, setSelectedValue] = useState(value || defaultValue);
 

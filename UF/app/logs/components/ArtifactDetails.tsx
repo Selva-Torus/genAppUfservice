@@ -184,7 +184,7 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
   const [activeTab, setActiveTab] = useState<string>('')
   const [selectedNode, setSelectedNode] = useState<any>(nodeData?.node?.[0])
   const { artifact, version, processId, status, time } = nodeData
-  const { borderColor, bgColor } = useTheme()
+  const { borderColor, bgColor, isDark } = useTheme()
   const { branding } = useGlobal()
   const { brandColor, selectionColor } = branding
 
@@ -261,7 +261,7 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
           }
         }
         theme='atom'
-        enableClipboard={false}
+        enableClipboard={true}
         style={{ fill: '#1A2024' }}
         className='g-text g-text_variant_code-2 h-full overflow-scroll'
       />
@@ -269,7 +269,7 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
   }
 
   return (
-    <div className='flex h-full w-full gap-2 overflow-hidden p-2'>
+    <div style={{ backgroundColor: isDark ? "black" : "white" }} className='flex h-full w-full gap-2 overflow-hidden p-2'>
       <div
         className={twMerge(
           'flex h-full w-1/3 min-w-[200px] flex-col rounded-lg border px-2 lg:w-1/4',

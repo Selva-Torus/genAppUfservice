@@ -1,5 +1,5 @@
 /* {
-  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT010:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
+  "aKey": "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT005:AFGK:GSS:AFK:RTGS:AFVK:v1:bldc",
   "ufKey": "Logs Screen",
   "screenName": "logs",
   "screenLabel": "logs",
@@ -14,7 +14,7 @@
           "key": "Logs Screen",
           "allowedAccessProfile": [],
           "static": true,
-          "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/document-add-svgrepo-com.svg"
+          "icon": "https://tdps3api.toruslowcode.com/torus/9.1/resources/icons/document-add-svgrepo-com.svg"
         },
         {
           "name": "user",
@@ -22,19 +22,22 @@
           "key": "User Screen",
           "allowedAccessProfile": [],
           "static": true,
-          "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/user-plus-svgrepo-com.svg"
+          "icon": "https://tdps3api.toruslowcode.com/torus/9.1/resources/icons/user-plus-svgrepo-com.svg"
         }
       ],
       "items": [],
-      "icon": "https://cdns3dfsdev.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
+      "icon": "https://tdps3api.toruslowcode.com/torus/9.1/resources/icons/admin-svgrepo-com.svg"
     },
     {
-      "menuGroupLabel": "Menu Item 2",
+      "menuGroupLabel": "Transactions",
       "screenDetails": [
         {
-          "name": "menu item 2",
-          "key": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1",
-          "allowedAccessProfile": [],
+          "name": "transactions",
+          "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:transactionProduct:AFVK:v1",
+          "allowedAccessProfile": [
+            "Operational Manager",
+            "Operational Officer"
+          ],
           "static": false
         }
       ],
@@ -43,155 +46,100 @@
   ],
   "setupData": {
     "appInfo": {
-      "code": "A001",
-      "name": "application",
-      "accessUrl": "https://tgadev.toruslowcode.com/<tenantCode>/<AppGroupCode>/<AppCode>/<version>",
-      "appGrpCode": "AG001",
-      "appGrpName": "appgroup",
-      "appTenants": [
-        {
-          "at_id": 1,
-          "tenant_id": "test1",
-          "created_at": "2026-04-30T07:12:53.726Z",
-          "trs_status": null,
-          "tenant_name": "test1",
-          "trs_ps_code": null,
-          "trs_app_code": "00000",
-          "trs_org_code": null,
-          "trs_token_id": null,
-          "trs_locked_by": null,
-          "trs_role_code": null,
-          "trs_tenant_id": "00000",
-          "trs_created_by": null,
-          "trs_process_id": null,
-          "trs_locked_time": null,
-          "trs_modified_by": null,
-          "trs_next_status": null,
-          "trs_prev_status": null,
-          "trs_ps_grp_code": null,
-          "trs_created_date": "2026-04-30T07:12:53.726Z",
-          "trs_event_status": null,
-          "trs_org_grp_code": null,
-          "trs_process_code": null,
-          "trs_product_code": "00000_00000",
-          "trs_sub_org_code": null,
-          "trs_modified_date": null,
-          "trs_role_grp_code": null,
-          "trs_access_profile": null,
-          "trs_process_status": null,
-          "trs_sub_org_grp_code": null,
-          "trs_next_process_code": null,
-          "trs_prev_process_code": null,
-          "trs_next_process_status": null,
-          "trs_prev_process_status": null,
-          "trs_event_process_status": null
-        }
-      ],
+      "name": "RTGS",
+      "code": "RTGS",
       "encryption": {
         "type": ""
       },
-      "lastBuildOn": "2026-04-30T12:45:04.549Z",
-      "needAutoDbPush": false,
-      "lastBuildVersion": "v1",
-      "isSaasApplication": true,
-      "applicationUniqueId": "234f615f-c7eb-465b-8ce9-797e3e083a86",
-      "deploymentArtifactKey": "CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1"
+      "applicationUniqueId": "ae093d5d-f44a-444b-afab-9476f31e7dca",
+      "deploymentArtifactKey": "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:GSS:AFGK:RTGS:AFK:RTGS_DPD:AFVK:v1",
+      "appGrpName": "GSS",
+      "appGrpCode": "GSS",
+      "fusionAuthAppClientSecret": "AKE3Mkrdhezw9vln9mTV-Wnb8WVEivZ3BY0KTxqtmbc"
     },
+    "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CT005:AFK:PROFILE:AFVK:v1:appearance",
     "selectedPresetKey": "default",
-    "tenantAppearancekey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:CT010:AFK:PROFILE:AFVK:v1:appearance",
-    "name": "default",
-    "theme": "light",
-    "fontSize": "Medium",
-    "language": "English",
+    "appBackgroundImage": "torus/9.1/CT005/resources/images/vivid-blurred-colorful-wallpaper-background_58702-3883.avif",
     "direction": "LTR",
-    "brandColor": "#ffffff",
-    "fontFamily": [
-      {
-        "fontUrl": "https://fonts.googleapis.com/css2?family=Diplomata&display=swap",
-        "label": "Diplomata Static"
-      },
-      {
-        "label": "Bebas Neue",
-        "fontUrl": "https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap"
-      },
-      {
-        "label": "Lobster Two",
-        "fontUrl": "https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&display=swap"
-      }
-    ],
-    "hoverColor": "#E95B86",
-    "layoutMode": "fluid",
-    "topbarColor": "#ffffff",
-    "borderRadius": "s",
-    "menubarColor": "#ffffff",
+    "brandColor": "#0737c9",
+    "selectionColor": "#579eff",
+    "hoverColor": "#d5eeff",
+    "borderRadius": "xl",
     "sidebarStyle": "",
-    "page-bg-color": "#ffffff",
-    "group-bg-color": "#ffffff",
-    "selectionColor": "#E95B86",
+    "navigationStyles": "horizontal",
+    "theme": "light",
+    "layoutMode": "detached",
     "mobileAppearance": {
-      "theme": "light",
-      "fontSize": {
-        "bodyLarge": "16",
-        "bodySmall": "12",
-        "bodyMedium": "14",
-        "labelLarge": "16",
-        "labelSmall": "12",
-        "titleLarge": "20",
-        "titleSmall": "16",
-        "labelMedium": "14",
-        "titleMedium": "18",
-        "displayLarge": "64",
-        "displaySmall": "36",
-        "displayMedium": "44",
-        "headlineLarge": "32",
-        "headlineSmall": "24",
-        "headlineMedium": "28"
-      },
       "language": "English",
       "direction": "LTR",
-      "fontFamily": "Roboto",
+      "theme": "light",
       "brandColors": {
-        "primary": "#4b39ef",
-        "tertiary": "#ee8b60",
-        "secondary": "#39d2c0"
+        "primary": "#0025dd",
+        "secondary": "#000e51",
+        "tertiary": "#000000"
       },
-      "drawerStyle": "",
       "accentColors": {
-        "accentOne": "#4c4b39",
-        "accentTwo": "#4d39d2"
+        "accentOne": "#f4f5ff",
+        "accentTwo": "#ffffff"
       },
       "utilityColors": {
-        "darkMode": {
-          "primaryText": "#ffffff",
-          "secondaryText": "#95a1ac",
-          "primaryBackground": "#1d2428",
-          "secondaryBackground": "#14181b"
-        },
         "lightMode": {
           "primaryText": "#14181b",
           "secondaryText": "#57636c",
           "primaryBackground": "#f1f4f8",
           "secondaryBackground": "#ffffff"
+        },
+        "darkMode": {
+          "primaryText": "#ffffff",
+          "secondaryText": "#95a1ac",
+          "primaryBackground": "#1d2428",
+          "secondaryBackground": "#14181b"
         }
       },
-      "navigationStyle": "Bottom Navigation"
+      "fontSize": {
+        "displayLarge": "64",
+        "displayMedium": "44",
+        "displaySmall": "36",
+        "headlineLarge": "32",
+        "headlineMedium": "28",
+        "headlineSmall": "24",
+        "titleLarge": "20",
+        "titleMedium": "18",
+        "titleSmall": "16",
+        "labelLarge": "16",
+        "labelMedium": "14",
+        "labelSmall": "12",
+        "bodyLarge": "16",
+        "bodyMedium": "14",
+        "bodySmall": "12"
+      },
+      "fontFamily": "Roboto",
+      "navigationStyle": "Bottom Navigation",
+      "drawerStyle": ""
     },
-    "navigationStyles": "horizontal",
-    "appBackgroundImage": "",
+    "language": "English",
+    "fontFamily": [
+      {
+        "label": "Inter",
+        "fontUrl": "https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+      }
+    ],
     "text-body-font": "",
     "text-header-font": "",
-    "text-display-font": ""
+    "text-display-font": "",
+    "name": "default",
+    "fontSize": "Small"
   },
-  "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT010:AFGK:AG001:AFK:A001:AFVK:v1:appearance",
+  "setupKey": "CK:TGA:FNGK:SETUP:FNK:SF:CATK:CT005:AFGK:GSS:AFK:RTGS:AFVK:v1:appearance",
   "allKeys": [
-    "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
+    "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:transactionProduct:AFVK:v1"
   ],
   "loginDetails": {
-    "loginId": "selva",
-    "firstName": "selva",
-    "lastName": "kumar",
-    "email": "selvakumarg@torus.tech",
-    "mobile": "8124805539",
+    "loginId": "guru",
+    "firstName": "Guru",
+    "lastName": "Krishnan",
+    "email": "cgkrishnan@gsstvl.com",
+    "mobile": "8190002700",
     "2FAFlag": "N",
     "scope": "client_admin",
     "status": "active",
@@ -199,13 +147,25 @@
       "admin"
     ],
     "accessExpires": "",
-    "dateAdded": "2026-04-30T06:40:14.128Z",
+    "dateAdded": "2026-01-21T06:18:59.283Z",
     "isRestricted": false,
-    "userUniqueId": "616efdf0-36f7-4ee8-81f2-2409804f2dc1",
+    "userUniqueId": "60c8940f-8aa1-485d-9b53-dc20e43cc584",
     "touring": {
       "isneedTouring": false,
       "touringData": {
-        "/torus": {
+        "/control-center/storage-configuration": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "/home": {
+          "stepIndex": 0,
+          "isSkipped": true,
+          "completed": false,
+          "notVisited": []
+        },
+        "artifactselector": {
           "stepIndex": 0,
           "isSkipped": true,
           "completed": false,
@@ -213,8 +173,12 @@
         }
       }
     },
-    "lastActive": "2026-05-18T05:57:26.392Z",
-    "client": "CT010"
+    "lastActive": "2026-05-28T12:26:05.715Z",
+    "client": "CT005",
+    "users": "guruGuru Krishnan",
+    "profile": "",
+    "edit": "",
+    "noOfProductsService": 0
   },
   "webOnBoarding": {
     "navBarStyle": {
@@ -230,36 +194,36 @@
         },
         {
           "name": "menu items",
-          "gridRow": "1/6",
-          "gridColumn": "4/9"
+          "gridColumn": "4/9",
+          "gridRow": "1/6"
         },
         {
           "name": "opr matrix",
-          "gridRow": "6/9",
-          "gridColumn": "9/12"
+          "gridColumn": "9/12",
+          "gridRow": "6/9"
         },
         {
           "name": "profile",
-          "gridRow": "12/13",
-          "gridColumn": "12/13"
+          "gridColumn": "12/13",
+          "gridRow": "12/13"
         }
       ]
     },
-    "landingScreen": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
+    "landingScreen": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:transactionProduct:AFVK:v1"
   },
   "allKeyswithScreenNames": [
     {
-      "screenName": "menu item 2",
-      "screensName": "menu_item_2-v1",
-      "ufKey": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
+      "screenName": "transactions",
+      "screensName": "transactions-v1",
+      "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:transactionProduct:AFVK:v1"
     }
   ],
-  "deploymentArtifactKey": "CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
-  "appGroupDesc": "appgroup",
-  "logType": "mongodb",
-  "appDesc": "application",
+  "deploymentArtifactKey": "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:GSS:AFGK:RTGS:AFK:RTGS_DPD:AFVK:v1",
+  "appGroupDesc": "GSS",
+  "logType": "dfs",
+  "appDesc": "RTGS",
   "isOld": true,
-  "clientCode": "CT010"
+  "clientCode": "CT005"
 } */
 import './globals.css';
 import type { Metadata } from 'next';
@@ -271,8 +235,8 @@ import { GlobalProvider } from '@/context/GlobalContext';
 import { EventBusProvider } from '@/context/EventBusContext';
 import { ThemeWrapper } from '@/components/ThemeWrapper';
 export const metadata: Metadata = {
-  title: 'application',
-  description: 'application Generated by Torus'
+  title: 'RTGS',
+  description: 'RTGS Generated by Torus'
 }
 
 export default function RootLayout({

@@ -7,7 +7,6 @@ import {
   HeaderPosition,
   TooltipProps as TooltipPropsType
 } from '@/types/global'
-import { getFontSizeClass } from '@/app/utils/branding'
 type ContentAlign = 'left' | 'center' | 'right'
 interface RadioProps {
   checked?: boolean
@@ -46,7 +45,7 @@ export const Radio: React.FC<RadioProps> = ({
   onFocus,
   onClick
 }) => {
-  const { theme, direction, branding } = useGlobal()
+  const { theme, direction } = useGlobal()
   const isDark = theme === 'dark' || theme === 'dark-hc'
   const getFillClasses = (): string => {
     if (!fillContainer) return ''
@@ -66,6 +65,16 @@ export const Radio: React.FC<RadioProps> = ({
   const getRadioStyles = (): React.CSSProperties => {
     const isDark = theme === 'dark' || theme === 'dark-hc'
 
+    if (disabled && checked) {
+      return {
+        backgroundColor: 'var(--selection-color)',
+        borderColor: 'var(--selection-color)',
+        borderWidth: '2px',
+        boxShadow: 'inset 0 0 0 5px white',
+        opacity: 0.5
+      }
+    }
+
     if (disabled) {
       return {
         backgroundColor: isDark ? '#374151' : '#E5E7EB',
@@ -78,7 +87,7 @@ export const Radio: React.FC<RadioProps> = ({
         backgroundColor: 'var(--selection-color)',
         borderColor: 'var(--selection-color)',
         borderWidth: '2px',
-        boxShadow: 'inset 0 0 0 5px white '
+        boxShadow: 'inset 0 0 0 5px white'
       }
     }
 
@@ -100,7 +109,6 @@ export const Radio: React.FC<RadioProps> = ({
   const radioElement = (
     <label
       className={`
-        ${getFontSizeClass(branding.fontSize)}
         ${fillContainer ? 'flex' : 'inline-flex'} 
         items-center 
         ${getContentAlignClasses()} 

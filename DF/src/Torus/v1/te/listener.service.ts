@@ -100,7 +100,7 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
 
     let keyarr = []
         
-    let artifactToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoic2VsdmEiLCJjbGllbnQiOiJDVDAxMCIsInR5cGUiOiJjIiwibG9nVHlwZSI6Im1vbmdvZGIiLCJzaWQiOiI0OWNiNWNkMi00MTE2LTQyMTktOGNmZC05NjEwODczNjdjYTkiLCJpYXQiOjE3NzkwODM4NDYsImV4cCI6MTc3OTA4NTA0Nn0.fGijMydkoRbQyzqJpJJa3iiVcBqc68hAy75S3ymuNXg';  
+    let artifactToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiZ3VydSIsImNsaWVudCI6IkNUMDA1IiwidHlwZSI6ImMiLCJsb2dUeXBlIjoiZGZzIiwic2lkIjoiZWJjMmJiYTgtY2Y3NC00NmQxLTk0OTEtZTQ1YjkwZTc1ZjI4IiwiaWF0IjoxNzc5OTcxMTY1LCJleHAiOjE3Nzk5NzIzNjV9.bEkLI8JDcTYk5sw3wu_7gje7pE7UANbmG25xpizST8s';  
     for (const key of keyarr) {
       this.listenToKey(key,artifactToken); // fire & forget
     }  
@@ -1641,6 +1641,7 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
 
           //mongodb Node
           if (nodeType == 'mongo-dbnode' && poNode[j].nodeId == nodeId) {
+            let listenerMongoClient;
             try {
               this.logger.log(`first ${poNode[j].nodeName},Mongo DB Node started`);
               let customConfig = ndp[poNode[j].nodeId]
@@ -1690,16 +1691,9 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
                   if (!mongodbUrl)
                     throw new CustomException('Mongo DB url not found', 404);
 
-                  const client = new MongoClient(mongodbUrl);
-                  client.connect()
-                    .then(() => {
-                      console.log('Connected to the database successfully!');
-                    })
-                    .catch((err) => {
-                      console.error('Error connecting to the database:', err);
-                    });
-
-                  let db = client.db();
+                  listenerMongoClient = new MongoClient(mongodbUrl);
+                  await listenerMongoClient.connect();
+                  const db = listenerMongoClient.db();
                   let staticFilter = {};
                   if (filterParams) {
                     for (let item of filterParams) {
@@ -1802,6 +1796,8 @@ export class ListenerService implements OnModuleInit, OnModuleDestroy{
               }
             } catch (error) {
               throw error
+            } finally {
+              if (listenerMongoClient) { try { await listenerMongoClient.close(); } catch {} }
             }
           }
 

@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react'
 import { useGlobal } from '@/context/GlobalContext'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 import { HeaderPosition, TooltipProps as TooltipPropsType } from '@/types/global'
-import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
+import { getBorderRadiusClass } from '@/app/utils/branding'
 
 interface XMLViewerProps {
   data?: string
@@ -28,7 +28,6 @@ const XMLViewer: React.FC<XMLViewerProps> = ({
   const { theme, branding } = useGlobal()
   const [copied, setCopied] = useState(false)
   const isDark = theme === 'dark' || theme === 'dark-hc'
-  const fontSizeClass = getFontSizeClass(branding.fontSize)
   const borderRadiusClass = getBorderRadiusClass(branding.borderRadius)
 
   const formatXml = (xml: string): string => {
@@ -88,7 +87,7 @@ const XMLViewer: React.FC<XMLViewerProps> = ({
   }
 
   const viewerElement = (
-    <div className={`${fillContainer ? 'w-full h-full' : ''} ${fontSizeClass}`}>
+    <div className={`${fillContainer ? 'w-full h-full' : ''} `}>
       <div
         className={`${fillContainer ? 'h-full' : ''} relative ${borderRadiusClass} overflow-hidden`}
         style={{
@@ -126,7 +125,7 @@ const XMLViewer: React.FC<XMLViewerProps> = ({
 
         {/* XML Content */}
         <pre
-          className="overflow-auto p-4 pr-10 text-sm leading-relaxed font-mono m-0"
+          className="overflow-y-auto overflow-x-auto p-4 pr-10 text-sm leading-relaxed font-mono m-0 max-h-96"
           style={{
             color: isDark ? '#E5E7EB' : '#1F2937',
           }}

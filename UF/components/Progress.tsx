@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { ProgressTheme, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 interface ProgressProps {
@@ -68,7 +67,6 @@ export const Progress: React.FC<ProgressProps> = ({
 
   const isDark = theme === "dark" || theme === "dark-hc";
   const clampedValue = Math.min(100, Math.max(0, value));
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
   const progressColor = getProgressColor();
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -79,12 +77,12 @@ export const Progress: React.FC<ProgressProps> = ({
     <div className={`w-full h-full flex flex-col ${className}`}>
       <div className="flex justify-between items-center mb-1">
         {text && (
-          <span className={`${fontSizeClass} ${isDark ? "text-gray-200" : "text-gray-900"}`}>
+          <span className={`${isDark ? "text-gray-200" : "text-gray-900"}`}>
             {text}
           </span>
         )}
         {isDynamic && (
-          <span className={`${fontSizeClass} font-semibold ${isDark ? "text-gray-200" : "text-gray-900"}`}>
+          <span className={`font-semibold ${isDark ? "text-gray-200" : "text-gray-900"}`}>
             {clampedValue}%
           </span>
         )}

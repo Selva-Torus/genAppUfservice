@@ -1,0 +1,31 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: ct005-rtgs-uf-generator-virtualservice
+  namespace: ct005-rtgs-uf-v1
+spec:
+  hosts:
+    - "tgadev2.toruslowcode.com"
+  gateways:
+    - istio-system/wp-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /ct005/gss/rtgs/v1
+      route:
+        - destination:
+            host: ct005-rtgs-uf-generator
+            port:
+              number: 443 
+    - match:
+        - uri:
+            prefix: /ct005/gss/rtgs/v1
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: ct005-rtgs-uf-generator
+            port:
+              number: 443
+ 
+ 

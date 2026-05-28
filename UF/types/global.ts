@@ -68,7 +68,7 @@ export interface ScreenDetail {
 export interface DecodedToken {
   loginId: string;
   isAppAdmin: boolean;
-  client: string;
+  tenant: string;
   type: string;
   ag: string;
   app: string;

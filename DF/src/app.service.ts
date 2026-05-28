@@ -22,7 +22,7 @@ export class AppService implements OnModuleInit{
     console.log('Application started, calling API...');
     console.log('DDL changes update started.');
     console.log('DDL changes update completed.');    
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoic2VsdmEiLCJjbGllbnQiOiJDVDAxMCIsInR5cGUiOiJjIiwibG9nVHlwZSI6Im1vbmdvZGIiLCJzaWQiOiI0OWNiNWNkMi00MTE2LTQyMTktOGNmZC05NjEwODczNjdjYTkiLCJpYXQiOjE3NzkwODM4NDYsImV4cCI6MTc3OTA4NTA0Nn0.fGijMydkoRbQyzqJpJJa3iiVcBqc68hAy75S3ymuNXg';
+    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoiZ3VydSIsImNsaWVudCI6IkNUMDA1IiwidHlwZSI6ImMiLCJsb2dUeXBlIjoiZGZzIiwic2lkIjoiZWJjMmJiYTgtY2Y3NC00NmQxLTk0OTEtZTQ1YjkwZTc1ZjI4IiwiaWF0IjoxNzc5OTcxMTY1LCJleHAiOjE3Nzk5NzIzNjV9.bEkLI8JDcTYk5sw3wu_7gje7pE7UANbmG25xpizST8s';
     let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
     if(Object.keys(preParedData).includes('torusApis'))
     {
@@ -32,12 +32,12 @@ export class AppService implements OnModuleInit{
       //endPointData.type =  "json";
       //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData);
       //torusData.endpoint = res.data;
-      torusData.tenant =  "CT010";
-      torusData.domain = "appgroup"; 
-      torusData.collection = "application";
+      torusData.tenant =  "CT005";
+      torusData.domain = "GSS"; 
+      torusData.collection = "RTGS";
       torusData.fabric = 'API-APIPD-TORUS';
       torusData.data = preParedData?.torusApis||{}
-      torusData.loginId = "selva";    
+      torusData.loginId = "guru";    
       //await axios.post(this.apiUrl, torusData);
     }
   }

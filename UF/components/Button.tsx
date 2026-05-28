@@ -13,7 +13,6 @@ import {
   ComponentEvents,
 } from "@/types/global";
 import {
-  getFontSizeClass,
   getBorderRadiusClass,
 } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
@@ -66,7 +65,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   fillContainer = true,
   contentAlign = "center"
 }, ref) => {
-  const { theme, direction, branding } = useGlobal();
+  const { theme, direction } = useGlobal();
   const { emit, subscribe, subscribeGlobal } = useEventBus();
 
   // Setup event listeners
@@ -164,45 +163,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     }
   }, [disabled, onFocus, events, emit, nodeId]);
 
-  // const getSizeClasses = () => {
-  //   const baseFontSize = getFontSizeClass(branding.fontSize);
-  //   switch (baseFontSize) {
-  //     case "xs":
-  //       return `px-2 py-1 ${
-  //         baseFontSize === "text-xl"
-  //           ? "text-base"
-  //           : baseFontSize === "text-lg"
-  //           ? "text-sm"
-  //           : "text-xs"
-  //       }`;
-  //     case "s":
-  //       return `px-3 py-1.5 ${
-  //         baseFontSize === "text-xl"
-  //           ? "text-lg"
-  //           : baseFontSize === "text-lg"
-  //           ? "text-base"
-  //           : "text-sm"
-  //       }`;
-  //     case "m":
-  //       return `px-4 py-2 ${baseFontSize}`;
-  //     case "l":
-  //       return `px-5 py-2.5 ${
-  //         baseFontSize === "text-sm"
-  //           ? "text-base"
-  //           : baseFontSize === "text-base"
-  //           ? "text-lg"
-  //           : "text-xl"
-  //       }`;
-  //     case "xl":
-  //       return `px-6 py-3 ${
-  //         baseFontSize === "text-sm"
-  //           ? "text-lg"
-  //           : baseFontSize === "text-base"
-  //           ? "text-xl"
-  //           : "text-2xl"
-  //       }`;
-  //   }
-  // };
 
   const getViewClasses = () => {
     const isDark = theme === "dark" || theme === "dark-hc";
@@ -391,32 +351,12 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   const renderIcon = () => {
     if (!icon) return null;
 
-    // Get icon size based on fillContainer and branding.fontSize
-    const getIconSize = () => {
-      if (fillContainer) {
-        // When fillContainer is true, scale icon with branding fontSize
-        const baseFontSize = getFontSizeClass(branding.fontSize);
-        switch (baseFontSize) {
-          case "text-sm":
-            return 22;
-          case "text-base":
-            return 30;
-          case "text-lg":
-            return 38;
-          case "text-xl":
-            return 46;
-          default: 
-            return 24;
-        }
-      }
-    };
-
     return (
-      <Icon
-        data={icon}
-        className="inline-block flex-shrink-0"
-        size={getIconSize()}
-      />
+      <span
+        className="inline-flex flex-shrink-0 items-center justify-center"
+      >
+        <Icon data={icon} className="w-full h-full" />
+      </span>
     );
   };
 
@@ -484,7 +424,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     }
   };
 
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
 
   const buttonElement = (
     <button
@@ -502,7 +441,6 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
         ${getFillClasses()}
         ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
         ${isRecordLevel ? "relative overflow-hidden" : ""}
-        ${fontSizeClass}
         gap-x-1
         ${className}
       `}

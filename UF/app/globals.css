@@ -1,6 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Diplomata&amp;display=swap');  
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&amp;display=swap');  
-@import url('https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&amp;display=swap');  
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;display=swap');  
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
 
@@ -28,12 +26,13 @@
 /* CSS Variables for Typography - These will be set dynamically by setUpKey.tsx */
 :root {
   --g-font-family-sans: "Inter", "Helvetica Neue", "Helvetica", "Arial", sans-serif;
-  --g-font-family-DiplomataStatic:"Diplomata Static", sans-serif;
-  --g-font-family-BebasNeue:"Bebas Neue", sans-serif;
-  --g-font-family-LobsterTwo:"Lobster Two", sans-serif;
+  --g-font-family-Inter:"Inter", sans-serif;
   --font-body:var(--g-font-family-sans);
   --font-header:var(--g-font-family-monospace);  
-  --font-display:var(--g-font-family-sans);}
+  --font-display:var(--g-font-family-sans);  
+  --font-size-base: "Small"  
+
+}
 
 
 /* .pc-Grid .container-fluid, .pc-Grid .container {
@@ -107,9 +106,10 @@ body {
   font-family: var(--font-body);
 }
 
-/* Typography - Apply fonts to different text elements */
+/* Typography - Apply fonts and responsive base font size to all elements */
 * {
   font-family: var(--font-body) !important;
+  font-size: var(--font-size-base);
 }
 
 body,
@@ -137,10 +137,25 @@ h6 {
   font-family: var(--font-header) !important;
 }
 
-/* Display text - large headings, hero text */
+/* Table column headers — header font gives visual separation from cell content */
+thead th {
+  font-family: var(--font-header) !important;
+}
+
+
+
+/* Component header labels (headerText prop renders) */
+.component-header-text {
+  font-family: var(--font-header) !important;
+}
+
+/* Display text - large headings, hero text, card/modal titles */
 .display-text,
 [class*="display-"],
-[class*="hero-"] {
+[class*="hero-"],
+.modal-title,
+.card-title,
+.section-title {
   font-family: var(--font-display) !important;
 }
 

@@ -1,32 +1,32 @@
 apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
-  name: ct010-a001-df-generator-virtualservice
-  namespace: ct010-a001-df-v1
+  name: ct005-rtgs-df-generator-virtualservice
+  namespace: ct005-rtgs-df-v1
 spec:
   hosts:
     - "tgadev2.toruslowcode.com"
   gateways:
-    - istio-system/wp-gateway 
+    - istio-system/wp-gateway
   http:
     - match:
         - uri:
-            prefix: /ct010/ag001/a001/v1/api/
+            prefix: /ct005/gss/rtgs/v1/api/
       rewrite:
         uri: /
       route:
         - destination:
-            host: ct010-a001-df-generator
+            host: ct005-rtgs-df-generator
             port:
               number: 443 
     - match:
         - uri:
-            exact: /ct010/ag001/a001/v1/api
+            exact: /ct005/gss/rtgs/v1/api
       rewrite:
         uri: /
       route:
         - destination:
-            host: ct010-a001-df-generator
+            host: ct005-rtgs-df-generator
             port:
               number: 443
 

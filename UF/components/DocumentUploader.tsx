@@ -38,7 +38,7 @@ import { Modal } from '@/components/Modal'
 import { Icon } from '@/components/Icon'
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global"
 import { useGlobal } from '@/context/GlobalContext'
-import { getBorderRadiusClass, getFontSizeClass } from '@/app/utils/branding'
+import { getBorderRadiusClass } from '@/app/utils/branding'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 
 type ContentAlign = "left" | "center" | "right";
@@ -381,24 +381,6 @@ const removeFile = async (
     )
   }
 
-  const getIconSize = () => {
-    if (fillContainer) {
-      // When fillContainer is true, scale icon with branding fontSize
-      const baseFontSize = getFontSizeClass(branding.fontSize);
-      switch (baseFontSize) {
-        case "text-sm":
-          return 22;
-        case "text-base":
-          return 30;
-        case "text-lg":
-          return 38;
-        case "text-xl":
-          return 46;
-      }
-    }
-  };
-
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
 
   const uploaderElement = (
     <div className={`flex 
@@ -415,11 +397,12 @@ const removeFile = async (
               disabled={disabled}
               fillContainer={fillContainer}
               contentAlign={`${getContentAlignClasses()}`}
-              className={` w-full ${fontSizeClass} ${className}`}
+              className={` w-full  ${className}`}
               startContent={
-                <span className='flex  items-center justify-center'>
-                  <Icon className='flex items-center justify-center bg-transparent px-[0.15vw] py-[0.25vh]' data='FaCloudUploadAlt'
-                  size={getIconSize()} />
+                <span className='flex items-center justify-center'>
+                  <span style={{ width: "1em", height: "1em", fontSize: "var(--font-size-base)", display: "inline-flex" }}>
+                    <Icon data='FaCloudUploadAlt' fillContainer />
+                  </span>
                 </span>
               }
               onClick={e => {

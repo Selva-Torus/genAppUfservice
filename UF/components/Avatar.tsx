@@ -5,7 +5,6 @@ import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { AvatarView, AvatarTheme, AvatarShape, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 // import { GravityIcon } from "@/types/icons";
 
@@ -54,7 +53,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   fillContainer = true,
   contentAlign = "center",
 }) => {
-  const { theme, direction, branding } = useGlobal();
+  const { theme, direction } = useGlobal();
 
   const getBackgroundColor = () => {
     if (backgroundColor) return backgroundColor;
@@ -124,24 +123,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     return {};
   };
 
-   const getIconSize = () => {
-    if (fillContainer) {
-      // When fillContainer is true, scale icon with branding fontSize
-      const baseFontSize = fontSizeClass;
-      switch (baseFontSize) {
-        case "text-sm":
-          return 22;
-        case "text-base":
-          return 30;
-        case "text-lg":
-          return 38;
-        case "text-xl":
-          return 46;
-      }
-    }
-  };
 
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
 
   const avatarElement = (
     <div
@@ -154,7 +136,6 @@ export const Avatar: React.FC<AvatarProps> = ({
         ${view === "outlined" ? "border-2" : ""}
         ${className}
         ${getFillClasses()}
-        ${fontSizeClass}
         ${getContentAlignClasses()}
         `}
       dir={direction}
@@ -176,19 +157,23 @@ export const Avatar: React.FC<AvatarProps> = ({
           }}
         />
       ) : icon ? (
-        <Icon
-          data={icon}
-          size={getIconSize()}
-          className={`p-2 ${fillContainer} ? "w-full h-full" : ""`}
-        />
+        <span style={{ width: "1em", height: "1em", fontSize: "var(--font-size-base)", display: "inline-flex" }}>
+          <Icon
+            data={icon}
+            fillContainer
+            className={`p-2 ${fillContainer ? "w-full h-full" : ""}`}
+          />
+        </span>
       ) : text ? (
         <span>{text.charAt(0).toUpperCase()}</span>
       ) : (
-        <Icon
-          data="user"
-          size={getIconSize()}
-          className={`p-2 ${fillContainer} ? "w-full h-full" : ""`}
-        />
+        <span style={{ width: "1em", height: "1em", fontSize: "var(--font-size-base)", display: "inline-flex" }}>
+          <Icon
+            data="user"
+            fillContainer
+            className={`p-2 ${fillContainer ? "w-full h-full" : ""}`}
+          />
+        </span>
       )}
     </div>
   );

@@ -7,7 +7,6 @@ import {
   HeaderPosition,
   TooltipProps as TooltipPropsType,
 } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 interface ProgressProps {
@@ -43,7 +42,6 @@ export const ProgressBar: React.FC<ProgressProps> = ({
 
   const isDark = theme === "dark" || theme === "dark-hc";
   const clampedValue = Math.min(100, Math.max(0, value));
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
 
   const getProgressColor = (): string => {
     switch (progressTheme) {
@@ -98,7 +96,7 @@ export const ProgressBar: React.FC<ProgressProps> = ({
       {text && (
         <div className="mb-2">
           <span
-            className={`${fontSizeClass} ${
+            className={`${
               isDark ? "text-gray-200" : "text-gray-900"
             }`}
           >
@@ -115,7 +113,7 @@ export const ProgressBar: React.FC<ProgressProps> = ({
           <div className="flex justify-between items-center mb-1">
             {isDynamic && (
               <span
-                className={`${fontSizeClass} font-semibold ${
+                className={`font-semibold ${
                   isDark ? "text-gray-200" : "text-gray-900"
                 }`}
               >

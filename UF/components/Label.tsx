@@ -8,7 +8,7 @@ import {
   HeaderPosition,
   TooltipProps as TooltipPropsType
 } from '@/types/global'
-import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
+import { getBorderRadiusClass } from '@/app/utils/branding'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 type IconDisplay = 'Icon only' | 'Start with Icon' | 'End with Icon'
 type LabelTheme =
@@ -61,7 +61,7 @@ export const Label: React.FC<LabelProps> = ({
   fillContainer = true,
   contentAlign = 'center'
 }) => {
-  const { theme, direction, branding } = useGlobal()
+  const { theme, direction } = useGlobal()
   const handleCopy = () => {
     if (copy) {
       const textToCopy = copyText || (children ? children.toString() : '')
@@ -132,23 +132,6 @@ export const Label: React.FC<LabelProps> = ({
     }
   }
 
-  const getIconSize = () => {
-    if (fillContainer) {
-      // When fillContainer is true, scale icon with branding fontSize
-      const baseFontSize = getFontSizeClass(branding.fontSize);
-      switch (baseFontSize) {
-        case "text-sm":
-          return 22;
-        case "text-base":
-          return 30;
-        case "text-lg":
-          return 38;
-        case "text-xl":
-          return 46;
-      }
-    }
-  };
-
   const colors = getThemeColors()
   const isDark = theme === 'dark' || theme === 'dark-hc'
 
@@ -167,7 +150,6 @@ export const Label: React.FC<LabelProps> = ({
               : ''
           }
           ${getFillClasses()}
-          ${getFontSizeClass(branding.fontSize)}
           ${getContentAlignClasses()}
           ${className}
         `}
@@ -178,10 +160,10 @@ export const Label: React.FC<LabelProps> = ({
       }}
     >
         {icon && iconDisplay === 'Icon only' && (
-          <Icon data={icon} fillContainer={false} size={getIconSize()} className={`${className}`} />
+          <Icon data={icon} fillContainer={false}  className={`${className}`} />
         )}
         {icon && iconDisplay === 'Start with Icon' && (
-          <Icon data={icon} fillContainer={false} size={getIconSize()} className={`${className}`} />
+          <Icon data={icon} fillContainer={false}  className={`${className}`} />
         )}
         {iconDisplay !== 'Icon only' && (
           <span className='overflow-hidden text-ellipsis whitespace-nowrap'>
@@ -189,10 +171,10 @@ export const Label: React.FC<LabelProps> = ({
           </span>
         )}
         {icon && iconDisplay === 'End with Icon' && (
-          <Icon data={icon} fillContainer={false} size={getIconSize()} className={`${className}`} />
+          <Icon data={icon} fillContainer={false} className={`${className}`} />
         )}
         {icon && !iconDisplay && (
-          <Icon data={icon} fillContainer={false} size={getIconSize()} className={`${className}`} />
+          <Icon data={icon} fillContainer={false} className={`${className}`} />
         )}
       <div className='flex !h-full  items-center justify-end'>
         {copy && (

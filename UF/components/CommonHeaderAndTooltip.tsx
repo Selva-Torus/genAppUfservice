@@ -4,7 +4,7 @@ import React from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
+import { getBorderRadiusClass } from "@/app/utils/branding";
 
 
 
@@ -29,8 +29,7 @@ export const CommonHeaderAndTooltip: React.FC<CommonHeaderAndTooltip> = ({
    children,
    required = false,
 }) => {
-  const { theme,direction, branding } = useGlobal();
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
+  const { theme,direction } = useGlobal();
   const isDark = theme === "dark" || theme === "dark-hc";
   const tabsElement = (
     <div className={fillContainer ? "w-full h-full" : ""}>{children}</div>
@@ -38,7 +37,7 @@ export const CommonHeaderAndTooltip: React.FC<CommonHeaderAndTooltip> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
+    const headerClasses = ` font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
     const headerContent = (

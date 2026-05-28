@@ -4,7 +4,6 @@ import React, { useState, useRef } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
 
@@ -126,7 +125,6 @@ export const DateAndTime: React.FC<DatePickerProps> = ({
   };
 
   const isDark = theme === "dark" || theme === "dark-hc";
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
 
   const sharedInputClass = `
     flex-1 min-h-0
@@ -138,7 +136,6 @@ export const DateAndTime: React.FC<DatePickerProps> = ({
     transition-colors
     focus:outline-none
     ${fillContainer ? "h-full" : ""}
-    ${fontSizeClass}
     ${getContentAlignClasses()}
     ${className}
   `;
@@ -173,14 +170,13 @@ export const DateAndTime: React.FC<DatePickerProps> = ({
         flex flex-col
         ${getContentAlignClasses()}
         ${fillContainer ? "w-full h-full" : ""}
-        ${fontSizeClass}
         overflow-hidden
       `}
       style={style}
     >
       {label && (
         <label
-          className={`${fontSizeClass} ${getContentAlignClasses()} block mb-2 font-medium flex-shrink-0 ${isDark ? "text-gray-200" : "text-gray-700"} ${className}`}
+          className={` ${getContentAlignClasses()} block mb-2 font-medium flex-shrink-0 ${isDark ? "text-gray-200" : "text-gray-700"} ${className}`}
         >
           {label}
         </label>

@@ -812,9 +812,9 @@ export class UfController {
     @Req() req: any
   ) {
     const { username, password, dpdKey, method, ufClientType, app_tenant, app_tenant_id } = body;
-    const { DEFAULT_AUTHENTICATION , FUSIONAUTH_TENANTID , FUSIONAUTH_APPLICATIONID,FUSIONAUTH_APPCLIENTSECRET } = process.env;
+    const { DEFAULT_AUTHENTICATION} = process.env;
     let result : any;
-    if(DEFAULT_AUTHENTICATION == "fusionauth" &&  FUSIONAUTH_TENANTID && FUSIONAUTH_APPLICATIONID && FUSIONAUTH_APPCLIENTSECRET) {
+    if(DEFAULT_AUTHENTICATION == "fusionauth") {
        result = await this.appService.signInViaIAM(username, password, ufClientType, false , app_tenant, app_tenant_id);
     }else{
        result = await this.appService.signIntoTorus(username, password, ufClientType, false , app_tenant, app_tenant_id);

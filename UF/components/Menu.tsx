@@ -9,7 +9,6 @@ import {
   ComponentEvents,
 } from "@/types/global";
 import {
-  getFontSizeClass,
   getBorderRadiusClass,
 } from "@/app/utils/branding";
 import { useTheme } from "@/hooks/useTheme";
@@ -89,17 +88,11 @@ export const Menu: React.FC<MenuProps> & { Item: React.FC<MenuItemProps> } = ({
   }, [nodeId, events, subscribe, subscribeGlobal]);
 
   const getMenuClasses = () => {
-    const fontSize = getFontSizeClass(branding.fontSize);
-
     const orientationClasses =
       orientation === "horizontal"
         ? "flex flex-row items-center"
         : "flex flex-col";
-    return `
-      ${orientationClasses}
-      ${fontSize}
-      ${className}
-    `;
+    return `${orientationClasses} ${className}`;
   };
 
   return (
@@ -180,42 +173,13 @@ const MenuItem: React.FC<MenuItemProps> = ({
   }, [disabled, onClick, events, emit, nodeId]);
 
   const getSizeClasses = () => {
-    const baseFontSize = getFontSizeClass(branding.fontSize);
     switch (context.size) {
-      case "xs":
-        return `px-2 py-1 ${
-          baseFontSize === "text-xl"
-            ? "text-base"
-            : baseFontSize === "text-lg"
-            ? "text-sm"
-            : "text-xs"
-        }`;
-      case "s":
-        return `px-3 py-1.5 ${
-          baseFontSize === "text-xl"
-            ? "text-lg"
-            : baseFontSize === "text-lg"
-            ? "text-base"
-            : "text-sm"
-        }`;
+      case "xs": return "px-[0.5em] py-[0.25em]";
+      case "s":  return "px-[0.75em] py-[0.375em]";
+      case "l":  return "px-[1.25em] py-[0.625em]";
+      case "xl": return "px-[1.5em] py-[0.75em]";
       case "m":
-        return `px-4 py-2 ${baseFontSize}`;
-      case "l":
-        return `px-5 py-2.5 ${
-          baseFontSize === "text-sm"
-            ? "text-base"
-            : baseFontSize === "text-base"
-            ? "text-lg"
-            : "text-xl"
-        }`;
-      case "xl":
-        return `px-6 py-3 ${
-          baseFontSize === "text-sm"
-            ? "text-lg"
-            : baseFontSize === "text-base"
-            ? "text-xl"
-            : "text-2xl"
-        }`;
+      default:   return "px-[1em] py-[0.5em]";
     }
   };
 
@@ -279,31 +243,27 @@ const MenuItem: React.FC<MenuItemProps> = ({
     return luminance > 0.5 ? "#000000" : "#FFFFFF";
   };
 
-  const renderIcon = (iconData: string | React.ReactNode, size: number) => {
-    if (!iconData) return null;
-
-    if (typeof iconData === "string") {
-      return <Icon data={iconData} size={size} className="flex-shrink-0" />;
+  const getIconEm = () => {
+    switch (context.size) {
+      case "xs": return "0.875em";
+      case "s":  return "1em";
+      case "l":  return "1.25em";
+      case "xl": return "1.5em";
+      case "m":
+      default:   return "1.125em";
     }
-
-    return iconData;
   };
 
-  const getIconSize = () => {
-    switch (context.size) {
-      case "xs":
-        return 14;
-      case "s":
-        return 16;
-      case "m":
-        return 18;
-      case "l":
-        return 20;
-      case "xl":
-        return 24;
-      default:
-        return 18;
+  const renderIcon = (iconData: string | React.ReactNode) => {
+    if (!iconData) return null;
+    if (typeof iconData === "string") {
+      return (
+        <span style={{ width: getIconEm(), height: getIconEm(), display: "inline-flex", flexShrink: 0 }}>
+          <Icon data={iconData} fillContainer className="flex-shrink-0" />
+        </span>
+      );
     }
+    return iconData;
   };
 
   return (
@@ -327,13 +287,13 @@ const MenuItem: React.FC<MenuItemProps> = ({
     >
       {iconStart && (
         <span className={direction === "RTL" ? "ml-1" : "mr-1"}>
-          {renderIcon(iconStart, getIconSize())}
+          {renderIcon(iconStart)}
         </span>
       )}
       <span className="flex-1">{children}</span>
       {iconEnd && (
         <span className={direction === "RTL" ? "mr-1" : "ml-1"}>
-          {renderIcon(iconEnd, getIconSize())}
+          {renderIcon(iconEnd)}
         </span>
       )}
     </div>

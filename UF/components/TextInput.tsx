@@ -15,7 +15,7 @@ import {
   TooltipProps as TooltipPropsType,
   ComponentEvents
 } from '@/types/global'
-import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
+import { getBorderRadiusClass } from '@/app/utils/branding'
 import { RiCloseCircleLine } from 'react-icons/ri'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 type ContentAlign = 'center' | 'left' | 'right'
@@ -289,7 +289,7 @@ export const TextInput: React.FC<TextInputProps> = ({
   };
   const customeOnBlur=(e:any)=>{
     onBlur(e)
-    if(type=='number')
+    if(type=='number' && itsHaveCurrency)
     {
       setOnloadType("text")
       let formatted = Number(e.target.value).toLocaleString();
@@ -301,7 +301,7 @@ export const TextInput: React.FC<TextInputProps> = ({
     }
   }
   const customeOnFocus=(e:any)=>{
-    if(type=='number')
+    if(type=='number' && itsHaveCurrency)
     {
       setOnloadType("text")
       let temp:any=e.target.value.replace(/,/g, "")
@@ -315,7 +315,7 @@ export const TextInput: React.FC<TextInputProps> = ({
   }
   useEffect(()=>{
     if (prevRefreshRef.current==false) {
-      if(type=='number')
+      if(type=='number' && itsHaveCurrency)
       {
         setOnloadType("text")
         let formatted = Number(value).toLocaleString();
@@ -326,11 +326,11 @@ export const TextInput: React.FC<TextInputProps> = ({
         setInternalValue(formatted)
       }
     }
-  },[value,type])
+  },[value,type,itsHaveCurrency])
 
   const inputElement = (
     <div
-      className={`${getFillClasses()} ${getFontSizeClass(branding.fontSize)} relative`}
+      className={`${getFillClasses()}  relative`}
     >
       {label && topContent && (
         <label

@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback } from "react";
-import { string } from "valibot";
 
 type ToastType = "success" | "danger" | "info" | "warning";
 
@@ -12,9 +11,9 @@ interface ToastConfig {
 }
 
 export const useInfoMsg = () => {
-  const showToast = useCallback((message: string | string[], type: ToastType) => {
+  const showToast = useCallback((message: string | string[], type: ToastType, autoClose: boolean = true) => {
     if (Array.isArray(message)) {
-      message.forEach((msg) => showToast(msg, type));
+      message.forEach((msg) => showToast(msg, type, autoClose));
       return;
     }
 
@@ -102,7 +101,9 @@ export const useInfoMsg = () => {
     closeBtn?.addEventListener("click", removeToast);
 
     // Auto-hide after 5 seconds
-    setTimeout(removeToast, 5000);
+    if (autoClose) {
+      setTimeout(removeToast, 5000);
+    }
   }, []);
 
   return showToast;

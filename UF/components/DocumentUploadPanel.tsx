@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { RxCross2, RxUpload } from 'react-icons/rx'
 import * as MdIcons from 'react-icons/md'
 import { useGlobal } from '@/context/GlobalContext'
+import { useInfoMsg } from '@/app/components/infoMsgHandler'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -77,6 +78,16 @@ const normalizeAccept = (values: string[]): string =>
     new Set(values.flatMap(v => ACCEPT_MAP[v.toLowerCase()] ?? [v]))
   ).join(',')
 
+const isFileAccepted = (file: File, acceptTypes: string[]): boolean => {
+  const resolved = acceptTypes.flatMap(v => ACCEPT_MAP[v.toLowerCase()] ?? [v])
+  return resolved.some(type => {
+    if (type === '*/*') return true
+    if (type.startsWith('.')) return file.name.toLowerCase().endsWith(type.toLowerCase())
+    if (type.endsWith('/*')) return file.type.startsWith(type.replace('/*', ''))
+    return file.type === type
+  })
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const DocumentUploadPanel = ({
@@ -93,6 +104,7 @@ const DocumentUploadPanel = ({
   const isMounted = useRef(false)
   const { theme } = useGlobal()
   const isDark = theme === 'dark' || theme === 'dark-hc'
+  const showToast = useInfoMsg()
 
   useEffect(() => {
     if (!isMounted.current) {
@@ -111,9 +123,18 @@ const DocumentUploadPanel = ({
 const handleFileChange = (
   docId: string,
   multiple: boolean,
+  accept: string[],
   e: React.ChangeEvent<HTMLInputElement>
 ) => {
-  const selected = Array.from(e.target.files || [])
+  const all = Array.from(e.target.files || [])
+  const selected = all.filter(f => isFileAccepted(f, accept))
+  const rejected = all.filter(f => !isFileAccepted(f, accept))
+
+  if (rejected.length > 0) {
+    const acceptedLabel = accept.map(v => v.toUpperCase()).join(', ')
+    showToast(`Invalid file type. Accepted formats: ${acceptedLabel}`, 'danger')
+  }
+
   if (!selected.length) return
 
   const makeEntries = (file: File): UploadedFileItem => {
@@ -240,7 +261,7 @@ const handleRemoveFile = (
                 accept={normalizeAccept(doc.accept)}
                 multiple={doc.multiple}
                 className='hidden'
-                onChange={e => handleFileChange(doc.id, doc.multiple, e)}
+                onChange={e => handleFileChange(doc.id, doc.multiple, doc.accept, e)}
               />
 
               {/* Card */}

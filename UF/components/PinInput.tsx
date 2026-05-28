@@ -4,7 +4,6 @@ import React, { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 interface PinInputProps {
@@ -86,7 +85,6 @@ export const PinInput: React.FC<PinInputProps> = ({
   };
 
   const isDark = theme === "dark" || theme === "dark-hc";
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
 
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
@@ -117,7 +115,6 @@ export const PinInput: React.FC<PinInputProps> = ({
             border-2
             text-center
             font-semibold
-            ${fontSizeClass}
             ${disabled ? "opacity-50 cursor-not-allowed" : ""}
             ${isDark ? "bg-gray-800 text-white border-gray-600" : "bg-white text-gray-900 border-gray-300"}
             transition-all duration-200

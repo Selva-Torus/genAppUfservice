@@ -112,7 +112,7 @@ export class TeService{
                  }
                }
                if (eflg == poNode[e].events.length)
-                 throw new CustomException('Event and nodeId mismatched', 400);
+                 throw new CustomException(`${poNode[e].nodeName} Node Event mismatched`, 400);
              } else {
                throw new CustomException('events not found', 404);
              }
@@ -139,7 +139,7 @@ export class TeService{
          }
        }
        if (flg == poNode.length) {
-         throw new CustomException('Invalid nodeId', 400);
+        throw new CustomException(`${pfdto.nodeName} Node Invalid nodeId`, 400);
        }
       if (pfdto.upId) {
          if (pfdto.nodeId == poNode[1].nodeId && currentFabric == 'PF-PFD') {
@@ -179,7 +179,7 @@ export class TeService{
 
        let eventResponse;
        for (var i = 0; i < poNode.length; i++) {
-        if(Object.keys(ifoObj).length>0){
+        if(Object.keys(ifoObj).length>0 && (poNode[i].nodeType != 'startnode' && poNode[i].nodeType != 'endnode')){
           this.redisService.setJsonData(processedKey + pfdto.upId + ':NPV:' + poNode[i].nodeName + '.PRO', JSON.stringify(ifoObj), client, 'ifo')
         }
         nodeInfo = poNode[i];
@@ -614,7 +614,7 @@ export class TeService{
                         let pfresponse = eventResponse;
                         if (!pfresponse)
                           pfresponse = await this.redisService.getJsonDataWithPath(processedKey + pfdto.upId + ':NPV:' + pfjson[pfs].nodeName + '.PRO', '.response', client);
-
+                         let nodearr =[]
                         let routeArray = pfjson[pfs].routeArray;
                         for (let r = 0; r < routeArray.length; r++) {
                           if (routeArray[r].nodeName == 'End') {
@@ -623,9 +623,9 @@ export class TeService{
                             await this.CommonService.getTPL(processedKey, pfdto.upId, poNode[i], 'Success', '',pfdto.token, currentFabric);
                             if (currentFabric == 'PF-PFD' || currentFabric == 'PF-SFD' || currentFabric == 'PF-SCDL') {
                              if(Array.isArray(pfresponse?.data) && pfresponse?.data.length>0 && currentFabric == 'PF-SFD')
-                              pfresponse = pfresponse.data && pfresponse.data[0][pfjson[pfs].nodeName] ? pfresponse.data[0][pfjson[pfs].nodeName] : pfresponse.data[0];
+                              pfresponse = pfresponse.data && pfresponse.data[0]?.[pfjson[pfs].nodeName] || pfresponse.data[0]?.[pfjson[pfs].nodeName] == ''? pfresponse.data[0][pfjson[pfs].nodeName] : pfresponse.data[0];
                               else
-                              pfresponse = pfresponse.data && pfresponse.data[pfjson[pfs].nodeName] ? pfresponse.data[pfjson[pfs].nodeName] : pfresponse.data; 
+                              pfresponse = pfresponse.data && pfresponse.data?.[pfjson[pfs].nodeName] || pfresponse.data?.[pfjson[pfs].nodeName] == ''? pfresponse.data[pfjson[pfs].nodeName] : pfresponse.data; 
                               
                               // OPTIMIZATION: Parallelize cleanup operations with concurrency limiting
                               // const [processedNodes, processedQueues] = await Promise.all([
@@ -710,10 +710,11 @@ export class TeService{
                             }
                           } else {
                             flg++;
+                            nodearr.push(routeArray[r].nodeName)
                           }
                         }
                         if (flg == routeArray.length) {
-                          throw new CustomException('Event Mismatched', 400);
+                          throw new CustomException(`${nodearr} Node Event Mismatched`, 400);
                         }
                       }
                     }
@@ -860,7 +861,7 @@ export class TeService{
        }
 
        if (invalidEventFlg == poNode.length - 2) {
-         throw new CustomException(`${event} doesn't matched`, 400);
+         throw new CustomException(`${pfdto.nodeName} node ${event} doesn't matched`, 400);
        }
      } catch (error) {
         console.log('PO ERROR:', error);

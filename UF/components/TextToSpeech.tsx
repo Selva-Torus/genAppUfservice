@@ -3,7 +3,6 @@ import React, { useEffect,useState } from 'react';
 import { FiVolume2 } from 'react-icons/fi';
 import { HeaderPosition, TooltipProps as TooltipPropsType } from '@/types/global';
 import { useGlobal } from '@/context/GlobalContext';
-import { getFontSizeClass } from '@/app/utils/branding';
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip';
 import {  Branding } from "@/types/global";
 interface TextAreaWithEndContentProps {
@@ -106,7 +105,6 @@ export function TextToSpeech(props: TextToSpeechProps){
   const { branding, theme } = useGlobal();
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [text, setText] = useState(props.value?.toString() || '');
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
   const isDark = theme === "dark" || theme === "dark-hc";
 
   const handleSpeak = () => {
@@ -168,7 +166,7 @@ export function TextToSpeech(props: TextToSpeechProps){
   const textAreaContent = (
     <div className="w-full h-full flex flex-col">
       {props.label && (
-        <label className={`block mb-2 ${fontSizeClass} font-medium text-gray-700 dark:text-gray-300`}>
+        <label className={`block mb-2  font-medium text-gray-700 dark:text-gray-300`}>
           {props.label}
         </label>
       )}

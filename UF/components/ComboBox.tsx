@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useGlobal } from "@/context/GlobalContext";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { Icon } from "./Icon";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
@@ -34,6 +33,8 @@ interface ComboboxProps {
   errorMessage?: string;
   contentAlign?: ContentAlign;
   onBlur?: (e:any) => void;
+  search?:string;
+  setSearch?:(e:any) => void;
 }
 
 export const Combobox: React.FC<ComboboxProps> = ({
@@ -60,6 +61,8 @@ export const Combobox: React.FC<ComboboxProps> = ({
   errorMessage,
   contentAlign = "center",
   onBlur=(e:any)=>{},
+  search="",
+  setSearch=(e:any)=>{}
 }) => {
   const { theme, branding } = useGlobal();
   const isDark = theme === "dark" || theme === "dark-hc";
@@ -72,7 +75,6 @@ export const Combobox: React.FC<ComboboxProps> = ({
   }, [validationState, errorMessage]);
 
   const [isOpen, setIsOpen] = useState(false);
-  const [search, setSearch] = useState("");
   const [selectedArray, setSelectedArray] = useState<string[]>(Array.isArray(value) ? value : []);
   const [currentPage, setCurrentPage] = useState<number | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
@@ -127,7 +129,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
     if (disabled) return;
     if (isOpen) {
       setIsOpen(false);
-      setSearch("");
+  
     } else {
       setIsOpen(true);
       noMorePagesRef.current = false;
@@ -165,16 +167,8 @@ export const Combobox: React.FC<ComboboxProps> = ({
     }
   };
 
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
+  
 
-  const getIconSize = () => {
-    switch (fontSizeClass) {
-      case "text-sm": return 22;
-      case "text-lg": return 38;
-      case "text-xl": return 46;
-      default: return 30;
-    }
-  };
 
   const getBorderColor = () => {
     if (validationState === "invalid") return "border-red-500";
@@ -197,7 +191,7 @@ useEffect(() => {
   const handleClickOutside = (e: MouseEvent) => {
     if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
       setIsOpen(false);
-      setSearch("");
+
     }
   };
 
@@ -222,7 +216,6 @@ useEffect(() => {
         disabled={disabled}
         className={`
           w-full px-4 py-2 border-2 flex items-center justify-between
-          ${fontSizeClass}
           ${getBorderColor()}
           ${isDark ? "bg-gray-800 text-white" : "bg-white text-black"}
           ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
@@ -263,10 +256,10 @@ useEffect(() => {
               className={`p-0.5 rounded transition-colors cursor-pointer ${isDark ? "hover:bg-gray-600" : "hover:bg-gray-200"}`}
               style={{ borderRadius: "var(--border-radius)" }}
             >
-              <Icon data="IoIosClose" size={getIconSize()} fillContainer={false} />
+              <Icon data="IoIosClose" fillContainer={false} />
             </span>
           )}
-          <Icon data={isOpen ? "IoIosArrowUp" : "IoIosArrowDown"} size={getIconSize()} fillContainer={false} />
+          <Icon data={isOpen ? "IoIosArrowUp" : "IoIosArrowDown"} fillContainer={false} />
         </div>
       </button>
 
@@ -294,14 +287,14 @@ useEffect(() => {
               }}
               onMouseDown={(e) => e.stopPropagation()}
               placeholder="Search..."
-              className={`w-full px-3 py-1 border focus:outline-none ${fontSizeClass} ${isDark ? "bg-gray-700 text-white border-gray-500 placeholder-gray-400" : "bg-white text-black border-gray-300 placeholder-gray-400"}`}
+              className={`w-full px-3 py-1 border focus:outline-none  ${isDark ? "bg-gray-700 text-white border-gray-500 placeholder-gray-400" : "bg-white text-black border-gray-300 placeholder-gray-400"}`}
               style={{ borderRadius: "var(--border-radius)" }}
             />
           </div>
           {options.map((option, idx) => (
             <div
               key={`${option.value}-${idx}`}
-              className={`px-4 py-2 cursor-pointer transition-colors ${fontSizeClass} ${
+              className={`px-4 py-2 cursor-pointer transition-colors  ${
                 (isArray ? selectedArray.includes(option.value) : option.label === value || option.value === value)
                   ? "text-white"
                   : isDark ? "text-gray-200 hover:[background-color:var(--hover-color)]" : "text-gray-700 hover:[background-color:var(--hover-color)]"
@@ -324,14 +317,14 @@ useEffect(() => {
                     setSelectedArray(next);
                     onChange(next);
                     setIsOpen(false);
-                    setSearch("");
+                    // setSearch("");
                     onBlur?.(next)
                   }
                 } else {
                   // case 1: single string
                   onChange({ [toSave]: option.value, ...(toDisplay ? { [toDisplay]: option.label } : {}) });
                   setIsOpen(false);
-                  setSearch("");
+                  // setSearch("");
                   onBlur?.({ [toSave]: option.value, ...(toDisplay ? { [toDisplay]: option.label } : {}) })
                 }
                 
@@ -341,7 +334,7 @@ useEffect(() => {
             </div>
           ))}
           {isLoading && (
-            <div className={`px-4 py-2 text-center ${fontSizeClass} ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            <div className={`px-4 py-2 text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
               Loading...
             </div>
           )}

@@ -9,7 +9,7 @@ import {
   HeaderPosition,
   TooltipProps as TooltipPropsType
 } from '@/types/global'
-import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
+import { getBorderRadiusClass } from '@/app/utils/branding'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 type ContentAlign = 'left' | 'right' | 'center'
 interface TextAreaProps {
@@ -105,7 +105,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
 
   const textAreaElement = (
     <div
-      className={`${getFillClasses()} ${getFontSizeClass(branding.fontSize)}`}
+      className={`${getFillClasses()} `}
     >
       <textarea
         value={value}

@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType, ComponentSize } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
+import { getBorderRadiusClass } from "@/app/utils/branding";
 
 // DateTime type based on common date libraries
 export interface DateTime {
@@ -259,23 +259,6 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
 
   const isDark = theme === "dark" || theme === "dark-hc";
 
-  const getSizeClasses = () => {
-    const fontSize = getFontSizeClass(branding.fontSize);
-    switch (size) {
-      case "xs":
-        return `p-2 ${fontSize === "text-xl" ? "text-sm" : fontSize === "text-lg" ? "text-xs" : "text-[10px]"}`;
-      case "s":
-        return `p-3 ${fontSize === "text-xl" ? "text-base" : fontSize === "text-lg" ? "text-sm" : "text-xs"}`;
-      case "m":
-        return `p-4 ${fontSize}`;
-      case "l":
-        return `p-5 ${fontSize === "text-sm" ? "text-base" : fontSize === "text-base" ? "text-lg" : "text-xl"}`;
-      case "xl":
-        return `p-6 ${fontSize === "text-sm" ? "text-lg" : fontSize === "text-base" ? "text-xl" : "text-2xl"}`;
-      default:
-        return `p-4 ${fontSize}`;
-    }
-  };
 
   const getBorderColor = () => {
     if (validationState === "invalid") return "border-red-500";
@@ -295,7 +278,6 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
         id={id}
         className={`
           ${getBorderRadiusClass(branding.borderRadius)}
-          ${getSizeClasses()}
           border-2
           ${getBorderColor()}
           ${isDark ? "bg-gray-800 text-white" : "bg-white text-gray-900"}
@@ -329,7 +311,6 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
                 className={`
                   px-3 py-1
                   ${getBorderRadiusClass(branding.borderRadius)}
-                  ${getFontSizeClass(branding.fontSize)}
                   transition-colors
                   ${isActive
                     ? "text-white"
@@ -360,7 +341,7 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
               >
                 ←
               </button>
-              <div className={`font-semibold ${getFontSizeClass(branding.fontSize)}`}>
+              <div className={`font-semibold `}>
                 {new Date(viewingDate.year || 0, (viewingDate.month || 1) - 1).toLocaleDateString("en-US", {
                   month: "long",
                   year: "numeric",
@@ -372,7 +353,7 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
                 className={`p-2 ${getBorderRadiusClass(branding.borderRadius)} ${disabled ? "cursor-not-allowed opacity-50" : "hover:bg-gray-700 dark:hover:bg-gray-600"
                   } transition-colors`}
               >
-                →
+                â†’
               </button>
             </div>
           )}
@@ -414,7 +395,6 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
                       disabled={disabled || readOnly || futureDate}
                       className={`
                           aspect-square flex items-center justify-center
-                          ${getFontSizeClass(branding.fontSize)}
                           ${getBorderRadiusClass(branding.borderRadius)}
                           transition-all
                           
@@ -467,7 +447,6 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
                   className={`
                     p-4
                     ${getBorderRadiusClass(branding.borderRadius)}
-                    ${getFontSizeClass(branding.fontSize)}
                     transition-colors
                     ${isDark
                       ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -500,7 +479,6 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
                   className={`
                     p-4
                     ${getBorderRadiusClass(branding.borderRadius)}
-                    ${getFontSizeClass(branding.fontSize)}
                     transition-colors
                     ${isDark
                       ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -533,7 +511,6 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
                   className={`
                     p-6
                     ${getBorderRadiusClass(branding.borderRadius)}
-                    ${getFontSizeClass(branding.fontSize)}
                     transition-colors
                     ${isDark
                       ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
@@ -551,7 +528,7 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
       </div>
 
       {validationState === "invalid" && errorMessage && (
-        <div className={`mt-1 ${getFontSizeClass(branding.fontSize)} text-red-500`}>
+        <div className={`mt-1 text-red-500`}>
           {errorMessage}
         </div>
       )}
@@ -561,7 +538,7 @@ export const RangeCalendar: React.FC<RangeCalendarProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"
+    const headerClasses = ` font-semibold mb-2 ${isDark ? "text-gray-300" : "text-gray-700"
       }`;
 
     switch (headerPosition) {

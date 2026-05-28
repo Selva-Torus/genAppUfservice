@@ -7,7 +7,7 @@ import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { Button } from "./Button";
 import { ComponentSize, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
+import { getBorderRadiusClass } from "@/app/utils/branding";
 
 type ModalPosition =
   | "center"
@@ -257,7 +257,7 @@ export const Modal: React.FC<ModalProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
+    const headerClasses = `font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 

@@ -4,9 +4,9 @@ import UOmapperData from '@/context/dfdmapperContolnames.json'
 export function getRouteScreenDetails(key: string, artfactName: string): string {
   let assemblerKeys: any = [
   {
-    "screenName": "menu item 2",
-    "screensName": "menu_item_2-v1",
-    "ufKey": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
+    "screenName": "transactions",
+    "screensName": "transactions-v1",
+    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:transactionProduct:AFVK:v1"
   }
 ]
 

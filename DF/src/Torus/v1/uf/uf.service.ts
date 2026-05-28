@@ -18,7 +18,6 @@ import * as nodemailer from 'nodemailer';
 import { JwtService } from '@nestjs/jwt';
 import { JwtServices } from 'src/jwt.services';
 import { RuleService } from 'src/ruleService';
-import { MongoService } from 'src/mongoService';
 const jsonata = require('jsonata');
 import * as fs from 'fs';
 import * as path from 'path';
@@ -55,9 +54,6 @@ const ag = process.env.APPGROUPCODE;
 const app = process.env.APPCODE;
 const appName = process.env.APPNAME;
 const version = process.env.VERSION;
-const fusionAuthTenantId = process.env.FUSIONAUTH_TENANTID;
-const fusionAuthApplicationId = process.env.FUSIONAUTH_APPLICATIONID;
-const fusionAuthAppClientSecret = process.env.FUSIONAUTH_APPCLIENTSECRET;
 const defaultAuth =  process.env.DEFAULT_AUTHENTICATION;
 // const accessTokenExpiryTime = process.env.AUTH_ACCESSTOKEN_EXPIRY_TIME;
 // const refreshTokenExpiryTime = process.env.AUTH_REFRESHTOKEN_EXPIRY_TIME;
@@ -72,7 +68,6 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
     private readonly gorule: RuleService,
     private readonly redisService: RedisService,
     private readonly commonService: CommonService,
-    private readonly mongoService: MongoService,
     private readonly envData: EnvData
   ) {}
     private pool : Pool;
@@ -221,6 +216,55 @@ getConfig(): FusionAuthConfig {
   };
 }
 
+  async getTenantAndApplicationFusionAuthIdSecret() {
+    try {
+      let tenantUniqueId = '';
+      const { fusionAuthBaseUrl , fusionAuthApiKey } = this.getConfig();
+
+      if (defaultAuth != 'fusionauth') {
+        return undefined;
+      }
+
+      const possible_FA_tenant_name = `${tenant}-Tenant`;
+      // CHECK EXISTENCE OF THE APPLICATION TENANT IN FUSIONAUTH
+      const tenantList = await FusionAuthGetTenantList({
+        name: possible_FA_tenant_name,
+        fusionAuthBaseUrl: fusionAuthBaseUrl,
+        fusionAuthApiKey: fusionAuthApiKey,
+      });
+      if (tenantList.length > 0) {
+        tenantUniqueId = tenantList[0]?.id;
+      } else {
+        throw new Error('Tenant not registered in FusionAuth');
+      }
+      // step 2 => check for application existence , create if not exist and return application id
+      const possibleApplicationNameInFusionAuth = `${tenant}-defaultApplication`;
+      const applicationList = await FusionAuthGetApplicationList(
+        tenantUniqueId,
+        {
+          fusionAuthBaseUrl: fusionAuthBaseUrl,
+          fusionAuthApiKey: fusionAuthApiKey,
+          name: possibleApplicationNameInFusionAuth,
+        },
+      );
+      const existingApplication = applicationList.find(
+        (a) => a.name == possibleApplicationNameInFusionAuth,
+      );
+      if (!existingApplication) {
+        throw new BadRequestException('Application not registered in FusionAuth');
+      } else {
+        return {
+          tenantUniqueId,
+          applicationId: existingApplication?.id,
+          fusionAuthAppClientSecret:
+            existingApplication?.oauthConfiguration?.clientSecret,
+        };
+      }
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+
   async screenRoute(keys: any[], token: string, header: any) {
     try {      
       for (let i = 0; i < keys.length; i++) {
@@ -274,7 +318,7 @@ getConfig(): FusionAuthConfig {
 
  async insertDocToVgphSourceTranDocMain(category: string, doc_name: string, url: string, size?: number, doc_group?: string): Promise<any> {
     try {
-      const insertUrl = `${process.env.APP_MANAGER_URL}/ct010/attachments`;
+      const insertUrl = `${process.env.APP_MANAGER_URL}/ct005/attachments`;
       //const vgphstm_uuid = uuid();
       const currentDate = new Date().toISOString().slice(0, 19) + '+00:00';
 
@@ -302,7 +346,7 @@ getConfig(): FusionAuthConfig {
 
   async getUrlByVgphstdmId(vgphstdm_id: any): Promise<string> {
     try {
-      const getUrl = `${process.env.APP_MANAGER_URL}/ct010/attachments/${vgphstdm_id}`;
+      const getUrl = `${process.env.APP_MANAGER_URL}/ct005/attachments/${vgphstdm_id}`;
 
       const response = await axios.get(getUrl, {
         headers: {
@@ -705,28 +749,96 @@ getConfig(): FusionAuthConfig {
           rule = json.find(f => f.nodeId === filter.nodeId)
           if(!rule) throw `Node Id not found ${filter.nodeId}`
           rule = rule.rule
-                   
-          let decisionTable = rule.nodes?.find(n => n.type === "decisionTableNode");
-          if(decisionTable){
-            let ruleInputs = decisionTable.content?.inputs 
-            let ruleConditions = decisionTable.content?.rules 
-            let ruleobj = {}
-            for(let item of ruleInputs){
+         
+          let {sobj,SessionInfo} = await this.commonService.sessionDecode(token, '')
+         
+          const result = await this.gorule.goRule(rule, {session:SessionInfo});
+          let queryobj
+          if (result?.result) {
+           
+            let ruleRes = result.result
+            let query:any = Object.values(ruleRes)[0]
+            if(query?.includes('$$session.')){ 
+                Object.keys(sobj).forEach(key => {
+                const regex = new RegExp(`\\$\\$${key}`, 'g');
+                const value = sobj[key];               
+                query = query.replace(regex, value);               
+            });
+            }            
+            queryobj = {[`${process.env.CLIENTCODE}_condition`]:query}                      
+          }         
+          // let decisionTable = rule.nodes?.find(n => n.type === "decisionTableNode");
+          // if (decisionTable) {
+          //   let ruleInputs = decisionTable.content?.inputs
+          //   let ruleConditions = decisionTable.content?.rules
+          //   let ruleobj = {}
+          //   let sessionObj = await this.commonService.sessionDecode(token, '')
+          //   let sobj = sessionObj?.sobj
+          //   for (let rule of ruleConditions) {
+          //     let matched = true
+          //     // validate session fields for THIS RULE
+          //     for (let input of ruleInputs) {                  
+          //         let field = input.field
+          //       if (field.includes('session.')) {                  
+          //         let conditionValue = rule[input.id]                
+          //         if (conditionValue) {                                
+          //           let expectedValue = JSON.parse(conditionValue)                   
+          //           let sessionKey = sobj[field] 
+          //           if (sessionKey != expectedValue) {
+          //             matched = false
+          //             break
+          //           }
+          //         }
+          //       }
+          //     }
+          //     // SKIP ENTIRE RULE
+          //     if (!matched) {
+          //       continue
+          //     }
+          //     // ONLY PUSH MATCHED RULE VALUES
+          //     for (let input of ruleInputs) {
 
-              let ruleId = item.id
-              let ruleField = item.field
-              
-            let ruleValue = []
-              for(let i=0;i< ruleConditions.length;i++){
-                if(ruleConditions[i][ruleId])
-                  ruleValue.push(JSON.parse(ruleConditions[i][ruleId]))
-            }           
-              ruleobj[ruleField] = ruleValue    
-            }     
-            filterobj = Object.assign(filterobj,ruleobj)               
-          }
+          //       let ruleField = input.field
+          //       let ruleId = input.id
+          //       // don't include session fields
+          //       if (ruleField.includes('session.')) {
+          //         continue
+          //       }
+          //       if (!rule[input.id]) {
+          //         continue
+          //       }
+          //       let parsedValue = JSON.parse(rule[input.id])
+          //        if(parsedValue?.includes('$$session.')){ 
+          //              Object.keys(sobj).forEach(key => {
+          //               const regex = new RegExp(`\\$\\$${key}`, 'g');
+          //               const value = sobj[key];
+          //               console.log("regex",regex);
+          //                console.log("value",value);
+          //               parsedValue = parsedValue.replace(regex, value);
+          //               console.log("conditionValue",parsedValue);
+                        
+          //           });
+          //           }
+          //       if (!ruleobj[ruleField]) {
+          //         ruleobj[ruleField] = []
+          //       }
+
+          //       if (Array.isArray(parsedValue)) {
+          //         ruleobj[ruleField].push(...parsedValue)
+          //       } else {
+          //         ruleobj[ruleField].push(parsedValue)
+          //       }
+          //     }
+          //   }
+          //   // remove duplicates
+          //   Object.keys(ruleobj).forEach(key => {
+          //     ruleobj[key] = [...new Set(ruleobj[key])]
+          //   })
+
+            filterobj = Object.assign(filterobj, queryobj)
+          // }
         }          
-      }  
+      }   
       
 
       if (Object.keys(filterobj)?.length > 0) {
@@ -762,243 +874,78 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-   // async getpagination(
-  //   key: any,
-  //   page,
-  //   count,
-  //   filter?,
-  //   searchObj?,
-  //   token?: string,
-  // ) {
-  //   try {
-  //     let tokenDecode = await this.jwtService.decodeToken(token);
-  //     if (!tokenDecode?.selectedAccessProfile)
-  //       throw 'Selected Access Profile not found';
+  async applyFilters(data, searchFilter) {
+    if(data?.length == 0 || !Array.isArray(data)) return data
+    return data.filter(item => {
 
-  //     if(!tokenDecode?.loginId) throw 'loginId not found'
-  //     let sobj ={}
-  //     sobj['orgGrpCode'] = tokenDecode.orgGrpCode 
-  //       sobj['orgCode'] = tokenDecode.orgCode
-  //       sobj['roleGrpCode'] = tokenDecode.roleGrpCode 
-  //       sobj['roleCode'] = tokenDecode.roleCode 
-  //       sobj['psGrpCode'] = tokenDecode.psGrpCode 
-  //       sobj['psCode'] = tokenDecode.psCode 
-  //       sobj['selectedAccessProfile'] = tokenDecode.selectedAccessProfile 
-  //       sobj['loginId'] = tokenDecode.loginId 
-  //       sobj['orgGrpName'] = tokenDecode?.orgGrpName 
-  //       sobj['orgName'] = tokenDecode?.orgName 
-  //       sobj['roleGrpName'] = tokenDecode?.roleGrpName 
-  //       sobj['roleName'] = tokenDecode?.roleName 
-  //       sobj['psGrpName'] = tokenDecode?.psGrpName 
-  //       sobj['psName'] = tokenDecode?.psName 
-  //       //sobj['session.trs_process_id'] = upId
-  //       sobj['userCode'] = tokenDecode?.userCode
-  //       sobj['subOrgGrpCode'] = tokenDecode?.subOrgGrpCode 
-  //       sobj['subOrgGrpName'] = tokenDecode?.subOrgGrpName 
-  //       sobj['subOrgCode'] = tokenDecode?.subOrgCode 
-  //       sobj['subOrgName'] = tokenDecode?.subOrgName 
-  //     let dsObject,data
-  //     let afkey = key.replace(':FNGK:AFP:FNK:DF-DST:',':FNGK:AF:FNK:DF-DFD:')    
-      
-  //     let afi = JSON.parse( await this.redisService.getJsonData(afkey+'AFI', process.env.CLIENTCODE))      
-  //     if (!afi.logicCenter) {            
-  //       return await this.getpaginationwithLogicCenter(key,page,count,filter,searchObj,token,);
-  //     } 
+        return searchFilter.every(filter => {
 
-  //       dsObject = await this.redisService.getAllRecordshash(key + tokenDecode.loginId+'_DS_Object')        
-  //     if (!dsObject) {
-  //       await this.commonService.errorLog(
-  //         'Technical',
-  //         'AK',
-  //         'Fatal',
-  //         'TG033',
-  //         'DataSet does not exists',
-  //         key,
-  //         token,
-  //       );
-  //     }
-  //   //if(f == 1)
-  //      data = dsObject
-  //    // else
-  //    // data = dsObject?.data
-  //   // console.log(12,data);
-     
-  //     if (data && tokenDecode) {
-  //       if (!page) page = 1;
-  //       let rule: any;
-  //       let finalData = []; 
-  //       var dataArr = [];
-  //       var searcharr = [];
-  //       let start,end;
-  //       if(count){
-  //         start = (page - 1) * count;
-  //         end = start + count;
-  //       }
+            const {key,operator,value,value2,type} = filter;
 
+            const fieldValue = item[key];
 
-  //       if (searchObj && Object.keys(searchObj).length > 0) {
-  //         var searchkey = Object.keys(searchObj);
-  //         var searchval = Object.values(searchObj);
-  //       }
+            const field = fieldValue != null? String(fieldValue).toLowerCase(): '';
 
-  //       if (filter) {
-  //         var json = JSON.parse(
-  //           await this.redisService.getJsonDataWithPath(
-  //             filter.ufKey,
-  //             '.mappedData.artifact.node',
-  //             process.env.CLIENTCODE,
-  //           ),
-  //         );
+            const searchValue = value != null? String(value).toLowerCase(): '';
 
-  //         if (!json) {
-  //           await this.commonService.errorLog(
-  //             'Technical',
-  //             'AK',
-  //             'Fatal',
-  //             'TG034',
-  //             'node is empty',
-  //             key,
-  //             token,
-  //           );
-  //         }
-  //         for (let s = 0; s < json.length; s++) {
-  //           if (json[s].nodeId == filter.nodeId) {
-  //             rule = json[s].rule;
-  //           }
-  //         }
-  //         let fieldarr = []
-  //         let result: any
-  //         if (rule?.nodes?.length && rule?.edges?.length) {
-  //           for (let j = 0; j < data.length; j++) {
-  //              var nodes = rule.nodes     
-  //         if(nodes && nodes.length > 0){
-  //           for(var c=0;c < nodes.length;c++){
-  //             var content = nodes[c].content
-  //             if(content){
-  //               let inputs = content.inputs
-  //               if(inputs?.length > 0){
-  //                 for(let i=0;i < inputs.length;i++){
-  //                   fieldarr.push(content.inputs[i].field)
-  //                 }
-  //               }                
-  //               if(fieldarr?.length == 0)
-  //                 throw 'Field not found in rule'
-  //             }            
-  //           }           
-  //           var gparamreq = {}; 
-  //            let afpVal,data,sarr = []
-  //           for(let i=0;i < fieldarr.length;i++){ 
-  //              //let connectedNodeName = fieldarr[i].split('.')[0]
-  //            // let connectedField = fieldarr[i].split('.')[1]
-  //             let field = fieldarr[i].split('.')
-  //             let connectedNodeName = field[0]
-  //             field.shift()            
-  //             let connectedField = field.join('.')
-              
-  //             // if(!connectedField || !connectedNodeName)
-  //             //   throw 'connectedField/ connectedNodeName not found in rule'
-  //             console.log("connectedNodeName",connectedNodeName);
-              
-  //             if(connectedNodeName == 'session'){
-  //               if(sobj[connectedField]){
-  //                 afpVal = sobj                  
-  //               }
-  //             }else{
-  //               console.log(123);                
-  //               afpVal = data[j]
-  //                console.log("afpVal",afpVal);
-  //             }
-  //              console.log("data[j]",data[j]);
-             
-  //             console.log("connectedField",connectedField);
-              
-  //               data = await this.commonService.getNestedValue(afpVal, connectedField)
-  //               console.log("data",data)
-                            
-  //               if(data)               
-  //                 await this.commonService.setNestedValue(gparamreq, fieldarr[i], data) 
+            switch (operator) {
+
+                case '=':                 
+                  if(type == 'date'){
+                    return new Date(fieldValue)
+                    .toISOString()
+                    .startsWith(value);
+                  }
+                  return fieldValue == value;
+
+                case '!=':
+                case '<>':
+                    return fieldValue != value;
+
+                case '>':
+                    return fieldValue > value;
+
+                case '<':
+                    return fieldValue < value;
+
+                case '>=':
+                    return fieldValue >= value;
+
+                case '<=':
+                    return fieldValue <= value;
                 
-  //               // else{
-  //               //   throw `${fieldarr[i]} not found in given request to take decision`                    
-  //               // }  
-  //             // }
-  //             } 
-  //              console.log('gparamreq',gparamreq);
-  //              result = await this.gorule.goRule(rule, gparamreq);
-  //            // var goruleres = await this.ruleEngine.goRule(rule, gparamreq)                  
-  //             // if(Object.keys(goruleres.result).length > 0){                   
-  //             //   //zenresult = goruleres.result.output
-  //             //    zenresult = goruleres.result
-  //             // }else{
-  //             //   throw `Rule doesn't matched with this value ${data}`
-  //             // }                         
-  //         }  
-  //            //let result: any = await this.gorule.goRule(rule, data[j]);
-  //           // let result = await this.commonService.getRuleCodeMapper()
-  //             console.log('result',result);
-              
-  //             if (result?.error) {
-  //               break;
-  //             } else if (result?.result?.output === true) {              
-  //               finalData.push(data[j]);                
-  //             }
-  //           }
-
-  //           if (searchObj && Object.keys(searchObj).length > 0) {
-  //             for (var x = 0; x < finalData.length; x++) {
-  //               var s = 0;
-  //               for (var q = 0; q < searchkey.length; q++) {
-  //                 if (finalData[x][searchkey[q]] == searchval[q]) {                   
-  //                   s++;                  
-  //                 }
-  //               }               
-  //               if (s == searchkey.length) searcharr.push(finalData[x]);
+                case 'LIKE':
+                    return field.includes(searchValue);
                 
-  //             }
-  //             return await this.filterpagination(start, end, searcharr);
-  //           }
-  //           return await this.filterpagination(start, end, finalData);
-  //         } else {
-  //           await this.commonService.errorLog(
-  //             'Technical',
-  //             'AK',
-  //             'Fatal',
-  //             'TG035',
-  //             'Invalid rule',
-  //             key,
-  //             token,
-  //           );
-  //         }
-  //       }
+                case 'LIKE_START':
+                    return field.startsWith(searchValue);
+                
+                case 'LIKE_END':
+                    return field.endsWith(searchValue);
 
-  //       if (searchObj && Object.keys(searchObj).length > 0) {
-  //         for (var x = 0; x < data.length; x++) {
-  //           var s = 0;
-  //           for (var q = 0; q < searchkey.length; q++) {
-  //             if (data[x][searchkey[q]] == searchval[q]) {               
-  //               s++;               
-  //             }
-  //           }           
-  //           if (s == searchkey.length) searcharr.push(data[x]);
-  //         }
-  //         return await this.filterpagination(start, end, searcharr);
-  //       }        
-  //       return await this.filterpagination(start, end, data);
-  //     }
-  //   } catch (err) {
-  //     await this.commonService.errorLog(
-  //       'Technical',
-  //       'AK',
-  //       'Fatal',
-  //       'TG036',
-  //       `Error in pagination:${err.message}`,
-  //       key,
-  //       token,
-  //     );
-  //   }
-  // }
+                case 'BETWEEN':
 
-   async getpagination(
+                    if (value == null || value2 == null) {
+                      return false;
+                    }                    
+                    return fieldValue >= value &&
+                        fieldValue <= value2;
+                
+
+                case 'IS NULL':
+                    return fieldValue == null;
+
+                case 'IS NOT NULL':
+                    return fieldValue != null;
+
+                default:
+                    return true;
+            }
+        });
+    });
+  }
+
+  async getpagination(
     key: any,
     page,
     count,
@@ -1156,16 +1103,7 @@ getConfig(): FusionAuthConfig {
       }
 
       // ================= SEARCH =================
-      if (searchObj && Object.keys(searchObj).length > 0) {
-         //   finalData = finalData.filter((item) =>
-      //   Object.entries(searchObj).every(([key, value]) =>
-      //     Array.isArray(value)
-      //       ? value.includes(item[key])
-      //       : item[key] == value
-      //   )
-        // );
-      
-       // ================= EXACTSEARCH =================
+      if (searchObj && !Array.isArray(searchObj) && Object.keys(searchObj).length > 0) { 
         finalData = finalData.filter((item) =>
           Object.entries(searchObj).every(([key, value]) => {
           const itemVal = item[key];
@@ -1185,6 +1123,8 @@ getConfig(): FusionAuthConfig {
           return itemVal == value;
         })
       );
+      }else if(Array.isArray(searchObj) && searchObj?.length>0){                                    
+        finalData = await this.applyFilters(finalData, searchObj)                                
       }
 
       // ================= PAGINATION =================
@@ -1368,7 +1308,7 @@ getConfig(): FusionAuthConfig {
       if(UFS.type==="Canvas"){
         continue;
       }
-      if(UFS.groupType == 'group'|| UFS?.groupType=="subscreen" || UFS?.groupType=="artifactgroup"  || UFS.type === 'tab_group' || UFS.type === 'stepper_group' || UFS.type === "stepper_header" || UFS.groupType == 'table' || UFS.type === 'tab_header' || UFS.groupType == 'dynamictable' || UFS.groupType == 'dynamicactions'){
+      if(UFS.groupType == 'group'|| UFS?.groupType=="subscreen" || UFS?.groupType=="artifactgroup"  || UFS.type === 'tab_group' || UFS.type === 'stepper_group' || UFS.type === "stepper_header" || UFS.groupType == 'table' || UFS.type === 'tab_header' || UFS.groupType == 'dynamictable' || UFS.groupType == 'dynamicactions' || UFS.groupType == 'grouparray'){
         const isTable = UFS.groupType === 'table';
         const result = await this.Orchestration(key, UFS.id, null, token, isTable, accessProfile, UO, UFSData, NDPData);
         groupData[UFS.id] = result;
@@ -2642,15 +2582,36 @@ getConfig(): FusionAuthConfig {
           );
           const POdata = POdataKey;
           // return POdata
-          if (POdata) {
+           if (POdata) {
             if (POdata?.mappedData?.artifact?.node?.length) {
               for (let i = 0; i < POdata.mappedData.artifact.node.length; i++) {
                 if (POdata.mappedData.artifact.node[i].nodeId == findingkey) {
                   if (POdata.mappedData.artifact.node[i].ifo) {
                     let filterItems: any = {};
-                    if("_groupArrays_" in formData){
-                      filterItems=[]
+                    let groupArraysData: any = {};
+                    for (
+                      let j = 0;
+                      j < POdata.mappedData.artifact.node[i].ifo.length;
+                      j++
+                    ) {
+                      let NodeId: any =
+                        POdata.mappedData.artifact.node[i].ifo[j].nodeId.split(
+                          '.',
+                        )[0];
+                      if (NodeId == controlId) {
+                        let nodeName: string =
+                          POdata.mappedData.artifact.node[i].ifo[
+                            j
+                          ].name.toLocaleLowerCase();
+                        if (formData[nodeName] != undefined) {
+                          filterItems[nodeName] = formData[nodeName];
+                        } else {
+                          filterItems[nodeName] = '';
+                        }
+                        
+                      }
                     }
+
                     for (
                       let j = 0;
                       j < POdata.mappedData.artifact.node[i].ifo.length;
@@ -2662,28 +2623,23 @@ getConfig(): FusionAuthConfig {
                         )[0];
                       if (NodeId == controlId) {
                         if("_groupArrays_" in formData){
-                          formData[formData._groupArrays_].map((groupArrayItems:any,index:number)=>{
-
-                            let nodeName: string =
-                              POdata.mappedData.artifact.node[i].ifo[
-                                j
-                              ].name.toLocaleLowerCase();
-                            if (groupArrayItems[nodeName] != undefined) {
-                              filterItems[index] ={...filterItems[index]||{} ,[nodeName]:groupArrayItems[nodeName]};
-                            } 
-
-                          })
-                        }else{
-                          let nodeName: string =
-                            POdata.mappedData.artifact.node[i].ifo[
-                              j
-                            ].name;
-                          if (formData[nodeName] != undefined) {
-                            filterItems[nodeName] = formData[nodeName];
-                          } else {
-                            filterItems[nodeName] = '';
-                          }
+                          formData["_groupArrays_"].forEach((arrayKey: string) => {
+                            formData[arrayKey]?.map((groupArrayItems:any,index:number)=>{
+                              let nodeName: string =
+                                POdata.mappedData.artifact.node[i].ifo[
+                                  j
+                                ].name.toLocaleLowerCase();
+                              if (groupArrayItems[nodeName] != undefined) {
+                                if(!(arrayKey in groupArraysData))
+                                {
+                                  groupArraysData={...groupArraysData,[arrayKey]:[]}
+                                }
+                                groupArraysData[arrayKey][index] ={...groupArraysData[arrayKey][index]||{} ,[nodeName]:groupArrayItems[nodeName]};
+                              }
+                            })
+                          });
                         }
+                        
                       }
                     }
                     if('childTables' in formData)
@@ -2693,7 +2649,7 @@ getConfig(): FusionAuthConfig {
                       })
                       return filterItems;
                     }else
-                      return filterItems;
+                      return {...filterItems,...groupArraysData};
                   }
                 }
               }
@@ -4052,7 +4008,7 @@ getConfig(): FusionAuthConfig {
       }
 
       const payload: any = await this.jwt.decode(token);
-      if (!payload || !payload.client || !payload.type) {
+      if (!payload || !payload.tenant || !payload.type) {
         await this.commonService.errorLog(
           'Technical',
           'AK',
@@ -4165,13 +4121,13 @@ getConfig(): FusionAuthConfig {
         dap: filteredCombination[0]?.dap,
       };
       const payload = await this.jwt.decode(token);
-      const { type, client, loginId, isAppAdmin, userUniqueId, sid, userCode, tenantId } = payload;
-      const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${client}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
+      const { type, tenant: tenantFromToken, loginId, isAppAdmin, userUniqueId, sid, userCode, tenantId } = payload;
+      const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenantFromToken}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
 
       const updatedToken = await this.jwt.signAsync(
         {
           type,
-          client,
+          tenant,
           loginId,
           isAppAdmin,
           ag,
@@ -4355,7 +4311,7 @@ getConfig(): FusionAuthConfig {
   async getAccessTemplate(token: string) {
     try {
       const accountDetails = await this.MyAccountForClient(token, 's', true);
-      const { client, accessProfile } = accountDetails;
+      const { accessProfile } = accountDetails;
       const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
       const accessProfileList = await this.query(`select 
         opr_ap_id ,
@@ -4405,11 +4361,12 @@ getConfig(): FusionAuthConfig {
       const config = this.getConfig();
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
       let ApplicationTenantDetails : any
+      const fusionAuthTenantANDAppDetails = await this.getTenantAndApplicationFusionAuthIdSecret();
      
       // prepare the tenant id ,application id and secret from the client tpc
       const url = `${fusionAuthBaseUrl}/oauth2/token`;
 
-      if(tenantId){
+      if(tenantId !== tenant){
         ApplicationTenantDetails = await this.getApplicationTenantFusionauthDetails(tenantId)
       }
 
@@ -4422,10 +4379,10 @@ getConfig(): FusionAuthConfig {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           Authorization:
-            tenantId ? 
+            tenantId !== tenant ? 
             'Basic ' + btoa(ApplicationTenantDetails.fusionAuthApplicationTenantId + ':' + ApplicationTenantDetails.fusionAuthApplicationTenantClientSecret) : 
-            'Basic ' + btoa(fusionAuthApplicationId + ':' + fusionAuthAppClientSecret),
-          'X-FusionAuth-TenantId': tenantId ? ApplicationTenantDetails.applicationTenantUniqueId : fusionAuthTenantId,
+            'Basic ' + btoa(fusionAuthTenantANDAppDetails.applicationId + ':' + fusionAuthTenantANDAppDetails.fusionAuthAppClientSecret),
+          'X-FusionAuth-TenantId': tenantId !== tenant ? ApplicationTenantDetails.applicationTenantUniqueId : fusionAuthTenantANDAppDetails.tenantUniqueId,
         },
         body: params.toString(),
       });
@@ -4560,7 +4517,7 @@ getConfig(): FusionAuthConfig {
           const reqiredUser = userList.find(
             (user) => user.loginId === payload.loginId,
           );
-          return { ...reqiredUser, client: tenant };
+          return { ...reqiredUser, tenant: tenant };
         }
       } catch (error) {
         await this.commonService.errorLog(
@@ -4733,7 +4690,7 @@ getConfig(): FusionAuthConfig {
       if (timegap < 300) {
         updatedToken = await this.jwt.signAsync(
           {
-            client: payload.client,
+            tenant: payload.client,
             loginId: payload.loginId,
             type: payload.type,
             isAppAdmin: payload.isAppAdmin,
@@ -4865,7 +4822,7 @@ getConfig(): FusionAuthConfig {
 
       const tenantUser = await this.query(query, values);
 
-       let tenantId = app_tenant;      
+       let tenantId = app_tenant ? app_tenant : tenant;      
 
       // if(app_tenant){
       //   // check user have app_sub_tenant access to work on it
@@ -4941,7 +4898,7 @@ getConfig(): FusionAuthConfig {
         let token = await this.jwt.signAsync(
           {
             loginId: loggedInUser.loginId,
-            client: tenant,
+            tenant: tenant,
             type: 't',
             ag,
             app,
@@ -4963,7 +4920,7 @@ getConfig(): FusionAuthConfig {
           refreshTokenId = fusionAuthLoginResponse?.refresh_token_id;
         } else {
           refreshToken = await this.jwt.signAsync(
-            { loginId: loggedInUser.loginId, client: tenant, type: 't' },
+            { loginId: loggedInUser.loginId, tenant: tenant, type: 't' },
             { secret: auth_secret, expiresIn: refreshTokenExpiryTime as any },
           );
         }
@@ -5058,7 +5015,7 @@ getConfig(): FusionAuthConfig {
                 {
                   loginId: loggedInUser.loginId,
                   isAppAdmin: loggedInUser?.isAppAdmin ?? undefined,
-                  client: tenant,
+                  tenant: tenant,
                   type: 't',
                   ag,
                   app,
@@ -5202,6 +5159,7 @@ getConfig(): FusionAuthConfig {
       const config = this.getConfig();
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
       let ApplicationTenantDetails : any
+      const fusionAuthTenantANDAppDetails = await this.getTenantAndApplicationFusionAuthIdSecret();
 
       if(app_tenant){
         ApplicationTenantDetails = await this.getApplicationTenantFusionauthDetails(app_tenant)
@@ -5213,7 +5171,7 @@ getConfig(): FusionAuthConfig {
       params.append('username', username);
       params.append('password', password);
       params.append('scope', 'offline_access');
-      params.append('client_id', app_tenant ? ApplicationTenantDetails.fusionAuthApplicationTenantId : fusionAuthApplicationId);
+      params.append('client_id', app_tenant ? ApplicationTenantDetails.fusionAuthApplicationTenantId : fusionAuthTenantANDAppDetails.applicationId);
 
       const res = await fetch(url, {
         method: 'POST',
@@ -5222,8 +5180,8 @@ getConfig(): FusionAuthConfig {
           Authorization:
           app_tenant ? 
             'Basic ' + btoa(ApplicationTenantDetails.fusionAuthApplicationTenantId + ':' + ApplicationTenantDetails.fusionAuthApplicationTenantClientSecret) : 
-            'Basic ' + btoa(fusionAuthApplicationId + ':' + fusionAuthAppClientSecret),
-          'X-FusionAuth-TenantId': app_tenant ? ApplicationTenantDetails.applicationTenantUniqueId : fusionAuthTenantId,
+            'Basic ' + btoa(fusionAuthTenantANDAppDetails.applicationId + ':' + fusionAuthTenantANDAppDetails.fusionAuthAppClientSecret),
+          'X-FusionAuth-TenantId': app_tenant ? ApplicationTenantDetails.applicationTenantUniqueId : fusionAuthTenantANDAppDetails.tenantUniqueId,
         },
         body: params.toString(),
       });
@@ -5646,6 +5604,7 @@ getConfig(): FusionAuthConfig {
       const fusionAuthApiKey = config.fusionAuthApiKey;
       const auth_secret = config.authSecret
       const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
+      const fusionAuthTenantANDAppDetails = await this.getTenantAndApplicationFusionAuthIdSecret();
 
       if (
         !data ||
@@ -5702,33 +5661,33 @@ getConfig(): FusionAuthConfig {
 
       if (
         defaultAuth === 'fusionauth' &&
-        fusionAuthTenantId &&
+        fusionAuthTenantANDAppDetails.tenantUniqueId &&
         data?.userUniqueId &&
-        fusionAuthApplicationId
+        fusionAuthTenantANDAppDetails.applicationId
       ) {
         dataExistOrNot = await FusionAuthUserApplicatonGet(
           fusionAuthBaseUrl,
           fusionAuthApiKey,
-          fusionAuthTenantId,
+          fusionAuthTenantANDAppDetails.tenantUniqueId,
           data?.userUniqueId,
-          fusionAuthApplicationId,
+          fusionAuthTenantANDAppDetails.applicationId,
         );
       }
 
       if (!userResponseFromDB || !userResponseFromDB?.length) {
         if (
           defaultAuth === 'fusionauth' &&
-          fusionAuthTenantId &&
+          fusionAuthTenantANDAppDetails.tenantUniqueId &&
           data?.userUniqueId &&
-          fusionAuthApplicationId
+          fusionAuthTenantANDAppDetails.applicationId
         ) {
           if (dataExistOrNot?.isNotExist) {
             await FusionAuthApplicatonAssign(
               fusionAuthBaseUrl,
               fusionAuthApiKey,
-              fusionAuthTenantId,
+              fusionAuthTenantANDAppDetails.tenantUniqueId,
               data?.userUniqueId,
-              fusionAuthApplicationId,
+              fusionAuthTenantANDAppDetails.applicationId,
               data.firstName,
               data.lastName,
               data.loginId,
@@ -5757,17 +5716,17 @@ getConfig(): FusionAuthConfig {
         if (userExist) {
           if (
             defaultAuth === 'fusionauth' &&
-            fusionAuthTenantId &&
+            fusionAuthTenantANDAppDetails.tenantUniqueId &&
             data?.userUniqueId &&
-            fusionAuthApplicationId
+            fusionAuthTenantANDAppDetails.applicationId
           ) {
             if (dataExistOrNot?.isNotExist) {
               await FusionAuthApplicatonAssign(
                 fusionAuthBaseUrl,
                 fusionAuthApiKey,
-                fusionAuthTenantId,
+                fusionAuthTenantANDAppDetails.tenantUniqueId,
                 data?.userUniqueId,
-                fusionAuthApplicationId,
+                fusionAuthTenantANDAppDetails.applicationId,
                 data.firstName,
                 data.lastName,
                 data.loginId,
@@ -5779,9 +5738,9 @@ getConfig(): FusionAuthConfig {
               await FusionAuthApplicatonAssign(
                 fusionAuthBaseUrl,
                 fusionAuthApiKey,
-                fusionAuthTenantId,
+                fusionAuthTenantANDAppDetails.tenantUniqueId,
                 data?.userUniqueId,
-                fusionAuthApplicationId,
+                fusionAuthTenantANDAppDetails.applicationId,
                 data.firstName,
                 data.lastName,
                 data.loginId,
@@ -5835,17 +5794,17 @@ getConfig(): FusionAuthConfig {
         } else {
           if (
             defaultAuth === 'fusionauth' &&
-            fusionAuthTenantId &&
+            fusionAuthTenantANDAppDetails.tenantUniqueId &&
             data?.userUniqueId &&
-            fusionAuthApplicationId
+            fusionAuthTenantANDAppDetails.applicationId
           ) {
             if (dataExistOrNot?.isNotExist) {
               await FusionAuthApplicatonAssign(
                 fusionAuthBaseUrl,
                 fusionAuthApiKey,
-                fusionAuthTenantId,
+                fusionAuthTenantANDAppDetails.tenantUniqueId,
                 data?.userUniqueId,
-                fusionAuthApplicationId,
+                fusionAuthTenantANDAppDetails.applicationId,
                 data.firstName,
                 data.lastName,
                 data.loginId,
@@ -6223,6 +6182,7 @@ getConfig(): FusionAuthConfig {
       }
       let ApplicationTenantDetails : any
       const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
+      const fusionAuthTenantANDAppDetails = await this.getTenantAndApplicationFusionAuthIdSecret();
 
       let query = `SELECT
             *
@@ -6257,7 +6217,7 @@ getConfig(): FusionAuthConfig {
           ApplicationTenantDetails = await this.getApplicationTenantFusionauthDetails(app_tenant)
         }
         
-        const fusionAuthTenantId = app_tenant ? ApplicationTenantDetails?.applicationTenantUniqueId : process.env.FUSIONAUTH_TENANTID;
+        const fusionAuthTenantId = app_tenant ? ApplicationTenantDetails?.applicationTenantUniqueId : fusionAuthTenantANDAppDetails.tenantUniqueId;
         const uniqueId = tenantUser.user_unique_id;
 
         if (!fusionAuthTenantId || !uniqueId) {
@@ -8730,7 +8690,7 @@ getConfig(): FusionAuthConfig {
         secret: auth_secret,
       });
       const {
-        client: tenant,
+        tenant: tenant,
         loginId,
         ag,
         app: currentApp,
@@ -8889,6 +8849,7 @@ getConfig(): FusionAuthConfig {
       const config = this.getConfig();
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
       const fusionAuthApiKey = config.fusionAuthApiKey;
+      const fusionAuthTenantANDAppDetails = await this.getTenantAndApplicationFusionAuthIdSecret();
       let tokenDecode = await this.jwtService.decodeToken(token);
       let tenantCode = tenant;
       let existUser: any[] = await this.getTenantUser();
@@ -8929,11 +8890,11 @@ getConfig(): FusionAuthConfig {
       }
 
       // create user in fusion auth
-       if (defaultAuth === 'fusionauth' && fusionAuthTenantId) {
+       if (defaultAuth === 'fusionauth' && fusionAuthTenantANDAppDetails.tenantUniqueId) {
           await FusionAuthUserCreation(
             fusionAuthBaseUrl,
             fusionAuthApiKey,
-            fusionAuthTenantId,
+            fusionAuthTenantANDAppDetails.tenantUniqueId,
             tam_tenant_user_payload.user_unique_id,
             tam_tenant_user_payload.first_name,
             tam_tenant_user_payload.last_name,

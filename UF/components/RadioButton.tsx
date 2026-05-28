@@ -7,7 +7,7 @@ import {
   HeaderPosition,
   TooltipProps as TooltipPropsType
 } from '@/types/global'
-import { getFontSizeClass, getBorderRadiusClass } from '@/app/utils/branding'
+import { getBorderRadiusClass } from '@/app/utils/branding'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 interface RadioButtonItem {
   value: string
@@ -83,8 +83,6 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
     }
   }
   const isDark = theme === 'dark' || theme === 'dark-hc'
-  const fontSizeClass = getFontSizeClass(branding.fontSize)
-
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex?.slice(1, 3), 16)
@@ -139,7 +137,6 @@ export const RadioButton: React.FC<RadioButtonProps> = ({
               px-4 py-2 ${getContentAlignClasses()}
               text-ellipsis
               whitespace-nowrap transition-all [border-radius:var(--border-radius)]
-              ${fontSizeClass}
               ${disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}
               ${getFillClasses()}
               ${

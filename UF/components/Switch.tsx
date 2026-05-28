@@ -7,7 +7,6 @@ import {
   HeaderPosition,
   TooltipProps as TooltipPropsType
 } from '@/types/global'
-import { getFontSizeClass } from '@/app/utils/branding'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 
 type ContentAlign = 'left' | 'center' | 'right'
@@ -43,7 +42,7 @@ export const Switch: React.FC<SwitchProps> = ({
   fillContainer = true,
   contentAlign = 'center'
 }) => {
-  const { theme, direction, branding } = useGlobal()
+  const { theme, direction } = useGlobal()
 
   const getFillClasses = () => {
     if (!fillContainer) return ''
@@ -84,12 +83,11 @@ export const Switch: React.FC<SwitchProps> = ({
   }
 
   const getTranslateClass = () => {
-    return checked ? 'translate-x-[calc(100%-0.125rem)]' : 'translate-x-0.5'
+    return checked ? 'translate-x-[calc(100%_+_6px)]' : 'translate-x-0.5'
   }
   const switchElement = (
     <label
-      className={` 
-        ${getFontSizeClass(branding.fontSize)}
+      className={`
         ${fillContainer ? 'flex' : 'inline-flex'} items-center 
         ${getContentAlignClasses()} 
         ${disabled ? 'cursor-not-allowed' : 'cursor-pointer'} 

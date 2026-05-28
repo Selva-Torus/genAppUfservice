@@ -8,7 +8,6 @@ import * as ReactIconsMd from "react-icons/md";
 import * as ReactIconsIo from "react-icons/io";
 import * as ReactIconsFa from "react-icons/fa";
 import * as ReactIconsIo5 from "react-icons/io5";
-import { getFontSizeClass } from "@/app/utils/branding";
 import * as ReactIconsRX  from "react-icons/rx";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
@@ -53,7 +52,7 @@ export const Icon: React.FC<IconProps> = ({
   fillContainer = true,
   contentAlign = "center",
 }) => {
-  const { theme,branding } = useGlobal();
+  const { theme } = useGlobal();
   const isDark = theme === "dark" || theme === "dark-hc";
 
   const getFillClasses = () => {
@@ -72,34 +71,22 @@ export const Icon: React.FC<IconProps> = ({
         return "justify-center items-center";
     }
   };
-  const getIconSize = () => {
-    if (fillContainer) {
-      // When fillContainer is true, scale icon with branding fontSize
-      const baseFontSize = getFontSizeClass(branding.fontSize);
-      switch (baseFontSize) {
-        case "text-sm":
-          return 22;
-        case "text-base":
-          return 30;
-        case "text-lg":
-          return 38;
-        case "text-xl":
-          return 46;
-      }
-    }
-  };
-  
   const IconComponent = getIconComponent(data);
-  
+
   const iconElement = IconComponent ? (
     <div
       className={`
         ${fillContainer ? "w-full h-full" : "inline-flex"}
         flex items-center justify-center
       `}
+      style={!size && !fillContainer ? { fontSize: "var(--font-size-base)" } : undefined}
       onClick={onClick}
     >
-      <IconComponent size={size || getIconSize()} className="w-full h-full"/>
+      <IconComponent
+        size={size}
+        className={fillContainer ? "w-full h-full" : ""}
+        style={!size && !fillContainer ? { width: "1em", height: "1em" } : undefined}
+      />
     </div>
   ) : (
     <div

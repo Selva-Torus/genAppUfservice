@@ -6,7 +6,6 @@ import {
   HeaderPosition,
   TooltipProps as TooltipPropsType
 } from '@/types/global'
-import { getFontSizeClass } from '@/app/utils/branding'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
 
 interface TimeLineProps {
@@ -130,7 +129,7 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                 <>
                   {/* Horizontal Layout */}
                   <time
-                    className={`mb-4 w-full break-all px-1 text-center text-lg sm:text-sm ${
+                    className={`mb-4 w-full break-all px-1 text-center  ${
                       isDark ? 'text-gray-200' : 'text-gray-600'
                     }`}
                   >
@@ -162,7 +161,7 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                   <div className='flex w-full flex-col gap-1 break-all px-1 text-center'>
                     <Text
                       fillContainer={false}
-                      className={`text-lg sm:text-sm ${
+                      className={` ${
                         isDark ? 'text-gray-200' : 'text-gray-600'
                       }`}
                     >
@@ -175,7 +174,7 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                   {/* Vertical Layout */}
                   <div className='min-w-0 basis-1/3 p-2 text-center'>
                     <time
-                      className={`break-all text-lg sm:text-sm ${
+                      className={`break-all  ${
                         isDark ? 'text-gray-200' : 'text-gray-700'
                       }`}
                     >
@@ -210,7 +209,9 @@ export const TimeLine: React.FC<TimeLineProps> = ({
                       isDark ? 'text-gray-200' : 'text-gray-700'
                     }`}
                   >
-                    <Text fillContainer={false} className='text-lg sm:text-sm'>{step[title]}</Text>
+                    <Text fillContainer={false} className=''>
+                      {step[title]}
+                      </Text>
                     
                   </div>
                 </>

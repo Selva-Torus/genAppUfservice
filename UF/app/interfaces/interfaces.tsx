@@ -134,7 +134,7 @@ export interface TopContentProps {
   }
 
 export interface api_signinDto {
-    client: string;
+    tenant: string;
     username: string;
     password: string;
     key?:string;

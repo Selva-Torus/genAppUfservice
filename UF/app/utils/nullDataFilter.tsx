@@ -15,6 +15,12 @@ const recursiveNullFilter = (data: any): any => {
     return filteredArray.length > 0 ? filteredArray : undefined;
   }
 
+  // Handle File/Blob instances - return as-is so native properties are preserved
+  if ((typeof File !== 'undefined' && data instanceof File) ||
+      (typeof Blob !== 'undefined' && data instanceof Blob)) {
+    return data;
+  }
+
   // Handle objects
   if (typeof data === 'object') {
     const filteredData: any = {};

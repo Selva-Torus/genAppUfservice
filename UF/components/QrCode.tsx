@@ -4,7 +4,6 @@ import React, { useEffect, useRef } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 interface QrCodeProps {
@@ -32,7 +31,7 @@ export const QrCode: React.FC<QrCodeProps> = ({
   headerPosition = "top",
   className = "",
 }) => {
-  const { theme, branding } = useGlobal();
+  const { theme } = useGlobal();
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const finalSize = size || width || height || 200;
@@ -77,7 +76,7 @@ export const QrCode: React.FC<QrCodeProps> = ({
   const qrCodeElement = (
     <div className={`flex flex-col items-center ${className}`}>
       {title && (
-        <h3 className={`mb-2 ${getFontSizeClass(branding.fontSize)} font-semibold ${
+        <h3 className={`mb-2 font-semibold ${
           isDark ? "text-gray-200" : "text-gray-700"
         }`}>
           {title}

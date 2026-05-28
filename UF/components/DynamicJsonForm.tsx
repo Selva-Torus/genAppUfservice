@@ -5,7 +5,7 @@ import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { Button } from "./Button";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
+import { getBorderRadiusClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 import DocumentUploader from './DocumentUploader'
 import * as v from 'valibot';
@@ -519,7 +519,6 @@ export default function DynamicContentFields({
 
     const inputClassName = `
       w-full px-3 py-2
-      ${getFontSizeClass(branding.fontSize)}
       ${getBorderRadiusClass(branding.borderRadius)}
       ${getTextAlignClasses()}
       border-2 transition-all
@@ -623,7 +622,7 @@ export default function DynamicContentFields({
                   borderColor: isDark ? '#6B7280' : '#E5E7EB',
                 }}
               ></div>
-              <span className={`ms-2 ${getFontSizeClass(branding.fontSize)} ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
+              <span className={`ms-2  ${isDark ? 'text-gray-300' : 'text-gray-600'}`}>
                 {value === true ? "Yes" : "No"}
               </span>
             </label>
@@ -747,7 +746,7 @@ export default function DynamicContentFields({
                   onWheel={handleListWheel}
                 >
                   <div
-                    className={`px-3 py-2 cursor-pointer ${getFontSizeClass(branding.fontSize)} ${isDark ? 'text-gray-500 hover:bg-gray-700' : 'text-gray-400 hover:bg-gray-50'}`}
+                    className={`px-3 py-2 cursor-pointer  ${isDark ? 'text-gray-500 hover:bg-gray-700' : 'text-gray-400 hover:bg-gray-50'}`}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => { handleChange(''); setOpenDropdownKey(null); }}
                   >
@@ -756,7 +755,7 @@ export default function DynamicContentFields({
                   {optionsArr.map((option, idx) => (
                     <div
                       key={`${option}-${idx}`}
-                      className={`px-3 py-2 cursor-pointer ${getFontSizeClass(branding.fontSize)} ${
+                      className={`px-3 py-2 cursor-pointer  ${
                         option === displayValue
                           ? isDark ? 'bg-gray-600 text-white' : 'bg-blue-50 text-blue-700'
                           : isDark ? 'text-gray-200 hover:bg-gray-700' : 'text-gray-900 hover:bg-gray-50'
@@ -771,7 +770,7 @@ export default function DynamicContentFields({
                     </div>
                   ))}
                   {isCurrentlyLoading && (
-                    <div className={`px-3 py-2 text-center ${getFontSizeClass(branding.fontSize)} ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                    <div className={`px-3 py-2 text-center ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
                       Loading...
                     </div>
                   )}
@@ -961,7 +960,7 @@ export default function DynamicContentFields({
                 onClick={() => toggleSection(key)}
                 className={`w-full px-4 py-3 flex items-center justify-between text-left transition-colors ${
                   getBorderRadiusClass(branding.borderRadius)
-                } ${getFontSizeClass(branding.fontSize)} ${
+                } ${
                   isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
                 }`}
                 style={{
@@ -1005,7 +1004,7 @@ export default function DynamicContentFields({
                           <div key={nestedKey} className="space-y-1.5">
                             <label
                               htmlFor={`field-${key}-${nestedKey}`}
-                              className={`block ${getFontSizeClass(branding.fontSize)} font-medium ${
+                              className={`block  font-medium ${
                                 isDark ? 'text-gray-300' : 'text-gray-600'
                               }`}
                               style={{ fontFamily: 'var(--font-body)' }}
@@ -1035,7 +1034,7 @@ export default function DynamicContentFields({
                             onClick={() => toggleSection(`${key}.${nestedKey}`)}
                             className={`w-full px-4 py-2 flex items-center justify-between text-left transition-colors ${
                               getBorderRadiusClass(branding.borderRadius)
-                            } ${getFontSizeClass(branding.fontSize)} ${
+                            }  ${
                               isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                             }`}
                             style={{ fontFamily: 'var(--font-body)' }}
@@ -1071,7 +1070,7 @@ export default function DynamicContentFields({
                                     >
                                       <div className="mb-2">
                                         <span
-                                          className={`${getFontSizeClass(branding.fontSize)} font-medium ${
+                                          className={` font-medium ${
                                             isDark ? 'text-gray-300' : 'text-gray-600'
                                           }`}
                                           style={{ fontFamily: 'var(--font-body)' }}
@@ -1087,7 +1086,7 @@ export default function DynamicContentFields({
                                             <div key={fieldKey} className="space-y-1.5">
                                               <label
                                                 htmlFor={`field-${key}.${nestedKey}__${index}-${fieldKey}`}
-                                                className={`block ${getFontSizeClass(branding.fontSize)} font-medium ${
+                                                className={`block  font-medium ${
                                                   isDark ? 'text-gray-300' : 'text-gray-600'
                                                 }`}
                                                 style={{ fontFamily: 'var(--font-body)' }}
@@ -1131,7 +1130,7 @@ export default function DynamicContentFields({
                             onClick={() => toggleSection(`${key}.${nestedKey}`)}
                             className={`w-full px-4 py-2 flex items-center justify-between text-left transition-colors ${
                               getBorderRadiusClass(branding.borderRadius)
-                            } ${getFontSizeClass(branding.fontSize)} ${
+                            }  ${
                               isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
                             }`}
                             style={{ fontFamily: 'var(--font-body)' }}
@@ -1165,7 +1164,7 @@ export default function DynamicContentFields({
                                   >
                                     <div className="flex items-center justify-between mb-2">
                                       <span
-                                        className={`${getFontSizeClass(branding.fontSize)} font-medium ${
+                                        className={` font-medium ${
                                           isDark ? 'text-gray-300' : 'text-gray-600'
                                         }`}
                                         style={{ fontFamily: 'var(--font-body)' }}
@@ -1196,7 +1195,7 @@ export default function DynamicContentFields({
                                           <div key={fieldKey} className="space-y-1.5">
                                             <label
                                               htmlFor={`field-${key}.${nestedKey}__${index}-${fieldKey}`}
-                                              className={`block ${getFontSizeClass(branding.fontSize)} font-medium ${
+                                              className={`block  font-medium ${
                                                 isDark ? 'text-gray-300' : 'text-gray-600'
                                               }`}
                                               style={{ fontFamily: 'var(--font-body)' }}
@@ -1219,7 +1218,7 @@ export default function DynamicContentFields({
                                 <button
                                   onClick={() => addNestedArrayItem(key, nestedKey, nestedConfig)}
                                   className={`w-full py-2 px-4 border-2 border-dashed ${getBorderRadiusClass(branding.borderRadius)} transition-colors ${
-                                    getFontSizeClass(branding.fontSize)
+                                    ""
                                   } ${
                                     isDark
                                       ? 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300'
@@ -1254,7 +1253,7 @@ export default function DynamicContentFields({
                 onClick={() => toggleSection(key)}
                 className={`w-full px-4 py-3 flex items-center justify-between text-left transition-colors ${
                   getBorderRadiusClass(branding.borderRadius)
-                } ${getFontSizeClass(branding.fontSize)} ${
+                }  ${
                   isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
                 }`}
                 style={{ fontFamily: 'var(--font-body)' }}
@@ -1290,7 +1289,7 @@ export default function DynamicContentFields({
                         >
                           <div className="mb-3">
                             <span
-                              className={`${getFontSizeClass(branding.fontSize)} font-medium ${
+                              className={` font-medium ${
                                 isDark ? 'text-gray-300' : 'text-gray-600'
                               }`}
                               style={{ fontFamily: 'var(--font-body)' }}
@@ -1306,7 +1305,7 @@ export default function DynamicContentFields({
                                 <div key={fieldKey} className="space-y-1.5">
                                   <label
                                     htmlFor={`field-${key}__${index}-${fieldKey}`}
-                                    className={`block ${getFontSizeClass(branding.fontSize)} font-medium ${
+                                    className={`block  font-medium ${
                                       isDark ? 'text-gray-300' : 'text-gray-600'
                                     }`}
                                     style={{ fontFamily: 'var(--font-body)' }}
@@ -1347,7 +1346,7 @@ export default function DynamicContentFields({
                 onClick={() => toggleSection(key)}
                 className={`w-full px-4 py-3 flex items-center justify-between text-left transition-colors ${
                   getBorderRadiusClass(branding.borderRadius)
-                } ${getFontSizeClass(branding.fontSize)} ${
+                }  ${
                   isDark ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
                 }`}
                 style={{ fontFamily: 'var(--font-body)' }}
@@ -1383,7 +1382,7 @@ export default function DynamicContentFields({
                       >
                         <div className="flex items-center justify-between mb-3">
                           <span
-                            className={`${getFontSizeClass(branding.fontSize)} font-medium ${
+                            className={` font-medium ${
                               isDark ? 'text-gray-300' : 'text-gray-600'
                             }`}
                             style={{ fontFamily: 'var(--font-body)' }}
@@ -1414,7 +1413,7 @@ export default function DynamicContentFields({
                               <div key={fieldKey} className="space-y-1.5">
                                 <label
                                   htmlFor={`field-${key}__${index}-${fieldKey}`}
-                                  className={`block ${getFontSizeClass(branding.fontSize)} font-medium ${
+                                  className={`block  font-medium ${
                                     isDark ? 'text-gray-300' : 'text-gray-600'
                                   }`}
                                   style={{ fontFamily: 'var(--font-body)' }}
@@ -1439,7 +1438,7 @@ export default function DynamicContentFields({
                     <button
                       onClick={() => addArrayItem(key, config)}
                       className={`w-full py-2 px-4 border-2 border-dashed ${getBorderRadiusClass(branding.borderRadius)} transition-colors ${
-                        getFontSizeClass(branding.fontSize)
+                        ""
                       } ${
                         isDark
                           ? 'border-gray-600 text-gray-400 hover:border-gray-500 hover:text-gray-300'
@@ -1466,7 +1465,7 @@ export default function DynamicContentFields({
               <div className="space-y-1.5">
                 <label
                   htmlFor={`field-${key}`}
-                  className={`block ${getFontSizeClass(branding.fontSize)} font-medium ${
+                  className={`block  font-medium ${
                     isDark ? 'text-gray-300' : 'text-gray-600'
                   }`}
                   style={{ fontFamily: 'var(--font-body)' }}

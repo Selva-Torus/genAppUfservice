@@ -8,7 +8,6 @@ import {
   ComponentEvents,
 } from "@/types/global";
 import {
-  getFontSizeClass,
   getBorderRadiusClass,
 } from "@/app/utils/branding";
 import { IoChevronBackOutline, IoChevronForward } from "react-icons/io5";
@@ -215,12 +214,10 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({
 
   const getPopupClasses = () => {
     const borderRadius = getBorderRadiusClass(branding.borderRadius);
-    const fontSize = getFontSizeClass(branding.fontSize);
 
     return `
       absolute z-50 mt-2 min-w-[160px] shadow-lg border rounded-md
       ${borderRadius}
-      ${fontSize}
       ${isDark ? "border-gray-600" : "border-gray-300"}
       ${isHighContrast ? "border-2" : "border"}
       ${popupProps.className || ""}

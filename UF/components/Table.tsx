@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Icon } from "./Icon";
-import { getFontSizeClass, getBorderRadiusClass } from"@/app/utils/branding";
+import { getBorderRadiusClass } from "@/app/utils/branding";
 import { BiSort } from "react-icons/bi";
 import { twMerge } from "tailwind-merge";
 import { useTheme } from "@/hooks/useTheme";
@@ -51,6 +51,7 @@ interface ColumnType {
   colourIndicator?: unknown[];
   type?: string;
   controlType?: string;
+  align?: 'left' | 'center' | 'right';
 }
 
 interface TableProps {
@@ -283,14 +284,18 @@ const sortedData = sortColumn
     }
   };
   const convertToformat=(data:any)=>{
-    function isValidDate(dateString:any) {
-      return !isNaN(Date.parse(dateString));
-    }
-    if(isValidDate(data))
-      return formatDateDisplay(data?.split("T")?.at(0))
+    const isISODate = typeof data === 'string' && /^\d{4}-\d{2}-\d{2}(T|$)/.test(data);
+    if(isISODate)
+      return formatDateDisplay(data.split("T")[0])
 
     return data
   }
+
+  const getAlignClass = (align?: 'left' | 'center' | 'right') => {
+    if (align === 'center') return 'text-center';
+    if (align === 'right') return 'text-right';
+    return 'text-left';
+  };
 
   const tableElement = (
      <div className={`w-full h-full flex flex-col ${edgePadding ? "" : ""} ${className}`}>
@@ -383,7 +388,7 @@ const sortedData = sortColumn
                       accentColor: branding.brandColor,
                     }}
                   />
-                  <span className={`${getFontSizeClass(branding.fontSize)} ${isDark ? "text-gray-200" : "text-gray-700"}`}>
+                  <span className={` ${isDark ? "text-gray-200" : "text-gray-700"}`}>
                     {column.name}
                   </span>
                 </label>
@@ -396,7 +401,6 @@ const sortedData = sortColumn
                 className={`
                   px-4 py-2
                   ${getBorderRadiusClass(branding.borderRadius)}
-                  ${getFontSizeClass(branding.fontSize)}
                   font-medium
                   transition-all duration-200
                   text-white
@@ -459,7 +463,6 @@ const sortedData = sortColumn
                     px-2 py-3
                     w-12
                     text-left
-                    ${getFontSizeClass(branding.fontSize)}
                     font-semibold
                     ${tableSorting ? "cursor-pointer hover:bg-opacity-80" : ""}
                     ${isDark ? "text-gray-200" : "text-gray-700"}
@@ -477,8 +480,7 @@ const sortedData = sortColumn
                   onClick={() => handleSort(column.id)}
                   className={`
                     px-4 py-3
-                    text-left
-                    ${getFontSizeClass(branding.fontSize)}
+                    ${getAlignClass(column.align)}
                     font-semibold
                     ${tableSorting ? "cursor-pointer hover:bg-opacity-80" : ""}
                     ${isDark ? "text-gray-200" : "text-gray-700"}
@@ -503,8 +505,7 @@ const sortedData = sortColumn
                   onClick={() => handleSort(column.id)}
                   className={`
                     px-4 py-3
-                    text-left
-                    ${getFontSizeClass(branding.fontSize)}
+                    ${getAlignClass(column.align)}
                     font-semibold
                     ${tableSorting ? "cursor-pointer hover:bg-opacity-80" : ""}
                     ${isDark ? "text-gray-200" : "text-gray-700"}
@@ -557,7 +558,7 @@ const sortedData = sortColumn
                       <div className="animate-spin flex items-center justify-center">
                         <Icon data="FaSpinner" size={32} />
                       </div>
-                      <span className={`${getFontSizeClass(branding.fontSize)} font-medium`}>
+                      <span className=" font-medium">
                         Loading...
                       </span>
                     </div>
@@ -570,7 +571,7 @@ const sortedData = sortColumn
                     className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                   >
                     <div className="flex flex-col items-center justify-center space-y-2">
-                      <span className={`${getFontSizeClass(branding.fontSize)} font-medium`}>
+                      <span className="font-medium">
                         {emptyMessage}
                       </span>
                     </div>
@@ -657,7 +658,7 @@ const sortedData = sortColumn
                             key={column.id}
                             className={`
                               px-4 py-3
-                              ${getFontSizeClass(branding.fontSize)}
+                              ${getAlignClass(column.align)}
                               ${isDark ? "text-gray-300" : "text-gray-700"}
                               ${isHyperLink ? "text-blue-500 underline" : ""}
                               ${wordWrap ? "break-words" : "whitespace-nowrap"}
@@ -692,8 +693,7 @@ const sortedData = sortColumn
       </div>
     </div>
   );
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
-  const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
+  const headerClasses = `font-semibold mb-2 ${
     isDark ? "text-gray-300" : "text-gray-700"
   }`;
 

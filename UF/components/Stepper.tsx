@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { GravityIcon } from "@/types/icons";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 import { Icon } from "./Icon";
 
@@ -60,7 +59,6 @@ export const Stepper: React.FC<StepperProps> = ({
     setActiveTab(id);
   };
 
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
   const isDark = theme === "dark" || theme === "dark-hc";
 
   const hexToRgba = (hex: string, alpha: number) => {
@@ -170,7 +168,7 @@ export const Stepper: React.FC<StepperProps> = ({
                 {/* Step label */}
                 <span
                   className={`
-                    ${fontSizeClass} whitespace-nowrap transition-all
+                    whitespace-nowrap transition-all
                     ${isActive
                       ? `font-semibold ${isDark ? "text-white" : "text-gray-900"}`
                       : `font-normal ${isDark ? "text-gray-500" : "text-gray-400"}`
@@ -181,7 +179,7 @@ export const Stepper: React.FC<StepperProps> = ({
                 </span>
               </button>
 
-              {/* Chevron separator — shown after every step including last */}
+              {/* Chevron separator â€” shown after every step including last */}
               <Chevron />
             </React.Fragment>
           );

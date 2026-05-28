@@ -85,3 +85,20 @@ export function commonSepareteDataFromTheObject(path: string, data: any) {
     }, acc);
   }, data);
 }
+
+
+export function filterByKeys<T extends Record<string, unknown>>(
+  data: T,
+  keys: string[],
+  caseInsensitive = false
+): Partial<T> {
+  const keySet = caseInsensitive
+    ? new Set(keys.map((k) => k.toLowerCase()))
+    : new Set(keys);
+
+  return Object.fromEntries(
+    Object.entries(data).filter(([key]) =>
+      caseInsensitive ? keySet.has(key.toLowerCase()) : keySet.has(key)
+    )
+  ) as Partial<T>;
+}

@@ -5,7 +5,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { ComponentSize, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
+import { getBorderRadiusClass } from "@/app/utils/branding";
 
 export interface SelectOption {
   value: string;
@@ -102,20 +102,13 @@ export const Select: React.FC<SelectProps> = ({
   }, [isOpen, searchable]);
 
   const getSizeClasses = () => {
-    const fontSize = getFontSizeClass(branding.fontSize);
     switch (size) {
-      case "xs":
-        return `px-2 py-1 ${fontSize === "text-xl" ? "text-sm" : fontSize === "text-lg" ? "text-xs" : "text-xs"}`;
-      case "s":
-        return `px-3 py-1.5 ${fontSize === "text-xl" ? "text-base" : fontSize === "text-lg" ? "text-sm" : "text-xs"}`;
+      case "xs": return "px-[0.5em] py-[0.25em]";
+      case "s":  return "px-[0.75em] py-[0.375em]";
+      case "l":  return "px-[1.25em] py-[0.625em]";
+      case "xl": return "px-[1.5em] py-[0.75em]";
       case "m":
-        return `px-4 py-2 ${fontSize}`;
-      case "l":
-        return `px-5 py-3 ${fontSize === "text-sm" ? "text-base" : fontSize === "text-base" ? "text-lg" : "text-xl"}`;
-      case "xl":
-        return `px-6 py-4 ${fontSize === "text-sm" ? "text-lg" : fontSize === "text-base" ? "text-xl" : "text-2xl"}`;
-      default:
-        return `px-4 py-2 ${fontSize}`;
+      default:   return "px-[1em] py-[0.5em]";
     }
   };
 
@@ -201,7 +194,7 @@ export const Select: React.FC<SelectProps> = ({
       {/* Label */}
       {label && (
         <label
-          className={`block mb-2 ${getFontSizeClass(branding.fontSize)} font-medium ${
+          className={`block mb-2 font-medium ${
             isDark ? "text-gray-200" : "text-gray-900"
           }`}
         >
@@ -292,8 +285,7 @@ export const Select: React.FC<SelectProps> = ({
                   px-3 py-2
                   ${getBorderRadiusClass(branding.borderRadius)}
                   border
-                  ${getFontSizeClass(branding.fontSize)}
-                  focus:outline-none
+                                   focus:outline-none
                   focus:ring-2
                 `}
                 style={{
@@ -310,7 +302,7 @@ export const Select: React.FC<SelectProps> = ({
           <div className="overflow-y-auto">
             {filteredOptions.length === 0 ? (
               <div
-                className={`px-4 py-3 text-center ${getFontSizeClass(branding.fontSize)}`}
+                className={`px-4 py-3 text-center text-[clamp(5px,0.675vw,18px)]`}
                 style={{ color: isDark ? "#9CA3AF" : "#6B7280" }}
               >
                 No options found
@@ -329,8 +321,7 @@ export const Select: React.FC<SelectProps> = ({
                       px-4 py-2
                       flex items-center justify-between
                       transition-colors
-                      ${getFontSizeClass(branding.fontSize)}
-                      ${option.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                                           ${option.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
                       ${selected ? "" : isDark ? "hover:bg-gray-700" : "hover:bg-gray-100"}
                     `}
                     style={{
@@ -353,7 +344,7 @@ export const Select: React.FC<SelectProps> = ({
 
       {/* Error Message */}
       {validationState === 'invalid' && errorMessage && (
-        <div className={`mt-1 text-sm text-red-500 ${getFontSizeClass(branding.fontSize)}`}>
+        <div className={`mt-1 text-sm text-red-500 text-[clamp(5px,0.675vw,18px)]`}>
           {errorMessage}
         </div>
       )}
@@ -363,7 +354,7 @@ export const Select: React.FC<SelectProps> = ({
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = `${getFontSizeClass(branding.fontSize)} font-semibold mb-2 ${
+    const headerClasses = `font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
 

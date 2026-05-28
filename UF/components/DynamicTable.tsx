@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Icon } from "./Icon";
-import { getFontSizeClass, getBorderRadiusClass } from"@/app/utils/branding";
+import { getBorderRadiusClass } from"@/app/utils/branding";
 import { BiSort } from "react-icons/bi";
 import { twMerge } from "tailwind-merge";
 import { useTheme } from "@/hooks/useTheme";
@@ -305,7 +305,7 @@ const sortedData = sortColumn
               style={{ boxShadow: isDark ? "0 2px 4px rgba(0,0,0,0.3)" : "0 2px 4px rgba(0,0,0,0.1)" }}
             >
               <tr>
-                <th className={`px-4 py-3 text-left ${getFontSizeClass(branding.fontSize)} font-semibold ${isDark ? "text-gray-200" : "text-gray-700"}`}>
+                <th className={`px-4 py-3 text-left  font-semibold ${isDark ? "text-gray-200" : "text-gray-700"}`}>
                   Field
                 </th>
                 {displayData.map((row, index) => {
@@ -313,7 +313,7 @@ const sortedData = sortColumn
                   return (
                     <th
                       key={rowId}
-                      className={`px-4 py-3 text-left ${getFontSizeClass(branding.fontSize)} font-semibold ${isDark ? "text-gray-200" : "text-gray-700"}`}
+                      className={`px-4 py-3 text-left  font-semibold ${isDark ? "text-gray-200" : "text-gray-700"}`}
                     >
                       {index + 1}
                     </th>
@@ -329,14 +329,14 @@ const sortedData = sortColumn
                       <div className="animate-spin flex items-center justify-center">
                         <Icon data="FaSpinner" size={32} />
                       </div>
-                      <span className={`${getFontSizeClass(branding.fontSize)} font-medium`}>Loading...</span>
+                      <span className={` font-medium`}>Loading...</span>
                     </div>
                   </td>
                 </tr>
               ) : displayData.length === 0 ? (
                 <tr>
                   <td colSpan={1} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                    <span className={`${getFontSizeClass(branding.fontSize)} font-medium`}>{emptyMessage}</span>
+                    <span className={` font-medium`}>{emptyMessage}</span>
                   </td>
                 </tr>
               ) : (
@@ -347,7 +347,7 @@ const sortedData = sortColumn
                       key={column.id}
                       className={`border-t ${isDark ? "border-gray-700" : "border-gray-200"}`}
                     >
-                      <td className={`px-4 py-3 font-semibold ${getFontSizeClass(branding.fontSize)} ${isDark ? "text-gray-200" : "text-gray-700"} whitespace-nowrap`}>
+                      <td className={`px-4 py-3 font-semibold  ${isDark ? "text-gray-200" : "text-gray-700"} whitespace-nowrap`}>
                         {column.name}
                       </td>
                       {displayData.map((row, index) => {
@@ -355,7 +355,7 @@ const sortedData = sortColumn
                         return (
                           <td
                             key={rowId}
-                            className={`px-4 py-3 ${getFontSizeClass(branding.fontSize)} ${isDark ? "text-gray-300" : "text-gray-700"} ${wordWrap ? "break-words" : "whitespace-nowrap"} ${column?.className}`}
+                            className={`px-4 py-3  ${isDark ? "text-gray-300" : "text-gray-700"} ${wordWrap ? "break-words" : "whitespace-nowrap"} ${column?.className}`}
                           >
                             {convertToformat(row[column.id])}
                           </td>
@@ -475,7 +475,7 @@ const sortedData = sortColumn
                       accentColor: branding.brandColor,
                     }}
                   />
-                  <span className={`${getFontSizeClass(branding.fontSize)} ${isDark ? "text-gray-200" : "text-gray-700"}`}>
+                  <span className={` ${isDark ? "text-gray-200" : "text-gray-700"}`}>
                     {column.name}
                   </span>
                 </label>
@@ -488,7 +488,7 @@ const sortedData = sortColumn
                 className={`
                   px-4 py-2
                   ${getBorderRadiusClass(branding.borderRadius)}
-                  ${getFontSizeClass(branding.fontSize)}
+                  
                   font-medium
                   transition-all duration-200
                   text-white
@@ -551,7 +551,7 @@ const sortedData = sortColumn
                     px-2 py-3
                     w-12
                     text-left
-                    ${getFontSizeClass(branding.fontSize)}
+                    
                     font-semibold
                     ${tableSorting ? "cursor-pointer hover:bg-opacity-80" : ""}
                     ${isDark ? "text-gray-200" : "text-gray-700"}
@@ -570,7 +570,7 @@ const sortedData = sortColumn
                   className={`
                     px-4 py-3
                     text-left
-                    ${getFontSizeClass(branding.fontSize)}
+                    
                     font-semibold
                     ${tableSorting ? "cursor-pointer hover:bg-opacity-80" : ""}
                     ${isDark ? "text-gray-200" : "text-gray-700"}
@@ -596,7 +596,7 @@ const sortedData = sortColumn
                   className={`
                     px-4 py-3
                     text-left
-                    ${getFontSizeClass(branding.fontSize)}
+                    
                     font-semibold
                     ${tableSorting ? "cursor-pointer hover:bg-opacity-80" : ""}
                     ${isDark ? "text-gray-200" : "text-gray-700"}
@@ -649,7 +649,7 @@ const sortedData = sortColumn
                       <div className="animate-spin flex items-center justify-center">
                         <Icon data="FaSpinner" size={32} />
                       </div>
-                      <span className={`${getFontSizeClass(branding.fontSize)} font-medium`}>
+                      <span className={` font-medium`}>
                         Loading...
                       </span>
                     </div>
@@ -662,7 +662,7 @@ const sortedData = sortColumn
                     className="px-4 py-8 text-center text-gray-500 dark:text-gray-400"
                   >
                     <div className="flex flex-col items-center justify-center space-y-2">
-                      <span className={`${getFontSizeClass(branding.fontSize)} font-medium`}>
+                      <span className={` font-medium`}>
                         {emptyMessage}
                       </span>
                     </div>
@@ -749,7 +749,7 @@ const sortedData = sortColumn
                             key={column.id}
                             className={`
                               px-4 py-3
-                              ${getFontSizeClass(branding.fontSize)}
+                              
                               ${isDark ? "text-gray-300" : "text-gray-700"}
                               ${isHyperLink ? "text-blue-500 underline" : ""}
                               ${wordWrap ? "break-words" : "whitespace-nowrap"}
@@ -784,8 +784,7 @@ const sortedData = sortColumn
       </div>
     </div>
   );
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
-  const headerClasses = `${fontSizeClass} font-semibold mb-2 ${
+  const headerClasses = `font-semibold mb-2 ${
     isDark ? "text-gray-300" : "text-gray-700"
   }`;
 

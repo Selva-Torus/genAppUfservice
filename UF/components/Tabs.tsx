@@ -6,7 +6,7 @@ import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { GravityIcon } from "@/types/icons";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
-import { getFontSizeClass, getBorderRadiusClass } from "@/app/utils/branding";
+import { getBorderRadiusClass } from "@/app/utils/branding";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
 
 type TabDirection = "horizontal" | "vertical";
@@ -63,9 +63,8 @@ export const Tabs: React.FC<TabsProps> = ({
 
   };
 
-  const fontSizeClass = getFontSizeClass(branding.fontSize);
   const getSizeClasses = () => {
-    return `px-4 py-2 ${fontSizeClass}`;
+    return `px-4 py-2 `;
   };
 
   const isDark = theme === "dark" || theme === "dark-hc";
