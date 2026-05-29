@@ -234,7 +234,7 @@ const LoginForm = ({ logo, appName = "RTGS", loginType = "standard", image, appT
             </div>
             <div
               className={twMerge(
-                `flex h-fit min-w-[350px] flex-col gap-3 rounded-xl px-5 pb-3 pt-4 2xl:pt-6 2xl:pb-6 shadow 2xl:min-w-[400px]`,
+                `flex h-fit min-w-[20vw] flex-col gap-3 rounded-xl px-5 pb-3 pt-4 2xl:pt-6 2xl:pb-6 shadow 2xl:min-w-[400px]`,
                 bgColor,
                 borderColor,
                 textColor
@@ -267,7 +267,7 @@ const LoginForm = ({ logo, appName = "RTGS", loginType = "standard", image, appT
                   name='email'
                   style={{ fontSize: branding.fontSize }}
                   className={twMerge(
-                    'rounded-lg border p-1.5 text-sm 2xl:text-base outline-none 2xl:p-3',
+                    'rounded-lg border px-[0.5vw] py-[1vh] !text-fsbase outline-none',
                     borderColor
                   )}
                   placeholder='Your Email/Username'
@@ -285,7 +285,7 @@ const LoginForm = ({ logo, appName = "RTGS", loginType = "standard", image, appT
                   name='password'
                   style={{ fontSize: branding.fontSize }}
                   className={twMerge(
-                    'rounded-lg border p-1.5 text-sm 2xl:text-base outline-none 2xl:p-3',
+                    'rounded-lg border px-[0.5vw] py-[1vh] !text-fsbase outline-none',
                     borderColor
                   )}
                   placeholder='Password'
@@ -313,7 +313,7 @@ const LoginForm = ({ logo, appName = "RTGS", loginType = "standard", image, appT
               </Link>
               <Button
                 onClick={handleFormSubmit}
-                className='h-10 rounded-lg 2xl:h-12 w-full'
+                className='!h-12 rounded-lg !2xl:h-14 w-full'
               >
                 {loading ? (
                   <Spin

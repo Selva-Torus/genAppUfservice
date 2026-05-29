@@ -97,6 +97,9 @@ const config: Config = {
       },
       scrollbar: {
         none: 'none'
+      },
+      fontSize : {
+        'fsbase' : 'var(--font-size-base)'
       }
     }
   },

@@ -177,7 +177,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
         </Text>
         {processId && (
           <div
-            className={twMerge('flex w-fit rounded-full p-2 gap-2')}
+            className={twMerge('flex w-fit rounded-full py-[.4vh] px-[.5vw] gap-[0.3vw] items-center')}
             style={{
               backgroundColor: selectionColor
             }}
@@ -331,7 +331,8 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     const items = headerProcessRowsItem.map((item: string, index: number) => {
       return {
         id: item,
-        name: keyset(camelCaseToParagraphCase(item))
+        name: keyset(camelCaseToParagraphCase(item)),
+        className: index === 0 ? 'text-left' : 'text-center'
       }
     })
     return items
@@ -341,7 +342,8 @@ const TableHeader: React.FC<TableHeaderProps> = ({
     const items = headerTorusRowsItem.map((item: string, index: number) => {
       return {
         id: item,
-        name: keyset(camelCaseToParagraphCase(item))
+        name: keyset(camelCaseToParagraphCase(item)),
+        className: index === 0 ? 'text-left' : 'text-center'
       }
     })
     return items
@@ -426,7 +428,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
           <div className='flex w-full '>
             <div className={`${activeTab === 'torus' ? 'block w-1/2 md:w-3/4' : 'w-full'}`}>
               <div
-                className={`overflow-auto transition-all delay-0 duration-300 ease-out xl:h-[66vh] 2xl:h-[78vh]`}
+                className={`overflow-auto transition-all delay-0 duration-300 ease-out h-[83vh]`}
               >
                 <Table
                   columns={activeTab === 'torus' ? torusColumn : processColumn}
@@ -448,17 +450,16 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                   emptyMessage={
                     loading ? <Spin spinning style='dots' /> : 'No data found'
                   }
+                  pagination={{
+                    page: jsonData?.page,
+                    pageSize: jsonData?.limit,
+                    pageSizeOptions: [3, 5, 10, 20, 50, 100],
+                    total: jsonData?.totalDocuments,
+                    onUpdate: data => handleUpdate(data.page, data.pageSize),
+                  }}
+                  showPagination={true}
                 />
               </div>
-              <Pagination
-                page={jsonData?.page}
-                pageSize={jsonData?.limit}
-                pageSizeOptions={[3, 5, 10, 20, 50, 100]}
-                total={jsonData?.totalDocuments}
-                onUpdate={data => handleUpdate(data.page, data.pageSize)}
-                alignment='middle'
-                showButtonText={true}
-              />
             </div>
             <div
               className={`${
