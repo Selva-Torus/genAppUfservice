@@ -1199,8 +1199,16 @@
     "controlName": "cr_bank_name"
   },
   "c22b200afac143a4b305b1dc87c3d26f": {
-    "source": "cr_bank_bic",
+    "source": "bic_code",
     "target": "cr_bank_bic",
+    "mapper": [
+      {
+        "sourceKey": [
+          "CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:GSS:AFGK:RTGS:AFK:crBankCodeDropDownDfd:AFVK:v1|b3bcefa5100b40a48d55edfe1b6821cf|properties.bic_code"
+        ],
+        "targetKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:scanApproveProcessUi:AFVK:v1|409b134cde0449b5a031a7686df3d198|c22b200afac143a4b305b1dc87c3d26f"
+      }
+    ],
     "controlName": "cr_bank_bic"
   },
   "0a03463e1db44810a36bb121eba65e0b": {
@@ -1299,13 +1307,18 @@
     "exchange_rate",
     "rate_ref_no",
     "rate_cust_id",
-    "cr_bank_bic",
+    "bic_code",
     "cr_bank_name"
   ],
   "91b331fe3ba64e1382dea26580846cb8": {
     "source": "addtional_info",
     "target": "addtional_info",
     "controlName": "addtional_info"
+  },
+  "d8c63820961a4d69b4213aab865cf6fc": {
+    "source": "vgphsts_uuid",
+    "target": "vgphsts_uuid",
+    "controlName": "vgphsts_uuid"
   },
   "5d80022ad84947259d615c470dfba5e0": {
     "source": "remittance_info",

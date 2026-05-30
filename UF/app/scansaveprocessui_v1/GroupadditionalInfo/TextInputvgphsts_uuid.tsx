@@ -30,7 +30,7 @@ import * as v from 'valibot';
 ///////////////
 ////////////
 
-const TextInputadditional_ref = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData,setIsProcessing,controlData}:any) => {  
+const TextInputvgphsts_uuid = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData,setIsProcessing,controlData}:any) => {  
   const token: string = getCookie('token');
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
   const {validateRefetch , setValidateRefetch} = useContext(TotalContext) as TotalContextProps;
@@ -66,25 +66,16 @@ const TextInputadditional_ref = ({checkToAdd,setCheckToAdd,refetch,setRefetch,en
   "code": "",
   "rule": {},
   "events": {},
-  "mapper": [
-    {
-      "sourceKey": [
-        "CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:GSS:AFGK:RTGS:AFK:scanSaveProcessDfd:AFVK:v1|2e406af65f3a4e38bfad9e92c2647a4c|properties.product_additional.properties.additional_reference"
-      ],
-      "targetKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:scanSaveProcessUi:AFVK:v1|18c17fb7694d4c3a944cddb2c4ed2894|28554e1639da4e139f594b56061f63a3"
-    }
-  ],
-  "dfdKey": "CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:GSS:AFGK:RTGS:AFK:scanSaveProcessDfd:AFVK:v1:",
-  "dataType": "string"
+  "mapper": [],
+  "dfdKey": "undefined:"
 }
   const decodedTokenObj:any = decodeToken(token);
-  const {dfd_scansaveprocessdfd_v1Props, setdfd_scansaveprocessdfd_v1Props} = useContext(TotalContext) as TotalContextProps; 
   const [isRequredData,setIsRequredData]=useState<boolean>(false)
   const toast : Function = useInfoMsg()
   const keyset : Function = i18n.keyset("language");
   const [allCode,setAllCode]=useState<string>("");
   let schemaArray :string[] =[];
-  const [dynamicStateandType,setDynamicStateandType]=useState<Record<string, any>>({name:'additional_reference',type:"text"})
+  const [dynamicStateandType,setDynamicStateandType]=useState<Record<string, any>>({name:'vgphsts_uuid',type:"text"})
   const routes: AppRouterInstance = useRouter()
   const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState<boolean>(false);
   const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState<boolean>(false);
@@ -190,12 +181,12 @@ const TextInputadditional_ref = ({checkToAdd,setCheckToAdd,refetch,setRefetch,en
   const handleChange = async(e: any) => {
       let validate:any;    
       setError('');
-      setValidate((pre:any)=>({...pre,scanSaveProcessUi_v1:{...pre?.scanSaveProcessUi_v1,additional_reference:undefined}}));
+      setValidate((pre:any)=>({...pre,scanSaveProcessUi_v1:{...pre?.scanSaveProcessUi_v1,vgphsts_uuid:undefined}}));
     if(dynamicStateandType.type=="number"){
-    setadditionalinfod2894((prev: any) => ({ ...prev, additional_reference: +e.target.value }));
+    setadditionalinfod2894((prev: any) => ({ ...prev, vgphsts_uuid: +e.target.value }));
     }
     else{
-    setadditionalinfod2894((prev: any) => ({ ...prev, additional_reference: e.target.value }));
+    setadditionalinfod2894((prev: any) => ({ ...prev, vgphsts_uuid: e.target.value }));
     }
     const newInputValue = dynamicStateandType.type=="number" ? +e.target.value : e.target.value;
     let code:string=allCode;
@@ -371,16 +362,16 @@ const TextInputadditional_ref = ({checkToAdd,setCheckToAdd,refetch,setRefetch,en
       const orchestrationData:any = getControlOrchestrationData(
         controlData,
         "18c17fb7694d4c3a944cddb2c4ed2894",
-        "28554e1639da4e139f594b56061f63a3"
+        "d8c63820961a4d69b4213aab865cf6fc"
       );
       // const orchestrationData: any = await AxiosService.post(
       //   '/UF/Orchestration',
       //   {
       //     key: "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:scanSaveProcessUi:AFVK:v1",
       //     componentId: "18c17fb7694d4c3a944cddb2c4ed2894",
-      //     controlId: "28554e1639da4e139f594b56061f63a3",
+      //     controlId: "d8c63820961a4d69b4213aab865cf6fc",
       //     isTable: false,
-      //     from:"TextInputadditional_ref",
+      //     from:"TextInputvgphsts_uuid",
       //     accessProfile:accessProfile
       //   },
       //   {
@@ -395,23 +386,23 @@ const TextInputadditional_ref = ({checkToAdd,setCheckToAdd,refetch,setRefetch,en
       // }
       setAllCode(orchestrationData?.data?.code);
       if (orchestrationData?.data?.dataType ==='integer' || orchestrationData?.data?.dataType ==='number') {
-        setDynamicStateandType({name:'additional_reference', type: 'number'});
+        setDynamicStateandType({name:'vgphsts_uuid', type: 'number'});
       }
       // if(orchestrationData?.data?.schemaData?.at(0)?.nodeType=='apinode'){
       // if(orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties){
-      //   let type:any={name:'additional_reference',type:'text'};
+      //   let type:any={name:'vgphsts_uuid',type:'text'};
       //   type={
-      //     name:'additional_reference',
-      //     type: orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties.additional_reference.type == 'string' ? 'text' : orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties.additional_reference.type =='integer' ? 'number' : orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties.additional_reference.type
+      //     name:'vgphsts_uuid',
+      //     type: orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties.vgphsts_uuid.type == 'string' ? 'text' : orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties.vgphsts_uuid.type =='integer' ? 'number' : orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties.vgphsts_uuid.type
       //   }
       //   setDynamicStateandType(type);
       // }
       // }else if(orchestrationData?.data?.schemaData?.at(0)?.nodeType=='dbnode'){
       //   if(orchestrationData?.data?.schemaData?.at(0)?.schema.properties){
-      //   let type:any={name:'additional_reference',type:'text'};
+      //   let type:any={name:'vgphsts_uuid',type:'text'};
       //   type={
-      //     name:'additional_reference',
-      //     type: orchestrationData?.data?.schemaData?.at(0)?.schema.properties.additional_reference.type == 'string' ? 'text' : orchestrationData?.data?.schemaData?.at(0)?.schema.properties.additional_reference.type =='integer' ? 'number' : orchestrationData?.data?.schemaData?.at(0)?.schema.properties.additional_reference.type
+      //     name:'vgphsts_uuid',
+      //     type: orchestrationData?.data?.schemaData?.at(0)?.schema.properties.vgphsts_uuid.type == 'string' ? 'text' : orchestrationData?.data?.schemaData?.at(0)?.schema.properties.vgphsts_uuid.type =='integer' ? 'number' : orchestrationData?.data?.schemaData?.at(0)?.schema.properties.vgphsts_uuid.type
       //   }
       //   setDynamicStateandType(type);
       // }
@@ -426,42 +417,34 @@ const TextInputadditional_ref = ({checkToAdd,setCheckToAdd,refetch,setRefetch,en
   useEffect(()=>{
       handleMapperValue();
   },[validateRefetch.value])
-  useEffect(() => {
-  if(dfd_scansaveprocessdfd_v1Props?.setSearchFilters && dfd_scansaveprocessdfd_v1Props?.data)
-  {
-    if(Array.isArray(dfd_scansaveprocessdfd_v1Props.data) && dfd_scansaveprocessdfd_v1Props.data.length > 0){
-      setadditionalinfod2894((pre:any)=>({...pre,additional_reference:dfd_scansaveprocessdfd_v1Props.data[0]?.additional_reference}));
-    }
-  }
-  },[dfd_scansaveprocessdfd_v1Props?.setSearchFilters])
-  if (additional_reff63a3?.isHidden) {
+  if (vgphsts_uuidcf6fc?.isHidden) {
     return <></>
   }
   return (   
     <div  
-      style={{gridColumn: `7 / 13`,gridRow: `10 / 25`, gap:``, height: `100%`, overflow: 'auto', display: 'flex', flexDirection: 'column'}} >
+      style={{gridColumn: `21 / 23`,gridRow: `7 / 17`, gap:``, height: `100%`, overflow: 'auto', display: 'flex', flexDirection: 'column'}} >
+        {isRequredData && <span style={{ color: 'red' }}>*</span>}
       <div style={{ flex: 1, minHeight: 0 }}>
       <TextInput
         require={isRequredData}
-        className="!rounded-xl"
-        label={keyset("Additional Reference")}
+        className=""
+        label={keyset("vgphsts_uuid")}
         onChange= {handleChange}
         onBlur={handleBlur}
         itsHaveCurrency={false}
         type={dynamicStateandType.type}
-        value={additionalinfod2894?.additional_reference||""}
-         disabled= {additional_reff63a3?.isDisabled ? true : false}
+        value={additionalinfod2894?.vgphsts_uuid||""}
+         disabled= {vgphsts_uuidcf6fc?.isDisabled ? true : false}
         pin='brick-brick'     
+        placeholder='type here....'      
         view='normal'
         contentAlign={"left"}
-        headerPosition='top'
-        headerText="Additional Reference"
       errorMessage={error}
-        validationState={validate?.scanSaveProcessUi_v1?.additional_reference ? "invalid" : undefined}
+        validationState={validate?.scanSaveProcessUi_v1?.vgphsts_uuid ? "invalid" : undefined}
       />
       </div>
     </div> 
   )
 }
 
-export default TextInputadditional_ref
+export default TextInputvgphsts_uuid

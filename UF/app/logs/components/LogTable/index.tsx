@@ -451,11 +451,11 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                     loading ? <Spin spinning style='dots' /> : 'No data found'
                   }
                   pagination={{
-                    page: jsonData?.page,
-                    pageSize: jsonData?.limit,
-                    pageSizeOptions: [3, 5, 10, 20, 50, 100],
-                    total: jsonData?.totalDocuments,
-                    onUpdate: data => handleUpdate(data.page, data.pageSize),
+                   page: jsonData?.page,
+                   pageSize: jsonData?.limit,
+                   pageSizeOptions: [3, 5, 10, 20, 50, 100],
+                   total: jsonData?.totalDocuments,
+                   onUpdate: data => handleUpdate(data.page, data.pageSize),
                   }}
                   showPagination={true}
                 />

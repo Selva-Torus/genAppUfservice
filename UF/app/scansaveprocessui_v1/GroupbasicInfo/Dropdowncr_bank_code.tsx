@@ -550,11 +550,11 @@ const Dropdowncr_bank_code = ({lockedData,setLockedData,checkToAdd,setCheckToAdd
       // copyFormData
                   // copyFormData for controller
           //copyFormhandlerData variable store state and its value
-          copyFormhandlerData["setbasicinfo3d198"]={...copyFormhandlerData["setbasicinfo3d198"],[UOmapperData['eca51347c40c453caca735963ee434eb']['source']]:value}
+            copyFormhandlerData["setbasicinfo3d198"]={...copyFormhandlerData["setbasicinfo3d198"],[UOmapperData['eca51347c40c453caca735963ee434eb']['source']]:commonSepareteDataFromTheObject("bank_name",selected?.current||{})}
       // copyFormData
                   // copyFormData for controller
           //copyFormhandlerData variable store state and its value
-          copyFormhandlerData["setbasicinfo3d198"]={...copyFormhandlerData["setbasicinfo3d198"],[UOmapperData['c22b200afac143a4b305b1dc87c3d26f']['source']]:value}
+            copyFormhandlerData["setbasicinfo3d198"]={...copyFormhandlerData["setbasicinfo3d198"],[UOmapperData['c22b200afac143a4b305b1dc87c3d26f']['source']]:commonSepareteDataFromTheObject("bic_code",selected?.current||{})}
       if("setbasicinfo3d198" in copyFormhandlerData){
         setbasicinfo3d198((pre:any)=>({...pre,...copyFormhandlerData["setbasicinfo3d198"]}) )
       }

@@ -30,6 +30,7 @@ const CustomWidgetcustomwidget = ({encryptionFlagCompData,controlData}:any) => {
   const {additionalinfod2894:additionalinfo, setadditionalinfod2894:setadditionalinfo}= useContext(TotalContext) as TotalContextProps;
   const {additionalinfod2894Props:additionalinfoProps, setadditionalinfod2894Props:setadditionalinfoProps}= useContext(TotalContext) as TotalContextProps;
   const {addtional_info46cb8:addtional_info, setaddtional_info46cb8:setaddtional_info}= useContext(TotalContext) as TotalContextProps;
+  const {vgphsts_uuidcf6fc:vgphsts_uuid, setvgphsts_uuidcf6fc:setvgphsts_uuid}= useContext(TotalContext) as TotalContextProps;
   const {remittance_infoba5e0:remittance_info, setremittance_infoba5e0:setremittance_info}= useContext(TotalContext) as TotalContextProps;
   const {additional_reff63a3:additional_ref, setadditional_reff63a3:setadditional_ref}= useContext(TotalContext) as TotalContextProps;
   const {customwidgetd7e47:customwidget, setcustomwidgetd7e47:setcustomwidget}= useContext(TotalContext) as TotalContextProps;
@@ -117,6 +118,8 @@ const CustomWidgetcustomwidget = ({encryptionFlagCompData,controlData}:any) => {
   setadditionalinfoProps={setadditionalinfoProps}
   addtional_info={ addtional_info}
   setaddtional_info={setaddtional_info}
+  vgphsts_uuid={ vgphsts_uuid}
+  setvgphsts_uuid={setvgphsts_uuid}
   remittance_info={ remittance_info}
   setremittance_info={setremittance_info}
   additional_ref={ additional_ref}

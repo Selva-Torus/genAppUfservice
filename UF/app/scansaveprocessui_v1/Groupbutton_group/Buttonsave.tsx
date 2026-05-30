@@ -169,6 +169,7 @@ const Buttonsave = ({ lockedData, setLockedData, tableData, setTableData, primar
   const {rtgs_list_cmnt_list_grpb5728Props, setrtgs_list_cmnt_list_grpb5728Props}= useContext(TotalContext) as TotalContextProps;
   const {rtgs_list_cmnts_list15716, setrtgs_list_cmnts_list15716}= useContext(TotalContext) as TotalContextProps;
   const {rtgs_list_cmnts_list15716Props, setrtgs_list_cmnts_list15716Props}= useContext(TotalContext) as TotalContextProps;
+  const {vgphsts_uuidcf6fc, setvgphsts_uuidcf6fc}= useContext(TotalContext) as TotalContextProps;
   //////////////
   const pendingAutoSearch = useRef(false);
   // keep update group state in ref to access latest state value
@@ -324,6 +325,8 @@ const Buttonsave = ({ lockedData, setLockedData, tableData, setTableData, primar
         codeStates['setrtgs_list_cmnts_list'] = setrtgs_list_cmnts_list15716,
         codeStates['rtgs_list_cmnts_list15716'] = rtgs_list_cmnts_list15716Props,
         codeStates['setrtgs_list_cmnts_list15716'] = setrtgs_list_cmnts_list15716Props,
+        codeStates['vgphsts_uuid'] = vgphsts_uuidcf6fc,
+        codeStates['setvgphsts_uuid'] = setvgphsts_uuidcf6fc,
       codeStates['response']  = savedData.current;
       customCode = codeExecution(code,codeStates);
       return customCode;
@@ -641,7 +644,41 @@ const Buttonsave = ({ lockedData, setLockedData, tableData, setTableData, primar
                           "name": "copyFormData",
                           "label": "copyFormData",
                           "sequence": "1.1.1.2.3.1.1",
-                          "children": []
+                          "children": [],
+                          "hlr": {
+                            "params": [
+                              {
+                                "name": "parentTable",
+                                "_type": "text",
+                                "value": "",
+                                "enabled": true
+                              },
+                              {
+                                "name": "primaryKey",
+                                "_type": "text",
+                                "value": "",
+                                "enabled": true
+                              },
+                              {
+                                "name": "path",
+                                "_type": "text",
+                                "value": "",
+                                "enabled": true
+                              },
+                              {
+                                "name": "setValue",
+                                "_type": "array",
+                                "items": [
+                                  {
+                                    "source": "",
+                                    "target": ""
+                                  }
+                                ],
+                                "value": "",
+                                "enabled": true
+                              }
+                            ]
+                          }
                         }
                       ]
                     },
@@ -947,6 +984,63 @@ const Buttonsave = ({ lockedData, setLockedData, tableData, setTableData, primar
                         "_label": "Path",
                         "_type": "text",
                         "value": "data[0]",
+                        "enabled": true
+                      }
+                    ]
+                  }
+                },
+                {
+                  "id": "0ac0ff5de1474cdc93561e6622df2390.1.1.1.2.9",
+                  "eventContext": "riseListen",
+                  "value": "",
+                  "type": "handlerNode",
+                  "name": "copyFormData",
+                  "label": "copyFormData",
+                  "sequence": "1.1.1.2.9",
+                  "children": [
+                    {
+                      "id": "18c17fb7694d4c3a944cddb2c4ed2894|d8c63820961a4d69b4213aab865cf6fc.1.1.1.2.9.1",
+                      "value": "",
+                      "type": "screen",
+                      "name": "scanSaveProcessUi.v1|additionalInfo|vgphsts_uuid",
+                      "label": "scanSaveProcessUi.v1|additionalInfo|vgphsts_uuid",
+                      "key": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:scanSaveProcessUi:AFVK:v1|additionalInfo|vgphsts_uuid",
+                      "elementType": "textinput",
+                      "groupType": "textinput",
+                      "sequence": "1.1.1.2.9.1",
+                      "children": []
+                    }
+                  ],
+                  "hlr": {
+                    "params": [
+                      {
+                        "name": "parentTable",
+                        "_type": "text",
+                        "value": "",
+                        "enabled": true
+                      },
+                      {
+                        "name": "primaryKey",
+                        "_type": "text",
+                        "value": "",
+                        "enabled": true
+                      },
+                      {
+                        "name": "path",
+                        "_type": "text",
+                        "value": "data[0].vgphsts_uuid",
+                        "enabled": true
+                      },
+                      {
+                        "name": "setValue",
+                        "_type": "array",
+                        "items": [
+                          {
+                            "source": "",
+                            "target": ""
+                          }
+                        ],
+                        "value": "",
                         "enabled": true
                       }
                     ]
@@ -1645,6 +1739,12 @@ const Buttonsave = ({ lockedData, setLockedData, tableData, setTableData, primar
          presetValues: {}
       }));    
     }
+    // copyFormData
+    // For a specific controller
+    setadditionalinfod2894((prev: any) => ({ ...prev, vgphsts_uuid:te_save?.data.data[0].vgphsts_uuid }));
+    // copyFormData
+    // For a specific controller
+    setadditionalinfod2894((prev: any) => ({ ...prev, vgphsts_uuid:te_save?.data.data[0].vgphsts_uuid }));
     }
     catch(err:any)
     {

@@ -201,6 +201,9 @@ export default function PageScansaveprocessuiV1() {
     "addtional_info": {
       "show": false
     },
+    "vgphsts_uuid": {
+      "show": false
+    },
     "remittance_info": {
       "show": false
     },

@@ -40,6 +40,7 @@ const Textaddtional_info = ({encryptionFlagCompData,isDynamic,item,index,setIsPr
   const {additionalinfod2894, setadditionalinfod2894}= useContext(TotalContext) as TotalContextProps;
   const {additionalinfod2894Props, setadditionalinfod2894Props}= useContext(TotalContext) as TotalContextProps;
   const {addtional_info46cb8, setaddtional_info46cb8}= useContext(TotalContext) as TotalContextProps;
+  const {vgphsts_uuidcf6fc, setvgphsts_uuidcf6fc}= useContext(TotalContext) as TotalContextProps;
   const {remittance_infoba5e0, setremittance_infoba5e0}= useContext(TotalContext) as TotalContextProps;
   const {additional_reff63a3, setadditional_reff63a3}= useContext(TotalContext) as TotalContextProps;
   const {customwidgetd7e47, setcustomwidgetd7e47}= useContext(TotalContext) as TotalContextProps;

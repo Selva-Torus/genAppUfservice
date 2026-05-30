@@ -19,6 +19,7 @@ import evaluateDecisionTable,{ evaluateDecisionForDynamicActions,eventDecisionTa
 import decodeToken from '@/app/components/decodeToken';
 import uoMapperData from '@/context/dfdmapperContolnames.json';
 import Textaddtional_info  from "./Textaddtional_info";
+import TextInputvgphsts_uuid  from "./TextInputvgphsts_uuid";
 import TextInputremittance_info  from "./TextInputremittance_info";
 import TextInputadditional_ref  from "./TextInputadditional_ref";
 import CustomWidgetcustomwidget  from "./CustomWidgetcustomwidget";
@@ -65,6 +66,7 @@ const GroupadditionalInfo = ({lockedData={},setLockedData,primaryTableData={},ta
   "Operational Manager": {
     "allowedControls": [
       "addtional_info",
+      "vgphsts_uuid",
       "remittance_info",
       "additional_ref",
       "customwidget"
@@ -108,6 +110,7 @@ const GroupadditionalInfo = ({lockedData={},setLockedData,primaryTableData={},ta
   "Operational Officer": {
     "allowedControls": [
       "addtional_info",
+      "vgphsts_uuid",
       "remittance_info",
       "additional_ref",
       "customwidget"
@@ -181,6 +184,7 @@ const GroupadditionalInfo = ({lockedData={},setLockedData,primaryTableData={},ta
   const {additionalinfod2894, setadditionalinfod2894}= useContext(TotalContext) as TotalContextProps;
   const {additionalinfod2894Props, setadditionalinfod2894Props}= useContext(TotalContext) as TotalContextProps;
   const {addtional_info46cb8, setaddtional_info46cb8}= useContext(TotalContext) as TotalContextProps;
+  const {vgphsts_uuidcf6fc, setvgphsts_uuidcf6fc}= useContext(TotalContext) as TotalContextProps;
   const {remittance_infoba5e0, setremittance_infoba5e0}= useContext(TotalContext) as TotalContextProps;
   const {additional_reff63a3, setadditional_reff63a3}= useContext(TotalContext) as TotalContextProps;
   const {customwidgetd7e47, setcustomwidgetd7e47}= useContext(TotalContext) as TotalContextProps;
@@ -272,6 +276,9 @@ const GroupadditionalInfo = ({lockedData={},setLockedData,primaryTableData={},ta
     if(orchestrationData?.data?.readableControls.includes("addtional_info")){
       setaddtional_info46cb8({...addtional_info46cb8,isDisabled:true});
     }
+    if(orchestrationData?.data?.readableControls.includes("vgphsts_uuid")){
+      setvgphsts_uuidcf6fc({...vgphsts_uuidcf6fc,isDisabled:true});
+    }
     if(orchestrationData?.data?.readableControls.includes("remittance_info")){
       setremittance_infoba5e0({...remittance_infoba5e0,isDisabled:true});
     }
@@ -322,6 +329,8 @@ const GroupadditionalInfo = ({lockedData={},setLockedData,primaryTableData={},ta
         codeStates['setadditionalinfod2894'] = setadditionalinfod2894Props,
         codeStates['addtional_info'] = addtional_info46cb8,
         codeStates['setaddtional_info'] = setaddtional_info46cb8,
+        codeStates['vgphsts_uuid'] = vgphsts_uuidcf6fc,
+        codeStates['setvgphsts_uuid'] = setvgphsts_uuidcf6fc,
         codeStates['remittance_info'] = remittance_infoba5e0,
         codeStates['setremittance_info'] = setremittance_infoba5e0,
         codeStates['additional_ref'] = additional_reff63a3,
@@ -484,6 +493,7 @@ const GroupadditionalInfo = ({lockedData={},setLockedData,primaryTableData={},ta
       className={`flex flex-col overflow-auto rounded-md !rounded-2xl p-1 ${isDark ? 'text-white' : 'text-black'}`}
     >
           {allowedControls.includes("addtional_info") ?<Textaddtional_info   /* 46cb8 */ isDynamic={false } index={idx} item={item} checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} setIsProcessing={setIsProcessing} controlData={controlData} />: <div></div>}
+        {allowedControls.includes("vgphsts_uuid") ?<TextInputvgphsts_uuid   /* cf6fc */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} setIsProcessing={setIsProcessing} controlData={controlData} />: <div></div>}
         {allowedControls.includes("remittance_info") ?<TextInputremittance_info   /* ba5e0 */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} setIsProcessing={setIsProcessing} controlData={controlData} />: <div></div>}
         {allowedControls.includes("additional_ref") ?<TextInputadditional_ref   /* f63a3 */ checkToAdd={checkToAdd} setCheckToAdd={setCheckToAdd} refetch={refetch} setRefetch={setRefetch} encryptionFlagCompData={encryptionFlagCompData} setIsProcessing={setIsProcessing} controlData={controlData} />: <div></div>}
         {allowedControls.includes("customwidget") ?<CustomWidgetcustomwidget /* d7e47 */ encryptionFlagCompData={encryptionFlagCompData} setIsProcessing={setIsProcessing} controlData={controlData} />: <div></div>}

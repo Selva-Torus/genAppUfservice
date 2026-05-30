@@ -66,16 +66,30 @@ const TextInputcr_bank_bic = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
   "code": "",
   "rule": {},
   "events": {},
-  "mapper": [],
-  "dfdKey": "undefined:"
+  "mapper": [
+    {
+      "sourceKey": [
+        "CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:GSS:AFGK:RTGS:AFK:crBankCodeDropDownDfd:AFVK:v1|b3bcefa5100b40a48d55edfe1b6821cf|properties.bic_code"
+      ],
+      "targetKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:scanApproveProcessUi:AFVK:v1|409b134cde0449b5a031a7686df3d198|c22b200afac143a4b305b1dc87c3d26f"
+    }
+  ],
+  "dfdKey": "CK:CT005:FNGK:AF:FNK:DF-DFD:CATK:GSS:AFGK:RTGS:AFK:crBankCodeDropDownDfd:AFVK:v1:",
+  "schemaData": {
+    "type": "string",
+    "x-pg-type": "character varying",
+    "x-expression": "bic_code"
+  },
+  "dataType": "string"
 }
   const decodedTokenObj:any = decodeToken(token);
+  const {dfd_crbankcodedropdowndfd_v1Props, setdfd_crbankcodedropdowndfd_v1Props} = useContext(TotalContext) as TotalContextProps; 
   const [isRequredData,setIsRequredData]=useState<boolean>(false)
   const toast : Function = useInfoMsg()
   const keyset : Function = i18n.keyset("language");
   const [allCode,setAllCode]=useState<string>("");
   let schemaArray :string[] =[];
-  const [dynamicStateandType,setDynamicStateandType]=useState<Record<string, any>>({name:'cr_bank_bic',type:"text"})
+  const [dynamicStateandType,setDynamicStateandType]=useState<Record<string, any>>({name:'bic_code',type:"text"})
   const routes: AppRouterInstance = useRouter()
   const [showProfileAsModalOpen, setShowProfileAsModalOpen] = React.useState<boolean>(false);
   const [showElementAsPopupOpen, setShowElementAsPopupOpen] = React.useState<boolean>(false);
@@ -199,13 +213,13 @@ const TextInputcr_bank_bic = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
     }
       let validate:any;    
       setError('');
-      setValidate((pre:any)=>({...pre,scanApproveProcessUi_v1:{...pre?.scanApproveProcessUi_v1,cr_bank_bic:undefined}}));
+      setValidate((pre:any)=>({...pre,scanApproveProcessUi_v1:{...pre?.scanApproveProcessUi_v1,bic_code:undefined}}));
     if(dynamicStateandType.type=="number"){
-    setbasicinfo3d198((prev: any) => ({ ...prev, cr_bank_bic: +e.target.value }));
+    setbasicinfo3d198((prev: any) => ({ ...prev, bic_code: +e.target.value }));
     validate = v.safeParse(schema, +e.target.value);
     }
     else{
-    setbasicinfo3d198((prev: any) => ({ ...prev, cr_bank_bic: e.target.value }));
+    setbasicinfo3d198((prev: any) => ({ ...prev, bic_code: e.target.value }));
     validate = v.safeParse(schema, e.target.value);
     }
     const newInputValue = dynamicStateandType.type=="number" ? +e.target.value : e.target.value;
@@ -373,31 +387,31 @@ const TextInputcr_bank_bic = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
   }
   const handleValidate=async (e?:any) => {
       let validate:any
-      if(basicinfo3d198?.cr_bank_bic == "" || basicinfo3d198?.cr_bank_bic == undefined){
-      basicinfo3d198.cr_bank_bic = "";
+      if(basicinfo3d198?.bic_code == "" || basicinfo3d198?.bic_code == undefined){
+      basicinfo3d198.bic_code = "";
      if(dynamicStateandType.type=="number"){
           validate = v.safeParse(schema, NaN);
         }
         else{
-          validate = v.safeParse(schema, basicinfo3d198?.cr_bank_bic);
+          validate = v.safeParse(schema, basicinfo3d198?.bic_code);
         }
         if(!validate.success){
           setError(validate?.issues[0]?.message);
-          setValidate((pre:any)=>({...pre,scanApproveProcessUi_v1:{...pre?.scanApproveProcessUi_v1,cr_bank_bic:"invalid"}}));
+          setValidate((pre:any)=>({...pre,scanApproveProcessUi_v1:{...pre?.scanApproveProcessUi_v1,bic_code:"invalid"}}));
         }
-    }else if(basicinfo3d198?.cr_bank_bic !== ""){
+    }else if(basicinfo3d198?.bic_code !== ""){
    if(dynamicStateandType.type=="number"){
-          validate = v.safeParse(schema, +basicinfo3d198?.cr_bank_bic);
+          validate = v.safeParse(schema, +basicinfo3d198?.bic_code);
         }
         else{
-          validate = v.safeParse(schema, basicinfo3d198?.cr_bank_bic);
+          validate = v.safeParse(schema, basicinfo3d198?.bic_code);
         }
     if(!validate.success){
       setError(validate?.issues[0]?.message);
-      setValidate((pre:any)=>({...pre,scanApproveProcessUi_v1:{...pre?.scanApproveProcessUi_v1,cr_bank_bic:"invalid"}}));
+      setValidate((pre:any)=>({...pre,scanApproveProcessUi_v1:{...pre?.scanApproveProcessUi_v1,bic_code:"invalid"}}));
     }else{
       setError('');
-      setValidate((pre:any)=>({...pre,scanApproveProcessUi_v1:{...pre?.scanApproveProcessUi_v1,cr_bank_bic:undefined}}));
+      setValidate((pre:any)=>({...pre,scanApproveProcessUi_v1:{...pre?.scanApproveProcessUi_v1,bic_code:undefined}}));
     }
     }
     if(!validate?.success){
@@ -449,23 +463,23 @@ const TextInputcr_bank_bic = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
       // }
       setAllCode(orchestrationData?.data?.code);
       if (orchestrationData?.data?.dataType ==='integer' || orchestrationData?.data?.dataType ==='number') {
-        setDynamicStateandType({name:'cr_bank_bic', type: 'number'});
+        setDynamicStateandType({name:'bic_code', type: 'number'});
       }
       // if(orchestrationData?.data?.schemaData?.at(0)?.nodeType=='apinode'){
       // if(orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties){
-      //   let type:any={name:'cr_bank_bic',type:'text'};
+      //   let type:any={name:'bic_code',type:'text'};
       //   type={
-      //     name:'cr_bank_bic',
-      //     type: orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties.cr_bank_bic.type == 'string' ? 'text' : orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties.cr_bank_bic.type =='integer' ? 'number' : orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties.cr_bank_bic.type
+      //     name:'bic_code',
+      //     type: orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties.bic_code.type == 'string' ? 'text' : orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties.bic_code.type =='integer' ? 'number' : orchestrationData?.data?.schemaData?.at(0)?.schema.responses["200"].content["application/json"].schema.items.properties.bic_code.type
       //   }
       //   setDynamicStateandType(type);
       // }
       // }else if(orchestrationData?.data?.schemaData?.at(0)?.nodeType=='dbnode'){
       //   if(orchestrationData?.data?.schemaData?.at(0)?.schema.properties){
-      //   let type:any={name:'cr_bank_bic',type:'text'};
+      //   let type:any={name:'bic_code',type:'text'};
       //   type={
-      //     name:'cr_bank_bic',
-      //     type: orchestrationData?.data?.schemaData?.at(0)?.schema.properties.cr_bank_bic.type == 'string' ? 'text' : orchestrationData?.data?.schemaData?.at(0)?.schema.properties.cr_bank_bic.type =='integer' ? 'number' : orchestrationData?.data?.schemaData?.at(0)?.schema.properties.cr_bank_bic.type
+      //     name:'bic_code',
+      //     type: orchestrationData?.data?.schemaData?.at(0)?.schema.properties.bic_code.type == 'string' ? 'text' : orchestrationData?.data?.schemaData?.at(0)?.schema.properties.bic_code.type =='integer' ? 'number' : orchestrationData?.data?.schemaData?.at(0)?.schema.properties.bic_code.type
       //   }
       //   setDynamicStateandType(type);
       // }
@@ -479,7 +493,7 @@ const TextInputcr_bank_bic = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
 
   useEffect(()=>{
       handleMapperValue();
-      if(!basicinfo3d198?.cr_bank_bic)
+      if(!basicinfo3d198?.bic_code)
       { 
         setbasicinfo3d198Props((pre:any)=>({...pre,required:true}));
         setIsRequredData(true);
@@ -487,6 +501,14 @@ const TextInputcr_bank_bic = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
       if(validateRefetch.init!=0)
         handleValidate();
   },[validateRefetch.value])
+  useEffect(() => {
+  if(dfd_crbankcodedropdowndfd_v1Props?.setSearchFilters && dfd_crbankcodedropdowndfd_v1Props?.data)
+  {
+    if(Array.isArray(dfd_crbankcodedropdowndfd_v1Props.data) && dfd_crbankcodedropdowndfd_v1Props.data.length > 0){
+      setbasicinfo3d198((pre:any)=>({...pre,bic_code:dfd_crbankcodedropdowndfd_v1Props.data[0]?.bic_code}));
+    }
+  }
+  },[dfd_crbankcodedropdowndfd_v1Props?.setSearchFilters])
   if (cr_bank_bic3d26f?.isHidden) {
     return <></>
   }
@@ -502,7 +524,7 @@ const TextInputcr_bank_bic = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
         onBlur={handleBlur}
         itsHaveCurrency={false}
         type={dynamicStateandType.type}
-        value={basicinfo3d198?.cr_bank_bic||""}
+        value={basicinfo3d198?.bic_code||""}
         disabled={ true }
         pin='brick-brick'     
         view='normal'
@@ -510,7 +532,7 @@ const TextInputcr_bank_bic = ({checkToAdd,setCheckToAdd,refetch,setRefetch,encry
         headerPosition='top'
         headerText="Cr Bank Bic"
       errorMessage={error}
-        validationState={validate?.scanApproveProcessUi_v1?.cr_bank_bic ? "invalid" : undefined}
+        validationState={validate?.scanApproveProcessUi_v1?.bic_code ? "invalid" : undefined}
       />
       </div>
     </div> 

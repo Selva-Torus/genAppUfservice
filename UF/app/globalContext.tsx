@@ -665,6 +665,10 @@ export interface TotalContextProps {
   setaddtional_info46cb8:React.Dispatch<React.SetStateAction<any>>
   addtional_info46cb8Props: any 
   setaddtional_info46cb8Props: React.Dispatch<React.SetStateAction<any>>
+  vgphsts_uuidcf6fc: any,
+  setvgphsts_uuidcf6fc:React.Dispatch<React.SetStateAction<any>>
+  vgphsts_uuidcf6fcProps: any 
+  setvgphsts_uuidcf6fcProps: React.Dispatch<React.SetStateAction<any>>
   remittance_infoba5e0: any,
   setremittance_infoba5e0:React.Dispatch<React.SetStateAction<any>>
   remittance_infoba5e0Props: any 
@@ -1445,7 +1449,7 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
             "exchange_rate",
             "rate_ref_no",
             "rate_cust_id",
-            "cr_bank_bic",
+            "bic_code",
             "cr_bank_name",
       ]
       }) 
@@ -2690,6 +2694,14 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     refresh:false,
     trigger: false
     }) 
+   const [vgphsts_uuidcf6fc,setvgphsts_uuidcf6fc] = React.useState<any>({
+    isDisabled: false,
+    presetValues: '',
+    isHidden: false,
+    refetch:false,
+    refresh:false,
+    trigger: false
+    }) 
    const [remittance_infoba5e0,setremittance_infoba5e0] = React.useState<any>({
     isDisabled: false,
     presetValues: '',
@@ -3327,6 +3339,7 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
        textinputrate_ref_no82399:false,
        textinputrate_cust_idad42a:false,
        textaddtional_info46cb8:false,
+       textinputvgphsts_uuidcf6fc:false,
        textinputremittance_infoba5e0:false,
        textinputadditional_reff63a3:false,
        customwidgetcustomwidgetd7e47:false,
@@ -3950,6 +3963,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         setrate_cust_idad42a, 
         addtional_info46cb8,
         setaddtional_info46cb8, 
+        vgphsts_uuidcf6fc,
+        setvgphsts_uuidcf6fc, 
         remittance_infoba5e0,
         setremittance_infoba5e0, 
         additional_reff63a3,

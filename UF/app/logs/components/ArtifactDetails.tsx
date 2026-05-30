@@ -303,27 +303,27 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
           </div>
           {processId && (
             <div
-             className={twMerge('flex w-fit rounded-full py-[.4vh] px-[.5vw] gap-[0.3vw] items-center')}
-             style={{
-               backgroundColor: selectionColor
-             }}
-           >
-             <Text>UID: {processId}</Text>
-             <Button
-               view='flat'
-               className='!w-4 rounded-md p-1'
-               onClick={e => {
-                 e.stopPropagation()
-                 handleCopyToClipboard(processId)
-               }}
-             >
-               {copied && copied === processId ? (
-                 <TbCopyCheckFilled className='text-green-500' />
-               ) : (
-                 <TbCopy />
-               )}
-             </Button>
-           </div>
+              className={twMerge('flex w-fit rounded-full py-[.4vh] px-[.5vw] gap-[0.3vw] items-center')}
+              style={{
+                backgroundColor: selectionColor
+              }}
+            >
+              <Text>UID: {processId}</Text>
+              <Button
+                view='flat'
+                className='!w-4 rounded-md p-1'
+                onClick={e => {
+                  e.stopPropagation()
+                  handleCopyToClipboard(processId)
+                }}
+              >
+                {copied && copied === processId ? (
+                  <TbCopyCheckFilled className='text-green-500' />
+                ) : (
+                  <TbCopy />
+                )}
+              </Button>
+            </div>
           )}
         </div>
         {/* seperate */}
