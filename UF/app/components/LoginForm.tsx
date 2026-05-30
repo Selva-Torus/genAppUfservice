@@ -32,7 +32,7 @@ interface LoginProps {
   appTenantList?: any[]
 }
 
-const LoginForm = ({ logo, appName = "RTGS", loginType = "standard", image, appTenantList }: LoginProps) => {
+const LoginForm = ({ logo, appName = "application", loginType = "standard", image, appTenantList }: LoginProps) => {
   const [formData, setFormData] = useState<Record<string, string>>({
     email: '',
     password: ''
@@ -45,7 +45,7 @@ const LoginForm = ({ logo, appName = "RTGS", loginType = "standard", image, appT
   const { branding } = useGlobal()
   const { brandColor } = branding
   const { bgColor, borderColor, textColor } = useTheme()
-  const onBoardingKey : string = "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:transactionProduct:AFVK:v1"
+  const onBoardingKey : string = "Logs Screen"
   const tenant = process.env.NEXT_PUBLIC_TENANT_CODE
   const isSaasApp = process.env.NEXT_PUBLIC_IS_SAAS_APPLICATION;
   const [imageandLogoValid, setImageandLogoValid] = useState({
@@ -71,7 +71,7 @@ const LoginForm = ({ logo, appName = "RTGS", loginType = "standard", image, appT
           tenant: tenant,
           username: formData.email,
           password: formData.password,
-          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT005:AFGK:GSS:AFK:RTGS:AFVK:v1:bldc",
+          key: "CK:TGA:FNGK:BLDC:FNK:DEV:CATK:CT010:AFGK:AG001:AFK:A001:AFVK:v1:bldc",
           ufClientType: 'UFW',
           app_tenant: selectedAppTenant ? appTenantList?.find(item => item.tenant_name == selectedAppTenant)?.tenant_id : undefined,
           app_tenant_id: selectedAppTenant ? appTenantList?.find(item => item.tenant_name == selectedAppTenant)?.at_id : undefined
@@ -103,9 +103,9 @@ const LoginForm = ({ logo, appName = "RTGS", loginType = "standard", image, appT
           let screenDetails: any = {
             keys:[
   {
-    "screenName": "transactions",
-    "screensName": "transactions-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:transactionProduct:AFVK:v1"
+    "screenName": "test",
+    "screensName": "test-v1",
+    "ufKey": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   }
 ]
           }

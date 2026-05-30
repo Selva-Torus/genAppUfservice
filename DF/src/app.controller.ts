@@ -13,12 +13,12 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  
-  
+
     @Post('expLog')
-    async getExceplogs(@Body() input): Promise<any> { 
+    async getExceplogs(@Body() input): Promise<any> {  
       const { dpdKey,method } = input;
-      let result:any = await this.apiService.getseaWeedExpLogs(input,'-TSL')
+      //return await this.apiService.getTenantExceptionlogs(input)
+      let result:any =  await this.apiService.getMongoProcessLogs(input,'-TSL')
       if(dpdKey && method){
         result["dpdKey"] = dpdKey
         result["method"] = method        
@@ -27,9 +27,10 @@ export class AppController {
     }
   
     @Post('prcLog')
-    async getProcessLog(@Body() input): Promise<any> {     
+    async getProcessLog(@Body() input): Promise<any> {
       const { dpdKey,method } = input;
-      let result:any = await this.apiService.getseaWeedProcessLogs(input,'-TPL');
+      //return await this.apiService.getTenantPrcLogs(input);
+      let result:any =  await this.apiService.getMongoProcessLogs(input,'-TPL')
       if(dpdKey && method){
         result["dpdKey"] = dpdKey
         result["method"] = method        
@@ -37,59 +38,29 @@ export class AppController {
       return result
     }
 
-
-     @ApiOperation({
-      summary: 'Set Process log in DFS',      
-    })
-    @ApiBody({ type: PrcLogInputDto })
-    @ApiResponse({
-      status: 200,     
-      type: LogOutputDto,
-    })    
-    @ApiResponse({
-      status: 500,
-      description: 'Internal server error',
-    })
-    @Post('setPrcLog')
-    async setPrcLog(@Body() input){
-      return await this.apiService.SetPrcExpLogs(input.streamname,input.data)
-    }
-
-
-    @ApiOperation({
-      summary: 'Set Exception log in DFS',      
-    })
-    @ApiBody({ type: ExpLogInputDto })
-    @ApiResponse({
-      status: 200,     
-      type: LogOutputDto,
-    })    
-    @ApiResponse({
-      status: 500,
-      description: 'Internal server error',
-    })
-    @Post('setExpLog')
-    async setExpLog(@Body() input){
-      return await this.apiService.SetPrcExpLogs(input.streamname,input.data)
-    }
-
-     @Delete('dropLog')
-    async deleteLog(@Query() input): Promise<any> {
+    @Post('subFlowLog')
+    async getSubFlowLog(@Body() input): Promise<any> {
       const { dpdKey,method } = input;
-      console.log("input",input)
-      let result:any
-      if(input.fileName.endsWith('-TSL')){
-        console.log("fileNaame",input.fileName)
-       result = await this.apiService.deleteLog('ExpLog/' + input.fileName + '/');
-      }else if(input.fileName.endsWith('-TPL')){
-       result = await this.apiService.deleteLog('PrcLog/' + input.fileName);
-      }
+    
+      let result:any =  await this.apiService.getSubFlowLog(input.key,input.upId)
       if(dpdKey && method){
         result["dpdKey"] = dpdKey
         result["method"] = method        
       }
       return result
     }
+
+    @Post('dropLog')
+    async deleteLog(@Body() input): Promise<any> {
+      const { dpdKey,method } = input;
+      let result:any =  await this.apiService.deleteLog(input)
+      if(dpdKey && method){
+        result["dpdKey"] = dpdKey
+        result["method"] = method        
+      }
+      return result
+    }
+  
 
      @ApiOperation({
     summary: 'Transform process log',

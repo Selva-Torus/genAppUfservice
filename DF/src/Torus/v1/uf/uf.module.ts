@@ -8,6 +8,7 @@ import { RedisService } from 'src/redisService';
 import { CommonService } from 'src/common.Service';
 import { RuleService } from 'src/ruleService';
 import { CodeService } from 'src/codeService';
+import { MongoService } from 'src/mongoService';
 import { ConfigService } from '@nestjs/config';
 import { EnvData } from 'src/envData/envData.service';
 
@@ -17,7 +18,7 @@ import { EnvData } from 'src/envData/envData.service';
     signOptions: { expiresIn: '1d' },
   }),],
   controllers: [UfController],
-  providers: [UfService, JwtModule,JwtServices,RedisService,CommonService,RuleService,CodeService,ConfigService,EnvData,],
+  providers: [UfService, JwtModule,JwtServices,RedisService,CommonService,RuleService,CodeService,ConfigService,EnvData,MongoService],
   exports: [UfService]
 })
 export class UfModule {}

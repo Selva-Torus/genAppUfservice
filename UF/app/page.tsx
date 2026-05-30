@@ -15,20 +15,20 @@ export default function HomePage() {
   const token :string | undefined = getCookie('token');
   const decodedToken : DecodedToken = decodeToken(token);
   const encryptionFlagApp: boolean = false;    
-  let landingScreen:string = 'CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:transactionProduct:AFVK:v1';
+  let landingScreen:string = 'Logs Screen';
   const toast : Function = useInfoMsg();
   let screenDetails : ScreenDetail[] = [
   {
-    "screenName": "transactions",
-    "screensName": "transactions-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:transactionProduct:AFVK:v1"
+    "screenName": "test",
+    "screensName": "test-v1",
+    "ufKey": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   }
 ]
   const isSaasApp = process.env.NEXT_PUBLIC_IS_SAAS_APPLICATION;
   const [appTenantList , setAppTenantList] = useState([]);
   const securityCheck = async () : Promise<void> => {
     try {
-      const encryptionDpd: string = "CK:CT005:FNGK:AF:FNK:CDF-DPD:CATK:GSS:AFGK:RTGS:AFK:RTGS_DPD:AFVK:v1";
+      const encryptionDpd: string = "CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1";
       const encryptionMethod: string = "";
       let introspect:any;
       if(encryptionFlagApp){
@@ -112,7 +112,7 @@ export default function HomePage() {
 
   return (
     <>
-      <LoginForm logo=""  image="" appTenantList={appTenantList}/>
+      <LoginForm logo="torus/9.1/CT010/resources/images/15017190.png"  image="" appTenantList={appTenantList}/>
     </>
   )
 }

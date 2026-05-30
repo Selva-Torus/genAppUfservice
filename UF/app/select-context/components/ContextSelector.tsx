@@ -41,7 +41,7 @@ const ContextSelector = () => {
   const tp_ps: any = getCookie('tp_ps')
   const toast = useInfoMsg()
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
-  const appName = 'RTGS'
+  const appName = 'application'
   const [accessProfiles, setAccessProfiles] = useState<any[]>([])
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -56,13 +56,13 @@ const ContextSelector = () => {
   const [selectedRole, setSelectedRole] = useState<Record<string, string>>({})
   const [orgGrpData, setOrgGrpData] = useState<any>([])
   const [isPending, startTransition] = useTransition();  
-  let landingScreen:string = 'CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:transactionProduct:AFVK:v1';
+  let landingScreen:string = 'Logs Screen';
   let screenDetails: any = {
            keys:[
   {
-    "screenName": "transactions",
-    "screensName": "transactions-v1",
-    "ufKey": "CK:CT005:FNGK:AF:FNK:UF-UFW:CATK:GSS:AFGK:RTGS:AFK:transactionProduct:AFVK:v1"
+    "screenName": "test",
+    "screensName": "test-v1",
+    "ufKey": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1"
   }
 ]
   }
@@ -306,8 +306,8 @@ const ContextSelector = () => {
     'gridRow'?: string
   }[] = []
 
-  const logo: string = ""
-  const appLogo: string = ""
+  const logo: string = "torus/9.1/CT010/resources/images/15017190.png"
+  const appLogo: string = "torus/9.1/CT010/resources/images/images.png"
 
   return (
     <div className='h-full w-full  bg-cover bg-center' style={{ backgroundImage: 'var(--app-bg-image)' }}>

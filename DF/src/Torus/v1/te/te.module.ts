@@ -10,11 +10,11 @@ import { RuleService } from "src/ruleService";
 import { JwtService } from "@nestjs/jwt";
 import { CodeService } from "src/codeService";
 import { LockService } from "src/lock.service";
+import { MongoService } from "src/mongoService";
 import { ConfigService } from "@nestjs/config";
 import { BullModule } from "@nestjs/bullmq";
 import { EventEmitterProcessor } from "./event-emitter.processor";
 import { ListenerService } from "./listener.service";
-import { DynamicFlowService } from "./dynamicFlow.service";
 
 import { SchedulerModule } from "../scheduler/scheduler.module";
 import { EnvData } from 'src/envData/envData.service';
@@ -31,8 +31,8 @@ import { EnvData } from 'src/envData/envData.service';
       ])    
     ],
     controllers: [TeController],
-    providers: [TeService, RedisService, CommonService,SecurityService,RuleService,JwtService,CodeService,LockService,ConfigService,EventEmitterProcessor,ListenerService,DynamicFlowService,EnvData,],
-    exports:[DynamicFlowService]
+    providers: [TeService, RedisService, CommonService,SecurityService,RuleService,JwtService,CodeService,LockService,ConfigService,EventEmitterProcessor,ListenerService,EnvData,MongoService],
+    exports:[TeService]
 })
   export class TeModule implements NestModule
   {

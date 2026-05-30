@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ct005-rtgs-uf-generator
-  namespace: ct005-rtgs-uf-v1
+  name: ct010-a001-uf-generator
+  namespace: ct010-a001-uf-v1
   labels:
-    app: ct005-rtgs-uf-generator
+    app: ct010-a001-uf-generator
 spec:
   replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels:
-      app: ct005-rtgs-uf-generator
+      app: ct010-a001-uf-generator
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -19,11 +19,11 @@ spec:
   template:
     metadata:
       labels:
-        app: ct005-rtgs-uf-generator
+        app: ct010-a001-uf-generator
     spec:
       containers:
-      - name: ct005-rtgs-uf-generator-frontend-container
-        image: 192.168.2.164:5000/ct005-rtgs-uf-v1:docker_tag
+      - name: ct010-a001-uf-generator-frontend-container
+        image: 192.168.2.164:5000/ct010-a001-uf-v1:docker_tag
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -32,13 +32,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ct005-rtgs-uf-generator
-  namespace: ct005-rtgs-uf-v1
+  name: ct010-a001-uf-generator
+  namespace: ct010-a001-uf-v1
   labels:
-    app: ct005-rtgs-uf-generator
+    app: ct010-a001-uf-generator
 spec:
   selector:
-    app: ct005-rtgs-uf-generator
+    app: ct010-a001-uf-generator
   ports:
     - name: http
       protocol: TCP

@@ -18,6 +18,7 @@ import * as nodemailer from 'nodemailer';
 import { JwtService } from '@nestjs/jwt';
 import { JwtServices } from 'src/jwt.services';
 import { RuleService } from 'src/ruleService';
+import { MongoService } from 'src/mongoService';
 const jsonata = require('jsonata');
 import * as fs from 'fs';
 import * as path from 'path';
@@ -68,6 +69,7 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
     private readonly gorule: RuleService,
     private readonly redisService: RedisService,
     private readonly commonService: CommonService,
+    private readonly mongoService: MongoService,
     private readonly envData: EnvData
   ) {}
     private pool : Pool;
@@ -318,7 +320,7 @@ getConfig(): FusionAuthConfig {
 
  async insertDocToVgphSourceTranDocMain(category: string, doc_name: string, url: string, size?: number, doc_group?: string): Promise<any> {
     try {
-      const insertUrl = `${process.env.APP_MANAGER_URL}/ct005/attachments`;
+      const insertUrl = `${process.env.APP_MANAGER_URL}/ct010/attachments`;
       //const vgphstm_uuid = uuid();
       const currentDate = new Date().toISOString().slice(0, 19) + '+00:00';
 
@@ -346,7 +348,7 @@ getConfig(): FusionAuthConfig {
 
   async getUrlByVgphstdmId(vgphstdm_id: any): Promise<string> {
     try {
-      const getUrl = `${process.env.APP_MANAGER_URL}/ct005/attachments/${vgphstdm_id}`;
+      const getUrl = `${process.env.APP_MANAGER_URL}/ct010/attachments/${vgphstdm_id}`;
 
       const response = await axios.get(getUrl, {
         headers: {

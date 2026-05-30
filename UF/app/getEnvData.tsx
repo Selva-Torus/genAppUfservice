@@ -1,5 +1,5 @@
 let data:any ={
-  "RTGS_DPD": {
+  "defaultDPD": {
     "encryptionType": {
       "name": "encryptionType",
       "_type": "select",

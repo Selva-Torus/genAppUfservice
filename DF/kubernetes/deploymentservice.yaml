@@ -2,16 +2,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ct005-rtgs-df-generator
-  namespace: ct005-rtgs-df-v1
+  name: ct010-a001-df-generator
+  namespace: ct010-a001-df-v1
   labels:
-    app: ct005-rtgs-df-generator
+    app: ct010-a001-df-generator
 spec:
   replicas: 1
   revisionHistoryLimit: 2
   selector:
     matchLabels:
-      app: ct005-rtgs-df-generator
+      app: ct010-a001-df-generator
   strategy:
     type: RollingUpdate
     rollingUpdate:
@@ -20,11 +20,11 @@ spec:
   template:
     metadata:
       labels:
-        app: ct005-rtgs-df-generator
+        app: ct010-a001-df-generator
     spec:
       containers:
-      - name: ct005-rtgs-df-generator-backend-container
-        image: 192.168.2.164:5000/ct005-rtgs-df-v1:docker_tag
+      - name: ct010-a001-df-generator-backend-container
+        image: 192.168.2.164:5000/ct010-a001-df-v1:docker_tag
         imagePullPolicy: IfNotPresent
         ports:
         - name: http
@@ -39,13 +39,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ct005-rtgs-df-generator
-  namespace: ct005-rtgs-df-v1
+  name: ct010-a001-df-generator
+  namespace: ct010-a001-df-v1
   labels:
-    app: ct005-rtgs-df-generator
+    app: ct010-a001-df-generator
 spec:
   selector:
-    app: ct005-rtgs-df-generator
+    app: ct010-a001-df-generator
   ports:
     - name: http
       protocol: TCP
