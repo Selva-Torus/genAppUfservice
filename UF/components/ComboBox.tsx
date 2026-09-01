@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { useGlobal } from "@/context/GlobalContext";
 import { Icon } from "./Icon";
 import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
@@ -32,6 +33,7 @@ interface ComboboxProps {
   validationState?: "valid" | "invalid" | "none";
   errorMessage?: string;
   contentAlign?: ContentAlign;
+  required?: boolean;
   onBlur?: (e:any) => void;
   search?:string;
   setSearch?:(e:any) => void;
@@ -60,6 +62,7 @@ export const Combobox: React.FC<ComboboxProps> = ({
   validationState = "none",
   errorMessage,
   contentAlign = "center",
+  required = false,
   onBlur=(e:any)=>{},
   search="",
   setSearch=(e:any)=>{}
@@ -79,6 +82,27 @@ export const Combobox: React.FC<ComboboxProps> = ({
   const [currentPage, setCurrentPage] = useState<number | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [loadTick, setLoadTick] = useState(0);
+  const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const highlightedItemRef = useRef<HTMLDivElement | null>(null);
+  // Mousedown fires just before focus, so a click sets this flag right
+  // before handleTriggerFocus would otherwise run -- lets that handler
+  // tell a mouse-driven focus (about to be handled by onClick/handleOpen)
+  // apart from a keyboard Tab into the trigger.
+  const pointerInteractionRef = useRef(false);
+
+  // Reset highlighted option when the panel closes or the search filters the list
+  useEffect(() => {
+    if (!isOpen) setHighlightedIndex(-1);
+  }, [isOpen]);
+  useEffect(() => {
+    setHighlightedIndex(-1);
+  }, [search]);
+  useEffect(() => {
+    if (highlightedItemRef.current) {
+      highlightedItemRef.current.scrollIntoView({ block: "nearest" });
+    }
+  }, [highlightedIndex]);
 
   useEffect(() => {
     if (isArray && Array.isArray(value)) setSelectedArray(value);
@@ -125,18 +149,104 @@ export const Combobox: React.FC<ComboboxProps> = ({
     });
   };
 
+  // ------------------------------------------------------------------
+  // Portal + fixed-position panel (same approach as DateAndTime).
+  // The options list is rendered into document.body via createPortal and
+  // positioned with position:fixed, computed from the trigger's
+  // getBoundingClientRect(). This means we no longer need to walk up the
+  // DOM tree and force ancestor overflow to "visible" -- the panel can
+  // never be clipped by an ancestor's overflow:hidden/auto because it's
+  // not a DOM descendant of any of them anymore.
+  // ------------------------------------------------------------------
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const triggerRef = useRef<HTMLDivElement>(null); // outer wrapper (kept for CommonHeaderAndTooltip sizing + click outside)
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({});
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+
+    const GAP = 4;
+    const VIEWPORT_MARGIN = 8;
+    const ESTIMATED_HEIGHT = 260; // search bar + max-h-60 list, before real measurement
+
+    const recalcPosition = () => {
+      const trigger = triggerRef.current;
+      if (!trigger) return;
+
+      const triggerRect = trigger.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+
+      const panelRect = panelRef.current?.getBoundingClientRect();
+      const panelHeight = panelRect?.height || ESTIMATED_HEIGHT;
+      const panelWidth = triggerRect.width;
+
+      const spaceBelow = viewportHeight - triggerRect.bottom - GAP;
+      const spaceAbove = triggerRect.top - GAP;
+      const openUpward = spaceBelow < panelHeight && spaceAbove > spaceBelow;
+
+      const availableVertical = Math.max(
+        120,
+        (openUpward ? spaceAbove : spaceBelow) - VIEWPORT_MARGIN
+      );
+
+      const style: React.CSSProperties = {
+        position: "fixed",
+        left: triggerRect.left,
+        width: panelWidth,
+        zIndex: 9999,
+      };
+
+      if (openUpward) {
+        style.bottom = viewportHeight - triggerRect.top + GAP;
+      } else {
+        style.top = triggerRect.bottom + GAP;
+      }
+
+      if (panelHeight > availableVertical) {
+        style.maxHeight = availableVertical;
+      }
+
+      setPanelStyle(style);
+    };
+
+    recalcPosition();
+    const raf = requestAnimationFrame(recalcPosition);
+
+    window.addEventListener("resize", recalcPosition);
+    window.addEventListener("scroll", recalcPosition, true);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", recalcPosition);
+      window.removeEventListener("scroll", recalcPosition, true);
+    };
+  }, [isOpen, options.length, isLoading]);
+
+  const openPanel = () => {
+    setIsOpen(true);
+    noMorePagesRef.current = false;
+    if (!isStatic && !currentPage && !loadingRef.current) {
+      loadPage(initialPage);
+    }
+  };
+
   const handleOpen = () => {
+    pointerInteractionRef.current = false;
     if (disabled) return;
     if (isOpen) {
       setIsOpen(false);
-  
     } else {
-      setIsOpen(true);
-      noMorePagesRef.current = false;
-      if (!isStatic && !currentPage && !loadingRef.current) {
-        loadPage(initialPage);
-      }
+      openPanel();
     }
+  };
+
+  const handleTriggerFocus = () => {
+    if (pointerInteractionRef.current || disabled || isOpen) return;
+    openPanel();
   };
 
   const handleListScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -167,8 +277,73 @@ export const Combobox: React.FC<ComboboxProps> = ({
     }
   };
 
-  
+  const handleSelect = (option: { label: string; value: string }) => {
+    if (isArray) {
+      if (isMultiple) {
+        const next = selectedArray.includes(option.value)
+          ? selectedArray.filter((v) => v !== option.value)
+          : [...selectedArray, option.value];
+        setSelectedArray(next);
+        onChange(next);
+        onBlur?.(next);
+      } else {
+        const next = [option.value];
+        setSelectedArray(next);
+        onChange(next);
+        setIsOpen(false);
+        buttonRef.current?.focus();
+        onBlur?.(next);
+      }
+    } else {
+      const next = { [toSave]: option.value, ...(toDisplay ? { [toDisplay]: option.label } : {}) };
+      onChange(next);
+      setIsOpen(false);
+      buttonRef.current?.focus();
+      onBlur?.(next);
+    }
+  };
 
+  // Focus stays on the search input (inside the portaled panel) while
+  // open, so Tab/Escape explicitly return focus to the trigger button
+  // before letting the browser's default action run -- without this, the
+  // browser computes "next focusable" from inside the portal, which is
+  // appended at the very end of document.body and has nothing after it,
+  // so Tab jumps straight out of the page (into browser chrome) instead
+  // of moving to the next control in the form.
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!isOpen) {
+      if (e.key === "ArrowDown" || e.key === "Enter") {
+        e.preventDefault();
+        openPanel();
+      }
+      return;
+    }
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev < options.length - 1 ? prev + 1 : prev));
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+        break;
+      case "Enter":
+        e.preventDefault();
+        if (highlightedIndex >= 0 && highlightedIndex < options.length) {
+          handleSelect(options[highlightedIndex]);
+        }
+        break;
+      case "Escape":
+        e.preventDefault();
+        setIsOpen(false);
+        buttonRef.current?.focus();
+        break;
+      case "Tab":
+        setIsOpen(false);
+        buttonRef.current?.focus();
+        break;
+    }
+  };
 
   const getBorderColor = () => {
     if (validationState === "invalid") return "border-red-500";
@@ -185,34 +360,49 @@ export const Combobox: React.FC<ComboboxProps> = ({
     }
   };
 
-const containerRef = useRef<HTMLDivElement>(null);
-
-useEffect(() => {
-  const handleClickOutside = (e: MouseEvent) => {
-    if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-      setIsOpen(false);
-
+  const getTextAlignClass = () => {
+    switch (contentAlign) {
+      case "left": return "text-left";
+      case "right": return "text-right";
+      default: return "text-center";
     }
   };
 
-  if (isOpen) {
-    document.addEventListener("mousedown", handleClickOutside);
-  }
+  // Click-outside now needs to check BOTH the trigger wrapper and the
+  // portaled panel, since the panel is no longer a DOM descendant of
+  // triggerRef once it's rendered into document.body.
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      const insideTrigger = triggerRef.current?.contains(target);
+      const insidePanel = panelRef.current?.contains(target);
+      if (!insideTrigger && !insidePanel) {
+        setIsOpen(false);
+      }
+    };
 
-  return () => {
-    document.removeEventListener("mousedown", handleClickOutside);
-  };
-}, [isOpen]);
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   const comboboxElement = (
     <div
-    ref={containerRef}   // add this
-      className={`relative ${getContentAlignClass()} w-full h-full ${className}`}
+      ref={triggerRef}
+      className={`relative flex ${getContentAlignClass()} w-full h-full ${className}`}
       tabIndex={-1}
     >
       <button
+        ref={buttonRef}
         type="button"
         onClick={handleOpen}
+        onKeyDown={handleKeyDown}
+        onMouseDown={() => { pointerInteractionRef.current = true; }}
+        onFocus={handleTriggerFocus}
         disabled={disabled}
         className={`
           w-full px-4 py-2 border-2 flex items-center justify-between
@@ -234,7 +424,7 @@ useEffect(() => {
             e.currentTarget.style.borderColor = "";
         }}
       >
-        <span className={`w-4/5 truncate ${(isArray ? selectedArray.length === 0 : !value) ? (isDark ? "text-gray-500" : "text-gray-400") : ""}`}>
+        <span className={`w-4/5 truncate ${getTextAlignClass()} ${(isArray ? selectedArray.length === 0 : !value) ? (isDark ? "text-gray-500" : "text-gray-400") : ""}`}>
           {isArray
             ? selectedArray.length > 0 ? `${selectedArray.length} selected` : placeholder
             : (value as string) || placeholder}
@@ -263,11 +453,12 @@ useEffect(() => {
         </div>
       </button>
 
-      {isOpen && (
+      {mounted && isOpen && createPortal(
         <div
-          ref={listDivRef}
-          className={`absolute z-50 w-full mt-1 max-h-60 overflow-y-auto border-2 shadow-lg ${isDark ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
-          style={{ borderRadius: "var(--border-radius)" }}
+          ref={panelRef}
+          className={`overflow-y-auto border-2 shadow-lg ${isDark ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}`}
+          style={panelStyle}
+          onMouseDown={(e) => e.stopPropagation()}
           onScroll={handleListScroll}
           onWheel={handleListWheel}
         >
@@ -286,59 +477,46 @@ useEffect(() => {
                 }
               }}
               onMouseDown={(e) => e.stopPropagation()}
+              onKeyDown={handleKeyDown}
               placeholder="Search..."
               className={`w-full px-3 py-1 border focus:outline-none  ${isDark ? "bg-gray-700 text-white border-gray-500 placeholder-gray-400" : "bg-white text-black border-gray-300 placeholder-gray-400"}`}
               style={{ borderRadius: "var(--border-radius)" }}
             />
           </div>
-          {options.map((option, idx) => (
-            <div
-              key={`${option.value}-${idx}`}
-              className={`px-4 py-2 cursor-pointer transition-colors  ${
-                (isArray ? selectedArray.includes(option.value) : option.label === value || option.value === value)
-                  ? "text-white"
-                  : isDark ? "text-gray-200 hover:[background-color:var(--hover-color)]" : "text-gray-700 hover:[background-color:var(--hover-color)]"
-              }`}
-              style={{ backgroundColor: (isArray ? selectedArray.includes(option.value) : option.label === value || option.value === value) ? branding.selectionColor : undefined }}
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                if (isArray) {
-                  if (isMultiple) {
-                    // case 3: toggle in/out, keep dropdown open
-                    const next = selectedArray.includes(option.value)
-                      ? selectedArray.filter((v) => v !== option.value)
-                      : [...selectedArray, option.value];
-                    setSelectedArray(next);
-                    onChange(next);
-                    onBlur?.(next)
-                  } else {
-                    // case 2: replace with single-item array, close dropdown
-                    const next = [option.value];
-                    setSelectedArray(next);
-                    onChange(next);
-                    setIsOpen(false);
-                    // setSearch("");
-                    onBlur?.(next)
-                  }
-                } else {
-                  // case 1: single string
-                  onChange({ [toSave]: option.value, ...(toDisplay ? { [toDisplay]: option.label } : {}) });
-                  setIsOpen(false);
-                  // setSearch("");
-                  onBlur?.({ [toSave]: option.value, ...(toDisplay ? { [toDisplay]: option.label } : {}) })
-                }
-                
-              }}
-            >
-              {option.label}
-            </div>
-          ))}
+          {options.map((option, idx) => {
+            const isSelected = isArray ? selectedArray.includes(option.value) : option.label === value || option.value === value;
+            const isHighlighted = idx === highlightedIndex;
+            return (
+              <div
+                key={`${option.value}-${idx}`}
+                ref={isHighlighted ? highlightedItemRef : null}
+                className={`px-4 py-2 cursor-pointer transition-colors  ${
+                  isSelected
+                    ? "text-white"
+                    : isDark ? "text-gray-200 hover:[background-color:var(--hover-color)]" : "text-gray-700 hover:[background-color:var(--hover-color)]"
+                }`}
+                style={{
+                  backgroundColor: isSelected
+                    ? branding.selectionColor
+                    : isHighlighted
+                    ? branding.hoverColor
+                    : undefined,
+                }}
+                onMouseDown={(e) => e.preventDefault()}
+                onMouseEnter={() => setHighlightedIndex(idx)}
+                onClick={() => handleSelect(option)}
+              >
+                {option.label}
+              </div>
+            );
+          })}
           {isLoading && (
             <div className={`px-4 py-2 text-center ${isDark ? "text-gray-400" : "text-gray-500"}`}>
               Loading...
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -351,6 +529,7 @@ useEffect(() => {
       headerPosition={headerPosition}
       className={className}
       fillContainer={true}
+      required={required}
     >
       {comboboxElement}
     </CommonHeaderAndTooltip>

@@ -32,12 +32,12 @@ export const CommonHeaderAndTooltip: React.FC<CommonHeaderAndTooltip> = ({
   const { theme,direction } = useGlobal();
   const isDark = theme === "dark" || theme === "dark-hc";
   const tabsElement = (
-    <div className={fillContainer ? "w-full h-full" : ""}>{children}</div>
+    <div className={fillContainer ? "w-full h-full" : "flex w-full h-full items-center justify-center"}>{children}</div>
   );
   const renderWithHeader = (element: React.ReactNode) => {
     if (!headerText) return element;
 
-    const headerClasses = ` font-semibold mb-2 ${
+    const headerClasses = `component-header-text font-semibold mb-2 ${
       isDark ? "text-gray-300" : "text-gray-700"
     }`;
     const headerContent = (
@@ -55,7 +55,7 @@ export const CommonHeaderAndTooltip: React.FC<CommonHeaderAndTooltip> = ({
               fillContainer ? 'h-full w-full' : ''
             } ${className}`}
           >
-            <div className={headerClasses}>{headerContent}</div>
+            <div className={`${headerClasses} whitespace-nowrap`}>{headerContent}</div>
             <div className={fillContainer ? 'min-h-0 flex-1' : ''}>
               {element}
             </div>
@@ -71,7 +71,7 @@ export const CommonHeaderAndTooltip: React.FC<CommonHeaderAndTooltip> = ({
             <div className={fillContainer ? 'min-h-0 flex-1' : ''}>
               {element}
             </div>
-            <div className={`${headerClasses} mb-0 mt-1`}>{headerContent}</div>
+            <div className={`${headerClasses} mb-0 mt-1 whitespace-nowrap`}>{headerContent}</div>
           </div>
         )
       case 'left':
@@ -82,7 +82,7 @@ export const CommonHeaderAndTooltip: React.FC<CommonHeaderAndTooltip> = ({
             } ${className}`}
           >
             <div
-              className={`${headerClasses} mb-0 flex-shrink-0 ${
+              className={`${headerClasses} mb-0 flex-shrink-0 whitespace-nowrap ${
                 direction === 'RTL' ? 'ml-2' : 'mr-2'
               }`}
             >
@@ -104,7 +104,7 @@ export const CommonHeaderAndTooltip: React.FC<CommonHeaderAndTooltip> = ({
               {element}
             </div>
             <div
-              className={`${headerClasses} mb-0 flex-shrink-0 ${
+              className={`${headerClasses} mb-0 flex-shrink-0 whitespace-nowrap ${
                 direction === 'RTL' ? 'mr-2' : 'ml-2'
               }`}
             >

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useGlobal } from "@/context/GlobalContext";
 import { Icon } from "./Icon";
 import { getBorderRadiusClass } from "@/app/utils/branding";
@@ -65,9 +65,11 @@ interface TableProps {
   data?: Record<string, string | number | boolean | null>[];
   columns?: ColumnType[];
   onRowClick?: (row: any, index: any) => void;
+  onSort?: (columnId: string, direction: "asc" | "desc") => void;
   className?: string;
   renderRowActions?: (props: RenderRowActionsProps) => React.ReactNode | Promise<React.ReactNode>;
-  selectedIds?: string[];
+  primaryKey?: string;
+  selectedIds?: any[];
   onSelectionChange?: (selectedIds: string[]) => void;
   selectionMode?: 'Single' | 'Multi';
   getRowId?: (row: any, index: number) => string;
@@ -75,6 +77,7 @@ interface TableProps {
   wordWrap?: boolean;
   loading?: boolean;
   isRowclick?: boolean;
+  disable?: boolean;
   // Pagination props
   pagination?: {
     page: number;
@@ -105,8 +108,10 @@ export const Table: React.FC<TableProps> = ({
   data = [],
   columns = [],
   onRowClick,
+  onSort,
   className = "",
   renderRowActions,
+  primaryKey="",
   selectedIds=[],
   onSelectionChange,
   selectionMode = 'single',
@@ -114,6 +119,7 @@ export const Table: React.FC<TableProps> = ({
   edgePadding = true,
   wordWrap = false,
   loading = false,
+  disable = false,
   pagination,
   showPagination = false,
   needTooltip = false,
@@ -148,10 +154,8 @@ export const Table: React.FC<TableProps> = ({
   // Use controlled selection if selectedIds is provided, otherwise use internal state
   // Helper function to get row ID
   const getRowIdHelper = (row: any, index: number): string => {
-    if (getRowId) {
-      return getRowId(row, index);
-    }
-    return index.toString();
+
+    return row[primaryKey]
   };
 
   const handleRowSelection = (row: any, index: number) => {
@@ -176,15 +180,15 @@ export const Table: React.FC<TableProps> = ({
     }
   };
 
+  // Sorting itself is not done here - clicking a header just toggles
+  // asc/desc for that column and reports it via onSort. The caller is
+  // responsible for sorting and passing the result back in as `data`.
   const handleSort = (columnId: string) => {
-    if (tableSorting) {
-      if (sortColumn === columnId) {
-        setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-      } else {
-        setSortColumn(columnId);
-        setSortDirection("asc");
-      }
-    }
+    if (!tableSorting) return;
+    const newDirection = sortColumn === columnId && sortDirection === "asc" ? "desc" : "asc";
+    setSortColumn(columnId);
+    setSortDirection(newDirection);
+    onSort?.(columnId, newDirection);
   };
 
   const handleColumnToggle = (columnId: string) => {
@@ -205,31 +209,18 @@ export const Table: React.FC<TableProps> = ({
     setVisibleColumns([]);
   };
 
-  const filteredData = search
-    ? data.filter((row) =>
-        Object.values(row).some((value) =>
-          String(value).toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredData = useMemo(() => (
+    search
+      ? data.filter((row) =>
+          Object.values(row).some((value) =>
+            String(value).toLowerCase().includes(searchTerm.toLowerCase())
+          )
         )
-      )
-    : data;
-
-const sortedData = sortColumn
-  ? [...filteredData].sort((a, b) => {
-      const aVal = a[sortColumn];
-      const bVal = b[sortColumn];
-      
-      // Handle null/undefined values
-      if (aVal == null && bVal == null) return 0;
-      if (aVal == null) return 1;  // Push nulls to end
-      if (bVal == null) return -1;
-      
-      const comparison = aVal > bVal ? 1 : aVal < bVal ? -1 : 0;
-      return sortDirection === "asc" ? comparison : -comparison;
-    })
-  : filteredData;
-
-  // Use all sorted data without pagination
-  const displayData = sortedData;
+      : data
+  ), [data, search, searchTerm]);
+  // Sorting is owned by the caller - it passes already-sorted rows via the
+  // `data` prop, so this component just displays filteredData as-is.
+  const displayData = filteredData;
 
   const handleSelectAllRows = () => {
     if (!onSelectionChange) return;
@@ -273,16 +264,78 @@ const sortedData = sortColumn
   };
     
   const formatDateDisplay = (dateStr: string): string => {
-    if (!dateStr) return "";
-    const parts = dateStr.split("-");
-    if (parts.length !== 3) return dateStr;
-    const [year, month, day] = parts;
-    switch (displayFormat?.datePickerProperty?.dateDisplayFormat||"DD-MM-YYYY") {
-      case "DD-MM-YYYY": return `${day}-${month}-${year}`;
-      case "d,M,yyyy":      return `${parseInt(day)},${parseInt(month)},${year}`;
-      default:           return `${year}-${month}-${day}`;
-    }
-  };
+  if (!dateStr) return "";
+
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+
+  const [year, month, day] = parts;
+
+  const d = parseInt(day, 10);
+  const m = parseInt(month, 10);
+
+  const shortMonths = [
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+  ];
+
+  const fullMonths = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+
+  const weekdays = [
+    "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+  ];
+
+  const date = new Date(Number(year), m - 1, d);
+
+  switch (
+    displayFormat?.datePickerProperty?.dateDisplayFormat || "DD-MM-YYYY"
+  ) {
+    case "YYYY-MM-DD":
+      return `${year}-${month}-${day}`;
+
+    case "DD-MM-YYYY":
+      return `${day}-${month}-${year}`;
+
+    case "MM-DD-YYYY":
+      return `${month}-${day}-${year}`;
+
+    case "DD/MM/YYYY":
+      return `${day}/${month}/${year}`;
+
+    case "MM/DD/YYYY":
+      return `${month}/${day}/${year}`;
+
+    case "YYYY/MM/DD":
+      return `${year}/${month}/${day}`;
+
+    case "DD.MM.YYYY":
+      return `${day}.${month}.${year}`;
+
+    case "D MMM YYYY":
+      return `${d} ${shortMonths[m - 1]} ${year}`;
+
+    case "MMM D, YYYY":
+      return `${shortMonths[m - 1]} ${d}, ${year}`;
+
+    case "MMMM D, YYYY":
+      return `${fullMonths[m - 1]} ${d}, ${year}`;
+
+    case "D MMMM YYYY":
+      return `${d} ${fullMonths[m - 1]} ${year}`;
+
+    case "ddd, D MMM YYYY":
+      return `${weekdays[date.getDay()]}, ${d} ${shortMonths[m - 1]} ${year}`;
+
+    case "d,M,yyyy":
+      return `${d},${m},${year}`;
+
+    default:
+      return `${year}-${month}-${day}`;
+  }
+};
   const convertToformat=(data:any)=>{
     const isISODate = typeof data === 'string' && /^\d{4}-\d{2}-\d{2}(T|$)/.test(data);
     if(isISODate)
@@ -429,7 +482,9 @@ const sortedData = sortColumn
               w-full
               ${getBorderRadiusClass(branding.borderRadius)}
               ${isDark ? "bg-gray-800" : "bg-white"}
+              ${disable ? "opacity-50 pointer-events-none" : ""}
             `}
+       
           >
             <thead
               className={`
@@ -468,7 +523,7 @@ const sortedData = sortColumn
                     ${isDark ? "text-gray-200" : "text-gray-700"}
                   `}
                 >
-                  <div className="flex items-center gap-2">
+                  <div className="component-header-text flex items-center gap-2">
                     Actions
                   </div>
                 </th>)}
@@ -487,14 +542,14 @@ const sortedData = sortColumn
                      ${column?.className}
                   `}
                 >
-      
+                  <div className={`component-header-text flex items-center gap-2 whitespace-nowrap ${column.align === 'right' ? 'justify-end' : column.align === 'center' ? 'justify-center' : ''}`}>
                     {column.name}
                     {tableSorting && sortColumn === column.id && (
                       <BiSort
                         size={14}
                       />
                     )}
-           
+                  </div>
                 </th>
               )
                 }
@@ -512,14 +567,14 @@ const sortedData = sortColumn
                     ${column?.className}
                   `}
                 >
-
+                  <div className={`component-header-text flex items-center gap-2 whitespace-nowrap ${column.align === 'right' ? 'justify-end' : column.align === 'center' ? 'justify-center' : ''}`}>
                     {column.name}
                     {tableSorting && sortColumn === column.id && (
                       <BiSort
                         size={14}
                       />
                     )}
-
+                  </div>
                 </th>
               )
                 }
@@ -579,11 +634,11 @@ const sortedData = sortColumn
                 </tr>
               ) : (displayData.map((row, index) => {
               const rowId = getRowIdHelper(row, index);
-              const isSelected = selectedIds.includes(rowId) || clickedRowId === rowId;
-
+              // const isSelected = selectedIds.includes(rowId) || clickedRowId === rowId;
+              const isSelected =primaryKey in row ? selectedIds?.includes(row[primaryKey]):false
               return (
                 <tr
-                  key={rowId}
+                  key={index}
                   onClick={() => {
                     if(isRowclick){                      
                       onRowClick?.(row,rowId);

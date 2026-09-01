@@ -6,12 +6,13 @@ import { useGlobal } from '@/context/GlobalContext'
 import { twMerge } from 'tailwind-merge'
 import { useTheme } from '@/hooks/useTheme'
 import { getCdnImage } from '@/app/utils/getAssets'
-import { getCookie } from '@/app/components/cookieMgment'
 import { AxiosService } from '@/app/components/axiosService'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import { Button } from '@/components/Button'
 import { Dropdown } from '@/components/Dropdown'
-import { SearchIcon } from '@/app/components/svgApplication'
+import { AppHubIcon, SearchIcon } from '@/app/components/svgApplication'
+import clsx from 'clsx'
+import Image from "next/image";
 
 type VersionInfo = {
   version: string
@@ -29,10 +30,11 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
   const { userDetails, setUserDetails } = useContext(
     TotalContext
   ) as TotalContextProps
-  const { branding } = useGlobal()
+  const { branding , token } = useGlobal()
   const { brandColor } = branding
   const { borderColor, isDark } = useTheme()
-  const token = getCookie('token')
+  const bgColor = isDark ? "bg-gray-800" : "bg-white"
+  const bgCardColor = isDark ? "bg-gray-700" : "bg-gray-100"
   const toast: Function = useInfoMsg()
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -63,7 +65,7 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
 
   return (
     <div
-      className='h-full w-full bg-cover bg-center'
+      className={clsx('h-screen w-full bg-cover bg-center' , bgColor)}
       style={{ backgroundImage: 'var(--app-bg-image)' }}
     >
       {/* Top Navigation */}
@@ -75,13 +77,13 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
         mode='closed'
         listMenuItems={false}
       />
-      <hr className={twMerge('w-full h-1', borderColor)} />
       {/* Header Controls */}
       <div className='flex items-center justify-between px-6 py-4'>
         <div
           className={twMerge(
-            'flex w-96 items-center gap-[.5vw] rounded-lg border px-3 py-1',
-            borderColor
+            'flex w-96 items-center gap-[.5vw] rounded-lg border px-[0.5vw] py-[0.85vh] text-fsbase',
+            borderColor,
+            bgColor
           )}
         >
           <span>
@@ -94,7 +96,7 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
           <input
             type='text'
             placeholder='Search'
-            className='w-full outline-none'
+            className={clsx('w-full outline-none text-fsbase', bgColor)}
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
           />
@@ -108,7 +110,7 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
             <Dropdown
               placeholder='Select Version'
               disabled={!selectedApp?.versionInfo?.length}
-              className='rounded-md outline-none disabled:opacity-50'
+              className='rounded-md outline-none disabled:opacity-50 text-left'
               static
               staticProps={selectedApp?.versionInfo?.map(v => v.version) ?? []}
               value={selectedVersion?.version ?? ''}
@@ -121,40 +123,18 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
             />
           </div>
 
-          {/* <select
-            className='rounded-md border px-4 py-3 outline-none disabled:opacity-50'
-            style={{ fontSize: branding.fontSize }}
-            disabled={!selectedApp?.versionInfo?.length}
-            value={selectedVersion?.version ?? ''}
-            onChange={e => {
-              const version = selectedApp?.versionInfo?.find(
-                v => v.version === e.target.value
-              )
-              setSelectedVersion(version ?? null)
-            }}
-          >
-            <option value=''>Select Version</option>
-            {selectedApp?.versionInfo?.map(v => (
-              <option key={v.version} value={v.version}>
-                {v.version}
-              </option>
-            ))}
-          </select> */}
-
           <Button
-            className='rounded-md px-4 py-2 disabled:opacity-50'
+            className='rounded-md px-4 py-3 disabled:opacity-50'
             disabled={!selectedVersion}
-            onClick={() => {
+             onClick={() => {
               if (selectedVersion?.accessUrl) {
                 const origin = window.location.href
-
-                const url = new URL(
-                  `${selectedVersion.accessUrl}/next-api/auth-redirect`
-                )
+                const url = new URL(`${process.env.NEXT_PUBLIC_BASE_PATH}/next-api/sso-init`, window.location.origin)
+                url.searchParams.set('accessUrl', selectedVersion.accessUrl)
                 url.searchParams.set('origin', origin)
                 url.searchParams.set('token', token)
-
-                window.open(url.toString(), '_self')
+                
+                window.open(url.toString(), '_self') // full navigation, not fetch
               } else {
                 toast('Access URL not found for the selected version', 'danger')
               }
@@ -168,7 +148,7 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
       {/* App Group */}
       <div className='px-6'>
         {/* App Grid */}
-        <div className='grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6'>
+        <div className='grid grid-cols-2 gap-4 sm:grid-cols-5 lg:grid-cols-8'>
           {appList
             .filter(a =>
               a.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -187,31 +167,32 @@ const AppHub = ({ appList }: { appList: Application[] }) => {
                       setSelectedVersion(null)
                     }
                   }}
-                  className={twMerge(
-                    'cursor-pointer rounded-xl border p-4 transition-all hover:bg-[var(--hover-color)]',
-                    isSelected ? 'bg-[var(--selection-color)]' : 'bg-unset'
+                   className={twMerge(
+                    'cursor-pointer rounded-xl border p-4 transition-all hover:bg-[var(--hover-color)] text-fsbase border-none',
+                    isSelected ? 'bg-[var(--selection-color)]' : bgCardColor
                   )}
                 >
-                  <div className='mb-3 flex h-10 w-12 items-center justify-center rounded-md bg-gray-100'>
+                  <div className='mb-3 flex h-12 w-12 items-center justify-center rounded-md bg-gray-100'>
                     {app.logo ? (
-                      <img
+                      <Image
+                        width={100}
+                        height={100}
                         src={getCdnImage(app.logo)}
                         alt={app.name}
                         className='h-6 w-6 object-contain'
                       />
                     ) : (
                       <span
-                        style={{ fontSize: branding.fontSize }}
-                        className='font-bold'
+                        className={clsx('font-bold p-2 rounded-lg', bgColor)}
                       >
-                        APP
+                         <AppHubIcon fill={isDark ? "white" : "black"}/>
                       </span>
                     )}
                   </div>
 
                   <p
-                    style={{ fontSize: branding.fontSize }}
-                    className='font-medium'
+                    className='text-fsbase w-full truncate'
+                    title={app.name}
                   >
                     {app.name}
                   </p>

@@ -17,7 +17,12 @@ export class BigIntInterceptor implements NestInterceptor {
     if (Array.isArray(obj)) {
       return obj.map(value => this.sanitize(value));
     }
-
+    // Date has no enumerable own/inherited properties — the generic object
+    // branch below would silently replace it with {} via the `for...in`
+    // loop below. Pass it through untouched; it's not a BigInt.
+    if (obj instanceof Date) {
+      return obj;
+    }
     if (obj && typeof obj === 'object') {
       const newObj: any = {};
       for (const key in obj) {

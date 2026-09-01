@@ -12,7 +12,7 @@
           "name": "logs",
           "label": "Logs",
           "key": "Logs Screen",
-          "allowedAccessProfile": [],
+          "restrictedAccessProfile": [],
           "static": true,
           "icon": "https://tdps3api.toruslowcode.comtorus/9.1/resources/icons/document-add-svgrepo-com.svg"
         },
@@ -20,7 +20,7 @@
           "name": "user",
           "label": "User",
           "key": "User Screen",
-          "allowedAccessProfile": [],
+          "restrictedAccessProfile": [],
           "static": true,
           "icon": "https://tdps3api.toruslowcode.comtorus/9.1/resources/icons/user-plus-svgrepo-com.svg"
         }
@@ -34,7 +34,7 @@
         {
           "name": "test",
           "key": "CK:CT010:FNGK:AF:FNK:UF-UFW:CATK:AG001:AFGK:A001:AFK:test:AFVK:v1",
-          "allowedAccessProfile": [],
+          "restrictedAccessProfile": [],
           "static": false
         }
       ],
@@ -45,57 +45,19 @@
     "appInfo": {
       "code": "A001",
       "name": "application",
-      "accessUrl": "https://tgadev2.toruslowcode.com/<tenantCode>/<AppGroupCode>/<AppCode>/<version>",
-      "appTenants": [
-        {
-          "at_id": 1,
-          "tenant_id": "test1",
-          "created_at": "2026-04-30T07:12:53.726Z",
-          "trs_status": null,
-          "tenant_name": "test1",
-          "trs_ps_code": null,
-          "trs_app_code": "00000",
-          "trs_org_code": null,
-          "trs_token_id": null,
-          "trs_locked_by": null,
-          "trs_role_code": null,
-          "trs_tenant_id": "00000",
-          "trs_created_by": null,
-          "trs_process_id": null,
-          "trs_locked_time": null,
-          "trs_modified_by": null,
-          "trs_next_status": null,
-          "trs_prev_status": null,
-          "trs_ps_grp_code": null,
-          "trs_created_date": "2026-04-30T07:12:53.726Z",
-          "trs_event_status": null,
-          "trs_org_grp_code": null,
-          "trs_process_code": null,
-          "trs_product_code": "00000_00000",
-          "trs_sub_org_code": null,
-          "trs_modified_date": null,
-          "trs_role_grp_code": null,
-          "trs_access_profile": null,
-          "trs_process_status": null,
-          "trs_sub_org_grp_code": null,
-          "trs_next_process_code": null,
-          "trs_prev_process_code": null,
-          "trs_next_process_status": null,
-          "trs_prev_process_status": null,
-          "trs_event_process_status": null
-        }
-      ],
+      "accessUrl": "https://tgadev2.toruslowcode.com/ct010/ag001/a001/v2",
+      "appTenants": [],
       "encryption": {
         "type": ""
       },
-      "lastBuildOn": "2026-05-30T04:44:18.160Z",
+      "lastBuildOn": "2026-08-24T12:27:45.918Z",
       "needAutoDbPush": false,
-      "lastBuildVersion": "v1",
+      "lastBuildVersion": "v2",
       "isSaasApplication": true,
       "applicationUniqueId": "234f615f-c7eb-465b-8ce9-797e3e083a86",
       "deploymentArtifactKey": "CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
-      "logo": "torus/9.1/CT010/resources/images/15017190.png",
-      "appLogo": "torus/9.1/CT010/resources/images/images.png",
+      "logo": "torus/9.1/CT010/resources/images/Screenshot 2024-02-14 131839.png",
+      "appLogo": "torus/9.1/CT010/resources/images/images.jpg",
       "appGrpName": "appgroup",
       "appGrpCode": "AG001",
       "fusionAuthAppClientSecret": "qpBFuPWkMf9z7fIyIjQ_F_s5tN7wVl0jTgpuSpNlrPA"
@@ -111,7 +73,7 @@
     },
     "language": "English",
     "direction": "LTR",
-    "brandColor": "#ffffff",
+    "brandColor": "#F44336",
     "fontFamily": [
       {
         "fontUrl": "https://fonts.googleapis.com/css2?family=Diplomata&display=swap",
@@ -126,7 +88,7 @@
         "fontUrl": "https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&display=swap"
       }
     ],
-    "hoverColor": "#E95B86",
+    "hoverColor": "#b2e0dd",
     "layoutMode": "fluid",
     "topbarColor": "#ffffff",
     "borderRadius": "s",
@@ -134,7 +96,7 @@
     "sidebarStyle": "",
     "page-bg-color": "#ffffff",
     "group-bg-color": "#ffffff",
-    "selectionColor": "#E95B86",
+    "selectionColor": "#2AE38F",
     "mobileAppearance": {
       "theme": "light",
       "fontSize": {
@@ -184,7 +146,7 @@
       "navigationStyle": "Bottom Navigation"
     },
     "navigationStyles": "horizontal",
-    "appBackgroundImage": "",
+    "appBackgroundImage": "torus/9.1/CT010/resources/images/vivid-blurred-colorful-wallpaper-background_58702-3883.avif",
     "text-body-font": "",
     "text-header-font": "",
     "text-display-font": ""
@@ -220,8 +182,12 @@
         }
       }
     },
-    "lastActive": "2026-05-30T05:03:43.548Z",
-    "client": "CT010"
+    "lastActive": "2026-09-01T10:10:15.433Z",
+    "client": "CT010",
+    "users": "selvaselva kumar",
+    "profile": "",
+    "noOfProductsService": 0,
+    "edit": ""
   },
   "webOnBoarding": {
     "navBarStyle": {
@@ -252,7 +218,12 @@
         }
       ]
     },
-    "landingScreen": "Logs Screen"
+    "landingScreen": "Logs Screen",
+    "menuBgColor": "#F44336",
+    "menuTextColor": "#F44336",
+    "menuSelectionColor": "",
+    "menuSelectionBgColor": "#0736C4",
+    "menuSelectionTextColor": "#0736C4"
   },
   "allKeyswithScreenNames": [
     {
@@ -263,9 +234,9 @@
   ],
   "deploymentArtifactKey": "CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1",
   "appGroupDesc": "appgroup",
-  "logType": "mongodb",
+  "logType": "dfs",
   "appDesc": "application",
-  "appLogo": "torus/9.1/CT010/resources/images/images.png",
+  "appLogo": "torus/9.1/CT010/resources/images/images.jpg",
   "isOld": true,
   "clientCode": "CT010"
 } */
@@ -278,21 +249,28 @@ import GlobalContext from './globalContext';
 import { GlobalProvider } from '@/context/GlobalContext';
 import { EventBusProvider } from '@/context/EventBusContext';
 import { ThemeWrapper } from '@/components/ThemeWrapper';
+import { cookies } from 'next/headers';
+import { COOKIE_PREFIX } from '@/lib/cookies';
+
 export const metadata: Metadata = {
   title: 'application',
   description: 'application Generated by Torus'
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children
 }: {
   children: React.ReactNode
 }) {
+  const cookieStore = await cookies();
+  const tokenParam = cookieStore.get(`${COOKIE_PREFIX}_token`)?.value;
+  console.log(tokenParam , "token param from layout");
+
   return (
     <html lang='en'>
       <body>
         <GlobalContext>
-          <GlobalProvider>
+          <GlobalProvider tokenParam={tokenParam ?? ""}>
             <EventBusProvider>
               <ThemeWrapper>
                   <GetSetupKey>{children}</GetSetupKey>

@@ -6,10 +6,9 @@ import { api_signinDto } from '../interfaces/interfaces'
 import { useInfoMsg } from './infoMsgHandler'
 import { setCookie } from './cookieMgment'
 import { useRouter } from 'next/navigation'
-import { DefaultLoginImage, FusionAuth } from '../utils/svgApplications'
+import { DefaultLoginImage } from '../utils/svgApplications'
 import { BsEyeFill, BsEyeSlash } from 'react-icons/bs'
 import Link from 'next/link'
-import { singleSignOn } from '../utils/serverUtils'
 import decodeToken from './decodeToken'
 import { Text } from '@/components/Text'
 import { Button } from '@/components/Button'
@@ -97,8 +96,6 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
             setLoading(false)
             return
           }
-          setCookie("token", api_signin.data.token, 10, "/");
-          setCookie('tenant', tenant)
           setCookie('language', 'en')
           let screenDetails: any = {
             keys:[
@@ -179,7 +176,7 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
       {loginType !== 'standard' && (
         <div className='hidden h-full w-1/2 flex-col items-center justify-center md:flex'>
           {imageandLogoValid.image ? (
-            <img
+            <Image
               className='h-full w-full'
               src={getCdnImage(image as string)}
               alt='login'
@@ -215,7 +212,7 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
           <div className='flex h-4/5 flex-col items-center justify-center lg:gap-4 xl:gap-6 2xl:gap-8'>
             <div className='flex flex-col items-center justify-center gap-2'>
               {imageandLogoValid.logo ? (
-                <img
+                <Image
                   className='h-8 w-12 2xl:h-10 2xl:w-16'
                   width={100}
                   height={100}
@@ -326,21 +323,6 @@ const LoginForm = ({ logo, appName = "application", loginType = "standard", imag
                   'Login'
                 )}
               </Button>
-
-              {process.env.NEXT_PUBLIC_NEXT_AUTH_NEEDED === 'true' && (
-                <div className='flex w-full justify-center'>
-                  <Button
-                    onClick={() => singleSignOn('fusionauth')}
-                    view='outlined'
-                    className='h-8 !w-fit rounded-lg p-2'
-                  >
-                    <span className='flex gap-2'>
-                      <FusionAuth fill={brandColor} />
-                      FusionAuth
-                    </span>
-                  </Button>
-                </div>
-              )}
 
               <div className='flex justify-center pb-2'>
                 <Text className='flex items-center gap-1 text-nowrap'>

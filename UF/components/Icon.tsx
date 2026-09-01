@@ -76,7 +76,7 @@ export const Icon: React.FC<IconProps> = ({
   const iconElement = IconComponent ? (
     <div
       className={`
-        ${fillContainer ? "w-full h-full" : "inline-flex"}
+        ${fillContainer ? "w-full h-full" : "flex w-full h-full"}
         flex items-center justify-center
       `}
       style={!size && !fillContainer ? { fontSize: "var(--font-size-base)" } : undefined}

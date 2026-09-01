@@ -1,32 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import Redlock from 'redlock';
-import Redis from "ioredis";
-// import { connectToRedis, getRedis } from './mongoClient';
-
- let redis 
- if (!redis) {
-    redis = new Redis({
-      host: process.env.HOST,
-      port: parseInt(process.env.PORT),      
-    }).on('error', (err) => {
-      console.log('Redis Client Error', err);
-      throw err;
-    });
-  }
-  //  connectToRedis().then(() => { 
-  //   redis = getRedis();
-  //   console.log('Redis initialized'); 
-  // }).catch((error) => {
-  //   console.error('Error connecting to Redis:', error);
-  // });
+import { getRedisClient } from "./redis.config";
 
 @Injectable()
 export class LockService {
   private redlock: Redlock;
 
-  constructor() {    
-
-    this.redlock = new Redlock([redis], {
+  constructor() {
+    // Shared across every module that registers LockService as a provider —
+    // see redis.config.ts.
+    this.redlock = new Redlock([getRedisClient()], {
       retryCount:  parseInt(process.env.RETRYCOUNT || '3'),
       retryDelay:  parseInt(process.env.RETRYDELAY || '200'), // time in ms
       retryJitter:  parseInt(process.env.RETRYJITTER || '100'), // time in ms
@@ -36,11 +19,12 @@ export class LockService {
       console.error('A Redis error has occurred:', err);
     });
   }
+
   async acquireLock(resource: string[], ttl: number) {
     return await this.redlock.acquire(resource, ttl);
   }
   async releaseLock(lock) {
     return await lock.release();
-  } 
+  }
 
 }

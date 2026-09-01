@@ -37,6 +37,7 @@ interface FieldMetadata {
   validation?: ValidationConfig;
   page?: number;
   count?: number;
+  height?: number | string;
 }
 
 interface ArrayMetadataConfig {
@@ -84,6 +85,72 @@ interface DynamicContentFieldsProps {
   revalidate?: number;
 }
 
+/* -------------------------------------------------------------------------- */
+/*  Internal identity helpers                                                 */
+/*                                                                            */
+/*  Dynamic array items are given a stable `__id` so React reconciles rows by */
+/*  identity instead of position. Without it, removing an item shifts every   */
+/*  index below it and React re-attaches focus, uncontrolled child state      */
+/*  (e.g. DocumentUploader) and the touched/error map to the WRONG row.       */
+/*                                                                            */
+/*  The id lives inside `values` on purpose: stripping it in onChange would   */
+/*  break identity every time the parent pushes controlled `values` back.     */
+/*  Use `stripInternalIds` before persisting to a backend if you don't want   */
+/*  the field. `onSubmit` already emits a stripped payload.                   */
+/* -------------------------------------------------------------------------- */
+
+const genId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `id-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+};
+
+const isPlainObject = (val: unknown): val is FieldValues =>
+  typeof val === 'object' && val !== null && !Array.isArray(val);
+
+// Recursively ensure every array item that is an object carries a `__id`.
+// Existing ids are preserved so identity stays stable across controlled updates.
+const ensureIds = (input: FieldValues): FieldValues => {
+  const out: FieldValues = {};
+  for (const [key, val] of Object.entries(input)) {
+    if (Array.isArray(val)) {
+      out[key] = val.map((item) => {
+        if (isPlainObject(item)) {
+          const obj = ensureIds(item);
+          if (obj.__id === undefined || obj.__id === null || obj.__id === '') {
+            obj.__id = genId();
+          }
+          return obj;
+        }
+        return item;
+      }) as FieldValues[];
+    } else if (isPlainObject(val)) {
+      out[key] = ensureIds(val);
+    } else {
+      out[key] = val;
+    }
+  }
+  return out;
+};
+
+// Recursively remove the internal `__id` marker. Use for final payloads.
+const stripInternalIds = (input: FieldValues): FieldValues => {
+  const out: FieldValues = {};
+  for (const [key, val] of Object.entries(input)) {
+    if (key === '__id') continue;
+    if (Array.isArray(val)) {
+      out[key] = val.map((item) =>
+        isPlainObject(item) ? stripInternalIds(item) : item
+      ) as FieldValues[];
+    } else if (isPlainObject(val)) {
+      out[key] = stripInternalIds(val);
+    } else {
+      out[key] = val;
+    }
+  }
+  return out;
+};
 
 export default function DynamicContentFields({
   metadata,
@@ -119,6 +186,12 @@ export default function DynamicContentFields({
   const noMorePagesRef = useRef<Set<string>>(new Set());
   const isInitializedRef = useRef(false);
 
+  // Centralized emitter — keeps the internal `__id` in the live value so
+  // controlled round-trips preserve identity. Strip only at submit time.
+  const emitChange = (newValues: FieldValues) => {
+    onChange(newValues);
+  };
+
   const updateError = (fieldId: string, error: string | null) => {
     setValidationErrors(prev => {
       const next = { ...prev };
@@ -151,7 +224,7 @@ export default function DynamicContentFields({
         });
         initialExpanded[key] = true;
       } else if (isArrayMetadata(config)) {
-        const defaultItem: FieldValues = {};
+        const defaultItem: FieldValues = { __id: genId() };
         Object.entries(config.items.fields).forEach(([fieldKey, fieldConfig]) => {
           if (isFieldMetadata(fieldConfig)) {
             defaultItem[fieldKey] = fieldConfig.defaultValue ?? null;
@@ -182,7 +255,7 @@ export default function DynamicContentFields({
             });
             initialExpanded[`${key}.${nestedKey}`] = true;
           } else if (isArrayMetadata(nestedConfig)) {
-            const defaultItem: FieldValues = {};
+            const defaultItem: FieldValues = { __id: genId() };
             Object.entries(nestedConfig.items.fields).forEach(([fieldKey, fieldConfig]) => {
               if (isFieldMetadata(fieldConfig)) {
                 defaultItem[fieldKey] = fieldConfig.defaultValue ?? null;
@@ -234,13 +307,21 @@ export default function DynamicContentFields({
     setValidationErrors(initErrors);
     const isValid = Object.keys(initErrors).length === 0 && !hasRequiredInArrays(metadata);
     onValidationChange?.(isValid);
+  // NOTE: JSON.stringify is intentional. It is a CONTENT-based change guard.
+  // The parent may rebuild `metadata` as a fresh object reference every render;
+  // depending on `[metadata]` directly would re-run this effect on every render
+  // and wipe user input. The stringify cost is O(schema size) and negligible for
+  // typical form schemas. If your schema is large or `metadata` is stable, hoist
+  // a memoized reference in the parent and switch this dep to `[metadata]`.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(metadata)]);
 
-  // Sync with external values when they change
+  // Sync with external values when they change.
+  // ensureIds preserves any incoming ids and backfills missing ones so array
+  // rows keep stable React keys across controlled updates.
   useEffect(() => {
     if (externalValues) {
-      setValues(externalValues);
+      setValues(ensureIds(externalValues));
     }
   }, [externalValues]);
 
@@ -291,23 +372,32 @@ export default function DynamicContentFields({
     }
   };
 
+  // Resolve an array position from either a `__id` (dynamic arrays) or a numeric
+  // index string (fixed arrays / id-less legacy items).
+  const resolveIdx = (arr: FieldValues[], idOrIndex: string): number => {
+    const byId = arr.findIndex((it) => isPlainObject(it) && it.__id === idOrIndex);
+    if (byId !== -1) return byId;
+    const n = Number(idOrIndex);
+    return Number.isInteger(n) ? n : -1;
+  };
+
   const updateValue = (key: string, nestedKey: string | null, value: FieldValue) => {
-    // Handle nested array item updates (key format: "objectKey.arrayKey__index")
+    // Handle nested array item updates (key format: "objectKey.arrayKey__idOrIndex")
     if (key.includes('.') && nestedKey !== null) {
       const dotIndex = key.indexOf('.');
       const objectKey = key.substring(0, dotIndex);
       const rest = key.substring(dotIndex + 1);
       if (rest.includes('__')) {
-        const [arrayKey, indexStr] = rest.split('__');
-        updateNestedArrayValue(objectKey, arrayKey, Number(indexStr), nestedKey, value);
+        const [arrayKey, idStr] = rest.split('__');
+        updateNestedArrayValue(objectKey, arrayKey, idStr, nestedKey, value);
         return;
       }
     }
 
-    // Handle array item updates (key format: "arrayKey__index")
+    // Handle array item updates (key format: "arrayKey__idOrIndex")
     if (key.includes('__') && nestedKey !== null) {
-      const [arrayKey, indexStr] = key.split('__');
-      updateArrayValue(arrayKey, Number(indexStr), nestedKey, value);
+      const [arrayKey, idStr] = key.split('__');
+      updateArrayValue(arrayKey, idStr, nestedKey, value);
       return;
     }
 
@@ -319,13 +409,13 @@ export default function DynamicContentFields({
         const nested = newValues[key] as FieldValues;
         newValues[key] = { ...nested, [nestedKey]: value };
       }
-      onChange(newValues);
+      emitChange(newValues);
       return newValues;
     });
   };
 
   const getArrayDefaultItem = (config: ArrayMetadataConfig): FieldValues => {
-    const defaultItem: FieldValues = {};
+    const defaultItem: FieldValues = { __id: genId() };
     Object.entries(config.items.fields).forEach(([fieldKey, fieldConfig]) => {
       if (isFieldMetadata(fieldConfig)) {
         defaultItem[fieldKey] = fieldConfig.defaultValue ?? null;
@@ -338,7 +428,7 @@ export default function DynamicContentFields({
     setValues((prev) => {
       const arr = (prev[key] as FieldValues[]) || [];
       const newValues = { ...prev, [key]: [...arr, getArrayDefaultItem(config)] };
-      onChange(newValues);
+      emitChange(newValues);
       return newValues;
     });
   };
@@ -348,29 +438,33 @@ export default function DynamicContentFields({
       const arr = (prev[key] as FieldValues[]) || [];
       const newArr = arr.filter((_, i) => i !== index);
       const newValues = { ...prev, [key]: newArr };
-      onChange(newValues);
+      emitChange(newValues);
       return newValues;
     });
   };
 
-  const updateArrayValue = (key: string, index: number, nestedKey: string, value: FieldValue) => {
+  const updateArrayValue = (key: string, idOrIndex: string, nestedKey: string, value: FieldValue) => {
     setValues((prev) => {
       const arr = [...((prev[key] as FieldValues[]) || [])];
+      const index = resolveIdx(arr, idOrIndex);
+      if (index < 0 || index >= arr.length) return prev;
       arr[index] = { ...arr[index], [nestedKey]: value };
       const newValues = { ...prev, [key]: arr };
-      onChange(newValues);
+      emitChange(newValues);
       return newValues;
     });
   };
 
-  const updateNestedArrayValue = (objectKey: string, arrayKey: string, index: number, fieldKey: string, value: FieldValue) => {
+  const updateNestedArrayValue = (objectKey: string, arrayKey: string, idOrIndex: string, fieldKey: string, value: FieldValue) => {
     setValues((prev) => {
       const objectValues = { ...(prev[objectKey] as FieldValues) };
       const arr = [...((objectValues[arrayKey] as FieldValues[]) || [])];
+      const index = resolveIdx(arr, idOrIndex);
+      if (index < 0 || index >= arr.length) return prev;
       arr[index] = { ...arr[index], [fieldKey]: value };
       objectValues[arrayKey] = arr;
       const newValues = { ...prev, [objectKey]: objectValues };
-      onChange(newValues);
+      emitChange(newValues);
       return newValues;
     });
   };
@@ -381,7 +475,7 @@ export default function DynamicContentFields({
       const arr = (objectValues[arrayKey] as FieldValues[]) || [];
       objectValues[arrayKey] = [...arr, getArrayDefaultItem(config)];
       const newValues = { ...prev, [objectKey]: objectValues };
-      onChange(newValues);
+      emitChange(newValues);
       return newValues;
     });
   };
@@ -392,7 +486,7 @@ export default function DynamicContentFields({
       const arr = (objectValues[arrayKey] as FieldValues[]) || [];
       objectValues[arrayKey] = arr.filter((_, i) => i !== index);
       const newValues = { ...prev, [objectKey]: objectValues };
-      onChange(newValues);
+      emitChange(newValues);
       return newValues;
     });
   };
@@ -517,6 +611,10 @@ export default function DynamicContentFields({
     const hasError = touchedFields.has(errorKey) && error;
     const errorBorderColor = '#ef4444';
 
+    const fieldHeight = fieldConfig.height !== undefined
+      ? (typeof fieldConfig.height === 'number' ? `${fieldConfig.height}px` : String(fieldConfig.height))
+      : '36px';
+
     const inputClassName = `
       w-full px-3 py-2
       ${getBorderRadiusClass(branding.borderRadius)}
@@ -566,9 +664,10 @@ export default function DynamicContentFields({
             value={String(value)}
             onChange={(e) => handleChange(e.target.value)}
             placeholder={fieldConfig.placeholder || "Value"}
-            rows={3}
+            rows={fieldConfig.height !== undefined ? undefined : 3}
             className={`${inputClassName} resize-y min-h-[60px]`}
             {...commonHandlers}
+            style={{ ...commonHandlers.style, ...(fieldConfig.height !== undefined ? { height: fieldHeight } : {}) }}
           />
         );
         break;
@@ -599,6 +698,7 @@ export default function DynamicContentFields({
             placeholder={fieldConfig.placeholder || "Value"}
             className={inputClassName}
             {...commonHandlers}
+            style={{ ...commonHandlers.style, height: fieldHeight }}
           />
         );
         break;
@@ -606,7 +706,7 @@ export default function DynamicContentFields({
 
       case "boolean":
         inputElement = (
-          <div className="flex items-center h-9">
+          <div className="flex items-center" style={{ height: fieldHeight }}>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
                 id={inputId}
@@ -639,6 +739,7 @@ export default function DynamicContentFields({
             onChange={(e) => handleChange(e.target.value)}
             className={inputClassName}
             {...commonHandlers}
+            style={{ ...commonHandlers.style, height: fieldHeight }}
           />
         );
         break;
@@ -729,7 +830,7 @@ export default function DynamicContentFields({
                 type="button"
                 onClick={handleOpen}
                 className={`${inputClassName} flex items-center justify-between`}
-                style={{ fontFamily: 'var(--font-body)' }}
+                style={{ fontFamily: 'var(--font-body)', height: fieldHeight }}
               >
                 <span className={displayValue ? '' : (isDark ? 'text-gray-500' : 'text-gray-400')}>
                   {displayValue || 'Select...'}
@@ -793,6 +894,7 @@ export default function DynamicContentFields({
               }}
               className={inputClassName}
               {...commonHandlers}
+              style={{ ...commonHandlers.style, height: fieldHeight }}
             >
               <option value="">{fieldConfig.placeholder || 'Select...'}</option>
               {optionsArr.map((option) => (
@@ -811,6 +913,7 @@ export default function DynamicContentFields({
               onChange={(e) => handleChange(e.target.value)}
               className={inputClassName}
               {...commonHandlers}
+              style={{ ...commonHandlers.style, height: fieldHeight }}
             >
               <option value="">{fieldConfig.placeholder || 'Select...'}</option>
               {plainOptions.map((option) => (
@@ -834,29 +937,33 @@ export default function DynamicContentFields({
             placeholder={fieldConfig.placeholder || "Value"}
             className={inputClassName}
             {...commonHandlers}
+            style={{ ...commonHandlers.style, height: fieldHeight }}
           />
         );
         break;
-        case 'documentuploader':
-          inputElement = (
+        case 'documentuploader': {
+        inputElement = (
+          <div className="w-full" style={{ height: fieldHeight }}>
             <DocumentUploader
               id={inputId}
               value={value as any}
               onChange={async (files: any) => {
-              setTimeout(() => {
-                if (files && files.length > 0) {
-                  handleChange(files[0])
-                } else {
-                  handleChange('' as any)
-                }
-              }, 0)
+                setTimeout(() => {
+                  if (files && files.length > 0) {
+                    handleChange(files[0])
+                  } else {
+                    handleChange('' as any)
+                  }
+                }, 0)
               }}
-              contentAlign={contentAlign}
+              contentAlign={"center"}
               singleSelect={true}
-              fillContainer={false}
+              fillContainer={true}
             />
-          )
+          </div>
+        )
         break;
+      }
       default: { // text
         const textRules = fieldConfig.validation || {};
         const textSchema = buildTextSchema(fieldConfig);
@@ -878,6 +985,7 @@ export default function DynamicContentFields({
             placeholder={fieldConfig.placeholder || "Value"}
             className={inputClassName}
             {...commonHandlers}
+            style={{ ...commonHandlers.style, height: fieldHeight }}
           />
         );
       }
@@ -939,7 +1047,8 @@ export default function DynamicContentFields({
 
   const handleSubmit = () => {
     if (onSubmit) {
-      onSubmit(values);
+      // Emit a clean payload without the internal `__id` markers.
+      onSubmit(stripInternalIds(values));
     }
   };
 
@@ -1017,7 +1126,7 @@ export default function DynamicContentFields({
                         );
                       })}
                     </div>
-                    {/* Nested fixed array fields */}
+                    {/* Nested fixed array fields (positional — index keys are safe here) */}
                     {Object.entries(config.fields).map(([nestedKey, nestedConfig]) => {
                       if (!isFixedArrayMetadata(nestedConfig)) return null;
                       const nestedValues = (values[key] as FieldValues) || {};
@@ -1113,7 +1222,7 @@ export default function DynamicContentFields({
                         </div>
                       );
                     })}
-                    {/* Nested array fields */}
+                    {/* Nested array fields (identity-keyed via __id) */}
                     {Object.entries(config.fields).map(([nestedKey, nestedConfig]) => {
                       if (!isArrayMetadata(nestedConfig)) return null;
                       const nestedValues = (values[key] as FieldValues) || {};
@@ -1155,9 +1264,11 @@ export default function DynamicContentFields({
                           {nestedArrayExpanded && (
                             <div className={`px-4 pb-4 pt-2 border-t ${isDark ? 'border-gray-600' : 'border-gray-100'}`}>
                               <div className="flex flex-col gap-3">
-                                {nestedArrayItems.map((item, index) => (
+                                {nestedArrayItems.map((item, index) => {
+                                  const itemId = String((item?.__id as string | undefined) ?? index);
+                                  return (
                                   <div
-                                    key={index}
+                                    key={itemId}
                                     className={`border ${getBorderRadiusClass(branding.borderRadius)} p-3 ${
                                       isDark ? 'border-gray-600 bg-gray-800' : 'border-gray-200 bg-white'
                                     }`}
@@ -1194,7 +1305,7 @@ export default function DynamicContentFields({
                                         return (
                                           <div key={fieldKey} className="space-y-1.5">
                                             <label
-                                              htmlFor={`field-${key}.${nestedKey}__${index}-${fieldKey}`}
+                                              htmlFor={`field-${key}.${nestedKey}__${itemId}-${fieldKey}`}
                                               className={`block  font-medium ${
                                                 isDark ? 'text-gray-300' : 'text-gray-600'
                                               }`}
@@ -1204,7 +1315,7 @@ export default function DynamicContentFields({
                                               {fieldConfig.validation?.required && <span className="text-red-500 ml-0.5">*</span>}
                                             </label>
                                             {renderInput(
-                                              `${key}.${nestedKey}__${index}`,
+                                              `${key}.${nestedKey}__${itemId}`,
                                               fieldKey,
                                               fieldConfig,
                                               currentValue
@@ -1214,7 +1325,8 @@ export default function DynamicContentFields({
                                       })}
                                     </div>
                                   </div>
-                                ))}
+                                  );
+                                })}
                                 <button
                                   onClick={() => addNestedArrayItem(key, nestedKey, nestedConfig)}
                                   className={`w-full py-2 px-4 border-2 border-dashed ${getBorderRadiusClass(branding.borderRadius)} transition-colors ${
@@ -1373,9 +1485,11 @@ export default function DynamicContentFields({
               {isExpanded && (
                 <div className={`px-4 pb-4 pt-2 border-t ${isDark ? 'border-gray-600' : 'border-gray-100'}`}>
                   <div className="flex flex-col gap-4">
-                    {arrayItems.map((item, index) => (
+                    {arrayItems.map((item, index) => {
+                      const itemId = String((item?.__id as string | undefined) ?? index);
+                      return (
                       <div
-                        key={index}
+                        key={itemId}
                         className={`border ${getBorderRadiusClass(branding.borderRadius)} p-4 ${
                           isDark ? 'border-gray-600 bg-gray-750' : 'border-gray-200 bg-gray-50'
                         }`}
@@ -1412,7 +1526,7 @@ export default function DynamicContentFields({
                             return (
                               <div key={fieldKey} className="space-y-1.5">
                                 <label
-                                  htmlFor={`field-${key}__${index}-${fieldKey}`}
+                                  htmlFor={`field-${key}__${itemId}-${fieldKey}`}
                                   className={`block  font-medium ${
                                     isDark ? 'text-gray-300' : 'text-gray-600'
                                   }`}
@@ -1422,7 +1536,7 @@ export default function DynamicContentFields({
                                   {fieldConfig.validation?.required && <span className="text-red-500 ml-0.5">*</span>}
                                 </label>
                                 {renderInput(
-                                  `${key}__${index}`,
+                                  `${key}__${itemId}`,
                                   fieldKey,
                                   fieldConfig,
                                   currentValue
@@ -1432,7 +1546,8 @@ export default function DynamicContentFields({
                           })}
                         </div>
                       </div>
-                    ))}
+                      );
+                    })}
 
                     {/* Add Item Button */}
                     <button
@@ -1506,4 +1621,3 @@ export default function DynamicContentFields({
       </CommonHeaderAndTooltip>
 </div>;
 }
- 

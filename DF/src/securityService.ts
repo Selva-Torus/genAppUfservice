@@ -3,10 +3,12 @@ import { RedisService } from "./redisService";
 import { CommonService } from "./common.Service";
 import { CustomException } from "./customException";
 import { JwtService } from "@nestjs/jwt";
+import { JwtServices } from "src/jwt.services";
+import { EnvData } from "./envData/envData.service";
 
 @Injectable()
 export class SecurityService {
-    constructor(private redisService: RedisService, private commonService: CommonService,private readonly jwtService:JwtService){}
+    constructor(private redisService: RedisService, private commonService: CommonService,private readonly jwtService:JwtServices,private readonly envData:EnvData){}
     private readonly logger = new Logger(SecurityService.name);
     
     async getSecurityTemplate(key,token){ 
@@ -18,13 +20,18 @@ export class SecurityService {
       var pojson = JSON.parse(await this.redisService.getJsonData(key,process.env.CLIENTCODE)) 
       
         if (pojson != null) {
-          var security = pojson.securityData
+          var security = pojson?.securityData
           if (security.afk && key.includes(security.afk)) {
             if (security) {
-              if (security.accessProfile.length > 0) {
+              if (security?.accessProfile?.length > 0) {
                 // let tokenDecode = await this.commonService.MyAccountForClient(token)
-                let tokenDecode = this.jwtService.decode(token);
-                let tokenFlg = 0                
+                let tokenDecode: any;
+                try {
+                  tokenDecode = await this.jwtService.verifyToken(token);;
+                } catch (e) {
+                  tokenDecode = null;
+                }
+                let tokenFlg = 0
                 // let profile = JSON.parse(await this.redisService.getJsonData(`CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${appgrp}:AFK:${app}:AFVK:v1:securityTemplates`, process.env.CLIENTCODE))                
                 // if (profile?.length > 0) {
                 //   for (let a = 0; a < profile.length; a++) {
@@ -38,7 +45,7 @@ export class SecurityService {
                 }
                 for (var i = 0; i < security.accessProfile.length; i++) {
                   var accessProfile = security.accessProfile[i]                  
-                    if (securityProfile?.includes(accessProfile.accessProfile)) {
+                    // if (securityProfile?.includes(accessProfile.accessProfile)) {
                       if (accessProfile.security.artifact.resource) {
                         if (accessProfile.security.artifact.resource == artifact) {
                           if (accessProfile.security.artifact.SIFlag.selectedValue == 'AA' || accessProfile.security.artifact.SIFlag.selectedValue == '') {
@@ -50,7 +57,7 @@ export class SecurityService {
                               throw 'Node Detail was empty'
                             }
 
-                          } else if (accessProfile.security.artifact.SIFlag.selectedValue == 'BA') {
+                          } else if (accessProfile.security.artifact.SIFlag.selectedValue == 'BA' && securityProfile?.includes(accessProfile.accessProfile)) {
                             throw `Permission denied to access the artifact ${artifact}`;
                           }
                         } else {
@@ -58,24 +65,26 @@ export class SecurityService {
                           // throw `Invalid artifact ${artifact}`;
                         }
                       }
-                    } else {
-                      tokenFlg++
-                    }                  
+                    // } else {
+                    //   tokenFlg++
+                    // }                  
                 }
-                if (tokenFlg == security.accessProfile.length) {
-                  throw new CustomException(`user was not authorized`, 403)
-                  // throw new CustomException(`${tokenDecode.loginId} this user was not authorized`,403)
-                }
+                // if (tokenFlg == security.accessProfile.length) {
+                //   throw new CustomException(`user was not authorized`, 403)
+                //   // throw new CustomException(`${tokenDecode.loginId} this user was not authorized`,403)
+                // }
 
                 if (artifactFlg == security.accessProfile.length) {
                   throw new CustomException(`Invalid artifact ${artifact}`, 400);
                 }
-              } else {
-                throw new CustomException('AccessProfile was empty', 404)
-              }
-            } else {
-              throw new CustomException('SecurityData does not exist', 404)
-            }
+               } 
+             // else {
+              //   throw new CustomException('AccessProfile was empty', 404)
+              // }
+            } 
+            //else {
+             // throw new CustomException('SecurityData does not exist', 404)
+           // }
           } else {
             throw new CustomException(`Artifact key mismatched ${key} in security Template ${security.afk}`, 400);
           }

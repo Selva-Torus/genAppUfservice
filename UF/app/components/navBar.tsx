@@ -7,18 +7,18 @@ import i18n from '@/app/components/i18n'
 import { useLanguage } from './languageContext'
 import { AxiosService } from '@/app/components/axiosService'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
-import { getCookie } from '@/app/components/cookieMgment'
 import { uf_authorizationCheckDto } from '../interfaces/interfaces'
 import { TotalContext, TotalContextProps } from '../globalContext'
 import { Button } from '@/components/Button'
 import { DropdownMenu } from '@/components/DropdownMenu'
+import { useGlobal } from '@/context/GlobalContext'
 //import ThemeSwitcher from './ThemeSwitcher'
 
 const Navbar = ({ data }: any) => {
-  const token: string = getCookie('token')
   const routes = useRouter()
   const [screenNames, setScreenNames] = useState<any[]>([])
   const language = useLanguage()
+  const { token } = useGlobal();
   const keyset: any = i18n.keyset('language')
   const toast: any = useInfoMsg()
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL

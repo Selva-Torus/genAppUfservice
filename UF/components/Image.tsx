@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { useGlobal } from '@/context/GlobalContext'
 import { Tooltip } from './Tooltip'
+import Image from "next/image";
 import {
   HeaderPosition,
   TooltipProps as TooltipPropsType
@@ -46,7 +47,7 @@ interface ImageProps {
   showNavigation?: boolean
 }
 
-export const Image: React.FC<ImageProps> = ({
+export const ImageC: React.FC<ImageProps> = ({
   url,
   needTooltip = false,
   tooltipProps,
@@ -372,10 +373,12 @@ export const Image: React.FC<ImageProps> = ({
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        <img
+        <Image
           src={currentImage.url}
           alt={currentImage.alt || currentImage.fileName || alt || ''}
           className='h-full w-full select-none object-contain'
+          width={100}
+          height={100}
           style={transformStyle}
           draggable={false}
           onError={() => handleImageError(safeIndex)}

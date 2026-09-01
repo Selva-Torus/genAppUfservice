@@ -6,58 +6,41 @@ import SetupScreen from './components'
 import { AxiosService } from '../components/axiosService'
 import {
   deleteAllCookies,
-  getCookie,
   setCookie
 } from '../components/cookieMgment'
 import { useRouter } from 'next/navigation'
 import decodeToken from '../components/decodeToken'
+import { useGlobal } from '@/context/GlobalContext'
+
 
 function page() {
-  const token = getCookie('token')
+  const { token } = useGlobal();
   const decodedToken = decodeToken(token)
   const router = useRouter()
-  let landingScreen: string = 'Logs Screen'
-  const encryptionFlagApp: boolean = false;    
+  
+  const logout = () => {
+    localStorage.clear();
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+    const from = encodeURIComponent(`${basePath}/`);
+    window.location.href = `${basePath}/next-api/auth/logout?from=${from}`;
+  };
+
   const securityCheck = async () => {
     try {
-      const encryptionDpd: string =
-        'CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1'
-      const encryptionMethod: string = ''
-      let introspect: any
-      if (encryptionFlagApp) {
-        introspect = await AxiosService.get('/UF/introspect', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          params: {
-            dpdKey: encryptionDpd,
-            method: encryptionMethod,
-            key:"Logs Screen"
-          }
-        })
-      } else {
-        introspect = await AxiosService.get('/UF/introspect', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          },
-          params: {
-            key:"Logs Screen"
-          }
-        })
-      }
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+    const res = await fetch(`${basePath}/next-api/auth/introspect?key=Logs Screen`)
+    if (!res.ok) {
+      logout()
+      return
+    }
+    router.refresh()
 
-      if (introspect?.data?.authenticated) {
-        if (!decodedToken.selectedAccessProfile) {
-          router.push('/select-context')
-        }
-        if (introspect?.data?.updatedToken) {
-          setCookie('token', introspect?.data.updatedToken)
-        }
-      } else {
-        await deleteAllCookies()
-      }
+    if (!decodedToken.selectedAccessProfile) {
+      router.push('/select-context')
+    }
+      
     } catch (err: any) {
-      await deleteAllCookies()
+      logout()
     }
   }
 
@@ -65,11 +48,11 @@ function page() {
     if (token) {
       securityCheck()
     }
-  }, [token])
+  }, [])
 
   return (
     <div>
-      <SetupScreen tenantAccess={'edit'} />
+      <SetupScreen />
     </div>
   )
 }

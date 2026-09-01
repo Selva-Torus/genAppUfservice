@@ -1,45 +1,36 @@
-# Stage 1: Install dependencies
-FROM docker.io/library/node:20-alpine AS dependencies
-WORKDIR /app
- 
-# Copy package files and install dependencies
-COPY package*.json ./
-RUN npm install
- 
-# Copy Prisma schema and generate client
-#COPY src/erd/prisma ./prisma
-
-COPY .env .env
-# RUN npx prisma generate
-
-# Stage 2: Build the application
+# Stage 1: Install dependencies + build
 FROM docker.io/library/node:20-alpine AS builder
 WORKDIR /app
- 
-COPY package.json package-lock.json ./
- 
-COPY --from=dependencies /app/node_modules ./node_modules
- 
-COPY --from=dependencies /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=dependencies /app/node_modules/@prisma ./node_modules/@prisma
+
+# Copy package files and install dependencies
+COPY package*.json ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
+
+# Copy Prisma schema and generate client only (no db push)
+#COPY src/erd/prisma ./prisma
+
+#RUN npx prisma generate
+
+# Copy source and build the TypeScript code
 COPY . .
- 
-# Build the TypeScript code
 RUN npm run build
 
- 
-# Stage 3: Final stage - Run the application
+# Stage 2: Final stage - Run the application
 FROM docker.io/library/node:20-alpine AS production
- 
 WORKDIR /app
- 
-# Copy production dependencies and the built application
-COPY --from=dependencies /app/node_modules ./node_modules
+
+# Install only production deps (smaller final image)
+COPY package*.json ./
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev
+
+# Copy the built application
 COPY --from=builder /app/dist ./dist
 COPY .env .env
- 
+
 # Expose the port
 EXPOSE 3000
- 
+
 # Start the application
 CMD ["node", "dist/main"]

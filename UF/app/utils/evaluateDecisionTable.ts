@@ -153,6 +153,74 @@ class DecisionTableEvaluator {
   }
 
   /**
+   * Detect a leading conditional operator in a rule cell.
+   * Returns { operator, operand } or null if the cell is a plain value.
+   * NOTE: two-char operators are checked before single-char ones so that
+   * ">=" is not mistaken for ">".
+   */
+  private parseOperator(
+    ruleValue: string
+  ): { operator: string; operand: string } | null {
+    const trimmed = ruleValue.trim();
+    const operators = ["!=", ">=", "<=", "==", ">", "<"]; // order matters
+    for (const op of operators) {
+      if (trimmed.startsWith(op)) {
+        return { operator: op, operand: trimmed.slice(op.length).trim() };
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Evaluate a conditional operator against the data value.
+   * Numeric comparison is used for > >= < <= when both sides parse as numbers,
+   * otherwise it falls back to string comparison.
+   * The operand supports surrounding single/double quotes and $variable
+   * resolution, matching the rest of the parser.
+   */
+  private evaluateOperator(
+    operator: string,
+    dataValue: unknown,
+    operand: string
+  ): boolean {
+    // Strip surrounding quotes ('..' or "..") then resolve $variables
+    let rhs = operand.trim();
+    if (
+      (rhs.startsWith("'") && rhs.endsWith("'")) ||
+      (rhs.startsWith('"') && rhs.endsWith('"'))
+    ) {
+      rhs = rhs.slice(1, -1);
+    }
+    rhs = this.resolveVariable(rhs);
+
+    const lhs =
+      dataValue === undefined || dataValue === null ? "" : String(dataValue);
+
+    switch (operator) {
+      case "==":
+        return lhs === rhs;
+      case "!=":
+        return lhs !== rhs;
+      case ">":
+      case ">=":
+      case "<":
+      case "<=": {
+        const ln = Number(lhs);
+        const rn = Number(rhs);
+        const numeric = lhs !== "" && rhs !== "" && !isNaN(ln) && !isNaN(rn);
+        const a: number | string = numeric ? ln : lhs;
+        const b: number | string = numeric ? rn : rhs;
+        if (operator === ">") return a > b;
+        if (operator === ">=") return a >= b;
+        if (operator === "<") return a < b;
+        return a <= b; // "<="
+      }
+      default:
+        return false;
+    }
+  }
+
+  /**
    * Resolve variable placeholders like $UID and nested patterns like $($usercode)
    */
   private resolveVariable(value: string): string {
@@ -266,6 +334,20 @@ class DecisionTableEvaluator {
       if (ruleValue === undefined || ruleValue === "" || ruleValue === null) {
         continue;
       }
+
+      // --- Conditional operators (!=, ==, >=, <=, >, <) ---
+      // These only apply to input cells. If the cell starts with one of the
+      // supported operators, evaluate it and short-circuit for this input.
+      if (typeof ruleValue === "string") {
+        const opExpr = this.parseOperator(ruleValue);
+        if (opExpr) {
+          if (!this.evaluateOperator(opExpr.operator, dataValue, opExpr.operand)) {
+            return false;
+          }
+          continue; // operator handled this input, move to next
+        }
+      }
+      // --- END conditional operators ---
 
       // Handle JSON object condition: deep-compare rule object against data value
       if (typeof ruleValue === "string" && ruleValue.trim().startsWith("{")) {
@@ -448,7 +530,7 @@ class DecisionTableEvaluator {
       // Check if this rule matches the input data
       if (this.doesRuleMatch(rule, inputData, inputs)) {
         // Build the result from matched rule
-        const result = this.buildResult(rule, outputs);
+        const result:any = this.buildResult(rule, outputs);
 
         // Get the first output value and convert to boolean
         const outputKeys = Object.keys(result);
@@ -456,6 +538,10 @@ class DecisionTableEvaluator {
           const outputValue = result[outputKeys[0]];
           // Handle string "true"/"false"
           if (typeof outputValue === "string") {
+            if('Show' in result)
+            {
+              return result.Show==true || result.Show=='true'?true : false
+            }
             return outputValue.toLowerCase() === "true";
           }
           // Handle array - return true if non-empty

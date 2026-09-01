@@ -1,78 +1,3 @@
-export const DeleteIcon = ({ width = '16', height = '16', fill = 'black' }) => {
-  return (
-    <svg
-      width={width}
-      height={height}
-      viewBox='0 0 16 16'
-      fill='none'
-      xmlns='http://www.w3.org/2000/svg'
-    >
-      <g opacity='1'>
-        <path
-          d='M6.66406 7.3335V11.3335'
-          stroke={fill}
-          strokeWidth='1.33333'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        />
-        <path
-          d='M9.33594 7.3335V11.3335'
-          stroke={fill}
-          strokeWidth='1.33333'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        />
-        <path
-          d='M2.66406 4.6665H13.3307'
-          stroke={fill}
-          strokeWidth='1.33333'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        />
-        <path
-          d='M4 4.6665H8H12V11.9998C12 13.1044 11.1046 13.9998 10 13.9998H6C4.89543 13.9998 4 13.1044 4 11.9998V4.6665Z'
-          stroke={fill}
-          strokeWidth='1.33333'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        />
-        <path
-          d='M6 3.33333C6 2.59695 6.59695 2 7.33333 2H8.66667C9.40307 2 10 2.59695 10 3.33333V4.66667H6V3.33333Z'
-          stroke={fill}
-          strokeWidth='1.33333'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        />
-      </g>
-    </svg>
-  )
-}
-
-export const Management = ({ fill = 'black', width = '16', height = '16' }) => {
-  return (
-    <svg
-      width={width}
-      height={height}
-      viewBox='0 0 16 16'
-      fill='none'
-      xmlns='http://www.w3.org/2000/svg'
-    >
-      <g opacity={fill == 'black' ? '0.35' : '1'}>
-        <path
-          d='M8.00065 6.66634C9.47341 6.66634 10.6673 5.47243 10.6673 3.99967C10.6673 2.52691 9.47341 1.33301 8.00065 1.33301C6.52789 1.33301 5.33398 2.52691 5.33398 3.99967C5.33398 5.47243 6.52789 6.66634 8.00065 6.66634Z'
-          stroke={fill}
-          strokeWidth='1.2'
-        />
-        <path
-          d='M8.00065 13.9998C10.578 13.9998 12.6673 12.8059 12.6673 11.3332C12.6673 9.86041 10.578 8.6665 8.00065 8.6665C5.42332 8.6665 3.33398 9.86041 3.33398 11.3332C3.33398 12.8059 5.42332 13.9998 8.00065 13.9998Z'
-          stroke={fill}
-          strokeWidth='1.2'
-        />
-      </g>
-    </svg>
-  )
-}
-
 export const GeneralSettingsIcon = ({ fill = 'black' }) => {
   return (
     <svg
@@ -90,125 +15,6 @@ export const GeneralSettingsIcon = ({ fill = 'black' }) => {
           fill={fill}
         />
       </g>
-    </svg>
-  )
-}
-
-export const Org = ({ fill = 'black' }) => {
-  return (
-    <svg
-      width='16'
-      height='16'
-      viewBox='0 0 16 16'
-      fill='none'
-      xmlns='http://www.w3.org/2000/svg'
-    >
-      <g
-        opacity={fill == 'black' ? '0.35' : '1'}
-        clipPath='url(#clip0_3291_44816)'
-      >
-        <path
-          d='M14.6663 14.6665H1.33301'
-          stroke={fill}
-          strokeWidth='1.2'
-          strokeLinecap='round'
-        />
-        <path
-          d='M13.9997 14.6668V4.00016C13.9997 2.74308 13.9997 2.11454 13.6092 1.72402C13.2187 1.3335 12.5901 1.3335 11.333 1.3335H9.99967C8.7426 1.3335 8.11407 1.3335 7.72354 1.72402C7.4092 2.03838 7.34787 2.50698 7.33594 3.3335'
-          stroke={fill}
-          strokeWidth='1.2'
-        />
-        <path
-          d='M10 14.6668V6.00016C10 4.74308 10 4.11454 9.60947 3.72402C9.21893 3.3335 8.5904 3.3335 7.33333 3.3335H4.66667C3.40959 3.3335 2.78105 3.3335 2.39053 3.72402C2 4.11454 2 4.74308 2 6.00016V14.6668'
-          stroke={fill}
-          strokeWidth='1.2'
-        />
-        <path
-          d='M6 14.6665V12.6665'
-          stroke={fill}
-          strokeWidth='1.2'
-          strokeLinecap='round'
-        />
-        <path
-          d='M4 5.3335H8'
-          stroke={fill}
-          strokeWidth='1.2'
-          strokeLinecap='round'
-        />
-        <path
-          d='M4 7.3335H8'
-          stroke={fill}
-          strokeWidth='1.2'
-          strokeLinecap='round'
-        />
-        <path
-          d='M4 9.3335H8'
-          stroke={fill}
-          strokeWidth='1.2'
-          strokeLinecap='round'
-        />
-      </g>
-      <defs>
-        <clipPath id='clip0_3291_44816'>
-          <rect width='16' height='16' fill='white' />
-        </clipPath>
-      </defs>
-    </svg>
-  )
-}
-
-export const PlusIcon = ({
-  width = '1.25vw',
-  height = '1.25vw',
-  fill = 'black'
-}) => {
-  return (
-    <svg
-      width={width}
-      height={height}
-      viewBox='0 0 24 24'
-      fill='none'
-      xmlns='http://www.w3.org/2000/svg'
-    >
-      <g opacity={fill == 'black' ? '0.35' : '1'}>
-        <rect
-          x='-0.015'
-          y='0.015'
-          width='23.97'
-          height='23.97'
-          transform='matrix(-1 0 0 1 23.97 0)'
-          stroke={fill}
-          strokeOpacity='0.15'
-          strokeWidth='0.03'
-        />
-        <path
-          d='M20 12H4M12 4V20'
-          stroke={fill}
-          strokeWidth='2'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        />
-      </g>
-    </svg>
-  )
-}
-
-export const SaveIcon = ({ height = '1.25vw', width = '1.25vw' }) => {
-  return (
-    <svg
-      width={width}
-      height={height}
-      viewBox='0 0 24 25'
-      fill='none'
-      xmlns='http://www.w3.org/2000/svg'
-    >
-      <path
-        d='M8 20.5005H6C4.89543 20.5005 4 19.6051 4 18.5005V6.50049C4 5.39592 4.89543 4.50049 6 4.50049H9M8 20.5005V14.5005C8 13.9482 8.44772 13.5005 9 13.5005H15C15.5523 13.5005 16 13.9482 16 14.5005V20.5005M8 20.5005H16M9 4.50049V7.50049C9 8.05277 9.44772 8.50049 10 8.50049H14C14.5523 8.50049 15 8.05277 15 7.50049V4.50049M9 4.50049H15M16 20.5005H18C19.1046 20.5005 20 19.6051 20 18.5005V9.32892C20 8.79848 19.7893 8.28978 19.4142 7.9147L16.5858 5.08628C16.2107 4.7112 15.702 4.50049 15.1716 4.50049H15'
-        stroke='white'
-        strokeWidth='2'
-        strokeLinecap='round'
-        strokeLinejoin='round'
-      />
     </svg>
   )
 }
@@ -2345,6 +2151,17 @@ export const RoleStructure = ({
           <rect width='14' height='14' fill={fill} />
         </clipPath>
       </defs>
+    </svg>
+  )
+}
+
+export const AppHubIcon = ({ fill = 'black' }) => {
+  return (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="md:h-[1.5vw] md:w-[1.5vw]">
+      <path d="M20.3116 12.6473L20.8293 10.7154C21.4335 8.46034 21.7356 7.3328 21.5081 6.35703C21.3285 5.58657 20.9244 4.88668 20.347 4.34587C19.6157 3.66095 18.4881 3.35883 16.2331 2.75458C13.978 2.15033 12.8504 1.84821 11.8747 2.07573C11.1042 2.25537 10.4043 2.65945 9.86351 3.23687C9.27709 3.86298 8.97128 4.77957 8.51621 6.44561C8.43979 6.7254 8.35915 7.02633 8.27227 7.35057L7.75458 9.28263C7.15033 11.5377 6.84821 12.6652 7.07573 13.641C7.25537 14.4115 7.65945 15.1114 8.23687 15.6522C8.96815 16.3371 10.0957 16.6392 12.3508 17.2435C14.3834 17.7881 15.4999 18.0873 16.415 17.9744C16.5152 17.9621 16.6129 17.9448 16.7092 17.9223C17.4796 17.7427 18.1795 17.3386 18.7203 16.7612C19.4052 16.0299 19.7074 14.9024 20.3116 12.6473Z" stroke={fill} strokeWidth="1.5" />
+      <path d="M16.415 17.9741C16.2065 18.6126 15.8399 19.1902 15.347 19.6519C14.6157 20.3368 13.4881 20.6389 11.2331 21.2432C8.97798 21.8474 7.85044 22.1495 6.87466 21.922C6.10421 21.7424 5.40432 21.3383 4.86351 20.7609C4.17859 20.0296 3.87647 18.9021 3.27222 16.647L2.75458 14.7151C2.15033 12.46 1.84821 11.3325 2.07573 10.3567C2.25537 9.58627 2.65945 8.88638 3.23687 8.34557C3.96815 7.66065 5.09569 7.35853 7.35077 6.75428C7.77741 6.63996 8.16368 6.53646 8.51621 6.44531" stroke={fill} strokeWidth="1.5" />
+      <path d="M11.7773 10L16.6069 11.2941" stroke={fill} strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M11 12.8975L13.8978 13.6739" stroke={fill} strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
 }

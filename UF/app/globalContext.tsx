@@ -2,8 +2,9 @@
 
 
 "use client"
-import React from 'react';
+import React, { useEffect } from 'react';
 import { getCookie } from './components/cookieMgment';
+import { usePathname } from 'next/navigation'
 export interface TotalContextProps {
   currentToken: any 
   setCurrentToken: React.Dispatch<React.SetStateAction<any>>
@@ -67,8 +68,8 @@ export const TotalContext = React.createContext<TotalContextProps | {}>({})
 
 const GlobalContext = ({children} : {children: React.ReactNode}) => {
     const [currentToken, setCurrentToken ] = React.useState<any>({})
-    const [matchedAccessProfileData, setMatchedAccessProfileData] =
-    React.useState<any>({})
+    const [matchedAccessProfileData, setMatchedAccessProfileData] = React.useState<any>({})
+    const pathname = usePathname()
       //////////
         const [groupd23af, setgroupd23af ] = React.useState<any>({}) 
     const [groupd23afProps, setgroupd23afProps ] = React.useState<any>({
@@ -85,20 +86,24 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
       ]
       }) 
    const [buttond4624,setbuttond4624] = React.useState<any>({
-    isDisabled: false,
+    isDisabled: null,
     presetValues: '',
     isHidden: false,
     refetch:false,
     refresh:false,
-    trigger: false
+    trigger: null
     }) 
+   const [buttond4624Props,setbuttond4624Props] = React.useState<any>({}) 
     ///////////
     const [refresh, setRefresh] = React.useState<Record<string, boolean>>({       buttonbuttond4624:false,
        groupgroupd23af:false,
       })
 
   ////// screen states 
-  const [test_v1,settest_v1] = React.useState<any>({})
+  const [test_v1,settest_v1] = React.useState<any>({
+    _selectedGroup_:"",
+    _selectionColor_:"!bg-blue-200"
+    })
   const [test_v1Props,settest_v1Props] = React.useState<any>({})
 
 ///////// dfd
@@ -122,7 +127,39 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
     const [userDetails , setUserDetails] = React.useState<any>({})
     const [encAppFalg , setEncAppFalg] = React.useState<any>({})
     const theme = getCookie('cfg_theme')
-    
+
+
+  const emptifyStateValues=()=>{ // for refresh disable key values exapmle app RTGS
+    setbuttond4624(
+                          {
+                            isDisabled: null,
+                            presetValues: '',
+                            isHidden: false,
+                            refetch:false,
+                            refresh:false,
+                            trigger: false
+                          }) 
+
+        setgroupd23af({}) 
+    setgroupd23afProps({
+      validation:false,
+      required:false,
+      refetch:false,
+      refresh:false,
+      isDisabled: false,
+      presetValues: '',
+      isHidden: false,
+      selectedIds:[],
+      controls:[
+            "button",
+      ]
+      }) 
+  }
+  useEffect(() => {
+    if (pathname?.includes('select-context')) {
+      emptifyStateValues()
+    }
+  }, [pathname])
     
   return (
     <TotalContext.Provider 
@@ -139,6 +176,8 @@ const GlobalContext = ({children} : {children: React.ReactNode}) => {
         setgroupd23afProps,
         buttond4624,
         setbuttond4624, 
+        buttond4624Props,
+        setbuttond4624Props,
         ////// screen states 
           test_v1,
           settest_v1,

@@ -1,4 +1,5 @@
 
+
 import { BadGatewayException, BadRequestException, HttpStatus, Injectable,Logger } from "@nestjs/common";
 import axios, { AxiosRequestConfig } from 'axios';
 import * as FormData from 'form-data';
@@ -6,29 +7,33 @@ import { readAPIDTO,errorObj } from "./dto";
 import { RuleService } from "./ruleService";
 import { CodeService } from "./codeService";
 import { CustomException } from "./customException";
-import { JwtService } from "@nestjs/jwt";
 import { RedisService } from "./redisService";
-import { MongoService } from "./mongoService";
 import { format } from 'date-fns';
 import jsonata from "jsonata";
 const vault = require('node-vault');
 import * as crypto from 'crypto';
-import { publicEncrypt,privateDecrypt,generateKeyPairSync  } from 'crypto';
 import * as fs from 'fs';
 import * as stream from 'stream';
 import { Readable } from "stream";
 import path from "path";
 import Redis from 'ioredis';
 import * as pg from "pg";
-import { GridFSBucket } from "mongodb";
 import { MongoClient, ObjectId , Db} from "mongodb";
 import { ConfigService } from "@nestjs/config";
-const NodeRSA = require('node-rsa')
+import { normalizePem } from "src/utils/normalizePem.util";
+import { rsaEncryptChunked, rsaDecryptChunked } from "src/utils/rsaBlockCrypto.util";
 import { Cron, CronExpression } from "@nestjs/schedule";
 import { readdir, readFile } from 'fs/promises';
-import { connectToMongo, getDb } from "./mongoClient";
 import { EnvData } from "src/envData/envData.service";
 import { decrypt } from "src/decrypt";
+import * as dayjs from 'dayjs';
+import * as utc from 'dayjs/plugin/utc';
+import * as timezone from 'dayjs/plugin/timezone';
+import { JwtServices } from "src/jwt.services";
+import { assertAllowedOutboundHost } from "src/utils/ssrf.util";
+import { negotiatePgTls, negotiateMongoTls } from "./db-ssl.util";
+dayjs.extend(utc);
+dayjs.extend(timezone);
 const _ = require("lodash")
 
 let db:Db
@@ -43,12 +48,6 @@ let db:Db
 //     });
 //   var db= client.db(process.env.MONGODB_NAME)
 
-connectToMongo().then(async () => { 
-    db = await getDb();
-    console.log('Database initialized'); 
-  }).catch((error) => {
-    console.error('Error connecting to MongoDB:', error);
-  });
  
   type JsonValue = string | number | boolean | null | JsonObject | JsonArray;
   type JsonObject = { [key: string]: JsonValue };
@@ -65,12 +64,10 @@ export class CommonService{
   private vaultAddr: string;
   private vaultToken: string;
   private vaultKey: string;
-  private bucket: GridFSBucket;
   constructor(private readonly ruleEngine:RuleService,
     private readonly codeService:CodeService,
-    private readonly jwtService: JwtService,
+    private readonly jwtService: JwtServices,
     private readonly redisService: RedisService,
-    private readonly mongoService: MongoService,
     private readonly configService: ConfigService,
     private readonly envData:EnvData
   ) {  
@@ -87,12 +84,46 @@ export class CommonService{
         });
     this.encryptionKey = this.vaultKey;
   }
+  async readTextFileSmart(path: string): Promise<string> {
+    const buf = await readFile(path); // read as raw Buffer first, no encoding
 
-  async  getLatestMigrationSql(isLocal?: string ): Promise<string> {
+    // UTF-16 LE BOM: FF FE
+    if (buf.length >= 2 && buf[0] === 0xff && buf[1] === 0xfe) {
+      return buf.toString('utf16le', 2); // skip BOM
+    }
+
+    // UTF-16 BE BOM: FE FF (Node doesn't natively decode this, swap bytes)
+    if (buf.length >= 2 && buf[0] === 0xfe && buf[1] === 0xff) {
+      const swapped = Buffer.alloc(buf.length - 2);
+      for (let i = 2; i < buf.length; i += 2) {
+        swapped[i - 2] = buf[i + 1];
+        swapped[i - 1] = buf[i];
+      }
+      return swapped.toString('utf16le');
+    }
+
+    // UTF-8 BOM: EF BB BF
+    if (buf.length >= 3 && buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) {
+      return buf.toString('utf-8', 3); // skip BOM
+    }
+
+    // plain UTF-8, no BOM
+    return buf.toString('utf-8');
+  }
+
+  async  getLatestMigrationSql(isLocal?: string ): Promise<{ baseline: string; incremental: string; prismaSchema:string }> {
     // Determine the base migrations directory based on isLocal
-    const migrationsDir = isLocal === 'dev'
-      ? './dist/erd/prisma/migrations'
-      : './dist/prisma/migrations';
+    let prismaSchemaPath=''
+    let migrationsDir =''
+    if(isLocal === 'dev')
+    {
+      migrationsDir = './src/erd/prisma/migrations'
+      prismaSchemaPath = './src/erd/prisma'
+    }
+    else {
+      migrationsDir = './dist/prisma/migrations'
+      prismaSchemaPath = './dist/prisma'
+    }
 
     // Read all entries in the migrations directory
     //const migrationEntries = await readdir(migrationsDir, { withFileTypes: true });
@@ -113,11 +144,17 @@ export class CommonService{
 
     // Read the SQL file inside the latest migration folder
     //const migrationSqlPath = `${migrationsDir}/${latestMigrationFolder}/migration.sql`;
-    const migrationSql = await readFile(`${migrationsDir}/ddlChanges.sql`, 'utf-8');
-
-    console.log('Migration SQL content:', migrationSql);
-
-    return migrationSql;
+    let migrationSql_baseline = await this.readTextFileSmart(`${migrationsDir}/ddl_changes_baseline.sql`);
+    let migrationSql_incremental = await this.readTextFileSmart(`${migrationsDir}/ddl_changes_incremental.sql`);
+    let migrationSql_allTrigger = await this.readTextFileSmart(`${migrationsDir}/allTriggers.sql`);
+    let migrationSql_triggerChanges = await this.readTextFileSmart(`${migrationsDir}/triggerChanges.sql`);
+    let overallPrismaSchema = await this.readTextFileSmart(`${prismaSchemaPath}/schema.prisma`);
+    migrationSql_baseline = migrationSql_baseline + migrationSql_allTrigger;
+    if (!migrationSql_incremental?.includes('-- This is an empty migration.')&&!migrationSql_incremental?.includes("No DDL changes available")) 
+    {
+      migrationSql_incremental = migrationSql_incremental + migrationSql_triggerChanges;
+    }
+    return { baseline: migrationSql_baseline, incremental: migrationSql_incremental, prismaSchema: overallPrismaSchema };
   }
 
   replaceKeysWithDollar(
@@ -143,12 +180,6 @@ export class CommonService{
   }
 
   private readonly logger = new Logger(CommonService.name) 
-  private readonly GRIDFS_BUCKET = 'CT010/AG001/A001/v1';
-
-  private async getBucket(): Promise<GridFSBucket> {
-    const collection = await getDb();
-    return new GridFSBucket(collection, { bucketName: this.GRIDFS_BUCKET });
-  }
     async encrypt(value: string,context:string): Promise<string> {
         const result = await this.vaultClient.write(`transit/encrypt/${this.encryptionKey}`, {
           plaintext: Buffer.from(value).toString('base64'),
@@ -196,7 +227,7 @@ export class CommonService{
       }
     }
 
-     async commonEncryption(dpdKey,Method,value,context:string): Promise<any> {
+    async commonEncryption(dpdKey,Method,value,context:string): Promise<any> {
       try {        
         let getCredentials = await this.getEncryptionInfo(dpdKey,Method)
         if(getCredentials){
@@ -219,32 +250,40 @@ export class CommonService{
               });
               return result.data.ciphertext;
             }else if(encMethod == 'AESCTR'){
-             
-              const iv = Buffer.from(encryptCredentials.IVlength, 'base64')
-              const key = Buffer.from(encryptCredentials.Key, 'base64');        
-              const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);        
-              let encrypted = cipher.update(JSON.stringify(value), 'utf8', 'base64');        
-              encrypted += cipher.final('base64');        
-             
-              return encrypted;
-    
-            }else if(encMethod == 'AESGCM'){    
- 
+              // Fresh random IV per call (not the static per-tenant config
+              // value) — CTR mode with a reused IV/key pair leaks plaintext
+              // via ciphertext XOR. Embedded as a fixed 24-char base64 prefix
+              // so commondecryption can recover it; see there for the
+              // legacy (pre-fix, static-IV) fallback path.
+              const iv = crypto.randomBytes(16);
               const key = Buffer.from(encryptCredentials.Key, 'base64');
-              const iv = Buffer.from(encryptCredentials.IVlength, 'base64')
- 
+              const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
+              let encrypted = cipher.update(JSON.stringify(value), 'utf8', 'base64');
+              encrypted += cipher.final('base64');
+
+              return `${iv.toString('base64')}:${encrypted}`;
+
+            }else if(encMethod == 'AESGCM'){
+
+              const key = Buffer.from(encryptCredentials.Key, 'base64');
+              // Fresh random IV per call — see AESCTR branch above. For GCM,
+              // IV reuse is worse: it also makes ciphertexts forgeable.
+              const iv = crypto.randomBytes(16);
+
               const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
               let encrypted = cipher.update(JSON.stringify(value), 'utf8', 'base64');
               encrypted += cipher.final('base64');
- 
+
               const authTag = cipher.getAuthTag();
-             
-             return {encrypted,authTag:authTag.toString('base64')};
+
+             return {encrypted,authTag:authTag.toString('base64'),iv:iv.toString('base64')};
             }else if (encMethod == 'RSA') {
               const publicKey = encryptCredentials.publicKey
               const encryptData = async (data: string) => {
-                const key = new NodeRSA(publicKey)
-                return key.encrypt(data, 'base64') // Encrypted data in base64
+                return rsaEncryptChunked(
+                  normalizePem(publicKey),
+                  Buffer.from(data, 'utf8')
+                ).toString('base64') // Encrypted data in base64
               }
 
               const sensitiveData = value
@@ -285,31 +324,52 @@ export class CommonService{
               });
               return Buffer.from(result.data.plaintext, 'base64').toString('utf-8');
             }else if(encMethod == 'AESCTR'){
-              
-              let key = Buffer.from(encryptCredentials.Key, 'base64'); 
-              let iv = Buffer.from(encryptCredentials.IVlength , 'base64');
+
+              let key = Buffer.from(encryptCredentials.Key, 'base64');
+              const raw: string = encryptedData.ciphertext;
+              let iv: Buffer;
+              let cipherB64: string;
+              // New format embeds a fresh per-call IV as a 24-char base64
+              // prefix before ':' (see commonEncryption). A value encrypted
+              // before this fix has no ':' and used the static config IV —
+              // keep decrypting those with the legacy IV so old data isn't
+              // stranded.
+              if (raw && raw.length > 24 && raw[24] === ':') {
+                iv = Buffer.from(raw.slice(0, 24), 'base64');
+                cipherB64 = raw.slice(25);
+              } else {
+                iv = Buffer.from(encryptCredentials.IVlength, 'base64');
+                cipherB64 = raw;
+              }
 
               const decipher = crypto.createDecipheriv('aes-256-ctr',key ,iv );
-              let decrypted = decipher.update(encryptedData.ciphertext, 'base64', 'utf8');
+              let decrypted = decipher.update(cipherB64, 'base64', 'utf8');
               decrypted += decipher.final('utf8');
               return decrypted;
-    
+
             }else if(encMethod == 'AESGCM'){
               let key = Buffer.from(encryptCredentials.Key, 'base64');
-              let iv = Buffer.from(encryptCredentials.IVlength, 'base64');
- 
+              // encryptedData.iv is only present for ciphertexts produced
+              // after this fix; fall back to the legacy static config IV
+              // for anything encrypted before it.
+              let iv = encryptedData.iv
+                ? Buffer.from(encryptedData.iv, 'base64')
+                : Buffer.from(encryptCredentials.IVlength, 'base64');
+
               const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
               decipher.setAuthTag(Buffer.from(encryptedData.authTag, 'base64'));
-             
+
               let decrypted = decipher.update(encryptedData.ciphertext, 'base64', 'utf8');
               decrypted += decipher.final('utf8');
- 
+
               return decrypted;
-             
+
             }else if (encMethod == 'RSA') {
               try{
-              const key = new NodeRSA(encryptCredentials.privateKey);
-              const decrypted = key.decrypt(encryptedData.ciphertext, 'utf8');
+              const decrypted = rsaDecryptChunked(
+                normalizePem(encryptCredentials.privateKey),
+                Buffer.from(encryptedData.ciphertext, 'base64')
+              ).toString('utf8');
 
               return decrypted
               }catch (error) {
@@ -326,14 +386,20 @@ export class CommonService{
       }
     }
 
-    async aes256ctrEncrypt(buffer: Buffer): Promise<Buffer> {
+        // Marks buffers produced by the fixed aes256ctrEncrypt below (fresh
+    // random IV per call, embedded) so aes256ctrDecrypt/DecryptFile can tell
+    // them apart from legacy buffers encrypted with the old static
+    // process.env.AES_IV, and decrypt each with the right IV.
+    private readonly AES_CTR_IV_MARKER = Buffer.from('AESCTRV2:', 'utf8');
+
+   async aes256ctrEncrypt(buffer: Buffer): Promise<Buffer> {
       try {
         const key = Buffer.from(process.env.AES_KEY, 'base64');
-        const iv = Buffer.from(process.env.AES_IV, 'base64');
+        const iv = crypto.randomBytes(16);
 
         const cipher = crypto.createCipheriv('aes-256-ctr', key, iv);
         const encrypted = Buffer.concat([cipher.update(buffer), cipher.final()]);
-        return encrypted;
+        return Buffer.concat([this.AES_CTR_IV_MARKER, iv, encrypted]);
       } catch (error) {
         throw error
       }
@@ -342,10 +408,24 @@ export class CommonService{
     async aes256ctrDecrypt(encryptedBuffer: Buffer): Promise<Buffer> {
       try {
       const key = Buffer.from(process.env.AES_KEY!, 'base64');
-      const iv = Buffer.from(process.env.AES_IV!, 'base64');
+      const markerLen = this.AES_CTR_IV_MARKER.length;
+
+      let iv: Buffer;
+      let ciphertext: Buffer;
+      if (
+        encryptedBuffer.length >= markerLen + 16 &&
+        encryptedBuffer.subarray(0, markerLen).equals(this.AES_CTR_IV_MARKER)
+      ) {
+        iv = encryptedBuffer.subarray(markerLen, markerLen + 16);
+        ciphertext = encryptedBuffer.subarray(markerLen + 16);
+      } else {
+        // Legacy buffer, encrypted before the per-call random IV fix.
+        iv = Buffer.from(process.env.AES_IV!, 'base64');
+        ciphertext = encryptedBuffer;
+      }
 
       const decipher = crypto.createDecipheriv('aes-256-ctr', key, iv);
-      const decrypted = Buffer.concat([decipher.update(encryptedBuffer), decipher.final()]);
+      const decrypted = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
 
       return decrypted
       } catch (error) {
@@ -391,74 +471,7 @@ export class CommonService{
       );
       return Buffer.from(res.data.data.plaintext, 'base64');
     }
-
-    async findFileById(id: string | string[]) {
-      // Handle single ID or array of IDs
-      const bucket = await this.getBucket();
-      if (Array.isArray(id)) {
-        const objectIds = id.map(fileId => new ObjectId(fileId));
-        const files = await bucket.find({ _id: { $in: objectIds } }).toArray();
-        return files;
-      } else {
-        const files = await bucket.find({ _id: new ObjectId(id) }).toArray();
-        return files[0];
-      }
-    }
-
-    async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number },context: string, enableEncryption: string): Promise<any> {
-    //const encrypted = await this.encryptFile(file.buffer, context);
-      let encrypted:Buffer
-      if(enableEncryption === "true" ){
-       encrypted = await this.aes256ctrEncrypt(file.buffer);
-      }else{
-         encrypted = file.buffer;
-      }
-      const bucket = await this.getBucket();
-      const uploadStream = bucket.openUploadStream(file.filename, {
-        metadata: { isEncrypted: enableEncryption },
-        contentType: file.mimetype,
-      });
-      uploadStream.end(encrypted);
-      return { message: 'Encrypted file uploaded successfully', fileId: uploadStream.id.toString() };
-    }
-
-    async getFile(id: string | string[], context: string,enableEncryption: Boolean): Promise<Buffer | Buffer[]> {
-      // Handle array of IDs
-      if (Array.isArray(id)) {
-        const buffers: Buffer[] = [];
-        for (const fileId of id) {
-          const buffer = await this.getSingleFile(fileId, context, enableEncryption);
-          buffers.push(buffer);
-        }
-        return buffers;
-      } else {
-        return this.getSingleFile(id, context, enableEncryption);
-      }
-    }
-
-    private async getSingleFile(id: string, context: string, enableEncryption: Boolean): Promise<Buffer> {
-      let decrypted: Buffer;
-      const chunks: Buffer[] = [];
-      const bucket = await this.getBucket();
-      const downloadStream = bucket.openDownloadStream(new ObjectId(id));
-      return new Promise<Buffer>((resolve, reject) => {
-        downloadStream.on('data', (chunk) => chunks.push(chunk));
-        downloadStream.on('end', async () => {
-          const ciphertext = Buffer.concat(chunks);
-          try {
-            if (enableEncryption) {
-              decrypted = await this.aes256ctrDecrypt(ciphertext);
-            } else {
-              decrypted = ciphertext;
-            }
-            resolve(decrypted);
-          } catch (err:any) {
-            reject(err);
-          }
-        });
-        downloadStream.on('error', reject);
-      });
-    }
+    
     async eventFunction(eventProperty: any) {
         let eventsDetails: any = [];
         const eventDetailsArray: any[] = [];
@@ -723,8 +736,22 @@ export class CommonService{
     
       return finalres;
     }
+
   async readAPI(keys: string, clientCode: string, token:string): Promise<any> {
-      try {      
+      try {  
+        const deploymentTenant = process.env.CLIENTCODE;
+        if (token && clientCode && clientCode !== deploymentTenant && clientCode !== 'redis') {
+          let verifiedPayload: any;
+          try {
+            verifiedPayload = await this.jwtService.verifyToken(token);;
+          } catch (e) {
+            throw new CustomException('Invalid or expired token', 401);
+          }
+          const tokenTenant = verifiedPayload?.tenant || deploymentTenant;
+          if (tokenTenant !== clientCode) {
+            throw new CustomException('Requested tenant does not match the authenticated session', 403);
+          }
+        }    
         let result:any = structuredClone(JSON.parse(await this.redisService.getJsonData(keys,clientCode)));
         return result
       } catch (error) {
@@ -738,58 +765,18 @@ export class CommonService{
             token,
           );
       }
-    //   const keyParts = keys.split(':');
-    //   const catk: string[] = [];
-    //   const afgk: string[] = [];
-    //   const ak: string[] = [];
-    //   const afvk: string[] = [];
-    //   const afsk: string = keyParts[14];
-    //   const ck = keyParts[1];
-    //   const fngk = keyParts[3];
-    //   const fnk = keyParts[5];
-    //   catk.push(keyParts[7]);
-    //   afgk.push(keyParts[9]);
-    //   ak.push(keyParts[11]);
-    //   afvk.push(keyParts[13]);
-
-    //   let readAPIBody: readAPIDTO = {
-    //     SOURCE: source,
-    //     TARGET: target,
-    //     CK: ck,
-    //     FNGK: fngk,
-    //     FNK: fnk,
-    //     CATK: catk,
-    //     AFGK: afgk,
-    //     AFK: ak,
-    //     AFVK: afvk,
-    //     AFSK: afsk,
-    //   };
-
-    //   // const readKey = await axios.post(
-    //   //   process.env.TORUS_URL + '/api/readkey',
-    //   //   readAPIBody,
-    //   // );
-    //   let URL = process.env.TORUS_URL +'/readkey'
-    //   const readKey = await axios.post(
-    //    URL,
-    //      readAPIBody,
-    //      {
-    //   headers: {
-    //     Authorization: `Bearer ${token}`
-    //   }
-    // }
-    //    );
-
-    //   return readKey.data;
+    
     }
     
     async postCall(url,body,headers?){ 
+      assertAllowedOutboundHost(url);
       return await axios.post(url,body,headers)
       .then((res) => this.responseData(res.status, res.data).then((res) => res))
       .catch((err) => {throw err});  
     }
 
     async axiosPostCall(url,body,headers?){ 
+      assertAllowedOutboundHost(url);
       let response = await axios.post(url,body,headers)
       return response.data;
     }  
@@ -812,23 +799,24 @@ export class CommonService{
     }
     } 
 
-    async getCall(url,headers?){   
+    async getCall(url,headers?){ 
+      assertAllowedOutboundHost(url);  
       return await axios.get(url,headers)
       .then((res) => this.responseData(res.status, res.data).then((res) => res))
       .catch((err) => {throw err});  
     } 
 
-        async extractInputFields(rule) {
-               let fieldarr = [];
+   async extractInputFields(rule) {
+      let fieldarr = [];
 
-           if (rule?.nodes?.length) {
-         for (let node of rule.nodes) {
-         let inputs = node?.content?.inputs;
+      if (rule?.nodes?.length) {
+      for (let node of rule.nodes) {
+        let inputs = node?.content?.inputs;
 
-            if (inputs?.length) {
-            for (let input of inputs) {
-              if (input.field) {
-             fieldarr.push(input.field);
+        if (inputs?.length) {
+        for (let input of inputs) {
+          if (input.field) {
+            fieldarr.push(input.field);
             }
            }
          }
@@ -839,23 +827,25 @@ export class CommonService{
      }
     
     
-       async getRuleCodeMapper(currentNode, inputparam,processedKey,fabric ,SessionInfo,controlName? ){       
+    async getRuleCodeMapper(currentNode, inputparam,processedKey,fabric ,SessionInfo,controlName? ){       
       try {       
         let zenresult
         var ResultObj = {}
         let fieldarr = []
         let rule = currentNode?.rule
         let customCode = currentNode?.code   
+      inputparam = JSON.parse(await this.redisService.getJsonData(processedKey+':rule',process.env.CLIENTCODE))
         if (customCode ) {
-          var customcoderesult = await this.codeService.customCode(processedKey, customCode, inputparam,fabric,SessionInfo)
-          // console.log("customcoderesult",customcoderesult);
+          var customcoderesult = await this.codeService.customCode(processedKey, customCode, inputparam,fabric,SessionInfo)        
           
          if(customcoderesult){
             if(inputparam[currentNode.nodeName]) 
               inputparam[currentNode.nodeName] = Object.assign(inputparam[currentNode.nodeName],customcoderesult)
             else
             inputparam = Object.assign(inputparam,{[currentNode.nodeName]:customcoderesult})
+            
             await this.redisService.setJsonData(processedKey + ':NPV:' +currentNode.nodeName + '.PRO', JSON.stringify(customcoderesult), process.env.CLIENTCODE, 'response',);       
+            await this.redisService.setJsonData(processedKey+':rule', JSON.stringify(inputparam), process.env.CLIENTCODE);
           }        
         }    
 
@@ -873,17 +863,7 @@ export class CommonService{
                     return null;
                   }
                   return value;
-                }));
-                console.log(
-                "RULE PAYLOAD",
-                JSON.stringify(gparamreq, (_, value) => {
-                  if (typeof value === 'number') {
-                    if (Number.isNaN(value)) return 'NaN';
-                    if (!Number.isFinite(value)) return 'Infinity';
-                  }
-                  return value;
-                }, 2)
-              );
+                }));               
               var goruleres = await this.ruleEngine.goRule(rule,gparamreq)
               if(Object.keys(goruleres.result).length > 0){
                 //zenresult = goruleres.result.output
@@ -906,7 +886,51 @@ export class CommonService{
       }          
     }
 
-    async PfRuleExtract(rule:any,SessionInfo,HtInputParam,controlName){
+  async ruleCheck(ruleJson,input){
+      try {       
+    // Find the decision table node
+     const decisionNode = ruleJson.nodes.find(
+    (node) => node.type === 'decisionTableNode',
+  );
+
+  if (!decisionNode) {
+    throw new Error('Decision table node not found');
+  }
+
+  const table = decisionNode.content;
+
+  const results = table.rules
+    .filter((rule) => {
+      // Check all input conditions dynamically
+      return table.inputs.every((inputDef) => {
+        const actualValue = this.getValue(input, inputDef.field);
+        const expectedValue = JSON.parse(rule[inputDef.id]);
+
+        return actualValue === expectedValue;
+      });
+    })
+    .map((rule) => {
+      const output: Record< string, any> = {};
+
+      // Build outputs dynamically
+      table.outputs.forEach((outputDef) => {
+        output[outputDef.field] = JSON.parse(rule[outputDef.id]);
+      });
+
+      return output;
+    });
+
+  return results;
+      } catch (error) {
+        throw error
+      }
+    }
+
+  private getValue(obj: any, path: string): any {
+    return path.split('.').reduce((acc, key) => acc?.[key], obj);
+  }
+
+  async PfRuleExtract(rule:any,SessionInfo,HtInputParam,controlName){
       let gparamreq = {}  
        if(rule && Object.keys(rule).length > 0){
           var nodes = rule.nodes     
@@ -929,9 +953,6 @@ export class CommonService{
                 }      
               }            
             }  
-
-            // console.log('gparamreq',gparamreq);
-
             var goruleres = await this.ruleEngine.goRule(rule, gparamreq) 
             if(Object.keys(goruleres.result).length > 0){  
               return goruleres.result
@@ -969,8 +990,84 @@ export class CommonService{
       return zenresultArr
     }
 
+    
+    sqlLiteral(value: any): any {
+      if (value === null || value === undefined) return 'NULL';
+      if (typeof value === 'string') return `'${value.replace(/'/g, "''")}'`;
+      if (Array.isArray(value)) return value.map(v => this.sqlLiteral(v)).join(',');
+      return value;
+    }
+
+   
+    isSafeSqlIdentifier(name: any): boolean {
+      return typeof name === 'string' && /^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$/.test(name);
+    }
+
+     isAuthorizedOutputTable(tenant: string | undefined, tableName: any): boolean {
+      if (!this.isSafeSqlIdentifier(tableName)) return false;
+      const raw = process.env.OUTPUTNODE_WRITE_ALLOWLIST;
+      if (!raw) return false;
+      try {
+        const allowlist = JSON.parse(raw);
+        const tenantList: string[] = (tenant && allowlist[tenant]) || [];
+        const globalList: string[] = allowlist['*'] || [];
+        return tenantList.includes(tableName) || globalList.includes(tableName);
+      } catch (e) {
+        this.logger?.error?.('OUTPUTNODE_WRITE_ALLOWLIST is not valid JSON — denying output-node write by default', e);
+        return false;
+      }
+    }
+    
+   applyDollarDollarDollarFilters(
+      executecommand: string,
+      filterData: any,
+      nodeId: string,
+      statickeyword: string[],
+      ): string {
+      if (!(filterData && Array.isArray(filterData) && filterData.length > 0)) {
+        return executecommand;
+      }
+      filterData.forEach((filterObj) => {
+        if (filterObj?.nodeId != nodeId) return;
+        const entries = Object.entries(filterObj).filter(([key]) => key !== 'nodeId');
+        entries.forEach(([key, value]) => {
+          let removedVal: string;
+          if (key.includes('.')) {
+            const s_item = key.split('.');
+            removedVal = s_item.filter((item) => !statickeyword.includes(item)).join('.');
+            if (removedVal.includes('.') && removedVal.startsWith('items.')) {
+              removedVal = removedVal.replace('items.', '');
+            }
+          } else {
+            removedVal = key;
+          }
+          if (!this.isSafeSqlIdentifier(removedVal)) return;
+          const regex = new RegExp(`\\$\\$\\$${removedVal}`, 'g');
+          if (typeof value == 'number') executecommand = executecommand.replace(regex, `${value}`);
+          else if (typeof value == 'string') executecommand = executecommand.replace(regex, this.sqlLiteral(value));
+        });
+      });
+      return executecommand;
+    }
+
+
+      
+    sanitizePagination(page: any, count: any): { page: any; count: any } {
+      if ((page === undefined || page === null) && (count === undefined || count === null)) {
+        return { page, count };
+      }
+      const p = Number(page);
+      const c = Number(count);
+       // const MAX_PAGE_SIZE = 10000;
+      // if (!Number.isInteger(p) || !Number.isInteger(c) || p < 1 || c < 1 || c > MAX_PAGE_SIZE) {
+      //   throw new CustomException('Invalid pagination parameters: page and count must be positive integers', 400);
+      // }
+      return { page: p, count: c };
+    } 
+    
+   
     //RollBack Check
-     async checkRollBack(Ndp,collectionName,action,currentNode?){
+     async checkRollBack(Ndp,collectionName,action,currentNode?,tenant?){
       try {  
         let pfs = currentNode?.pfs
         let ifoflg = []
@@ -1065,11 +1162,11 @@ export class CommonService{
                     manualQry = rollback.subSelection._true.manualQuery
                   Object.keys(insertedData).forEach(key => {
                     const regex = new RegExp(`\\$\\$${key}`, 'g');
-                    const value = typeof insertedData[key] === 'string' ? `'${insertedData[key]}'` : insertedData[key];
+                    const value = this.sqlLiteral(insertedData[key]);
                     qry = manualQry.replace(regex, value);
                   });
                   // let qry = `DELETE FROM ${tablename} WHERE ${primaryKey} = ${insertedData[primaryKey]};`
-                  let conectdb = await this.dbconfig(Ndp[item], collectionName)
+                  let conectdb = await this.dbconfig(Ndp[item], collectionName, tenant)
                   let db = conectdb.client
                   await db.connect();
                   if (qry) qryres = await db.query(qry);
@@ -1082,7 +1179,7 @@ export class CommonService{
                     manualQryType = rollback.subSelection._true.manualQueryType.value
                     rmanualQry = rollback.subSelection._true.manualQueryType.manualQuery
                   }
-                  let mconfig = await this.mongodbconfig(Ndp[item], collectionName)
+                  let mconfig = await this.mongodbconfig(Ndp[item], collectionName, tenant)
                   let mongodbUrl = mconfig.mongodbUrl
                   //let manualQryType = mconfig.manualQryType
                   const client = new MongoClient(mongodbUrl);
@@ -1114,7 +1211,7 @@ export class CommonService{
                 else if (Ndp[item].nodeType == 'streamnode') {
                   let rollbackData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO', '.rollback', collectionName));
                   let reqData: any;
-                  let sconf = await this.streamConfig(Ndp[item], collectionName)
+                  let sconf = await this.streamConfig(Ndp[item], collectionName, tenant)
                   if (!sconf.streamName)
                     reqData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodename + '.PRO', '.request', collectionName));
                   else
@@ -1137,7 +1234,7 @@ export class CommonService{
                 else if (Ndp[item].nodeType == 'filenode') {
                   let rollbackData = JSON.parse(await this.redisService.getJsonDataWithPath(currentNode.key + ':NPV:' + Ndp[item].nodeName + '.PRO', '.rollback', collectionName));
 
-                  let fconf = await this.fileConfig(Ndp[item], collectionName)
+                  let fconf = await this.fileConfig(Ndp[item], collectionName, tenant)
                   if (fconf.oprname == 'write') {
                     let auth = {
                       username: fconf.seaWeedConfig.username,
@@ -1151,12 +1248,12 @@ export class CommonService{
                       await axios.delete(url, { auth });
                   }
                 }
-                else if (Ndp[item].nodeType == 'procedureexecutionnode' || 'function_node') {
-                  let pconf = await this.procedureConfig(Ndp[item], collectionName)
+                else if (Ndp[item].nodeType == 'procedureexecutionnode' || Ndp[item].nodeType == 'function_node') {
+                  let pconf = await this.procedureConfig(Ndp[item], collectionName, tenant)
                   if (insertedData && Object.keys(insertedData).length > 0) {
                     Object.keys(insertedData).forEach(key => {
                       const regex = new RegExp(`\\$\\$${key}`, 'g');
-                      const value = typeof insertedData[key] === 'string' ? `'${insertedData[key]}'` : insertedData[key];
+                      const value = this.sqlLiteral(insertedData[key]);
                       pconf.rexecmd = pconf.rexecmd.replace(regex, value);
                     });
                   }
@@ -1178,13 +1275,15 @@ export class CommonService{
       }    
     }
 
+
     async deleteCall(url, headers?) {
+     assertAllowedOutboundHost(url);
       return await axios.delete(url, headers)
       .then((res) => this.responseData(res.status, res.data).then((res) => res))
       .catch((err) => { return err });
     }
     
-      setNestedValue(obj: any, path: string, value: any): void {
+  setNestedValue(obj: any, path: string, value: any): void {
       const parts = path.split('.');
       let current = obj;
 
@@ -1213,14 +1312,40 @@ export class CommonService{
       }
     }
 
+    private static readonly SENSITIVE_LOG_KEY_PATTERN = /^(authorization|cookie|set-cookie|token|accesstoken|access_token|refreshtoken|refresh_token|password|secret|apikey|api_key|x-api-key)$/i;
+
+    redactSensitiveFields(value: any, seen: WeakSet<object> = new WeakSet()): any {
+      if (value === null || value === undefined) return value;
+      if (Array.isArray(value)) {
+        return value.map((item) => this.redactSensitiveFields(item, seen));
+      }
+      if (typeof value === 'object') {
+        if (seen.has(value)) return '[Circular]';
+        seen.add(value);
+        const result: any = {};
+        for (const [k, v] of Object.entries(value)) {
+          result[k] = CommonService.SENSITIVE_LOG_KEY_PATTERN.test(k)
+            ? '[REDACTED]'
+            : this.redactSensitiveFields(v, seen);
+        }
+        return result;
+      }
+      return value;
+    }
+
     async getTPL(key: any, upId: any,pfjson:any,status:string, targetQueue:string ,stoken:any,fabric:string,sourceStatus?:string,request?:any,response?:any){
       // this.logger.log("TPL Log Started")     
       var sessionInfo = {} 
       var processInfo = {};
       var tenant = await this.splitcommonkey(key,'CK')
       var app = await this.splitcommonkey(key,'AFGK')
-      var token:any = this.jwtService.decode(stoken,{ json: true })
-      if(token){       
+      var token:any
+      try {
+          token = await this.jwtService.verifyToken(stoken);
+      } catch (e) {
+        token = null;
+      }
+      if(token){ 
         sessionInfo['user'] =  token.loginId     
         sessionInfo['accessProfile'] =  token.accessProfile     
       }        
@@ -1244,26 +1369,26 @@ export class CommonService{
 
         if(status == 'Success'){
           if(request)
-            processInfo['request'] = request;                     
-                 
+            processInfo['request'] = this.redactSensitiveFields(request);
+
           if(response){
             let childObj = {}
-            
+            const redactedResponse = this.redactSensitiveFields(response);
             if(response.upId){
               childObj['subFlowKey'] = response.key
               childObj['subFlowUpId'] = response.upId
               if(response.eventError)
                 childObj['subFlowError'] = response.eventError
               if(response.data)
-                childObj['subFlowResponse'] = response.data
+                childObj['subFlowResponse'] = redactedResponse.data
               processInfo['subFlowInfo'] = childObj;
             }
-            processInfo['response'] = response;
+            processInfo['response'] = redactedResponse;
           }
         }else{
-          var errdata = {}  
+          var errdata = {}
           errdata['tname'] = 'TE'
-           processInfo['request'] = request; 
+           processInfo['request'] = this.redactSensitiveFields(request);
           if(response.status == 403){
             errdata['errGrp'] = 'Security'
           }else
@@ -1272,8 +1397,8 @@ export class CommonService{
           errdata['fabric'] = fabric
           errdata['errType'] = 'Fatal'
           errdata['errCode'] = '001'
-          var errorDetails = await this.errorobj(errdata,response,status)
-        }   
+          var errorDetails = await this.errorobj(errdata,this.redactSensitiveFields(response),status)
+        }
        var prclogdata:any
         if(status == 'Success'){
           prclogdata = {
@@ -1291,7 +1416,7 @@ export class CommonService{
         await this.redisService.setStreamData(tenant+'-'+app+'-TPL', key + upId, JSON.stringify(prclogdata));  
         // this.logger.log("TPL Log completed")     
         return prclogdata 
-    } 
+    }  
 
     async errorobj(errdata:any,error: any,status:any): Promise<any> {    
       if(error.code){
@@ -1345,13 +1470,15 @@ export class CommonService{
       }      
     }
 
-    async patchCall(url,data,headers){
+    async patchCall(url,data,headers){ 
+     assertAllowedOutboundHost(url);   
       return await axios.patch(url,data,headers)
       .then((res) => this.responseData(res.status, res.data).then((res) => res))
       .catch((err) => {throw err}); 
     }
 
-    async postCallwithDB(url,body,headers?){      
+    async postCallwithDB(url,body,headers?){ 
+       assertAllowedOutboundHost(url);     
       return await axios.post(url,body,headers)
       .then((res) => !res.data.errorCode? this.responseData(res.status, res.data).then((res) => res): res.data)
       .catch((err) => {throw err});  
@@ -1399,7 +1526,12 @@ export class CommonService{
        }
       //  stoken = null
        if(stoken){
-        let token:any = this.jwtService.decode(stoken,{ json: true })
+        let token:any
+        try {
+            token = await this.jwtService.verifyToken(stoken);
+        } catch (e) {
+          token = null;
+        }
         //let token = await this.MyAccountForClient(stoken)
         if(token){
          
@@ -1409,18 +1541,18 @@ export class CommonService{
         }  
         } 
 
-        let errorDetails = await this.errorobj(errdata,error,status)
+        let errorDetails = await this.errorobj(errdata,this.redactSensitiveFields(error),status)
         let logs = {}
         logs['sessionInfo'] = sessionInfo
         if(key){
           if(fabric == 'PF-PFD' || fabric == 'DF-DFD' || fabric == 'PF-SFD' || fabric == 'PF-SCDL')
-            logs['processInfo'] = prcdet
+            logs['processInfo'] = this.redactSensitiveFields(prcdet)
           }
-        logs['errorDetails'] = errorDetails   
+        logs['errorDetails'] = errorDetails
         
         if(typeof key != 'string')
         key = 'commonError'
-        tenant=tenant || "CT010"
+         tenant=tenant || "CT010"
         app=app ||  "A001"
         await this.redisService.setStreamData(tenant+'-'+app+'-TSL',key,JSON.stringify(logs))    
         return logs
@@ -1434,7 +1566,12 @@ export class CommonService{
       const ag = process.env.APPGROUPCODE;
       const app = process.env.APPCODE;
       try {
-        const payload: any = this.jwtService.decode(token);
+         let payload: any;
+        try {
+          payload = await this.jwtService.verifyToken(token);;
+        } catch (e) {
+          throw new BadRequestException('Invalid or expired token');
+        }
         if (!payload) {
           throw new BadRequestException('Please provide valid token');
         } else {
@@ -1461,316 +1598,378 @@ export class CommonService{
 
 
 
-    async getMongoProcessLogs(input, type): Promise<any> {
+  async seaWeeduploadFile(
+  data: any,
+  bucketName: string,
+  folderPath: string,
+  filename: string
+  
+) {
+  try {
+     let client = folderPath.split('-')[0]
+    const fileUrl = `${this.seaweedOutPutPath}/buckets/torus/9.1/${client}/${bucketName}/${folderPath}/${filename.endsWith('.json') ? filename : `${filename}.json`}`;
+    // Helper to check if JSON
+    const isJSONString = (str: string): boolean => {
       try {
-        this.logger.log('get MongoProcess started');
-
-        const {
-          tenant, user, FromDate, ToDate,
-          fabric, appgroup, app,
-          searchParam, page = 1, limit = 10,sortOrder
-        } = input;
-
-        if(!tenant) throw 'Invalid Payload'   
-       
-        let fileName = `${tenant}-${app?.code || ''}`;
-        const filter: any = {
-          'CK': tenant,
-        };
-        if (user?.length >0 ) {
-          filter['USER'] = { $in: user };
-        }
-
-        if (fabric?.length >0 ) {
-          filter['FNK'] = { $in: fabric };
-        }
-
-        if (appgroup?.code) {
-          filter['CATK'] = appgroup.code;
-        }
-
-        if (app?.code) {
-          filter['AFGK'] = app.code;
-        }
-
-        if (FromDate || ToDate) {
-          filter['DATE'] = {
-            ...(FromDate && { $gte: FromDate }),
-            ...(ToDate && { $lte: ToDate }),
-          };
-        }
-        // console.log('Filter for MongoDB query:', filter);
-        if (searchParam) {
-          const regex = { $regex: searchParam, $options: 'i' };
-          filter['$or'] = [
-            { 'CK': regex },
-            { 'FNGK': regex },
-            { 'FNK': regex },
-            { 'CATK': regex },
-            { 'AFGK': regex },
-            { 'AFK': regex },
-            { 'AFVK': regex },
-            { 'USER': regex },
-            { 'DATE': regex },
-            { 'UPID': regex },
-          ];
-        }      
-        const allCollections:any = await this.redisService.listCollections(fileName);
-        if(!allCollections || !(Array.isArray(allCollections)) || allCollections?.length == 0) throw `Data not found in ${fileName}${type}`
-
-        const targetCollections = allCollections.filter(name => name.endsWith(type));
-        let sortingNum = (sortOrder === 'newest') ? -1 : (sortOrder === 'oldest') ? 1 : -1;
-        
-        const countPromises = targetCollections.map(name =>
-          this.mongoService.countDocuments(name, filter)
-        );
-        const counts = await Promise.all(countPromises);
-        const totalDocuments = counts.reduce((sum, c) => sum + c, 0);
-        const documentPromises = targetCollections.map(name =>
-          this.mongoService.findDocument(name, filter, { _id: 0},{skip: (page - 1) * limit, limit, sortOrder:{DateAndTime:sortingNum}})//value: 1 
-        );
-        const allDocs = (await Promise.all(documentPromises)).flat(); 
-        //const paginatedData = allDocs.slice((page - 1) * limit, page * limit)//.map(d => d.value);
-
-        this.logger.log('get MongoProcess completed');
-
-        return {
-          data: allDocs,
-          page,
-          limit,
-          totalPages: Math.ceil(totalDocuments / limit),
-          totalDocuments,
-        };
-
-      } catch (error: any) {
-        console.error('ERROR', error);
-        const message = error?.message || error;
-        throw new BadRequestException(message);
+        JSON.parse(str);
+        return true;
+      } catch {
+        return false;
       }
-    }
- 
-    async getSubFlowLog(SubFlowKey,subFlowUpId){
-      try {
-        if(!SubFlowKey || !subFlowUpId) throw 'Invalid Payload'
+    };
 
-        let tenant = await this.splitcommonkey(SubFlowKey,'CK')
-        let fabric = await this.splitcommonkey(SubFlowKey,'FNK')
-        let appgroupcode = await this.splitcommonkey(SubFlowKey,'CATK')
-        let appcode = await this.splitcommonkey(SubFlowKey,'AFGK')
+    // Format incoming data
+    const newJsonData = typeof data === 'string' && isJSONString(data)
+      ? JSON.parse(data)
+      : data;
+
+    let combinedData: any[] = [];
+
+    // Try to fetch existing file
+        try {
+          assertAllowedOutboundHost(fileUrl);
+          const existing = await axios.get(fileUrl, {
+        auth: {
+        username: this.envData.getSeaweedUsername(),//process.env.SEAWEED_USERNAME,
+        password: this.envData.getSeaweedPassword()//process.env.SEAWEED_PASSWORD
+      }
+    });
+      const existingJson = existing.data;
+      if(existingJson){
+      if (Array.isArray(existingJson)) {
+        combinedData = existingJson;
+      } else {
+        combinedData = [existingJson];
+      }
+      }
       
-        let subFlowResult:any = await this.getMongoProcessLogs({
-          tenant,
-          fabric:[fabric],
-          appgroup:{
-            code:appgroupcode
-          },
-          app:{
-            code:appcode
-          },
-          page: 1,
-          limit: 10,
-          searchParam: subFlowUpId
-        },'TPL')
-
-        if(subFlowResult?.data && Array.isArray(subFlowResult?.data) && subFlowResult?.data.length > 0){         
-          return Object.values(subFlowResult.data[0]['AFSK']).flat()
-        }else{
-          return []
-        }
-
-      } catch (error: any) {
-        //console.log('ERROR', error);        
-        throw error
-      }
-    }
-    
-    @Cron(process.env.MY_CRON)
-    
-    async prcLog(): Promise<any> { //Default Mongo
-      try {       
-        //this.logger.log('ProcessLog start Listening')
-       
-       let tplstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TPL'
-       let tslstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TSL'
-       if (await this.redisService.exist(tplstreamName, process.env.CLIENTCODE)){
-         await this.structuredPrcLogs(tplstreamName) 
-       } 
-        if (await this.redisService.exist(tslstreamName, process.env.CLIENTCODE)){
-         await this.structuredPrcLogs(tslstreamName) 
-       } 
-        return 'success'
-      } catch (error: any) {
-        throw error;
-      }
+    } catch (e) {
+      console.warn('No existing file found. Creating new one.');
     }
 
-    async structuredPrcLogs(streamName) { //Default Mongo
-      try {  
-        if (await this.redisService.exist(streamName, process.env.CLIENTCODE)) {
-          let grpInfo = await this.redisService.getInfoGrp(streamName)
-          if (grpInfo.length == 0) {
-            await this.redisService.createConsumerGroup(streamName, streamName+'ProcessLog_' + process.pid)
-          } else if (!grpInfo[0].includes(streamName+'ProcessLog_' + process.pid)) {
-            await this.redisService.createConsumerGroup(streamName, streamName+'ProcessLog_' + process.pid)
-          }
-
-          let streamData: any = await this.redisService.readConsumerGroup(streamName, streamName+'ProcessLog_' + process.pid, streamName+'_TPL');
-          if (streamData != 'No Data available to read' && streamData.length > 0) {
-            var msgid = []
-            var strmarr = []
-            for (let s = 0; s < streamData.length; s++) {
-              msgid.push(streamData[s].msgid)
-              strmarr.push(streamData[s].data)
-            }
-          }
-          if (msgid?.length > 0) {
-            var AfskValue = "logInfo"
-            let resultFlg = 0
-            for (var s = 0; s < msgid.length; s++) {
-              let streamKey = strmarr[s][0]
-              if(streamName.endsWith('-TPL')){              
-                var upidsplit = streamKey.split(':');
-                if (upidsplit.length > 14) {
-                  var upid = upidsplit[upidsplit.length - 1]
-                  AfskValue = upid?upid:"logInfo"
-                }
-              }
-    
-              var date = new Date(Number(msgid[s].split("-")[0]));
-              var entryId = format(date, 'yyyy-MM-dd')
-    
-              var afskvalue: any = JSON.parse(strmarr[s][1])
-              if(typeof afskvalue == 'object')
-                afskvalue['DateAndTime'] = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"); //format(date, 'yyyy-MM-dd HH:mm:ss:SSS')
-    
-              var user
-              if (afskvalue?.sessionInfo && Object.keys(afskvalue.sessionInfo).length > 0) {
-                user = afskvalue.sessionInfo.user
-              } 
-              // else {
-              //   user = 'user'
-              // }
-
-              let CK = await this.splitcommonkey(streamKey, 'CK')
-              let FNGK = await this.splitcommonkey(streamKey, 'FNGK')
-              let FNK = await this.splitcommonkey(streamKey, 'FNK')
-              let CATK = await this.splitcommonkey(streamKey, 'CATK')
-              let AFGK = await this.splitcommonkey(streamKey, 'AFGK')
-              let AFK = await this.splitcommonkey(streamKey, 'AFK')
-              let AFVK = await this.splitcommonkey(streamKey, 'AFVK')
-              
-              const db = await getDb();
-
-              if(streamName.endsWith('-TPL')){
-                let isDocExist:any
-                let filter = {}               
-                filter['CK'] = CK
-                filter['FNGK'] = FNGK
-                filter['FNK'] = FNK
-                filter['CATK'] = CATK
-                filter['AFGK'] = AFGK
-                filter['AFK'] = AFK
-                filter['AFVK'] = AFVK
-                filter['DATE'] = entryId
-                if(user){
-                  filter['USER'] = user
-                }
-                if(AfskValue !=  "logInfo"){
-                  filter['UPID'] = AfskValue
-                }
-                isDocExist = await this.mongoService.existsDocument(streamName,'',filter) 
-                if(isDocExist && Object.keys(isDocExist).length > 0 && isDocExist._id){
-                  let appendRes:any = await this.mongoService.appendFileInToDocument(streamName,isDocExist._id,'AFSK.'+AfskValue,afskvalue);
-                            
-                  resultFlg++ 
-                   if(appendRes.modifiedCount){
-                      await this.redisService.ackMessage(streamName,streamName+'ProcessLog_' + process.pid,msgid[s])   
-                      await this.redisService.deleteWithEntryId(streamName,msgid[s])    
-                      let isStreamExist = await this.redisService.getStreamRange(streamName)
-                      if(!isStreamExist || isStreamExist.length == 0){
-                        await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
-                      }                        
-                   }
-                }else{
-                  await db.collection(streamName).createIndex({ "CK": 1, "FNGK": 1, "FNK": 1, "CATK": 1, "AFGK": 1, "AFK": 1, "AFVK": 1, "DATE": 1, "USER": 1 });
-                  let insertRes:any = await this.mongoService.insertDocument(streamName,'',{
-                    CK,
-                    FNGK,
-                    FNK,
-                    CATK,
-                    AFGK,
-                    AFK,
-                    AFVK,
-                    UPID:AfskValue,
-                    DATE: entryId,
-                    DateAndTime: format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"), //format(date, 'yyyy-MM-dd HH:mm:ss:SSS'),
-                    USER: user,
-                    AFSK: 
-                      {[AfskValue]:[afskvalue]}
-                    
-                  })
-                
-                  resultFlg++ 
-                   if(insertRes.insertedId) {
-                      await this.redisService.ackMessage(streamName,streamName+'ProcessLog_' + process.pid,msgid[s])   
-                     await this.redisService.deleteWithEntryId(streamName,msgid[s])   
-                     let isStreamExist = await this.redisService.getStreamRange(streamName)
-                      if(!isStreamExist || isStreamExist.length == 0){
-                        await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
-                      }                  
-                   }     
-                }
-              }else if(streamName.endsWith('-TSL')){              
-                await db.collection(streamName).createIndex({ "CK": 1, "FNGK": 1, "FNK": 1, "CATK": 1, "AFGK": 1, "AFK": 1, "AFVK": 1, "DATE": 1, "USER": 1 });
-                let insertRes:any = await this.mongoService.insertDocument(streamName,'',{
-                  CK,
-                  FNGK,
-                  FNK,
-                  CATK,
-                  AFGK,
-                  AFK,
-                  AFVK,
-                  // UPID:AfskValue,
-                  DATE: entryId,
-                  DateAndTime: format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"), //format(date, 'yyyy-MM-dd HH:mm:ss:SSS'),
-                  USER: user,
-                  AFSK: afskvalue                                 
-                })
-              
-                resultFlg++ 
-                 if(insertRes.insertedId) {
-                    await this.redisService.ackMessage(streamName,streamName+'ProcessLog_' + process.pid,msgid[s])    
-                   await this.redisService.deleteWithEntryId(streamName,msgid[s])   
-                   let isStreamExist = await this.redisService.getStreamRange(streamName)
-                  if(!isStreamExist || isStreamExist.length == 0){
-                    await this.redisService.deleteKey(streamName,process.env.CLIENTCODE)
-                    }                  
-                 }   
-              }                      
-            }
-          
-            if(resultFlg == msgid.length){ 
-              return 'Success'
-            }
-          }  
-        } 
+    // Append new data
+    if (Array.isArray(newJsonData)) {
+      for(let d=0; d< newJsonData.length; d++){
+        combinedData.push(newJsonData[d]);
+      }
       
-      } catch (error: any) {
-        this.logger.log('error',error)
-      }
+    } else {
+       combinedData.push(newJsonData)
     }
 
-    async deleteLog(input){
-      try {
-        return await this.mongoService.deleteFileFromGridFs('LOGS',input.filename)
-      } catch (error: any) {
-        throw error
-      }
-    }
+    // if (Array.isArray(newJsonData)) {
+    //   combinedData = newJsonData;
+    // } else {
+    //   combinedData = [newJsonData];
+    // }
 
+    // Convert to buffer
+    const buffer = Buffer.from(JSON.stringify(combinedData, null, 2), 'utf-8');
+
+    // Upload
+    const form = new FormData();
+    form.append('file', Readable.from(buffer), {
+      filename: filename.endsWith('.json') ? filename : `${filename}.json`,
+      contentType: 'application/json',
+    });
+
+  assertAllowedOutboundHost(fileUrl);
+  const response = await axios.post(fileUrl, form, {
+      headers: {
+        ...form.getHeaders(),
+      },
+       auth: {
+      username: this.envData.getSeaweedUsername(),//process.env.SEAWEED_USERNAME,
+      password: this.envData.getSeaweedPassword()//process.env.SEAWEED_PASSWORD
+  },
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    });
+
+    return {
+      status: response.status,
+      fileName: filename
+    };
+  } catch (error: any) {
+    console.error('Upload error:', error?.response?.data || error.message);
+    throw error?.response?.data || error.message || 'some error occured in seaWeeduploadFile';
+  }
+  }  
    
+  streamToString = async (readableStream: stream.Readable): Promise<string> => {
+      const chunks: Uint8Array[] = [];
+      for await (const chunk of readableStream) {
+        chunks.push(typeof chunk === 'string' ? Buffer.from(chunk) : chunk);
+      }
+      return Buffer.concat(chunks).toString('utf-8');
+    };
 
-  async dbconfig(customConfig,collectionName){
+  async downloadAndParseFile(client:string,fileName: string): Promise<any> {
+    try {
+      const streamUrl = `${this.seaweedOutPutPath}/buckets/torus/9.1/${client}${fileName}`;    
+      assertAllowedOutboundHost(streamUrl);
+      const response = await axios.get(streamUrl, { responseType: 'stream',  auth: {
+    username: this.envData.getSeaweedUsername(),//process.env.SEAWEED_USERNAME,
+    password: this.envData.getSeaweedPassword(),//process.env.SEAWEED_PASSWORD
+  } });
+      const fileContent = await this.streamToString(response.data);
+      const jsonData = JSON.parse(fileContent);
+      return jsonData;
+    } catch (error: any) {
+      console.error('Download error:', error?.response?.status, error?.response?.data || error.message);
+      throw new Error('Failed to download and parse file');
+    }
+  }
+
+  async listFiles(bucketName: string, prefixPath: string): Promise<string[]> {
+    let client = prefixPath.split('-')[0]
+       let basePath = `/buckets/torus/9.1/${client}/${bucketName}/${prefixPath}`
+      const allFiles: string[] = [];
+      const traverse = async (path: string) => {
+        try {
+         assertAllowedOutboundHost(`${this.seaweedOutPutPath}${path}`);
+         const res = await axios.get(`${this.seaweedOutPutPath}${path}?recursive=true&pretty=y`,{
+          headers: {
+          Accept: 'application/json',
+        }, auth: {
+            username: this.envData.getSeaweedUsername(),//process.env.SEAWEED_USERNAME,
+            password: this.envData.getSeaweedPassword(),//process.env.SEAWEED_PASSWORD
+          }
+        });
+          const entries = res.data.Entries || [];
+
+          for (const entry of entries) {
+            const fullPath = entry.FullPath;
+            const name = fullPath.split('/').pop(); // derive name manually
+
+            const isDirectory = entry.FileSize === 0 && !entry.Mime;
+
+            if (isDirectory) {
+              await traverse(fullPath); // go deeper
+            } else {
+              allFiles.push(fullPath); // file found
+            }
+          }
+
+        } catch (err:any) {
+          console.error(`Failed to traverse ${path}:`, err?.response?.data || err.message);
+        }
+      };
+
+      await traverse(basePath);
+      return allFiles;
+    }  
+
+
+  async SetPrcExpLogs(streamName,inputData) {
+    try {
+      const result = []; 
+      if(!streamName || streamName != `${process.env.TENANT}-${process.env.APPCODE}-TPL`) throw new CustomException('Invalid Bucket Name',400);
+      //console.log('inputData',inputData);
+      
+      if (!inputData) throw new CustomException('Input Data is required',400);   
+        
+      if(!Array.isArray(inputData) && typeof inputData == 'object' && Object.keys(inputData).length > 0){
+        inputData = [inputData]
+      }
+      if(inputData?.length>0){
+        for (let i = 0; i < inputData.length; i++) {
+          const item = inputData[i];   
+  
+          if(!item?.currentDate) throw new CustomException('currentDate is required',400);
+  
+          const date = new Date(item.currentDate);
+          const entryId = format(date, 'yyyy-MM-dd');
+          
+          let user, upid = 'logInfo';
+  
+          if (streamName.endsWith('-TPL')) {
+            if(!item?.field) throw new CustomException('Field is required',400);
+            const requiredKeys = [
+              'CK:',
+              ':FNGK:',
+              ':FNK:',
+              ':CATK:',
+              ':AFGK:',
+              ':AFK:',
+              ':AFVK:',
+            ];
+            if (!(requiredKeys.every((key) => item.field.includes(key)))) throw new CustomException('Invalid Key Structure',400);
+
+            
+            const upidsplit = item.field.split(':');
+            if (upidsplit.length > 14) {
+              upid = upidsplit[upidsplit.length - 1];              
+            }
+          }
+  
+          const afskvalue: any = typeof item.value == "string"?JSON.parse(item.value):item.value;
+          if(typeof afskvalue == 'object')
+            afskvalue['DateAndTime'] = format(date, "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"); //format(date, 'yyyy-MM-dd HH:mm:ss:SSS');
+  
+          if (!afskvalue?.sessionInfo?.user) throw new CustomException('user is required',400);
+          user = afskvalue.sessionInfo.user;          
+          
+          const CK = await this.splitcommonkey(item.field, 'CK');
+          const FNGK = await this.splitcommonkey(item.field, 'FNGK');
+          const FNK = await this.splitcommonkey(item.field, 'FNK');
+          const CATK = await this.splitcommonkey(item.field, 'CATK');
+          const AFGK = await this.splitcommonkey(item.field, 'AFGK');
+          const AFK = await this.splitcommonkey(item.field, 'AFK');
+          const AFVK = await this.splitcommonkey(item.field, 'AFVK');
+          
+          if(CATK != process.env.APPGROUPCODE) throw new CustomException('Invalid AppGroup Code found in Key',400);
+          if(AFGK != process.env.APPCODE) throw new CustomException('Invalid App Code found in Key',400);
+
+          let existingEntry = result.find(
+            (item) =>
+              item.CK === CK &&
+              item.FNGK === FNGK &&
+              item.FNK === FNK &&
+              item.CATK === CATK &&
+              item.AFGK === AFGK &&
+              item.AFK === AFK &&
+              item.AFVK === AFVK &&
+              item.USER === user &&
+              item.DATE === entryId
+          );
+  
+          if (!existingEntry) {
+            existingEntry = {
+              CK,
+              FNGK,
+              FNK,
+              CATK,
+              AFGK,
+              AFK,
+              AFVK,
+              DATE: entryId,
+              USER: user,
+              AFSK: {},
+            };
+            result.push(existingEntry);
+          }
+  
+          if (!existingEntry.AFSK[upid]) {
+            existingEntry.AFSK[upid] = [];
+          }
+          existingEntry.AFSK[upid].push(afskvalue);
+  
+        }             
+      }      
+      
+     
+      if (result && result.length > 0) {
+        let successCount = 0;
+        for (let i = 0; i < result.length; i++) {
+          const { USER, DATE: date, CK, FNGK, FNK, CATK, AFGK, AFK, AFVK } = result[i];
+          const upid = Object.keys(result[i].AFSK)[0];
+          let res;
+          if (USER && date && CK && FNGK && FNK && CATK && AFGK && AFK && AFVK) {
+            if (streamName.endsWith('-TPL')) {
+              const path = `${streamName}/${USER}/${date}/${CK}/${FNGK}/${FNK}/${CATK}/${AFGK}/${AFK}/${AFVK}`;           
+              res = await this.seaWeeduploadFile(JSON.stringify(result[i]), 'PrcLog', path, upid);
+            } else if (streamName.endsWith('-TSL')) {
+              const basePath = `${streamName}/${USER}/${date}/${CK}/${FNGK}/${FNK}/${CATK}/${AFGK}/${AFK}`;                       
+              res = await this.seaWeeduploadFile(JSON.stringify(result[i]), 'ExpLog', basePath, AFVK);              
+            }         
+            if(res?.status == 201){
+              successCount++;
+            }
+          }
+        }
+        if(successCount == result.length)
+        return { status: 'success' }; //'success';
+      }
+      
+      return { status: 'failed' };
+    
+    } catch (error:any) {
+      // console.log('ERROR',error);      
+      throw new CustomException(error?.message || 'Something went wrong',error?.statusCode || error?.status || 500);
+    }
+  }
+
+    async getlogFormat(array1, array2) {
+    
+      const len = array1.length > array2.length ? array1.length : array2.length
+
+      const matchCache = new Map()
+      const matchesFor = (key) => {
+        if (matchCache.has(key)) return matchCache.get(key)
+        const group = []
+        for (const item of array1) {
+          if (item.includes(key)) group.push(item)
+        }
+        matchCache.set(key, group)
+        return group
+      }
+
+      const filteredArr = []
+      for (let i = 0; i < len; i++) {
+        const group = matchesFor(array2[i])
+        for (let j = 0; j < group.length; j++) {
+          filteredArr.push(group[j])
+        }
+      }
+      return filteredArr
+    }
+
+     async deleteLog(fileName: string) {
+    try {
+      if (!fileName) {
+        throw new Error('FileName is required');
+      }
+
+      // volumeUrl example: http://localhost:8080
+      const traverse = async (path: string) => {
+        try {
+         assertAllowedOutboundHost(`${this.seaweedOutPutPath}${fileName}`);
+         const res = await axios.delete(`${this.seaweedOutPutPath}${fileName}?recursive=true&pretty=y`,{
+          headers: {
+          Accept: 'application/json',
+        }, auth: {
+            username: this.envData.getSeaweedUsername(),//process.env.SEAWEED_USERNAME,
+            password: this.envData.getSeaweedPassword(),//process.env.SEAWEED_PASSWORD
+          }
+        });
+          
+
+        } catch (err:any) {
+          console.error(`Failed to traverse ${path}:`, err?.response?.data || err.message);
+        }
+      };
+
+      // const deleteUrl = `${this.seaweedOutPutPath}/${fileName}`;
+      // console.log("deleteUrl", deleteUrl);
+
+      // const response = await axios.delete(deleteUrl);
+      // console.log("response", response);
+
+      return {
+        success: true,
+        message: 'File deleted successfully',
+        // data: response.data,
+      };
+
+    } catch (error: any) {
+      throw new CustomException('Seaweed file delete failed',
+          
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+
+  async assertConnectorTenant(dpdkey: string, tenant?: string): Promise<void> {
+    const keyTenant = await this.splitcommonkey(dpdkey, 'CK');
+    if (!tenant)
+      throw new CustomException('Tenant identity missing from request context', 403);
+    if (!keyTenant || keyTenant !== tenant)
+      throw new CustomException('Connector tenant ownership check failed', 403);
+  }
+
+  async dbconfig(customConfig,collectionName,tenant?){
     try {
       let client: any;
       let nodeVersion = customConfig?.nodeVersion;
@@ -1788,6 +1987,7 @@ export class CommonService{
       }      
       if (!dpdkey) throw new CustomException('DPD key not found', 404);          
        
+      await this.assertConnectorTenant(dpdkey, tenant);
       let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];
       
       let dpdData:any = decrypt(extdata)         
@@ -1835,10 +2035,24 @@ export class CommonService{
         
         if (!dbUrl) throw new CustomException('DB url not found', 404);
         if (dbtype && dbtype == 'postgres') {
-          const { Client } = pg;
+           const { Client ,types } = pg;
+          const bigintParser = { getTypeParser: (oid: number, format: string) => {
+          if (oid === 20) return (val: string) => parseInt(val, 10);
+          return types.getTypeParser(oid, format);
+      }};
+          // M11: this connects to a per-tenant external connector whose
+          // TLS-readiness isn't known in advance, and node-postgres has no
+          // "prefer" fallback of its own — so negotiatePgTls() probes the
+          // target first and only requests TLS if the probe confirms it
+          // supports SSL. See db-ssl.util.ts for the full precedence
+          // (explicit sslmode in the URL, then PG_CONNECTOR_SSL_MODE, then
+          // the probe).
+          dbUrl = await negotiatePgTls(dbUrl, 'PG_CONNECTOR_SSL_MODE');
           client = new Client({
-            connectionString: dbUrl,
-            application_name: `${process.env.TENANT}_${process.env.APPGROUPCODE}_${process.env.APPCODE}_PFservice`
+            connectionString: dbUrl,  
+           // options: `-c search_path=${schemaname}`,
+            application_name: `${process.env.TENANT}_${process.env.APPGROUPCODE}_${process.env.APPCODE}_PFservice`,
+             types: bigintParser,
           });
         } else if (dbtype == 'mysql') {
           const mysql = require('mysql2/promise');
@@ -1860,7 +2074,7 @@ export class CommonService{
     }
   }
 
-   async mongodbconfig(customConfig,collectionName){
+   async mongodbconfig(customConfig,collectionName,tenant?){
    try {
     let collnName, manualQryType, manualQry, sessionfilterParams, connectorType, storageType, dpdkey, conncectorName, filterParams;
     let nodeVersion = customConfig?.nodeVersion;
@@ -1879,6 +2093,7 @@ export class CommonService{
       let mongoQry, mongoDbarr, mongodbConfig, mongodbUrl;
       if (storageType?.toLowerCase() == 'external') {
         if (!dpdkey) throw new CustomException('DPD key not found', 404);
+        await this.assertConnectorTenant(dpdkey, tenant);
           let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];      
           let dpdData      
           dpdData = decrypt(extdata) 
@@ -1906,7 +2121,10 @@ export class CommonService{
       }
       if (!mongodbUrl)
         throw new CustomException('Mongo DB url not found', 404);    
-
+        // M11: same reasoning as the Postgres connector path above —
+        // negotiateMongoTls() probes the target and only requests tls=true
+        // if the probe confirms it. See db-ssl.util.ts.
+        mongodbUrl = await negotiateMongoTls(mongodbUrl, 'MONGO_CONNECTOR_TLS');
         return {mongodbUrl,manualQryType,manualQry,sessionfilterParams,filterParams,collnName}
       } catch (error) {
         throw error
@@ -1914,7 +2132,7 @@ export class CommonService{
     
   }
 
-  async streamConfig(customConfig,collectionName){
+  async streamConfig(customConfig,collectionName,tenant?){
       let oprname, oprkey, streamName, fromStreamid, toStreamid, connectorType, storageType, dpdkey, conncectorName,apikey,responseNodeName,fieldName,isStatic,useAsConsumer,consumerName,consumerGroupName,rollback,filterParams,ConsumerBasedOnJob;
       let nodeVersion = customConfig?.nodeVersion;
       if (!nodeVersion)
@@ -1953,12 +2171,15 @@ export class CommonService{
 
       let streamhost
       let streamport
+      let streamusername
+      let streampassword
       let redisconfig
       if (storageType?.toLowerCase() == 'external') {
         if (!dpdkey) throw new CustomException('DPD key not found', 404);
-          let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];      
-          let dpdData      
-          dpdData = decrypt(extdata) 
+        await this.assertConnectorTenant(dpdkey, tenant);
+          let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];
+          let dpdData
+          dpdData = decrypt(extdata)
        // let nodedata = Object.keys(extdata)[0];
         let configConnectors = dpdData.data['externalConnectors-STREAM']?.items;
         if (configConnectors?.length > 0) {
@@ -1966,12 +2187,16 @@ export class CommonService{
             if (configConnectors[i].connectorName == conncectorName) {
               streamhost = configConnectors[i]?.credentials.host;
               streamport = parseInt(configConnectors[i]?.credentials.port);
+              streamusername = configConnectors[i]?.credentials.username;
+              streampassword = configConnectors[i]?.credentials.password;
             }
           }
         }
         redisconfig = new Redis({
           host: streamhost,
           port: streamport,
+          username: streamusername,
+          password: streampassword,
         });
                     
         
@@ -1992,7 +2217,7 @@ export class CommonService{
        }
   }
 
-  async fileConfig(customConfig,collectionName){
+  async fileConfig(customConfig,collectionName,tenant?){
     try {
     let nodeVersion = customConfig?.nodeVersion;
     let connectorType, storageType, dpdkey, conncectorName, oprname, oprkey, encryptionFlag, fileFolderPath, fileType, fileName, ndpPro,apikey,responseNodeName,rollback,filterParams,isStatic;
@@ -2034,6 +2259,7 @@ export class CommonService{
 
     if (storageType.toLowerCase() == 'external') {
       if (!dpdkey) throw new CustomException('DPD key not found', 404);
+      await this.assertConnectorTenant(dpdkey, tenant);
         let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];      
         let dpdData      
           dpdData = decrypt(extdata) 
@@ -2058,7 +2284,7 @@ export class CommonService{
 
       if (!url || !userName || !password)                
         throw new CustomException('Invalid File Credentials',404);
-
+         assertAllowedOutboundHost(url);
       const seaWeedConfig = {
         url: url,
         username: userName,
@@ -2073,7 +2299,7 @@ export class CommonService{
     }
   }
 
-  async procedureConfig(customConfig,collectionName){
+  async procedureConfig(customConfig,collectionName,tenant?){
     try {
       let params, procedurequery, nodeVersion, dbType, connectorType, storageType, dpdkey, conncectorName, dbConfig,executecommand,inMemory,rlbckcnfg,rlbckflg,rexecmd,rqry
       nodeVersion = customConfig.nodeVersion
@@ -2106,6 +2332,7 @@ export class CommonService{
       let dbUrl: any
       if (storageType?.toLowerCase() == 'external') {
         if (!dpdkey) throw new CustomException('DPD key not found', 404);
+        await this.assertConnectorTenant(dpdkey, tenant);
           let extdata:any =  Object.values(JSON.parse(await this.redisService.getJsonData(dpdkey + 'NDP', collectionName)))[0];      
           let dpdData      
           dpdData = decrypt(extdata) 
@@ -2148,6 +2375,9 @@ export class CommonService{
       let client
       if (dbType == 'postgres') {
         const { Client } = pg;
+        // M11: same probe-and-negotiate as dbconfig() — see negotiatePgTls()
+        // in db-ssl.util.ts.
+        dbUrl = await negotiatePgTls(dbUrl, 'PG_CONNECTOR_SSL_MODE');
          client = new Client({
           connectionString: dbUrl,
           application_name: `${process.env.TENANT}_${process.env.APPGROUPCODE}_${process.env.APPCODE}_PFservice`
@@ -2176,7 +2406,12 @@ export class CommonService{
   async sessionDecode(token,upId){
     try {
         let sobj = {},SessionInfo = {}
-        let SessionToken = await this.jwtService.decode(token, { json: true });
+        let SessionToken: any;
+        try {
+          SessionToken = await this.jwtService.verifyToken(token);;
+        } catch (e) {
+          throw new BadRequestException('Invalid or expired token');
+        }
         //sobj['session.client'] = SessionToken.client || process.env?.CLIENTCODE
         sobj['session.tenant'] = SessionToken.tenant || process.env?.CLIENTCODE
         sobj['session.orgGrpCode'] = SessionToken.orgGrpCode || process.env?.ORGGRPCODE
@@ -2213,14 +2448,22 @@ export class CommonService{
         SessionInfo['userCode'] = SessionToken?.userCode || ''
         SessionInfo['subOrgGrpName'] = SessionToken?.subOrgGrpName || process.env?.SUBORGGRPNAME || '';
         SessionInfo['subOrgName'] = SessionToken?.subOrgName || process.env?.SUBORGNAME || '';
-        SessionInfo['orgGrpCode'] = SessionToken.orgGrpCode || process.env?.ORGGRPCODE
-        SessionInfo['orgCode'] = SessionToken.orgCode || process.env?.ORGCODE
-        SessionInfo['roleGrpCode'] = SessionToken.roleGrpCode || process.env?.ROLEGRPCODE
-        SessionInfo['roleCode'] = SessionToken.roleCode || process.env?.ROLECODE
-        SessionInfo['psGrpCode'] = SessionToken.psGrpCode || process.env?.PSGRPCODE
-        SessionInfo['psCode'] = SessionToken.psCode || process.env?.PSCODE
+        SessionInfo['orgGrpCode'] = SessionToken.orgGrpCode || process.env?.ORGGRPCODE || '';
+        SessionInfo['orgCode'] = SessionToken.orgCode || process.env?.ORGCODE || '';
+        SessionInfo['roleGrpCode'] = SessionToken.roleGrpCode || process.env?.ROLEGRPCODE || '';
+        SessionInfo['roleCode'] = SessionToken.roleCode || process.env?.ROLECODE || '';
+        SessionInfo['psGrpCode'] = SessionToken.psGrpCode || process.env?.PSGRPCODE || '';
+        SessionInfo['psCode'] = SessionToken.psCode || process.env?.PSCODE || '';
         
         return {sobj,SessionInfo,SessionToken}
+    } catch (error) {
+    throw error
+    }
+  }
+
+  convertTimeZone(utcDate) {
+    try {  
+      return dayjs.utc(utcDate).tz(process.env.TIMEZONE).format(process.env.DATEFORMAT?.replace(/\[:ss\]/g, ''))
     } catch (error) {
     throw error
     }
@@ -2256,60 +2499,7 @@ export class CommonService{
     return `${modifiedQuery}${trailingQuery}`;
   }
 
-//   async appendWhereClause(baseQuery: string, condition: string) {
-//   const query = baseQuery.trim();
-//   const lower = query.toLowerCase();
 
-//   // ✅ Detect outer query pattern: ") alias"
-//   const outerMatch = query.match(
-//      /(\)\s+\w+)((\s+(?:LIMIT|ORDER\s+BY|GROUP\s+BY|OFFSET)\b[\s\S]*)?)$/i,
-//    );
-
-//   // 👉 CASE 1: Query has subquery → apply WHERE outside
-//   if (outerMatch) {
-//     const aliasEnd      = outerMatch.index! + outerMatch[1].length; // right after ") alias"
-//     const trailingClause = outerMatch[2] || '';                      // " LIMIT 10 OFFSET 0" or ""
-//     const beforeTrailing = query.slice(0, aliasEnd);                 // everything up to and including ") alias"
-//     const betweenPart    = query.slice(aliasEnd, query.length - trailingClause.length); // any existing WHERE between alias and trailing
-
-//     const hasOuterWhere = /\bwhere\b/i.test(betweenPart);
-
-//     if (hasOuterWhere) {
-//       return `${beforeTrailing}${betweenPart} AND ${condition}${trailingClause}`;
-//     } else {
-//       return `${beforeTrailing} WHERE ${condition}${trailingClause}`;
-//     }
-//   }
-
-//   // 👉 CASE 2: Simple query (your original logic, cleaned)
-//   const keywords = [' order by ', ' group by ', ' limit '];
-//   let firstKeywordIndex = -1;
-
-//   for (const keyword of keywords) {
-//     const index = lower.lastIndexOf(keyword);
-//     if (index !== -1 && (firstKeywordIndex === -1 || index < firstKeywordIndex)) {
-//       firstKeywordIndex = index;
-//     }
-//   }
-
-//   const mainQuery =
-//     firstKeywordIndex !== -1 ? query.substring(0, firstKeywordIndex) : query;
-
-//   const trailingQuery =
-//     firstKeywordIndex !== -1 ? query.substring(firstKeywordIndex) : '';
-
-//   const hasWhere = /\bwhere\b/i.test(mainQuery);
-
-//   let modifiedQuery;
-
-//   if (hasWhere) {
-//     modifiedQuery = `${mainQuery} AND ${condition}`;
-//   } else {
-//     modifiedQuery = `${mainQuery} WHERE ${condition}`;
-//   }
-
-//   return `${modifiedQuery}${trailingQuery}`;
-// }
 
   async checkEncryption(nodeInfo) {
     try {
@@ -2337,7 +2527,7 @@ export class CommonService{
         }
       );
       const encryptedFile = response.data;
-      const decryptedFile = this.DecryptFile(encryptedFile);
+      const decryptedFile = await this.DecryptFile(encryptedFile);
       return decryptedFile;
 
     } catch (error) {
@@ -2346,11 +2536,10 @@ export class CommonService{
     }
   }
 
-  private DecryptFile(encryptedData: Buffer): Buffer {
-    const decipher = crypto.createDecipheriv('aes-256-ctr', Buffer.from(process.env.AES_KEY!, 'base64'), Buffer.from(process.env.AES_IV!, 'base64'));
-    const decrypted = Buffer.concat([decipher.update(encryptedData), decipher.final()]);
-    // console.log('decrypted',decrypted);      
-    return decrypted;
+  private async DecryptFile(encryptedData: Buffer): Promise<Buffer> {
+    // Delegates to aes256ctrDecrypt so both the new random-IV format and
+    // legacy static-IV files decrypt correctly through one code path.
+    return this.aes256ctrDecrypt(encryptedData);
   }
 
   async setfileKeys(config: any, operationName: string, folderPath: string, fileName: string, fileType?: string, insertData?: any) {
@@ -2367,8 +2556,7 @@ export class CommonService{
       let auth = {
         username: config.username,
         password: config.password
-      }
-      // console.log("insertData",insertData);
+      }    
 
       if (operationName == 'read') {
         if (fileType == 'xlsx' || fileType == 'pfx') {
@@ -2398,8 +2586,7 @@ export class CommonService{
       }
 
 
-    } catch (error) {
-      console.log(error);
+    } catch (error) {     
       throw error
     }
   }

@@ -26,17 +26,19 @@ export class EncryptInterceptor implements NestInterceptor {
       );
 
       let authTag: any = '';
-      if (data.method === 'AESGCM') {
-        authTag = encryptedData.authTag;
-        encryptedData = encryptedData.encrypted;
-      }
-
-      return {
-        ciphertext: encryptedData,
-        dpdKey: data.dpdKey,
-        method: data.method,
-        authTag,
-      };
+        let iv: any = '';
+        if (data.method === 'AESGCM') {
+          authTag = encryptedData.authTag;
+          iv = encryptedData.iv;
+          encryptedData = encryptedData.encrypted;
+        }
+        return {
+          ciphertext: encryptedData,
+          dpdKey: data.dpdKey,
+          method: data.method,
+          authTag,
+          iv,
+        };
     }
 
     return data;

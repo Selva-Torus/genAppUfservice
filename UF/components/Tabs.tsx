@@ -29,6 +29,7 @@ interface TabsProps {
   headerText?: string;
   headerPosition?: HeaderPosition;
   headerAlignment?: HeaderAlignment;
+  headerClassName?: string;
   defaultActiveId?: string;
   activeTab?: string;
   onChange?: (id: any) => void;
@@ -50,6 +51,7 @@ export const Tabs: React.FC<TabsProps> = ({
   activeTab: activeTabProp,
   onChange=()=>{},
   className = "",
+  headerClassName = "",
   tabHeaders=[],
 }) => {
   const { theme, branding } = useGlobal();
@@ -101,9 +103,12 @@ export const Tabs: React.FC<TabsProps> = ({
         className={`
           flex-shrink-0
           flex
+          overflow-hidden
           ${direction === "vertical" ? "flex-col" : "flex-row"}
           ${direction === "vertical" ? "w-auto" : "w-full"}
           p-1
+          mt-2
+           ${headerClassName}
           ${getJustifyClass()}
         `}
       >
@@ -112,7 +117,7 @@ export const Tabs: React.FC<TabsProps> = ({
             flex
             ${direction === "vertical" ? "flex-col" : "flex-row"}            
             rounded-full
-            p-1
+            p-2
             bg-white
             ${headerAlignment === 'full' ? 'w-full' : 'w-fit'}
           `}

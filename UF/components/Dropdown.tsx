@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
+import { createPortal } from "react-dom";
 import { useGlobal } from "@/context/GlobalContext";
 import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
@@ -56,7 +57,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   filterable = false,
   hasClear = false,
   value,
-  validationState = "none",
+  validationState = undefined,
   errorMessage,
   fillContainer = true,
   contentAlign = "center",
@@ -76,8 +77,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [filterText, setFilterText] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState<number>(-1);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null); // trigger wrapper (input/button)
+  const listRef = useRef<HTMLDivElement>(null); // portaled options panel
   const highlightedItemRef = useRef<HTMLDivElement | null>(null);
 
   // Reset highlighted index when dropdown closes
@@ -96,6 +97,90 @@ export const Dropdown: React.FC<DropdownProps> = ({
       highlightedItemRef.current.scrollIntoView({ block: "nearest" });
     }
   }, [highlightedIndex]);
+
+  // ------------------------------------------------------------------
+  // Portal + fixed-position panel (same approach as DateAndTime/Combobox).
+  // The options list is rendered into document.body via createPortal and
+  // positioned with position:fixed, computed from the trigger's
+  // getBoundingClientRect(). This replaces the old approach of walking up
+  // the DOM tree and forcing every ancestor's overflow to "visible" --
+  // the panel can no longer be clipped by an ancestor's overflow:hidden
+  // /auto because it isn't a DOM descendant of any of them anymore.
+  // ------------------------------------------------------------------
+
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({});
+
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+
+    const GAP = 4;
+    const VIEWPORT_MARGIN = 8;
+    const ESTIMATED_HEIGHT = 260; // ~search bar (if any) + max-h-60 list, before real measurement
+
+    const recalcPosition = () => {
+      const trigger = dropdownRef.current;
+      if (!trigger) return;
+
+      const triggerRect = trigger.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+
+      const panelRect = listRef.current?.getBoundingClientRect();
+      const panelHeight = panelRect?.height || ESTIMATED_HEIGHT;
+      const panelWidth = triggerRect.width;
+
+      const spaceBelow = viewportHeight - triggerRect.bottom - GAP;
+      const spaceAbove = triggerRect.top - GAP;
+      const openUpward = spaceBelow < panelHeight && spaceAbove > spaceBelow;
+
+      const availableVertical = Math.max(
+        120,
+        (openUpward ? spaceAbove : spaceBelow) - VIEWPORT_MARGIN
+      );
+
+      const style: React.CSSProperties = {
+        position: "fixed",
+        left: triggerRect.left,
+        width: panelWidth,
+        zIndex: 9999,
+      };
+
+      if (openUpward) {
+        style.bottom = viewportHeight - triggerRect.top + GAP;
+      } else {
+        style.top = triggerRect.bottom + GAP;
+      }
+
+      if (panelHeight > availableVertical) {
+        style.maxHeight = availableVertical;
+      }
+
+      setPanelStyle(style);
+    };
+
+    // Scrolling inside the options panel itself doesn't move the trigger,
+    // so it shouldn't trigger a reposition -- and letting it through here
+    // means the panel's own scroll gets treated like an ancestor scroll by
+    // anything else listening on window (e.g. overlay/close-on-scroll logic
+    // in whatever the dropdown is rendered inside).
+    const handleWindowScroll = (e: Event) => {
+      if (listRef.current && listRef.current.contains(e.target as Node)) return;
+      recalcPosition();
+    };
+
+    recalcPosition();
+    const raf = requestAnimationFrame(recalcPosition);
+
+    window.addEventListener("resize", recalcPosition);
+    window.addEventListener("scroll", handleWindowScroll, true);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", recalcPosition);
+      window.removeEventListener("scroll", handleWindowScroll, true);
+    };
+  }, [isOpen, filterText, isLoadingMore]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) {
@@ -124,6 +209,12 @@ export const Dropdown: React.FC<DropdownProps> = ({
         break;
       case "Escape":
         e.preventDefault();
+        setIsOpen(false);
+        break;
+      case "Tab":
+        // Don't preventDefault -- let focus move to the next/previous
+        // control as normal, just close the panel so it doesn't stay
+        // floating open over whatever the user tabs into.
         setIsOpen(false);
         break;
     }
@@ -156,63 +247,15 @@ export const Dropdown: React.FC<DropdownProps> = ({
     }
   }, [value]);
 
-  // Handle parent container overflow (including nested parents)
-  useEffect(() => {
-    if (!dropdownRef.current) return;
-
-    // Find all parent containers that have overflow settings
-    const parentsToModify: Array<{ element: HTMLElement; originalOverflow: string }> = [];
-    let currentElement = dropdownRef.current.parentElement;
-
-    // Traverse up the DOM tree to find all parents with overflow
-    while (currentElement) {
-      const styles = window.getComputedStyle(currentElement);
-      const hasOverflow = styles.overflow !== 'visible' || 
-                         styles.overflowY !== 'visible' || 
-                         styles.overflowX !== 'visible';
-
-      if (hasOverflow) {
-        parentsToModify.push({
-          element: currentElement,
-          originalOverflow: currentElement.style.overflow
-        });
-      }
-
-      // Stop at the grid container or after 10 levels
-      if (styles.display === 'grid' && parentsToModify.length > 0) {
-        break;
-      }
-      
-      if (parentsToModify.length >= 10) break;
-      
-      currentElement = currentElement.parentElement;
-    }
-
-    // Set overflow based on dropdown state
-    if (isOpen) {
-      parentsToModify.forEach(({ element }) => {
-        element.style.overflow = 'visible';
-      });
-    } else {
-      parentsToModify.forEach(({ element, originalOverflow }) => {
-        element.style.overflow = originalOverflow || 'auto';
-      });
-    }
-
-    // Cleanup: restore original overflow when component unmounts
-    return () => {
-      parentsToModify.forEach(({ element, originalOverflow }) => {
-        if (element) {
-          element.style.overflow = originalOverflow;
-        }
-      });
-    };
-  }, [isOpen]);
-
-  // Close dropdown when clicking outside
+  // Close dropdown when clicking outside.
+  // Checks both the trigger wrapper AND the portaled panel, since the
+  // panel is no longer a DOM descendant of dropdownRef once portaled.
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const insideTrigger = dropdownRef.current?.contains(target);
+      const insidePanel = listRef.current?.contains(target);
+      if (!insideTrigger && !insidePanel) {
         setIsOpen(false);
       }
     };
@@ -256,6 +299,11 @@ export const Dropdown: React.FC<DropdownProps> = ({
     onChange?.(isMultiple ? [] : "");
   };
 
+  const tooltipTitle = isMultiple
+    ? selectedValues.join(', ')
+    : (selectedValues[0] || '');
+  const showTooltip = disabled && tooltipTitle.trim() !== '';
+
   const isDark = theme === "dark" || theme === "dark-hc";
 
   const getBorderColor = () => {
@@ -264,6 +312,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
     if (isOpen) return "";
     return isDark ? "border-gray-600" : "border-gray-300";
   };
+
+  // No fixed validation color (invalid/valid) is driving the border,
+  // so hover/open highlighting is free to apply.
+  const isNeutralValidation = validationState !== "invalid" && validationState !== "valid";
 
   const getFillClasses = () => {
     if (!fillContainer) return "";
@@ -282,6 +334,60 @@ export const Dropdown: React.FC<DropdownProps> = ({
     }
   };
 
+  const optionsPanel = (
+    <div
+      ref={listRef}
+      data-modal="true"
+      className={`
+        border-2
+        ${isDark ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}
+        shadow-lg
+        overflow-auto
+      `}
+      style={{ borderRadius: "var(--border-radius)", maxHeight: panelStyle.maxHeight ?? 240, overscrollBehavior: "contain", ...panelStyle }}
+      onMouseDown={(e) => e.stopPropagation()}
+    >
+      {filteredOptions.map((option, index) => {
+        const isSelected = selectedValues.includes(option);
+        const isHighlighted = index === highlightedIndex;
+        return (
+          <div
+            key={index}
+            ref={isHighlighted ? highlightedItemRef : null}
+            onClick={() => handleSelect(option)}
+            onMouseEnter={() => setHighlightedIndex(index)}
+            onMouseLeave={() => setHighlightedIndex(-1)}
+            className={`
+              px-4 py-2
+              cursor-pointer
+              flex items-center justify-between
+              transition-colors
+              ${isSelected
+                ? `text-white`
+                : isDark ? "text-gray-200" : "text-gray-700"
+              }
+              ${className}
+            `}
+            style={{
+              backgroundColor: isSelected
+                ? branding.selectionColor
+                : isHighlighted
+                ? branding.hoverColor
+                : undefined,
+            }}
+          >
+            <span>{option}</span>
+            {isMultiple && isSelected && <Icon fillContainer={false} data="FaCheck" />}
+          </div>
+        );
+      })}
+      {isLoadingMore && (
+        <div className={`px-4 py-2 text-center text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+          Loading...
+        </div>
+      )}
+    </div>
+  );
 
   const dropdownElement = (
     <div 
@@ -293,6 +399,11 @@ export const Dropdown: React.FC<DropdownProps> = ({
        `} 
     >
       {filterable ? (
+        <Tooltip
+          title={tooltipTitle}
+          placement="bottom-start"
+          disable={!showTooltip}
+        >
         <div className="relative w-full h-full">
           <input
             type="text"
@@ -313,22 +424,22 @@ export const Dropdown: React.FC<DropdownProps> = ({
               border-2
               ${getBorderColor()}
               ${isDark ? "bg-gray-800 text-white placeholder-white" : "bg-white text-black placeholder-black"}
-              ${disabled ? "opacity-50 cursor-not-allowed" : ""}
+              ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}
               transition-colors
               focus:outline-none
               ${className}
             `}
             style={{
               borderRadius: "var(--border-radius)",
-              borderColor: validationState === "none" && isOpen ? branding.selectionColor : undefined,
+              borderColor: isNeutralValidation && isOpen ? branding.selectionColor : undefined,
             }}
             onMouseEnter={e => {
-              if (!disabled && validationState === "none" && !isOpen) {
+              if (!disabled && isNeutralValidation && !isOpen) {
                 e.currentTarget.style.borderColor = branding.hoverColor
               }
             }}
             onMouseLeave={e => {
-              if (!disabled && validationState === "none" && !isOpen) {
+              if (!disabled && isNeutralValidation && !isOpen) {
                 e.currentTarget.style.borderColor = ''
               }
             }}
@@ -360,7 +471,13 @@ export const Dropdown: React.FC<DropdownProps> = ({
             </button>
           </div>
         </div>
+        </Tooltip>
       ) : (
+        <Tooltip
+          title={tooltipTitle}
+          placement="bottom-start"
+          disable={!showTooltip}
+        >
         <button
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
@@ -371,21 +488,21 @@ export const Dropdown: React.FC<DropdownProps> = ({
             ${getBorderColor()}
             flex items-center justify-between
             ${isDark ? "bg-gray-800 text-white" : "bg-white text-black"}
-            ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+            ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : "cursor-pointer"}
             transition-colors
             ${className}
           `}
           style={{
             borderRadius: "var(--border-radius)",
-            borderColor: validationState === "none" && isOpen ? branding.selectionColor : undefined,
+            borderColor: isNeutralValidation && isOpen ? branding.selectionColor : undefined,
           }}
           onMouseEnter={e => {
-            if (!disabled && validationState === "none" && !isOpen) {
+            if (!disabled && isNeutralValidation && !isOpen) {
               e.currentTarget.style.borderColor = branding.hoverColor
             }
           }}
           onMouseLeave={e => {
-            if (!disabled && validationState === "none" && !isOpen) {
+            if (!disabled && isNeutralValidation && !isOpen) {
               e.currentTarget.style.borderColor = ''
             }
           }}
@@ -411,65 +528,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
             <Icon data={isOpen ? "IoIosArrowUp" : "IoIosArrowDown"} fillContainer={false} />
           </div>
         </button>
+        </Tooltip>
       )}
 
-      {isOpen && (
-        <div
-        ref={listRef}
-          className={`
-            absolute
-            w-full
-            mt-1
-            border-2
-            ${isDark ? "bg-gray-800 border-gray-600" : "bg-white border-gray-300"}
-            shadow-lg
-            max-h-60
-            overflow-auto
-            z-50
-          `}
-          style={{ borderRadius: "var(--border-radius)" }}
-        >
-          {filteredOptions.map((option, index) => {
-            const isSelected = selectedValues.includes(option);
-            const isHighlighted = index === highlightedIndex;
-            return (
-              <div
-                key={index}
-                ref={isHighlighted ? highlightedItemRef : null}
-                onClick={() => handleSelect(option)}
-                onMouseEnter={() => setHighlightedIndex(index)}
-                onMouseLeave={() => setHighlightedIndex(-1)}
-                className={`
-                  px-4 py-2
-                  cursor-pointer
-                  flex items-center justify-between
-                  transition-colors
-                  ${isSelected
-                    ? `text-white`
-                    : isDark ? "text-gray-200" : "text-gray-700"
-                  }
-                  ${className}
-                `}
-                style={{
-                  backgroundColor: isSelected
-                    ? branding.selectionColor
-                    : isHighlighted
-                    ? branding.hoverColor
-                    : undefined,
-                }}
-              >
-                <span>{option}</span>
-                {isMultiple && isSelected && <Icon fillContainer={false} data="FaCheck" />}
-              </div>
-            );
-          })}
-          {isLoadingMore && (
-            <div className={`px-4 py-2 text-center text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-              Loading...
-            </div>
-          )}
-        </div>
-      )}
+      {mounted && isOpen && createPortal(optionsPanel, document.body)}
     </div>
   );
 

@@ -5,6 +5,7 @@ import * as babelParser from '@babel/parser';
 import traverse from '@babel/traverse';
 import generate from '@babel/generator';
 import * as t from '@babel/types';
+import { runInSandbox } from './sandbox';
 
 @Injectable()
 export class CodeService{
@@ -74,9 +75,12 @@ function buildLiteralAST(value: any, seen = new Set()): t.Expression {
        
          arr[declaredVars[a]] = data[declaredVars[a]]
       }else{
-         var customres = JSON.parse(await this.redisService.getJsonDataWithPath(key + ':NPV:'+declaredVars[a]+'.PRO','.customResponse',process.env.CLIENTCODE))
-      
-         if(customres){
+        //  var customres = JSON.parse(await this.redisService.getJsonDataWithPath(key + ':NPV:'+declaredVars[a]+'.PRO','.customResponse',process.env.CLIENTCODE))
+        var customres = await this.redisService.getJsonData(key + ':NPV:'+declaredVars[a]+'.PRO',process.env.CLIENTCODE)
+         
+        if(customres){
+            customres = JSON.parse(customres)
+            customres = customres.customResponse
             if(Array.isArray(customres) && customres.length > 0){
               arr[declaredVars[a]] = customres
             }else if(Object.keys(customres).length > 0){
@@ -102,18 +106,7 @@ function buildLiteralAST(value: any, seen = new Set()): t.Expression {
 
       //console.log('code EndTime',new Date());
 
-    //   const vm = new VM({
-    //  timeout: 1000,
-    //  sandbox: {},
-    // });
-    
-    // ✅ Step 3: Execute the function in VM
-  //   const output = vm.run(`
-  //     ${updatedFunctionString}
-  //     test(); 
-  //  `);
-
-      const output =  eval(updatedFunctionString);
+      const output = runInSandbox(updatedFunctionString);
       return output
    }
 

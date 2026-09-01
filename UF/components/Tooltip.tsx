@@ -27,11 +27,6 @@ export const Tooltip: React.FC<TooltipProps> = ({
   const tooltipRef = useRef<HTMLDivElement>(null);
   const { theme } = useGlobal();
 
-  // If tooltip is disabled, just return children without tooltip functionality
-  if (disable) {
-    return <>{children}</>;
-  }
-
   useEffect(() => {
     if (isVisible && triggerRef.current && tooltipRef.current) {
       const triggerRect = triggerRef.current.getBoundingClientRect();
@@ -112,6 +107,10 @@ export const Tooltip: React.FC<TooltipProps> = ({
         return "bg-gray-900 text-white border-gray-800";
     }
   };
+
+  if (disable) {
+    return <>{children}</>;
+  }
 
   return (
     <>

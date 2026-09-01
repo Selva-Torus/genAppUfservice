@@ -1,7 +1,4 @@
-import type { NextRequest, NextResponse } from "next/server";
-
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
-export const COOKIE_PREFIX = basePath.replace(/^\/|\/$/g, "").replace(/\//g, "_");
+import { COOKIE_PREFIX, FULL_BASE_PATH } from "@/lib/cookies";
 
 function prefixName(cname: string) {
   return COOKIE_PREFIX ? `${COOKIE_PREFIX}_${cname}` : cname;
@@ -12,7 +9,7 @@ export function setCookie(
   cname: string,
   cvalue: string,
   exdays: number = 10,
-  path: string = "/"
+  path: string = FULL_BASE_PATH
 ) {
   const d = new Date();
   d.setTime(d.getTime() + exdays * 24 * 60 * 60 * 1000);
@@ -38,7 +35,7 @@ export function setCookie(
     return "";
   }
 
-export function deleteAllCookies(path: string = "/") {
+export function deleteAllCookies(path: string = FULL_BASE_PATH) {
   const cookies = document.cookie.split(";");
 
   for (let i = 0; i < cookies.length; i++) {
@@ -52,33 +49,6 @@ export function deleteAllCookies(path: string = "/") {
   }
 }
 
-export function deleteCookie(cookieName: string, path: string = "/") {
+export function deleteCookie(cookieName: string, path: string = FULL_BASE_PATH) {
   document.cookie = `${prefixName(cookieName)}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=${path};`;
-}
-
-
-export function getServerCookie(request: NextRequest, cname: string) {
-  return request.cookies.get(prefixName(cname))?.value || "";
-}
-
-export function setServerCookie(
-  response: NextResponse,
-  cname: string,
-  cvalue: string,
-  options?: { expires?: Date }
-) {
-  response.cookies.set({
-    name: prefixName(cname),
-    value: cvalue,
-    ...(options?.expires && { expires: options.expires }),
-  });
-}
-
-export function deleteServerCookie(request: NextRequest, cname: string) {
-  request.cookies.delete(prefixName(cname));
-}
-
-
-export function getHeaderCookie(cookieStore: { get: (name: string) => { value: string } | undefined }, cname: string) {
-  return cookieStore.get(prefixName(cname))?.value || "";
 }

@@ -206,24 +206,6 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
     }
   }
 
-  function formatDate(inputDateStr: string) {
-    // Create a Date object from the input string
-    const dateObj = new Date(inputDateStr)
-
-    // Get the day, month, year, hours, minutes, and seconds
-    const day = dateObj.getDate()
-    const month = dateObj.toLocaleString('default', { month: 'long' })
-    const year = dateObj.getFullYear()
-    const hours = dateObj.getHours()
-    const minutes = dateObj.getMinutes()
-    const seconds = dateObj.getSeconds()
-    const milliseconds = dateObj.getMilliseconds()
-    // Format the date and time components
-    const formattedDate = `${month} ${day}, ${year} ${hours}:${minutes}:${seconds}:${milliseconds}`
-
-    return formattedDate
-  }
-
   const handleGetFinishingTime = (nodeTime: string) => {
     // Ensure 'time' is a string array
     if (Array.isArray(time) && time.every(item => typeof item === 'string')) {
@@ -233,13 +215,13 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
           new Date(time[currentIndex + 1]).getMilliseconds() -
           new Date(nodeTime).getMilliseconds()
         return {
-          endTime: formatDate(time[currentIndex + 1]),
+          endTime: time[currentIndex + 1],
           processingTime: `${timeDifference}ms`
         }
       } else {
         return status.toLowerCase() === 'success'
           ? {
-              endTime: formatDate(time[time.length - 1]),
+              endTime: time[time.length - 1],
               processingTime: 'Process completed successfully'
             }
           : {
@@ -385,7 +367,7 @@ const Artifactdetails = ({ nodeData, setNodeData }: Nodedataprops) => {
                   <div className='flex flex-col gap-2'>
                     <Text className='text-nowrap text-end'>Process started at</Text>
                     <Text color='secondary' className='text-nowrap'>
-                      {formatDate(selectedNode?.time)}
+                      {selectedNode?.time}
                     </Text>
                   </div>
                   <div className='flex flex-col gap-2 py-2'>

@@ -1,8 +1,9 @@
+
 import { deleteAllCookies, getCookie } from '@/app/components/cookieMgment'
 import decodeToken from '@/app/components/decodeToken'
 import { Logo } from '@/app/components/Logo'
 import { usePathname, useRouter } from 'next/navigation'
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MenuItem, MenuStructure } from '../../interfaces/interfaces'
 import { Text } from '@/components/Text'
 import { Button } from '@/components/Button'
@@ -17,6 +18,10 @@ import Popup from '@/components/Popup'
 import { LogoutIcon, RotateIcon, SettingsIcon } from '../../utils/svgApplications'
 import clsx from 'clsx'
 import { OrgStructure, ProdStructure, RoleStructure } from '../svgApplication'
+import { isLightColor } from '../utils'
+import Image from "next/image";
+import { AxiosService } from '@/app/components/axiosService'
+import { useGlobal } from '@/context/GlobalContext'
 
 const TopNav = ({
   navData,
@@ -46,18 +51,26 @@ const TopNav = ({
   }[]
 }) => {
   const router = useRouter()
-  const token: string = getCookie('token')
+  const { token } = useGlobal()
   const decodedTokenObj: any = decodeToken(token)
   const user = decodedTokenObj?.loginId
   const selectedAccessProfile = decodedTokenObj?.selectedAccessProfile
   const pathname = usePathname()
   const menuRef = useRef<HTMLDivElement>(null)
-  const { borderColor, isDark } = useTheme()
+  const { borderColor, isDark , textStyle } = useTheme()
+  const bgStyle = isDark ? "#1f2937" : "#ffffff"
   const [visibleItems, setVisibleItems] = useState<MenuItem[]>(navData || [])
   const [hiddenItems, setHiddenItems] = useState<MenuItem[]>([])
   const tp_ps = getCookie('tp_ps')
   const [isPopoverOpen, setIsPopoverOpen] = useState(false)
   const popoverButtonElement = useRef(null)
+  const brandTextColor = useMemo(() => {
+    return isLightColor(brandColor)
+  } , [brandColor])
+  const menuBgColor ="#F44336"
+  const menuTextColor ="#F44336"
+  const menuSelectionBgColor ="#0736C4"
+  const menuSelectionTextColor ="#0736C4"
 
   useEffect(() => {
     const checkOverflow = () => {
@@ -126,11 +139,28 @@ const TopNav = ({
     return nestedMenu
   }
 
+//  async function logout() {
+//    localStorage.clear()
+//    deleteAllCookies()
+//    window.location.href = '/ct010/ag001/a001/v1'
+//  }
+
   async function logout() {
+    try {
+      if (token) {
+        await AxiosService.post('/UF/release-all-locks', null, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      }
+    } catch (e) {
+      // ignore error, proceed with logout
+    }
     localStorage.clear()
-    deleteAllCookies()
-    window.location.href = '/ct010/ag001/a001/v1'
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ''
+    const from = encodeURIComponent(`${basePath}/`)
+    window.location.href = `${basePath}/next-api/auth/logout?from=${from}`
   }
+  
   const hasMatchingName = (obj: any, input: string): boolean => {
     if (typeof obj !== 'object' || obj === null) return false
 
@@ -164,6 +194,38 @@ const TopNav = ({
     [brandColor]
   )
 
+  const getMenuStyle = (selected: boolean): React.CSSProperties => {
+  const style: React.CSSProperties = {}
+
+  if (selected) {
+    if (menuSelectionBgColor) {
+      style.backgroundColor = menuSelectionBgColor
+    } else {
+      style.backgroundColor = brandColor
+    }
+
+    if (menuSelectionTextColor) {
+      style.color = menuSelectionTextColor
+    } else {
+      style.color = brandTextColor
+    }
+  } else {
+    if (menuBgColor) {
+      style.backgroundColor = menuBgColor
+    }else{
+      style.backgroundColor = bgStyle
+    }
+
+    if (menuTextColor) {
+      style.color = menuTextColor
+    }else{
+      style.color = textStyle
+    }
+  }
+
+  return style
+}
+
   // Helper function to get grid style for a section
   const getGridStyle: (sectionName: string) => React.CSSProperties = (
     sectionName: string
@@ -186,8 +248,8 @@ const TopNav = ({
   const LogoSection = useCallback(() => (
     <div className='flex items-center gap-1 min-w-[100px]' style={navigationStyles == 'vertical' ? undefined : getGridStyle('logo')}>
       {logo ? (
-        <img
-          className='h-[50px] w-[50px]'
+        <Image
+          className='min-h-[3vh] max-h-[5vh] h-auto w-auto'
           width={100}
           height={100}
           src={getCdnImage(logo)}
@@ -196,10 +258,10 @@ const TopNav = ({
       ) : (
         <Logo />
       )}
-      <Text className='text-nowrap text-start font-bold w-full truncate' contentAlign='left'>
-        <span title={appName}>
-        {appName}
-        </span>
+      <Text className='text-nowrap text-start font-bold w-full truncate text-[var(--brand-color)]' contentAlign='left'>
+          <span title={appName}>
+          {appName}
+          </span>
       </Text>
     </div>
   ) , [logo, appName])
@@ -207,8 +269,10 @@ const TopNav = ({
       const AppLogoSection = useCallback(() => (
     <div className='flex items-center gap-1' style={navigationStyles == 'vertical' ? undefined : getGridStyle('app logo')}>
       {appLogo && (
-        <img
-          className='min-h-[40px] max-h-[60px] h-auto w-auto'
+        <Image
+          width={100}
+          height={100}
+          className='min-h-[3vh] max-h-[5vh] h-auto w-auto'
           src={getCdnImage(appLogo)}
           alt='appLogo'
         />
@@ -219,29 +283,28 @@ const TopNav = ({
   // Menu Items section
   const MenuItemsSection = useCallback(() => (
     <div
-      className='flex w-full justify-start gap-1 pl-4'
+      className='flex w-full justify-start items-center gap-1 pl-4'
       style={getGridStyle('menu items')}
       ref={menuRef}
     >
-      <div className='flex max-w-[62%] items-center gap-1'>
+      <div className='flex max-w-[62%] items-center gap-[0.5vw]'>
         {navData &&
           visibleItems.map((menu, index) => {
             if (menu.menuGroup) {
+              const selected = isSelectedMenuGroup(menu.menuGroup)
               return (
                 <div key={index}>
                   <DropdownMenu
                     renderSwitcher={(props: any) => (
-                      <Button
+                      <button
                         {...props}
-                        view={
-                          isSelectedMenuGroup(menu.menuGroup)
-                            ? 'action'
-                            : 'raised'
-                        }
-                        className='px-3 py-1'
+                        className={twMerge(
+                            'px-[1vw] py-[0.5vh] !text-nowrap rounded-[1vw] hover:bg-[var(--hover-color)] text-fsbase'
+                          )}
+                        style={getMenuStyle(selected)} 
                       >
                         {menu.menuGroupLabel}
-                      </Button>
+                      </button>
                     )}
                     key={index}
                     items={getNestedMenu(menu)}
@@ -254,15 +317,18 @@ const TopNav = ({
                 menu.screenDetails[0].name.replace(/ /g, '_') +
                 '_' +
                 menu.screenDetails[0].key.split(':').at(-1)
+              const selected = routingName == pathname  
               return (
-                <Button
-                  view={routingName == pathname ? 'action' : 'raised'}
-                  className='px-3 py-1'
+                <button
+                 className={twMerge(
+                            'px-[1vw] py-[0.5vh] !text-nowrap rounded-[1vw] hover:bg-[var(--hover-color)] text-fsbase'
+                          )}
+                  style={getMenuStyle(selected)}
                   key={index}
                   onClick={() => router.push(routingName)}
                 >
                   {menu.menuGroupLabel}
-                </Button>
+                </button>
               )
             }
           })}
@@ -271,7 +337,7 @@ const TopNav = ({
         {hiddenItems.length > 0 && (
           <DropdownMenu
             renderSwitcher={(props: any) => (
-              <Button {...props} view='raised' className='mt-1 rotate-90'>
+              <Button {...props} view='action' className='px-2 rotate-90'>
                 <BsThreeDots />
               </Button>
             )}
@@ -482,18 +548,11 @@ const TopNav = ({
         suppressHydrationWarning
         className={clsx(
           `flex items-center justify-between p-2 ${
-            mode === 'detached' ? 'shadow-md' : ''
+            mode === 'detached' && navigationStyles == 'vertical' ? 'shadow-md' : ''
           }`
         )}
       >
-          {appLogo ? (
-          <div className='flex items-center gap-3 w-full'>
-            <LogoSection />
-            <AppLogoSection />
-          </div>
-        ) : (
         <LogoSection />
-        )}
         {listMenuItems && (
           <>
             <MenuItemsSection />
@@ -502,8 +561,8 @@ const TopNav = ({
           </>
         )}
         {
-          pathname === '/select-context' || pathname == '/app-hub' &&
-          ( <ProfileSection />)
+          pathname === '/select-context' || pathname == '/app-hub' ?
+          ( <ProfileSection />) : <></>
         }
       </div>
     )
@@ -514,7 +573,7 @@ const TopNav = ({
     <div
       suppressHydrationWarning
       className={clsx(
-        `grid items-center p-2 ${mode === 'detached' ? 'shadow-md' : ''}`
+        `grid items-center px-[1vw] py-[0.5vh] ${mode === 'detached' && navigationStyles == "vertical" ? 'shadow-md' : ''}`
       )}
       style={{
         gridTemplateColumns: 'repeat(12,  minmax(0, 1fr))',
@@ -531,8 +590,8 @@ const TopNav = ({
         </>
       )}
       {
-        pathname === '/select-context' || pathname == '/app-hub' &&
-        ( <ProfileSection />)
+        pathname === '/select-context' || pathname == '/app-hub' ?
+        ( <ProfileSection />) : <></>
       }
     </div>
   )

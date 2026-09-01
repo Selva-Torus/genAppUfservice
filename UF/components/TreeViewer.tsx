@@ -3,7 +3,6 @@ import React, { useContext, useEffect, useState } from 'react'
 import i18n from '@/app/components/i18n'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import { TotalContext, TotalContextProps } from '@/app/globalContext'
-import { getCookie } from '@/app/components/cookieMgment'
 import { useGlobal } from '@/context/GlobalContext'
 import { HeaderPosition, TooltipProps as TooltipPropsType } from '@/types/global'
 

@@ -9,12 +9,11 @@ import React, {
 } from 'react'
 import { useInfoMsg } from '@/app/components/infoMsgHandler'
 import axios from 'axios'
-import { getCookie, setCookie } from '@/app/components/cookieMgment'
+import { getCookie, setCookie, deleteAllCookies } from '@/app/components/cookieMgment'
 import { useRouter } from 'next/navigation'
 import decodeToken from '@/app/components/decodeToken'
 import { Text } from '@/components/Text'
 import { useGlobal } from '@/context/GlobalContext'
-import { twMerge } from 'tailwind-merge'
 import { useTheme } from '@/hooks/useTheme'
 import { Dropdown } from '@/components/Dropdown'
 import { Button } from '@/components/Button'
@@ -24,9 +23,9 @@ import { TotalContext, TotalContextProps } from '../../globalContext'
 import TopNav from '@/app/components/Layout/TopNav'
 import OPRList from './OprList'
 import { LuBuilding2 } from 'react-icons/lu'
-import { hexWithOpacity, isLightColor } from '@/app/components/utils'
+import { hexWithOpacity } from '@/app/components/utils'
 import { BiPackage } from 'react-icons/bi'
-import { RiUserShared2Fill } from 'react-icons/ri'
+import { RiUserShared2Line } from 'react-icons/ri'
 import clsx from 'clsx'
 
 const ContextSelector = () => {
@@ -37,7 +36,6 @@ const ContextSelector = () => {
   const { userDetails, setUserDetails , setMatchedAccessProfileData } = useContext(
     TotalContext
   ) as TotalContextProps
-  const token: string = getCookie('token')
   const tp_ps: any = getCookie('tp_ps')
   const toast = useInfoMsg()
   const baseUrl: any = process.env.NEXT_PUBLIC_API_BASE_URL
@@ -45,12 +43,13 @@ const ContextSelector = () => {
   const [accessProfiles, setAccessProfiles] = useState<any[]>([])
   const router = useRouter()
   const [loading, setLoading] = useState(false)
-  const { branding } = useGlobal()
+  const { branding , token } = useGlobal()
   const { brandColor } = branding
   const [selectedCombination, setSelectedCombination] = useState<
     Record<string, string>
   >({})
-  const { borderColor } = useTheme()
+  const { borderColor , isDark } = useTheme()
+  const bgHeaderColor = isDark ? "bg-gray-700" : "bg-gray-100"
   const [selectedOrg, setSelectedOrg] = useState<Record<string, string>>({})
   const [selectedPs, setSelectedPs] = useState<Record<string, string>>({})
   const [selectedRole, setSelectedRole] = useState<Record<string, string>>({})
@@ -82,9 +81,28 @@ const ContextSelector = () => {
       landingScreen.split('-')[0] + '_' + landingScreen.split('-').at(-1)
   }
 
+  const introspect = async () => {
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+    const res = await fetch(`${basePath}/next-api/auth/introspect?key=context-selector`)
+    if (!res.ok) {
+      logout()
+      return
+    }
+    router.refresh()
+  }
+
+  const logout = () => {
+    localStorage.clear();
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+    const from = encodeURIComponent(`${basePath}/`);
+
+    window.location.href = `${basePath}/next-api/auth/logout?from=${from}`;
+  };
+
   useEffect(() => {
     orpsData()
     userDetailsData()
+    introspect()
   }, [])
 
   const userDetailsData = async () => {
@@ -225,8 +243,8 @@ const ContextSelector = () => {
     }
     setLoading(true)
     try {
-      const res = await axios.post(
-        `${baseUrl}/UF/getAccessToken`,
+     const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ''; 
+     const res = await axios.post(`${basePath}/next-api/auth/get-access-token`, 
         {
           selectedCombination: selectedCombo,
           selectedAccessProfile: selectedAccessProfile[0],
@@ -235,15 +253,9 @@ const ContextSelector = () => {
               item => item.accessProfile === selectedAccessProfile[0]
             )?.dap ?? undefined,
           ufClientType: 'UFW'
-        },
-        {
-          headers: {
-            authorization: `Bearer ${token}`
-          }
         }
-      )
-      if (res.status == 201) {
-        setCookie('token', res.data.token)
+)
+      if (res.status == 200) {
         setCookie(
           'tp_ps',
           btoa(
@@ -253,22 +265,11 @@ const ContextSelector = () => {
             })
           )
         )
-        const ORM: any = decodeToken(res.data.token)
-        sessionStorage.setItem(
-          'organizationDetails',
-          JSON.stringify({
-            orgGrpCode: ORM.orgGrpCode,
-            orgCode: ORM.orgCode,
-            roleGrpCode: ORM.roleGrpCode,
-            roleCode: ORM.roleCode,
-            psGrpCode: ORM.psGrpCode,
-            psCode: ORM.psCode
-          })
-        )
         setMatchedAccessProfileData({})
         startTransition(() => {
           router.push(landingScreen)
         })
+        router.refresh()
         // here we have to set the default authentication route
         setLoading(false)
       }
@@ -292,7 +293,7 @@ const ContextSelector = () => {
         subtitle: selectedPs.psCode
       },
       {
-        icon: RiUserShared2Fill,
+        icon: RiUserShared2Line,
         group: selectedRole.roleGrpName,
         title: selectedRole?.roleCount ? `${selectedRole.roleCount} Role` : ''
       }
@@ -306,11 +307,11 @@ const ContextSelector = () => {
     'gridRow'?: string
   }[] = []
 
-  const logo: string = "torus/9.1/CT010/resources/images/15017190.png"
-  const appLogo: string = "torus/9.1/CT010/resources/images/images.png"
+  const logo: string = "torus/9.1/CT010/resources/images/Screenshot 2024-02-14 131839.png"
+  const appLogo: string = "torus/9.1/CT010/resources/images/images.jpg"
 
   return (
-    <div className='h-full w-full  bg-cover bg-center' style={{ backgroundImage: 'var(--app-bg-image)' }}>
+    <div className='h-full w-full  bg-cover bg-center'>
       <TopNav
         appName={appName}
         navData={[]}
@@ -323,10 +324,9 @@ const ContextSelector = () => {
         logo={logo}
       />
 
-      <hr className={twMerge('w-full h-1', borderColor)} />
       <div className='px-5 py-2.5'>
         <div className='flex w-full items-center justify-end gap-1'>
-          <div title={selectedAccessProfile.length ? selectedAccessProfile[0] : "Select Access Profile"} className='w-[12vw]'>
+          <div title={selectedAccessProfile.length ? selectedAccessProfile[0] : "Select Access Profile"} className='w-[8vw]'>
             <Dropdown
               placeholder='Select Access Profile'
               value={selectedAccessProfile[0]}
@@ -350,11 +350,12 @@ const ContextSelector = () => {
                 setSelectedRole({})
                 setSelectedCombination({})
               }}
+              className='text-left'
             />
           </div>
-          <div className='flex gap-2 py-2'>
+          <div className='flex py-1'>
             <Button
-              className='flex items-center rounded-md px-5 py-2.5 disabled:opacity-50'
+              className='flex items-center rounded-md px-5 py-3 disabled:opacity-50'
               icon={'MdArrowForward'}
               onClick={handleNavigationClick}
               disabled={
@@ -363,7 +364,7 @@ const ContextSelector = () => {
             >
               {loading || isPending ? (
                 <Spin
-                  className='flex w-full justify-center'
+                  className='flex w-full justify-center py-2'
                   spinning
                   color='success'
                   style='dots'
@@ -374,16 +375,16 @@ const ContextSelector = () => {
             </Button>
           </div>
         </div>
-        <div className={'gap-1- flex h-full flex-col rounded-md px-5 py-2'}>
+        <div className={'gap-[2vh] flex h-full flex-col rounded-md px-5 py-2'}>
           <div className='h-1\5 flex w-full items-center justify-between'>
-            <div className='flex h-[20vh] w-full items-center justify-center rounded-lg'>
+            <div className={clsx('flex h-[18vh] w-full items-center justify-center rounded-lg', bgHeaderColor)}>
               {blocks.map((block, idx) => (
                 <div key={idx} className='flex items-center '>
                   {/* Circle */}
                   <div className='flex w-[8vw] flex-col items-center gap-[0.5vh]'>
                     <div
                       style={{
-                        backgroundColor: hexWithOpacity(brandColor, 0.8)
+                        backgroundColor: hexWithOpacity(brandColor, 0.2)
                       }}
                       className={clsx(
                         `flex h-[2.5vw] w-[2.5vw] items-center justify-center rounded-full shadow-sm transition-all duration-300 ease-in-out`,
@@ -394,14 +395,14 @@ const ContextSelector = () => {
                     >
                       <block.icon
                         className={clsx(
-                          'h-[0.7vw] w-[0.7vw] transition-all duration-300 ease-in-out',
+                          'h-[0.8vw] w-[0.8vw] transition-all duration-300 ease-in-out',
                           {
                             'h-[1.1vw] w-[1.1vw]':
                               !block?.group || !block?.title
                           }
                         )}
                         style={{
-                          color: isLightColor(brandColor)
+                          color: brandColor
                         }}
                       />
                     </div>
@@ -409,7 +410,7 @@ const ContextSelector = () => {
                     {/* Texts */}
                     <div className='flex w-full flex-col items-center'>
                       <Text
-                        className={`w-full truncate text-nowrap text-center`}
+                        className={`w-full truncate text-nowrap text-center text-[var(--brand-color)]`}
                       >
                         {block?.group}
                       </Text>

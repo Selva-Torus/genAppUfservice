@@ -96,9 +96,20 @@ export const Switch: React.FC<SwitchProps> = ({
       `}
     >
       <div
-        className={`relative aspect-[2/1] h-full flex-shrink-0 rounded-full transition-colors duration-200 ease-in-out`}
+        className={`relative aspect-[2/1] h-full flex-shrink-0 rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-1`}
         style={getSwitchStyles()}
         onClick={() => !disabled && onChange?.(!checked)}
+        role="switch"
+        aria-checked={checked}
+        aria-disabled={disabled}
+        tabIndex={disabled ? -1 : 0}
+        onKeyDown={(e) => {
+          if (disabled) return
+          if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
+            e.preventDefault()
+            onChange?.(!checked)
+          }
+        }}
       >
         <div
           className={`absolute top-0.5 aspect-square h-[calc(100%-4px)] transform rounded-full bg-white shadow-md transition-transform duration-200 ease-in-out ${getTranslateClass()}`}

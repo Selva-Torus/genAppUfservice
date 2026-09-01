@@ -1,7 +1,7 @@
 export type Theme = "light" | "dark" | "light-hc" | "dark-hc";
 export type Language = "English" | "Tamil" | "Arabic" | "Russian" | "French";
 export type Direction = "LTR" | "RTL";
-export type FontSize = "Small" | "Medium" | "Large" | "Extra Large";
+export type FontSize = string;
 export type BorderRadiusSize = "xs" | "s" | "m" | "l" | "xl" | "none";
 
 export interface ActionDetails {
@@ -52,7 +52,7 @@ export interface PrimaryTableData {
 }
 
 export interface SecurityDataRole {
-  allowedGroups: string[];
+  blockedGroups: string[];
 }
 
 export interface SecurityData {
@@ -118,6 +118,7 @@ export interface Branding {
 }
 
 export interface GlobalProps {
+  token: string;
   theme: Theme;
   language: Language;
   direction: Direction;

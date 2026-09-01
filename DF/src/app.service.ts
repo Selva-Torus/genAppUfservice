@@ -1,47 +1,34 @@
 
 
 
-
-
-
-
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable} from '@nestjs/common';
 import axios from 'axios';
 import * as fs from 'fs';
 import { UfService } from './Torus/v1/uf/uf.service';
 import { CommonService } from './common.Service';
-
+import { SwaggerGuard } from './swagger.guard';
 @Injectable()
-export class AppService implements OnModuleInit{
+export class AppService {
   private readonly apiUrl = process.env.API_URL;
   private readonly clientcode = process.env.CLIENTCODE;
+  private readonly loginId = process.env.LOGINID;
+  private swaggerDocument: any = null;
   constructor(private readonly ufservice: UfService,
-  private readonly commonService: CommonService) {}
+  private readonly swaggerGuard: SwaggerGuard,
+  private readonly commonService: CommonService  ) {}
 
-  async onModuleInit() {
-    console.log('Application started, calling API...');
-    console.log('DDL changes update started.');
-    console.log('DDL changes update completed.');    
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJsb2dpbklkIjoic2VsdmEiLCJjbGllbnQiOiJDVDAxMCIsInR5cGUiOiJjIiwibG9nVHlwZSI6Im1vbmdvZGIiLCJzaWQiOiJhNTdmZDVkZS1kMjE4LTQ3MTktOThkOC1iMDZiOTg5OTUzZTUiLCJpYXQiOjE3ODAxMTU5NjEsImV4cCI6MTc4MDExNzE2MX0.RaeE6-9iUXSBtqqsWHejngZL4fNQpt2ueokfPzHZW04';
-    let preParedData:any=await this.dataPrep(JSON.parse(fs.readFileSync('./swagger.json', 'utf-8')))
-    if(Object.keys(preParedData).includes('torusApis'))
-    {
-      let torusData: any = {};
-      //let endPointData : any = {};
-      //endPointData.data = preParedData?.torusApis||{}
-      //endPointData.type =  "json";
-      //let res =  await axios.post(this.apiUrl+'/getEndPoints', endPointData);
-      //torusData.endpoint = res.data;
-      torusData.tenant =  "CT010";
-      torusData.domain = "appgroup"; 
-      torusData.collection = "application";
-      torusData.fabric = 'API-APIPD-TORUS';
-      torusData.data = preParedData?.torusApis||{}
-      torusData.loginId = "selva";    
-      //await axios.post(this.apiUrl, torusData);
-    }
+  setSwaggerDocument(document: any): void {
+    this.swaggerDocument = document;
   }
 
+   async initSwaggerUpload() {
+    console.info('Starting Swagger upload to API Fabric...');
+    if (!this.swaggerDocument) {
+      console.warn('Swagger document not set — skipping Swagger upload to API Fabric.');
+      return;
+    }
+    let preParedData:any=await this.dataPrep(this.swaggerDocument)
+  }
 
   getHello(): string {
     return 'Hello World!';

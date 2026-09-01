@@ -33,7 +33,7 @@ const RenderChild = ({
         children
           ? 'rounded-lg border bg-[var(--g-color-base-background)]  hover:border-[var(--brand-color)] hover:shadow'
           : 'cursor-pointer',
-        bgColor
+        bgColor ,borderColor
       )}
       key={displayCode}
     >

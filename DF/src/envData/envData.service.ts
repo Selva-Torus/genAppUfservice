@@ -7,6 +7,10 @@ export class EnvData {
 
   private config: any = null;
   private isLoaded: boolean = false;
+  private readonly TENANT_NAME: string = 'ct010';
+  private readonly APP_GROUP_NAME: string = 'ag001';
+  private readonly APP_NAME: string = 'a001';
+  private readonly VERSION: string = 'v1';
 
   constructor() {
     if (EnvData.staticLoaded && EnvData.staticConfig) {
@@ -52,7 +56,24 @@ export class EnvData {
 
     // ===== Tenant / App / Group / Version ===== 
   getBeUrl(): string {
-    return this.getConfigValue('api.release.HOST') || '';
+    const hostName = this.getConfigValue('api.release.HOST') || '';
+    const port = this.getConfigValue('api.release.PORT') || '';
+    
+    if (!hostName) return '';
+
+    if (port !== '') {
+      if (hostName.includes('http://') || hostName.includes('https://')) {
+        return `${hostName}/${this.TENANT_NAME}/${this.APP_GROUP_NAME}/${this.APP_NAME}/${this.VERSION}/api:${port}`;
+      }
+
+      return `http://${hostName}/${this.TENANT_NAME}/${this.APP_GROUP_NAME}/${this.APP_NAME}/${this.VERSION}/api:${port}`;
+    }
+
+    if (hostName.includes('http://') || hostName.includes('https://')) {
+      return `${hostName}/${this.TENANT_NAME}/${this.APP_GROUP_NAME}/${this.APP_NAME}/${this.VERSION}/api`;
+    }
+
+    return `http://${hostName}/${this.TENANT_NAME}/${this.APP_GROUP_NAME}/${this.APP_NAME}/${this.VERSION}/api`;
   }
 
   getApiUrl(): string {
@@ -285,7 +306,14 @@ export class EnvData {
   }
 
   getAuthSecret(): string {
-    return this.getConfigValue('iam.auth_secret') || 'HpZnm7V6YeshFDVbwACyOtx6oa6QSbraZoNyU9fwtGYUL1Rnc6PN5QUosu9BcqVBo5L6QeSs';
+    const secret = this.getConfigValue('iam.auth_secret');
+    if (!secret) {
+      // Fail closed: a missing secret must never fall back to a value that
+      // sits in source control, since that would let anyone forge a token
+      // that passes AuthGuard's verify() check.
+      //throw new Error('iam.auth_secret is not configured — refusing to start with no JWT signing secret');
+    }
+    return secret;
   }
 
    getAuthAccessTokenExpiryTime(): string {

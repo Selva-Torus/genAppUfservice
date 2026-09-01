@@ -1,12 +1,12 @@
 'use server'
 
-import { signIn } from '@/auth'
+//import { signIn } from '@/auth'
 import { AxiosService } from '../components/axiosService'
 import { cookies } from 'next/headers'
 
 export const singleSignOn = async (provider: 'google' | 'github' | 'fusionauth')  => {
   try {
-    await signIn(provider)
+   // await signIn(provider)
   } catch (error) {
     console.log(`this is error ${error}`)
     throw error

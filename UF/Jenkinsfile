@@ -55,19 +55,17 @@ pipeline {
             }
             steps {
                 script {
-                    docker.withRegistry("http://${DOCKERHUB_USERNAME}", '') {
-                        sh """
-                        export DOCKER_BUILDKIT=1
-                        docker buildx use default
-                        
-                        docker buildx build \
-                          --build-arg BUILDKIT_INLINE_CACHE=1 \
-                          --tag ${IMAGE_NAME}:${IMAGE_TAG} \
-                          --file apps/CT010/AG001/A001/v1/Next-uf/Dockerfile \
-                          apps/CT010/AG001/A001/v1/Next-uf \
-                          --push
-                        """
-                    }
+                    sh """
+                    export DOCKER_BUILDKIT=1
+                    docker buildx use default
+                    
+                    docker buildx build \
+                        --build-arg BUILDKIT_INLINE_CACHE=1 \
+                        --tag ${IMAGE_NAME}:${IMAGE_TAG} \
+                        --file apps/CT010/AG001/A001/v1/Next-uf/Dockerfile \
+                        apps/CT010/AG001/A001/v1/Next-uf \
+                        --push
+  """
                 }
             }
         }

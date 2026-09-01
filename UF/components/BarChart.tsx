@@ -35,6 +35,8 @@ export interface BarChartProps {
   headerPosition?: HeaderPosition;
   className?: string;
   colors?: string[];
+  numberKey?: string;
+  onClick?: (data: any, index: number, event: React.MouseEvent) => void;
 }
 
 export const BarChart: React.FC<BarChartProps> = ({
@@ -48,7 +50,9 @@ export const BarChart: React.FC<BarChartProps> = ({
   tooltipProps,
   headerText = "",
   headerPosition = "top",
-  colors = [] 
+  colors = [],
+  numberKey,
+  onClick
 }) => {
   const { theme } = useGlobal();
   const keyset:any=i18n.keyset("language"); 
@@ -153,13 +157,17 @@ export const BarChart: React.FC<BarChartProps> = ({
             />
             <Legend />
             {Object.keys(parsedExpenseData[0] || {})
-              .filter(key => key !== 'name')
+              .filter(key => key !== 'name' && (!numberKey || key === numberKey))
               .map((key, index) => (
                 <Bar
                   key={key}
                   dataKey={key}
                   name={keyset(key)}
                   fill={colors[index % colors.length]}
+                  cursor={onClick ? "pointer" : "default"}
+                  onClick={onClick ? (barData: any, idx: number, e: React.MouseEvent) => {
+                    onClick(barData, idx, e);
+                  } : undefined}
                 />
               ))}
           </RechartsBarChart>

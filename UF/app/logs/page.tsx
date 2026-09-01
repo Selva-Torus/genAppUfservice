@@ -4,14 +4,13 @@
 import React, { useState, useEffect, useMemo, useDeferredValue, useContext } from 'react'
 import { AxiosService } from '@/app/components/axiosService'
 import TableHeader from './components/LogTable'
-import { deleteAllCookies, getCookie, setCookie } from '@/app/components/cookieMgment'
 import decodeToken from '@/app/components/decodeToken'
 import Artifactdetails from './components/ArtifactDetails'
 import { TotalContext, TotalContextProps } from '../globalContext'
 import { useRouter } from 'next/navigation'
+import { useGlobal } from '@/context/GlobalContext'
 
 const ParentComponent = () => {
-  console.log("🚀 ~ TgService ~ codeGeneration ~ setupData:")
   const [searchTerm, setSearchTerm] = useState('')
   const [activeTab, setActiveTab] = useState<'process' | 'torus'>('process')
   const [nodeData, setNodeData] = useState(null)
@@ -24,7 +23,7 @@ const ParentComponent = () => {
     code: 'AG001',
     name: 'appgroup'
   })
-  const token: string = getCookie('token')
+  const { token } = useGlobal();
   const decodedToken: any = decodeToken(token)
   const [user, setUser] = useState<string[]>([decodedToken?.loginId])
   const { encAppFalg,setEncAppFalg}= useContext(TotalContext) as TotalContextProps
@@ -99,12 +98,15 @@ const ParentComponent = () => {
         payload['dpdKey'] = encAppFalg.dpd;
         payload['method'] = 'vault';
       }
-      console.log('Fetching data...', payload)
+
       setLoading(true)
       const response = await AxiosService.post(
         `/${activeTab === 'torus' ? 'expLog' : 'prcLog'}`,
         payload,
         {
+          headers : {
+            Authorization : `Bearer ${token}`
+          },
           signal: signal
         }
       )
@@ -236,7 +238,6 @@ const ParentComponent = () => {
       }
       setLoading(false)
     } catch (error: any) {
-      if (error?.code !== 'ERR_CANCELED') {
         setLoading(false)
         setJsonViewerData({})
         setJsonData(prevData => ({
@@ -247,11 +248,9 @@ const ParentComponent = () => {
           totalDocuments: 0,
           totalPages: 0
         }))
-      }
-
-      console.error('Error fetching data:', error)
     }
   }
+  
   useEffect(() => {
     const controller = new AbortController()
     const signal = controller.signal
@@ -270,54 +269,39 @@ const ParentComponent = () => {
       limit: newPageSize
     }))
   }
-  const securityCheck = async () => {
-  try {
-    const encryptionDpd: string =
-      'CK:CT010:FNGK:AF:FNK:CDF-DPD:CATK:AG001:AFGK:A001:AFK:defaultDPD:AFVK:v1'
-    const encryptionMethod: string = ''
-    let introspect: any
-    if (encryptionFlagApp) {
-      introspect = await AxiosService.get('/UF/introspect', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        params: {
-          dpdKey: encryptionDpd,
-          method: encryptionMethod,
-          key:"Logs Screen"
-        }
-      })
-    } else {
-      introspect = await AxiosService.get('/UF/introspect', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        },
-        params: {
-          key:"Logs Screen"
-        }
-      })
-    }
+ 
+  const logout = () => {
+    localStorage.clear();
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+    const from = encodeURIComponent(`${basePath}/`);
+    window.location.href = `${basePath}/next-api/auth/logout?from=${from}`;
+  };
 
-    if (introspect?.data?.authenticated) {
-      if (!decodedToken.selectedAccessProfile) {
-        router.push('/select-context')
-      }
-      if (introspect?.data?.updatedToken) {
-        setCookie('token', introspect?.data.updatedToken)
-      }
-    } else {
-      await deleteAllCookies()
-    }
-  } catch (err: any) {
-    await deleteAllCookies()
-  }
-}
+   const securityCheck = async () => {
+     try {
+     const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+     const res = await fetch(`${basePath}/next-api/auth/introspect?key=Logs Screen`)
+     if (!res.ok) {
+       logout()
+       return
+     }
+     router.refresh()
+ 
+     if (!decodedToken.selectedAccessProfile) {
+       router.push('/select-context')
+     }
+       
+     } catch (err: any) {
+       logout()
+     }
+   }
+ 
+   useEffect(() => {
+     if (token) {
+       securityCheck()
+     }
+   }, [])
 
-  useEffect(() => {
-    if (token) {
-      securityCheck()
-    }
-  }, [token])
   return (
     <>
       {nodeData ? (
@@ -326,6 +310,7 @@ const ParentComponent = () => {
         <TableHeader
           loading={loading}
           jsonData={jsonData}
+          setJsonData={setJsonData}
           onPageChange={handlePageChange}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}

@@ -171,7 +171,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
             ))}
           </select>
           <span className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2'>
-            â–¼
+            ▼
           </span>
         </div>
         {/* Minute Selector */}
@@ -206,7 +206,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
             ))}
           </select>
           <span className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2'>
-            â–¼
+            ▼
           </span>
         </div>
 
@@ -243,7 +243,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
               ))}
             </select>
             <span className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-sm'>
-              â–¼
+              ▼
             </span>
           </div>
         )}
@@ -281,7 +281,7 @@ const TimePicker: React.FC<TimePickerProps> = ({
               ))}
             </select>
             <span className='pointer-events-none absolute right-2 top-1/2 -translate-y-1/2'>
-              â–¼
+              ▼
             </span>
           </div>
         )}

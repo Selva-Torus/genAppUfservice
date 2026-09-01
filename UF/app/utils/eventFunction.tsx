@@ -74,10 +74,13 @@ export async function eventFunction(eventProperty: any) {
   eventsDetails.push(eventDetailsObj);
   return eventsDetails;
 }
+
 export function commonSepareteDataFromTheObject(path: string, data: any) {
   return path.split(".").reduce((acc, key) => {
     // Split segment like "data[0]" into ["data", "[0]", ""]
-    const parts = key.split(/(\[\d+\])/);
+    const cleanKey = key.replace(/\?\.?/g, "");
+    if (!cleanKey) return acc;
+    const parts = cleanKey.split(/(\[\d+\])/);
     return parts.reduce((innerAcc, part) => {
       if (!part) return innerAcc;
       const arrayIndex = part.match(/^\[(\d+)\]$/);

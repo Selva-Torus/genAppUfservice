@@ -35,6 +35,8 @@ export interface LineChartProps {
   headerPosition?: HeaderPosition;
   className?: string;
   colors?: string[];
+  numberKey?: string;
+  onClick?: (data: any, index: number, event: React.MouseEvent) => void;
 }
 
 export const LineChart: React.FC<LineChartProps> = ({
@@ -48,7 +50,9 @@ export const LineChart: React.FC<LineChartProps> = ({
   tooltipProps,
   headerText = "",
   headerPosition = "top",
-  colors = []
+  colors = [],
+  numberKey,
+  onClick
 }) => {
   const { theme } = useGlobal();
   const keyset:any=i18n.keyset("language"); 
@@ -96,11 +100,21 @@ export const LineChart: React.FC<LineChartProps> = ({
   const isDark = theme === "dark" || theme === "dark-hc";
 
   const chartElement = (
-    <div className={`w-full h-full ${className}`}>
+    <div className={`w-full h-full ${className}`} style={onClick ? { cursor: "pointer" } : undefined}>
+      {onClick && (
+        <style>{`.recharts-wrapper, .recharts-surface { cursor: pointer !important; }`}</style>
+      )}
       {title && <h3 className='font-semibold'>{title}</h3>}
       {parsedExpenseData.length > 0 ? (
         <ResponsiveContainer width='100%' height={title ? '90%' : '100%'}>
-          <RechartsLineChart data={parsedExpenseData}>
+          <RechartsLineChart
+            data={parsedExpenseData}
+            onClick={onClick ? ((chartData: any, e: any, idx: any) => {
+              if (chartData?.activePayload?.length) {
+                onClick(chartData.activePayload[0], idx, e);
+              }
+            }) as any : undefined}
+          >
             <CartesianGrid strokeDasharray='3 3' />
             <XAxis
               dataKey="name"
@@ -153,7 +167,7 @@ export const LineChart: React.FC<LineChartProps> = ({
             />
             <Legend />
             {Object.keys(parsedExpenseData[0] || {})
-              .filter((key) => key !== 'name')
+              .filter((key) => key !== 'name' && (!numberKey || key === numberKey))
               .map((key, index) => (
                 <Line
                   key={key}

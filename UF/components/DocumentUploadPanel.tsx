@@ -25,6 +25,8 @@ type DocumentUploadPanelProps = {
   documentfields?: DocConfig[]
   onChange?: (files: UploadedFiles) => void
   className?: string
+  title?: string
+  subtitle?: string
   // ── match DocumentUploader's props ──
   DbType?: string // 'mongodb' | 'dfs'
   enableEncryption?: string
@@ -94,6 +96,8 @@ const DocumentUploadPanel = ({
   documentfields,
   onChange,
   className = '',
+  title,
+  subtitle,
   DbType,
   enableEncryption,
   fileNamingPreference = 'use_system_generated_name',
@@ -230,18 +234,28 @@ const handleRemoveFile = (
       className={`flex flex-col gap-6 rounded-xl p-6 shadow-md ${panelBg} ${className}`}
     >
       {/* Header */}
-      <div className='flex flex-col gap-1'>
-        <h2
-          className={`text-base font-semibold ${
-            isDark ? 'text-gray-100' : 'text-gray-800'
-          }`}
-        >
-          Required Documents
-        </h2>
-        <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-          Upload the following documents to complete your application.
-        </p>
-      </div>
+      {(title || subtitle) && (
+        <div className='flex flex-col gap-1'>
+          {title && (
+            <h2
+              className={`text-base font-semibold ${
+                isDark ? 'text-gray-100' : 'text-gray-800'
+              }`}
+            >
+              {title}
+            </h2>
+          )}
+          {subtitle && (
+            <p
+              className={`text-xs ${
+                isDark ? 'text-gray-400' : 'text-gray-500'
+              }`}
+            >
+              {subtitle}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* 2-column card grid */}
       <div className='grid grid-cols-2 gap-4'>

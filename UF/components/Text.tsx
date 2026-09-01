@@ -6,7 +6,7 @@ import { Icon } from './Icon'
 import { Tooltip } from './Tooltip'
 import { TooltipProps as TooltipPropsType } from '@/types/global'
 import { getBorderRadiusClass } from '@/app/utils/branding'
-type TextVariant =
+export type TextVariant =
   | 'display-4'
   | 'display-3'
   | 'display-2'
@@ -81,6 +81,7 @@ interface TextProps {
   needTooltip?: boolean
   tooltipProps?: TooltipPropsType
   className?: string
+  style?: React.CSSProperties
   fillContainer?: boolean
   contentAlign?: contentAlign
 }
@@ -99,6 +100,7 @@ export const Text: React.FC<TextProps> = ({
   needTooltip = false,
   tooltipProps,
   className = '',
+  style,
   fillContainer = true,
   contentAlign = 'center'
 }) => {
@@ -282,7 +284,8 @@ if (iconDisplay === 'End with Icon' && icon) {
       `}
       dir={direction}
       style={{
-        color: getColorStyle()
+        color: getColorStyle(),
+        ...style
       }}
     >
       {renderContent()}

@@ -37,13 +37,14 @@ const RenderSubOrg: React.FC<RenderSubOrgProps> = ({
   orgName
 }) => {
   const { toggleDropdown, collapsedItems } = useOPRList()
-  const { isDark, branding } = useTheme()
+  const { isDark, branding , borderColor } = useTheme()
   const isOpen = !collapsedItems[subOrgGrp.subOrgGrpId]
 
   return (
     <div
       className={twMerge(
-        'mt-[1vh] flex w-full flex-col gap-[1vh] rounded-lg border bg-[var(--g-color-base-background)] px-[.5vw] py-[1vh] font-semibold hover:border-[var(--brand-color)] hover:shadow'
+        'mt-[1vh] flex w-full flex-col gap-[1vh] rounded-lg border bg-[var(--g-color-base-background)] px-[.5vw] py-[1vh] font-semibold hover:border-[var(--brand-color)] hover:shadow',
+        borderColor
       )}
       style={{
         backgroundColor: hexWithOpacity(branding.brandColor, 0.1)

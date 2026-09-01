@@ -447,3 +447,62 @@ export const FusionAuthGetApplicationList = async (
   const val = await applicationListResponse.json();
   return val?.applications ?? [];
 };
+
+export const handleFusionAuthUserRegistrationForTokenLambda = async (
+  fusionAuthTenantId: string,
+  fusionAuthApplicationId: string,
+  fusionAuthApiKey: string,        // ✅ use API key, not client secret
+  fusionAuthBaseUrl: string,
+  fusionAuthUserId: string,
+  data: any,
+) => {
+  try {
+    const url = `${fusionAuthBaseUrl}/api/user/registration/${fusionAuthUserId}/${fusionAuthApplicationId}`;
+
+    const body = {
+      registration: {
+        applicationId: fusionAuthApplicationId,
+        data: {
+          ...data
+        },
+      },
+    };
+
+    // First try PATCH (update existing registration)
+    let res = await fetch(url, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: fusionAuthApiKey,              // ✅ plain API key header
+        'X-FusionAuth-TenantId': fusionAuthTenantId,
+      },
+      body: JSON.stringify(body),
+    });
+
+    // If registration doesn't exist yet, create it with POST
+    if (res.status === 404) {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: fusionAuthApiKey,
+          'X-FusionAuth-TenantId': fusionAuthTenantId,
+        },
+        body: JSON.stringify(body),
+      });
+    }
+
+    if (!res.ok) {
+      const errorText = res.text()
+      throw errorText;
+    }
+
+    const responseData = await res.json();
+    return {
+      status: res.status,
+      data: responseData,
+    };
+  } catch (error) {
+    throw error
+  }
+}

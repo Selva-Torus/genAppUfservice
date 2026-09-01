@@ -1,31 +1,20 @@
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
 metadata:
-  name: ct010-a001-uf-generator-virtualservice
+  name: ct010-a001-uf-generator-httproute
   namespace: ct010-a001-uf-v1
 spec:
-  hosts:
+  parentRefs:
+    - name: wp-gateway
+      namespace: kgateway-system
+      sectionName: https
+  hostnames:
     - "tgadev2.toruslowcode.com"
-  gateways:
-    - istio-system/
-  http:
-    - match:
-        - uri:
-            prefix: /ct010/ag001/a001/v1
-      route:
-        - destination:
-            host: ct010-a001-uf-generator
-            port:
-              number: 443 
-    - match:
-        - uri:
-            prefix: /ct010/ag001/a001/v1
-      rewrite:
-        uri: /
-      route:
-        - destination:
-            host: ct010-a001-uf-generator
-            port:
-              number: 443
- 
- 
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /ct010/ag001/a001/v1
+      backendRefs:
+        - name: ct010-a001-uf-generator
+          port: 443

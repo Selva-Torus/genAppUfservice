@@ -6,6 +6,7 @@ import { Tooltip } from "./Tooltip";
 import { Icon } from "./Icon";
 import { AvatarView, AvatarTheme, AvatarShape, HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global";
 import { CommonHeaderAndTooltip } from "./CommonHeaderAndTooltip";
+import Image from "next/image";
 // import { GravityIcon } from "@/types/icons";
 
 type ContentAlign = "left" | "center" | "right";
@@ -146,9 +147,11 @@ export const Avatar: React.FC<AvatarProps> = ({
       }}
     >
       {imageUrl ? (
-        <img
+        <Image
           src={imageUrl}
           alt={alt}
+          width={100}
+          height={100}
           className={`h-full object-contain ${contentAlign === "center" ? "w-full" : ""}`}
           onError={(e) => {
             if (fallbackImgUrl) {
@@ -157,7 +160,7 @@ export const Avatar: React.FC<AvatarProps> = ({
           }}
         />
       ) : icon ? (
-        <span style={{ width: "1em", height: "1em", fontSize: "var(--font-size-base)", display: "inline-flex" }}>
+        <span style={{ width: fillContainer ? "100%" : "1em", height: fillContainer ? "100%" : "1em", display: "inline-flex" }}>
           <Icon
             data={icon}
             fillContainer
@@ -165,9 +168,9 @@ export const Avatar: React.FC<AvatarProps> = ({
           />
         </span>
       ) : text ? (
-        <span>{text.charAt(0).toUpperCase()}</span>
+        <span style={{ fontSize: fillContainer ? "clamp(0.5rem, 40%, 2rem)" : undefined }}>{text.charAt(0).toUpperCase()}</span>
       ) : (
-        <span style={{ width: "1em", height: "1em", fontSize: "var(--font-size-base)", display: "inline-flex" }}>
+        <span style={{ width: fillContainer ? "100%" : "1em", height: fillContainer ? "100%" : "1em", display: "inline-flex" }}>
           <Icon
             data="user"
             fillContainer

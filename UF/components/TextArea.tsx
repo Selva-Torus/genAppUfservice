@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useGlobal } from '@/context/GlobalContext'
+import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { Tooltip } from './Tooltip'
 import {
   ComponentSize,
@@ -18,10 +19,13 @@ interface TextAreaProps {
   placeholder?: string
   readOnly?: boolean
   value?: string
+  validationState?: 'valid' | 'invalid'
+  errorMessage?: string
   needTooltip?: boolean
   tooltipProps?: TooltipPropsType
   headerText?: string
   headerPosition?: HeaderPosition
+  require?: boolean
   onChange?: (value: any) => void
   onBlur?: (value: any) => void
   onFocus?: (value: any) => void
@@ -36,10 +40,13 @@ export const TextArea: React.FC<TextAreaProps> = ({
   placeholder,
   readOnly = false,
   value = '',
+  validationState,
+  errorMessage,
   needTooltip = false,
   tooltipProps,
   headerText,
   headerPosition = 'top',
+  require = false,
   onChange,
   onBlur,
   onFocus,
@@ -49,6 +56,13 @@ export const TextArea: React.FC<TextAreaProps> = ({
 }) => {
   const { theme, direction, branding } = useGlobal()
   const [internalValue, setInternalValue] = useState(value)
+  const showToast = useInfoMsg()
+
+  useEffect(() => {
+    if (validationState === 'invalid' && errorMessage) {
+      showToast(errorMessage, 'danger')
+    }
+  }, [validationState, errorMessage])
 
   const getFillClasses = () => {
     if (!fillContainer) return ''
@@ -95,6 +109,22 @@ export const TextArea: React.FC<TextAreaProps> = ({
 
   const isDark = theme === 'dark' || theme === 'dark-hc'
 
+  const getInputStyles = (): React.CSSProperties => {
+    const styles: React.CSSProperties = {}
+
+    if (validationState === 'invalid' || errorMessage) {
+      styles.borderColor = '#EF4444'
+    } else if (validationState === 'valid') {
+      styles.borderColor = '#10B981'
+    } else if (isDark) {
+      styles.borderColor = '#4B5563'
+    } else {
+      styles.borderColor = '#D1D5DB'
+    }
+
+    return styles
+  }
+
   // Helper to convert hex to rgba
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex?.slice(1, 3), 16)
@@ -121,18 +151,24 @@ export const TextArea: React.FC<TextAreaProps> = ({
           ${disabled ? 'cursor-not-allowed opacity-50' : ''}
           ${
             isDark
-              ? 'border-gray-600 bg-gray-800 text-white'
-              : 'border-gray-300 bg-white text-gray-900'
+              ? 'bg-gray-800 text-white'
+              : 'bg-white text-gray-900'
           }
           p-2 transition-all duration-200
           focus:outline-none
 
           ${className}
         `}
+        style={{
+          fontFamily: 'var(--font-body)',
+          ...getInputStyles()
+        }}
         onMouseEnter={e => {
           if (
             !disabled &&
             !readOnly &&
+            !errorMessage &&
+            !validationState &&
             document.activeElement !== e.currentTarget
           ) {
             e.currentTarget.style.borderColor = branding.hoverColor
@@ -142,22 +178,28 @@ export const TextArea: React.FC<TextAreaProps> = ({
           if (
             !disabled &&
             !readOnly &&
+            !errorMessage &&
+            !validationState &&
             document.activeElement !== e.currentTarget
           ) {
             e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
           }
         }}
         onFocus={e => {
-          e.currentTarget.style.borderColor = branding.selectionColor
-          e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(
-            branding.selectionColor,
-            0.2
-          )}`
+          if (!errorMessage && !validationState) {
+            e.currentTarget.style.borderColor = branding.selectionColor
+            e.currentTarget.style.boxShadow = `0 0 0 3px ${hexToRgba(
+              branding.selectionColor,
+              0.2
+            )}`
+          }
           onFocus?.(e)
         }}
         onBlur={e => {
-          e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
-          e.currentTarget.style.boxShadow = 'none'
+          if (!errorMessage && !validationState) {
+            e.currentTarget.style.borderColor = isDark ? '#4B5563' : '#D1D5DB'
+            e.currentTarget.style.boxShadow = 'none'
+          }
           onBlur?.(e)
         }}
       />
@@ -172,6 +214,7 @@ export const TextArea: React.FC<TextAreaProps> = ({
       headerPosition={headerPosition}
       className={className}
       fillContainer={fillContainer}
+      required={require}
     >
       {textAreaElement}
     </CommonHeaderAndTooltip>

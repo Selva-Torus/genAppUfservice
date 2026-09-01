@@ -1,5 +1,5 @@
 'use client'
-import * as XLSX from 'xlsx'
+import * as XLSX from '@e965/xlsx'
 import { useEffect, useState } from 'react'
 import * as React from 'react'
 import { DropzoneOptions, useDropzone } from 'react-dropzone'
@@ -40,6 +40,7 @@ import { HeaderPosition, TooltipProps as TooltipPropsType } from "@/types/global
 import { useGlobal } from '@/context/GlobalContext'
 import { getBorderRadiusClass } from '@/app/utils/branding'
 import { CommonHeaderAndTooltip } from './CommonHeaderAndTooltip'
+import Image from "next/image";
 
 type ContentAlign = "left" | "center" | "right";
 
@@ -605,9 +606,11 @@ const Viewer = ({ file, url, closeFn }: any) => {
           {/* Image */}
           {file.type.includes('image') && (
             <div className='scrollbar-none flex h-full w-full items-center justify-center overflow-scroll'>
-              <img
+              <Image
                 src={url}
                 alt={file.name}
+                width={500}
+                height={500}
                 className='rounded-md object-cover'
               />
             </div>

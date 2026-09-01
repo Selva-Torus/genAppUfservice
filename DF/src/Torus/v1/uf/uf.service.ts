@@ -1,5 +1,5 @@
 
-import { BadGatewayException, HttpStatus, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { BadGatewayException, HttpException, HttpStatus, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { CommonService } from 'src/common.Service';
 import { RedisService } from 'src/redisService';
 import * as v from 'valibot';
@@ -13,12 +13,10 @@ import {
   UnauthorizedException,
   NotFoundException,
 } from 'src/customException';
-import { randomBytes, scryptSync, timingSafeEqual } from 'crypto';
+import { randomBytes, randomInt, scryptSync, timingSafeEqual } from 'crypto';
 import * as nodemailer from 'nodemailer';
-import { JwtService } from '@nestjs/jwt';
 import { JwtServices } from 'src/jwt.services';
 import { RuleService } from 'src/ruleService';
-import { MongoService } from 'src/mongoService';
 const jsonata = require('jsonata');
 import * as fs from 'fs';
 import * as path from 'path';
@@ -27,10 +25,15 @@ import * as FormData from 'form-data'; // Use this
 import { Readable } from 'stream';
 import { Pool } from 'pg';
 //import { v4 as uuidv4 } from 'uuid';
-import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet, FusionAuthUserCreation, FusionAuthGetTenantList, FusionAuthGetApplicationList } from 'src/fusionAuth.api';
+import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet, FusionAuthUserCreation, FusionAuthGetTenantList, FusionAuthGetApplicationList, handleFusionAuthUserRegistrationForTokenLambda } from 'src/fusionAuth.api';
 import { EnvData } from 'src/envData/envData.service';
 import { decrypt } from 'src/decrypt';
+import { format } from 'date-fns';
+import { Cron } from "@nestjs/schedule";
+//import { connectPG } from 'src/mongoClient';
 // import { RuleService } from 'src/ruleService';
+import { LockRecordDto } from 'src/dto';
+
 const transporter = nodemailer.createTransport({
   host: 'smtp-mail.outlook.com',
   port: 587,
@@ -49,58 +52,52 @@ interface FusionAuthConfig {
   fusionauthRefreshTokenExpiryTimeinMinutes: string
 }
 
-// const auth_secret = process.env.AUTH_SECRET;
 const tenant = process.env.TENANT;
 const ag = process.env.APPGROUPCODE;
 const app = process.env.APPCODE;
 const appName = process.env.APPNAME;
 const version = process.env.VERSION;
-const defaultAuth =  process.env.DEFAULT_AUTHENTICATION;
-// const accessTokenExpiryTime = process.env.AUTH_ACCESSTOKEN_EXPIRY_TIME;
-// const refreshTokenExpiryTime = process.env.AUTH_REFRESHTOKEN_EXPIRY_TIME;
-// const fusionauthRefreshTokenExpiryTimeinMinutes = process.env.FUSIONAUTH_REFRESHTOKEN_EXPIRY_TIME_IN_MINUTES
-const torusAppApiBaseUrl = process.env.TOURS_APP_API_BASE_URL
+const schemaName = new URL(process.env.PG_URL).searchParams.get('schema')
 
 @Injectable()
 export class UfService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly jwtService: JwtServices,
-    private readonly jwt: JwtService,
     private readonly gorule: RuleService,
     private readonly redisService: RedisService,
     private readonly commonService: CommonService,
-    private readonly mongoService: MongoService,
-    private readonly envData: EnvData
+    private readonly envData: EnvData,
   ) {}
     private pool : Pool;
     
-    async onModuleInit() {
-     this.pool = new Pool({
-      connectionString: process.env.PG_URL,
-      application_name: `${tenant}_${ag}_${app}_ufService`,
-      // Pool sizing
-      max: 10,                // max connections in pool
-      min: 2,                 // keep at least 2 alive
-      idleTimeoutMillis: 30000,       // close idle connections after 30s
-      connectionTimeoutMillis: 5000,  // fail fast if can't connect in 5s
-      allowExitOnIdle: false,         // keep pool alive
-    });
-    // 🔑 Key: handle pool-level errors so they don't crash the process
-    this.pool.on('error', (err, client) => {
-      console.error('Unexpected error on idle pg client:', err.message);
-      // Do NOT re-throw — just log. Pool will recover automatically.
-    });
+     async onModuleInit() {
+      this.pool = new Pool({
+       connectionString: process.env.PG_URL,
+       application_name: `${tenant}_${ag}_${app}_ufService`,
+    //   // Pool sizing
+       max: 10,                // max connections in pool
+       min: 2,                 // keep at least 2 alive
+       idleTimeoutMillis: 30000,       // close idle connections after 30s
+       connectionTimeoutMillis: 30000,  // fail fast if can't connect in 5s
+       allowExitOnIdle: false,         // keep pool alive
+     });
+    // // 🔑 Key: handle pool-level errors so they don't crash the process
+     this.pool.on('error', (err, client) => {
+       console.error('Unexpected error on idle pg client:', err.message);
+    //   // Do NOT re-throw — just log. Pool will recover automatically.
+     });
+
 
      // Also handle process-level unhandled errors as safety net
-    process.on('unhandledRejection', (reason) => {
-      console.error('Unhandled Rejection:', reason);
-    });
+     process.on('unhandledRejection', (reason) => {
+       console.error('Unhandled Rejection:', reason);
+     });
 
     try {
       const client = await this.pool.connect();
       console.log('PostgreSQL pool connected from uf.service');
       client.release();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to connect to PostgreSQL:', err.message);
       throw err;
     }
@@ -118,7 +115,7 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
     try {
       const result = await client.query(text, params);
       return result.rows;
-    } catch (err) {
+    } catch (err: any) {
       console.error('Query error:', err.message);
       throw err;
     } finally {
@@ -134,8 +131,6 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
 ) {
   try {
     if (!tableName) throw new Error('Table name missing');
-
-    const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
 
     const columns = Object.keys(data).filter((col) => col !== primaryKey);
 
@@ -180,8 +175,7 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
   ) {
     try {
       if (!tableName) throw new Error('Table or schema missing');
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
- 
+      
       // Column names
       const columns = Object.keys(data);
       // Values placeholders $1, $2 ...
@@ -222,10 +216,6 @@ getConfig(): FusionAuthConfig {
     try {
       let tenantUniqueId = '';
       const { fusionAuthBaseUrl , fusionAuthApiKey } = this.getConfig();
-
-      if (defaultAuth != 'fusionauth') {
-        return undefined;
-      }
 
       const possible_FA_tenant_name = `${tenant}-Tenant`;
       // CHECK EXISTENCE OF THE APPLICATION TENANT IN FUSIONAUTH
@@ -361,20 +351,6 @@ getConfig(): FusionAuthConfig {
       throw error;
     }
   }
-  
-  async uploadFile(file: { buffer: Buffer; filename: string; mimetype: string; size: number }, context: string, enableEncryption: string, doc_group?: string): Promise<any> {
-    try {
-      const res = await this.commonService.uploadFile(file, context, enableEncryption);
-
-      // Insert the URL into vgph_source_tran_doc_main
-      const vgphstdm_id = await this.insertDocToVgphSourceTranDocMain("front", file.filename, res.fileId,file.size,doc_group);
-
-      res.fileId = `${vgphstdm_id}`;
-      return res;
-    } catch (error) {
-      throw new BadGatewayException(error);
-    }
-  }
 
   async getDFS(fileUrl: string | string[], enableEncryption: boolean): Promise<Buffer | Buffer[]> {
     try {
@@ -427,22 +403,114 @@ getConfig(): FusionAuthConfig {
     doc_group?: string
   ): Promise<string> {
     try {
-      const fileName = filename || file.filename;
-      const bucket = bucketFoldername || ''; // e.g. 'torus'
-      const subFolder = folderPath || ''; // e.g. 'images'
+      const SAFE_SEGMENT = /^[a-zA-Z0-9._-]+$/;
 
-      const actualBuffer = Buffer.isBuffer(file.buffer)
-        ? file.buffer
-        : Buffer.from((file.buffer as any)?.data || []);
+      const ALLOWED_EXTENSIONS: Record<string, string[]> = {
+        'jpg': ['image/jpeg'],
+        'jpeg': ['image/jpeg'],
+        'png': ['image/png'],
+        'gif': ['image/gif'],
+        'webp': ['image/webp'],
+        'svg': ['image/svg+xml'],
+        'pdf': ['application/pdf'],
+        'doc': ['application/msword'],
+        'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+        'xls': ['application/vnd.ms-excel'],
+        'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        'txt': ['text/plain'],
+        'csv': ['text/csv'],
+        'mp4': ['video/mp4'],
+        'mp3': ['audio/mpeg'],
+        'avi': ['video/x-msvideo'],
+        'mov': ['video/quicktime'],
+        'zip': ['application/zip', 'application/x-zip-compressed'],
+        'rar': ['application/vnd.rar', 'application/x-rar-compressed'],
+      };
+
+      const validateBucketFolderName = (value: string): void => {
+        if (value.includes('/') || value.includes('\\')) {
+          throw new BadRequestException('bucketFoldername contains invalid characters');
+        }
+        if (value === '.' || value.includes('..')) {
+          throw new BadRequestException('bucketFoldername contains path traversal');
+        }
+        if (!SAFE_SEGMENT.test(value)) {
+          throw new BadRequestException('bucketFoldername contains unsafe characters');
+        }
+      };
+
+      const validateFolderPath = (value: string): void => {
+        if (value.includes('\\')) {
+          throw new BadRequestException('folderPath contains invalid characters');
+        }
+        if (value.includes('..')) {
+          throw new BadRequestException('folderPath contains path traversal');
+        }
+        for (const segment of value.split('/')) {
+          if (segment === '' || segment === '.') {
+            throw new BadRequestException(`Invalid folderPath segment: "${segment}"`);
+          }
+          if (!SAFE_SEGMENT.test(segment)) {
+            throw new BadRequestException(`folderPath contains unsafe characters in segment: "${segment}"`);
+          }
+        }
+      };
+
+      const validateFilename = (value: string): string => {
+        if (!value) {
+          throw new BadRequestException('Filename is required');
+        }
+        if (value.includes('/') || value.includes('\\')) {
+          throw new BadRequestException('Filename contains invalid characters');
+        }
+        if (value === '.' || value.includes('..')) {
+          throw new BadRequestException('Filename contains path traversal');
+        }
+        const dotIndex = value.lastIndexOf('.');
+        if (dotIndex <= 0 || dotIndex === value.length - 1) {
+          throw new BadRequestException('Filename must have a valid extension');
+        }
+        const ext = value.substring(dotIndex + 1).toLowerCase();
+        if (!ALLOWED_EXTENSIONS[ext]) {
+          throw new BadRequestException(`File extension ".${ext}" is not allowed`);
+        }
+        return ext;
+      };
+
+      const validateMimeType = (mimetype: string, ext: string): void => {
+        const allowedMimes = ALLOWED_EXTENSIONS[ext];
+        if (!allowedMimes) {
+          throw new BadRequestException(`File extension ".${ext}" is not allowed`);
+        }
+        const normalizedMime = mimetype.split(';')[0].trim().toLowerCase();
+        if (!allowedMimes.includes(normalizedMime)) {
+          throw new BadRequestException(
+            `MIME type "${normalizedMime}" is not allowed for extension ".${ext}"`
+          );
+        }
+      };
+
+      const bucket = bucketFoldername || '';
+      const subFolder = folderPath || '';
+      const fileName = filename || file.filename;
+
+      if (bucket) {
+        validateBucketFolderName(bucket);
+      }
+      if (subFolder) {
+        validateFolderPath(subFolder);
+      }
+
+      const ext = validateFilename(fileName);
+      validateMimeType(file.mimetype, ext);
 
       const shouldEncrypt = enableEncryption === 'true';
-
-      const encryptedBuffer = shouldEncrypt
-        ? await this.commonService.aes256ctrEncrypt(actualBuffer)
-        : actualBuffer;
+      const fileBuffer = shouldEncrypt
+        ? await this.commonService.aes256ctrEncrypt(file.buffer)
+        : file.buffer;
 
       const form = new FormData();
-      form.append('file', Readable.from(encryptedBuffer), {
+      form.append('file', Readable.from(fileBuffer), {
         filename: fileName,
         contentType: file.mimetype || 'application/octet-stream',
       });
@@ -451,7 +519,7 @@ getConfig(): FusionAuthConfig {
         /\/$/,
         ''
       )}/buckets/${bucket}/${subFolder}/${fileName}`;
-      const res = await axios.post(uploadUrl, form, {
+      const uploadResponse = await axios.post(uploadUrl, form, {
         headers: {
           Accept: 'application/json',
           ...form.getHeaders(),
@@ -463,16 +531,16 @@ getConfig(): FusionAuthConfig {
         validateStatus: (status) => status < 500,
       });
 
-      if (res.status === 201) {
-        const res = `${bucket}/${subFolder}/${fileName}`;
-        const responce = await this.insertDocToVgphSourceTranDocMain("front",fileName,res,file.size,doc_group);
-        return `${responce}`;
+      if (uploadResponse.status === 201) {
+        const storagePath = `${bucket}/${subFolder}/${fileName}`;
+        const attachmentId = await this.insertDocToVgphSourceTranDocMain("front", fileName, storagePath, file.size, doc_group);
+        return `${attachmentId}`;
       } else {
         throw new ConflictException(
-          res.data || 'Error occurred while uploading file'
+          uploadResponse.data || 'Error occurred while uploading file'
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -487,30 +555,6 @@ getConfig(): FusionAuthConfig {
         },
       );
       await this.throwCustomException(error);
-    }
-  }
-
-  async getFile(id: string | string[], context: string,enableEncryption: Boolean) {
-    try {
-      const fileMetadata = await this.commonService.findFileById(id);
-      const buffer = await this.commonService.getFile(id, context,enableEncryption);
-
-      // Handle single file
-      if (!Array.isArray(id)) {
-        return {
-          res: buffer,
-          file: fileMetadata
-        };
-      }
-
-      // Handle multiple files
-      return {
-        res: buffer,
-        file: fileMetadata,
-        isMultiple: true
-      };
-    } catch (error) {
-      throw new BadGatewayException(error);
     }
   }
 
@@ -552,7 +596,7 @@ getConfig(): FusionAuthConfig {
           token,
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -710,7 +754,8 @@ getConfig(): FusionAuthConfig {
     filter?,
     searchObj?,
     token?: string,
-    filterData?
+    filterData?,
+    sortingDetails?
   ) {
     try {
       
@@ -721,7 +766,8 @@ getConfig(): FusionAuthConfig {
         if(filterData && Object.keys(filterData).length > 0){
           filterobj = filterData?.find(n => n.nodeId === dbnodeid);
           if(!filterobj) filterobj = {}
-        }else if((filter && Object.keys(filter).length > 0) || (searchObj && Object.keys(searchObj).length > 0)){        
+        }
+        if((filter && Object.keys(filter).length > 0) || (searchObj && Object.keys(searchObj).length > 0)){        
           filterobj['nodeId'] = dbnodeid;
         }
         
@@ -752,23 +798,31 @@ getConfig(): FusionAuthConfig {
           if(!rule) throw `Node Id not found ${filter.nodeId}`
           rule = rule.rule
          
+           let fobj = {};
+          if(filterData && Object.keys(filterData).length > 0)
+          fobj = Object.assign(fobj,filterData[0])
+        
           let {sobj,SessionInfo} = await this.commonService.sessionDecode(token, '')
-         
-          const result = await this.gorule.goRule(rule, {session:SessionInfo});
+          fobj =  Object.assign(fobj,{session:SessionInfo})
+          const result = await this.gorule.goRule(rule, fobj); 
           let queryobj
           if (result?.result) {
            
-            let ruleRes = result.result
-            let query:any = Object.values(ruleRes)[0]
-            if(query?.includes('$$session.')){ 
-                Object.keys(sobj).forEach(key => {
-                const regex = new RegExp(`\\$\\$${key}`, 'g');
-                const value = sobj[key];               
-                query = query.replace(regex, value);               
-            });
-            }            
-            queryobj = {[`${process.env.CLIENTCODE}_condition`]:query}                      
-          }         
+            let ruleRes = result.result                    
+            let query:any = Object.values(ruleRes)[0] 
+           if(typeof query == 'string') {
+             if(query?.includes('$$session.')){ 
+                 Object.keys(sobj).forEach(key => {
+                 const regex = new RegExp(`\\$\\$${key}`, 'g');
+                 const value = sobj[key];               
+                 query = query.replace(regex, value);               
+             });
+             }            
+             queryobj = {[`${process.env.CLIENTCODE}_condition`]:query}                      
+           } else {
+            throw new CustomException('rule value does not exist',403)
+           }      
+          }          
           // let decisionTable = rule.nodes?.find(n => n.type === "decisionTableNode");
           // if (decisionTable) {
           //   let ruleInputs = decisionTable.content?.inputs
@@ -845,24 +899,37 @@ getConfig(): FusionAuthConfig {
 
       if (Object.keys(filterobj)?.length > 0) {
             payload['filterData'] = [filterobj];
-        } 
-      console.log('payload',JSON.stringify(payload));
+        }
+        
+        if (sortingDetails && Object.keys(sortingDetails)?.length > 0) {
+          payload['sortingDetails'] = sortingDetails;
+        }
           
-       await this.commonService.postCall(
-              //process.env.BE_URL + '/te/eventEmitter',
-              this.envData.getBeUrl() + '/te/eventEmitter',            
-              payload,
-              requestConfig,
-            );
-            let tokenDecode = await this.jwtService.decodeToken(token);           
-            if(!tokenDecode?.loginId) throw 'loginId not found'
-            //return await this.redisService.getAllRecordshash(key + tokenDecode.loginId+'_DS_Object') 
-           let data =  await this.redisService.getAllRecordshash(key + tokenDecode.loginId+'_DS_Object') 
-          return { records: data, totalRecords: Number(data?.[0]?.total_records) || data.length } 
+        let event_response = await this.commonService.postCall(
+          //process.env.BE_URL + '/te/eventEmitter',
+          this.envData.getBeUrl() + '/te/eventEmitter',            
+          payload,
+          requestConfig,
+        );
+        let data = []
+        if(event_response?.status == 'Success' && event_response?.statusCode == 201){
+          let upid = event_response?.result?.upId
+          let tokenDecode = await this.jwtService.verifyToken(token);           
+          if(!tokenDecode?.loginId) throw 'loginId not found'
+         
+          data = await this.redisService.getAllRecordshash(`${key}${upid}:${tokenDecode.loginId}_DS_Object`)  
+          let keys = await this.redisService.getKeys(`${key}${upid}:${tokenDecode.loginId}_DS_Object`,process.env.CLIENTCODE)
+        
+          if(keys && keys.length > 0){
+            await Promise.all(keys.map(key =>
+              this.redisService.deleteKey(key, process.env.CLIENTCODE,)
+            ));
+          }  
+        }
+        return { records: data, totalRecords: Number(data?.[0]?.total_records) || data.length } 
       
        
-    } catch (err:any) {
-      //console.log("err",err.response.data.message)
+    } catch (err:any) {     
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -954,10 +1021,11 @@ getConfig(): FusionAuthConfig {
     filter?,
     searchObj?,
     token?: string,
-    filterData?
+    filterData?,
+    sortingDetails?
   ) {
     try {
-      const tokenDecode = await this.jwtService.decodeToken(token);
+      const tokenDecode = await this.jwtService.verifyToken(token);
 
       if (!tokenDecode?.selectedAccessProfile)
         throw new Error('Selected Access Profile not found');
@@ -965,7 +1033,27 @@ getConfig(): FusionAuthConfig {
       if (!tokenDecode?.loginId)
         throw new Error('loginId not found');
 
-      // ✅ Build session object
+      // // ✅ Get AFI
+      // const afkey = key.replace(':FNGK:AFP:FNK:DF-DST:', ':FNGK:AF:FNK:DF-DFD:');
+
+      const afi = JSON.parse(
+        await this.redisService.getJsonData(key.replace(':FNGK:AFP:FNK:DF-DST:', ':FNGK:AF:FNK:DF-DFD:') + 'AFI', process.env.CLIENTCODE),
+      );
+
+      if (!afi.logicCenter) {       
+        return await this.getpaginationwithLogicCenter(
+          key,
+          page,
+          count,
+          filter,
+          searchObj,
+          token,
+          filterData,
+          sortingDetails
+        );     
+      }
+
+       // ✅ Build session object
       const sobj: any = {
         orgGrpCode: tokenDecode?.orgGrpCode,
         orgCode: tokenDecode?.orgCode,
@@ -988,25 +1076,6 @@ getConfig(): FusionAuthConfig {
         subOrgName: tokenDecode?.subOrgName,
       };
 
-      // ✅ Get AFI
-      const afkey = key.replace(':FNGK:AFP:FNK:DF-DST:', ':FNGK:AF:FNK:DF-DFD:');
-
-      const afi = JSON.parse(
-        await this.redisService.getJsonData(afkey + 'AFI', process.env.CLIENTCODE),
-      );
-
-      if (!afi.logicCenter) {       
-        return await this.getpaginationwithLogicCenter(
-          key,
-          page,
-          count,
-          filter,
-          searchObj,
-          token,
-          filterData
-        );     
-      }
-
       // ✅ Get dataset
       const dsObject = await this.redisService.getAllRecordshash(
         key + tokenDecode.loginId + '_DS_Object',
@@ -1022,6 +1091,9 @@ getConfig(): FusionAuthConfig {
       page = page || 1;
       const start = count ? (page - 1) * count : 0;
       const end = count ? start + count : data.length;
+
+      if(sortingDetails && Object.keys(sortingDetails).length>0)
+        data = this.sortRecords(data, sortingDetails);
 
       let finalData: any[] = [];
 
@@ -1140,11 +1212,70 @@ getConfig(): FusionAuthConfig {
         `Error in pagination: ${err.message}`,
         key,
         token,
-      );
-      //throw err;
+      );     
       throw new CustomException(err.message,err.statusCode)
     }
   }
+
+  private sortRecords(records: any[],sortingDetails: Record< string, 'asc' | 'desc'>): any[] {
+
+  const sortingColumn = Object.keys(sortingDetails)[0];
+  const sortDirection = sortingDetails[sortingColumn];
+
+  if (!sortingColumn || !sortDirection) {
+    return records;
+  }
+
+  return [...records].sort((a, b) => {
+    const valueA = a[sortingColumn];
+    const valueB = b[sortingColumn];
+
+    if (valueA == null && valueB == null) {
+      return 0;
+    }
+
+    if (valueA == null) {
+      return sortDirection === 'asc' ? -1 : 1;
+    }
+
+    if (valueB == null) {
+      return sortDirection === 'asc' ? 1 : -1;
+    }
+
+    let result = 0;
+
+    // Number sorting (including numeric strings)
+    if (
+      !isNaN(Number(valueA)) &&
+      !isNaN(Number(valueB))
+    ) {
+      result = Number(valueA) - Number(valueB);
+    }
+
+    // Date sorting
+    else if (
+      !isNaN(Date.parse(valueA)) &&
+      !isNaN(Date.parse(valueB))
+    ) {
+      result =
+        new Date(valueA).getTime() -
+        new Date(valueB).getTime();
+    }
+
+    // String sorting
+    else {
+      result = String(valueA).localeCompare(
+        String(valueB),
+        undefined,
+        {
+          sensitivity: 'base',
+        }
+      );
+    }
+
+    return sortDirection === 'desc' ? -result : result;
+  });
+}
 
   async filterpagination(start, end, searcharr) {
     try {
@@ -1160,7 +1291,7 @@ getConfig(): FusionAuthConfig {
       }
 
      // return { records: filArray, totalRecords: searcharr.length };
-     return { records: filArray, totalRecords: searcharr?.[0]?.total_records || searcharr.length };
+     return { records: filArray, totalRecords:searcharr?.length };
     } catch (error) {
       throw new BadGatewayException(error);
     }
@@ -1172,118 +1303,6 @@ getConfig(): FusionAuthConfig {
       .reduce((acc, key) => acc?.[key], obj);
   }
 
-  async OrchestrationAll(
-    key: string,
-    token: string,
-    accessProfile?: any[],
-  ): Promise<{ pageData: any; groupData: Record<string, any>; controlData: Record<string, Record<string, any>> }> {
-    // 1. Read UO once to get nodeTree
-    const UO: any = await this.commonService.readAPI(
-      key + ':UO',
-      process.env.CLIENTCODE,
-      token,
-    );
-
-    if (!UO) {
-      return { pageData: null, groupData: {}, controlData: {} };
-    }
-
-    // 2. Preload common data (UFS, NDP) to avoid redundant reads in control processing
-    const [UFSData, NDPData] = await Promise.all([
-      this.commonService.readAPI(key + ':UFS', process.env.CLIENTCODE, token),
-      this.commonService.readAPI(key + ':NDP', process.env.CLIENTCODE, token),
-    ]);
-
-    // 3. Get page-level data (pass preloaded UO to avoid redundant read)
-    const pageData = await this.Orchestration(key, null, null, token, false, accessProfile, UO, UFSData, NDPData);
-
-    // 4. Extract groups/controls from mappedData.artifact.node (flat array with parentId)
-    const groupBatches: { componentId: string; controlIds: string[] }[] = [];
-    const nodes: any[] = UO.mappedData?.artifact?.node || [];
-
-    // Find all group nodes
-    const groupNodes = nodes.filter((node: any) => node.nodeType === 'group');
-
-    for (const groupNode of groupNodes) {
-      const componentId = groupNode.nodeId;
-
-      // Controls are stored in objElements array of the group node, not as separate nodes
-      const ctrlIds: string[] = [];
-      if (groupNode.objElements && Array.isArray(groupNode.objElements)) {
-        for (const element of groupNode.objElements) {
-          if (element.elementId) {
-            ctrlIds.push(element.elementId);
-          }
-        }
-      }
-
-      // Always add the group to groupBatches (even if no controls)
-      groupBatches.push({
-        componentId,
-        controlIds: ctrlIds,
-      });
-    }
-
-    // 5. Process all groups using existing Orchestration function (group-level)
-    // Pass preloaded data to avoid redundant API calls
-    const groupData: Record<string, any> = {};
-
-    await Promise.all(
-      groupBatches.map(async (batch) => {
-        const { componentId } = batch;
-        const result = await this.Orchestration(
-          key,
-          componentId,
-          null,
-          token,
-          false,
-          accessProfile,
-          UO,
-          UFSData,
-          NDPData,
-        );
-        groupData[componentId] = result;
-      }),
-    );
-
-    // 6. Process ALL controls in parallel (not sequentially per group)
-    // Pass preloaded data to avoid redundant API calls
-    const controlData: Record<string, Record<string, any>> = {};
-
-    // Initialize controlData structure
-    for (const batch of groupBatches) {
-      controlData[batch.componentId] = {};
-    }
-
-    // Flatten all control calls into a single parallel batch
-    const allControlCalls: { componentId: string; controlId: string }[] = [];
-    for (const batch of groupBatches) {
-      for (const controlId of batch.controlIds) {
-        allControlCalls.push({ componentId: batch.componentId, controlId });
-      }
-    }
-
-    // Process all controls in parallel
-    await Promise.all(
-      allControlCalls.map(async ({ componentId, controlId }) => {
-        const result = await this.Orchestration(
-          key,
-          componentId,
-          controlId,
-          token,
-          false,
-          accessProfile,
-          UO,
-          UFSData,
-          NDPData,
-        );
-        controlData[componentId][controlId] = result;
-      }),
-    );
-
-    console.log("🚀 ~ UfService ~ OrchestrationAll ~ controlData:", JSON.stringify(controlData));
-    return { pageData, groupData, controlData };
-  }
   async OrchestrationBatch(key: string, token: string, accessProfile: any[]) {
   
     const UO: any = await this.commonService.readAPI(
@@ -1344,7 +1363,7 @@ getConfig(): FusionAuthConfig {
       let mappedData: any = UO.mappedData.artifact.node;
       const securityData: any = UO.securityData;
       let templateArray: any[] = securityData.accessProfile;
-      const decodedToken: any = await this.jwtService.decodeToken(token);
+      const decodedToken: any = await this.jwtService.verifyToken(token);
       let object:any = {};
       let dataType: string;
       let security: any;
@@ -1357,6 +1376,7 @@ getConfig(): FusionAuthConfig {
       let sourceData: any[];
       let dfData: any;
       let DS_Object: any = [];
+      let accessProfileCheck:boolean = false;
       if (UO) {
         if (key && !componentId && !controlId) {
           /*---------security start-------------*/
@@ -1366,6 +1386,7 @@ getConfig(): FusionAuthConfig {
                 accessProfile.includes(templateArray[i].accessProfile) &&
                 screenName === templateArray[i].security.artifact.resource
               ) {
+                accessProfileCheck = true;
                 security =
                   templateArray[i].security.artifact.SIFlag.selectedValue;
                 templateArray[i].security.artifact?.node?.map((nodes: any) => {
@@ -1374,8 +1395,21 @@ getConfig(): FusionAuthConfig {
                     security: nodes?.SIFlag.selectedValue,
                   });
                 });
+                break;
               }
+              
             }
+            if(!accessProfileCheck){
+                //--------------------------
+                mappedData?.map((nodes: any) => {
+                  allowedGroup.push({
+                    groupName: nodes?.nodeName,
+                    security: "AA",
+                  });
+                });
+                security = "AA";
+                //--------------------------
+              }
           } else {
             await this.commonService.errorLog(
               'Technical',
@@ -1455,6 +1489,7 @@ getConfig(): FusionAuthConfig {
                   if (
                   accessProfile.includes(templateArray[i].accessProfile)
                 ) {
+                accessProfileCheck = true;
                 if(screenName === templateArray[i].security.artifact.resource &&
                     componentId ===
                     templateArray[i].security.artifact.node[j].resourceId){
@@ -1669,10 +1704,24 @@ getConfig(): FusionAuthConfig {
                       );
                       // return controlNames;
                     }
+                    break;
                   }
                 }
               }
             }
+            if(!accessProfileCheck){
+                  //--------------
+                  for(let m = 1;m < mappedData.length;m++){
+                    componentNameArray.push(mappedData[m].nodeName.toLowerCase(),);
+                    for (let k = 0;k < mappedData[m].objElements.length;k++) {
+                        controlNames.push(mappedData[m].objElements[k].elementName.toLowerCase());
+                    }
+                  }
+                  controlNames = controlNames.map((item) =>
+                          item.toLowerCase(),
+                        );
+                  //--------------
+                }
           } else {
             await this.commonService.errorLog(
               'Technical',
@@ -2036,7 +2085,7 @@ getConfig(): FusionAuthConfig {
           token,
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -2249,7 +2298,7 @@ getConfig(): FusionAuthConfig {
           token,
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -2259,24 +2308,6 @@ getConfig(): FusionAuthConfig {
         key,
         token,
       );
-    }
-  }
-
-  async codeExecution(stringCode: string, params: any) {
-    try {
-      function runCodeWithObjectParams(codeString, paramsObject) {
-        // Create a function with destructured parameters from the object
-        const keys = Object.keys(paramsObject);
-        const values = Object.values(paramsObject);
-
-        const runCode = new Function(...keys, `${codeString};`);
-
-        // Call the function with the values from the object
-        return runCode(...values);
-      }
-      return runCodeWithObjectParams(stringCode, params);
-    } catch (error) {
-      throw new BadGatewayException(error);
     }
   }
 
@@ -2446,7 +2477,7 @@ getConfig(): FusionAuthConfig {
             );
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -2508,10 +2539,22 @@ getConfig(): FusionAuthConfig {
                         let nodeName: string =
                           POdata.mappedData.artifact.node[i].ifo[j].name;
                         nodeName = nodeName.toLocaleLowerCase();
+                        let ifoValue: any =
+                          POdata?.mappedData?.artifact?.node[i]?.ifo[j]?.value;
                         if (nodeName in formData) {
                           filterItems[nodeName] = formData[nodeName];
+                        } else if (ifoValue != undefined && ifoValue !== '') {
+                          if (
+                            filterItems[nodeName] == undefined ||
+                            filterItems[nodeName] === ''
+                          ) {
+                            filterItems[nodeName] = ifoValue;
+                          }
                         }
                       }
+                    }
+                    if ('trs_version' in formData) {
+                      filterItems['trs_version'] = formData['trs_version'];
                     }
                     return filterItems;
                   }
@@ -2549,7 +2592,7 @@ getConfig(): FusionAuthConfig {
             token,
           );
         }
-      } catch (error) {
+      } catch (error: any) {
         await this.commonService.errorLog(
           'Technical',
           'AK',
@@ -2584,7 +2627,7 @@ getConfig(): FusionAuthConfig {
           );
           const POdata = POdataKey;
           // return POdata
-           if (POdata) {
+          if (POdata) {
             if (POdata?.mappedData?.artifact?.node?.length) {
               for (let i = 0; i < POdata.mappedData.artifact.node.length; i++) {
                 if (POdata.mappedData.artifact.node[i].nodeId == findingkey) {
@@ -2605,13 +2648,25 @@ getConfig(): FusionAuthConfig {
                           POdata.mappedData.artifact.node[i].ifo[
                             j
                           ].name.toLocaleLowerCase();
+                        let ifoValue: any =
+                          POdata?.mappedData?.artifact?.node[i]?.ifo[j]?.value;
                         if (formData[nodeName] != undefined) {
                           filterItems[nodeName] = formData[nodeName];
-                        } else {
+                        } else if (ifoValue != undefined && ifoValue !== '') {
+                          if (
+                            filterItems[nodeName] == undefined ||
+                            filterItems[nodeName] === ''
+                          ) {
+                            filterItems[nodeName] = ifoValue;
+                          }
+                        } else if (filterItems[nodeName] == undefined) {
                           filterItems[nodeName] = '';
                         }
-                        
+
                       }
+                    }
+                    if ('trs_version' in formData) {
+                      filterItems['trs_version'] = formData['trs_version'];
                     }
 
                     for (
@@ -2624,34 +2679,32 @@ getConfig(): FusionAuthConfig {
                           '.',
                         )[0];
                       if (NodeId == controlId) {
-                        if("_groupArrays_" in formData){
+                        if ("_groupArrays_" in formData) {
                           formData["_groupArrays_"].forEach((arrayKey: string) => {
-                            formData[arrayKey]?.map((groupArrayItems:any,index:number)=>{
+                            formData[arrayKey]?.map((groupArrayItems: any, index: number) => {
                               let nodeName: string =
                                 POdata.mappedData.artifact.node[i].ifo[
                                   j
                                 ].name.toLocaleLowerCase();
                               if (groupArrayItems[nodeName] != undefined) {
-                                if(!(arrayKey in groupArraysData))
-                                {
-                                  groupArraysData={...groupArraysData,[arrayKey]:[]}
+                                if (!(arrayKey in groupArraysData)) {
+                                  groupArraysData = { ...groupArraysData, [arrayKey]: [] }
                                 }
-                                groupArraysData[arrayKey][index] ={...groupArraysData[arrayKey][index]||{} ,[nodeName]:groupArrayItems[nodeName]};
+                                groupArraysData[arrayKey][index] = { ...groupArraysData[arrayKey][index] || {}, [nodeName]: groupArrayItems[nodeName] };
                               }
                             })
                           });
                         }
-                        
+
                       }
                     }
-                    if('childTables' in formData)
-                    {
-                      formData.childTables.map((eachTable:any)=>{
-                        filterItems[eachTable]=formData[eachTable]
+                    if ('childTables' in formData) {
+                      formData.childTables.map((eachTable: any) => {
+                        filterItems[eachTable] = formData[eachTable]
                       })
                       return filterItems;
-                    }else
-                      return {...filterItems,...groupArraysData};
+                    } else
+                      return { ...filterItems, ...groupArraysData };
                   }
                 }
               }
@@ -2687,7 +2740,7 @@ getConfig(): FusionAuthConfig {
             token,
           );
         }
-      } catch (error) {
+      } catch (error: any) {
         await this.commonService.errorLog(
           'Technical',
           'AK',
@@ -2897,7 +2950,7 @@ getConfig(): FusionAuthConfig {
           token,
         );
       }
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -3741,7 +3794,7 @@ getConfig(): FusionAuthConfig {
       const screenName: string = ufKey.split(':')[11];
       const source: string = 'redis';
       const target: string = 'redis';
-      const decodedToken: any = await this.jwtService.decodeToken(token);
+      const decodedToken: any = await this.jwtService.verifyToken(token);
       const DOKey: any = await this.commonService.readAPI(
         ufKey + ':UO',
         process.env.CLIENTCODE,
@@ -4009,7 +4062,12 @@ getConfig(): FusionAuthConfig {
         );
       }
 
-      const payload: any = await this.jwt.decode(token);
+      let payload: any;
+      try {
+        payload = await this.jwtService.verifyToken(token);
+      } catch (e) {
+        payload = null;
+      }
       if (!payload || !payload.tenant || !payload.type) {
         await this.commonService.errorLog(
           'Technical',
@@ -4060,7 +4118,7 @@ getConfig(): FusionAuthConfig {
         );
       }
       return 'logout successfully';
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -4073,36 +4131,23 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-   async getAccessToken(
+  async getAccessToken(
     token: string,
     selectedCombination: any,
     selectedAccessProfile: string,
     dap: string | undefined,
-    ufClientType: string
+    ufClientType: string,
   ) {
     try {
-      const config = this.getConfig()
-      const auth_secret = config.authSecret
-      const accessTokenExpiryTime = config.authAccessTokenExpiryTime 
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
+      const config = this.getConfig();
 
-       const accessProfileList = await this.query(`select 
-        opr_ap_id ,
-        access_profile as "accessProfile" ,
-        dap ,
-        org_grp as "orgGrp" ,
-        users_cnt as "no.ofusers" ,
-        trs_created_date::text as "createdOn" ,
-        role_unique_id as "roleUniqueId" ,
-        assigned_keys as "assignedKeys"
-        from 
-        ${schemaName}.tam_opr_access_profile 
-        where 
-        tenant_code=$1 and ag_code=$2 and app_code=$3`
-          , [tenant , ag , app])
+      const accessProfileList = await this.getAccessTemplate(token , true)
       const filteredAccessprofile = accessProfileList.find(
         (t: any) => t?.accessProfile === selectedAccessProfile,
       );
+      if(!filteredAccessprofile){
+        throw new NotFoundException('Selected access profile not found')
+      }
       const filteredCombination: any = this.transformToCombinations([
         filteredAccessprofile,
       ]);
@@ -4122,12 +4167,41 @@ getConfig(): FusionAuthConfig {
         selectedAccessProfile: filteredCombination[0]?.accessProfile,
         dap: filteredCombination[0]?.dap,
       };
-      const payload = await this.jwt.decode(token);
-      const { type, tenant: tenantFromToken, loginId, isAppAdmin, userUniqueId, sid, userCode, tenantId } = payload;
+      const payload = await this.jwtService.verifyToken(token);
+      const {
+        type,
+        tenant: tenantFromToken,
+        loginId,
+        isAppAdmin,
+        sid,
+        userCode,
+        tenantId,
+        tid: tenantUniqueId,
+        sub: userUniqueId,
+        applicationId,
+      } = payload;
       const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenantFromToken}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
 
-      const updatedToken = await this.jwt.signAsync(
-        {
+      const sessionListResponse = await this.redisService.getJsonData(
+        sessionListCacheKey,
+        process.env.CLIENTCODE,
+      );
+      let updatedSessionList = [];
+      let updatedToken;
+      if (sessionListResponse) {
+        const sessionList = JSON.parse(sessionListResponse);
+        updatedSessionList = await this.checkSession(sessionList);
+        const previousActiveSession = updatedSessionList.find(
+          (session: any) => session?.sid === sid,
+        );
+
+        if (!previousActiveSession?.refreshToken) {
+          throw new BadGatewayException(
+            'No active FusionAuth session found for this token',
+          );
+        }
+
+        let tokenData = {
           type,
           tenant,
           loginId,
@@ -4139,31 +4213,33 @@ getConfig(): FusionAuthConfig {
           userCode,
           ...accessObj,
           userUniqueId,
-          sid,
-          tenantId
-        },
-        {
-          secret: auth_secret,
-          expiresIn: accessTokenExpiryTime as any,
-        },
-      );
+          tenantId,
+        };
 
-      const sessionListResponse = await this.redisService.getJsonData(
-        sessionListCacheKey,
-        process.env.CLIENTCODE,
-      );
-      let updatedSessionList = [];
-      if (sessionListResponse) {
-        const sessionList = JSON.parse(sessionListResponse);
-        updatedSessionList = await this.checkSession(sessionList);
-        const previousActiveSession = updatedSessionList.find(
-          (session: any) => session?.sid === sid,
+        // add here patch required data to the registration object
+        await handleFusionAuthUserRegistrationForTokenLambda(
+          tenantUniqueId,
+          applicationId,
+          config.fusionAuthApiKey,
+          config.fusionAuthBaseUrl,
+          userUniqueId,
+          tokenData,
         );
-       updatedSessionList = updatedSessionList.filter((s: any) => s?.sid !== sid).concat({
+        const value = await this.fusionAuthVerifyRefreshToken(
+          previousActiveSession?.refreshToken,
+          tenantId,
+        );
+        updatedToken = value.access_token;
+
+        updatedSessionList = updatedSessionList
+          .filter((s: any) => s?.sid !== sid)
+          .concat({
             ...previousActiveSession,
-          accessToken : updatedToken,
-          updatedOn : new Date().toISOString(),
+            accessToken: updatedToken,
+            updatedOn: new Date().toISOString(),
           });
+      } else {
+        throw new BadGatewayException('No active session found');
       }
       await this.redisService.setJsonData(
         sessionListCacheKey,
@@ -4176,7 +4252,7 @@ getConfig(): FusionAuthConfig {
         process.env.CLIENTCODE,
       );
       return updatedToken;
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -4191,7 +4267,7 @@ getConfig(): FusionAuthConfig {
       );
       throw new BadGatewayException(error);
     }
-  }
+  } 
 
   transformToCombinations(data: any[]) {
   try {
@@ -4310,11 +4386,11 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async getAccessTemplate(token: string) {
+   async getAccessTemplate(token: string , calledInternally: boolean = false, tenantOverride?: string) {
     try {
       const accountDetails = await this.MyAccountForClient(token, 's', true);
       const { accessProfile } = accountDetails;
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
+      const effectiveTenant = tenantOverride || tenant;
       const accessProfileList = await this.query(`select 
         opr_ap_id ,
         access_profile as "accessProfile" ,
@@ -4327,8 +4403,8 @@ getConfig(): FusionAuthConfig {
         from 
         ${schemaName}.tam_opr_access_profile 
         where 
-        tenant_code=$1 and ag_code=$2 and app_code=$3`
-          , [tenant , ag , app])
+        tenant_code=$1 and ag_code=$2 and app_code=$3 and trs_tenant_id=$1`
+          , [effectiveTenant , ag , app])
       if (
         accessProfileList && 
         Array.isArray(accessProfileList) && 
@@ -4337,11 +4413,14 @@ getConfig(): FusionAuthConfig {
         const filteredAccessTemplate = accessProfileList.filter((template: any) =>
           accessProfile.includes(template?.accessProfile),
         );
+         if(calledInternally) {
+          return filteredAccessTemplate
+        }
         return this.transformToCombinations(filteredAccessTemplate);
       } else {
         throw new NotFoundException('Access Template not found');
       }
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -4355,6 +4434,40 @@ getConfig(): FusionAuthConfig {
         },
       );
       throw new BadGatewayException(error);
+    }
+  }
+
+  // Maker-checker entitlement check (R2 remediation): the ERD services'
+  // approve/reject branches previously trusted the client-supplied
+  // xCdcaRole header on its own. This resolves the caller's own
+  // access-profile templates (by verified token, not by header) and checks
+  // for a capability key of the form "<module>:AUTHORIZE" in
+  // tam_opr_access_profile.assigned_keys. Fails closed: any lookup error,
+  // missing template, or unrecognized assignedKeys shape returns false.
+  async hasCapability(token: string, capabilityKey: string, tenantOverride?: string): Promise<boolean> {
+    try {
+      const templates: any[] = await this.getAccessTemplate(token, true, tenantOverride);
+      if (!Array.isArray(templates)) return false;
+      return templates.some((template: any) => {
+        const raw = template?.assignedKeys;
+        if (!raw) return false;
+        let keys: any[];
+        if (Array.isArray(raw)) {
+          keys = raw;
+        } else if (typeof raw === 'string') {
+          try {
+            const parsed = JSON.parse(raw);
+            keys = Array.isArray(parsed) ? parsed : raw.split(',');
+          } catch {
+            keys = raw.split(',');
+          }
+        } else {
+          return false;
+        }
+        return keys.some((k: any) => typeof k === 'string' && k.trim() === capabilityKey);
+      });
+    } catch {
+      return false;
     }
   }
 
@@ -4482,8 +4595,12 @@ getConfig(): FusionAuthConfig {
   async MyAccountForClient(token: string, key: string, authorization: any) {
     if (authorization) {
       try {
-        const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
-        const payload: any = this.jwt.decode(token);
+        let payload: any;
+        try {
+          payload = await this.jwtService.verifyToken(token);
+        } catch (e) {
+          payload = null;
+        }
         if (!payload) {
           await this.commonService.errorLog(
             'Technical',
@@ -4514,14 +4631,15 @@ getConfig(): FusionAuthConfig {
             ON au.org_tu_id = tu.org_tu_id
           WHERE au.tenant_code = $1
             AND au.ag_code     = $2
-            AND au.app_code    = $3 AND login_id=$4 or email=$4` , [tenant , ag , app ,payload.loginId])
+            and au.trs_tenant_id=$1
+            AND au.app_code    = $3 AND (login_id=$4 or email=$4)` , [tenant , ag , app ,payload.loginId])
       
           const reqiredUser = userList.find(
             (user) => user.loginId === payload.loginId,
           );
           return { ...reqiredUser, tenant: tenant };
         }
-      } catch (error) {
+      } catch (error: any) {
         await this.commonService.errorLog(
           'Technical',
           'AK',
@@ -4547,9 +4665,6 @@ getConfig(): FusionAuthConfig {
 
    async introspectToken(headers: any, key: string, tokens: string) {
     try {
-      const config = this.getConfig()
-      const auth_secret = config.authSecret
-      const accessTokenExpiryTime = config.authAccessTokenExpiryTime 
 
       const { authorization } = headers;
       if (!authorization || typeof authorization !== 'string') {
@@ -4575,7 +4690,12 @@ getConfig(): FusionAuthConfig {
           tokens,
         );
       }
-      const payload = await this.jwt.decode(token);
+      let payload: any;
+      try {
+        payload = await this.jwtService.verifyToken(token);
+      } catch (e) {
+        payload = null;
+      }
       if (!payload) {
         await this.commonService.errorLog(
           'Technical',
@@ -4592,13 +4712,12 @@ getConfig(): FusionAuthConfig {
         sessionListCacheKey,
         process.env.CLIENTCODE,
       );
-      const sessionList = sessionListCache && JSON.parse(sessionListCache) ? JSON.parse(sessionListCache) : [];
+      const sessionList =
+        sessionListCache && JSON.parse(sessionListCache)
+          ? JSON.parse(sessionListCache)
+          : [];
 
-      if (
-        !sessionList ||
-        !Array.isArray(sessionList) ||
-        !sessionList.length
-      ) {
+      if (!sessionList || !Array.isArray(sessionList) || !sessionList.length) {
         await this.commonService.errorLog(
           'Technical',
           'AK',
@@ -4644,79 +4763,25 @@ getConfig(): FusionAuthConfig {
         );
         throw new UnauthorizedException('Session not available');
       }
-      // if currentSession has refreshTokenId this token is from fusionAuth and we need to verify with fusionauth
-      if(currentSession['refreshTokenId']){
-        const value = await this.fusionAuthVerifyRefreshToken(refreshToken, payload?.tenantId );
+
+      if (currentSession['refreshTokenId']) {
+        const value = await this.fusionAuthVerifyRefreshToken(
+          refreshToken,
+          payload?.tenantId,
+        );
         if (value) {
           currentSession = {
             ...currentSession,
+            accessToken: value?.access_token,
             refreshToken: value?.refresh_token,
             refreshTokenId: value?.refresh_token_id,
-            updatedOn : new Date().toISOString()
-          }
-        }else{
-          await this.commonService.errorLog(
-            'Technical',
-            'AK',
-            'Fatal',
-            'TG075',
-            'Session not available',
-            key,
-            tokens,
-          );
-          throw new UnauthorizedException('Session not available');
-        }
-      }else{
-        try {
-         await this.jwt.verifyAsync(
-             currentSession['refreshToken'], {
-               secret : auth_secret
-             }
-           )
-        } catch (error) {
-          await this.commonService.errorLog(
-            'Technical',
-            'AK',
-            'Fatal',
-            'TG075',
-            'Session not available',
-            key,
-            tokens,
-          );
+            updatedOn: new Date().toISOString(),
+          };
+        } else {
           throw new UnauthorizedException('Session not available');
         }
       }
-      const timeNow = Math.ceil(new Date().getTime() / 1000);
-      const timegap = payload.exp - timeNow;
-      let updatedToken = undefined;
-      if (timegap < 300) {
-        updatedToken = await this.jwt.signAsync(
-          {
-            tenant: payload.client,
-            loginId: payload.loginId,
-            type: payload.type,
-            isAppAdmin: payload.isAppAdmin,
-            userCode: payload?.userCode,
-            ag,
-            app,
-            sid : payload.sid,
-          },
-          {
-            secret: auth_secret,
-            expiresIn: accessTokenExpiryTime as any,
-          },
-        );
-        currentSession = {
-          ...currentSession,
-          accessToken: updatedToken,
-          updatedOn : new Date().toISOString()
-        }
-      } else {
-        currentSession = {
-          ...currentSession,
-          updatedOn : new Date().toISOString()
-        }
-      }
+
       await this.redisService.setJsonData(
         sessionListCacheKey,
         JSON.stringify(
@@ -4726,8 +4791,13 @@ getConfig(): FusionAuthConfig {
         ),
         process.env.CLIENTCODE,
       );
-      return { authenticated: true, updatedToken };
-    } catch (error) {
+      // return { authenticated: true, updatedToken };
+      return {
+        authenticated: true,
+        updatedToken:
+          token == currentSession?.accessToken ? undefined : currentSession?.accessToken,
+      };
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -4777,16 +4847,12 @@ getConfig(): FusionAuthConfig {
     password: string,
     ufClientType: string,
     isOauthUser: boolean = false,
-    app_tenant : string | undefined = undefined,
+    app_tenant: string | undefined = undefined,
     app_tenant_id: number | undefined = undefined,
     fusionAuthLoginResponse?: any | undefined,
   ) {
     try {
-      const config = this.getConfig()
-      const auth_secret = config.authSecret
-      const accessTokenExpiryTime = config.authAccessTokenExpiryTime 
-      const refreshTokenExpiryTime = config.authRefreshTokenExpiryTime 
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
+      const config = this.getConfig();
 
       let query = `
         SELECT
@@ -4811,41 +4877,29 @@ getConfig(): FusionAuthConfig {
           AND au.ag_code     = $2
           AND au.app_code    = $3 
           AND (tu.login_id = $4 OR tu.email = $4)
+          AND au.trs_tenant_id = $1
       `;
 
-        let values = [tenant, ag, app, username];
+      let values = [tenant, ag, app, username];
 
-        if (app_tenant_id) {
-          query += ` AND tu.at_id = $5`;
-          values.push(String(app_tenant_id));
-        } else {
-          query += ` AND tu.at_id IS NULL`;
-        }
+      if (app_tenant_id) {
+        query += ` AND tu.at_id = $5`;
+        values.push(String(app_tenant_id));
+      } else {
+        query += ` AND tu.at_id IS NULL`;
+      }
 
       const tenantUser = await this.query(query, values);
 
-       let tenantId = app_tenant ? app_tenant : tenant;      
+      // getApplicationTenantId 
+      let foundAppTenant: any;
+      if(app_tenant){
+        const appTenantList = await this.getAppTenantsLinkedWithApp();
+        foundAppTenant = appTenantList.find((item: any) => (item.tenant_name == app_tenant) || item.tenant_id == app_tenant);
+        if(!foundAppTenant) throw new BadRequestException(`fusionauth configuration details for the tenant ${app_tenant} not found`);
+      }
 
-      // if(app_tenant){
-      //   // check user have app_sub_tenant access to work on it
-      //   try {   
-      //     const app_sub_tenant_exist = await this.query(`SELECT * 
-      //         FROM ${tenant.toLowerCase()}.tam_app_user_app_tenant auat
-      //         JOIN ${tenant.toLowerCase()}.app_tenant at ON auat.at_id = at.at_id
-      //         WHERE auat.org_au_id = ${tenantUser[0].org_au_id} AND at.tenant_id = '${app_tenant}';`)
-      //     if(app_sub_tenant_exist.length > 0){
-      //       tenantId = app_tenant
-      //     }else{
-      //       throw `${tenantUser[0].org_au_id} , ${app_tenant} Not Found`
-      //     }
-      //   } catch (error) {
-      //     console.log(error);
-          
-      //     throw new NotAcceptableException(`User lacks the access to the selected Tenant`)
-      //   }
-      // }else{
-      //   tenantId = undefined
-      // }    
+      let tenantId = foundAppTenant?.tenant_id ? foundAppTenant?.tenant_id : tenant;
 
       const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
 
@@ -4858,20 +4912,27 @@ getConfig(): FusionAuthConfig {
             if (isOauthUser) {
               return true;
             } else {
-              return user?.password?this.comparePasswords(password, user.password):false
+              return user?.password
+                ? this.comparePasswords(password, user.password)
+                : false;
             }
           }) || null;
-        if (!loggedInUser){
-          if(isOauthUser)
-            return false;
-          else 
-            throw new NotFoundException('User not found');
-        }
-      
         if (!loggedInUser) {
-          throw new NotFoundException(`User did not have access to the application`);
+          if (isOauthUser) return false;
+          else throw new NotFoundException('User not found');
         }
-        loggedInUser={...loggedInUser,firstName:loggedInUser?.firstName,lastName:loggedInUser?.lastName,profile:loggedInUser?.profile}
+
+        if (!loggedInUser) {
+          throw new NotFoundException(
+            `User did not have access to the application`,
+          );
+        }
+        loggedInUser = {
+          ...loggedInUser,
+          firstName: loggedInUser?.firstName,
+          lastName: loggedInUser?.lastName,
+          profile: loggedInUser?.profile,
+        };
         const isExpiredUser = this.isUserAccessExpired(loggedInUser);
 
         if (isExpiredUser) {
@@ -4884,47 +4945,70 @@ getConfig(): FusionAuthConfig {
           throw new UnauthorizedException(
             `User access pending for ${loggedInUser.loginId ?? loggedInUser?.email} , you'll be notified when approved`,
           );
-        }
-        else if (!loggedInUser?.accessProfile?.length) {
+        } else if (!loggedInUser?.accessProfile?.length) {
           throw new UnauthorizedException(
             `User access pending for ${loggedInUser.loginId ?? loggedInUser?.email} , you'll be notified when approved`,
           );
         }
 
-        await this.query(`update ${schemaName}.tam_app_user set last_active=$1 where org_au_id=$2`, [new Date().toISOString() , loggedInUser?.org_au_id])
-
+        await this.query(
+          `update ${schemaName}.tam_app_user set last_active=$1 where org_au_id=$2 and trs_tenant_id=$3`,
+          [new Date().toISOString(), loggedInUser?.org_au_id, tenant],
+        );
 
         delete loggedInUser.password;
 
-        let sid: string = uuid();
-        let token = await this.jwt.signAsync(
-          {
-            loginId: loggedInUser.loginId,
-            tenant: tenant,
-            type: 't',
-            ag,
-            app,
-            isAppAdmin: loggedInUser?.isAppAdmin ?? undefined,
-            userCode: loggedInUser?.userCode ?? undefined,
-            sid: sid,
-            tenantId
-          },
-          {
-            secret: auth_secret,
-            expiresIn: accessTokenExpiryTime as any,
-          },
-        );
-        let refreshToken: string;
-        let refreshTokenId: string | undefined;
-
-        if (fusionAuthLoginResponse && fusionAuthLoginResponse?.refresh_token) {
-          refreshToken = fusionAuthLoginResponse?.refresh_token;
-          refreshTokenId = fusionAuthLoginResponse?.refresh_token_id;
-        } else {
-          refreshToken = await this.jwt.signAsync(
-            { loginId: loggedInUser.loginId, tenant: tenant, type: 't' },
-            { secret: auth_secret, expiresIn: refreshTokenExpiryTime as any },
+        // ---- FusionAuth is now the single source of tokens; JWT signing removed ----
+        if (
+          !fusionAuthLoginResponse ||
+          !fusionAuthLoginResponse?.refresh_token
+        ) {
+          // NOTE: previously the JWT fallback silently generated tokens here.
+          // Since JWT sync is removed, a FusionAuth login response is now REQUIRED
+          // for password-based (non-OAuth) logins too.
+          // If your password-login flow does NOT currently call FusionAuth before
+          // reaching this function, you must add that call upstream (e.g. FusionAuth
+          // /api/login or /oauth2/token) and pass its response in as
+          // `fusionAuthLoginResponse` before this function is invoked.
+          throw new UnauthorizedException(
+            'FusionAuth login response is required to issue tokens',
           );
+        }
+
+        let sid: string = fusionAuthLoginResponse?.refresh_token_id;
+        let tokenData = {
+          loginId: loggedInUser.loginId,
+          tenant: tenant,
+          type: 't',
+          ag,
+          app,
+          isAppAdmin: loggedInUser?.isAppAdmin ?? undefined,
+          userCode: loggedInUser?.userCode ?? undefined,
+          tenantId,
+        };
+        const fusionAuthTenantAndApplicationDetails =
+          await this.getFusionAuthCredentials(app_tenant ?? undefined);
+
+        let refreshToken: string = fusionAuthLoginResponse.refresh_token;
+        let refreshTokenId: string | undefined =
+          fusionAuthLoginResponse.refresh_token_id;
+        let token: string;
+
+        // add here patch required data to the registration object
+        await handleFusionAuthUserRegistrationForTokenLambda(
+          fusionAuthTenantAndApplicationDetails.tenantUniqueId,
+          fusionAuthTenantAndApplicationDetails.applicationId,
+          config.fusionAuthApiKey,
+          config.fusionAuthBaseUrl,
+          loggedInUser.userUniqueId,
+          tokenData,
+        );
+        {
+          const value = await this.fusionAuthVerifyRefreshToken(
+            refreshToken,
+            tenantId,
+          );
+          token = value.access_token;
         }
 
         if (
@@ -4938,7 +5022,7 @@ getConfig(): FusionAuthConfig {
               sid,
               refreshToken,
               refreshTokenId,
-              createdOn : new Date().toISOString()
+              createdOn: new Date().toISOString(),
             },
             sessionListCacheKey,
           );
@@ -4949,7 +5033,8 @@ getConfig(): FusionAuthConfig {
             redirectToORPSelector: true,
           };
         }
-        const accessProfileList = await this.query(`select 
+        const accessProfileList = await this.query(
+          `select 
           opr_ap_id ,
           access_profile as "accessProfile" ,
           dap ,
@@ -4961,9 +5046,9 @@ getConfig(): FusionAuthConfig {
           from 
           ${schemaName}.tam_opr_access_profile 
           where 
-          tenant_code=$1 and ag_code=$2 and app_code=$3`
-           , [tenant , ag , app])
-        
+          tenant_code=$1 and ag_code=$2 and app_code=$3 and trs_tenant_id=$1`,
+          [tenant, ag, app],
+        );
 
         if (accessProfileList.length == 0) {
           await this.addSession(
@@ -4972,7 +5057,7 @@ getConfig(): FusionAuthConfig {
               sid,
               refreshToken,
               refreshTokenId,
-              createdOn : new Date().toISOString()
+              createdOn: new Date().toISOString(),
             },
             sessionListCacheKey,
           );
@@ -5004,33 +5089,38 @@ getConfig(): FusionAuthConfig {
             const combination = filteredCombination[0].combinations;
             if (combination.length == 1) {
               for (const key in combination[0]) {
-                // if (key.toLowerCase().includes('code')) {
                 orpAccessObj[key] = combination[0][key];
                 orpAccessObj['selectedAccessProfile'] =
                   loggedInUser.accessProfile[0];
                 orpAccessObj['dap'] =
                   filteredCombination[0]['dap'] || undefined;
                 redirectToORPSelector = false;
-                // }
               }
-              token = await this.jwt.signAsync(
-                {
-                  loginId: loggedInUser.loginId,
-                  isAppAdmin: loggedInUser?.isAppAdmin ?? undefined,
-                  tenant: tenant,
-                  type: 't',
-                  ag,
-                  app,
-                  userCode: loggedInUser?.userCode ?? undefined,
-                  ...orpAccessObj,
-                 sid:sid,
-                 tenantId
-                },
-                {
-                  secret: auth_secret,
-                  expiresIn: accessTokenExpiryTime as any,
-                },
+              tokenData = {
+                loginId: loggedInUser.loginId,
+                isAppAdmin: loggedInUser?.isAppAdmin ?? undefined,
+                tenant: tenant,
+                type: 't',
+                ag,
+                app,
+                userCode: loggedInUser?.userCode ?? undefined,
+                ...orpAccessObj,
+                tenantId,
+              };
+              // add here patch required data to the registration object
+              await handleFusionAuthUserRegistrationForTokenLambda(
+                fusionAuthTenantAndApplicationDetails.tenantUniqueId,
+                fusionAuthTenantAndApplicationDetails.applicationId,
+                config.fusionAuthApiKey,
+                config.fusionAuthBaseUrl,
+                loggedInUser.userUniqueId,
+                tokenData,
               );
+              const value = await this.fusionAuthVerifyRefreshToken(
+                refreshToken,
+                tenantId,
+              );
+              token = value.access_token;
             }
           }
         }
@@ -5041,7 +5131,7 @@ getConfig(): FusionAuthConfig {
             sid,
             refreshToken,
             refreshTokenId,
-            createdOn : new Date().toISOString()
+            createdOn: new Date().toISOString(),
           },
           sessionListCacheKey,
         );
@@ -5057,26 +5147,102 @@ getConfig(): FusionAuthConfig {
           redirectToORPSelector,
         };
       } else {
-        if(isOauthUser)
-        {
-          return false
-        }
-        await this.commonService.errorLog(
-        'Technical',
-        'AK',
-        'Fatal',
-        'AUTH002',
-        'Invalid Credentials',
-        'LoginScreen',
-        '',
-        {
-          artifact: 'LoginScreen',
-          users: username,
-        },
-      );
-        throw new NotFoundException(`Invalid Credentials`);
+        const fusionAuthAccessTokenFromRequest =
+          fusionAuthLoginResponse?.access_token;
+        if (!fusionAuthAccessTokenFromRequest)
+          throw new UnauthorizedException('Invalid Credentials');
+        const fusionPayload = await this.jwtService.verifyToken(fusionAuthAccessTokenFromRequest);
+        if (!fusionPayload)
+          throw new UnauthorizedException('Invalid Credentials');
+        const authentication_type = fusionPayload?.authenticationType;
+        if (!authentication_type || authentication_type != 'OPENID_CONNECT')
+          throw new UnauthorizedException('Invalid Credentials');
+
+        // if authentication_type is OPENID_CONNECT , then it's google and github
+        const userInfoRes = await fetch(
+          `${config.fusionAuthBaseUrl}/oauth2/userinfo`,
+          {
+            headers: {
+              Authorization: `Bearer ${fusionAuthLoginResponse.access_token}`,
+            },
+          },
+        );
+
+        const userInfo = await userInfoRes.json();
+
+        const tam_tenant_user_data = {
+          user_unique_id: userInfo.sub,
+          email: username,
+          password: '',
+          first_name: username,
+          last_name: username,
+          login_id: username,
+          user_code: '',
+          status: '',
+          profile: '',
+          tenant_code: tenant,
+          trs_created_by: username || 'anonymous',
+          trs_modified_date: new Date().toISOString(),
+          trs_modified_by: username || 'anonymous',
+          trs_access_profile: '',
+          trs_org_grp_code: '',
+          trs_org_code: '',
+          trs_role_grp_code: '',
+          trs_role_code: '',
+          trs_ps_grp_code: '',
+          trs_ps_code: '',
+          trs_sub_org_grp_code: '',
+          trs_sub_org_code: '',
+          trs_tenant_id: tenant,
+        };
+
+        const tamTenantUserRes = await this.insertIntoTable(
+          'tam_tenant_user',
+          tam_tenant_user_data,
+        );
+        const org_tu_id = tamTenantUserRes.data[0]?.org_tu_id;
+
+        const tam_app_user_data = {
+          user_unique_id: userInfo.sub,
+          no_of_products_service: '',
+          access_profile: [],
+          is_app_admin: false,
+          last_active: '',
+          access_expires: '',
+          tenant_code: tenant,
+          ag_code: ag,
+          app_code: app,
+          org_tu_id: org_tu_id,
+          trs_created_date: new Date().toISOString(),
+          trs_created_by: username || 'anonymous',
+          trs_modified_date: new Date().toISOString(),
+          trs_modified_by: username || 'anonymous',
+          trs_status: '',
+          trs_next_status: '',
+          trs_process_id: '',
+          trs_access_profile: '',
+          trs_org_grp_code: '',
+          trs_org_code: '',
+          trs_role_grp_code: '',
+          trs_role_code: '',
+          trs_ps_grp_code: '',
+          trs_ps_code: '',
+          trs_sub_org_grp_code: '',
+          trs_sub_org_code: '',
+          trs_app_code: '',
+          trs_tenant_id: tenant,
+        };
+
+        const tamAppUserRes = await this.insertIntoTable(
+          'tam_app_user',
+          tam_app_user_data,
+        );
+
+        throw new UnauthorizedException(
+          `User access pending for ${tamTenantUserRes.data[0].login_id ?? tamTenantUserRes.data[0]?.email} , you'll be notified when approved`,
+        );
       }
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -5203,7 +5369,7 @@ getConfig(): FusionAuthConfig {
         fusionAuthLoginResponse,
       );
       return torusSignIn;
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -5282,80 +5448,8 @@ getConfig(): FusionAuthConfig {
     return `${salt}:${hash}`;
   }
 
-  // static screen's apis
-  async getTenantUser() {
-    try {
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
-      const res = await this.query(`select * from ${schemaName}.tam_tenant_user tu where tenant_code=$1` , [tenant])
-      return res || [];
-    } catch (err: any) {
-      throw new UnauthorizedException('Invalid tenant key');
-    }
-  }
-
-  async getAppUserList(
-    tenant: string,
-    ag: string,
-    app: string,
-    client: string,
-  ) {
-    try {
-      if (!tenant || !ag || !app || !client) {
-        return [];
-      }
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
-      const tenantUserList = await this.query(`SELECT
-            au.org_au_id,
-            tu.user_unique_id AS "userUniqueId",
-            tu.email,
-            tu.password,
-            tu.first_name AS "firstName",
-            tu.last_name AS "lastName",
-            tu.login_id AS "loginId",
-            tu.user_code AS "userCode",
-            tu.trs_created_date::text AS "dateAdded",
-            tu.status,
-            au.is_app_admin as "isAppAdmin",
-            au.no_of_products_service AS "noOfProductsService",
-            au.access_profile AS "accessProfile",
-            au.last_active AS "lastActive"
-          FROM ${schemaName}.tam_tenant_user tu
-          JOIN ${schemaName}.tam_app_user au
-            ON au.org_tu_id = tu.org_tu_id
-          WHERE au.tenant_code = $1
-            AND au.ag_code     = $2
-            AND au.app_code    = $3` , [tenant , ag , app])
-      return tenantUserList || [];
-    } catch (error) {
-      throw new UnauthorizedException('Please check credentials');
-    }
-  }
-
-  async getTenantAppUser(tenant, client, ag, app){
-    try {
-      let setAssignUsers = []
-
-      const tenantUser: any[] = await this.getTenantUser();
-      const tenantAppUser: any[] = await this.getAppUserList(tenant, ag, app, client);
-      tenantAppUser.filter((appUser: any) =>
-        tenantUser.some(
-          (tenantUser: any) => {
-            if(appUser.userUniqueId === tenantUser.userUniqueId){
-              setAssignUsers.push({...appUser,...tenantUser})
-          }
-          }
-        ),
-      );
-      // return {data:setAssignUsers}
-       return setAssignUsers
-    }catch (error) {
-      throw new UnauthorizedException('Please check credentials');
-    }
-  }
-
   async getAppSecurityData() {
     try {
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
       const actions = [
         {
           code : "orgMatrix",
@@ -5370,7 +5464,7 @@ getConfig(): FusionAuthConfig {
           FROM ${schemaName}.tam_opr_org_matrix
           WHERE tenant_code = $1
             AND ag_code = $2
-            AND app_code = $3`,
+            AND app_code = $3 and trs_tenant_id=$1`,
           params : [tenant , ag , app]  
         },
         {
@@ -5385,7 +5479,7 @@ getConfig(): FusionAuthConfig {
          FROM   ${schemaName}.tam_opr_org_master
          WHERE  tenant_code = $1
            AND  ag_code     = $2
-           AND  app_code    = $3`,
+           AND  app_code    = $3 and trs_tenant_id=$1`,
           params : [tenant , ag , app]  
         },
         {
@@ -5396,7 +5490,6 @@ getConfig(): FusionAuthConfig {
             tu.org_tu_id,
             tu.user_unique_id as "userUniqueId",
             tu.email,
-            tu.password,
             tu.first_name as "firstName",
             tu.last_name as "lastName",
             tu.login_id as "loginId",
@@ -5421,7 +5514,7 @@ getConfig(): FusionAuthConfig {
             and au.ag_code = $2
             and au.app_code = $3
           where
-            tu.tenant_code = $1`,
+            tu.tenant_code = $1 and tu.trs_tenant_id=$1`,
           params : [tenant , ag , app]  
         }
       ]
@@ -5448,7 +5541,7 @@ getConfig(): FusionAuthConfig {
         }
 
       return securityResponse;
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -5466,414 +5559,6 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async getAPPSecurityTemplateData() {
-    try {
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
-      let securityTemplateData = await this.query(`select 
-        opr_ap_id ,
-        access_profile as "accessProfile" ,
-        dap ,
-        org_grp as "orgGrp" ,
-        users_cnt as "no.ofusers" ,
-        trs_created_date::text as "createdOn" ,
-        role_unique_id as "roleUniqueId" ,
-        assigned_keys as "assignedKeys"
-        from 
-        ${schemaName}.tam_opr_access_profile 
-        where 
-        tenant_code=$1 and ag_code=$2 and app_code=$3`
-          , [tenant , ag , app]);
-        securityTemplateData = securityTemplateData.map((data) => ({
-          ...data,
-          'no.ofusers': 0,
-        }));
-          const userlist = await this.query(`SELECT
-            au.org_au_id,
-            tu.user_unique_id AS "userUniqueId",
-            tu.email,
-            tu.password,
-            tu.first_name AS "firstName",
-            tu.last_name AS "lastName",
-            tu.login_id AS "loginId",
-            tu.user_code AS "userCode",
-            tu.trs_created_date::text AS "dateAdded",
-            tu.status,
-            au.is_app_admin as "isAppAdmin",
-            au.no_of_products_service AS "noOfProductsService",
-            au.access_profile AS "accessProfile",
-            au.last_active AS "lastActive"
-          FROM ${schemaName}.tam_tenant_user tu
-          JOIN ${schemaName}.tam_app_user au
-            ON au.org_tu_id = tu.org_tu_id
-          WHERE au.tenant_code = $1
-            AND au.ag_code     = $2
-            AND au.app_code    = $3` , [tenant , ag , app]);
-
-          securityTemplateData = securityTemplateData.map((data) => {
-            var noOfUsers = 0;
-            userlist.forEach((user) => {
-              if (
-                user?.accessProfile &&
-                user.accessProfile.includes(data.accessProfile)
-              ) {
-                noOfUsers += 1;
-              }
-            });
-
-            return { ...data, 'no.ofusers': noOfUsers };
-          });
-      return securityTemplateData;
-    } catch (error) {
-      await this.commonService.errorLog(
-        'Technical',
-        'AK',
-        'Fatal',
-        'AUTH009',
-        error,
-        'UserScreen',
-        '',
-        {
-          artifact: 'UserScreen',
-          users: 'anonymous user',
-        },
-      );
-      await this.throwCustomException(error);
-    }
-  }
-
-  async getAppAccessProfiles() {
-    try {
-      if (!tenant || !ag || !app) {
-        throw new BadRequestException(
-          'Either AppGroup or Application not available',
-        );
-      }
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
-   
-      const accessProfileArray = [];
-      const accessProfileWithProductAndService = {};
-        const accessProfileData: any[] = await this.query(`select 
-        opr_ap_id ,
-        access_profile as "accessProfile" ,
-        dap ,
-        org_grp as "orgGrp" ,
-        users_cnt as "no.ofusers" ,
-        trs_created_date::text as "createdOn" ,
-        role_unique_id as "roleUniqueId" ,
-        assigned_keys as "assignedKeys"
-        from 
-        ${schemaName}.tam_opr_access_profile 
-        where 
-        tenant_code=$1 and ag_code=$2 and app_code=$3`
-          , [tenant , ag , app]);
-        accessProfileData.forEach((accessProfileObj) => {
-          var noOfProdService = 0;
-           accessProfileObj['orgGrp']?.forEach((orgGrp: any) => {
-            orgGrp['org']?.forEach((org: any) => {
-              org['psGrp']?.forEach((psGrp: any) => {
-                noOfProdService += psGrp['ps'].length;
-              });
-            })
-          });
-          accessProfileWithProductAndService[accessProfileObj?.accessProfile] =
-            noOfProdService;
-          accessProfileArray.push(accessProfileObj?.accessProfile);
-        });
-      return accessProfileWithProductAndService;
-    } catch (error) {
-      await this.commonService.errorLog(
-        'Technical',
-        'AK',
-        'Fatal',
-        'AUTH010',
-        error,
-        'UserScreen',
-        '',
-        {
-          artifact: 'UserScreen',
-          users: 'anonymous user',
-        },
-      );
-      await this.throwCustomException(error);
-    }
-  }
-
-  async postAppUserList(data: any, token: string) {
-    // this data is a single user record at any case
-    try {
-      const config = this.getConfig();
-      const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
-      const fusionAuthApiKey = config.fusionAuthApiKey;
-      const auth_secret = config.authSecret
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
-      const fusionAuthTenantANDAppDetails = await this.getTenantAndApplicationFusionAuthIdSecret();
-
-      if (
-        !data ||
-        !process.env.CLIENTCODE ||
-        !token
-      ) {
-        throw new BadRequestException('Invalid credentials');
-      }
-      const payload = await this.jwt.verifyAsync(token, {
-        secret: auth_secret,
-      });
-      
-      const userResponseFromDB = await this.query(
-        `select * from ${schemaName}.tam_app_user au where org_tu_id=$1 and tenant_code=$2 and ag_code=$3 and app_code=$4`,
-        [data?.org_tu_id , tenant , ag , app]
-       )
-
-      const tam_app_user_data = {
-        user_unique_id: data?.userUniqueId ?? '',
-        no_of_products_service: String(data?.['noOfProductsService']) ?? '',
-        access_profile: data?.['accessProfile'] ?? [],
-        is_app_admin:
-          typeof data?.['isAppAdmin'] == 'boolean'
-            ? data?.['isAppAdmin']
-            : false,
-        last_active: data?.['lastActive'] ?? '',
-        access_expires: new Date(data?.['accessExpires']).toISOString() ?? '',
-        tenant_code: tenant,
-        ag_code: ag,
-        app_code: app,
-        org_tu_id: data?.org_tu_id,
-        trs_created_date: data?.['dateAdded'] ?? new Date().toISOString(),
-        trs_created_by: payload?.loginId ?? 'anonymous',
-        trs_modified_date: data?.['dateAdded'] ?? new Date().toISOString(),
-        trs_modified_by: payload?.loginId ?? 'anonymous',
-        trs_status: '',
-        trs_next_status: '',
-        trs_process_id: '',
-        trs_access_profile: payload?.selectedAccessProfile || '',
-        trs_org_grp_code: payload?.orgGrpCode || '',
-        trs_org_code: payload?.orgCode || '',
-        trs_role_grp_code: payload?.roleGrpCode || '',
-        trs_role_code: payload?.roleCode || '',
-        trs_ps_grp_code: payload?.psGrpCode || '',
-        trs_ps_code: payload?.psCode || '',
-        trs_sub_org_grp_code: payload?.subOrgGrpCode || '',
-        trs_sub_org_code: payload?.subOrgCode || '',
-        trs_app_code: payload?.appCode || '',
-      };
-
-      let dataExistOrNot: any = {
-        isNotExist: true,
-      };
-
-      if (
-        defaultAuth === 'fusionauth' &&
-        fusionAuthTenantANDAppDetails.tenantUniqueId &&
-        data?.userUniqueId &&
-        fusionAuthTenantANDAppDetails.applicationId
-      ) {
-        dataExistOrNot = await FusionAuthUserApplicatonGet(
-          fusionAuthBaseUrl,
-          fusionAuthApiKey,
-          fusionAuthTenantANDAppDetails.tenantUniqueId,
-          data?.userUniqueId,
-          fusionAuthTenantANDAppDetails.applicationId,
-        );
-      }
-
-      if (!userResponseFromDB || !userResponseFromDB?.length) {
-        if (
-          defaultAuth === 'fusionauth' &&
-          fusionAuthTenantANDAppDetails.tenantUniqueId &&
-          data?.userUniqueId &&
-          fusionAuthTenantANDAppDetails.applicationId
-        ) {
-          if (dataExistOrNot?.isNotExist) {
-            await FusionAuthApplicatonAssign(
-              fusionAuthBaseUrl,
-              fusionAuthApiKey,
-              fusionAuthTenantANDAppDetails.tenantUniqueId,
-              data?.userUniqueId,
-              fusionAuthTenantANDAppDetails.applicationId,
-              data.firstName,
-              data.lastName,
-              data.loginId,
-              data.email,
-              'POST',
-              [],
-            );
-          }
-        }
-        
-        // Torus API OPR Table entry
-        await this.insertIntoTable(
-          'tam_app_user',
-          tam_app_user_data
-        );
-      } else {
-        let userExist: boolean = false;
-        let updateIndex: any = null;
-
-        userResponseFromDB.forEach((user: any, index: number) => {
-          if (data?.userUniqueId === user?.user_unique_id) {
-            userExist = true;
-            updateIndex = index;
-          }
-        });
-        if (userExist) {
-          if (
-            defaultAuth === 'fusionauth' &&
-            fusionAuthTenantANDAppDetails.tenantUniqueId &&
-            data?.userUniqueId &&
-            fusionAuthTenantANDAppDetails.applicationId
-          ) {
-            if (dataExistOrNot?.isNotExist) {
-              await FusionAuthApplicatonAssign(
-                fusionAuthBaseUrl,
-                fusionAuthApiKey,
-                fusionAuthTenantANDAppDetails.tenantUniqueId,
-                data?.userUniqueId,
-                fusionAuthTenantANDAppDetails.applicationId,
-                data.firstName,
-                data.lastName,
-                data.loginId,
-                data.email,
-                'POST',
-                [],
-              );
-            } else if (dataExistOrNot?.registration) {
-              await FusionAuthApplicatonAssign(
-                fusionAuthBaseUrl,
-                fusionAuthApiKey,
-                fusionAuthTenantANDAppDetails.tenantUniqueId,
-                data?.userUniqueId,
-                fusionAuthTenantANDAppDetails.applicationId,
-                data.firstName,
-                data.lastName,
-                data.loginId,
-                data.email,
-                'PUT',
-                [],
-              );
-            }
-          }
-          
-          // Torus API OPR Table entry
-          let org_au_id = undefined;
-          if (data?.org_au_id) {
-            org_au_id = data?.org_au_id;
-            // handle patch only if field values gets changed
-            const equivalentDataInRedis = userResponseFromDB[updateIndex];
-            if (
-              data?.['noOfProductsService'] !==
-                equivalentDataInRedis?.['no_of_products_service '] ||
-              data['isAppAdmin'] !== equivalentDataInRedis['is_app_admin'] ||
-              JSON.stringify(data['accessProfile']) !==
-                JSON.stringify(equivalentDataInRedis['access_profile']) ||
-              data['lastActive'] !== equivalentDataInRedis['last_active'] ||
-              data['accessExpires'] !== equivalentDataInRedis['access_expires']
-            ) {
-              await this.updateTable(
-                'tam_app_user',
-                {
-                  org_au_id : org_au_id,
-                  no_of_products_service: data?.['noOfProductsService'] ?? '',
-                  access_profile: data?.['accessProfile'] ?? [],
-                  is_app_admin:
-                    typeof data?.['isAppAdmin'] == 'boolean'
-                      ? data?.['isAppAdmin']
-                      : false,
-                  last_active: data?.['lastActive'] ?? '',
-                  access_expires: data?.['accessExpires'] ?? '',
-                  trs_modified_date: new Date().toISOString(),
-                  trs_modified_by: payload?.loginId ?? 'anonymous',
-                },
-                'org_au_id'
-              )
-            }
-          } else {
-            // insert record
-            await this.insertIntoTable(
-              'tam_app_user',
-              tam_app_user_data,
-            )
-          }
-        } else {
-          if (
-            defaultAuth === 'fusionauth' &&
-            fusionAuthTenantANDAppDetails.tenantUniqueId &&
-            data?.userUniqueId &&
-            fusionAuthTenantANDAppDetails.applicationId
-          ) {
-            if (dataExistOrNot?.isNotExist) {
-              await FusionAuthApplicatonAssign(
-                fusionAuthBaseUrl,
-                fusionAuthApiKey,
-                fusionAuthTenantANDAppDetails.tenantUniqueId,
-                data?.userUniqueId,
-                fusionAuthTenantANDAppDetails.applicationId,
-                data.firstName,
-                data.lastName,
-                data.loginId,
-                data.email,
-                'POST',
-                data?.accessProfile || [],
-              );
-            }
-          }
-        // insert record
-        await this.insertIntoTable(
-              'tam_app_user',
-              tam_app_user_data,
-            )
-        }
-      }
-      const val = await this.query(`select
-            tu.org_tu_id,
-            tu.user_unique_id as "userUniqueId",
-            tu.email,
-            tu.password,
-            tu.first_name as "firstName",
-            tu.last_name as "lastName",
-            tu.login_id as "loginId",
-            tu.user_code as "userCode",
-            tu.trs_created_date::text as "dateAdded",
-            tu.status,
-            au.org_au_id,
-            au.no_of_products_service as "noOfProductsService",
-            au.access_profile as "accessProfile",
-            au.last_active as "lastActive",
-            au.access_expires as "accessExpires",
-            au.is_app_admin as "isAppAdmin",
-            case
-              when au.org_au_id is not null then true
-              else false
-            end as "isAssigned"
-          from
-            ${schemaName}.tam_tenant_user tu
-          left join ${schemaName}.tam_app_user au
-              on
-            au.org_tu_id = tu.org_tu_id
-            and au.ag_code = $2
-            and au.app_code = $3
-          where
-            tu.tenant_code = $1` , 
-            [tenant , ag , app])
-        if(val && Array.isArray(val)){
-          return val
-        }
-    } catch (error) {
-      await this.commonService.errorLog(
-        'Technical',
-        'AK',
-        'Fatal',
-        'AUTH011',
-        error,
-        'UserScreen',
-        '',
-        {
-          artifact: 'UserScreen',
-          users: 'anonymous user',
-        },
-      );
-      await this.throwCustomException(error);
-    }
-  }
 
   async setJson(key: string, data: any) {
     try {
@@ -5882,7 +5567,7 @@ getConfig(): FusionAuthConfig {
         JSON.stringify(data),
         process.env.CLIENTCODE,
       );
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -5900,102 +5585,7 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async appUserAddition(data: any,isFusionAuth:boolean=false) {
-    try {
-      if (!tenant || !ag || !app || !data) {
-        throw new BadRequestException('Invalid input parameters');
-      }
-      const userCachekey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:users`;
-      const clientProfileResourceKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`;
-
-      const userResponse = await this.redisService.getJsonData(
-        userCachekey,
-        process.env.CLIENTCODE,
-      );
-
-      const userList: any[] = userResponse ? JSON.parse(userResponse) : [];
-
-      const clientProfile = JSON.parse(
-        await this.redisService.getJsonData(
-          clientProfileResourceKey,
-          process.env.CLIENTCODE,
-        ),
-      );
-
-      const { email, firstName, lastName, password, loginId } = data;
-      const resForClientUserAddition = await this.redisService.getJsonData(
-        `CK:TRL:FNGK:AFR:FNK:PORTAL:CATK:EMAILTEMPLATE:AFGK:TORUS:AFK:CLIENTUSERADDITION:AFVK:v1:TPI`,
-        process.env.CLIENTCODE,
-      );
-
-      const clientUserAddition = JSON.parse(resForClientUserAddition);
-
-      const updatedSubject = (clientUserAddition.subject as string).replaceAll(
-        '${clientProfile.clientName}',
-        `${clientProfile.Name}`,
-      );
-      const updateclientUserAdditionHtml = (clientUserAddition.html as string)
-        .replaceAll('${clientProfile.clientName}', `${clientProfile.Name}`)
-        .replace('${firstName}', `${firstName}`)
-        .replace('${lastName}', `${lastName}`)
-        .replace('${clientCode}', `${tenant}`)
-        .replace('${username}', `${loginId}`)
-        .replace('${password}', `${password}`);
-
-      const mailOptions = {
-        from: 'support@torus.tech',
-        to: email,
-        subject: updatedSubject,
-        // text: updateclientUserAddition,
-        html: updateclientUserAdditionHtml,
-      };
-
-      transporter.sendMail(mailOptions, async (error, info) => {
-        if (error) {
-          throw new ForbiddenException('There is an issue with sending otp');
-        } else {
-          console.log('Email sent: ' + info.response);
-          // return `Email sent`;
-        }
-      });
-
-      userList.push({
-        ...data,
-        isRestricted: true,
-      });
-      await this.redisService.setJsonData(
-        userCachekey,
-        JSON.stringify(userList),
-        process.env.CLIENTCODE,
-      );
-      const newUserList = structuredClone(userList);
-
-      let result = [];
-
-      for (const user of newUserList) {
-        delete user.password;
-        result.push(user);
-      }
-
-      return result;
-    } catch (error) {
-      await this.commonService.errorLog(
-        'Technical',
-        'AK',
-        'Fatal',
-        'AUTH013',
-        error,
-        'UserScreen',
-        '',
-        {
-          artifact: 'UserScreen',
-          users: 'anonymous user',
-        },
-      );
-      console.log(error, 'error');
-      await this.throwCustomException(error);
-    }
-  }
+  
 
   async readAMDKey(key: string, token: string) {
     const valueObj: any = await this.commonService.readAPI(
@@ -6022,14 +5612,13 @@ getConfig(): FusionAuthConfig {
   async getResetPasswordOtp(email: string, tenantId: string | undefined = undefined) {
     try {
       if (!email) throw new BadRequestException('email is required');
-      const otpCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:otp`;
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
+      const otpResetToken = randomBytes(32).toString('hex');
+      const otpCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:otp:${otpResetToken}`;
       let query = 
         `SELECT
             au.org_au_id,
             tu.user_unique_id AS "userUniqueId",
             tu.email,
-            tu.password,
             tu.first_name AS "firstName",
             tu.last_name AS "lastName",
             tu.login_id AS "loginId",
@@ -6045,7 +5634,7 @@ getConfig(): FusionAuthConfig {
             ON au.org_tu_id = tu.org_tu_id
           WHERE au.tenant_code = $1
             AND au.ag_code     = $2
-            AND au.app_code    = $3`
+            AND au.app_code    = $3 and au.trs_tenant_id=$1`
         
             const values = [tenant , ag , app ]
 
@@ -6074,29 +5663,15 @@ getConfig(): FusionAuthConfig {
         if (!str) return str; // If the string is empty or null, return it as is.
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
       };
-      const otp = Math.floor(100000 + Math.random() * 900000);
-      const otpJsonFromRedis = await this.redisService.getJsonData(
-        otpCacheKey,
-        process.env.CLIENTCODE,
-      );
-      var otpJson = [];
-
-      if (otpJsonFromRedis) {
-        otpJson = JSON.parse(otpJsonFromRedis);
-        const existingIndex = otpJson.findIndex((ele) => ele.email == email);
-        if (existingIndex != -1) {
-          otpJson.splice(existingIndex, 1, { email, otp });
-        } else {
-          otpJson.push({ email, otp });
-        }
-      } else {
-        otpJson.push({ email, otp });
-      }
+      const otp = randomInt(100000, 1000000);
+      var otpJson = { email, otp }
+     
       await this.redisService.setJsonData(
         otpCacheKey,
         JSON.stringify(otpJson),
         process.env.CLIENTCODE,
       );
+      await this.redisService.expire(otpCacheKey, 60);
 
       const updatedTemplateHtml = (resetOtpTemplate.html as string)
         .replace(
@@ -6118,8 +5693,8 @@ getConfig(): FusionAuthConfig {
           console.log('Email sent: ' + info.response);
         }
       });
-      return 'Email sent to the registered email address';
-    } catch (error) {
+      return {message: 'Email sent to the registered email address', id: otpResetToken};
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -6137,29 +5712,37 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async verifyOtp(email: string, otp: string) {
+  async verifyOtp(email: string, otp: string, otpResetToken: string) {
     try {
       if (!email || !otp)
         throw new BadRequestException('email or otp is required');
-      const otpCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:otp`;
+      const otpCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:otp:${otpResetToken}`;
       const otpJsonFromRedis = await this.redisService.getJsonData(
         otpCacheKey,
         process.env.CLIENTCODE,
       );
       if (!otpJsonFromRedis) throw new NotFoundException('otp not found');
       const otpJson = JSON.parse(otpJsonFromRedis);
-      const existingIndex = otpJson.findIndex(
-        (ele) => ele.email == email && ele.otp == otp,
-      );
-      if (existingIndex == -1) throw new NotFoundException('invalid otp');
-      otpJson.splice(existingIndex, 1);
+      const isCorrectOtp = otpJson.email.toLowerCase() === email.toLowerCase() && String(otpJson.otp) === String(otp);
+      if (!isCorrectOtp) throw new NotFoundException('invalid otp');
+      await this.redisService.deleteKey(otpCacheKey, process.env.CLIENTCODE);
+      
+      // Issue a short-lived, single-use reset token bound to this email and
+      // hand it back instead of a bare `true`. resetPassword() below now
+      // requires this token -- previously it had no way to know verifyOtp
+      // had ever run, so knowing someone's email address was enough on its
+      // own to change their password.
+      const resetToken = randomBytes(32).toString('hex');
+      const resetTokenKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:pwdResetToken:${resetToken}`;
       await this.redisService.setJsonData(
-        otpCacheKey,
-        JSON.stringify(otpJson),
+        resetTokenKey,
+        JSON.stringify({ email }),
         process.env.CLIENTCODE,
       );
-      return true;
-    } catch (error) {
+      await this.redisService.expire(resetTokenKey, 600); // 10-minute window; also deleted on redemption below
+
+      return { verified: true, resetToken };
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -6177,21 +5760,40 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async resetPassword(email: string, password: string, app_tenant: string | undefined = undefined, tenantId: string | undefined = undefined) {
+  async resetPassword(email: string, password: string, app_tenant: string | undefined = undefined, tenantId: string | undefined = undefined, resetToken?: string) {
     try {
       if (!email || !password) {
       throw new BadRequestException('Please provide valid email and password');
       }
+
+      // resetToken must be the value verifyOtp() returned after a successful
+      // OTP check for this same email -- without this, resetPassword had no
+      // server-side proof that the OTP step ever happened.
+      if (!resetToken) {
+        throw new UnauthorizedException('A valid password reset token is required');
+      }
+      const resetTokenKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:pwdResetToken:${resetToken}`;
+      const storedTokenRaw = await this.redisService.getJsonData(resetTokenKey, process.env.CLIENTCODE);
+      if (!storedTokenRaw) {
+        throw new UnauthorizedException('Reset token is invalid or has expired');
+      }
+      // Burn the token immediately so it can't be replayed, even if
+      // something below this point fails.
+      await this.redisService.del(resetTokenKey);
+      const storedToken = JSON.parse(storedTokenRaw);
+      if (String(storedToken.email).toLowerCase() !== String(email).toLowerCase()) {
+        throw new UnauthorizedException('Reset token does not match this email');
+      }
+
       let ApplicationTenantDetails : any
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
       const fusionAuthTenantANDAppDetails = await this.getTenantAndApplicationFusionAuthIdSecret();
 
       let query = `SELECT
             *
           FROM ${schemaName}.tam_tenant_user tu
-         where tu.email=$1`
+         where tu.email=$1 and trs_tenant_id=$2`
 
-         const values = [email]
+         const values = [email , tenant]
 
         if (tenantId) {
           query += ` AND tu.at_id = $2`;
@@ -6214,7 +5816,6 @@ getConfig(): FusionAuthConfig {
       }
 
       // --- FusionAuth flow ---
-      if (process.env.DEFAULT_AUTHENTICATION === 'fusionauth') {
         if(app_tenant){
           ApplicationTenantDetails = await this.getApplicationTenantFusionauthDetails(app_tenant)
         }
@@ -6235,9 +5836,8 @@ getConfig(): FusionAuthConfig {
         );
         if (value.status !== 200) {
           throw new UnauthorizedException(
-            value?.error ?? 'FusionAuth password update failed',
+            (value as any)?.error ?? 'FusionAuth password update failed',
           );
-        }
       }
 
       // --- Update Redis only after FusionAuth success (or if not fusionauth) ---
@@ -6245,16 +5845,9 @@ getConfig(): FusionAuthConfig {
         password : this.hashPassword(password),
         email
       } , 'email', tenantId)
-      // tenantUser.password = this.hashPassword(password);
-      // tenantList.splice(index, 1, tenantUser);
-      // await this.redisService.setJsonData(
-      //   tenantUserKey,
-      //   JSON.stringify(tenantList),
-      //   process.env.CLIENTCODE,
-      // );
 
       return 'Password updated successfully';
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -6313,47 +5906,6 @@ getConfig(): FusionAuthConfig {
         error: error,
         status: 500,
       };
-    }
-  }
-
-  async sendMailOTP(email: string) {
-    try {
-      if (!email) {
-        throw new BadRequestException('Not enough data to continue');
-      }
-      const otp = Math.floor(100000 + Math.random() * 900000);
-      const responseFromRedis = await this.redisService.getJsonData(
-        'CK:TRL:FNGK:AFR:FNK:PORTAL:CATK:EMAILTEMPLATE:AFGK:TORUS:AFK:MAILVERIFICATIONOTP:AFVK:v1:TPI',
-        process.env.CLIENTCODE,
-      );
-      const verificationTemplate = JSON.parse(responseFromRedis);
-      const updatedTemplate = (verificationTemplate.text as string)
-        .replace('${email}', email.split('@')[0])
-        .replace('${otp}', `${otp}`);
-      const fabricatedUserName = email.split('@')[0];
-      const mailOptions = {
-        from: 'support@torus.tech',
-        to: email,
-        subject: verificationTemplate.subject,
-        // text: updatedTemplate,
-        html: verificationTemplate.html
-          .replace(
-            '${email}',
-            fabricatedUserName.charAt(0).toUpperCase() +
-              fabricatedUserName.slice(1),
-          )
-          .replace('${otp}', `${otp}`),
-      };
-      transporter.sendMail(mailOptions, async (error, info) => {
-        if (error) {
-          console.log('Please check email is correct');
-        } else {
-          console.log('Email sent: ' + info.response);
-        }
-      });
-      return { otp: otp, message: `Email sent` };
-    } catch (error) {
-      console.log(error);
     }
   }
 
@@ -8252,206 +7804,6 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async oauthSignIn(user: any) {
-    try {
-      const config = this.getConfig();
-      const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
-      const fusionAuthApiKey = config.fusionAuthApiKey;
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
-
-      if (!user) {
-        throw new BadRequestException('Account details not enough to continue');
-      }
-        if(user?.provider =='fusionauth')
-        {
-          const fusionauthUser:any  = await FusionAuthUserGet(fusionAuthBaseUrl, fusionAuthApiKey, user?.providerAccountId)
-        user['email'] = fusionauthUser.user.email;
-      }
-
-      const isExistingUser = await this.signIntoTorus(
-        user?.email,
-        '',
-        user?.ufClientType,
-        true,
-      );
-      if (isExistingUser) {
-        return isExistingUser;
-      } else {
-        let tempId:string = uuid()
-        user['userUniqueId']=tempId
-        const tenatUserAddedResponse = await this.postTenantUser(user)
-        let temp: string = user?.email?.split('@').at(0) || '';
-         const tam_app_user_data = {
-              user_unique_id: user?.userUniqueId ?? '',
-              no_of_products_service: '',
-              access_profile: [],
-              is_app_admin: false,
-              last_active: '',
-              access_expires: '',
-              tenant_code: tenant,
-              ag_code: ag,
-              app_code: app,
-              org_tu_id: tenatUserAddedResponse?.data?.[0].org_tu_id,
-              trs_created_by: '',
-              trs_modified_date: new Date().toISOString(),
-              trs_modified_by: '',
-              trs_status: '',
-              trs_next_status: '',
-              trs_process_id: '',
-              trs_access_profile: '',
-              trs_org_grp_code: '',
-              trs_org_code: '',
-              trs_role_grp_code: '',
-              trs_role_code: '',
-              trs_ps_grp_code: '',
-              trs_ps_code: '',
-              trs_sub_org_grp_code: '',
-              trs_sub_org_code: '',
-              trs_app_code: '',
-            };
-        await this.insertIntoTable('tam_app_user' , tam_app_user_data)
-        const userList = await this.query(`select
-                          tu.email 
-                        from
-                          ${schemaName}.tam_app_user au
-                        join ${schemaName}.tam_tenant_user tu on
-                          tu.org_tu_id = au.org_tu_id
-                        where
-                          au.is_app_admin=$1
-                          and au.tenant_code=$2
-                          and au.ag_code=$3
-                          and au.app_code=$4` , [true , tenant , ag , app])
-        await this.notifyUserAccessPending(user, userList);
-        return await this.signIntoTorus(
-          user?.email,
-          '',
-          user?.ufClientType,
-          true,
-        );
-      }
-    } catch (error) {
-      await this.commonService.errorLog(
-        'Technical',
-        'AK',
-        'Fatal',
-        'AUTH015',
-        error,
-        'LoginScreen',
-        '',
-        {
-          artifact: 'LoginScreen',
-          users: user,
-        },
-      );
-      await this.throwCustomException(error);
-    }
-  }
-  
-  async AppSecurityTemplateData(
-    data: any[],
-    token: string,
-  ) {
-    try {
-      if (tenant && data) {
-        const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
-        let existingRoles: any[] =
-         await this.getAPPSecurityTemplateData()
-         data = data.map(t => {
-          if(!t.roleUniqueId){
-            return {...t , roleUniqueId : uuid() }
-          }
-          return t
-         })
-
-      const securityTempPrevdataIds = existingRoles ? existingRoles?.map((item: any) => item?.opr_ap_id).filter((id: any) => id !== undefined) : [];
-      const incomingSecurityDataIds = data?.map((item: any) => item?.opr_ap_id).filter((id: any) => id !== undefined) || [];
-      const securityDataIdsToDelete = securityTempPrevdataIds.filter((id: any) => !incomingSecurityDataIds.includes(id));
-
-      //Torus API OPR Table entry Start
-      let tokenDecode = await this.jwtService.decodeToken(token); 
-      for (const secDataObj of data) {
-         const security_data = {
-            access_profile: secDataObj?.accessProfile,
-            dap: secDataObj?.dap,
-            org_grp: JSON.stringify(secDataObj?.orgGrp ?? []),
-            users_cnt: secDataObj["no.ofusers"],
-            role_unique_id: secDataObj?.roleUniqueId,
-            tenant_code: tenant,
-            ag_code: ag,
-            app_code: app,
-            trs_created_by: tokenDecode?.loginId || 'anonymous',
-            trs_modified_date: new Date().toISOString(),
-            trs_modified_by: tokenDecode?.loginId || 'anonymous',
-            trs_access_profile: tokenDecode?.selectedAccessProfile,
-            trs_org_grp_code: tokenDecode?.orgGrpCode,
-            trs_org_code: tokenDecode?.orgCode,
-            trs_role_grp_code: tokenDecode?.roleGrpCode,
-            trs_role_code: tokenDecode?.roleCode,
-            trs_ps_grp_code: tokenDecode?.psGrpCode,
-            trs_ps_code: tokenDecode?.psCode,
-            trs_sub_org_grp_code: tokenDecode?.subOrgGrpCode ?? "",
-            trs_sub_org_code: tokenDecode?.subOrgCode ?? ""
-         }
-
-         if (secDataObj?.opr_ap_id) {
-          const currentAccessTemplate = await this.query(`select * from ${schemaName}.tam_opr_access_profile where opr_ap_id=$1` , [secDataObj?.opr_ap_id])
-          
-          if (currentAccessTemplate && Array.isArray(currentAccessTemplate) && currentAccessTemplate.length) {
-            const prevData = currentAccessTemplate?.[0];
-            if (
-              prevData?.access_profile == security_data.access_profile &&
-              (prevData?.org_grp ?? '{}') ==
-                (security_data.org_grp ?? '{}')
-            ) {
-              continue;
-            } else {
-              // patch this record
-              await this.updateTable('tam_opr_access_profile' , 
-                {
-                  ...security_data,
-                  opr_ap_id : secDataObj?.opr_ap_id,
-                },
-                'opr_ap_id'
-              )
-            }
-          }
-          continue;
-        } else {
-          await this.insertIntoTable(
-            'tam_opr_access_profile',
-            security_data,
-          )
-        }
-      }
-
-      // delete records from torus which are deleted from incoming data 
-      for (const masterId of securityDataIdsToDelete) {
-        await this.query(`DELETE FROM ${schemaName}.tam_opr_access_profile WHERE opr_ap_id=$1` , [masterId])
-      }
-      //Torus API OPR Table entry End
-      } else {
-        throw new BadRequestException(
-          'Please provide all necessary credentials',
-        );
-      }
-    } catch (error) {
-      await this.commonService.errorLog(
-        'Technical',
-        'AK',
-        'Fatal',
-        'AUTH016',
-        error,
-        'UserScreen',
-        '',
-        {
-          artifact: 'UserScreen',
-          users: 'anonymous user',
-        },
-      );
-      await this.throwCustomException(error);
-    }
-  }
-
   async screenDetailsData(data) {
     const result = [];
     // Traverse through the data and process the webArtifacts key
@@ -8539,14 +7891,14 @@ getConfig(): FusionAuthConfig {
       token,
     );
     let templateArray:any = UO?.securityData?.accessProfile||[];
-    let allowedAccessProfile:any=[]
+    let restrictedAccessProfile:any=[]
     templateArray.map((profile:any)=>{
-      if(profile?.security?.artifact?.SIFlag?.selectedValue=='AA'||profile?.security?.artifact?.SIFlag?.selectedValue=='RA' )
+      if(profile?.security?.artifact?.SIFlag?.selectedValue=='BA')
       {
-          allowedAccessProfile.push(profile?.accessProfile);
+          restrictedAccessProfile.push(profile?.accessProfile);
         }
     })
-    return allowedAccessProfile
+    return restrictedAccessProfile
     } catch (error) {
     return []
     }
@@ -8568,9 +7920,9 @@ getConfig(): FusionAuthConfig {
 
       // Process the screens and convert to the desired format
       for (const screen of group.screens) {
-        let allowedAccessProfile: any = [];
+        let restrictedAccessProfile: any = [];
         if (screen.UF != 'Logs Screen' && screen.UF != 'User Screen') {
-          allowedAccessProfile = await this.getAccessProfileForArtifact(
+          restrictedAccessProfile = await this.getAccessProfileForArtifact(
             screen.UF + ':UO',
             clientCode,
             token,
@@ -8580,7 +7932,7 @@ getConfig(): FusionAuthConfig {
           name: screen.screenName,
           label: screen.screenNameLabel,
           key: screen.UF,
-          allowedAccessProfile: allowedAccessProfile,
+          restrictedAccessProfile: restrictedAccessProfile,
           static: screen?.static || false,
           icon: screen.icon,
         });
@@ -8643,54 +7995,10 @@ getConfig(): FusionAuthConfig {
     return navbarData;
   }
   
-  async postTenantUser(userDetail: any) {
-    let tenantUser: any = await this.getTenantUser();
-      const isExists: any = (tenantUser ?? []).find(
-        (allUser: any) => allUser?.email == userDetail?.email,
-      );
-    
-      let temp: string = userDetail?.email?.split('@').at(0) || '';
-
-       const tam_tenant_user_payload = {
-        user_unique_id : userDetail?.providerAccountId || userDetail?.userUniqueId,
-        email : userDetail?.email,
-        password : '',
-        first_name : userDetail?.name || temp,
-        last_name : userDetail?.name || temp,
-        login_id : userDetail?.loginId,
-        user_code : userDetail?.userCode,
-        status : '',
-        tenant_code : tenant,
-        trs_created_by: userDetail?.loginId,
-        trs_modified_date: new Date().toISOString(),
-        trs_modified_by: '',
-        // "trs_status": "string",
-        // "trs_next_status": "string",
-        // "trs_process_id": "string",
-        trs_access_profile: "",
-        trs_org_grp_code: "",
-        trs_org_code: "",
-        trs_role_grp_code: "",
-        trs_role_code: "",
-        trs_ps_grp_code: "",
-        trs_ps_code: "",
-        trs_sub_org_grp_code: "",
-        trs_sub_org_code: ""
-      }
-
-      if (!isExists) {
-        return await this.insertIntoTable('tam_tenant_user' ,tam_tenant_user_payload)
-      }
-  }
 
   async getAppList(token: string) {
     try {
-      const config = this.getConfig()
-      const auth_secret = config.authSecret
-
-      const payload = await this.jwt.verifyAsync(token, {
-        secret: auth_secret,
-      });
+      const payload = await this.jwtService.verifyToken(token);
       const {
         tenant: tenant,
         loginId,
@@ -8698,8 +8006,6 @@ getConfig(): FusionAuthConfig {
         app: currentApp,
       } = payload;
       const tenantProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`;
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
-
     
       const tenantProfileResponse = await this.redisService.getJsonData(
         tenantProfileCacheKey,
@@ -8708,7 +8014,7 @@ getConfig(): FusionAuthConfig {
       const tenantProfile = tenantProfileResponse
         ? JSON.parse(tenantProfileResponse)
         : {};
-      const foundUser = await this.query(`select * from ${schemaName}.tam_tenant_user tu where tu.tenant_code=$1 and tu.login_id=$2` , [tenant , loginId])
+      const foundUser = await this.query(`select * from ${schemaName}.tam_tenant_user tu where tu.tenant_code=$1 and tu.login_id=$2 and trs_tenant_id=$1` , [tenant , loginId])
    
       const appGroupInfo =
         tenantProfile?.AG?.find((group: any) => group?.code == ag) ?? {};
@@ -8728,25 +8034,24 @@ getConfig(): FusionAuthConfig {
                               au.tenant_code =$1
                               and au.ag_code =$2
                               and au.app_code =$3
-                              and au.org_tu_id =$4` , [tenant , ag , app ,foundUser?.[0]?.org_tu_id ])
+                              and au.org_tu_id =$4 and trs_tenant_id=$1` , [tenant , ag , application?.code ,foundUser?.[0]?.org_tu_id ])
           
         } catch (error) {
           userList = []
         }
         const isUserExistInApp = userList.find(
           (user: any) =>
-            user?.user_unique_id == foundUser?.[0]?.user_unique_id &&
             user?.access_profile?.length,
         );
         if (!isUserExistInApp) continue;
         // check the application's build key information along with the accessUrl
-        const appBuildKeyCachePrefix = `CK:TGA:FNGK:BLDC:FNK:DEV:CATK:${tenant}:AFGK:${ag}:AFK:${application?.code}:AFVK:*:bldc`;
+        const appBuildKeyCachePrefix = `CK:TGA:FNGK:BLDC:FNK:DEV:CATK:${tenant}:AFGK:${ag}:AFK:${application?.code}:AFVK:*`;
         const appBuildKeyList = await this.redisService.getKeys(
           appBuildKeyCachePrefix,
           process.env.CLIENTCODE,
         );
         let versionInfo = [];
-        for (let i = 0; i < appBuildKeyList.length; i++) {
+        for (let i = 0; i < appBuildKeyList?.length; i++) {
           const buildKey = appBuildKeyList[i];
           const buildKeyResponse = await this.redisService.getJsonData(
             buildKey,
@@ -8770,11 +8075,14 @@ getConfig(): FusionAuthConfig {
             if(typeof nodeData == "string"){
               nodeData = decrypt(nodeData)
             }
-            const appAccessUrl = nodeData?.data?.api?.release?.HOST?.replace('/api' , '');
-            if (appAccessUrl) {
+            const targetAppBaseURL = new URL(nodeData?.data?.api?.release?.HOST).origin ?? "";
+            const targetAppBasePath = `/${tenant}/${ag}/${application?.code}/${buildKey.split(':')[13]}`.toLowerCase();
+            const targetAppAccessUrl = `${targetAppBaseURL}${targetAppBasePath}`
+
+            if (targetAppAccessUrl && targetAppBaseURL) {
               versionInfo.push({
                 version: buildKey.split(':')[13],
-                accessUrl: appAccessUrl,
+                accessUrl: targetAppAccessUrl,
               });
             }
           }
@@ -8788,7 +8096,7 @@ getConfig(): FusionAuthConfig {
       }
 
       return accessibleAppList;
-    } catch (error) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -8806,29 +8114,32 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async sso(sourceToken: string , ufClientType:string) {
+    async sso(sourceToken: string , ufClientType:string) {
     try {
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
-      const payload = await this.jwt.decode(sourceToken);
-      const { loginId } = payload;
-      let tenantUserList = []
-      try {
-        tenantUserList = await this.query(`select tu.email , tu.login_id from ${schemaName}.tam_tenant_user tu where tu.login_id=$1` , [loginId])
-      } catch (error) {
-        tenantUserList = []
-      }
-      const user = tenantUserList.find(
-        (user: any) => user?.loginId == loginId,
-      );
-
-        return await this.signIntoTorus(
-          user?.email,
+      const payload = await this.jwtService.verifyToken(sourceToken);
+      const { loginId , tenant:srcTenant , ag:srcAg , app:srcApp , sid , tenantId } = payload;
+      const srcAppSessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${srcTenant}:AFGK:${srcAg}:AFK:${srcApp}:AFVK:v1:session`;
+      const srcAppSessionList = JSON.parse(await this.redisService.getJsonData(srcAppSessionListCacheKey, process.env.CLIENTCODE));
+      const srcAppUserSession = srcAppSessionList?.find((v) => v.sid == sid);
+      if(!srcAppUserSession) throw new UnauthorizedException('Invalid session')
+      const fusionAUthLoginResponse = await this.fusionAuthVerifyRefreshToken(srcAppUserSession?.refreshToken, tenantId);
+      const loggedInValue = await this.signIntoTorus(
+          loginId,
           '',
           ufClientType,
           true,
+          undefined,
+          undefined,
+          fusionAUthLoginResponse
         );
-
-    } catch (error) {
+       if(!loggedInValue) throw new UnauthorizedException('Unauthorized access to the application')
+      await this.redisService.setJsonData(
+        srcAppSessionListCacheKey,
+        JSON.stringify(srcAppSessionList.filter(s => s.sid == sid)),
+        process.env.CLIENTCODE
+      )
+      return loggedInValue; 
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -8843,426 +8154,11 @@ getConfig(): FusionAuthConfig {
         },
       );
       await this.throwCustomException(error);
-    }
-  }
-
-  async setTenantUser(content: any, token: string) {
-    try {
-      const config = this.getConfig();
-      const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
-      const fusionAuthApiKey = config.fusionAuthApiKey;
-      const fusionAuthTenantANDAppDetails = await this.getTenantAndApplicationFusionAuthIdSecret();
-      let tokenDecode = await this.jwtService.decodeToken(token);
-      let tenantCode = tenant;
-      let existUser: any[] = await this.getTenantUser();
-      let userUniqueId = uuid();
-
-      const tam_tenant_user_payload = {
-        user_unique_id : userUniqueId,
-        email : content?.email,
-        password : this.hashPassword(content?.password),
-        first_name : content.firstName,
-        last_name : content?.lastName,
-        login_id : content?.loginId,
-        user_code : content?.userCode,
-        status : '',
-        tenant_code : tenant,
-        trs_created_by: tokenDecode?.loginId || 'anonymous',
-        trs_modified_date: new Date().toISOString(),
-        trs_modified_by: tokenDecode?.loginId || 'anonymous',
-        // "trs_status": "string",
-        // "trs_next_status": "string",
-        // "trs_process_id": "string",
-        trs_access_profile: tokenDecode?.selectedAccessProfile,
-        trs_org_grp_code: tokenDecode?.orgGrpCode,
-        trs_org_code: tokenDecode?.orgCode,
-        trs_role_grp_code: tokenDecode?.roleGrpCode,
-        trs_role_code: tokenDecode?.roleCode,
-        trs_ps_grp_code: tokenDecode?.psGrpCode,
-        trs_ps_code: tokenDecode?.psCode,
-        trs_sub_org_grp_code: tokenDecode?.subOrgGrpCode ?? "",
-        trs_sub_org_code: tokenDecode?.subOrgCode ?? ""
-      }
-
-      if(existUser.find((u) => u.email == tam_tenant_user_payload.email)){
-        throw new NotAcceptableException('Email already taken , please add another email')
-      }
-      if(existUser.find((u) => u.login_id == tam_tenant_user_payload.login_id)){
-        throw new NotAcceptableException('Username already taken , please choose different name')
-      }
-
-      // create user in fusion auth
-       if (defaultAuth === 'fusionauth' && fusionAuthTenantANDAppDetails.tenantUniqueId) {
-          await FusionAuthUserCreation(
-            fusionAuthBaseUrl,
-            fusionAuthApiKey,
-            fusionAuthTenantANDAppDetails.tenantUniqueId,
-            tam_tenant_user_payload.user_unique_id,
-            tam_tenant_user_payload.first_name,
-            tam_tenant_user_payload.last_name,
-            tam_tenant_user_payload.login_id,
-            tam_tenant_user_payload.email,
-            content?.password,
-            'POST',
-            '',
-          );
-        }
-       const userAddedResponse = await this.insertIntoTable('tam_tenant_user' ,{
-          ...tam_tenant_user_payload ,
-          trs_created_by : tokenDecode?.loginId 
-        })
-        
-      const resForTenantUserAddition = await this.redisService.getJsonData(
-        `CK:TRL:FNGK:AFR:FNK:PORTAL:CATK:EMAILTEMPLATE:AFGK:TORUS:AFK:CLIENTUSERADDITION:AFVK:v1:TPI`,
-        'TORUS',
-      );
-
-      const tenantUserAddition = JSON.parse(resForTenantUserAddition);
-
-      const { firstName, lastName, email, loginId, password } = content;
-
-      const updatedSubject = (tenantUserAddition.subject as string).replaceAll(
-        '${clientProfile.clientName}',
-        `${tenant}`,
-      );
-      const updateclientUserAdditionHtml = (tenantUserAddition.html as string)
-        .replaceAll('${clientProfile.clientName}', `${tenant}`)
-        .replace('${firstName}', `${firstName}`)
-        .replace('${lastName}', `${lastName}`)
-        .replace('${clientCode}', `${tenantCode}`)
-        .replace('${username}', `${loginId}`)
-        .replace('${password}', `${password}`)
-        .replace(`Client`, `Tenant`);
-
-      const mailOptions = {
-        from: 'support@torus.tech',
-        to: email,
-        subject: updatedSubject,
-        html: updateclientUserAdditionHtml,
-      };
-
-      transporter.sendMail(mailOptions, async (error, info) => {
-        if (error) {
-          throw new ForbiddenException('There is an issue with sending welcome email to the user');
-        } else {
-          console.log('Email sent: ' + info.response);
-          // return `Email sent`;
-        }
-      });
-     const result = await this.postAppUserList({...content, userUniqueId: userUniqueId , password: undefined , org_tu_id : userAddedResponse?.data?.[0].org_tu_id } , token);
-     return result;
-    } catch (err: any) {
-        await this.commonService.errorLog(
-        'Technical',
-        'AK',
-        'Fatal',
-        'AUTH016',
-        err,
-        'UserScreen',
-        '',
-        {
-          artifact: 'UserScreen',
-          users: 'anonymous user',
-        },
-      );
-      await this.throwCustomException(err);
-    }
-  }
-
-  async uploadFromLocalPath(
-  localPaths: any[],
-  bucketFoldername?: string,
-  folderPath?: string,
-  enableEncryption?: string,
-): Promise<string[]> {
-  try {
-    const bucket = bucketFoldername || '';
-    const subFolder = folderPath || '';
-    const shouldEncrypt = enableEncryption === 'true';
-    
-    // Normalize to array if single path provided
-    let paths :string[] = [];
-    for(let i=0;i<localPaths.length;i++){
-      paths.push(localPaths[i].filepath);
-    }
-    console.log("localPaths ==> ", paths);
-
-    const uploadedFiles: string[] = [];
-
-    // Process each path
-    for (const localPath of paths) {
-      const stat = await fs.promises.stat(localPath);
-
-      let files: string[] = [];
-
-      // If directory → upload all files
-      if (stat.isDirectory()) {
-        const entries = await fs.promises.readdir(localPath);
-        files = entries.map((f) => path.join(localPath, f));
-      } else {
-        files = [localPath];
-      }
-
-      // Upload each file
-      for (const filePath of files) {
-        const buffer = await fs.promises.readFile(filePath);
-        const fileName = path.basename(filePath);
-
-        const encryptedBuffer = shouldEncrypt
-          ? await this.commonService.aes256ctrEncrypt(buffer)
-          : buffer;
-
-        const form = new FormData();
-        form.append('file', Readable.from(encryptedBuffer), {
-          filename: fileName,
-          contentType: 'application/octet-stream',
-        });
-
-        const uploadUrl = `${this.envData.getSeaweedOutputHost()?.replace(
-          /\/$/,
-          '',
-        )}/buckets/${bucket}/${subFolder}/${fileName}`;
-
-        const res = await axios.post(uploadUrl, form, {
-          headers: {
-            Accept: 'application/json',
-            ...form.getHeaders(),
-          },
-          auth: {
-            username: this.envData.getSeaweedUsername()!,
-            password: this.envData.getSeaweedPassword()!,
-          },
-          validateStatus: (status) => status < 500,
-        });
-
-        if (res.status === 201) {
-          uploadedFiles.push(`${bucket}/${subFolder}/${fileName}`);
-        } else {
-          throw new Error(
-            res.data || 'Error occurred while uploading file',
-          );
-        }
-      }
-    }
-
-    console.log("uploadedFiles ==> ", uploadedFiles);
-    return uploadedFiles;
-  } catch (error) {
-    throw error;
       }
 }
-
-  async callTorusAPI<T = any>(
-    apiEndpoint: string,
-    options?: {
-      method?: Method;
-      data?: any;
-      token?: string;
-      params?: Record<string, any>;
-      headers?: Record<string, string>;
-    },
-  ): Promise<{ status: number; data: T }> {
-    const { method = 'GET', data, token, params, headers = {} } = options || {};
-
-    try {
-      const response = await axios({
-        url: `${torusAppApiBaseUrl}${apiEndpoint}`,
-        method,
-        data,
-        params,
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-          ...headers,
-        },
-        validateStatus: () => true,
-      });
-
-      return {
-        status: response.status,
-        data: response.data,
-      };
-    } catch (error: any) {
-      throw error;
-    }
-  }
-
-  async postOrgData(incomingMasterData: any, incomingMatrixData: any, token: string) {
-    try {
-      const config = this.getConfig()
-      const auth_secret = config.authSecret
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
-
-      if (!token) throw new BadRequestException('Token is required');
-      const payload = await this.jwt.verifyAsync(token, {
-        secret: auth_secret,
-      });
-      if (!incomingMasterData || !incomingMatrixData)
-        throw new BadRequestException(
-          'Master data and matrix data are required',
-        );
-
-      const val = await this.getAppSecurityData() 
-      const {orgMatrix : orgMatrixResponse  , orgMaster : orgMasterResponse} = val as any;
-
-      // To delete records which are deleted from incoming data in torus as well as in redis, 
-      // we need to get the existing record ids from redis and compare with incoming data ids, 
-      // if any id is not present in incoming data then we can delete that record from torus and redis both
-      const orgMasterPrevdataIds = orgMasterResponse ? orgMasterResponse?.map((item: any) => item?.opr_om_id).filter((id: any) => id !== undefined) : [];
-      const orgMatrixPrevdataIds = orgMatrixResponse ? orgMatrixResponse?.map((item: any) => item?.opr_mx_id).filter((id: any) => id !== undefined) : [];
-      const incomingMasterDataIds = incomingMasterData?.map((item: any) => item?.opr_om_id).filter((id: any) => id !== undefined) || [];
-      const incomingMatrixDataIds = incomingMatrixData?.map((item: any) => item?.opr_mx_id).filter((id: any) => id !== undefined) || [];
-      const masterDataIdsToDelete = orgMasterPrevdataIds.filter((id: any) => !incomingMasterDataIds.includes(id));
-      const matrixDataIdsToDelete = orgMatrixPrevdataIds.filter((id: any) => !incomingMatrixDataIds.includes(id));
-
-      // Torus API OPR Table entry start
-      // loop thorugh masterData
-      for (const masterDataItem of incomingMasterData) {
-        // prepare data for tam_opr_org_master table in torus
-        const tam_opr_org_master_data = {
-          org_grp_code: masterDataItem?.orgGrpCode,
-          org_grp_name: masterDataItem?.orgGrpName,
-          org_grp_id: masterDataItem?.orgGrpId,
-          org: JSON.stringify(masterDataItem?.org ?? []),
-          tenant_code: tenant,
-          ag_code: ag,
-          app_code: app,
-          // trs_created_date: new Date().toISOString(),
-          trs_created_by: payload?.loginId || 'anonymous',
-          trs_modified_date: new Date().toISOString(),
-          trs_modified_by: payload?.loginId || 'anonymous',
-          trs_status: '',
-          trs_next_status: '',
-          trs_process_id: '',
-          trs_access_profile: payload?.selectedAccessProfile || '',
-          trs_org_grp_code: payload?.orgGrpCode || '',
-          trs_org_code: payload?.orgCode || '',
-          trs_role_grp_code: payload?.roleGrpCode || '',
-          trs_role_code: payload?.roleCode || '',
-          trs_ps_grp_code: payload?.psGrpCode || '',
-          trs_ps_code: payload?.psCode || '',
-          trs_sub_org_grp_code: payload?.subOrgGrpCode || '',
-          trs_sub_org_code: payload?.subOrgCode || '',
-        };
-        // if opr_om_id exist then patch else post
-        if (masterDataItem?.opr_om_id) {
-          const mstrData :any[] = await this.query(`select * from ${schemaName}.tam_opr_org_master where opr_om_id=$1` , [masterDataItem?.opr_om_id])
-          if (mstrData && Array.isArray(mstrData) && mstrData.length) {
-            if (
-              mstrData?.[0].org_grp_name == tam_opr_org_master_data.org_grp_name &&
-              (mstrData?.[0].org ?? {}) ==      //this is already in stringified format
-                tam_opr_org_master_data.org
-            ) {
-              continue;
-            } else {
-              // patch this record
-              await this.updateTable('tam_opr_org_master' , 
-                {
-                ...tam_opr_org_master_data ,
-                opr_om_id : masterDataItem?.opr_om_id,
-                trs_created_by: mstrData?.[0].trs_created_by ?? ''
-                } 
-                ,'opr_om_id' )
-            }
-          }
-          continue;
-        } else {
-          await this.insertIntoTable('tam_opr_org_master' , 
-            {...tam_opr_org_master_data }
-          )
-        }
-      }
-
-      // loop thorugh matrixData
-      for (const matrixDataItem of incomingMatrixData) {
-        // prepare data for tam_opr_org_matrix table in torus
-        const tam_opr_org_matrix_data = {
-          org_grp_code: matrixDataItem?.orgGrpCode,
-          org_grp_name: matrixDataItem?.orgGrpName,
-          org_grp_id: matrixDataItem?.orgGrpId,
-          src_id: matrixDataItem?.srcId,
-          org: JSON.stringify(matrixDataItem?.org ?? []),
-          tenant_code: tenant,
-          ag_code: ag,
-          app_code: app,
-          // trs_created_date: new Date().toISOString(),
-          trs_created_by: payload?.loginId || 'anonymous',
-          trs_modified_date: new Date().toISOString(),
-          trs_modified_by: payload?.loginId || 'anonymous',
-          trs_status: '',
-          trs_next_status: '',
-          trs_process_id: '',
-          trs_access_profile: payload?.selectedAccessProfile || '',
-          trs_org_grp_code: payload?.orgGrpCode || '',
-          trs_org_code: payload?.orgCode || '',
-          trs_role_grp_code: payload?.roleGrpCode || '',
-          trs_role_code: payload?.roleCode || '',
-          trs_ps_grp_code: payload?.psGrpCode || '',
-          trs_ps_code: payload?.psCode || '',
-          trs_sub_org_grp_code: payload?.subOrgGrpCode || '',
-          trs_sub_org_code: payload?.subOrgCode || '',
-        };
-        // if opr_mx_id exist then patch else post
-        if (matrixDataItem?.opr_mx_id) {
-          const mtrxData : any[] = await this.query(`select * from ${schemaName}.tam_opr_org_matrix where opr_mx_id=$1` , [matrixDataItem?.opr_mx_id])
-         
-          if (mtrxData && Array.isArray(mtrxData) && mtrxData.length) {
-            if (
-              mtrxData?.[0].org_grp_name == tam_opr_org_matrix_data.org_grp_name &&
-              (mtrxData?.[0].org ?? {}) ==
-                tam_opr_org_matrix_data.org
-            ) {
-              continue;
-            } else {
-             // patch this record
-              await this.updateTable('tam_opr_org_matrix' , 
-                {
-                  ...tam_opr_org_matrix_data,
-                  opr_mx_id : matrixDataItem?.opr_mx_id,
-                   trs_created_by: mtrxData?.[0].trs_created_by
-                  } 
-                ,'opr_mx_id' )
-            }
-          }
-          continue;
-        } else {
-          await this.insertIntoTable('tam_opr_org_matrix' , 
-            {...tam_opr_org_matrix_data }
-          )
-        }
-      }
-      // Torus API OPR Table entry end
-
-      // delete records from torus which are deleted from incoming data 
-      for (const masterId of masterDataIdsToDelete) {
-        await this.query(`DELETE FROM ${schemaName}.tam_opr_org_master WHERE opr_om_id=$1` , [masterId])
-      }
-
-      for (const matrixId of matrixDataIdsToDelete) {
-        await this.query(`DELETE FROM ${schemaName}.tam_opr_org_matrix WHERE opr_mx_id=$1` , [matrixId])
-      }
-      
-      return { message: 'Organization data saved successfully' };
-    } catch (error) {
-      await this.commonService.errorLog(
-        'Technical',
-        'AK',
-        'Fatal',
-        'AUTH019',
-        error,
-        'User Screen',
-        '',
-        {
-          artifact: 'User Screen',
-          users: 'anonymous user',
-        },
-      );
-      await this.throwCustomException(error);
-    }
-  }
   
   async getAppTenantsLinkedWithApp() {
     try {
-      const schemaName = `${tenant.toLocaleLowerCase()}_tam`;
       const result = await this.query(`select
               *
             from
@@ -9272,7 +8168,7 @@ getConfig(): FusionAuthConfig {
             where
               aat.tenant_code =$1
               and aat.ag_code =$2
-              and aat.app_code =$3
+              and aat.app_code =$3 and aat.trs_tenant_id=$1
             ` , [tenant, ag, app]);
       if (result) {
         return JSON.parse(JSON.stringify(result ?? []));
@@ -9281,6 +8177,611 @@ getConfig(): FusionAuthConfig {
       }
     } catch (error) {
      return [];
+    }
+  }
+
+    // `includeSecrets` is granted only to a trusted server-to-server caller (see
+  // the controller's internal-service-key check). This endpoint has to stay
+  // reachable pre-login so the UF server can build the FusionAuth authorization
+  // URL, but that flow only needs the non-secret discovery fields below.
+  // The FusionAuth admin API key is never returned at all — no consumer uses it,
+  // and handing it out over HTTP would hand over the whole identity provider.
+  async getFusionAuthCredentials(app_tenant:string | undefined, includeSecrets = true) {
+    try {
+      const { fusionAuthBaseUrl } = this.getConfig();
+      if(!app_tenant){
+        const credentials = await this.getTenantAndApplicationFusionAuthIdSecret();
+        if(credentials && typeof credentials == 'object'){
+          return {
+            tenantUniqueId : credentials.tenantUniqueId,
+            applicationId : credentials.applicationId,
+            ...(includeSecrets ? { fusionAuthAppClientSecret : credentials.fusionAuthAppClientSecret } : {}),
+            fusionAuthBaseUrl,
+          };
+        }else{
+          throw new BadRequestException('fusionauth configuration details not found');
+        }
+      }
+      const appTenantList = await this.getAppTenantsLinkedWithApp();
+      const foundAppTenant = appTenantList.find((item: any) => (item.tenant_name == app_tenant) || item.tenant_id == app_tenant);
+      if(!foundAppTenant) throw new BadRequestException(`fusionauth configuration details for the tenant ${app_tenant} not found`);
+      const credentials = await this.getApplicationTenantFusionauthDetails(foundAppTenant.tenant_id);
+      if(credentials && typeof credentials == 'object'){
+          return {
+            tenantUniqueId : credentials.applicationTenantUniqueId,
+            applicationId : credentials.fusionAuthApplicationTenantId,
+            ...(includeSecrets ? { fusionAuthAppClientSecret : credentials.fusionAuthApplicationTenantClientSecret } : {}),
+            appTenantId : foundAppTenant.at_id,
+            fusionAuthBaseUrl,
+          };
+        }else{
+          throw new BadRequestException('fusionauth configuration details not found');
+        }
+
+    } catch (error) {
+      await this.throwCustomException(error);
+    }
+  }
+ 
+  //___________________________LOGS__________________________________________
+
+  @Cron(process.env.MY_CRON)
+  async prcLog(): Promise<any> {
+    try {
+    let structuredData 
+    let tplstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TPL'
+    let tslstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TSL'
+    if (await this.redisService.exist(tplstreamName, process.env.CLIENTCODE)){
+      structuredData =await this.structuredPrcLogs(tplstreamName) 
+    } 
+    if (await this.redisService.exist(tslstreamName, process.env.CLIENTCODE)){
+      structuredData = await this.structuredPrcLogs(tslstreamName) 
+    } 
+    return structuredData
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async structuredPrcLogs(streamName) {
+    try {
+      const msgid = [];
+      const strmarr = [];
+      const result = [];
+      let groupName
+      let consumerName
+      if (await this.redisService.exist(streamName, process.env.CLIENTCODE)) {
+        
+      groupName  = streamName + 'ProcessLog_' + process.pid;
+      consumerName = streamName
+      
+        await this.redisService.createConsumerGroup(streamName, groupName);
+        let streamData: any = await this.redisService.readConsumerGroup(
+          streamName, 
+          groupName, 
+          consumerName
+        );
+        
+      
+        if (!streamData || streamData === 'No Data available to read') {
+          return [];
+        }
+        
+        if (!Array.isArray(streamData)) {
+          return [];
+        }
+
+        if (streamData.length === 0) {
+          return [];
+        }        
+        
+        for (let i = 0; i < streamData.length; i++) {
+          const item = streamData[i];          
+          
+          if (item.msgid && item.data) {
+            msgid.push(item.msgid);
+            strmarr.push(item.data);
+          }
+          else if (Array.isArray(item) && item.length === 2) {
+            msgid.push(item[0]);
+            strmarr.push(item[1]);
+          }
+          else {
+            console.log("Unexpected item structure at index", i, ":", item);
+          }
+        }
+        if (msgid?.length > 0) {
+          
+          for (let s = 0; s < msgid.length; s++) {           
+            let user,upid = 'logInfo';
+
+            if (streamName.endsWith('-TPL')) {
+              const upidsplit = strmarr[s][0].split(':');
+              if (upidsplit.length > 14) {
+                upid = upidsplit[upidsplit.length - 1];
+                // AfskValue = upid;
+              }
+            }
+            
+            const date = new Date(Number(msgid[s].split('-')[0]));
+            const utcDate = date.toISOString()
+            const entryId = utcDate.split('T')[0] //format(date, 'yyyy-MM-dd');
+
+            const afskvalue: any = JSON.parse(strmarr[s][1]);
+            if(typeof afskvalue == 'object')
+              afskvalue['DateAndTime'] = utcDate
+            
+            if (afskvalue?.sessionInfo && Object.keys(afskvalue.sessionInfo).length > 0 && afskvalue.sessionInfo.user) {
+              user = afskvalue.sessionInfo.user;
+            } else {
+              user = 'user';
+            }
+
+            const CK = await this.commonService.splitcommonkey(strmarr[s][0], 'CK');
+            const FNGK = await this.commonService.splitcommonkey(strmarr[s][0], 'FNGK');
+            const FNK = await this.commonService.splitcommonkey(strmarr[s][0], 'FNK');
+            const CATK = await this.commonService.splitcommonkey(strmarr[s][0], 'CATK');
+            const AFGK = await this.commonService.splitcommonkey(strmarr[s][0], 'AFGK');
+            const AFK = await this.commonService.splitcommonkey(strmarr[s][0], 'AFK');
+            const AFVK = await this.commonService.splitcommonkey(strmarr[s][0], 'AFVK');
+
+            let existingEntry = result.find(
+              (item) =>
+                item.CK === CK &&
+                item.FNGK === FNGK &&
+                item.FNK === FNK &&
+                item.CATK === CATK &&
+                item.AFGK === AFGK &&
+                item.AFK === AFK &&
+                item.AFVK === AFVK &&
+                item.UPID === upid &&
+                item.USER === user &&
+                item.DATE === entryId
+            );
+
+            if (!existingEntry) {
+              existingEntry = {
+                CK,
+                FNGK,
+                FNK,
+                CATK,
+                AFGK,
+                AFK,
+                AFVK,
+                UPID: upid,
+                DATE: entryId,
+                DateAndTime: utcDate,
+                USER: user,
+                AFSK: {},
+              };
+              result.push(existingEntry);
+            }
+
+            if (streamName.endsWith('-TPL')) {
+              if (!existingEntry.AFSK[upid]) {
+                existingEntry.AFSK[upid] = [];
+              }
+              existingEntry.AFSK[upid].push(afskvalue);
+            }else{
+              existingEntry.AFSK = afskvalue;
+            }
+          }
+          
+          result.forEach((entry, idx) => { Object.values(entry.AFSK).reduce((sum: number, arr: any[]) => sum + arr.length, 0);});
+          
+          if (result && result.length > 0) {
+            let upid
+            let bucketName = streamName.endsWith('-TSL')?'ExpLog':'PrcLog'
+            if (streamName.endsWith('-TSL')) {                 
+              upid = 'logInfo'
+            }
+            for (let i = 0; i < result.length; i++) {
+              const { USER, DATE: date,DateAndTime, CK, FNGK, FNK, CATK, AFGK, AFK, AFVK } = result[i];
+              upid = Object.keys(result[i].AFSK)[0];
+              let res;
+              if (USER && date && CK && FNGK && FNK && CATK && AFGK && AFK && AFVK) {
+                const path = `${USER}:${date}:${CK}:${FNGK}:${FNK}:${CATK}:${AFGK}:${AFK}:${AFVK}:${upid}`;    
+                
+                res = await this.commonService.seaWeeduploadFile(JSON.stringify(result[i]), bucketName, streamName, path);                
+               
+                if(res?.status == 201){
+                  await this.structuredPrcLogsToPostgres(streamName,path,CK,FNK,CATK,AFGK,upid,USER,DateAndTime)
+                  await this.redisService.ackMessage(streamName,groupName,msgid);
+                  await this.redisService.deleteWithEntryId(streamName,msgid)   
+                  let isStreamExist = await this.redisService.getStreamRange(streamName)
+                
+                  if(!isStreamExist || isStreamExist.length == 0){
+                    await this.redisService.deleteKey(streamName,streamName)
+                  }
+                }
+              }
+            }
+            return 'success';
+          }
+        }
+        return result;
+    }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async structuredPrcLogsToPostgres(tableName: string,Key:string,tenant:string,fabric:string,appGrp:string,app:string,upid:string,user:string,date) {  
+    try {         
+       tableName = tableName.toLowerCase()
+       await this.query(`CREATE SCHEMA IF NOT EXISTS "processlog"`);
+       await this.query(
+         `CREATE TABLE IF NOT EXISTS "processlog"."${tableName}" (
+          id BIGSERIAL PRIMARY KEY,
+          key TEXT,
+          ck_code varchar(50) NULL,
+          fnk_code varchar(100) NULL,
+          ag_code varchar(16) NOT NULL,
+          app_code varchar(16) NOT NULL,         
+          upid TEXT,
+          user_name TEXT,
+          date_and_time TIMESTAMPTZ
+        );
+        CREATE UNIQUE INDEX IF NOT EXISTS "${tableName}_key_idx" ON "processlog"."${tableName}" ("key")
+      `);   
+     
+      let params = [Key,tenant,fabric,appGrp,app,upid,user,date];
+
+      let insertquery =
+       `INSERT INTO "processlog"."${tableName}"(key,ck_code,fnk_code,ag_code,app_code,upid,user_name,date_and_time)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (key) DO NOTHING RETURNING *`;      
+
+      const insertRes = await this.query(insertquery, params);
+      return insertRes;
+    } catch (error) {
+      console.error('structuredPrcLogsToPostgres Error =>',error);
+      throw error;
+    }  
+  }
+
+  async getseaWeedProcessExpLogs(input,type): Promise<any> {
+    try {    
+      if(!input?.tenant || !input?.app?.code) throw 'Invalid Payload'
+      let downloadedFile = []
+      let filename = `${input?.tenant}-${input?.app?.code}${type}`
+     
+      let response = await this.getPostgresProcessLogs(input,type)
+      
+      let bucketName = type.endsWith('-TSL')?'ExpLog':'PrcLog'
+
+      if(response?.data.length>0){
+        for(let item of response.data){                    
+          downloadedFile.push(await this.commonService.downloadAndParseFile(input?.tenant,`/${bucketName}/${filename}/${item.key}.json`));
+        }
+      }
+      
+      downloadedFile = downloadedFile.flat()
+      
+        if(downloadedFile.length>0){    
+        const timeZone = process.env.TIMEZONE;
+     
+        if(timeZone && timeZone != 'UTC'){        
+
+          if(type.endsWith('-TPL')){
+          for (const item of downloadedFile) {
+
+            const utcDate = new Date(item.DateAndTime);
+              item.DateAndTime = this.commonService.convertTimeZone(utcDate);  
+
+              let upidVal = item.AFSK ? Object.values(item.AFSK)[0] : null;
+            if (Array.isArray(upidVal)) {
+              for (const upidItem of upidVal) {               
+                const upidutcDate = new Date(upidItem.DateAndTime);
+                  upidItem.DateAndTime = this.commonService.convertTimeZone(upidutcDate)             
+                }
+              }    
+            }
+          }else if(type.endsWith('-TSL')){
+            for (const item of downloadedFile) {
+              const utcDate = new Date(item.DateAndTime); 
+              item.DateAndTime = this.commonService.convertTimeZone(utcDate);  
+              if(item?.AFSK?.DateAndTime)
+                item.AFSK.DateAndTime = this.commonService.convertTimeZone(item.AFSK.DateAndTime)    
+            }
+          }
+        }
+      }
+      response['data'] = downloadedFile
+      return response
+    }catch(error:any){
+      console.log("ERROR123", error);
+      if(error.message) error = error.message    
+      throw new BadRequestException(error)
+    }
+  }
+
+  async getPostgresProcessLogs(input: any,type:string): Promise<any> {
+    try {
+      const {
+        tenant,user,FromDate,ToDate,fabric,appgroup,
+        app,searchParam,page = 1,limit = 10,sortOrder,} = input;
+      
+      const PG_SCHEMANAME = 'processlog';
+      const tableName = (`${tenant}-${app?.code}${type}`).toLowerCase();
+
+      if (!this.commonService.isSafeSqlIdentifier(tenant) || !this.commonService.isSafeSqlIdentifier(app?.code)) {
+        throw new BadRequestException('Invalid tenant/app code');
+      }
+
+      // console.log('tableName', tableName);
+      const params: any[] = [];
+      let whereClause = `WHERE ck_code = $1`;
+      params.push(tenant);
+
+      // User Filter
+      if (user?.length > 0) {
+        whereClause += ` AND "user_name" = ANY($${params.length + 1})`;
+        params.push(user);
+      }
+
+      // Fabric Filter
+      if (fabric?.length > 0) {
+        whereClause += ` AND "fnk_code" = ANY($${params.length + 1})`;
+        params.push(fabric);
+      }
+
+      // App Group
+      if (appgroup?.code) {
+        whereClause += ` AND "ag_code" = $${params.length + 1}`;
+        params.push(appgroup.code);
+      }
+
+      // App
+      if (app?.code) {
+        whereClause += ` AND "app_code" = $${params.length + 1}`;
+        params.push(app.code);
+      }
+
+      // Date Filter
+      // if (FromDate) {
+      //   whereClause += ` AND "date_and_time" >= $${params.length + 1}`;
+      //   params.push(FromDate);
+      // }
+
+      // if (ToDate) {
+      //   // whereClause += ` AND "date_and_time" <= $${params.length + 1}`;
+      //   whereClause += ` AND "date_and_time" < $${params.length + 1} + INTERVAL '1 day'`;
+      //   params.push(ToDate);
+      // }
+
+      if (FromDate) {
+        whereClause += ` AND "date_and_time" >= $${params.length + 1}::date`;
+        params.push(FromDate);
+      }
+
+      if (ToDate) {
+        whereClause += ` AND "date_and_time" < ($${params.length + 1}::date + INTERVAL '1 day')`;
+        params.push(ToDate);
+      }
+
+      // Global Search
+      if (searchParam) {
+        whereClause += `
+        AND (
+          ck_code ILIKE $${params.length + 1}         
+          OR "fnk_code" ILIKE $${params.length + 1}
+          OR "ag_code" ILIKE $${params.length + 1}        
+          OR "app_code" ILIKE $${params.length + 1}         
+          OR "user_name" ILIKE $${params.length + 1} 
+          OR CAST("date_and_time" AS TEXT) ILIKE $${params.length + 1}
+          OR "upid" ILIKE $${params.length + 1}
+        )
+        `;
+        params.push(`%${searchParam}%`);
+      }
+
+      const orderBy = sortOrder === 'oldest' ? 'ASC' : 'DESC';
+
+      // Total Count
+      const countQuery = `
+      SELECT COUNT(*) AS total
+      FROM "${PG_SCHEMANAME}"."${tableName}"
+      ${whereClause}
+      `;
+
+      const countResult = await this.query(countQuery, params);
+
+      const totalDocuments = Number(countResult[0].total);
+
+      // Pagination
+      const offset = (page - 1) * limit;
+
+      const dataQuery = `
+        SELECT key,upid
+        FROM  "${PG_SCHEMANAME}"."${tableName}"
+        ${whereClause}
+        ORDER BY "date_and_time" ${orderBy}
+        LIMIT $${params.length + 1}
+        OFFSET $${params.length + 2}
+      `;
+      //console.log('dataQuery',dataQuery);
+      //console.log('params',params);
+      
+      const data = await this.query(dataQuery, [
+        ...params,
+        limit,
+        offset,
+      ]);
+      
+      return {
+        data,
+        page,
+        limit,
+        totalPages: Math.ceil(totalDocuments / limit),
+        totalDocuments,
+      }
+    } catch (error:any) {
+      if (error instanceof HttpException) throw error;
+      throw new BadRequestException( error);
+    }
+  }
+
+  async acquireLock(dto: LockRecordDto) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const recordSchema = dto.tableName.startsWith('tam_') ? schemaName : '';
+
+      const rows = await client.query(
+        `SELECT trs_locked_by, trs_locked_time FROM ${recordSchema}."${dto.tableName}" WHERE ${dto.key} = $1 FOR UPDATE`,
+        [dto.value],
+      );
+
+      if (!rows.rows.length) {
+        throw new Error('Record not found');
+      }
+
+      if (rows.rows[0].trs_locked_by && rows.rows[0].trs_locked_by !== dto.userId) {
+        throw new HttpException(
+          {
+            message: `Record locked by ${rows.rows[0].trs_locked_by}`,
+            lockedBy: rows.rows[0].trs_locked_by,
+            lockedTime: rows.rows[0].trs_locked_time,
+          },
+          HttpStatus.CONFLICT,
+        );
+      }
+
+      await client.query(
+        `UPDATE ${recordSchema}."${dto.tableName}"
+         SET trs_locked_by = $2, trs_locked_time = CURRENT_TIMESTAMP
+         WHERE ${dto.key} = $1`,
+        [dto.value, dto.userId],
+      );
+
+      await client.query(
+        `INSERT INTO ct010_tam.tam_transaction_locks
+           (table_name, transaction_id, trs_locked_by, trs_locked_on)
+         VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+         ON CONFLICT (table_name, transaction_id)
+         DO UPDATE
+           SET trs_locked_by = EXCLUDED.trs_locked_by,
+               trs_locked_on = CURRENT_TIMESTAMP`,
+        [dto.tableName, String(dto.value), dto.userId],
+      );
+
+      await client.query('COMMIT');
+
+      return {
+        success: true,
+        message: 'Record locked successfully',
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async releaseLock(dto: LockRecordDto) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const recordSchema = dto.tableName.startsWith('tam_') ? schemaName : '';
+
+      const rows = await client.query(
+        `SELECT trs_locked_by, trs_locked_time FROM ${recordSchema}."${dto.tableName}" WHERE ${dto.key} = $1 FOR UPDATE`,
+        [dto.value],
+      );
+
+      if (!rows.rows.length) {
+        throw new Error('Record not found');
+      }
+
+      if (!rows.rows[0].trs_locked_by) {
+        throw new HttpException(
+          { message: 'Record is already unlocked' },
+          HttpStatus.CONFLICT,
+        );
+      }
+
+      if (rows.rows[0].trs_locked_by !== dto.userId) {
+        throw new HttpException(
+          {
+            message: `Only '${rows.rows[0].trs_locked_by}' can unlock this record.`,
+            lockedBy: rows.rows[0].trs_locked_by,
+            lockedTime: rows.rows[0].trs_locked_time,
+          },
+          HttpStatus.CONFLICT,
+        );
+      }
+
+      await client.query(
+        `UPDATE ${recordSchema}."${dto.tableName}"
+         SET trs_locked_by = NULL, trs_locked_time = NULL
+         WHERE ${dto.key} = $1`,
+        [dto.value],
+      );
+
+      await client.query(
+        `DELETE FROM ct010_tam.tam_transaction_locks
+         WHERE table_name = $1
+           AND transaction_id = $2
+           AND trs_locked_by = $3`,
+        [dto.tableName, String(dto.value), dto.userId],
+      );
+
+      await client.query('COMMIT');
+
+      return {
+        success: true,
+        message: 'Record unlocked successfully',
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async releaseAllLocks(userId: string) {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const locks = await client.query(
+        `SELECT table_name, transaction_id FROM ct010_tam.tam_transaction_locks
+         WHERE trs_locked_by = $1`,
+        [userId],
+      );
+
+      for (const lock of locks.rows) {
+        const recordSchema = lock.table_name.startsWith('tam_') ? schemaName : '';
+        await client.query(
+          `UPDATE ${recordSchema}."${lock.table_name}"
+           SET trs_locked_by = NULL, trs_locked_time = NULL
+           WHERE trs_locked_by = $1`,
+          [userId],
+        );
+      }
+
+      await client.query(
+        `DELETE FROM ct010_tam.tam_transaction_locks
+         WHERE trs_locked_by = $1`,
+        [userId],
+      );
+
+      await client.query('COMMIT');
+
+      return {
+        success: true,
+        message: 'All locks released successfully',
+        releasedCount: locks.rows.length,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
     }
   }
 }

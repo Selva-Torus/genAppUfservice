@@ -4,7 +4,6 @@ import {
   SearchIcon
 } from '@/app/components/svgApplication'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { getCookie } from '@/app/components/cookieMgment'
 import { checkDataAccess } from '@/app/utils/checkDAP'
 import { AxiosService } from '@/app/components/axiosService'
 import { CiCalendarDate } from 'react-icons/ci'
@@ -21,6 +20,7 @@ import { getCdnImage } from '@/app/utils/getAssets'
 import { getFontSizeForSubHeader } from '@/app/utils/branding'
 import { get } from 'lodash'
 import clsx from 'clsx'
+import { useGlobal } from '@/context/GlobalContext'
 
 const FilterModal = ({
   range,
@@ -32,7 +32,8 @@ const FilterModal = ({
   setUser,
   activeTab,
   localSortOrder,
-  setLocalSortOrder
+  setLocalSortOrder,
+  setJsonData
 }: {
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
   range: any
@@ -44,6 +45,7 @@ const FilterModal = ({
   activeTab: string
   localSortOrder: string
   setLocalSortOrder: React.Dispatch<React.SetStateAction<string>>
+  setJsonData: React.Dispatch<React.SetStateAction<any>>
 }) => {
   const [isDateRangeOpen, setDateRangeOpen] = useState(false)
   const [selectedDateRange, setSelectedDateRange] = useState<any>(range)
@@ -52,7 +54,8 @@ const FilterModal = ({
   const [searchTerm, setSearchTerm] = useState('')
   const [userList, setuserList] = useState<Array<any>>([])
   const [loading, setLoading] = useState(false)
-  const token: string = getCookie('token')
+  const { token } = useGlobal();
+
 
   const isAdminUser = useMemo(() => checkDataAccess(token), [token])
   const { isDark, borderColor, textColor, bgColor, branding } = useTheme()
@@ -100,6 +103,9 @@ const FilterModal = ({
     setFabrics(selectedKeys);
     setUser(selectedUsers);
     setOpen(false);
+    setJsonData((prev: any) => ({
+      ...prev, page: 1
+    }))
   };
 
   const getOrgAndUserData = async () => {
@@ -111,7 +117,7 @@ const FilterModal = ({
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/UF/getAppSecurityData`,
         {
           headers: {
-            Authorization: `Bearer ${getCookie('token')}`
+            Authorization: `Bearer ${token}`
           }
         }
       )

@@ -48,6 +48,7 @@ export interface api_paginationDto{
     dpdKey?:string;
     method?:string;
     filterData?:any[];
+    sortingDetails?:any;
   }
 export interface uf_paginationDataFilterDto{
     data?:any;
@@ -153,7 +154,7 @@ export interface ScreenDetail {
   label?: string;
   static?:boolean;
   icon?:string;
-  allowedAccessProfile:any;
+  restrictedAccessProfile:any;
 }
 
 export interface MenuItem {

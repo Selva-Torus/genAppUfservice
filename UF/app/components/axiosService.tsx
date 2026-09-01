@@ -1,15 +1,19 @@
 import axios from 'axios'
-import * as crypto from 'crypto'
+// encrypt/decrypt/clientEncrypt/clientDecrypt are 'use server' actions: their
+// bodies (and the getEnvData() key lookups inside them) run only on the
+// server. This file never imports getEnvData or resolves key material itself
+// — it only ever forwards the tenant-identifying dpdKey/method across the
+// server action boundary.
 import { encryptData } from '../utils/encrypt'
 import { decryptData } from '../utils/decrypt'
 import { clientDecrypt } from '../utils/clientDecrypt'
 import { clientEncrypt } from '../utils/clientEncrypt'
-import getEnvData from '../getEnvData'
 import {localEncrypt, localDecrypt} from '../utils/localCrypto'
 const url = process.env.NEXT_PUBLIC_API_BASE_URL
 
 const AxiosService = axios.create({
   baseURL: url,
+  withCredentials: false,
   headers: {
     'Content-Type': 'application/json'
   }
@@ -18,32 +22,28 @@ const AxiosService = axios.create({
 AxiosService.interceptors.request.use(
   async (config) => {
      if (config.data && ['post', 'put', 'patch'].includes(config.method || '') && config.data.dpdKey && config.data.method ) {
-      let encryptionData:any = {};
       let dpdKey = config.data.dpdKey
       let method = config.data.method
       let authTag: any
-      let deploymentData:any =  await getEnvData(config.data.dpdKey,method)
-      // let deploymentId = Object.keys(deploymentData)[0]
-      for (let i = 0; i < deploymentData.encryptionInfo.items.length; i++) {
-      if (deploymentData.encryptionInfo.items[i].type === config.data.method) {
-        encryptionData["credentials"] = deploymentData.encryptionInfo.items[i];        
-        }            
-      }
+      let iv: any
       delete config.data.dpdKey
       delete config.data.method
       let ciphertext : any;
       if(method == "vault"){
-        const encrypt = { Credentials: encryptionData.credentials, value: config.data, context: "ct010_ag001_a001_v1" }
-        const vaultEncrypt = await localEncrypt(encrypt)
-        ciphertext = await encryptData(vaultEncrypt)
+        const wrapped = await localEncrypt({ value: config.data, context: "ct010_ag001_a001_v1" })
+        ciphertext = await encryptData(dpdKey, wrapped)
       }else{
-        ciphertext = await clientEncrypt(encryptionData.credentials,config.data,"ct010_ag001_a001_v1")
+        ciphertext = await clientEncrypt(dpdKey, method, config.data, "ct010_ag001_a001_v1")
       }
-      if(method == "AESGCM"){
+      if(method == "AESGCM" || method == "AESCTR"){
+        // clientEncrypt now generates a fresh random IV per call instead of
+        // reusing the static per-tenant config IV, so it must travel with
+        // the ciphertext for clientDecrypt to reverse it.
         authTag = ciphertext?.authTag
-        ciphertext = ciphertext.ciphertext  
+        iv = ciphertext?.iv
+        ciphertext = ciphertext?.ciphertext
       }
-      config.data = JSON.stringify({ ciphertext, dpdKey , method, authTag}) // send { encrypted: <value> }
+      config.data = JSON.stringify({ ciphertext, dpdKey , method, authTag, iv}) // send { encrypted: <value> }
     }
     return config
   },
@@ -55,16 +55,8 @@ AxiosService.interceptors.request.use(
 AxiosService.interceptors.response.use(
   async(response:any) => {
     if ( response.data.dpdKey && response.data.method ) {
-      let encryptionData:any = {};
       let dpdKey = response.data.dpdKey
       let method = response.data.method
-      let deploymentData =  await getEnvData(response.data.dpdKey,method)
-      // let deploymentId = Object.keys(deploymentData)[0]
-      for (let i = 0; i < deploymentData.encryptionInfo.items.length; i++) {
-      if (deploymentData.encryptionInfo.items[i].type === response.data.method) {
-        encryptionData["credentials"] = deploymentData.encryptionInfo.items[i];        
-        }            
-      }
       delete response.data.dpdKey
       delete response.data.method
 
@@ -72,7 +64,7 @@ AxiosService.interceptors.response.use(
         let vault = await decryptData(response.data, dpdKey)
         response.data = await localDecrypt(vault)
       }else{
-        response.data = await clientDecrypt(encryptionData.credentials,response.data,"ct010_ag001_a001_v1")
+        response.data = await clientDecrypt(dpdKey, method, response.data, "ct010_ag001_a001_v1")
       }
     }
     return response
@@ -83,3 +75,4 @@ AxiosService.interceptors.response.use(
 )
 
 export { AxiosService }
+

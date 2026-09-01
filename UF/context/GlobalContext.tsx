@@ -19,8 +19,9 @@ interface GlobalContextType extends GlobalProps {
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
 
-export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
+export const GlobalProvider: React.FC<{ children: ReactNode , tokenParam:string }> = ({
   children,
+  tokenParam
 }) => {
   // Initialize theme from cookie or default to "light"
   const [theme, setThemeState] = useState<Theme>(() => {
@@ -29,6 +30,7 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
   });
 
   const [language, setLanguage] = useState<Language>("English");
+  const [token , setToken] = useState(tokenParam);
 
   // Initialize direction from cookie or default to "LTR"
   const [direction, setDirectionState] = useState<Direction>(() => {
@@ -40,7 +42,11 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
       dateDisplayFormat: "DD-MM-YYYY",
     },
     textInputProperty:{
-      currencyDisplayFormat: "DD-MM-YYYY",
+      currencyDisplayFormat: "₹",
+      decimal_places:3
+    },
+    timePickerProperty:{
+       timeDisplayFormat: "HH:mm",
     }
   });
   const [branding, setBrandingState] = useState<Branding>({
@@ -91,11 +97,15 @@ export const GlobalProvider: React.FC<{ children: ReactNode }> = ({
     if (typeof window !== 'undefined') {
       document.documentElement.dir = direction.toLowerCase();
     }
-  }, [direction]);
+    if(token != tokenParam){
+      setToken(tokenParam)
+    }
+  }, [direction , tokenParam]);
 
   return (
     <GlobalContext.Provider
       value={{
+        token,
         theme,
         language,
         direction,

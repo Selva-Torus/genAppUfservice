@@ -11,7 +11,7 @@ import { useInfoMsg } from "@/app/components/infoMsgHandler";
 import { TotalContext, TotalContextProps } from '@/app/globalContext';
 import { uf_getPFDetailsDto,uf_initiatePfDto,te_eventEmitterDto,uf_ifoDto,te_updateDto, te_refreshDto } from '@/app/interfaces/interfaces';
 import { AxiosService } from '@/app/components/axiosService';
-import { getCookie } from '@/app/components/cookieMgment';
+import { useGlobal } from '@/context/GlobalContext'
 import { nullFilter } from '@/app/utils/nullDataFilter';
 import {commonSepareteDataFromTheObject, eventFunction } from '@/app/utils/eventFunction';
 import { useRouter } from 'next/navigation';
@@ -31,6 +31,7 @@ import decodeToken from '@/app/components/decodeToken';
 import { getGridPositionFromOrder } from '@/app/utils/getGridPositionFromOrder';
 import { Scan } from '@/app/utils/scanService';
 import { exportJsonToExcel } from '@/app/utils/jsonToExcel';
+import { getGroupOrchestrationData, getControlOrchestrationData } from '@/app/utils/Orchestration';
 import { XMLParser } from 'fast-xml-parser'
 
     
@@ -55,11 +56,11 @@ function objectToQueryString(obj: any) {
 }
  
 
-const Buttonbutton =  ({ lockedData,setLockedData,tableData, setTableData, primaryTableData, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData,setIsProcessing}: { lockedData:any,setLockedData:any,tableData:any, setTableData:any, checkToAdd:any,setCheckToAdd:any,refetch:any,setRefetch:any,primaryTableData:any,setPrimaryTableData:any,encryptionFlagCompData:any,setIsProcessing:any}) => {
-  const token:string = getCookie('token');
+const Buttonbutton = ({ lockedData, setLockedData, tableData, setTableData, primaryTableData, setPrimaryTableData,checkToAdd,setCheckToAdd,refetch,setRefetch,encryptionFlagCompData,setIsProcessing,controlData}: { lockedData:any,setLockedData:any,tableData:any,setTableData:any,checkToAdd:any,setCheckToAdd:any,refetch:any,setRefetch:any,primaryTableData:any,setPrimaryTableData:any,encryptionFlagCompData:any,setIsProcessing:any,controlData:any}) => {
+  const { token } = useGlobal();
   const {currentToken, setCurrentToken} = useContext(TotalContext) as TotalContextProps;
-  const decodedTokenObj : any = decodeToken(token);
-  const createdBy:string =decodedTokenObj.users;
+  const decodedTokenObj:any = decodeToken(token);
+  const createdBy : string = decodedTokenObj.users;
   const {globalState , setGlobalState} = useContext(TotalContext) as TotalContextProps;
   const {validate , setValidate} = useContext(TotalContext) as TotalContextProps;
   const {validateRefetch , setValidateRefetch} = useContext(TotalContext) as TotalContextProps;
@@ -68,25 +69,25 @@ const Buttonbutton =  ({ lockedData,setLockedData,tableData, setTableData, prima
   const {memoryVariables, setMemoryVariables} = useContext(TotalContext) as TotalContextProps;
   const { eventEmitterData,setEventEmitterData}= useContext(TotalContext) as TotalContextProps;
   const handleDfdRefresh = useHandleDfdRefresh();
-  const [styleSate, setStyleSate] = useState<any>({})
 
-  let code : string = "";
-  let rule : any = {};
+  let code:string = "";
+  const prevRefreshRef = useRef(false);
+  const [ruleData,setRulseData]=useState<any>([])
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [paginationData, setPaginationData] = React.useState({
     page: 0,
     pageSize: 0,
     total: 0,
   })
-  const validationResolverRef = useRef<((value: any) => void) | null>(null);
   const savedData=useRef<Record<string, any>>({})
   const validateRef = useRef<any>(null);
   const keyset:any=i18n.keyset("language");
   const confirmMsgFlag: boolean = false; 
-  const toast : Function = useInfoMsg();
+  const toast : Function=useInfoMsg();
   let dfKey: string | any;
   const [showFlag, setShowFlag] = React.useState<boolean>(true);
-  const lockMode:any = lockedData?.lockMode;
+  const [styleSate, setStyleSate] = useState<any>({})
+  const lockMode:any = lockedData.lockMode;
   const [loading, setLoading] = useState<boolean>(false);
   const routes : AppRouterInstance = useRouter();
   const encryptionFlagCont: boolean = encryptionFlagCompData.flag || false;
@@ -94,9 +95,12 @@ const Buttonbutton =  ({ lockedData,setLockedData,tableData, setTableData, prima
   encryptionDpd = encryptionDpd !=='' ? encryptionDpd: encryptionFlagCompData.dpd;
   let encryptionMethod: string = "";
   encryptionMethod  = encryptionMethod !=='' ? encryptionMethod: encryptionFlagCompData.method;
-  let actionLockData :any = {"ttl":"","name":"","lockMode":""}
+  let actionLockData : any = {"ttl":"","name":"","lockMode":""}
+  const [allCode,setAllCode]=useState<string>("");
   const [gridPosition, setGridPosition] = useState<any>({ gridColumn: '1 / 3', gridRow: '1 / 12' });
-  //showComponentAsPopup || showArtifactAsModal
+    const [hiddenModalForTrigger, setHiddenModalForTrigger] = React.useState<boolean>(false);  
+  ////showComponentAsPopup || showArtifactAsModal
+  const [assetDataReady, setAssetDataReady] = React.useState<boolean>(false);
     
  /////////////
    //another screen
@@ -106,14 +110,14 @@ const Buttonbutton =  ({ lockedData,setLockedData,tableData, setTableData, prima
   const {buttond4624, setbuttond4624}= useContext(TotalContext) as TotalContextProps;
   //////////////
   const pendingAutoSearch = useRef(false);
+  const preloadDone = useRef(false);
   // keep update group state in ref to access latest state value
   const groupd23afRef = useRef(groupd23af);
   useEffect(() => {
     groupd23afRef.current = groupd23af;
-    if(pendingAutoSearch.current){
+    if (!pendingAutoSearch.current) return;
       pendingAutoSearch.current = false;
-      handleClick();
-    }
+      handleClick(false);
   }, [groupd23af]);
   
   //group props in ref to access latest props value
@@ -121,13 +125,12 @@ const Buttonbutton =  ({ lockedData,setLockedData,tableData, setTableData, prima
   useEffect(() => {
     groupd23afPropsRef.current = groupd23afProps;
   }, [groupd23afProps]);
-
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
   let customCode:any;
   const handleCustomCode=async () => {
+    code = allCode ||""
     if (code != '') {
-      let codeStates: any = {};
+      let codeStates: Record<string, any> = {};
         codeStates['group'] = groupd23af,
         codeStates['setgroup'] = setgroupd23af,
         codeStates['groupd23af'] = groupd23afProps,
@@ -142,22 +145,47 @@ const Buttonbutton =  ({ lockedData,setLockedData,tableData, setTableData, prima
   const {test_v1, settest_v1} = useContext(TotalContext) as TotalContextProps;
   const handleMapper=async (data?:any) => {
     try{     
+      data = {...data,...groupd23afRef.current};
+      let parentRowSpan = 157;
+      const orchestrationData : any = getControlOrchestrationData(
+        controlData,
+        "1917aeed17e846bba0eec1c2417d23af",
+        "f1bd0db2c469470ea7d033597b8d4624"
+      );
+      if(orchestrationData?.data?.error == true){
+        return
+      }
+      setAllCode(orchestrationData?.data?.code);
+      setPaginationData((pre: any) => ({
+      ...pre,
+          page: +orchestrationData?.data?.action?.pagination?.page || 1,
+          pageSize: +orchestrationData?.data?.action?.pagination?.count || 1000
+    }))
+
+    /////////
     }catch(err){
-      console.log(err)
+        console.log(err);
     }
   }
 
   useEffect(()=>{
     handleMapper();
-    const handler = (id:any) => {
+    const handler = async (id:any) => {
       if (id === "buttond4624") {
-        handleClick();
+        handleClick(false);
+      }
+    };
+    const triggerElementHandler = async (id:any) => {
+      if (id === "f1bd0db2c469470ea7d033597b8d4624") {
+        handleClick(false);
       }
     };
     eventBus.on("triggerButton", handler);
+    eventBus.on("triggerElement|onClick", triggerElementHandler);
     eventBus.emit("buttonReady", "buttond4624");
     return () => {
       eventBus.off("triggerButton", handler);
+      eventBus.off("triggerElement|onClick", triggerElementHandler);
     };
   },[currentToken,memoryVariables])
 
@@ -165,12 +193,11 @@ const Buttonbutton =  ({ lockedData,setLockedData,tableData, setTableData, prima
     validateRef.current = validate;  
   }, [validate]);
 
+
+
   useEffect(()=>{
     if (!buttond4624?.trigger) return;
       if(buttond4624?.trigger){
-      (async()=>{
-        await handleClick();
-      })();
       setbuttond4624((prev:any) => ({...prev, trigger: !prev?.trigger}));
       (async()=>{
         await handleMapper();
@@ -187,50 +214,57 @@ const Buttonbutton =  ({ lockedData,setLockedData,tableData, setTableData, prima
     })();
     }
   },[buttond4624?.refresh])
+  
 
   function SourceIdFilter(eventProperty:any,matchingSequence?:string){
     let ans : any[] = [];
     let id : string = "";
     if(eventProperty.name=='saveHandler' && eventProperty.sequence == matchingSequence)
     {
-      return [eventProperty.id];
+      return [eventProperty.id]
     }
     if(eventProperty.name=='eventEmitter' && eventProperty.sequence == matchingSequence)
     {
-      return [eventProperty.id];
+      return [eventProperty.id]
     }
     for(let i=0;i<eventProperty?.children?.length;i++)
     {
       let temp:any=SourceIdFilter(eventProperty?.children[i],matchingSequence)
       if(temp.length)
       {
-        ans.push(eventProperty?.children[i].id);
-        id=id+"|"+eventProperty?.children[i].id;
-        ans.push(...temp);
+        ans.push(eventProperty?.children[i].id)
+        id=id+"|"+eventProperty?.children[i].id
+        ans.push(...temp)
       }
     }
-    return ans;
+    return ans
   }
 
-  const handleClick=async()=>{
-    try{  
+  const handleClick=async(showModal: boolean = true)=>{
+    if (!showModal && preloadDone.current) return;
+    if (!showModal) preloadDone.current = true;
+    setHiddenModalForTrigger(!showModal);
+    try{
       setIsProcessing(true);
-      setgroupd23af((prev: any) => ({ ...prev, button: true }));
+        setgroupd23af((prev: any) => ({ ...prev, button: true }));
       await handleCustomCode();
     }catch (err: any) {
       setIsProcessing(false);
-      setgroupd23af((prev: any) => ({ ...prev, button: false }));
+        setgroupd23af((prev: any) => ({ ...prev, button: false }));
       if(typeof err == 'string')
         toast(err, 'danger');
       else
         toast(err?.response?.data?.errorDetails?.message, 'danger');
       setLoading(false);
     }finally{
-      setIsProcessing(false);
-      setgroupd23af((prev: any) => ({ ...prev, button: false }));
+        setIsProcessing(false);
+        setgroupd23af((prev: any) => ({ ...prev, button: false }));
     }
   }
-
+   const handleAssetPageReady = () => {
+    setAssetDataReady(true);
+    setIsProcessing(false);
+  }
 
  if (buttond4624?.isHidden) {
     return <></>
@@ -239,10 +273,10 @@ const Buttonbutton =  ({ lockedData,setLockedData,tableData, setTableData, prima
   return (
     <div
       style={{gridColumn: `6 / 12`,gridRow: `30 / 65`, gap:``, height: `100%`, overflow: 'auto'}} 
- >
+      >
         {showFlag && <Button 
           ref={buttonRef}
-          className="   "
+          className=""
           onClick={handleClick}
           view='action'
           disabled= {buttond4624?.isDisabled ? true : false}
@@ -257,5 +291,4 @@ const Buttonbutton =  ({ lockedData,setLockedData,tableData, setTableData, prima
 }
 
 export default Buttonbutton
-
 

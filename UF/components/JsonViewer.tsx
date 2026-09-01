@@ -26,27 +26,23 @@ export const JsonViewer = ({
   const keyset = i18n.keyset('language')
   const {branding} = useGlobal()
 
-  const jsonViewerElement = (
-    <div
-      className={`mt-2
-      h-full w-full items-center rounded-lg`}
-    >
-      <div className={`ml-2 h-[92%] w-[100%]`}>
-        {data ? (
-          <JsonView
-            theme='atom'
-            enableClipboard={false}
-            src={data ?? { data: 'data not available' }}
-            className='max-h-[60vh] overflow-y-scroll md:max-h-[80vh]'
-          />
-        ) : (
-          <Text className='p-2 text-center'>
-            {keyset('No Data available')}
-          </Text>
-        )}
-      </div>
+const jsonViewerElement = (
+  <div className="h-full w-full flex flex-col overflow-hidden">
+    <div className="flex-1 overflow-y-auto overflow-x-hidden">
+      {data ? (
+        <JsonView
+          theme="atom"
+          enableClipboard={false}
+          src={data}
+        />
+      ) : (
+        <Text className="p-2 text-center">
+          {keyset('No Data available')}
+        </Text>
+      )}
     </div>
-  )
+  </div>
+)
 
   return (
     <CommonHeaderAndTooltip

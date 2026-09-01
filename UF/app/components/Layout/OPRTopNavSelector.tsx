@@ -11,6 +11,10 @@ import { MdClose } from 'react-icons/md'
 import { LuSearch } from 'react-icons/lu'
 import { TotalContext, TotalContextProps } from '@/app/globalContext'
 import { getCdnImage } from '@/app/utils/getAssets'
+import { isLightColor } from '../utils'
+import Image from "next/image";
+import axios from 'axios'
+import { useGlobal } from '@/context/GlobalContext'
 
 interface Role {
   roleCode: string
@@ -722,16 +726,24 @@ const OPRTopNavSelector = ({
   const orgPopupRef = React.useRef<HTMLButtonElement>(null)
   const prodPopupRef = React.useRef<HTMLButtonElement>(null)
   const rolePopupRef = React.useRef<HTMLButtonElement>(null)
-  const { currentToken, setCurrentToken, matchedAccessProfileData, setMatchedAccessProfileData } = useContext(
+  const { matchedAccessProfileData, setMatchedAccessProfileData } = useContext(
     TotalContext
   ) as TotalContextProps
   const tp_ps = getCookie('tp_ps')
-  const token = getCookie('token')
   const [selectedOrg, setSelectedOrg] = React.useState<null | any>(null)
   const [selectedSubOrg, setSelectedSubOrg] = React.useState<null | any>(null)
   const [selectedProd, setSelectedProd] = React.useState<null | any>(null)
   const [selectedRole, setSelectedRole] = React.useState<null | any>(null)
-  const { borderColor, isDark } = useTheme()
+  const { branding } = useTheme()
+  const { token } = useGlobal()
+  const { brandColor } = branding
+  const brandTextColor = useMemo(() => {
+    if(brandColor){
+      return isLightColor(brandColor)
+    }else{
+      return '#000'
+    }
+  } , [brandColor])
 
   const assignOriginalIndex = (data: any): any => {
     if (Array.isArray(data)) {
@@ -764,9 +776,9 @@ const OPRTopNavSelector = ({
 
   const getSecurityTemplate = async () => {
     try {
-      const res = await AxiosService.get(`UF/getAPPSecurityTemplateData`, {
+      const res = await AxiosService.get(`UF/getAccessTemplates`, {
         headers: {
-          Authorization: `Bearer ${getCookie('token')}`
+          Authorization: `Bearer ${token}`
         }
       })
       if (res.status === 200 && Array.isArray(res['data'])) {
@@ -985,23 +997,15 @@ const OPRTopNavSelector = ({
         id: currentSubOrg ? currentSubOrg?.id : currentOrg?.id
       }
 
-      const res = await AxiosService.post(
-        `/UF/getAccessToken`,
-        {
+     const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? ''; 
+     const res = await axios.post(`${basePath}/next-api/auth/get-access-token`, {
           selectedCombination: selectedCombo,
           selectedAccessProfile: matchedAccessProfileData?.accessProfile,
           dap: matchedAccessProfileData?.dap,
           ufClientType: 'UFW'
         },
-        {
-          headers: {
-            authorization: `Bearer ${token}`
-          }
-        }
       )
-      if (res.status == 201) {
-        setCookie('token', res.data.token)
-        setCurrentToken(res.data.token)
+      if (res.status == 200) {
         setCookie(
           'tp_ps',
           btoa(
@@ -1031,34 +1035,35 @@ const OPRTopNavSelector = ({
   }
 
   return (
-    <div className={clsx(`h-full flex gap-2 px-4 ${fullView ? "justify-evenly" : "justify-around"} `, className)}>
+    <div className={clsx(`h-full flex items-center gap-2  ${fullView ? "justify-evenly" : "justify-around px-4"} overflow-visible min-w-0`, className)}>
       <>
         <button
           ref={orgPopupRef}
           onClick={() => handleStageClick('org')}
           className={clsx(
-            'flex items-center justify-center gap-2 rounded-full border px-3 py-1 hover:bg-[var(--hover-color)]',
-            borderColor,
+            'flex items-center justify-center gap-2 rounded-full bg-[var(--brand-color)]',
             {
-              'bg-[var(--selection-color)]': activeStage == 'org',
-              'w-[unset]': !fullView,
-              'max-w-36': fullView
+              'w-[unset] px-3 py-1': !fullView,
+              'max-w-[8vw] min-w-[7vw] px-[1vw] py-[0.3vh]': fullView
             }
           )}
+          style={{
+            color : brandTextColor
+          }}
           title={selectedOrg?.orgName ? `Organization: \n${selectedOrg?.orgName}` : 'Select Organization'}
         >
           {fullView ? (
             <>
               <div className='w-[90%]'>
                 <div className='flex items-center gap-1'>
-                  <OrgStructure />
-                  <Text contentAlign='left' className='!text-xs'>
+                  <OrgStructure height='1vw' width='1vw'/>
+                  <Text contentAlign='left' className='!text-[0.6vw]'>
                     Organization
                   </Text>
                 </div>
                 <Text
                   contentAlign='left'
-                  className='block w-full truncate text-left !text-sm'
+                  className='block w-full truncate text-left'
                 >
                   {selectedOrg?.orgName}
                 </Text>
@@ -1083,28 +1088,29 @@ const OPRTopNavSelector = ({
           ref={prodPopupRef}
           onClick={() => handleStageClick('prod')}
           className={clsx(
-            'flex items-center justify-center gap-2 rounded-full border px-3 py-1 hover:bg-[var(--hover-color)]',
-            borderColor,
+            'flex items-center justify-center gap-2 rounded-full bg-[var(--brand-color)]',
             {
-              'bg-[var(--selection-color)]': activeStage == 'prod',
-              'w-[unset]': !fullView,
-              'max-w-36': fullView
+              'w-[unset] px-3 py-1': !fullView,
+              'max-w-[8vw] min-w-[7vw] px-[1vw] py-[0.3vh]': fullView
             }
           )}
+          style={{
+            color : brandTextColor
+          }}
           title={selectedProd?.psName ? `Product: \n${selectedProd?.psName}` : 'Select Product'}
         >
           {fullView ? (
             <>
               <div className='w-[90%]'>
                 <div className='flex items-center gap-1'>
-                  <ProdStructure />
-                  <Text contentAlign='left' className='!text-xs'>
+                  <ProdStructure height='1vw' width='1vw'/>
+                  <Text contentAlign='left' className='!text-[0.6vw]'>
                     Products
                   </Text>
                 </div>
                 <Text
                   contentAlign='left'
-                  className='block w-full truncate text-left !text-sm'
+                  className='block w-full truncate text-left'
                 >
                   {selectedProd?.psName}
                 </Text>
@@ -1129,28 +1135,29 @@ const OPRTopNavSelector = ({
           ref={rolePopupRef}
           onClick={() => handleStageClick('role')}
           className={clsx(
-            'flex items-center justify-center gap-2 rounded-full border px-3 py-1 hover:bg-[var(--hover-color)]',
-            borderColor,
+            'flex items-center justify-center gap-2 rounded-full bg-[var(--brand-color)]',
             {
-              'bg-[var(--selection-color)]': activeStage == 'role',
-              'w-[unset]': !fullView,
-              'max-w-36 min-w-36': fullView
+              'w-[unset] px-3 py-1': !fullView,
+              'max-w-[8vw] min-w-[7vw] px-[1vw] py-[0.3vh]': fullView
             }
           )}
+          style={{
+            color : brandTextColor
+          }}
           title={selectedRole?.roleName ? `Role: \n${selectedRole?.roleName}` : 'Select Role'}
         >
           {fullView ? (
             <>
               <div className='w-[90%]'>
                 <div className='flex items-center gap-1'>
-                  <RoleStructure />
-                  <Text contentAlign='left' className='!text-xs'>
+                  <RoleStructure height='1vw' width='1vw'/>
+                  <Text contentAlign='left' className='!text-[0.6vw]'>
                     Roles
                   </Text>
                 </div>
                 <Text
                   contentAlign='left'
-                  className='block w-full truncate text-left !text-sm'
+                  className='block w-full truncate text-left'
                 >
                   {selectedRole?.roleName}
                 </Text>
@@ -1171,17 +1178,17 @@ const OPRTopNavSelector = ({
         </button>
       </>
       {selectedProd?.psLogo && (
-        <img
-          className={clsx('h-fit w-fit ', {
-            'border-l px-2': fullView,
-            'border-t py-2': !fullView,
-          })}
-          width={100}
-          height={100}
-          src={getCdnImage(selectedProd?.psLogo)}
-          alt='appLogo'
-        />
-      )}
+  <Image
+    className={clsx('h-fit w-fit max-h-[3vh] flex-shrink-0', {  // 👈 add flex-shrink-0
+      'border-l px-2': fullView,
+      'border-t py-2': !fullView,
+    })}
+    width={100}
+    height={100}
+    src={getCdnImage(selectedProd?.psLogo)}
+    alt='appLogo'
+  />
+)}
       <Popup
         key={activeStage}
         anchorRef={

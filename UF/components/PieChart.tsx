@@ -26,6 +26,8 @@ export interface PieChartProps {
   headerPosition?: HeaderPosition;
   className?: string;
   colors?: string[];
+  numberKey?: string;
+  onClick?: (data: any, index: number, event: React.MouseEvent) => void;
 }
 
 export const PieChart: React.FC<PieChartProps> =({
@@ -39,7 +41,9 @@ export const PieChart: React.FC<PieChartProps> =({
   tooltipProps,
   headerText = "",
   headerPosition = "top",
-  colors = []
+  colors = [],
+  numberKey,
+  onClick
 }) => {
   const { theme } = useGlobal();
   const keyset:any=i18n.keyset("language"); 
@@ -78,10 +82,9 @@ export const PieChart: React.FC<PieChartProps> =({
 
   const totalExpenses = parsedExpenseData.reduce((acc, item) => {
     const { name, ...rest } = item;
-    const sum = Object.values(rest as Record<string, number>).reduce(
-      (sum, value) => sum + value,
-      0
-    );
+    const sum = Object.keys(rest)
+      .filter((key) => !numberKey || key === numberKey)
+      .reduce((sum, key) => sum + (rest as Record<string, number>)[key], 0);
     return acc + sum;
   }, 0);
   const isDark = theme === "dark" || theme === "dark-hc";
@@ -97,7 +100,7 @@ export const PieChart: React.FC<PieChartProps> =({
           <div className= {`${isDark ? "bg-gray-800" : "bg-white"} p-2 border border-gray-300 rounded shadow`}>
             <p className='font-bold'>{name}</p>
             {Object.keys(selectedData)
-              .filter((key) => key !== 'name')
+              .filter((key) => key !== 'name' && (!numberKey || key === numberKey))
               .map((key) => (
                 <p key={key}>
                   {key}: {showCurrencySign}{selectedData[key]}
@@ -113,7 +116,7 @@ export const PieChart: React.FC<PieChartProps> =({
   const pieChartData = parsedExpenseData.map((item) => ({
     name: item.name,
     value: Object.keys(item)
-      .filter((key) => key !== 'name')
+      .filter((key) => key !== 'name' && (!numberKey || key === numberKey))
       .reduce((acc, key) => acc + (item[key] as number), 0),
   }));
 
@@ -134,9 +137,16 @@ export const PieChart: React.FC<PieChartProps> =({
               dataKey='value'
               startAngle={90}
               endAngle={-270}
+              cursor={onClick ? "pointer" : "default"}
+              onClick={onClick ? (pieData: any, idx: number, e: React.MouseEvent) => {
+                onClick(pieData, idx, e);
+              } : undefined}
             >
               {pieChartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                <Cell 
+                  key={`cell-${index}`} 
+                  fill={colors[index % colors.length]} 
+                />
               ))}
             </Pie>
             <TooltipDisplay

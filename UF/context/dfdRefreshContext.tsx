@@ -41,7 +41,7 @@ import { useContext } from "react";
 import { api_paginationDto, te_refreshDto } from "@/app/interfaces/interfaces";
 import { AxiosService } from "@/app/components/axiosService";
 import { useInfoMsg } from "@/app/components/infoMsgHandler";
-import { getCookie } from "@/app/components/cookieMgment";
+import { useGlobal } from "./GlobalContext";
 let inProgressKeys:any[] = [];
 
 export async function dfdRefreshContext(dfdkey:any,setState:any,page:any,count:any,dpdEncryption:any,toast:any,token:any){
@@ -127,7 +127,7 @@ export function useHandleDfdRefresh(){
 
 
     const toast=useInfoMsg();
-    const token:string = getCookie('token'); 
+    const { token } = useGlobal();
 
     return (nodename:any,page:any=1,count:any=10,dpdEncryption:any) => {
     };

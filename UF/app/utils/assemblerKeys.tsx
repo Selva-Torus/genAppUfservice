@@ -1,7 +1,7 @@
 import UOmapperData from '@/context/dfdmapperContolnames.json'
 
 
-export function getRouteScreenDetails(key: string, artfactName: string): string {
+export function getRouteScreenDetails(key: string, artfactName: string,other:string=''): string {
   let assemblerKeys: any = [
   {
     "screenName": "test",
@@ -11,12 +11,18 @@ export function getRouteScreenDetails(key: string, artfactName: string): string 
 ]
 
   let routeScreen: string = artfactName
+  let isKeyInAssem:boolean=false
 
   assemblerKeys.forEach((item: any) => {
     if (item.ufKey == key) {
       routeScreen = item.screensName.replace('-v','_v')
+      isKeyInAssem=true
     }
   })
+  if(other!=''&&isKeyInAssem==false)
+  {
+    return 'not in assembler'
+  }
 
   return routeScreen
 }

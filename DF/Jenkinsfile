@@ -10,7 +10,6 @@ pipeline {
         DOCKERHUB_USERNAME = "192.168.2.164:5000"
         APP_NAME = "ct010-a001-df-v1"
         IMAGE_NAME = "${DOCKERHUB_USERNAME}/${APP_NAME}"
-        BUILD_NUMBER = "${BUILD_NUMBER}"
         GITHUB_CREDENTIALS = "GIT_HUB_PAT"
         IMAGE_TAG = "${BUILD_NUMBER}"
     }
@@ -28,9 +27,9 @@ pipeline {
 
         stage('Code Checkout') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${GITHUB_CREDENTIALS}", usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
-                    git branch: 'master', credentialsId: "${GITHUB_CREDENTIALS}", url: 'https://github.com/TorusDev2023/Claims5UF.git'
-                }
+                git branch: 'master',
+                    credentialsId: "${GITHUB_CREDENTIALS}",
+                    url: 'https://github.com/TorusDev2023/Claims5UF.git'
             }
         }
 
@@ -55,19 +54,18 @@ pipeline {
             }
             steps {
                 script {
-                    docker.withRegistry("http://${DOCKERHUB_USERNAME}", '') {
-                        sh """
-                        export DOCKER_BUILDKIT=1
-                        docker buildx use default
-                        
-                        docker buildx build \
-                          --build-arg BUILDKIT_INLINE_CACHE=1 \
-                          --tag ${IMAGE_NAME}:${IMAGE_TAG} \
-                          --file apps/CT010/AG001/A001/v1/Nest-df/Dockerfile \
-                          apps/CT010/AG001/A001/v1/Nest-df \
-                          --push
-                        """
-                    }
+                    sh """
+                    export DOCKER_BUILDKIT=1
+                    docker buildx use default
+                    
+                    docker buildx build \
+                        --no-cache \
+                        --build-arg BUILDKIT_INLINE_CACHE=1 \
+                        --tag ${IMAGE_NAME}:${IMAGE_TAG} \
+                        --file apps/CT010/AG001/A001/v1/Nest-df/Dockerfile \
+                        apps/CT010/AG001/A001/v1/Nest-df \
+                        --push
+                    """              
                 }
             }
         }
@@ -79,6 +77,14 @@ pipeline {
             steps {
                 script {
                     sh "sed -i 's/docker_tag/${IMAGE_TAG}/g' apps/CT010/AG001/A001/v1/Nest-df/kubernetes/deploymentservice.yaml"
+                    sh """
+                    sed -i 's|docker_tag|${IMAGE_TAG}|g' \
+                    apps/CT010/AG001/A001/v1/Nest-df/kubernetes/deploymentservice.yaml
+
+                    echo "=============================="
+                    echo "Deployment Image"
+                    grep image: apps/CT010/AG001/A001/v1/Nest-df/kubernetes/deploymentservice.yaml
+                    """
                 }
             }
         }

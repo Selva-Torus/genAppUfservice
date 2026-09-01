@@ -4,6 +4,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import i18n from './i18n';
 import { getCookie } from './cookieMgment';
 import { getLanguagesJson } from '../utils/getLanguagesJson.api';
+import { useGlobal } from '@/context/GlobalContext';
 
 type LanguageContextType = {
   language: string;
@@ -22,9 +23,9 @@ export const useLanguage = () => {
 
 export const LanguageProvider = ({ children }: { children: React.ReactNode }) => {
   const [language, setLanguage] = useState<string>(getCookie('cfg_lang') || 'en');
+  const { token } = useGlobal()
 
   const setupLanguage = async (lang: string) => {
-    const token = getCookie('token');
     try {
       const languageJson = await getLanguagesJson(lang, token);
       i18n.registerKeysets(lang, languageJson);

@@ -18,6 +18,9 @@ import { useGlobal } from '@/context/GlobalContext'
 import { Spin } from '@/components/Spin'
 import i18n from '@/app/components/i18n'
 import { getFontSizeForSubHeader } from '@/app/utils/branding'
+import { isLightColor } from '@/app/components/utils'
+import clsx from 'clsx'
+
 interface TableHeaderProps {
   loading: boolean
   jsonData: {
@@ -27,6 +30,7 @@ interface TableHeaderProps {
     totalDocuments: number
     totalPages: number
   }
+  setJsonData: React.Dispatch<React.SetStateAction<any>>
   onPageChange: (page: number, pageSize: number) => void
   searchTerm: string
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>
@@ -48,6 +52,7 @@ interface TableHeaderProps {
 const TableHeader: React.FC<TableHeaderProps> = ({
   loading,
   jsonData,
+  setJsonData,
   onPageChange,
   searchTerm,
   setSearchTerm,
@@ -89,24 +94,11 @@ const TableHeader: React.FC<TableHeaderProps> = ({
   }
   const [open, setOpen] = useState(false)
   const buttonElement = useRef<HTMLButtonElement>(null)
-  const { isDark, bgColor, borderColor, textColor } = useTheme()
+  const { isDark, borderColor, textColor } = useTheme()
+  const bgColor = isDark ? "bg-gray-800" : "bg-white";
   const { branding } = useGlobal()
   const { selectionColor } = branding
   const keyset = i18n.keyset('language')
-
-  function formatTableDate(dateString: string) {
-    const date = new Date(dateString)
-    const options = {
-      month: 'long', // Full month name
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }
-    return new Intl.DateTimeFormat('en-US', options as any).format(date)
-  }
 
   const displayNodeData = (data: any, type: 'node' | 'time' | 'status') => {
     switch (type) {
@@ -125,7 +117,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
           <div className='flex h-full w-full flex-col items-center justify-center gap-1'>
             {(data?.time ?? []).map((item: any, indexOfTime: number) => (
               <Text key={indexOfTime} color='secondary'>
-                {formatTableDate(item)}
+                {item}
               </Text>
             ))}
           </div>
@@ -393,7 +385,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                   className='rounded-md p-2'
                 >
                   <span className='flex items-center gap-2'>
-                    Filter <FilterIcon fill={isDark ? '#fff' : '#000'} />
+                    Filter <FilterIcon fill={isLightColor(branding.brandColor)} />
                   </span>
                 </Button>
                 <Modal
@@ -413,6 +405,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
                     activeTab={activeTab}
                     localSortOrder={localSortOrder}
                     setLocalSortOrder={setLocalSortOrder}
+                    setJsonData={setJsonData}
                   />
                 </Modal>
               </div>
@@ -425,7 +418,7 @@ const TableHeader: React.FC<TableHeaderProps> = ({
               borderColor={borderColor}
             />
           </div>
-          <div className='flex w-full '>
+          <div className={clsx('flex w-full' , bgColor)}>
             <div className={`${activeTab === 'torus' ? 'block w-1/2 md:w-3/4' : 'w-full'}`}>
               <div
                 className={`overflow-auto transition-all delay-0 duration-300 ease-out h-[83vh]`}
