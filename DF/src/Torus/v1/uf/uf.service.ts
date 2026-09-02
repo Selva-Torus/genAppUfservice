@@ -1,5 +1,11 @@
-
-import { BadGatewayException, HttpException, HttpStatus, Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  BadGatewayException,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { CommonService } from 'src/common.Service';
 import { RedisService } from 'src/redisService';
 import * as v from 'valibot';
@@ -25,11 +31,20 @@ import * as FormData from 'form-data'; // Use this
 import { Readable } from 'stream';
 import { Pool } from 'pg';
 //import { v4 as uuidv4 } from 'uuid';
-import { FusionAuthApplicatonAssign, FusionAuthUserApplicatonGet, FusionAutRoleCRUDAlongWithApp,FusionAuthUserGet, FusionAuthUserCreation, FusionAuthGetTenantList, FusionAuthGetApplicationList, handleFusionAuthUserRegistrationForTokenLambda } from 'src/fusionAuth.api';
+import {
+  FusionAuthApplicatonAssign,
+  FusionAuthUserApplicatonGet,
+  FusionAutRoleCRUDAlongWithApp,
+  FusionAuthUserGet,
+  FusionAuthUserCreation,
+  FusionAuthGetTenantList,
+  FusionAuthGetApplicationList,
+  handleFusionAuthUserRegistrationForTokenLambda,
+} from 'src/fusionAuth.api';
 import { EnvData } from 'src/envData/envData.service';
 import { decrypt } from 'src/decrypt';
 import { format } from 'date-fns';
-import { Cron } from "@nestjs/schedule";
+import { Cron } from '@nestjs/schedule';
 //import { connectPG } from 'src/mongoClient';
 // import { RuleService } from 'src/ruleService';
 import { LockRecordDto } from 'src/dto';
@@ -49,7 +64,7 @@ interface FusionAuthConfig {
   authSecret: string;
   authAccessTokenExpiryTime: string;
   authRefreshTokenExpiryTime: string;
-  fusionauthRefreshTokenExpiryTimeinMinutes: string
+  fusionauthRefreshTokenExpiryTimeinMinutes: string;
 }
 
 const tenant = process.env.TENANT;
@@ -57,7 +72,7 @@ const ag = process.env.APPGROUPCODE;
 const app = process.env.APPCODE;
 const appName = process.env.APPNAME;
 const version = process.env.VERSION;
-const schemaName = new URL(process.env.PG_URL).searchParams.get('schema')
+const schemaName = new URL(process.env.PG_URL).searchParams.get('schema');
 
 @Injectable()
 export class UfService implements OnModuleInit, OnModuleDestroy {
@@ -68,30 +83,29 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
     private readonly commonService: CommonService,
     private readonly envData: EnvData,
   ) {}
-    private pool : Pool;
-    
-     async onModuleInit() {
-      this.pool = new Pool({
-       connectionString: process.env.PG_URL,
-       application_name: `${tenant}_${ag}_${app}_ufService`,
-    //   // Pool sizing
-       max: 10,                // max connections in pool
-       min: 2,                 // keep at least 2 alive
-       idleTimeoutMillis: 30000,       // close idle connections after 30s
-       connectionTimeoutMillis: 30000,  // fail fast if can't connect in 5s
-       allowExitOnIdle: false,         // keep pool alive
-     });
+  private pool: Pool;
+
+  async onModuleInit() {
+    this.pool = new Pool({
+      connectionString: process.env.PG_URL,
+      application_name: `${tenant}_${ag}_${app}_ufService`,
+      //   // Pool sizing
+      max: 10, // max connections in pool
+      min: 2, // keep at least 2 alive
+      idleTimeoutMillis: 30000, // close idle connections after 30s
+      connectionTimeoutMillis: 30000, // fail fast if can't connect in 5s
+      allowExitOnIdle: false, // keep pool alive
+    });
     // // 🔑 Key: handle pool-level errors so they don't crash the process
-     this.pool.on('error', (err, client) => {
-       console.error('Unexpected error on idle pg client:', err.message);
-    //   // Do NOT re-throw — just log. Pool will recover automatically.
-     });
+    this.pool.on('error', (err, client) => {
+      console.error('Unexpected error on idle pg client:', err.message);
+      //   // Do NOT re-throw — just log. Pool will recover automatically.
+    });
 
-
-     // Also handle process-level unhandled errors as safety net
-     process.on('unhandledRejection', (reason) => {
-       console.error('Unhandled Rejection:', reason);
-     });
+    // Also handle process-level unhandled errors as safety net
+    process.on('unhandledRejection', (reason) => {
+      console.error('Unhandled Rejection:', reason);
+    });
 
     try {
       const client = await this.pool.connect();
@@ -103,12 +117,12 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-   async onModuleDestroy() {
-       if (this.pool) {
+  async onModuleDestroy() {
+    if (this.pool) {
       await this.pool.end();
       console.log('PostgreSQL pool closed');
     }
-    }
+  }
 
   async query<T = any>(text: string, params?: any[]): Promise<T[]> {
     const client = await this.pool.connect();
@@ -123,75 +137,72 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
- async updateTable(
-  tableName: string,
-  data: Record<string, any>,
-  primaryKey: string,
-  tenantId?: string
-) {
-  try {
-    if (!tableName) throw new Error('Table name missing');
+  async updateTable(
+    tableName: string,
+    data: Record<string, any>,
+    primaryKey: string,
+    tenantId?: string,
+  ) {
+    try {
+      if (!tableName) throw new Error('Table name missing');
 
-    const columns = Object.keys(data).filter((col) => col !== primaryKey);
+      const columns = Object.keys(data).filter((col) => col !== primaryKey);
 
-    const setClause = columns
-      .map((col, i) => `${col} = $${i + 1}`)
-      .join(', ');
+      const setClause = columns
+        .map((col, i) => `${col} = $${i + 1}`)
+        .join(', ');
 
-    const values = columns.map((col) => data[col]);
+      const values = columns.map((col) => data[col]);
 
-    const whereValue = data[primaryKey];
+      const whereValue = data[primaryKey];
 
-    let whereClause = `${primaryKey} = $${columns.length + 1}`;
-    let params = [...values, whereValue];
+      let whereClause = `${primaryKey} = $${columns.length + 1}`;
+      let params = [...values, whereValue];
 
-    // 👉 Tenant condition
-    if (tenantId) {
-      whereClause += ` AND at_id = $${params.length + 1}`;
-      params.push(tenantId);
-    }
+      // 👉 Tenant condition
+      if (tenantId) {
+        whereClause += ` AND at_id = $${params.length + 1}`;
+        params.push(tenantId);
+      }
 
-    const query = `
+      const query = `
       UPDATE ${schemaName}.${tableName}
       SET ${setClause}
       WHERE ${whereClause}
       RETURNING *;
     `;
 
-    const result = await this.query(query, params);
+      const result = await this.query(query, params);
 
-    return {
-      message: `${tableName} updated successfully`,
-      data: result,
-    };
-  } catch (error) {
-    throw error;
+      return {
+        message: `${tableName} updated successfully`,
+        data: result,
+      };
+    } catch (error) {
+      throw error;
+    }
   }
-}
 
-  async insertIntoTable(
-    tableName: string,
-    data: Record<string, any>,
-  ) {
+  async insertIntoTable(tableName: string, data: Record<string, any>) {
     try {
       if (!tableName) throw new Error('Table or schema missing');
-      
+
       // Column names
       const columns = Object.keys(data);
       // Values placeholders $1, $2 ...
       const placeholders = columns.map((_, i) => `$${i + 1}`);
       // Values array
       const values = Object.values(data);
- 
+
       // Final query
       const query = `
       INSERT INTO ${schemaName}.${tableName} (${columns.join(',')})
       VALUES (${placeholders.join(',')})
       RETURNING *;
     `;
- 
+
       const result = await this.query(query, values);
- 
+
       return {
         message: `${tableName} inserted successfully`,
         data: result,
@@ -201,21 +212,22 @@ export class UfService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-getConfig(): FusionAuthConfig {
-  return {
-    fusionAuthBaseUrl: this.envData.getFusionAuthBaseUrl(),
-    fusionAuthApiKey: this.envData.getFusionAuthApiKey(),
-    authSecret: this.envData.getAuthSecret(),
-    authAccessTokenExpiryTime: this.envData.getAuthAccessTokenExpiryTime(),
-    authRefreshTokenExpiryTime: this.envData.getAuthRefreshTokenExpiryTime(),
-    fusionauthRefreshTokenExpiryTimeinMinutes: this.envData.getFusionAuthRefreshTokenExpiryTimeInMinutes()
-  };
-}
+  getConfig(): FusionAuthConfig {
+    return {
+      fusionAuthBaseUrl: this.envData.getFusionAuthBaseUrl(),
+      fusionAuthApiKey: this.envData.getFusionAuthApiKey(),
+      authSecret: this.envData.getAuthSecret(),
+      authAccessTokenExpiryTime: this.envData.getAuthAccessTokenExpiryTime(),
+      authRefreshTokenExpiryTime: this.envData.getAuthRefreshTokenExpiryTime(),
+      fusionauthRefreshTokenExpiryTimeinMinutes:
+        this.envData.getFusionAuthRefreshTokenExpiryTimeInMinutes(),
+    };
+  }
 
   async getTenantAndApplicationFusionAuthIdSecret() {
     try {
       let tenantUniqueId = '';
-      const { fusionAuthBaseUrl , fusionAuthApiKey } = this.getConfig();
+      const { fusionAuthBaseUrl, fusionAuthApiKey } = this.getConfig();
 
       const possible_FA_tenant_name = `${tenant}-Tenant`;
       // CHECK EXISTENCE OF THE APPLICATION TENANT IN FUSIONAUTH
@@ -243,7 +255,9 @@ getConfig(): FusionAuthConfig {
         (a) => a.name == possibleApplicationNameInFusionAuth,
       );
       if (!existingApplication) {
-        throw new BadRequestException('Application not registered in FusionAuth');
+        throw new BadRequestException(
+          'Application not registered in FusionAuth',
+        );
       } else {
         return {
           tenantUniqueId,
@@ -258,7 +272,7 @@ getConfig(): FusionAuthConfig {
   }
 
   async screenRoute(keys: any[], token: string, header: any) {
-    try {      
+    try {
       for (let i = 0; i < keys.length; i++) {
         const UO: any = await this.commonService.readAPI(
           keys[i].ufKey + ':UO',
@@ -308,20 +322,26 @@ getConfig(): FusionAuthConfig {
     }
   }
 
- async insertDocToVgphSourceTranDocMain(category: string, doc_name: string, url: string, size?: number, doc_group?: string): Promise<any> {
+  async insertDocToVgphSourceTranDocMain(
+    category: string,
+    doc_name: string,
+    url: string,
+    size?: number,
+    doc_group?: string,
+  ): Promise<any> {
     try {
       const insertUrl = `${process.env.APP_MANAGER_URL}/ct010/attachments`;
       //const vgphstm_uuid = uuid();
       const currentDate = new Date().toISOString().slice(0, 19) + '+00:00';
 
-      const payload = { 
+      const payload = {
         category: category,
         doc_group: doc_group,
         doc_name: doc_name,
         doc_size: `${Math.ceil((size ?? 0) / 1024)}`,
         url: url,
         trs_created_date: currentDate,
-        trs_modified_date: currentDate
+        trs_modified_date: currentDate,
       };
 
       const response = await axios.post(insertUrl, payload, {
@@ -352,11 +372,16 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async getDFS(fileUrl: string | string[], enableEncryption: boolean): Promise<Buffer | Buffer[]> {
+  async getDFS(
+    fileUrl: string | string[],
+    enableEncryption: boolean,
+  ): Promise<Buffer | Buffer[]> {
     try {
       // Normalize to array if single URL provided
       const urls = Array.isArray(fileUrl) ? fileUrl : [fileUrl];
-      const fullUrls = urls.map(url => `${this.envData.getFtpOutputHost()}/${url}`);
+      const fullUrls = urls.map(
+        (url) => `${this.envData.getFtpOutputHost()}/${url}`,
+      );
       // console.log("fileUrl ==> ", fullUrls);
 
       const fileBuffers: Buffer[] = [];
@@ -373,7 +398,9 @@ getConfig(): FusionAuthConfig {
         });
 
         if (response.status !== 200) {
-          throw new Error(`Failed to fetch file from ${url}: ${response.status}`);
+          throw new Error(
+            `Failed to fetch file from ${url}: ${response.status}`,
+          );
         }
 
         const ciphertext = Buffer.from(response.data);
@@ -400,58 +427,74 @@ getConfig(): FusionAuthConfig {
     folderPath?: string,
     filename?: string,
     enableEncryption?: string,
-    doc_group?: string
+    doc_group?: string,
   ): Promise<string> {
     try {
       const SAFE_SEGMENT = /^[a-zA-Z0-9._-]+$/;
 
       const ALLOWED_EXTENSIONS: Record<string, string[]> = {
-        'jpg': ['image/jpeg'],
-        'jpeg': ['image/jpeg'],
-        'png': ['image/png'],
-        'gif': ['image/gif'],
-        'webp': ['image/webp'],
-        'svg': ['image/svg+xml'],
-        'pdf': ['application/pdf'],
-        'doc': ['application/msword'],
-        'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-        'xls': ['application/vnd.ms-excel'],
-        'xlsx': ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-        'txt': ['text/plain'],
-        'csv': ['text/csv'],
-        'mp4': ['video/mp4'],
-        'mp3': ['audio/mpeg'],
-        'avi': ['video/x-msvideo'],
-        'mov': ['video/quicktime'],
-        'zip': ['application/zip', 'application/x-zip-compressed'],
-        'rar': ['application/vnd.rar', 'application/x-rar-compressed'],
+        jpg: ['image/jpeg'],
+        jpeg: ['image/jpeg'],
+        png: ['image/png'],
+        gif: ['image/gif'],
+        webp: ['image/webp'],
+        svg: ['image/svg+xml'],
+        pdf: ['application/pdf'],
+        doc: ['application/msword'],
+        docx: [
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ],
+        xls: ['application/vnd.ms-excel'],
+        xlsx: [
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ],
+        txt: ['text/plain'],
+        csv: ['text/csv'],
+        mp4: ['video/mp4'],
+        mp3: ['audio/mpeg'],
+        avi: ['video/x-msvideo'],
+        mov: ['video/quicktime'],
+        zip: ['application/zip', 'application/x-zip-compressed'],
+        rar: ['application/vnd.rar', 'application/x-rar-compressed'],
       };
 
       const validateBucketFolderName = (value: string): void => {
         if (value.includes('/') || value.includes('\\')) {
-          throw new BadRequestException('bucketFoldername contains invalid characters');
+          throw new BadRequestException(
+            'bucketFoldername contains invalid characters',
+          );
         }
         if (value === '.' || value.includes('..')) {
-          throw new BadRequestException('bucketFoldername contains path traversal');
+          throw new BadRequestException(
+            'bucketFoldername contains path traversal',
+          );
         }
         if (!SAFE_SEGMENT.test(value)) {
-          throw new BadRequestException('bucketFoldername contains unsafe characters');
+          throw new BadRequestException(
+            'bucketFoldername contains unsafe characters',
+          );
         }
       };
 
       const validateFolderPath = (value: string): void => {
         if (value.includes('\\')) {
-          throw new BadRequestException('folderPath contains invalid characters');
+          throw new BadRequestException(
+            'folderPath contains invalid characters',
+          );
         }
         if (value.includes('..')) {
           throw new BadRequestException('folderPath contains path traversal');
         }
         for (const segment of value.split('/')) {
           if (segment === '' || segment === '.') {
-            throw new BadRequestException(`Invalid folderPath segment: "${segment}"`);
+            throw new BadRequestException(
+              `Invalid folderPath segment: "${segment}"`,
+            );
           }
           if (!SAFE_SEGMENT.test(segment)) {
-            throw new BadRequestException(`folderPath contains unsafe characters in segment: "${segment}"`);
+            throw new BadRequestException(
+              `folderPath contains unsafe characters in segment: "${segment}"`,
+            );
           }
         }
       };
@@ -472,7 +515,9 @@ getConfig(): FusionAuthConfig {
         }
         const ext = value.substring(dotIndex + 1).toLowerCase();
         if (!ALLOWED_EXTENSIONS[ext]) {
-          throw new BadRequestException(`File extension ".${ext}" is not allowed`);
+          throw new BadRequestException(
+            `File extension ".${ext}" is not allowed`,
+          );
         }
         return ext;
       };
@@ -480,12 +525,14 @@ getConfig(): FusionAuthConfig {
       const validateMimeType = (mimetype: string, ext: string): void => {
         const allowedMimes = ALLOWED_EXTENSIONS[ext];
         if (!allowedMimes) {
-          throw new BadRequestException(`File extension ".${ext}" is not allowed`);
+          throw new BadRequestException(
+            `File extension ".${ext}" is not allowed`,
+          );
         }
         const normalizedMime = mimetype.split(';')[0].trim().toLowerCase();
         if (!allowedMimes.includes(normalizedMime)) {
           throw new BadRequestException(
-            `MIME type "${normalizedMime}" is not allowed for extension ".${ext}"`
+            `MIME type "${normalizedMime}" is not allowed for extension ".${ext}"`,
           );
         }
       };
@@ -515,10 +562,9 @@ getConfig(): FusionAuthConfig {
         contentType: file.mimetype || 'application/octet-stream',
       });
 
-      const uploadUrl = `${this.envData.getSeaweedOutputHost()?.replace(
-        /\/$/,
-        ''
-      )}/buckets/${bucket}/${subFolder}/${fileName}`;
+      const uploadUrl = `${this.envData
+        .getSeaweedOutputHost()
+        ?.replace(/\/$/, '')}/buckets/${bucket}/${subFolder}/${fileName}`;
       const uploadResponse = await axios.post(uploadUrl, form, {
         headers: {
           Accept: 'application/json',
@@ -533,11 +579,17 @@ getConfig(): FusionAuthConfig {
 
       if (uploadResponse.status === 201) {
         const storagePath = `${bucket}/${subFolder}/${fileName}`;
-        const attachmentId = await this.insertDocToVgphSourceTranDocMain("front", fileName, storagePath, file.size, doc_group);
+        const attachmentId = await this.insertDocToVgphSourceTranDocMain(
+          'front',
+          fileName,
+          storagePath,
+          file.size,
+          doc_group,
+        );
         return `${attachmentId}`;
       } else {
         throw new ConflictException(
-          uploadResponse.data || 'Error occurred while uploading file'
+          uploadResponse.data || 'Error occurred while uploading file',
         );
       }
     } catch (error: any) {
@@ -558,14 +610,14 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-   async setUpKey(key: string, token: string,tag?: string) {
+  async setUpKey(key: string, token: string, tag?: string) {
     try {
       const sKey: any = await this.commonService.readAPI(
         key,
         process.env.CLIENTCODE,
         token,
       );
-      if (sKey ) {
+      if (sKey) {
         if (sKey?.tenantAppearancekey) {
           const presetData: any = await this.commonService.readAPI(
             sKey?.tenantAppearancekey,
@@ -573,15 +625,27 @@ getConfig(): FusionAuthConfig {
             token,
           );
           if (sKey?.selectedPresetKey) {
-            return {...presetData[sKey?.selectedPresetKey] || {},localization:sKey?.appInfo?.localization||{}};
+            return {
+              ...(presetData[sKey?.selectedPresetKey] || {}),
+              localization: sKey?.appInfo?.localization || {},
+            };
           } else {
-            return {...presetData['default'] || {},localization:sKey?.appInfo?.localization||{}};
+            return {
+              ...(presetData['default'] || {}),
+              localization: sKey?.appInfo?.localization || {},
+            };
           }
-        }else{
+        } else {
           if (sKey?.tag) {
-            return {...sKey[tag] || {},localization:sKey?.appInfo?.localization||{}};
+            return {
+              ...(sKey[tag] || {}),
+              localization: sKey?.appInfo?.localization || {},
+            };
           } else {
-            return {...sKey['default'] || {},localization:sKey?.appInfo?.localization||{}};
+            return {
+              ...(sKey['default'] || {}),
+              localization: sKey?.appInfo?.localization || {},
+            };
           }
         }
         return sKey || {};
@@ -630,7 +694,10 @@ getConfig(): FusionAuthConfig {
           ':' +
           readMDdto.AFSK;
       //var request: any = await redis.call('JSON.GET', key);
-      var request:any = await this.redisService.getJsonData(key,process.env.CLIENTCODE)
+      var request: any = await this.redisService.getJsonData(
+        key,
+        process.env.CLIENTCODE,
+      );
       return request;
     } catch (error) {
       throw new BadGatewayException(error);
@@ -747,7 +814,7 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-    async getpaginationwithLogicCenter(
+  async getpaginationwithLogicCenter(
     key: any,
     page,
     count,
@@ -755,74 +822,94 @@ getConfig(): FusionAuthConfig {
     searchObj?,
     token?: string,
     filterData?,
-    sortingDetails?
+    sortingDetails?,
   ) {
     try {
-      
-      let filterobj = {}
-      let afkey = key.replace(':FNGK:AFP:FNK:DF-DST:',':FNGK:AF:FNK:DF-DFD:')  
-         
-        let dbnodeid = Object.keys(JSON.parse(await this.redisService.getJsonData(afkey+'NDP',process.env.CLIENTCODE)))[0]
-        if(filterData && Object.keys(filterData).length > 0){
-          filterobj = filterData?.find(n => n.nodeId === dbnodeid);
-          if(!filterobj) filterobj = {}
-        }
-        if((filter && Object.keys(filter).length > 0) || (searchObj && Object.keys(searchObj).length > 0)){        
-          filterobj['nodeId'] = dbnodeid;
-        }
-        
-      //if(searchObj) filterobj = Object.assign(filterobj,searchObj)    
+      let filterobj = {};
+      let afkey = key.replace(':FNGK:AFP:FNK:DF-DST:', ':FNGK:AF:FNK:DF-DFD:');
+
+      let dbnodeid = Object.keys(
+        JSON.parse(
+          await this.redisService.getJsonData(
+            afkey + 'NDP',
+            process.env.CLIENTCODE,
+          ),
+        ),
+      )[0];
+      if (filterData && Object.keys(filterData).length > 0) {
+        filterobj = filterData?.find((n) => n.nodeId === dbnodeid);
+        if (!filterobj) filterobj = {};
+      }
+      if (
+        (filter && Object.keys(filter).length > 0) ||
+        (searchObj && Object.keys(searchObj).length > 0)
+      ) {
+        filterobj['nodeId'] = dbnodeid;
+      }
+
+      //if(searchObj) filterobj = Object.assign(filterobj,searchObj)
 
       if (!page) page = 1;
-      let rule: any;       
-      let start,end;
-      if(count){
+      let rule: any;
+      let start, end;
+      if (count) {
         start = (page - 1) * count;
         end = start + count;
-      }       
-       let payload = { key: afkey, count: count, page: page, afiflag:'Y',searchFilter:searchObj};
-        const requestConfig: AxiosRequestConfig = {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-              timeout: 300000,
-            };        
-          
-            
+      }
+      let payload = {
+        key: afkey,
+        count: count,
+        page: page,
+        afiflag: 'Y',
+        searchFilter: searchObj,
+      };
+      const requestConfig: AxiosRequestConfig = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        timeout: 300000,
+      };
 
       if (filter) {
-        var json = JSON.parse(await this.redisService.getJsonDataWithPath(filter.ufKey,'.mappedData.artifact.node',process.env.CLIENTCODE,));
-        if(json){
-                             
-          rule = json.find(f => f.nodeId === filter.nodeId)
-          if(!rule) throw `Node Id not found ${filter.nodeId}`
-          rule = rule.rule
-         
-           let fobj = {};
-          if(filterData && Object.keys(filterData).length > 0)
-          fobj = Object.assign(fobj,filterData[0])
-        
-          let {sobj,SessionInfo} = await this.commonService.sessionDecode(token, '')
-          fobj =  Object.assign(fobj,{session:SessionInfo})
-          const result = await this.gorule.goRule(rule, fobj); 
-          let queryobj
+        var json = JSON.parse(
+          await this.redisService.getJsonDataWithPath(
+            filter.ufKey,
+            '.mappedData.artifact.node',
+            process.env.CLIENTCODE,
+          ),
+        );
+        if (json) {
+          rule = json.find((f) => f.nodeId === filter.nodeId);
+          if (!rule) throw `Node Id not found ${filter.nodeId}`;
+          rule = rule.rule;
+
+          let fobj = {};
+          if (filterData && Object.keys(filterData).length > 0)
+            fobj = Object.assign(fobj, filterData[0]);
+
+          let { sobj, SessionInfo } = await this.commonService.sessionDecode(
+            token,
+            '',
+          );
+          fobj = Object.assign(fobj, { session: SessionInfo });
+          const result = await this.gorule.goRule(rule, fobj);
+          let queryobj;
           if (result?.result) {
-           
-            let ruleRes = result.result                    
-            let query:any = Object.values(ruleRes)[0] 
-           if(typeof query == 'string') {
-             if(query?.includes('$$session.')){ 
-                 Object.keys(sobj).forEach(key => {
-                 const regex = new RegExp(`\\$\\$${key}`, 'g');
-                 const value = sobj[key];               
-                 query = query.replace(regex, value);               
-             });
-             }            
-             queryobj = {[`${process.env.CLIENTCODE}_condition`]:query}                      
-           } else {
-            throw new CustomException('rule value does not exist',403)
-           }      
-          }          
+            let ruleRes = result.result;
+            let query: any = Object.values(ruleRes)[0];
+            if (typeof query == 'string') {
+              if (query?.includes('$$session.')) {
+                Object.keys(sobj).forEach((key) => {
+                  const regex = new RegExp(`\\$\\$${key}`, 'g');
+                  const value = sobj[key];
+                  query = query.replace(regex, value);
+                });
+              }
+              queryobj = { [`${process.env.CLIENTCODE}_condition`]: query };
+            } else {
+              throw new CustomException('rule value does not exist', 403);
+            }
+          }
           // let decisionTable = rule.nodes?.find(n => n.type === "decisionTableNode");
           // if (decisionTable) {
           //   let ruleInputs = decisionTable.content?.inputs
@@ -833,13 +920,13 @@ getConfig(): FusionAuthConfig {
           //   for (let rule of ruleConditions) {
           //     let matched = true
           //     // validate session fields for THIS RULE
-          //     for (let input of ruleInputs) {                  
+          //     for (let input of ruleInputs) {
           //         let field = input.field
-          //       if (field.includes('session.')) {                  
-          //         let conditionValue = rule[input.id]                
-          //         if (conditionValue) {                                
-          //           let expectedValue = JSON.parse(conditionValue)                   
-          //           let sessionKey = sobj[field] 
+          //       if (field.includes('session.')) {
+          //         let conditionValue = rule[input.id]
+          //         if (conditionValue) {
+          //           let expectedValue = JSON.parse(conditionValue)
+          //           let sessionKey = sobj[field]
           //           if (sessionKey != expectedValue) {
           //             matched = false
           //             break
@@ -864,7 +951,7 @@ getConfig(): FusionAuthConfig {
           //         continue
           //       }
           //       let parsedValue = JSON.parse(rule[input.id])
-          //        if(parsedValue?.includes('$$session.')){ 
+          //        if(parsedValue?.includes('$$session.')){
           //              Object.keys(sobj).forEach(key => {
           //               const regex = new RegExp(`\\$\\$${key}`, 'g');
           //               const value = sobj[key];
@@ -872,7 +959,7 @@ getConfig(): FusionAuthConfig {
           //                console.log("value",value);
           //               parsedValue = parsedValue.replace(regex, value);
           //               console.log("conditionValue",parsedValue);
-                        
+
           //           });
           //           }
           //       if (!ruleobj[ruleField]) {
@@ -891,126 +978,129 @@ getConfig(): FusionAuthConfig {
           //     ruleobj[key] = [...new Set(ruleobj[key])]
           //   })
 
-            filterobj = Object.assign(filterobj, queryobj)
+          filterobj = Object.assign(filterobj, queryobj);
           // }
-        }          
-      }   
-      
+        }
+      }
 
       if (Object.keys(filterobj)?.length > 0) {
-            payload['filterData'] = [filterobj];
-        }
-        
-        if (sortingDetails && Object.keys(sortingDetails)?.length > 0) {
-          payload['sortingDetails'] = sortingDetails;
-        }
-          
-        let event_response = await this.commonService.postCall(
-          //process.env.BE_URL + '/te/eventEmitter',
-          this.envData.getBeUrl() + '/te/eventEmitter',            
-          payload,
-          requestConfig,
+        payload['filterData'] = [filterobj];
+      }
+
+      if (sortingDetails && Object.keys(sortingDetails)?.length > 0) {
+        payload['sortingDetails'] = sortingDetails;
+      }
+
+      let event_response = await this.commonService.postCall(
+        //process.env.BE_URL + '/te/eventEmitter',
+        this.envData.getBeUrl() + '/te/eventEmitter',
+        payload,
+        requestConfig,
+      );
+      let data = [];
+      if (
+        event_response?.status == 'Success' &&
+        event_response?.statusCode == 201
+      ) {
+        let upid = event_response?.result?.upId;
+        let tokenDecode = await this.jwtService.verifyToken(token);
+        if (!tokenDecode?.loginId) throw 'loginId not found';
+
+        data = await this.redisService.getAllRecordshash(
+          `${key}${upid}:${tokenDecode.loginId}_DS_Object`,
         );
-        let data = []
-        if(event_response?.status == 'Success' && event_response?.statusCode == 201){
-          let upid = event_response?.result?.upId
-          let tokenDecode = await this.jwtService.verifyToken(token);           
-          if(!tokenDecode?.loginId) throw 'loginId not found'
-         
-          data = await this.redisService.getAllRecordshash(`${key}${upid}:${tokenDecode.loginId}_DS_Object`)  
-          let keys = await this.redisService.getKeys(`${key}${upid}:${tokenDecode.loginId}_DS_Object`,process.env.CLIENTCODE)
-        
-          if(keys && keys.length > 0){
-            await Promise.all(keys.map(key =>
-              this.redisService.deleteKey(key, process.env.CLIENTCODE,)
-            ));
-          }  
+        let keys = await this.redisService.getKeys(
+          `${key}${upid}:${tokenDecode.loginId}_DS_Object`,
+          process.env.CLIENTCODE,
+        );
+
+        if (keys && keys.length > 0) {
+          await Promise.all(
+            keys.map((key) =>
+              this.redisService.deleteKey(key, process.env.CLIENTCODE),
+            ),
+          );
         }
-        return { records: data, totalRecords: Number(data?.[0]?.total_records) || data.length } 
-      
-       
-    } catch (err:any) {     
+      }
+      return {
+        records: data,
+        totalRecords: Number(data?.[0]?.total_records) || data.length,
+      };
+    } catch (err: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
         'Fatal',
-        'TG036', 
+        'TG036',
         `Error in pagination:${err.message}`,
         key,
         token,
       );
-       throw err?.response?.data ?  err?.response?.data : err;
+      throw err?.response?.data ? err?.response?.data : err;
     }
   }
 
   async applyFilters(data, searchFilter) {
-    if(data?.length == 0 || !Array.isArray(data)) return data
-    return data.filter(item => {
+    if (data?.length == 0 || !Array.isArray(data)) return data;
+    return data.filter((item) => {
+      return searchFilter.every((filter) => {
+        const { key, operator, value, value2, type } = filter;
 
-        return searchFilter.every(filter => {
+        const fieldValue = item[key];
 
-            const {key,operator,value,value2,type} = filter;
+        const field =
+          fieldValue != null ? String(fieldValue).toLowerCase() : '';
 
-            const fieldValue = item[key];
+        const searchValue = value != null ? String(value).toLowerCase() : '';
 
-            const field = fieldValue != null? String(fieldValue).toLowerCase(): '';
-
-            const searchValue = value != null? String(value).toLowerCase(): '';
-
-            switch (operator) {
-
-                case '=':                 
-                  if(type == 'date'){
-                    return new Date(fieldValue)
-                    .toISOString()
-                    .startsWith(value);
-                  }
-                  return fieldValue == value;
-
-                case '!=':
-                case '<>':
-                    return fieldValue != value;
-
-                case '>':
-                    return fieldValue > value;
-
-                case '<':
-                    return fieldValue < value;
-
-                case '>=':
-                    return fieldValue >= value;
-
-                case '<=':
-                    return fieldValue <= value;
-                
-                case 'LIKE':
-                    return field.includes(searchValue);
-                
-                case 'LIKE_START':
-                    return field.startsWith(searchValue);
-                
-                case 'LIKE_END':
-                    return field.endsWith(searchValue);
-
-                case 'BETWEEN':
-
-                    if (value == null || value2 == null) {
-                      return false;
-                    }                    
-                    return fieldValue >= value &&
-                        fieldValue <= value2;
-                
-
-                case 'IS NULL':
-                    return fieldValue == null;
-
-                case 'IS NOT NULL':
-                    return fieldValue != null;
-
-                default:
-                    return true;
+        switch (operator) {
+          case '=':
+            if (type == 'date') {
+              return new Date(fieldValue).toISOString().startsWith(value);
             }
-        });
+            return fieldValue == value;
+
+          case '!=':
+          case '<>':
+            return fieldValue != value;
+
+          case '>':
+            return fieldValue > value;
+
+          case '<':
+            return fieldValue < value;
+
+          case '>=':
+            return fieldValue >= value;
+
+          case '<=':
+            return fieldValue <= value;
+
+          case 'LIKE':
+            return field.includes(searchValue);
+
+          case 'LIKE_START':
+            return field.startsWith(searchValue);
+
+          case 'LIKE_END':
+            return field.endsWith(searchValue);
+
+          case 'BETWEEN':
+            if (value == null || value2 == null) {
+              return false;
+            }
+            return fieldValue >= value && fieldValue <= value2;
+
+          case 'IS NULL':
+            return fieldValue == null;
+
+          case 'IS NOT NULL':
+            return fieldValue != null;
+
+          default:
+            return true;
+        }
+      });
     });
   }
 
@@ -1022,7 +1112,7 @@ getConfig(): FusionAuthConfig {
     searchObj?,
     token?: string,
     filterData?,
-    sortingDetails?
+    sortingDetails?,
   ) {
     try {
       const tokenDecode = await this.jwtService.verifyToken(token);
@@ -1030,17 +1120,19 @@ getConfig(): FusionAuthConfig {
       if (!tokenDecode?.selectedAccessProfile)
         throw new Error('Selected Access Profile not found');
 
-      if (!tokenDecode?.loginId)
-        throw new Error('loginId not found');
+      if (!tokenDecode?.loginId) throw new Error('loginId not found');
 
       // // ✅ Get AFI
       // const afkey = key.replace(':FNGK:AFP:FNK:DF-DST:', ':FNGK:AF:FNK:DF-DFD:');
 
       const afi = JSON.parse(
-        await this.redisService.getJsonData(key.replace(':FNGK:AFP:FNK:DF-DST:', ':FNGK:AF:FNK:DF-DFD:') + 'AFI', process.env.CLIENTCODE),
+        await this.redisService.getJsonData(
+          key.replace(':FNGK:AFP:FNK:DF-DST:', ':FNGK:AF:FNK:DF-DFD:') + 'AFI',
+          process.env.CLIENTCODE,
+        ),
       );
 
-      if (!afi.logicCenter) {       
+      if (!afi.logicCenter) {
         return await this.getpaginationwithLogicCenter(
           key,
           page,
@@ -1049,11 +1141,11 @@ getConfig(): FusionAuthConfig {
           searchObj,
           token,
           filterData,
-          sortingDetails
-        );     
+          sortingDetails,
+        );
       }
 
-       // ✅ Build session object
+      // ✅ Build session object
       const sobj: any = {
         orgGrpCode: tokenDecode?.orgGrpCode,
         orgCode: tokenDecode?.orgCode,
@@ -1092,7 +1184,7 @@ getConfig(): FusionAuthConfig {
       const start = count ? (page - 1) * count : 0;
       const end = count ? start + count : data.length;
 
-      if(sortingDetails && Object.keys(sortingDetails).length>0)
+      if (sortingDetails && Object.keys(sortingDetails).length > 0)
         data = this.sortRecords(data, sortingDetails);
 
       let finalData: any[] = [];
@@ -1135,16 +1227,16 @@ getConfig(): FusionAuthConfig {
           }
 
           if (!fieldarr.length) throw new Error('Field not found in rule');
-          let parts,root,nestedPath
+          let parts, root, nestedPath;
           // ✅ Build gparamreq safely
-          for (const fieldPath of fieldarr) {         
-            if(fieldPath.includes('.')){
+          for (const fieldPath of fieldarr) {
+            if (fieldPath.includes('.')) {
               parts = fieldPath.split('.');
-            root = parts.shift();
-            nestedPath = parts.join('.');
-            }else{
-              nestedPath = fieldPath
-            } 
+              root = parts.shift();
+              nestedPath = parts.join('.');
+            } else {
+              nestedPath = fieldPath;
+            }
             let source;
             if (root === 'session') {
               source = sobj;
@@ -1154,8 +1246,8 @@ getConfig(): FusionAuthConfig {
             const value = await this.commonService.getNestedValue(
               source,
               nestedPath,
-            );         
-            
+            );
+
             if (value !== undefined) {
               await this.commonService.setNestedValue(
                 gparamreq,
@@ -1163,8 +1255,8 @@ getConfig(): FusionAuthConfig {
                 value,
               );
             }
-          }      
-          
+          }
+
           // ✅ Execute rule
           const result = await this.gorule.goRule(rule, gparamreq);
 
@@ -1177,33 +1269,37 @@ getConfig(): FusionAuthConfig {
       }
 
       // ================= SEARCH =================
-      if (searchObj && !Array.isArray(searchObj) && Object.keys(searchObj).length > 0) { 
+      if (
+        searchObj &&
+        !Array.isArray(searchObj) &&
+        Object.keys(searchObj).length > 0
+      ) {
         finalData = finalData.filter((item) =>
           Object.entries(searchObj).every(([key, value]) => {
-          const itemVal = item[key];
- 
-          if (Array.isArray(value)) {
-            return value.some(v =>
-              typeof v === "string" && typeof itemVal === "string"
-                ? itemVal.toLowerCase().includes(v.toLowerCase())
-                : v === itemVal
-            );
-          }
- 
-          if (typeof value === "string" && typeof itemVal === "string") {
-            return itemVal.toLowerCase().includes(value.toLowerCase());
-          }
- 
-          return itemVal == value;
-        })
-      );
-      }else if(Array.isArray(searchObj) && searchObj?.length>0){                                    
-        finalData = await this.applyFilters(finalData, searchObj)                                
+            const itemVal = item[key];
+
+            if (Array.isArray(value)) {
+              return value.some((v) =>
+                typeof v === 'string' && typeof itemVal === 'string'
+                  ? itemVal.toLowerCase().includes(v.toLowerCase())
+                  : v === itemVal,
+              );
+            }
+
+            if (typeof value === 'string' && typeof itemVal === 'string') {
+              return itemVal.toLowerCase().includes(value.toLowerCase());
+            }
+
+            return itemVal == value;
+          }),
+        );
+      } else if (Array.isArray(searchObj) && searchObj?.length > 0) {
+        finalData = await this.applyFilters(finalData, searchObj);
       }
 
       // ================= PAGINATION =================
       return await this.filterpagination(start, end, finalData);
-    } catch (err:any) {      
+    } catch (err: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -1212,108 +1308,103 @@ getConfig(): FusionAuthConfig {
         `Error in pagination: ${err.message}`,
         key,
         token,
-      );     
-      throw new CustomException(err.message,err.statusCode)
-    }
-  }
-
-  private sortRecords(records: any[],sortingDetails: Record< string, 'asc' | 'desc'>): any[] {
-
-  const sortingColumn = Object.keys(sortingDetails)[0];
-  const sortDirection = sortingDetails[sortingColumn];
-
-  if (!sortingColumn || !sortDirection) {
-    return records;
-  }
-
-  return [...records].sort((a, b) => {
-    const valueA = a[sortingColumn];
-    const valueB = b[sortingColumn];
-
-    if (valueA == null && valueB == null) {
-      return 0;
-    }
-
-    if (valueA == null) {
-      return sortDirection === 'asc' ? -1 : 1;
-    }
-
-    if (valueB == null) {
-      return sortDirection === 'asc' ? 1 : -1;
-    }
-
-    let result = 0;
-
-    // Number sorting (including numeric strings)
-    if (
-      !isNaN(Number(valueA)) &&
-      !isNaN(Number(valueB))
-    ) {
-      result = Number(valueA) - Number(valueB);
-    }
-
-    // Date sorting
-    else if (
-      !isNaN(Date.parse(valueA)) &&
-      !isNaN(Date.parse(valueB))
-    ) {
-      result =
-        new Date(valueA).getTime() -
-        new Date(valueB).getTime();
-    }
-
-    // String sorting
-    else {
-      result = String(valueA).localeCompare(
-        String(valueB),
-        undefined,
-        {
-          sensitivity: 'base',
-        }
       );
+      throw new CustomException(err.message, err.statusCode);
+    }
+  }
+
+  private sortRecords(
+    records: any[],
+    sortingDetails: Record<string, 'asc' | 'desc'>,
+  ): any[] {
+    const sortingColumn = Object.keys(sortingDetails)[0];
+    const sortDirection = sortingDetails[sortingColumn];
+
+    if (!sortingColumn || !sortDirection) {
+      return records;
     }
 
-    return sortDirection === 'desc' ? -result : result;
-  });
-}
+    return [...records].sort((a, b) => {
+      const valueA = a[sortingColumn];
+      const valueB = b[sortingColumn];
+
+      if (valueA == null && valueB == null) {
+        return 0;
+      }
+
+      if (valueA == null) {
+        return sortDirection === 'asc' ? -1 : 1;
+      }
+
+      if (valueB == null) {
+        return sortDirection === 'asc' ? 1 : -1;
+      }
+
+      let result = 0;
+
+      // Number sorting (including numeric strings)
+      if (!isNaN(Number(valueA)) && !isNaN(Number(valueB))) {
+        result = Number(valueA) - Number(valueB);
+      }
+
+      // Date sorting
+      else if (!isNaN(Date.parse(valueA)) && !isNaN(Date.parse(valueB))) {
+        result = new Date(valueA).getTime() - new Date(valueB).getTime();
+      }
+
+      // String sorting
+      else {
+        result = String(valueA).localeCompare(String(valueB), undefined, {
+          sensitivity: 'base',
+        });
+      }
+
+      return sortDirection === 'desc' ? -result : result;
+    });
+  }
 
   async filterpagination(start, end, searcharr) {
     try {
       var filArray = [];
-      if(end){
+      if (end) {
         for (let i = start; i < end; i++) {
           if (searcharr[i] != null) filArray.push(searcharr[i]);
         }
-      }else{       
+      } else {
         for (let i = 0; i < searcharr.length; i++) {
           if (searcharr[i] != null) filArray.push(searcharr[i]);
         }
       }
 
-     // return { records: filArray, totalRecords: searcharr.length };
-     return { records: filArray, totalRecords:searcharr?.length };
+      // return { records: filArray, totalRecords: searcharr.length };
+      return { records: filArray, totalRecords: searcharr?.length };
     } catch (error) {
       throw new BadGatewayException(error);
     }
   }
 
   async getValueByPath(obj, path) {
-    return path
-      .split(".")
-      .reduce((acc, key) => acc?.[key], obj);
+    return path.split('.').reduce((acc, key) => acc?.[key], obj);
   }
 
   async OrchestrationBatch(key: string, token: string, accessProfile: any[]) {
-  
     const UO: any = await this.commonService.readAPI(
       key + ':UO',
       process.env.CLIENTCODE,
       token,
     );
 
-    if (!UO) return "UO not found";
-    
-    const pageData = await this.Orchestration(key, null, null, token, false, accessProfile, UO);
+    if (!UO) return 'UO not found';
+
+    const pageData = await this.Orchestration(
+      key,
+      null,
+      null,
+      token,
+      false,
+      accessProfile,
+      UO,
+    );
     const groupData: Record<string, any> = {};
     const controlData: Record<string, Record<string, any>> = {};
     const [UFSData, NDPData] = await Promise.all([
@@ -1322,27 +1413,64 @@ getConfig(): FusionAuthConfig {
     ]);
 
     if (!Array.isArray(UFSData)) {
-      throw new Error(`Expected UFSData to be an array, got: ${typeof UFSData}`);
+      throw new Error(
+        `Expected UFSData to be an array, got: ${typeof UFSData}`,
+      );
     }
 
-    for(const UFS of UFSData){
-      if(UFS.type==="Canvas"){
+    for (const UFS of UFSData) {
+      if (UFS.type === 'Canvas') {
         continue;
       }
-      if(UFS.groupType == 'group'|| UFS?.groupType=="subscreen" || UFS?.groupType=="artifactgroup"  || UFS.type === 'tab_group' || UFS.type === 'stepper_group' || UFS.type === "stepper_header" || UFS.groupType == 'table' || UFS.type === 'tab_header' || UFS.groupType == 'dynamictable' || UFS.groupType == 'dynamicactions' || UFS.groupType == 'grouparray'){
+      if (
+        UFS.groupType == 'group' ||
+        UFS?.groupType == 'subscreen' ||
+        UFS?.groupType == 'artifactgroup' ||
+        UFS.type === 'tab_group' ||
+        UFS.type === 'stepper_group' ||
+        UFS.type === 'stepper_header' ||
+        UFS.groupType == 'table' ||
+        UFS.type === 'tab_header' ||
+        UFS.groupType == 'dynamictable' ||
+        UFS.groupType == 'dynamicactions' ||
+        UFS.groupType == 'grouparray'
+      ) {
         const isTable = UFS.groupType === 'table';
-        const result = await this.Orchestration(key, UFS.id, null, token, isTable, accessProfile, UO, UFSData, NDPData);
+        const result = await this.Orchestration(
+          key,
+          UFS.id,
+          null,
+          token,
+          isTable,
+          accessProfile,
+          UO,
+          UFSData,
+          NDPData,
+        );
         groupData[UFS.id] = result;
-      }else{
-        const result = await this.Orchestration(key, UFS.T_parentId, UFS.id, token, false, accessProfile, UO, UFSData, NDPData);
-        controlData[UFS.T_parentId] = { ...controlData[UFS.T_parentId], [UFS.id]: result };
+      } else {
+        const result = await this.Orchestration(
+          key,
+          UFS.T_parentId,
+          UFS.id,
+          token,
+          false,
+          accessProfile,
+          UO,
+          UFSData,
+          NDPData,
+        );
+        controlData[UFS.T_parentId] = {
+          ...controlData[UFS.T_parentId],
+          [UFS.id]: result,
+        };
       }
     }
-    
-    return {pageData, groupData, controlData};
+
+    return { pageData, groupData, controlData };
   }
 
-  async Orchestration(  
+  async Orchestration(
     key: string,
     componentId: string,
     controlId: string,
@@ -1354,17 +1482,19 @@ getConfig(): FusionAuthConfig {
     preloadedNDP?: any,
   ) {
     try {
-      const UO: any = preloadedUO ?? await this.commonService.readAPI(
-        key + ':UO',
-        process.env.CLIENTCODE,
-        token,
-      );
+      const UO: any =
+        preloadedUO ??
+        (await this.commonService.readAPI(
+          key + ':UO',
+          process.env.CLIENTCODE,
+          token,
+        ));
       const screenName: string = key.split(':')[11];
       let mappedData: any = UO.mappedData.artifact.node;
       const securityData: any = UO.securityData;
       let templateArray: any[] = securityData.accessProfile;
       const decodedToken: any = await this.jwtService.verifyToken(token);
-      let object:any = {};
+      let object: any = {};
       let dataType: string;
       let security: any;
       let allowedGroup: any = [];
@@ -1376,7 +1506,7 @@ getConfig(): FusionAuthConfig {
       let sourceData: any[];
       let dfData: any;
       let DS_Object: any = [];
-      let accessProfileCheck:boolean = false;
+      let accessProfileCheck: boolean = false;
       if (UO) {
         if (key && !componentId && !controlId) {
           /*---------security start-------------*/
@@ -1397,19 +1527,18 @@ getConfig(): FusionAuthConfig {
                 });
                 break;
               }
-              
             }
-            if(!accessProfileCheck){
-                //--------------------------
-                mappedData?.map((nodes: any) => {
-                  allowedGroup.push({
-                    groupName: nodes?.nodeName,
-                    security: "AA",
-                  });
+            if (!accessProfileCheck) {
+              //--------------------------
+              mappedData?.map((nodes: any) => {
+                allowedGroup.push({
+                  groupName: nodes?.nodeName,
+                  security: 'AA',
                 });
-                security = "AA";
-                //--------------------------
-              }
+              });
+              security = 'AA';
+              //--------------------------
+            }
           } else {
             await this.commonService.errorLog(
               'Technical',
@@ -1442,28 +1571,29 @@ getConfig(): FusionAuthConfig {
             ); */
           }
           /*---------get dfKey end-------------*/
-          let artfactPFRule={}
-          if("rulekey" in UO.mappedData.artifact?.rule && UO.mappedData.artifact?.rule?.rulekey?.length>0){
-            let RuleKey = UO.mappedData.artifact?.rule?.rulekey[0]?.split(':')
-            if(RuleKey?.length == 7){
-              let pfRuleKey = `CK:${RuleKey[0]}:FNGK:${RuleKey[1]}:FNK:${RuleKey[2]}:CATK:${RuleKey[3]}:AFGK:${RuleKey[4]}:AFK:${RuleKey[5]}:AFVK:${RuleKey[6]}`
+          let artfactPFRule = {};
+          if (
+            'rulekey' in UO.mappedData.artifact?.rule &&
+            UO.mappedData.artifact?.rule?.rulekey?.length > 0
+          ) {
+            let RuleKey = UO.mappedData.artifact?.rule?.rulekey[0]?.split(':');
+            if (RuleKey?.length == 7) {
+              let pfRuleKey = `CK:${RuleKey[0]}:FNGK:${RuleKey[1]}:FNK:${RuleKey[2]}:CATK:${RuleKey[3]}:AFGK:${RuleKey[4]}:AFK:${RuleKey[5]}:AFVK:${RuleKey[6]}`;
               const tempRule: any = await this.commonService.readAPI(
-                  pfRuleKey + ':NDP',
-                  process.env.CLIENTCODE,
-                  token,
-                );
-              if(tempRule!=null && tempRule!=undefined)
-              {
-                Object.keys(tempRule).map((keys:any)=>{
-                  if(tempRule[keys]?.rule)
-                  {
-                     artfactPFRule=tempRule[keys].rule
+                pfRuleKey + ':NDP',
+                process.env.CLIENTCODE,
+                token,
+              );
+              if (tempRule != null && tempRule != undefined) {
+                Object.keys(tempRule).map((keys: any) => {
+                  if (tempRule[keys]?.rule) {
+                    artfactPFRule = tempRule[keys].rule;
                   }
-                })
+                });
               }
             }
           }
- 
+
           object = {
             action: UO.mappedData.artifact?.action,
             code: UO.mappedData.artifact?.code,
@@ -1477,7 +1607,7 @@ getConfig(): FusionAuthConfig {
           };
           return object;
         } else if (key && componentId && !controlId) {
-          let controllerRule:any = {}
+          let controllerRule: any = {};
           /*---------security start-------------*/
           if (key === securityData.afk) {
             for (let i = 0; i < templateArray.length; i++) {
@@ -1486,13 +1616,14 @@ getConfig(): FusionAuthConfig {
                 j < templateArray[i].security.artifact.node.length;
                 j++
               ) {
+                if (accessProfile.includes(templateArray[i].accessProfile)) {
+                  accessProfileCheck = true;
                   if (
-                  accessProfile.includes(templateArray[i].accessProfile)
-                ) {
-                accessProfileCheck = true;
-                if(screenName === templateArray[i].security.artifact.resource &&
+                    screenName ===
+                      templateArray[i].security.artifact.resource &&
                     componentId ===
-                    templateArray[i].security.artifact.node[j].resourceId){
+                      templateArray[i].security.artifact.node[j].resourceId
+                  ) {
                     let selectedValues: any = [];
                     for (
                       let l = 0;
@@ -1504,10 +1635,16 @@ getConfig(): FusionAuthConfig {
                           .selectedValue,
                       );
                     }
-                  for(let m = 0;m < templateArray[i].security.artifact.node.length;m++){
-                    if(selectedValues.includes('ATO')){
-                      if(templateArray[i].security.artifact.node[m].SIFlag
-                          .selectedValue === 'ATO'){
+                    for (
+                      let m = 0;
+                      m < templateArray[i].security.artifact.node.length;
+                      m++
+                    ) {
+                      if (selectedValues.includes('ATO')) {
+                        if (
+                          templateArray[i].security.artifact.node[m].SIFlag
+                            .selectedValue === 'ATO'
+                        ) {
                           componentNameArray.push(
                             templateArray[i].security.artifact.node[
                               m
@@ -1515,17 +1652,21 @@ getConfig(): FusionAuthConfig {
                           );
                           break;
                         }
-                    }else{
-                      if(templateArray[i].security.artifact.node[m].SIFlag
-                        .selectedValue === 'AA'){
+                      } else {
+                        if (
+                          templateArray[i].security.artifact.node[m].SIFlag
+                            .selectedValue === 'AA'
+                        ) {
                           componentNameArray.push(
                             templateArray[i].security.artifact.node[
                               m
                             ].resource.toLowerCase(),
                           );
                         }
-                        if(templateArray[i].security.artifact.node[m].SIFlag
-                          .selectedValue === 'RA'){
+                        if (
+                          templateArray[i].security.artifact.node[m].SIFlag
+                            .selectedValue === 'RA'
+                        ) {
                           componentNameArray.push(
                             templateArray[i].security.artifact.node[
                               m
@@ -1709,19 +1850,19 @@ getConfig(): FusionAuthConfig {
                 }
               }
             }
-            if(!accessProfileCheck){
-                  //--------------
-                  for(let m = 1;m < mappedData.length;m++){
-                    componentNameArray.push(mappedData[m].nodeName.toLowerCase(),);
-                    for (let k = 0;k < mappedData[m].objElements.length;k++) {
-                        controlNames.push(mappedData[m].objElements[k].elementName.toLowerCase());
-                    }
-                  }
-                  controlNames = controlNames.map((item) =>
-                          item.toLowerCase(),
-                        );
-                  //--------------
+            if (!accessProfileCheck) {
+              //--------------
+              for (let m = 1; m < mappedData.length; m++) {
+                componentNameArray.push(mappedData[m].nodeName.toLowerCase());
+                for (let k = 0; k < mappedData[m].objElements.length; k++) {
+                  controlNames.push(
+                    mappedData[m].objElements[k].elementName.toLowerCase(),
+                  );
                 }
+              }
+              controlNames = controlNames.map((item) => item.toLowerCase());
+              //--------------
+            }
           } else {
             await this.commonService.errorLog(
               'Technical',
@@ -1736,37 +1877,38 @@ getConfig(): FusionAuthConfig {
           /*---------security end-------------*/
           for (let i = 0; i < mappedData.length; i++) {
             if (componentId === mappedData[i].nodeId) {
-              for (let j = 0;j < mappedData[i].objElements.length;j++) {
-                if(mappedData[i].objElements[j].mapper.length > 0){
-                let mapperDetails:any ={};
-                mapperDetails["elementname"] = mappedData[i].objElements[j].elementName;
-                mapperDetails["sourcekey"] = mappedData[i].objElements[j].mapper[0].sourceKey[0];
-                mapperDetails["targetkey"] = mappedData[i].objElements[j].mapper[0].targetKey;
+              for (let j = 0; j < mappedData[i].objElements.length; j++) {
+                if (mappedData[i].objElements[j].mapper.length > 0) {
+                  let mapperDetails: any = {};
+                  mapperDetails['elementname'] =
+                    mappedData[i].objElements[j].elementName;
+                  mapperDetails['sourcekey'] =
+                    mappedData[i].objElements[j].mapper[0].sourceKey[0];
+                  mapperDetails['targetkey'] =
+                    mappedData[i].objElements[j].mapper[0].targetKey;
                   mappedData[i]?.mapper.push(mapperDetails);
                 }
-                if(componentId==mappedData[i].objElements[j]?.parentId)
-                {
-                  let tempRule:any=mappedData[i].objElements[j]?.rule
-                  if((("nodes" in tempRule)&&("edges" in tempRule))){
-
-                    controllerRule={...controllerRule,[mappedData[i].objElements[j]?.elementName]:tempRule}
+                if (componentId == mappedData[i].objElements[j]?.parentId) {
+                  let tempRule: any = mappedData[i].objElements[j]?.rule;
+                  if ('nodes' in tempRule && 'edges' in tempRule) {
+                    controllerRule = {
+                      ...controllerRule,
+                      [mappedData[i].objElements[j]?.elementName]: tempRule,
+                    };
                   }
-
                 }
               }
               object = {
                 action: mappedData[i]?.action,
                 code: mappedData[i]?.code,
                 rule: mappedData[i]?.rule,
-                events:  { eventSummary: mappedData[i].events?.eventSummary },
+                events: { eventSummary: mappedData[i].events?.eventSummary },
                 mapper: mappedData[i]?.mapper,
-                GoRuleData:controllerRule
+                GoRuleData: controllerRule,
               };
-
             }
-       
           }
-          let mappperNodeId:any=""
+          let mappperNodeId: any = '';
           /*---------get dfKey start-------------*/
           if (mappedData) {
             for (let i = 0; i < mappedData.length; i++) {
@@ -1777,7 +1919,8 @@ getConfig(): FusionAuthConfig {
                   node++
                 ) {
                   if (mappedData[i].objElements[node].mapper.length > 0) {
-                    mappperNodeId = mappedData[i].objElements[
+                    mappperNodeId =
+                      mappedData[i].objElements[
                         node
                       ].mapper[0].sourceKey[0].split('|')[1];
                     dfKey =
@@ -1834,7 +1977,7 @@ getConfig(): FusionAuthConfig {
                 schemaData,
                 dfKey: dfKey,
                 dfdNodeType: nodeType,
-                mappperNodeId:mappperNodeId
+                mappperNodeId: mappperNodeId,
               };
             } catch (err) {
               object = {
@@ -1843,7 +1986,7 @@ getConfig(): FusionAuthConfig {
                 allowedGroups: componentNameArray,
                 readableControls: readableControls,
                 dfKey: dfKey,
-                mappperNodeId:mappperNodeId
+                mappperNodeId: mappperNodeId,
               };
             }
           } else {
@@ -1854,7 +1997,7 @@ getConfig(): FusionAuthConfig {
               allowedGroups: componentNameArray,
               readableControls: readableControls,
               dfKey: dfKey,
-              mappperNodeId:mappperNodeId
+              mappperNodeId: mappperNodeId,
             };
           }
           // Fallback: if no security entry found for this componentId, return basic object
@@ -1865,7 +2008,7 @@ getConfig(): FusionAuthConfig {
               allowedGroups: [],
               readableControls: [],
               dfKey: '',
-              noSecurityEntry: true  // flag to indicate no security config exists for this group
+              noSecurityEntry: true, // flag to indicate no security config exists for this group
             };
           }
           return object;
@@ -1877,87 +2020,134 @@ getConfig(): FusionAuthConfig {
                 if (controlId === mappedData[i].objElements[j].elementId) {
                   if (mappedData[i].objElements[j].mapper.length == 0) {
                     dfData = [];
-                    const UFSData = preloadedUFS ?? await this.commonService.readAPI(
-                                  key + ':UFS',
-                                  process.env.CLIENTCODE,
-                                  token,
-                                );
-                    let tempAPIData={parentId:"",
-                      virtualControllerKey:"",
-                      apiKey:""
+                    const UFSData =
+                      preloadedUFS ??
+                      (await this.commonService.readAPI(
+                        key + ':UFS',
+                        process.env.CLIENTCODE,
+                        token,
+                      ));
+                    let tempAPIData = {
+                      parentId: '',
+                      virtualControllerKey: '',
+                      apiKey: '',
                     };
-                    if(UFSData?.length>0)
-                    {   
+                    if (UFSData?.length > 0) {
                       for (let o = 0; o < UFSData?.length; o++) {
-                        if(UFSData[o].id==mappedData[i].nodeId&&"virtualControllerKey" in UFSData[o])
-                        {
-                         tempAPIData={...tempAPIData,
-                          virtualControllerKey:UFSData[o]?.virtualControllerKey,
-                          parentId:UFSData[o]?.T_parentId
-                         }
-                        break;
+                        if (
+                          UFSData[o].id == mappedData[i].nodeId &&
+                          'virtualControllerKey' in UFSData[o]
+                        ) {
+                          tempAPIData = {
+                            ...tempAPIData,
+                            virtualControllerKey:
+                              UFSData[o]?.virtualControllerKey,
+                            parentId: UFSData[o]?.T_parentId,
+                          };
+                          break;
                         }
-                      }   
-                      if(tempAPIData?.parentId !="" && tempAPIData?.virtualControllerKey !="")
-                      {
+                      }
+                      if (
+                        tempAPIData?.parentId != '' &&
+                        tempAPIData?.virtualControllerKey != ''
+                      ) {
                         for (let o = 0; o < UFSData?.length; o++) {
-                          if(UFSData[o].id==tempAPIData?.parentId &&"virtualControllerKey" in UFSData[o]&&UFSData[o]?.virtualControllerKey==tempAPIData?.virtualControllerKey)
-                          {
-                            tempAPIData={...tempAPIData,apiKey:UFSData[o]?.apiKey}
+                          if (
+                            UFSData[o].id == tempAPIData?.parentId &&
+                            'virtualControllerKey' in UFSData[o] &&
+                            UFSData[o]?.virtualControllerKey ==
+                              tempAPIData?.virtualControllerKey
+                          ) {
+                            tempAPIData = {
+                              ...tempAPIData,
+                              apiKey: UFSData[o]?.apiKey,
+                            };
                             break;
                           }
-                        }           
+                        }
                       }
-                      if(tempAPIData?.apiKey!=undefined && tempAPIData?.apiKey != "")
-                      {
-                        let NDPScehemaData =await this.commonService.readAPI(
-                                  tempAPIData?.apiKey,
-                                  process.env.CLIENTCODE,
-                                  token,
-                                );
-                        if(Object.keys(NDPScehemaData)?.length>0)
-                        {
-                          let schema:any = {}
-                          Object.keys(NDPScehemaData)?.map((keys:any)=>{
-                            if(NDPScehemaData[keys]?.nodeType== "datasetschemanode")
-                            {
-                              if("properties" in NDPScehemaData[keys]?.dataset)
-                              {
-                                schema = NDPScehemaData[keys]?.dataset?.properties
-                              }else if("items" in NDPScehemaData[keys]?.dataset)
-                              {
-                                schema = NDPScehemaData[keys]?.dataset?.items?.properties
+                      if (
+                        tempAPIData?.apiKey != undefined &&
+                        tempAPIData?.apiKey != ''
+                      ) {
+                        let NDPScehemaData = await this.commonService.readAPI(
+                          tempAPIData?.apiKey,
+                          process.env.CLIENTCODE,
+                          token,
+                        );
+                        if (Object.keys(NDPScehemaData)?.length > 0) {
+                          let schema: any = {};
+                          Object.keys(NDPScehemaData)?.map((keys: any) => {
+                            if (
+                              NDPScehemaData[keys]?.nodeType ==
+                              'datasetschemanode'
+                            ) {
+                              if (
+                                'properties' in NDPScehemaData[keys]?.dataset
+                              ) {
+                                schema =
+                                  NDPScehemaData[keys]?.dataset?.properties;
+                              } else if (
+                                'items' in NDPScehemaData[keys]?.dataset
+                              ) {
+                                schema =
+                                  NDPScehemaData[keys]?.dataset?.items
+                                    ?.properties;
                               }
                             }
-                          })
-                          if(Object.keys(schema)?.length>0)
-                          {
-                            if(mappedData[i].objElements[j]?.elementName in schema){
-                              dataType= schema[mappedData[i].objElements[j]?.elementName]?.type
+                          });
+                          if (Object.keys(schema)?.length > 0) {
+                            if (
+                              mappedData[i].objElements[j]?.elementName in
+                              schema
+                            ) {
+                              dataType =
+                                schema[
+                                  mappedData[i].objElements[j]?.elementName
+                                ]?.type;
                             }
                           }
                         }
                       }
                     }
                   } else {
-                    if(mappedData[i].objElements[j].elementType == "dropdown"){
-                      for(let k=0;k<mappedData[i].objElements[j].mapper.length;k++){
-                        if(mappedData[i].objElements[j].mapper[k].targetKey.split('|').at(-1) == "value"){
-                          dfKey = mappedData[i].objElements[j].mapper[k].sourceKey[0].split('|')[0];
+                    if (
+                      mappedData[i].objElements[j].elementType == 'dropdown'
+                    ) {
+                      for (
+                        let k = 0;
+                        k < mappedData[i].objElements[j].mapper.length;
+                        k++
+                      ) {
+                        if (
+                          mappedData[i].objElements[j].mapper[k].targetKey
+                            .split('|')
+                            .at(-1) == 'value'
+                        ) {
+                          dfKey =
+                            mappedData[i].objElements[j].mapper[
+                              k
+                            ].sourceKey[0].split('|')[0];
                         }
                       }
-                    }else{
-                      dfKey = mappedData[i].objElements[j].mapper[0].sourceKey[0].split('|')[0];
+                    } else {
+                      dfKey =
+                        mappedData[i].objElements[
+                          j
+                        ].mapper[0].sourceKey[0].split('|')[0];
                     }
                     let dfdNode: string =
                       mappedData[i].objElements[j].mapper[0].sourceKey[0].split(
                         '|',
                       )[1];
-                    let dfdSource: string =
+                    let dfdSource: string = mappedData[i].objElements[
+                      j
+                    ].mapper[0].sourceKey[0]
+                      .split('|')[2]
+                      .split('.')
+                      .at(-1);
+                    let dfPath: string =
                       mappedData[i].objElements[j].mapper[0].sourceKey[0].split(
-                        '|',
-                      )[2].split('.').at(-1);
-                    let dfPath: string =  mappedData[i].objElements[j].mapper[0].sourceKey[0].split(
                         '|',
                       )[2];
                     let dfSchemaKey = await this.commonService.readAPI(
@@ -1965,14 +2155,15 @@ getConfig(): FusionAuthConfig {
                       process.env.CLIENTCODE,
                       token,
                     );
-                    
+
                     for (let dfo = 0; dfo < dfSchemaKey.length; dfo++) {
                       if (dfSchemaKey[dfo].nodeId == dfdNode) {
-                        dataType = await this.getValueByPath(dfSchemaKey[dfo].schema,dfPath+'.type');
-                        console.log("dataType ==> ", dataType);
-
+                        dataType = await this.getValueByPath(
+                          dfSchemaKey[dfo].schema,
+                          dfPath + '.type',
+                        );
+                        console.log('dataType ==> ', dataType);
                       }
-                      
                     }
                     // return dfSchemaKey
                     try {
@@ -2003,70 +2194,75 @@ getConfig(): FusionAuthConfig {
                     // }
                   }
 
-                  if(mappedData[i].objElements[j]?.elementType == "dynamicjsonform")
-                  {
-                    let ruleKey:string =''
-                    let pfRuleData:any={}
-                    const NDPData = preloadedNDP ?? await this.commonService.readAPI(
-                                  key + ':NDP',
-                                  process.env.CLIENTCODE,
-                                  token,
-                                );
-                    if(controlId in NDPData)
-                    {
-                      ruleKey= NDPData[controlId]?.apiKey || ''
-                      if(ruleKey)
-                      {
-                      let temp:any  =await this.commonService.readAPI(
-                                  ruleKey,
-                                  process.env.CLIENTCODE,
-                                  token,
-                                );
-                      Object.keys(temp)?.map((eachKey)=>{
-                        if(temp[eachKey]?.rule)
-                        {
-                          pfRuleData = temp[eachKey]?.rule;
-                        }
-                      })
+                  if (
+                    mappedData[i].objElements[j]?.elementType ==
+                    'dynamicjsonform'
+                  ) {
+                    let ruleKey: string = '';
+                    let pfRuleData: any = {};
+                    const NDPData =
+                      preloadedNDP ??
+                      (await this.commonService.readAPI(
+                        key + ':NDP',
+                        process.env.CLIENTCODE,
+                        token,
+                      ));
+                    if (controlId in NDPData) {
+                      ruleKey = NDPData[controlId]?.apiKey || '';
+                      if (ruleKey) {
+                        let temp: any = await this.commonService.readAPI(
+                          ruleKey,
+                          process.env.CLIENTCODE,
+                          token,
+                        );
+                        Object.keys(temp)?.map((eachKey) => {
+                          if (temp[eachKey]?.rule) {
+                            pfRuleData = temp[eachKey]?.rule;
+                          }
+                        });
                       }
                     }
                     object = {
-                              action: mappedData[i].objElements[j]?.action,
-                              code: mappedData[i].objElements[j]?.code,
-                              pfRuleData:pfRuleData,
-                              rule: mappedData[i].objElements[j]?.rule,
-                              events: {
-                                eventSummary: mappedData[i].objElements[j]?.events?.eventSummary
-                              },                              mapper: mappedData[i].objElements[j]?.mapper,
-                              // dstData: DS_Object?.data || [],
-                              schemaData,
-                            };
-                  }
-                  else
-                  {
+                      action: mappedData[i].objElements[j]?.action,
+                      code: mappedData[i].objElements[j]?.code,
+                      pfRuleData: pfRuleData,
+                      rule: mappedData[i].objElements[j]?.rule,
+                      events: {
+                        eventSummary:
+                          mappedData[i].objElements[j]?.events?.eventSummary,
+                      },
+                      mapper: mappedData[i].objElements[j]?.mapper,
+                      // dstData: DS_Object?.data || [],
+                      schemaData,
+                    };
+                  } else {
                     object = {
                       action: mappedData[i].objElements[j]?.action,
                       code: mappedData[i].objElements[j]?.code,
                       rule: mappedData[i].objElements[j]?.rule,
-                      events: { eventSummary: mappedData[i].objElements[j]?.events?.eventSummary },
+                      events: {
+                        eventSummary:
+                          mappedData[i].objElements[j]?.events?.eventSummary,
+                      },
                       mapper: mappedData[i].objElements[j]?.mapper,
                       dfdKey: dfKey + ':',
                       // dstData: DS_Object?.data || [],
                       schemaData,
-                      dataType
+                      dataType,
                     };
                   }
-                  if(mappedData[i].objElements[j]?.elementType== "editor")
-                  {
-                    let editorMapper:any=[]
-                    object?.mapper?.map((eachResource:any)=>{
-                      let temp:any={
-                        sourceKey:eachResource?.sourceKey[0]?.split('/')?.at(-1)|| "",
-                        targetKey:eachResource?.targetKey?.split('|')?.at(-1) || ""
-                      }
-                      editorMapper.push(temp)
-                    })
-                    object.mapper=editorMapper
+                  if (mappedData[i].objElements[j]?.elementType == 'editor') {
+                    let editorMapper: any = [];
+                    object?.mapper?.map((eachResource: any) => {
+                      let temp: any = {
+                        sourceKey:
+                          eachResource?.sourceKey[0]?.split('/')?.at(-1) || '',
+                        targetKey:
+                          eachResource?.targetKey?.split('|')?.at(-1) || '',
+                      };
+                      editorMapper.push(temp);
+                    });
+                    object.mapper = editorMapper;
                   }
                   return object;
                 }
@@ -2097,7 +2293,6 @@ getConfig(): FusionAuthConfig {
       );
     }
   }
-
 
   async elementsFilter(
     key: string,
@@ -2662,7 +2857,6 @@ getConfig(): FusionAuthConfig {
                         } else if (filterItems[nodeName] == undefined) {
                           filterItems[nodeName] = '';
                         }
-
                       }
                     }
                     if ('trs_version' in formData) {
@@ -2679,32 +2873,41 @@ getConfig(): FusionAuthConfig {
                           '.',
                         )[0];
                       if (NodeId == controlId) {
-                        if ("_groupArrays_" in formData) {
-                          formData["_groupArrays_"].forEach((arrayKey: string) => {
-                            formData[arrayKey]?.map((groupArrayItems: any, index: number) => {
-                              let nodeName: string =
-                                POdata.mappedData.artifact.node[i].ifo[
-                                  j
-                                ].name.toLocaleLowerCase();
-                              if (groupArrayItems[nodeName] != undefined) {
-                                if (!(arrayKey in groupArraysData)) {
-                                  groupArraysData = { ...groupArraysData, [arrayKey]: [] }
-                                }
-                                groupArraysData[arrayKey][index] = { ...groupArraysData[arrayKey][index] || {}, [nodeName]: groupArrayItems[nodeName] };
-                              }
-                            })
-                          });
+                        if ('_groupArrays_' in formData) {
+                          formData['_groupArrays_'].forEach(
+                            (arrayKey: string) => {
+                              formData[arrayKey]?.map(
+                                (groupArrayItems: any, index: number) => {
+                                  let nodeName: string =
+                                    POdata.mappedData.artifact.node[i].ifo[
+                                      j
+                                    ].name.toLocaleLowerCase();
+                                  if (groupArrayItems[nodeName] != undefined) {
+                                    if (!(arrayKey in groupArraysData)) {
+                                      groupArraysData = {
+                                        ...groupArraysData,
+                                        [arrayKey]: [],
+                                      };
+                                    }
+                                    groupArraysData[arrayKey][index] = {
+                                      ...(groupArraysData[arrayKey][index] ||
+                                        {}),
+                                      [nodeName]: groupArrayItems[nodeName],
+                                    };
+                                  }
+                                },
+                              );
+                            },
+                          );
                         }
-
                       }
                     }
                     if ('childTables' in formData) {
                       formData.childTables.map((eachTable: any) => {
-                        filterItems[eachTable] = formData[eachTable]
-                      })
+                        filterItems[eachTable] = formData[eachTable];
+                      });
                       return filterItems;
-                    } else
-                      return { ...filterItems, ...groupArraysData };
+                    } else return { ...filterItems, ...groupArraysData };
                   }
                 }
               }
@@ -3230,7 +3433,7 @@ getConfig(): FusionAuthConfig {
     data: any,
     token: string,
     dfdType: string,
-    primaryKey: string
+    primaryKey: string,
   ) {
     try {
       const source: string = 'redis';
@@ -3524,7 +3727,7 @@ getConfig(): FusionAuthConfig {
           token,
         );
       }
-    } catch (error:any) {
+    } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
         'AK',
@@ -4084,12 +4287,11 @@ getConfig(): FusionAuthConfig {
         sessionListCacheKey,
         process.env.CLIENTCODE,
       );
-      const sessionList = sessionListCache && JSON.parse(sessionListCache) ? JSON.parse(sessionListCache) : [];
-      if (
-        !sessionList ||
-        !Array.isArray(sessionList) ||
-        !sessionList.length
-      ) {
+      const sessionList =
+        sessionListCache && JSON.parse(sessionListCache)
+          ? JSON.parse(sessionListCache)
+          : [];
+      if (!sessionList || !Array.isArray(sessionList) || !sessionList.length) {
         await this.commonService.errorLog(
           'Technical',
           'AK',
@@ -4141,12 +4343,12 @@ getConfig(): FusionAuthConfig {
     try {
       const config = this.getConfig();
 
-      const accessProfileList = await this.getAccessTemplate(token , true)
+      const accessProfileList = await this.getAccessTemplate(token, true);
       const filteredAccessprofile = accessProfileList.find(
         (t: any) => t?.accessProfile === selectedAccessProfile,
       );
-      if(!filteredAccessprofile){
-        throw new NotFoundException('Selected access profile not found')
+      if (!filteredAccessprofile) {
+        throw new NotFoundException('Selected access profile not found');
       }
       const filteredCombination: any = this.transformToCombinations([
         filteredAccessprofile,
@@ -4267,103 +4469,104 @@ getConfig(): FusionAuthConfig {
       );
       throw new BadGatewayException(error);
     }
-  } 
+  }
 
   transformToCombinations(data: any[]) {
-  try {
-    return data.map((profile) => {
-      const combinations: any[] = [];
+    try {
+      return data.map((profile) => {
+        const combinations: any[] = [];
 
-      profile.orgGrp?.forEach((orgGrp: any) => {
-        const { orgGrpCode, orgGrpName } = orgGrp;
+        profile.orgGrp?.forEach((orgGrp: any) => {
+          const { orgGrpCode, orgGrpName } = orgGrp;
 
-        orgGrp.org?.forEach((org: any) => {
-          const { orgCode, orgName } = org;
+          orgGrp.org?.forEach((org: any) => {
+            const { orgCode, orgName } = org;
 
-          /* ------------------------------
+            /* ------------------------------
              1️⃣ ORG-LEVEL COMBINATIONS
              org → psGrp → ps → roleGrp → role
           --------------------------------*/
-          org.psGrp?.forEach((psGrp: any) => {
-            const { psGrpCode, psGrpName } = psGrp;
+            org.psGrp?.forEach((psGrp: any) => {
+              const { psGrpCode, psGrpName } = psGrp;
 
-            psGrp.ps?.forEach((ps: any) => {
-              const { psCode, psName } = ps;
+              psGrp.ps?.forEach((ps: any) => {
+                const { psCode, psName } = ps;
 
-              ps.roleGrp?.forEach((roleGrp: any) => {
-                const { roleGrpCode, roleGrpName } = roleGrp;
+                ps.roleGrp?.forEach((roleGrp: any) => {
+                  const { roleGrpCode, roleGrpName } = roleGrp;
 
-                roleGrp.roles?.forEach((role: any) => {
-                  const { roleCode, roleName } = role;
+                  roleGrp.roles?.forEach((role: any) => {
+                    const { roleCode, roleName } = role;
 
-                  combinations.push({
-                    orgGrpCode,
-                    orgGrpName,
-                    orgCode,
-                    orgName,
+                    combinations.push({
+                      orgGrpCode,
+                      orgGrpName,
+                      orgCode,
+                      orgName,
 
-                    subOrgGrpCode: '',
-                    subOrgGrpName: '',
-                    subOrgCode: '',
-                    subOrgName: '',
+                      subOrgGrpCode: '',
+                      subOrgGrpName: '',
+                      subOrgCode: '',
+                      subOrgName: '',
 
-                    psGrpCode,
-                    psGrpName,
-                    psCode,
-                    psName,
+                      psGrpCode,
+                      psGrpName,
+                      psCode,
+                      psName,
 
-                    roleGrpCode,
-                    roleGrpName,
-                    roleCode,
-                    roleName,
+                      roleGrpCode,
+                      roleGrpName,
+                      roleCode,
+                      roleName,
+                    });
                   });
                 });
               });
             });
-          });
 
-          /* ------------------------------
+            /* ------------------------------
              2️⃣ SUB-ORG-LEVEL COMBINATIONS
              org → subOrgGrp → subOrg → psGrp → ps → roleGrp → role
           --------------------------------*/
-          org.subOrgGrp?.forEach((subOrgGrp: any) => {
-            const { subOrgGrpCode, subOrgGrpName } = subOrgGrp;
+            org.subOrgGrp?.forEach((subOrgGrp: any) => {
+              const { subOrgGrpCode, subOrgGrpName } = subOrgGrp;
 
-            subOrgGrp.subOrg?.forEach((subOrg: any) => {
-              const { subOrgCode, subOrgName } = subOrg;
+              subOrgGrp.subOrg?.forEach((subOrg: any) => {
+                const { subOrgCode, subOrgName } = subOrg;
 
-              subOrg.psGrp?.forEach((psGrp: any) => {
-                const { psGrpCode, psGrpName } = psGrp;
+                subOrg.psGrp?.forEach((psGrp: any) => {
+                  const { psGrpCode, psGrpName } = psGrp;
 
-                psGrp.ps?.forEach((ps: any) => {
-                  const { psCode, psName } = ps;
+                  psGrp.ps?.forEach((ps: any) => {
+                    const { psCode, psName } = ps;
 
-                  ps.roleGrp?.forEach((roleGrp: any) => {
-                    const { roleGrpCode, roleGrpName } = roleGrp;
+                    ps.roleGrp?.forEach((roleGrp: any) => {
+                      const { roleGrpCode, roleGrpName } = roleGrp;
 
-                    roleGrp.roles?.forEach((role: any) => {
-                      const { roleCode, roleName } = role;
+                      roleGrp.roles?.forEach((role: any) => {
+                        const { roleCode, roleName } = role;
 
-                      combinations.push({
-                        orgGrpCode,
-                        orgGrpName,
-                        orgCode,
-                        orgName,
+                        combinations.push({
+                          orgGrpCode,
+                          orgGrpName,
+                          orgCode,
+                          orgName,
 
-                        subOrgGrpCode,
-                        subOrgGrpName,
-                        subOrgCode,
-                        subOrgName,
+                          subOrgGrpCode,
+                          subOrgGrpName,
+                          subOrgCode,
+                          subOrgName,
 
-                        psGrpCode,
-                        psGrpName,
-                        psCode,
-                        psName,
+                          psGrpCode,
+                          psGrpName,
+                          psCode,
+                          psName,
 
-                        roleGrpCode,
-                        roleGrpName,
-                        roleCode,
-                        roleName,
+                          roleGrpCode,
+                          roleGrpName,
+                          roleCode,
+                          roleName,
+                        });
                       });
                     });
                   });
@@ -4372,7 +4575,6 @@ getConfig(): FusionAuthConfig {
             });
           });
         });
-      });
 
         return {
           accessProfile: profile.accessProfile,
@@ -4386,12 +4588,17 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-   async getAccessTemplate(token: string , calledInternally: boolean = false, tenantOverride?: string) {
+  async getAccessTemplate(
+    token: string,
+    calledInternally: boolean = false,
+    tenantOverride?: string,
+  ) {
     try {
       const accountDetails = await this.MyAccountForClient(token, 's', true);
       const { accessProfile } = accountDetails;
       const effectiveTenant = tenantOverride || tenant;
-      const accessProfileList = await this.query(`select 
+      const accessProfileList = await this.query(
+        `select 
         opr_ap_id ,
         access_profile as "accessProfile" ,
         dap ,
@@ -4403,18 +4610,19 @@ getConfig(): FusionAuthConfig {
         from 
         ${schemaName}.tam_opr_access_profile 
         where 
-        tenant_code=$1 and ag_code=$2 and app_code=$3 and trs_tenant_id=$1`
-          , [effectiveTenant , ag , app])
+        tenant_code=$1 and ag_code=$2 and app_code=$3 and trs_tenant_id=$1`,
+        [effectiveTenant, ag, app],
+      );
       if (
-        accessProfileList && 
-        Array.isArray(accessProfileList) && 
+        accessProfileList &&
+        Array.isArray(accessProfileList) &&
         accessProfileList.length
       ) {
-        const filteredAccessTemplate = accessProfileList.filter((template: any) =>
-          accessProfile.includes(template?.accessProfile),
+        const filteredAccessTemplate = accessProfileList.filter(
+          (template: any) => accessProfile.includes(template?.accessProfile),
         );
-         if(calledInternally) {
-          return filteredAccessTemplate
+        if (calledInternally) {
+          return filteredAccessTemplate;
         }
         return this.transformToCombinations(filteredAccessTemplate);
       } else {
@@ -4444,9 +4652,17 @@ getConfig(): FusionAuthConfig {
   // for a capability key of the form "<module>:AUTHORIZE" in
   // tam_opr_access_profile.assigned_keys. Fails closed: any lookup error,
   // missing template, or unrecognized assignedKeys shape returns false.
-  async hasCapability(token: string, capabilityKey: string, tenantOverride?: string): Promise<boolean> {
+  async hasCapability(
+    token: string,
+    capabilityKey: string,
+    tenantOverride?: string,
+  ): Promise<boolean> {
     try {
-      const templates: any[] = await this.getAccessTemplate(token, true, tenantOverride);
+      const templates: any[] = await this.getAccessTemplate(
+        token,
+        true,
+        tenantOverride,
+      );
       if (!Array.isArray(templates)) return false;
       return templates.some((template: any) => {
         const raw = template?.assignedKeys;
@@ -4464,25 +4680,32 @@ getConfig(): FusionAuthConfig {
         } else {
           return false;
         }
-        return keys.some((k: any) => typeof k === 'string' && k.trim() === capabilityKey);
+        return keys.some(
+          (k: any) => typeof k === 'string' && k.trim() === capabilityKey,
+        );
       });
     } catch {
       return false;
     }
   }
 
-  async fusionAuthVerifyRefreshToken(refreshToken: string, tenantId?: string): Promise<any> {
+  async fusionAuthVerifyRefreshToken(
+    refreshToken: string,
+    tenantId?: string,
+  ): Promise<any> {
     try {
       const config = this.getConfig();
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
-      let ApplicationTenantDetails : any
-      const fusionAuthTenantANDAppDetails = await this.getTenantAndApplicationFusionAuthIdSecret();
-     
+      let ApplicationTenantDetails: any;
+      const fusionAuthTenantANDAppDetails =
+        await this.getTenantAndApplicationFusionAuthIdSecret();
+
       // prepare the tenant id ,application id and secret from the client tpc
       const url = `${fusionAuthBaseUrl}/oauth2/token`;
 
-      if(tenantId !== tenant){
-        ApplicationTenantDetails = await this.getApplicationTenantFusionauthDetails(tenantId)
+      if (tenantId !== tenant) {
+        ApplicationTenantDetails =
+          await this.getApplicationTenantFusionauthDetails(tenantId);
       }
 
       const params = new URLSearchParams();
@@ -4494,10 +4717,23 @@ getConfig(): FusionAuthConfig {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           Authorization:
-            tenantId !== tenant ? 
-            'Basic ' + btoa(ApplicationTenantDetails.fusionAuthApplicationTenantId + ':' + ApplicationTenantDetails.fusionAuthApplicationTenantClientSecret) : 
-            'Basic ' + btoa(fusionAuthTenantANDAppDetails.applicationId + ':' + fusionAuthTenantANDAppDetails.fusionAuthAppClientSecret),
-          'X-FusionAuth-TenantId': tenantId !== tenant ? ApplicationTenantDetails.applicationTenantUniqueId : fusionAuthTenantANDAppDetails.tenantUniqueId,
+            tenantId !== tenant
+              ? 'Basic ' +
+                btoa(
+                  ApplicationTenantDetails.fusionAuthApplicationTenantId +
+                    ':' +
+                    ApplicationTenantDetails.fusionAuthApplicationTenantClientSecret,
+                )
+              : 'Basic ' +
+                btoa(
+                  fusionAuthTenantANDAppDetails.applicationId +
+                    ':' +
+                    fusionAuthTenantANDAppDetails.fusionAuthAppClientSecret,
+                ),
+          'X-FusionAuth-TenantId':
+            tenantId !== tenant
+              ? ApplicationTenantDetails.applicationTenantUniqueId
+              : fusionAuthTenantANDAppDetails.tenantUniqueId,
         },
         body: params.toString(),
       });
@@ -4562,9 +4798,10 @@ getConfig(): FusionAuthConfig {
 
   async checkSession(sessionList: any[]) {
     try {
-      const config = this.getConfig()
-      const refreshTokenExpiryTime = config.authRefreshTokenExpiryTime 
-      const fusionauthRefreshTokenExpiryTimeinMinutes = config.fusionauthRefreshTokenExpiryTimeinMinutes
+      const config = this.getConfig();
+      const refreshTokenExpiryTime = config.authRefreshTokenExpiryTime;
+      const fusionauthRefreshTokenExpiryTimeinMinutes =
+        config.fusionauthRefreshTokenExpiryTimeinMinutes;
       const timeNow = Math.ceil(new Date().getTime() / 1000);
       const updatedSessionList = new Map();
       for (let index = 0; index < sessionList.length; index++) {
@@ -4588,7 +4825,7 @@ getConfig(): FusionAuthConfig {
       }
       return Array.from(updatedSessionList.values());
     } catch (error) {
-      return []
+      return [];
     }
   }
 
@@ -4612,7 +4849,8 @@ getConfig(): FusionAuthConfig {
             token,
           );
         } else {
-           const userList = await this.query(`SELECT
+          const userList = await this.query(
+            `SELECT
             au.org_au_id,
             tu.user_unique_id AS "userUniqueId",
             tu.email,
@@ -4632,8 +4870,10 @@ getConfig(): FusionAuthConfig {
           WHERE au.tenant_code = $1
             AND au.ag_code     = $2
             and au.trs_tenant_id=$1
-            AND au.app_code    = $3 AND (login_id=$4 or email=$4)` , [tenant , ag , app ,payload.loginId])
-      
+            AND au.app_code    = $3 AND (login_id=$4 or email=$4)`,
+            [tenant, ag, app, payload.loginId],
+          );
+
           const reqiredUser = userList.find(
             (user) => user.loginId === payload.loginId,
           );
@@ -4663,9 +4903,8 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-   async introspectToken(headers: any, key: string, tokens: string) {
+  async introspectToken(headers: any, key: string, tokens: string) {
     try {
-
       const { authorization } = headers;
       if (!authorization || typeof authorization !== 'string') {
         await this.commonService.errorLog(
@@ -4795,7 +5034,9 @@ getConfig(): FusionAuthConfig {
       return {
         authenticated: true,
         updatedToken:
-          token == currentSession?.accessToken ? undefined : currentSession?.accessToken,
+          token == currentSession?.accessToken
+            ? undefined
+            : currentSession?.accessToken,
       };
     } catch (error: any) {
       await this.commonService.errorLog(
@@ -4842,7 +5083,7 @@ getConfig(): FusionAuthConfig {
     return currentDate > expiryDate;
   }
 
-   async signIntoTorus(
+  async signIntoTorus(
     username: string,
     password: string,
     ufClientType: string,
@@ -4891,15 +5132,23 @@ getConfig(): FusionAuthConfig {
 
       const tenantUser = await this.query(query, values);
 
-      // getApplicationTenantId 
+      // getApplicationTenantId
       let foundAppTenant: any;
-      if(app_tenant){
+      if (app_tenant) {
         const appTenantList = await this.getAppTenantsLinkedWithApp();
-        foundAppTenant = appTenantList.find((item: any) => (item.tenant_name == app_tenant) || item.tenant_id == app_tenant);
-        if(!foundAppTenant) throw new BadRequestException(`fusionauth configuration details for the tenant ${app_tenant} not found`);
+        foundAppTenant = appTenantList.find(
+          (item: any) =>
+            item.tenant_name == app_tenant || item.tenant_id == app_tenant,
+        );
+        if (!foundAppTenant)
+          throw new BadRequestException(
+            `fusionauth configuration details for the tenant ${app_tenant} not found`,
+          );
       }
 
-      let tenantId = foundAppTenant?.tenant_id ? foundAppTenant?.tenant_id : tenant;
+      let tenantId = foundAppTenant?.tenant_id
+        ? foundAppTenant?.tenant_id
+        : tenant;
 
       const sessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:session`;
 
@@ -5151,7 +5400,9 @@ getConfig(): FusionAuthConfig {
           fusionAuthLoginResponse?.access_token;
         if (!fusionAuthAccessTokenFromRequest)
           throw new UnauthorizedException('Invalid Credentials');
-        const fusionPayload = await this.jwtService.verifyToken(fusionAuthAccessTokenFromRequest);
+        const fusionPayload = await this.jwtService.verifyToken(
+          fusionAuthAccessTokenFromRequest,
+        );
         if (!fusionPayload)
           throw new UnauthorizedException('Invalid Credentials');
         const authentication_type = fusionPayload?.authenticationType;
@@ -5260,59 +5511,61 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async getApplicationTenantFusionauthDetails (app_tenant : string | undefined = undefined) {
-      const config = this.getConfig();
-      const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
-      const fusionAuthApiKey = config.fusionAuthApiKey;
-      let applicationTenantUniqueId = ''
-      let fusionAuthApplicationTenantId = '';
-      let fusionAuthApplicationTenantClientSecret = '';
-      
-      const possible_FA_tenant_name = `${tenant}-apptenant-${app_tenant}`;
-        // CHECK EXISTENCE OF THE APPLICATION TENANT IN FUSIONAUTH
-          const tenantList = await FusionAuthGetTenantList({
-            name: possible_FA_tenant_name,
-            fusionAuthBaseUrl: fusionAuthBaseUrl,
-            fusionAuthApiKey: fusionAuthApiKey,
-          });
+  async getApplicationTenantFusionauthDetails(
+    app_tenant: string | undefined = undefined,
+  ) {
+    const config = this.getConfig();
+    const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
+    const fusionAuthApiKey = config.fusionAuthApiKey;
+    let applicationTenantUniqueId = '';
+    let fusionAuthApplicationTenantId = '';
+    let fusionAuthApplicationTenantClientSecret = '';
 
-       const isTenantExist = tenantList.find(
-        (a) => a.name == possible_FA_tenant_name,
-      );
+    const possible_FA_tenant_name = `${tenant}-apptenant-${app_tenant}`;
+    // CHECK EXISTENCE OF THE APPLICATION TENANT IN FUSIONAUTH
+    const tenantList = await FusionAuthGetTenantList({
+      name: possible_FA_tenant_name,
+      fusionAuthBaseUrl: fusionAuthBaseUrl,
+      fusionAuthApiKey: fusionAuthApiKey,
+    });
 
-      if(isTenantExist.id){
-        applicationTenantUniqueId = isTenantExist.id
-      } else {
-        return 'Application Tenant does not exist'
-      }
+    const isTenantExist = tenantList.find(
+      (a) => a.name == possible_FA_tenant_name,
+    );
 
+    if (isTenantExist.id) {
+      applicationTenantUniqueId = isTenantExist.id;
+    } else {
+      return 'Application Tenant does not exist';
+    }
 
-      // step 2 => check for application existence , create if not exist and return application id
-      const possibleApplicationNameInFusionAuth = `${app_tenant}-defaultApplication`;
-      const applicationList = await FusionAuthGetApplicationList(
-        applicationTenantUniqueId,
-        {
-          fusionAuthBaseUrl: fusionAuthBaseUrl,
-          fusionAuthApiKey: fusionAuthApiKey,
-          name: possibleApplicationNameInFusionAuth,
-        },
-      )
-      
-      const isApplicationExist = applicationList.find(
-        (a) => a.name == possibleApplicationNameInFusionAuth,
-      );
-      if(isApplicationExist.id){
-        fusionAuthApplicationTenantId = isApplicationExist.id;
-        fusionAuthApplicationTenantClientSecret = isApplicationExist.oauthConfiguration.clientSecret;
-      } else {
-        return 'Application does not exist'
-      }
+    // step 2 => check for application existence , create if not exist and return application id
+    const possibleApplicationNameInFusionAuth = `${app_tenant}-defaultApplication`;
+    const applicationList = await FusionAuthGetApplicationList(
+      applicationTenantUniqueId,
+      {
+        fusionAuthBaseUrl: fusionAuthBaseUrl,
+        fusionAuthApiKey: fusionAuthApiKey,
+        name: possibleApplicationNameInFusionAuth,
+      },
+    );
 
-      return {
-        applicationTenantUniqueId,
-        fusionAuthApplicationTenantId,
-        fusionAuthApplicationTenantClientSecret
-      }
+    const isApplicationExist = applicationList.find(
+      (a) => a.name == possibleApplicationNameInFusionAuth,
+    );
+    if (isApplicationExist.id) {
+      fusionAuthApplicationTenantId = isApplicationExist.id;
+      fusionAuthApplicationTenantClientSecret =
+        isApplicationExist.oauthConfiguration.clientSecret;
+    } else {
+      return 'Application does not exist';
+    }
+
+    return {
+      applicationTenantUniqueId,
+      fusionAuthApplicationTenantId,
+      fusionAuthApplicationTenantClientSecret,
+    };
   }
 
   async signInViaIAM(
@@ -5320,17 +5573,19 @@ getConfig(): FusionAuthConfig {
     password: string,
     ufClientType: string,
     isOauthUser: boolean = false,
-    app_tenant : string | undefined = undefined,
-    app_tenant_id : number | undefined = undefined
+    app_tenant: string | undefined = undefined,
+    app_tenant_id: number | undefined = undefined,
   ) {
     try {
       const config = this.getConfig();
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
-      let ApplicationTenantDetails : any
-      const fusionAuthTenantANDAppDetails = await this.getTenantAndApplicationFusionAuthIdSecret();
+      let ApplicationTenantDetails: any;
+      const fusionAuthTenantANDAppDetails =
+        await this.getTenantAndApplicationFusionAuthIdSecret();
 
-      if(app_tenant){
-        ApplicationTenantDetails = await this.getApplicationTenantFusionauthDetails(app_tenant)
+      if (app_tenant) {
+        ApplicationTenantDetails =
+          await this.getApplicationTenantFusionauthDetails(app_tenant);
       }
 
       const url = `${fusionAuthBaseUrl}/oauth2/token`;
@@ -5339,24 +5594,42 @@ getConfig(): FusionAuthConfig {
       params.append('username', username);
       params.append('password', password);
       params.append('scope', 'offline_access');
-      params.append('client_id', app_tenant ? ApplicationTenantDetails.fusionAuthApplicationTenantId : fusionAuthTenantANDAppDetails.applicationId);
+      params.append(
+        'client_id',
+        app_tenant
+          ? ApplicationTenantDetails.fusionAuthApplicationTenantId
+          : fusionAuthTenantANDAppDetails.applicationId,
+      );
 
       const res = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          Authorization:
-          app_tenant ? 
-            'Basic ' + btoa(ApplicationTenantDetails.fusionAuthApplicationTenantId + ':' + ApplicationTenantDetails.fusionAuthApplicationTenantClientSecret) : 
-            'Basic ' + btoa(fusionAuthTenantANDAppDetails.applicationId + ':' + fusionAuthTenantANDAppDetails.fusionAuthAppClientSecret),
-          'X-FusionAuth-TenantId': app_tenant ? ApplicationTenantDetails.applicationTenantUniqueId : fusionAuthTenantANDAppDetails.tenantUniqueId,
+          Authorization: app_tenant
+            ? 'Basic ' +
+              btoa(
+                ApplicationTenantDetails.fusionAuthApplicationTenantId +
+                  ':' +
+                  ApplicationTenantDetails.fusionAuthApplicationTenantClientSecret,
+              )
+            : 'Basic ' +
+              btoa(
+                fusionAuthTenantANDAppDetails.applicationId +
+                  ':' +
+                  fusionAuthTenantANDAppDetails.fusionAuthAppClientSecret,
+              ),
+          'X-FusionAuth-TenantId': app_tenant
+            ? ApplicationTenantDetails.applicationTenantUniqueId
+            : fusionAuthTenantANDAppDetails.tenantUniqueId,
         },
         body: params.toString(),
       });
 
       if (!res.ok) {
         const errorData = await res.text();
-        throw new UnauthorizedException(JSON.parse(errorData)?.error_description ?? 'invalid credentials');
+        throw new UnauthorizedException(
+          JSON.parse(errorData)?.error_description ?? 'invalid credentials',
+        );
       }
       const fusionAuthLoginResponse = await res.json();
       const torusSignIn = await this.signIntoTorus(
@@ -5452,9 +5725,9 @@ getConfig(): FusionAuthConfig {
     try {
       const actions = [
         {
-          code : "orgMatrix",
-          parseFields: ["org"],   // 👈 this table stores org as text
-          query : `SELECT
+          code: 'orgMatrix',
+          parseFields: ['org'], // 👈 this table stores org as text
+          query: `SELECT
             opr_mx_id,
             org_grp_code AS "orgGrpCode",
             org_grp_name AS "orgGrpName",
@@ -5465,12 +5738,12 @@ getConfig(): FusionAuthConfig {
           WHERE tenant_code = $1
             AND ag_code = $2
             AND app_code = $3 and trs_tenant_id=$1`,
-          params : [tenant , ag , app]  
+          params: [tenant, ag, app],
         },
         {
-          code : "orgMaster",
-          parseFields: ["org"],   // 👈 add defensively — no-op if already object
-          query : ` SELECT
+          code: 'orgMaster',
+          parseFields: ['org'], // 👈 add defensively — no-op if already object
+          query: ` SELECT
             opr_om_id,
             org_grp_code AS "orgGrpCode",
             org_grp_name AS "orgGrpName",
@@ -5480,13 +5753,13 @@ getConfig(): FusionAuthConfig {
          WHERE  tenant_code = $1
            AND  ag_code     = $2
            AND  app_code    = $3 and trs_tenant_id=$1`,
-          params : [tenant , ag , app]  
+          params: [tenant, ag, app],
         },
         {
-          code : "users",
-          parseFields: ["accessProfile"],  // 👈 if stored as text[]  or json string
+          code: 'users',
+          parseFields: ['accessProfile'], // 👈 if stored as text[]  or json string
           // here the query give the result without password
-          query : `select
+          query: `select
             tu.org_tu_id,
             tu.user_unique_id as "userUniqueId",
             tu.email,
@@ -5515,30 +5788,30 @@ getConfig(): FusionAuthConfig {
             and au.app_code = $3
           where
             tu.tenant_code = $1 and tu.trs_tenant_id=$1`,
-          params : [tenant , ag , app]  
-        }
-      ]
+          params: [tenant, ag, app],
+        },
+      ];
       const securityResponse = {};
       for (const action of actions) {
-          let rows = await this.query(action.query, action.params) ?? [];
-          // Parse any string JSON fields after fetching
-          if (action.parseFields) {
-            rows = rows.map(row => {
-              const parsed = { ...row };
-              for (const field of action.parseFields) {
-                if (typeof parsed[field] === 'string') {
-                  try {
-                    parsed[field] = JSON.parse(parsed[field]);
-                  } catch {
-                    // leave as-is if not valid JSON
-                  }
+        let rows = (await this.query(action.query, action.params)) ?? [];
+        // Parse any string JSON fields after fetching
+        if (action.parseFields) {
+          rows = rows.map((row) => {
+            const parsed = { ...row };
+            for (const field of action.parseFields) {
+              if (typeof parsed[field] === 'string') {
+                try {
+                  parsed[field] = JSON.parse(parsed[field]);
+                } catch {
+                  // leave as-is if not valid JSON
                 }
               }
-              return parsed;
-            });
-          }
-          securityResponse[action.code] = rows;
+            }
+            return parsed;
+          });
         }
+        securityResponse[action.code] = rows;
+      }
 
       return securityResponse;
     } catch (error: any) {
@@ -5552,13 +5825,12 @@ getConfig(): FusionAuthConfig {
         '',
         {
           artifact: 'UserScreen',
-          user: "anonymous user",
+          user: 'anonymous user',
         },
       );
       await this.throwCustomException(error);
     }
   }
-
 
   async setJson(key: string, data: any) {
     try {
@@ -5585,8 +5857,6 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  
-
   async readAMDKey(key: string, token: string) {
     const valueObj: any = await this.commonService.readAPI(
       key,
@@ -5609,13 +5879,15 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-  async getResetPasswordOtp(email: string, tenantId: string | undefined = undefined) {
+  async getResetPasswordOtp(
+    email: string,
+    tenantId: string | undefined = undefined,
+  ) {
     try {
       if (!email) throw new BadRequestException('email is required');
       const otpResetToken = randomBytes(32).toString('hex');
       const otpCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:otp:${otpResetToken}`;
-      let query = 
-        `SELECT
+      let query = `SELECT
             au.org_au_id,
             tu.user_unique_id AS "userUniqueId",
             tu.email,
@@ -5634,17 +5906,17 @@ getConfig(): FusionAuthConfig {
             ON au.org_tu_id = tu.org_tu_id
           WHERE au.tenant_code = $1
             AND au.ag_code     = $2
-            AND au.app_code    = $3 and au.trs_tenant_id=$1`
-        
-            const values = [tenant , ag , app ]
+            AND au.app_code    = $3 and au.trs_tenant_id=$1`;
 
-        if (tenantId) {
-          query += ` AND tu.at_id = $4`;
-          values.push(tenantId);
-        } else {
-          query += ` AND tu.at_id IS NULL`;
-        }
-            
+      const values = [tenant, ag, app];
+
+      if (tenantId) {
+        query += ` AND tu.at_id = $4`;
+        values.push(tenantId);
+      } else {
+        query += ` AND tu.at_id IS NULL`;
+      }
+
       const userList: any[] = await this.query(query, values);
       const foundedUser = userList.find(
         (user) => user.email.toLowerCase() === email.toLowerCase(),
@@ -5664,8 +5936,8 @@ getConfig(): FusionAuthConfig {
         return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
       };
       const otp = randomInt(100000, 1000000);
-      var otpJson = { email, otp }
-     
+      var otpJson = { email, otp };
+
       await this.redisService.setJsonData(
         otpCacheKey,
         JSON.stringify(otpJson),
@@ -5693,7 +5965,10 @@ getConfig(): FusionAuthConfig {
           console.log('Email sent: ' + info.response);
         }
       });
-      return {message: 'Email sent to the registered email address', id: otpResetToken};
+      return {
+        message: 'Email sent to the registered email address',
+        id: otpResetToken,
+      };
     } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
@@ -5705,7 +5980,7 @@ getConfig(): FusionAuthConfig {
         '',
         {
           artifact: 'ForgotPasswordScreen',
-          users: email.split("@")[0],
+          users: email.split('@')[0],
         },
       );
       await this.throwCustomException(error);
@@ -5723,10 +5998,12 @@ getConfig(): FusionAuthConfig {
       );
       if (!otpJsonFromRedis) throw new NotFoundException('otp not found');
       const otpJson = JSON.parse(otpJsonFromRedis);
-      const isCorrectOtp = otpJson.email.toLowerCase() === email.toLowerCase() && String(otpJson.otp) === String(otp);
+      const isCorrectOtp =
+        otpJson.email.toLowerCase() === email.toLowerCase() &&
+        String(otpJson.otp) === String(otp);
       if (!isCorrectOtp) throw new NotFoundException('invalid otp');
       await this.redisService.deleteKey(otpCacheKey, process.env.CLIENTCODE);
-      
+
       // Issue a short-lived, single-use reset token bound to this email and
       // hand it back instead of a bare `true`. resetPassword() below now
       // requires this token -- previously it had no way to know verifyOtp
@@ -5753,54 +6030,74 @@ getConfig(): FusionAuthConfig {
         '',
         {
           artifact: 'ForgotPasswordScreen',
-          users: email.split("@")[0],
+          users: email.split('@')[0],
         },
       );
       await this.throwCustomException(error);
     }
   }
 
-  async resetPassword(email: string, password: string, app_tenant: string | undefined = undefined, tenantId: string | undefined = undefined, resetToken?: string) {
+  async resetPassword(
+    email: string,
+    password: string,
+    app_tenant: string | undefined = undefined,
+    tenantId: string | undefined = undefined,
+    resetToken?: string,
+  ) {
     try {
       if (!email || !password) {
-      throw new BadRequestException('Please provide valid email and password');
+        throw new BadRequestException(
+          'Please provide valid email and password',
+        );
       }
 
       // resetToken must be the value verifyOtp() returned after a successful
       // OTP check for this same email -- without this, resetPassword had no
       // server-side proof that the OTP step ever happened.
       if (!resetToken) {
-        throw new UnauthorizedException('A valid password reset token is required');
+        throw new UnauthorizedException(
+          'A valid password reset token is required',
+        );
       }
       const resetTokenKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${tenant}:AFGK:${ag}:AFK:${app}:AFVK:v1:pwdResetToken:${resetToken}`;
-      const storedTokenRaw = await this.redisService.getJsonData(resetTokenKey, process.env.CLIENTCODE);
+      const storedTokenRaw = await this.redisService.getJsonData(
+        resetTokenKey,
+        process.env.CLIENTCODE,
+      );
       if (!storedTokenRaw) {
-        throw new UnauthorizedException('Reset token is invalid or has expired');
+        throw new UnauthorizedException(
+          'Reset token is invalid or has expired',
+        );
       }
       // Burn the token immediately so it can't be replayed, even if
       // something below this point fails.
       await this.redisService.del(resetTokenKey);
       const storedToken = JSON.parse(storedTokenRaw);
-      if (String(storedToken.email).toLowerCase() !== String(email).toLowerCase()) {
-        throw new UnauthorizedException('Reset token does not match this email');
+      if (
+        String(storedToken.email).toLowerCase() !== String(email).toLowerCase()
+      ) {
+        throw new UnauthorizedException(
+          'Reset token does not match this email',
+        );
       }
 
-      let ApplicationTenantDetails : any
-      const fusionAuthTenantANDAppDetails = await this.getTenantAndApplicationFusionAuthIdSecret();
+      let ApplicationTenantDetails: any;
+      const fusionAuthTenantANDAppDetails =
+        await this.getTenantAndApplicationFusionAuthIdSecret();
 
       let query = `SELECT
             *
           FROM ${schemaName}.tam_tenant_user tu
-         where tu.email=$1 and trs_tenant_id=$2`
+         where tu.email=$1 and trs_tenant_id=$2`;
 
-         const values = [email , tenant]
+      const values = [email, tenant];
 
-        if (tenantId) {
-          query += ` AND tu.at_id = $2`;
-          values.push(tenantId);
-        } else {
-          query += ` AND tu.at_id IS NULL`;
-        }
+      if (tenantId) {
+        query += ` AND tu.at_id = $2`;
+        values.push(tenantId);
+      } else {
+        query += ` AND tu.at_id IS NULL`;
+      }
 
       const tenantList: any[] = await this.query(query, values);
       const index = tenantList.findIndex(
@@ -5811,40 +6108,50 @@ getConfig(): FusionAuthConfig {
       }
       const tenantUser = tenantList[index];
 
-      if(this.comparePasswords(password , tenantUser?.password)){
-        throw new NotAcceptableException('New password must be different from your current password.')
+      if (this.comparePasswords(password, tenantUser?.password)) {
+        throw new NotAcceptableException(
+          'New password must be different from your current password.',
+        );
       }
 
       // --- FusionAuth flow ---
-        if(app_tenant){
-          ApplicationTenantDetails = await this.getApplicationTenantFusionauthDetails(app_tenant)
-        }
-        
-        const fusionAuthTenantId = app_tenant ? ApplicationTenantDetails?.applicationTenantUniqueId : fusionAuthTenantANDAppDetails.tenantUniqueId;
-        const uniqueId = tenantUser.user_unique_id;
+      if (app_tenant) {
+        ApplicationTenantDetails =
+          await this.getApplicationTenantFusionauthDetails(app_tenant);
+      }
 
-        if (!fusionAuthTenantId || !uniqueId) {
-          throw new NotFoundException(
-            `Missing FusionAuth tenantId or userUniqueId`,
-          );
-        }
+      const fusionAuthTenantId = app_tenant
+        ? ApplicationTenantDetails?.applicationTenantUniqueId
+        : fusionAuthTenantANDAppDetails.tenantUniqueId;
+      const uniqueId = tenantUser.user_unique_id;
 
-        const value = await this.handleFusionResetPassWord(
-          fusionAuthTenantId,
-          password,
-          uniqueId,
+      if (!fusionAuthTenantId || !uniqueId) {
+        throw new NotFoundException(
+          `Missing FusionAuth tenantId or userUniqueId`,
         );
-        if (value.status !== 200) {
-          throw new UnauthorizedException(
-            (value as any)?.error ?? 'FusionAuth password update failed',
-          );
+      }
+
+      const value = await this.handleFusionResetPassWord(
+        fusionAuthTenantId,
+        password,
+        uniqueId,
+      );
+      if (value.status !== 200) {
+        throw new UnauthorizedException(
+          (value as any)?.error ?? 'FusionAuth password update failed',
+        );
       }
 
       // --- Update Redis only after FusionAuth success (or if not fusionauth) ---
-      await this.updateTable('tam_tenant_user' , {
-        password : this.hashPassword(password),
-        email
-      } , 'email', tenantId)
+      await this.updateTable(
+        'tam_tenant_user',
+        {
+          password: this.hashPassword(password),
+          email,
+        },
+        'email',
+        tenantId,
+      );
 
       return 'Password updated successfully';
     } catch (error: any) {
@@ -5858,13 +6165,13 @@ getConfig(): FusionAuthConfig {
         '',
         {
           artifact: 'ForgotPasswordScreen',
-          users: email.split("@")[0],
+          users: email.split('@')[0],
         },
       );
       await this.throwCustomException(error);
     }
   }
-  
+
   async handleFusionResetPassWord(
     fusionAuthTenantId: string,
     password: string,
@@ -5873,7 +6180,7 @@ getConfig(): FusionAuthConfig {
     try {
       const config = this.getConfig();
       const fusionAuthBaseUrl = config.fusionAuthBaseUrl;
-      const fusionAuthApiKey = config.fusionAuthApiKey
+      const fusionAuthApiKey = config.fusionAuthApiKey;
 
       const url = `${fusionAuthBaseUrl}/api/user/${uniqueId}`;
       const res = await fetch(url, {
@@ -7273,9 +7580,8 @@ getConfig(): FusionAuthConfig {
                     dto[responseParameter][propertyArr[i]] =
                       data?.components?.[
                         nestedSchema[nestedSchema.length - 2]
-                      ]?.[
-                        nestedSchema[nestedSchema.length - 1]
-                      ]?.oneOf[0]?.type;
+                      ]?.[nestedSchema[nestedSchema.length - 1]]?.oneOf[0]
+                        ?.type;
                   else if (
                     data?.components?.[nestedSchema[nestedSchema.length - 2]]?.[
                       nestedSchema[nestedSchema.length - 1]
@@ -7284,9 +7590,8 @@ getConfig(): FusionAuthConfig {
                     dto[responseParameter][propertyArr[i]] =
                       data?.components?.[
                         nestedSchema[nestedSchema.length - 2]
-                      ]?.[
-                        nestedSchema[nestedSchema.length - 1]
-                      ]?.allOf[0]?.type;
+                      ]?.[nestedSchema[nestedSchema.length - 1]]?.allOf[0]
+                        ?.type;
                   // else dto[responseParameter][propertyArr[i]] = 'object';
                 }
 
@@ -7627,9 +7932,8 @@ getConfig(): FusionAuthConfig {
                     ResponseDto[propertyArr[i]] =
                       data?.components?.[
                         nestedSchema[nestedSchema.length - 2]
-                      ]?.[
-                        nestedSchema[nestedSchema.length - 1]
-                      ]?.oneOf?.[0]?.type;
+                      ]?.[nestedSchema[nestedSchema.length - 1]]?.oneOf?.[0]
+                        ?.type;
                   else if (
                     data?.components?.[nestedSchema[nestedSchema.length - 2]]?.[
                       nestedSchema[nestedSchema.length - 1]
@@ -7638,9 +7942,8 @@ getConfig(): FusionAuthConfig {
                     ResponseDto[propertyArr[i]] =
                       data?.components?.[
                         nestedSchema[nestedSchema.length - 2]
-                      ]?.[
-                        nestedSchema[nestedSchema.length - 1]
-                      ]?.allOf?.[0]?.type;
+                      ]?.[nestedSchema[nestedSchema.length - 1]]?.allOf?.[0]
+                        ?.type;
 
                   //else ResponseDto[propertyArr[i]] = 'object';
                 }
@@ -7768,7 +8071,10 @@ getConfig(): FusionAuthConfig {
             .replaceAll('${email}', oauthUser?.email)
             .replaceAll(
               '${appUrl}',
-              process.env.BE_URL.substring(0, process.env.BE_URL.lastIndexOf("/"))
+              process.env.BE_URL.substring(
+                0,
+                process.env.BE_URL.lastIndexOf('/'),
+              ),
             ),
         };
       } else {
@@ -7785,7 +8091,10 @@ getConfig(): FusionAuthConfig {
             .replaceAll('${email}', oauthUser?.email)
             .replaceAll(
               '${appUrl}',
-              process.env.BE_URL.substring(0, process.env.BE_URL.lastIndexOf("/")),
+              process.env.BE_URL.substring(
+                0,
+                process.env.BE_URL.lastIndexOf('/'),
+              ),
             ),
         };
       }
@@ -7882,25 +8191,23 @@ getConfig(): FusionAuthConfig {
     return result;
   }
 
-  async getAccessProfileForArtifact(key:string, clientCode: string, token: string)
-{
+  async getAccessProfileForArtifact(
+    key: string,
+    clientCode: string,
+    token: string,
+  ) {
     try {
-    const UO: any = await this.commonService.readAPI(
-      key ,
-      clientCode,
-      token,
-    );
-    let templateArray:any = UO?.securityData?.accessProfile||[];
-    let restrictedAccessProfile:any=[]
-    templateArray.map((profile:any)=>{
-      if(profile?.security?.artifact?.SIFlag?.selectedValue=='BA')
-      {
+      const UO: any = await this.commonService.readAPI(key, clientCode, token);
+      let templateArray: any = UO?.securityData?.accessProfile || [];
+      let restrictedAccessProfile: any = [];
+      templateArray.map((profile: any) => {
+        if (profile?.security?.artifact?.SIFlag?.selectedValue == 'BA') {
           restrictedAccessProfile.push(profile?.accessProfile);
         }
-    })
-    return restrictedAccessProfile
+      });
+      return restrictedAccessProfile;
     } catch (error) {
-    return []
+      return [];
     }
   }
 
@@ -7983,10 +8290,13 @@ getConfig(): FusionAuthConfig {
 
   async getNavbarData(key: string, clientCode: string, token: string) {
     let webAssemblerData: any = await this.commonService.readAPI(
-      key,process.env.CLIENTCODE,token
-    )
-    let screenDetailsForNav: any =
-      await this.screenDetailsData(webAssemblerData.webArtifacts);
+      key,
+      process.env.CLIENTCODE,
+      token,
+    );
+    let screenDetailsForNav: any = await this.screenDetailsData(
+      webAssemblerData.webArtifacts,
+    );
     let navbarData = await this.navbarDataPreparation(
       screenDetailsForNav,
       clientCode,
@@ -7994,19 +8304,13 @@ getConfig(): FusionAuthConfig {
     );
     return navbarData;
   }
-  
 
   async getAppList(token: string) {
     try {
       const payload = await this.jwtService.verifyToken(token);
-      const {
-        tenant: tenant,
-        loginId,
-        ag,
-        app: currentApp,
-      } = payload;
+      const { tenant: tenant, loginId, ag, app: currentApp } = payload;
       const tenantProfileCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:TENANT:AFGK:${tenant}:AFK:PROFILE:AFVK:v1:tpc`;
-    
+
       const tenantProfileResponse = await this.redisService.getJsonData(
         tenantProfileCacheKey,
         process.env.CLIENTCODE,
@@ -8014,19 +8318,22 @@ getConfig(): FusionAuthConfig {
       const tenantProfile = tenantProfileResponse
         ? JSON.parse(tenantProfileResponse)
         : {};
-      const foundUser = await this.query(`select * from ${schemaName}.tam_tenant_user tu where tu.tenant_code=$1 and tu.login_id=$2 and trs_tenant_id=$1` , [tenant , loginId])
-   
+      const foundUser = await this.query(
+        `select * from ${schemaName}.tam_tenant_user tu where tu.tenant_code=$1 and tu.login_id=$2 and trs_tenant_id=$1`,
+        [tenant, loginId],
+      );
+
       const appGroupInfo =
         tenantProfile?.AG?.find((group: any) => group?.code == ag) ?? {};
       const overAllApplicationList =
-        appGroupInfo?.APPS?.filter((a) => a?.code != currentApp) ||
-        [];
+        appGroupInfo?.APPS?.filter((a) => a?.code != currentApp) || [];
       let accessibleAppList: any[] = [];
 
       for (const application of overAllApplicationList) {
-        let userList = []
+        let userList = [];
         try {
-           userList = await this.query(`select
+          userList = await this.query(
+            `select
                               *
                             from
                               ${schemaName}.tam_app_user au
@@ -8034,14 +8341,14 @@ getConfig(): FusionAuthConfig {
                               au.tenant_code =$1
                               and au.ag_code =$2
                               and au.app_code =$3
-                              and au.org_tu_id =$4 and trs_tenant_id=$1` , [tenant , ag , application?.code ,foundUser?.[0]?.org_tu_id ])
-          
+                              and au.org_tu_id =$4 and trs_tenant_id=$1`,
+            [tenant, ag, application?.code, foundUser?.[0]?.org_tu_id],
+          );
         } catch (error) {
-          userList = []
+          userList = [];
         }
         const isUserExistInApp = userList.find(
-          (user: any) =>
-            user?.access_profile?.length,
+          (user: any) => user?.access_profile?.length,
         );
         if (!isUserExistInApp) continue;
         // check the application's build key information along with the accessUrl
@@ -8072,12 +8379,14 @@ getConfig(): FusionAuthConfig {
             // skip nodeId and get data
             let nodeData: any = Object.values(artifactKeyData)[0];
             // for encryption
-            if(typeof nodeData == "string"){
-              nodeData = decrypt(nodeData)
+            if (typeof nodeData == 'string') {
+              nodeData = decrypt(nodeData);
             }
-            const targetAppBaseURL = new URL(nodeData?.data?.api?.release?.HOST).origin ?? "";
-            const targetAppBasePath = `/${tenant}/${ag}/${application?.code}/${buildKey.split(':')[13]}`.toLowerCase();
-            const targetAppAccessUrl = `${targetAppBaseURL}${targetAppBasePath}`
+            const targetAppBaseURL =
+              new URL(nodeData?.data?.api?.release?.HOST).origin ?? '';
+            const targetAppBasePath =
+              `/${tenant}/${ag}/${application?.code}/${buildKey.split(':')[13]}`.toLowerCase();
+            const targetAppAccessUrl = `${targetAppBaseURL}${targetAppBasePath}`;
 
             if (targetAppAccessUrl && targetAppBaseURL) {
               versionInfo.push({
@@ -8114,31 +8423,50 @@ getConfig(): FusionAuthConfig {
     }
   }
 
-    async sso(sourceToken: string , ufClientType:string) {
+  async sso(sourceToken: string, ufClientType: string) {
     try {
       const payload = await this.jwtService.verifyToken(sourceToken);
-      const { loginId , tenant:srcTenant , ag:srcAg , app:srcApp , sid , tenantId } = payload;
+      const {
+        loginId,
+        tenant: srcTenant,
+        ag: srcAg,
+        app: srcApp,
+        sid,
+        tenantId,
+      } = payload;
       const srcAppSessionListCacheKey = `CK:TGA:FNGK:SETUP:FNK:SF:CATK:${srcTenant}:AFGK:${srcAg}:AFK:${srcApp}:AFVK:v1:session`;
-      const srcAppSessionList = JSON.parse(await this.redisService.getJsonData(srcAppSessionListCacheKey, process.env.CLIENTCODE));
+      const srcAppSessionList = JSON.parse(
+        await this.redisService.getJsonData(
+          srcAppSessionListCacheKey,
+          process.env.CLIENTCODE,
+        ),
+      );
       const srcAppUserSession = srcAppSessionList?.find((v) => v.sid == sid);
-      if(!srcAppUserSession) throw new UnauthorizedException('Invalid session')
-      const fusionAUthLoginResponse = await this.fusionAuthVerifyRefreshToken(srcAppUserSession?.refreshToken, tenantId);
+      if (!srcAppUserSession)
+        throw new UnauthorizedException('Invalid session');
+      const fusionAUthLoginResponse = await this.fusionAuthVerifyRefreshToken(
+        srcAppUserSession?.refreshToken,
+        tenantId,
+      );
       const loggedInValue = await this.signIntoTorus(
-          loginId,
-          '',
-          ufClientType,
-          true,
-          undefined,
-          undefined,
-          fusionAUthLoginResponse
+        loginId,
+        '',
+        ufClientType,
+        true,
+        undefined,
+        undefined,
+        fusionAUthLoginResponse,
+      );
+      if (!loggedInValue)
+        throw new UnauthorizedException(
+          'Unauthorized access to the application',
         );
-       if(!loggedInValue) throw new UnauthorizedException('Unauthorized access to the application')
       await this.redisService.setJsonData(
         srcAppSessionListCacheKey,
-        JSON.stringify(srcAppSessionList.filter(s => s.sid == sid)),
-        process.env.CLIENTCODE
-      )
-      return loggedInValue; 
+        JSON.stringify(srcAppSessionList.filter((s) => s.sid == sid)),
+        process.env.CLIENTCODE,
+      );
+      return loggedInValue;
     } catch (error: any) {
       await this.commonService.errorLog(
         'Technical',
@@ -8154,12 +8482,13 @@ getConfig(): FusionAuthConfig {
         },
       );
       await this.throwCustomException(error);
-      }
-}
-  
+    }
+  }
+
   async getAppTenantsLinkedWithApp() {
     try {
-      const result = await this.query(`select
+      const result = await this.query(
+        `select
               *
             from
               ${schemaName}.tam_tenant at
@@ -8169,75 +8498,108 @@ getConfig(): FusionAuthConfig {
               aat.tenant_code =$1
               and aat.ag_code =$2
               and aat.app_code =$3 and aat.trs_tenant_id=$1
-            ` , [tenant, ag, app]);
+            `,
+        [tenant, ag, app],
+      );
       if (result) {
         return JSON.parse(JSON.stringify(result ?? []));
       } else {
-        return []
+        return [];
       }
     } catch (error) {
-     return [];
+      return [];
     }
   }
 
-    // `includeSecrets` is granted only to a trusted server-to-server caller (see
+  // `includeSecrets` is granted only to a trusted server-to-server caller (see
   // the controller's internal-service-key check). This endpoint has to stay
   // reachable pre-login so the UF server can build the FusionAuth authorization
   // URL, but that flow only needs the non-secret discovery fields below.
   // The FusionAuth admin API key is never returned at all — no consumer uses it,
   // and handing it out over HTTP would hand over the whole identity provider.
-  async getFusionAuthCredentials(app_tenant:string | undefined, includeSecrets = true) {
+  async getFusionAuthCredentials(
+    app_tenant: string | undefined,
+    includeSecrets = true,
+  ) {
     try {
       const { fusionAuthBaseUrl } = this.getConfig();
-      if(!app_tenant){
-        const credentials = await this.getTenantAndApplicationFusionAuthIdSecret();
-        if(credentials && typeof credentials == 'object'){
+      if (!app_tenant) {
+        const credentials =
+          await this.getTenantAndApplicationFusionAuthIdSecret();
+        if (credentials && typeof credentials == 'object') {
           return {
-            tenantUniqueId : credentials.tenantUniqueId,
-            applicationId : credentials.applicationId,
-            ...(includeSecrets ? { fusionAuthAppClientSecret : credentials.fusionAuthAppClientSecret } : {}),
+            tenantUniqueId: credentials.tenantUniqueId,
+            applicationId: credentials.applicationId,
+            ...(includeSecrets
+              ? {
+                  fusionAuthAppClientSecret:
+                    credentials.fusionAuthAppClientSecret,
+                }
+              : {}),
             fusionAuthBaseUrl,
           };
-        }else{
-          throw new BadRequestException('fusionauth configuration details not found');
+        } else {
+          throw new BadRequestException(
+            'fusionauth configuration details not found',
+          );
         }
       }
       const appTenantList = await this.getAppTenantsLinkedWithApp();
-      const foundAppTenant = appTenantList.find((item: any) => (item.tenant_name == app_tenant) || item.tenant_id == app_tenant);
-      if(!foundAppTenant) throw new BadRequestException(`fusionauth configuration details for the tenant ${app_tenant} not found`);
-      const credentials = await this.getApplicationTenantFusionauthDetails(foundAppTenant.tenant_id);
-      if(credentials && typeof credentials == 'object'){
-          return {
-            tenantUniqueId : credentials.applicationTenantUniqueId,
-            applicationId : credentials.fusionAuthApplicationTenantId,
-            ...(includeSecrets ? { fusionAuthAppClientSecret : credentials.fusionAuthApplicationTenantClientSecret } : {}),
-            appTenantId : foundAppTenant.at_id,
-            fusionAuthBaseUrl,
-          };
-        }else{
-          throw new BadRequestException('fusionauth configuration details not found');
-        }
-
+      const foundAppTenant = appTenantList.find(
+        (item: any) =>
+          item.tenant_name == app_tenant || item.tenant_id == app_tenant,
+      );
+      if (!foundAppTenant)
+        throw new BadRequestException(
+          `fusionauth configuration details for the tenant ${app_tenant} not found`,
+        );
+      const credentials = await this.getApplicationTenantFusionauthDetails(
+        foundAppTenant.tenant_id,
+      );
+      if (credentials && typeof credentials == 'object') {
+        return {
+          tenantUniqueId: credentials.applicationTenantUniqueId,
+          applicationId: credentials.fusionAuthApplicationTenantId,
+          ...(includeSecrets
+            ? {
+                fusionAuthAppClientSecret:
+                  credentials.fusionAuthApplicationTenantClientSecret,
+              }
+            : {}),
+          appTenantId: foundAppTenant.at_id,
+          fusionAuthBaseUrl,
+        };
+      } else {
+        throw new BadRequestException(
+          'fusionauth configuration details not found',
+        );
+      }
     } catch (error) {
       await this.throwCustomException(error);
     }
   }
- 
+
   //___________________________LOGS__________________________________________
 
   @Cron(process.env.MY_CRON)
   async prcLog(): Promise<any> {
     try {
-    let structuredData 
-    let tplstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TPL'
-    let tslstreamName = process.env.TENANT+'-'+ process.env.APPCODE+'-TSL'
-    if (await this.redisService.exist(tplstreamName, process.env.CLIENTCODE)){
-      structuredData =await this.structuredPrcLogs(tplstreamName) 
-    } 
-    if (await this.redisService.exist(tslstreamName, process.env.CLIENTCODE)){
-      structuredData = await this.structuredPrcLogs(tslstreamName) 
-    } 
-    return structuredData
+      let structuredData;
+      let tplstreamName =
+        process.env.TENANT + '-' + process.env.APPCODE + '-TPL';
+      let tslstreamName =
+        process.env.TENANT + '-' + process.env.APPCODE + '-TSL';
+      if (
+        await this.redisService.exist(tplstreamName, process.env.CLIENTCODE)
+      ) {
+        structuredData = await this.structuredPrcLogs(tplstreamName);
+      }
+      if (
+        await this.redisService.exist(tslstreamName, process.env.CLIENTCODE)
+      ) {
+        structuredData = await this.structuredPrcLogs(tslstreamName);
+      }
+      return structuredData;
     } catch (error) {
       throw error;
     }
@@ -8248,52 +8610,48 @@ getConfig(): FusionAuthConfig {
       const msgid = [];
       const strmarr = [];
       const result = [];
-      let groupName
-      let consumerName
+      let groupName;
+      let consumerName;
       if (await this.redisService.exist(streamName, process.env.CLIENTCODE)) {
-        
-      groupName  = streamName + 'ProcessLog_' + process.pid;
-      consumerName = streamName
-      
+        groupName = streamName + 'ProcessLog_' + process.pid;
+        consumerName = streamName;
+
         await this.redisService.createConsumerGroup(streamName, groupName);
         let streamData: any = await this.redisService.readConsumerGroup(
-          streamName, 
-          groupName, 
-          consumerName
+          streamName,
+          groupName,
+          consumerName,
         );
-        
-      
+
         if (!streamData || streamData === 'No Data available to read') {
           return [];
         }
-        
+
         if (!Array.isArray(streamData)) {
           return [];
         }
 
         if (streamData.length === 0) {
           return [];
-        }        
-        
+        }
+
         for (let i = 0; i < streamData.length; i++) {
-          const item = streamData[i];          
-          
+          const item = streamData[i];
+
           if (item.msgid && item.data) {
             msgid.push(item.msgid);
             strmarr.push(item.data);
-          }
-          else if (Array.isArray(item) && item.length === 2) {
+          } else if (Array.isArray(item) && item.length === 2) {
             msgid.push(item[0]);
             strmarr.push(item[1]);
-          }
-          else {
-            console.log("Unexpected item structure at index", i, ":", item);
+          } else {
+            console.log('Unexpected item structure at index', i, ':', item);
           }
         }
         if (msgid?.length > 0) {
-          
-          for (let s = 0; s < msgid.length; s++) {           
-            let user,upid = 'logInfo';
+          for (let s = 0; s < msgid.length; s++) {
+            let user,
+              upid = 'logInfo';
 
             if (streamName.endsWith('-TPL')) {
               const upidsplit = strmarr[s][0].split(':');
@@ -8302,28 +8660,53 @@ getConfig(): FusionAuthConfig {
                 // AfskValue = upid;
               }
             }
-            
+
             const date = new Date(Number(msgid[s].split('-')[0]));
-            const utcDate = date.toISOString()
-            const entryId = utcDate.split('T')[0] //format(date, 'yyyy-MM-dd');
+            const utcDate = date.toISOString();
+            const entryId = utcDate.split('T')[0]; //format(date, 'yyyy-MM-dd');
 
             const afskvalue: any = JSON.parse(strmarr[s][1]);
-            if(typeof afskvalue == 'object')
-              afskvalue['DateAndTime'] = utcDate
-            
-            if (afskvalue?.sessionInfo && Object.keys(afskvalue.sessionInfo).length > 0 && afskvalue.sessionInfo.user) {
+            if (typeof afskvalue == 'object')
+              afskvalue['DateAndTime'] = utcDate;
+
+            if (
+              afskvalue?.sessionInfo &&
+              Object.keys(afskvalue.sessionInfo).length > 0 &&
+              afskvalue.sessionInfo.user
+            ) {
               user = afskvalue.sessionInfo.user;
             } else {
               user = 'user';
             }
 
-            const CK = await this.commonService.splitcommonkey(strmarr[s][0], 'CK');
-            const FNGK = await this.commonService.splitcommonkey(strmarr[s][0], 'FNGK');
-            const FNK = await this.commonService.splitcommonkey(strmarr[s][0], 'FNK');
-            const CATK = await this.commonService.splitcommonkey(strmarr[s][0], 'CATK');
-            const AFGK = await this.commonService.splitcommonkey(strmarr[s][0], 'AFGK');
-            const AFK = await this.commonService.splitcommonkey(strmarr[s][0], 'AFK');
-            const AFVK = await this.commonService.splitcommonkey(strmarr[s][0], 'AFVK');
+            const CK = await this.commonService.splitcommonkey(
+              strmarr[s][0],
+              'CK',
+            );
+            const FNGK = await this.commonService.splitcommonkey(
+              strmarr[s][0],
+              'FNGK',
+            );
+            const FNK = await this.commonService.splitcommonkey(
+              strmarr[s][0],
+              'FNK',
+            );
+            const CATK = await this.commonService.splitcommonkey(
+              strmarr[s][0],
+              'CATK',
+            );
+            const AFGK = await this.commonService.splitcommonkey(
+              strmarr[s][0],
+              'AFGK',
+            );
+            const AFK = await this.commonService.splitcommonkey(
+              strmarr[s][0],
+              'AFK',
+            );
+            const AFVK = await this.commonService.splitcommonkey(
+              strmarr[s][0],
+              'AFVK',
+            );
 
             let existingEntry = result.find(
               (item) =>
@@ -8336,7 +8719,7 @@ getConfig(): FusionAuthConfig {
                 item.AFVK === AFVK &&
                 item.UPID === upid &&
                 item.USER === user &&
-                item.DATE === entryId
+                item.DATE === entryId,
             );
 
             if (!existingEntry) {
@@ -8362,36 +8745,82 @@ getConfig(): FusionAuthConfig {
                 existingEntry.AFSK[upid] = [];
               }
               existingEntry.AFSK[upid].push(afskvalue);
-            }else{
+            } else {
               existingEntry.AFSK = afskvalue;
             }
           }
-          
-          result.forEach((entry, idx) => { Object.values(entry.AFSK).reduce((sum: number, arr: any[]) => sum + arr.length, 0);});
-          
+
+          result.forEach((entry, idx) => {
+            Object.values(entry.AFSK).reduce(
+              (sum: number, arr: any[]) => sum + arr.length,
+              0,
+            );
+          });
+
           if (result && result.length > 0) {
-            let upid
-            let bucketName = streamName.endsWith('-TSL')?'ExpLog':'PrcLog'
-            if (streamName.endsWith('-TSL')) {                 
-              upid = 'logInfo'
+            let upid;
+            let bucketName = streamName.endsWith('-TSL') ? 'ExpLog' : 'PrcLog';
+            if (streamName.endsWith('-TSL')) {
+              upid = 'logInfo';
             }
             for (let i = 0; i < result.length; i++) {
-              const { USER, DATE: date,DateAndTime, CK, FNGK, FNK, CATK, AFGK, AFK, AFVK } = result[i];
+              const {
+                USER,
+                DATE: date,
+                DateAndTime,
+                CK,
+                FNGK,
+                FNK,
+                CATK,
+                AFGK,
+                AFK,
+                AFVK,
+              } = result[i];
               upid = Object.keys(result[i].AFSK)[0];
               let res;
-              if (USER && date && CK && FNGK && FNK && CATK && AFGK && AFK && AFVK) {
-                const path = `${USER}:${date}:${CK}:${FNGK}:${FNK}:${CATK}:${AFGK}:${AFK}:${AFVK}:${upid}`;    
-                
-                res = await this.commonService.seaWeeduploadFile(JSON.stringify(result[i]), bucketName, streamName, path);                
-               
-                if(res?.status == 201){
-                  await this.structuredPrcLogsToPostgres(streamName,path,CK,FNK,CATK,AFGK,upid,USER,DateAndTime)
-                  await this.redisService.ackMessage(streamName,groupName,msgid);
-                  await this.redisService.deleteWithEntryId(streamName,msgid)   
-                  let isStreamExist = await this.redisService.getStreamRange(streamName)
-                
-                  if(!isStreamExist || isStreamExist.length == 0){
-                    await this.redisService.deleteKey(streamName,streamName)
+              if (
+                USER &&
+                date &&
+                CK &&
+                FNGK &&
+                FNK &&
+                CATK &&
+                AFGK &&
+                AFK &&
+                AFVK
+              ) {
+                const path = `${USER}:${date}:${CK}:${FNGK}:${FNK}:${CATK}:${AFGK}:${AFK}:${AFVK}:${upid}`;
+
+                res = await this.commonService.seaWeeduploadFile(
+                  JSON.stringify(result[i]),
+                  bucketName,
+                  streamName,
+                  path,
+                );
+
+                if (res?.status == 201) {
+                  await this.structuredPrcLogsToPostgres(
+                    streamName,
+                    path,
+                    CK,
+                    FNK,
+                    CATK,
+                    AFGK,
+                    upid,
+                    USER,
+                    DateAndTime,
+                  );
+                  await this.redisService.ackMessage(
+                    streamName,
+                    groupName,
+                    msgid,
+                  );
+                  await this.redisService.deleteWithEntryId(streamName, msgid);
+                  let isStreamExist =
+                    await this.redisService.getStreamRange(streamName);
+
+                  if (!isStreamExist || isStreamExist.length == 0) {
+                    await this.redisService.deleteKey(streamName, streamName);
                   }
                 }
               }
@@ -8400,18 +8829,28 @@ getConfig(): FusionAuthConfig {
           }
         }
         return result;
-    }
+      }
     } catch (error) {
       throw error;
     }
   }
 
-  async structuredPrcLogsToPostgres(tableName: string,Key:string,tenant:string,fabric:string,appGrp:string,app:string,upid:string,user:string,date) {  
-    try {         
-       tableName = tableName.toLowerCase()
-       await this.query(`CREATE SCHEMA IF NOT EXISTS "processlog"`);
-       await this.query(
-         `CREATE TABLE IF NOT EXISTS "processlog"."${tableName}" (
+  async structuredPrcLogsToPostgres(
+    tableName: string,
+    Key: string,
+    tenant: string,
+    fabric: string,
+    appGrp: string,
+    app: string,
+    upid: string,
+    user: string,
+    date,
+  ) {
+    try {
+      tableName = tableName.toLowerCase();
+      await this.query(`CREATE SCHEMA IF NOT EXISTS "processlog"`);
+      await this.query(
+        `CREATE TABLE IF NOT EXISTS "processlog"."${tableName}" (
           id BIGSERIAL PRIMARY KEY,
           key TEXT,
           ck_code varchar(50) NULL,
@@ -8423,88 +8862,107 @@ getConfig(): FusionAuthConfig {
           date_and_time TIMESTAMPTZ
         );
         CREATE UNIQUE INDEX IF NOT EXISTS "${tableName}_key_idx" ON "processlog"."${tableName}" ("key")
-      `);   
-     
-      let params = [Key,tenant,fabric,appGrp,app,upid,user,date];
+      `,
+      );
 
-      let insertquery =
-       `INSERT INTO "processlog"."${tableName}"(key,ck_code,fnk_code,ag_code,app_code,upid,user_name,date_and_time)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (key) DO NOTHING RETURNING *`;      
+      let params = [Key, tenant, fabric, appGrp, app, upid, user, date];
+
+      let insertquery = `INSERT INTO "processlog"."${tableName}"(key,ck_code,fnk_code,ag_code,app_code,upid,user_name,date_and_time)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (key) DO NOTHING RETURNING *`;
 
       const insertRes = await this.query(insertquery, params);
       return insertRes;
     } catch (error) {
-      console.error('structuredPrcLogsToPostgres Error =>',error);
+      console.error('structuredPrcLogsToPostgres Error =>', error);
       throw error;
-    }  
+    }
   }
 
-  async getseaWeedProcessExpLogs(input,type): Promise<any> {
-    try {    
-      if(!input?.tenant || !input?.app?.code) throw 'Invalid Payload'
-      let downloadedFile = []
-      let filename = `${input?.tenant}-${input?.app?.code}${type}`
-     
-      let response = await this.getPostgresProcessLogs(input,type)
-      
-      let bucketName = type.endsWith('-TSL')?'ExpLog':'PrcLog'
+  async getseaWeedProcessExpLogs(input, type): Promise<any> {
+    try {
+      if (!input?.tenant || !input?.app?.code) throw 'Invalid Payload';
+      let downloadedFile = [];
+      let filename = `${input?.tenant}-${input?.app?.code}${type}`;
 
-      if(response?.data.length>0){
-        for(let item of response.data){                    
-          downloadedFile.push(await this.commonService.downloadAndParseFile(input?.tenant,`/${bucketName}/${filename}/${item.key}.json`));
+      let response = await this.getPostgresProcessLogs(input, type);
+
+      let bucketName = type.endsWith('-TSL') ? 'ExpLog' : 'PrcLog';
+
+      if (response?.data.length > 0) {
+        for (let item of response.data) {
+          downloadedFile.push(
+            await this.commonService.downloadAndParseFile(
+              input?.tenant,
+              `/${bucketName}/${filename}/${item.key}.json`,
+            ),
+          );
         }
       }
-      
-      downloadedFile = downloadedFile.flat()
-      
-        if(downloadedFile.length>0){    
+
+      downloadedFile = downloadedFile.flat();
+
+      if (downloadedFile.length > 0) {
         const timeZone = process.env.TIMEZONE;
-     
-        if(timeZone && timeZone != 'UTC'){        
 
-          if(type.endsWith('-TPL')){
-          for (const item of downloadedFile) {
-
-            const utcDate = new Date(item.DateAndTime);
-              item.DateAndTime = this.commonService.convertTimeZone(utcDate);  
+        if (timeZone && timeZone != 'UTC') {
+          if (type.endsWith('-TPL')) {
+            for (const item of downloadedFile) {
+              const utcDate = new Date(item.DateAndTime);
+              item.DateAndTime = this.commonService.convertTimeZone(utcDate);
 
               let upidVal = item.AFSK ? Object.values(item.AFSK)[0] : null;
-            if (Array.isArray(upidVal)) {
-              for (const upidItem of upidVal) {               
-                const upidutcDate = new Date(upidItem.DateAndTime);
-                  upidItem.DateAndTime = this.commonService.convertTimeZone(upidutcDate)             
+              if (Array.isArray(upidVal)) {
+                for (const upidItem of upidVal) {
+                  const upidutcDate = new Date(upidItem.DateAndTime);
+                  upidItem.DateAndTime =
+                    this.commonService.convertTimeZone(upidutcDate);
                 }
-              }    
+              }
             }
-          }else if(type.endsWith('-TSL')){
+          } else if (type.endsWith('-TSL')) {
             for (const item of downloadedFile) {
-              const utcDate = new Date(item.DateAndTime); 
-              item.DateAndTime = this.commonService.convertTimeZone(utcDate);  
-              if(item?.AFSK?.DateAndTime)
-                item.AFSK.DateAndTime = this.commonService.convertTimeZone(item.AFSK.DateAndTime)    
+              const utcDate = new Date(item.DateAndTime);
+              item.DateAndTime = this.commonService.convertTimeZone(utcDate);
+              if (item?.AFSK?.DateAndTime)
+                item.AFSK.DateAndTime = this.commonService.convertTimeZone(
+                  item.AFSK.DateAndTime,
+                );
             }
           }
         }
       }
-      response['data'] = downloadedFile
-      return response
-    }catch(error:any){
-      console.log("ERROR123", error);
-      if(error.message) error = error.message    
-      throw new BadRequestException(error)
+      response['data'] = downloadedFile;
+      return response;
+    } catch (error: any) {
+      console.log('ERROR123', error);
+      if (error.message) error = error.message;
+      throw new BadRequestException(error);
     }
   }
 
-  async getPostgresProcessLogs(input: any,type:string): Promise<any> {
+  async getPostgresProcessLogs(input: any, type: string): Promise<any> {
     try {
       const {
-        tenant,user,FromDate,ToDate,fabric,appgroup,
-        app,searchParam,page = 1,limit = 10,sortOrder,} = input;
-      
-      const PG_SCHEMANAME = 'processlog';
-      const tableName = (`${tenant}-${app?.code}${type}`).toLowerCase();
+        tenant,
+        user,
+        FromDate,
+        ToDate,
+        fabric,
+        appgroup,
+        app,
+        searchParam,
+        page = 1,
+        limit = 10,
+        sortOrder,
+      } = input;
 
-      if (!this.commonService.isSafeSqlIdentifier(tenant) || !this.commonService.isSafeSqlIdentifier(app?.code)) {
+      const PG_SCHEMANAME = 'processlog';
+      const tableName = `${tenant}-${app?.code}${type}`.toLowerCase();
+
+      if (
+        !this.commonService.isSafeSqlIdentifier(tenant) ||
+        !this.commonService.isSafeSqlIdentifier(app?.code)
+      ) {
         throw new BadRequestException('Invalid tenant/app code');
       }
 
@@ -8601,23 +9059,19 @@ getConfig(): FusionAuthConfig {
       `;
       //console.log('dataQuery',dataQuery);
       //console.log('params',params);
-      
-      const data = await this.query(dataQuery, [
-        ...params,
-        limit,
-        offset,
-      ]);
-      
+
+      const data = await this.query(dataQuery, [...params, limit, offset]);
+
       return {
         data,
         page,
         limit,
         totalPages: Math.ceil(totalDocuments / limit),
         totalDocuments,
-      }
-    } catch (error:any) {
+      };
+    } catch (error: any) {
       if (error instanceof HttpException) throw error;
-      throw new BadRequestException( error);
+      throw new BadRequestException(error);
     }
   }
 
@@ -8637,7 +9091,10 @@ getConfig(): FusionAuthConfig {
         throw new Error('Record not found');
       }
 
-      if (rows.rows[0].trs_locked_by && rows.rows[0].trs_locked_by !== dto.userId) {
+      if (
+        rows.rows[0].trs_locked_by &&
+        rows.rows[0].trs_locked_by !== dto.userId
+      ) {
         throw new HttpException(
           {
             message: `Record locked by ${rows.rows[0].trs_locked_by}`,
@@ -8755,7 +9212,9 @@ getConfig(): FusionAuthConfig {
       );
 
       for (const lock of locks.rows) {
-        const recordSchema = lock.table_name.startsWith('tam_') ? schemaName : '';
+        const recordSchema = lock.table_name.startsWith('tam_')
+          ? schemaName
+          : '';
         await client.query(
           `UPDATE ${recordSchema}."${lock.table_name}"
            SET trs_locked_by = NULL, trs_locked_time = NULL
